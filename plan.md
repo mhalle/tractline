@@ -2,7 +2,7 @@
 
 *Plan for a self-contained demo: an offline Python pipeline plus a PicoGL browser viewer. No 3D Slicer, no SlicerLive. Renderer design is left to the implementer; this document specifies what the viewer must show and what data it receives.*
 
-*Written 2026-10-01. Incubated in medseg `bench/tractography/` on branch `tractography-incubation` (never merged into main, as with `vessels-incubation`); data and captured fields stay outside the repo (`_data.py`: `~/tmp/data/tractography`). Revision 2. The rankfield facts below were checked against rankfield v0.3.10 (format 0.4). The TractCloud facts are still as first stated and have not been rechecked; see the handoff notes.*
+*Written 2026-10-01. Incubated in medseg `bench/tractography/` on branch `tractography-incubation` (never merged into main, as with `vessels-incubation`); data and captured fields stay outside the repo (`_data.py`: `~/tmp/data/tractography`). Revision 2. The rankfield facts below were checked against rankfield v0.3.10 (format 0.4). The TractCloud facts were checked against TractCloud `94de627` (main, 2026-10-01) during M0, with three corrections.*
 
 ## The claim
 
@@ -20,13 +20,16 @@ Claim 3 is the headline. If it fails, we learn that early and cheaply (milestone
 
 ## Background
 
-**TractCloud** (`github.com/SlicerDMRI/TractCloud`, `src/tractcloud/`; not rechecked in this revision):
+**TractCloud** (`github.com/SlicerDMRI/TractCloud`, `src/tractcloud/`; checked at `94de627`):
 
 - Each streamline is resampled to 15 equally spaced points in RAS (`extract_ras_features`), then shifted so the subject's mean matches the HCP atlas center (`center_tractography`). There is no registration.
-- Context for each streamline: its k = 20 nearest streamlines, searched in a random 10 % subsample (`k_ds_rate = 0.1`), plus k_global = 80 streamlines drawn at random from the whole brain. **Neither random draw is seeded**, so labels vary between runs.
+- Context for each streamline: its k = 20 nearest streamlines, plus k_global = 80 streamlines drawn at random from the whole brain. **Neither random draw is seeded**, so labels vary between runs. Both draws come from numpy's global stream: the global sample first, then the kNN draws.
+  - *Correction:* the kNN search is NOT over a 10 % subsample of the whole brain. The brain is split into chunks of about 10 k streamlines in file order, and each streamline's neighbors are searched in a 10 % random draw (`k_ds_rate = 0.1`) from its own chunk, about 1 k streamlines. The original training repo does the same (`RealData_PatchData` → `cal_local_feat` on the chunk). So the context depends on file order, and a subsample must not be run as if it were a whole brain.
+  - The model was trained with k_global = 500 and `k_ds_rate = 1.0` (`cli_args.txt`). Both the CLI and the paper's test script use 80 and 0.1 at inference.
 - The model is a DGCNN whose output is `F.log_softmax` over **1600 classes**: the 800 ORG atlas clusters (0–799) plus an outlier twin for each (800–1599).
 - `run_inference` keeps only `pred.data.max(1)[1]`. **This is the line to patch.**
 - `tract_mapping.py` maps clusters to 42 tracts in 5 categories (Association, Projection, Commissural, Cerebellar, Superficial). Outlier classes map to "Other."
+  - *Correction:* "Other" also holds 289 plausible clusters (0–799) that the atlas leaves unannotated, so it is a group of 1089 classes, not just the outliers.
 - Log-softmax equals the logits minus a per-streamline constant. rankfield stores only differences between classes, so the log-probabilities can be encoded directly.
 
 **Test data** (`TestData.tar.gz`, 1.5 GB, from TractCloud GitHub release v1.0.0). It contains four subjects, all `.vtp`:
@@ -233,5 +236,6 @@ Validate the port against Python on a fixed set of streamlines. Decoding through
 
 - Start at M0 on CPU with the 100 k subsample. Nothing downstream is worth building until M1 holds.
 - The rankfield API in this document was checked against v0.3.10: `encode` (including `keep="clip"`), `decode_groups`, `probabilities`, `margin`, `tail_at`, `levels` and `store`. Pin that tag, or recheck the API if you move to a later one, because the format is still alpha.
-- The TractCloud facts in Background were not rechecked in this revision. Before patching, confirm the `run_inference` line, where the two random draws happen (so they can be seeded), and the 1600-class layout.
+- The TractCloud facts in Background were checked at `94de627` during M0. The model needs `HCP_mass_center.npy`, which ships only in `TrainData_800clu800ol.tar.gz` (166 MB); keep that one file.
+- M0 builds the context over the whole brain with upstream `RealDataDataset` unchanged, under `np.random.seed`, and runs the model on the 100 k targets only. A target's label is then exactly what a full-brain run with that seed gives it (`capture.py`).
 - There is no JS decoder to reuse. Port the decode from `decode.py` (`_field`, `decode_groups`, `probabilities`). Test it against Python using the level table exported in Step 5.

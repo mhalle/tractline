@@ -1,0 +1,14 @@
+{
+ "run": 4,
+ "seed": 4,
+ "targets": 100000,
+ "device": "cpu",
+ "torch": "2.14.1",
+ "machine": "arm64",
+ "threads": 4,
+ "context_s": 2.1,
+ "inference_s": 234.2,
+ "fp16_argmax_differs": 8,
+ "logp_min": -133.7401123046875,
+ "max_logp_mean": -0.3975161015987396
+}

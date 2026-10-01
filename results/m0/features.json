@@ -1,0 +1,23 @@
+{
+ "streamlines": 440621,
+ "points": 21641984,
+ "feat_shape": [
+  440621,
+  15,
+  3
+ ],
+ "ras_min": [
+  -63.6,
+  -97.6,
+  -65.5
+ ],
+ "ras_max": [
+  64.8,
+  70.1,
+  66.6
+ ],
+ "targets": 100000,
+ "subsample_seed": 20261001,
+ "read_s": 3.6,
+ "extract_s": 2.4
+}
