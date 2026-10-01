@@ -13,7 +13,6 @@ Writes results/tc_hardi.json.
 """
 import json, sys
 from pathlib import Path
-import modal
 
 HERE = Path(__file__).resolve().parent
 DATA = Path.home() / "tmp/data/tractography"
@@ -29,6 +28,8 @@ if "--extract" in sys.argv:                                            # local: 
         np.save(DATA / "ukf/hardi" / f"feat_{name}.npy", feat)
         print(name, feat.shape)
     raise SystemExit(0)
+
+import modal                                                           # not needed (or installed) for --extract
 
 image = (modal.Image.debian_slim(python_version="3.12").pip_install("torch>=2.7", "numpy>=2")
          .env({"PYTHONPATH": "/root/pkg"})
