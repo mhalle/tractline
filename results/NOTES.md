@@ -682,3 +682,28 @@ format-and-speed test, not an accuracy test.
   on the CPU 5.7 s (3,655 classes) and 26.2 s (13,695): encoding cost grows with the class count.
   At the paper's 2.93 M streamlines: about 110 s inference, 40 s and 175 s encode on this laptop's
   CPU. The GPU encode path (0.45 s for TractCloud on an A10G) is the obvious next step.
+
+## 2026-10-01 UKF as a Triton kernel (CUDA)
+
+`_ukf_triton_block.py` (compact: [F,16] states, [F,16,16] matrices, batched IEEE tl.dot, Cholesky
+loops), `modal_ukf_triton.py` → `ukf_triton_block_{smoke,tune,full}.json`. The first, fully unrolled
+generator (`_ukf_triton.py`) is correct but took 1,901 s to compile; the block kernel compiles in
+about 40-140 s.
+
+- **One step, 3,335 fixtures, against float64:** state error 3.3e-7 median, 40x smaller than torch's
+  float32 step (1.3e-5); 2 swap flips against torch float32's 7; no stop flips. The Cholesky-based
+  inverses are the likely reason. Two launches bit-identical.
+- **Launch sweep (one step, 50k half-fibers, A10G):** 456 k steps/s at F 2 / 8 warps, 454 k at F 1 /
+  4 warps; F 4 exceeds shared memory.
+- **Whole HARDI brain (98,491 seeds), F 2 / 4 warps:** 78 s steady state (352 k steps/s; the first
+  run, 213 s, includes compiling). Against float64: 85 % of fibers within 0.1 mm everywhere (Metal
+  69 %), 94.4 % of ends within 0.06 mm (Metal 86.7 %, torch float32 88 %), density r 0.9994 (Metal
+  0.9989). The more accurate float32 arithmetic shows as fewer diverging fibers.
+
+| whole HARDI brain, UKF | seconds |
+|---|---|
+| Slicer C++ binary, M2, 8 threads (Rosetta) | 1,649 |
+| torch float64, A10G | 560 |
+| torch float32, A10G | 240 |
+| Metal kernel, M2 | 176 |
+| **Triton block kernel, A10G** | **78** |

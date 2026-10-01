@@ -1,0 +1,36 @@
+{
+ "kernel": "block",
+ "gpu": "NVIDIA A10G",
+ "F": 2,
+ "warps": 4,
+ "seeds": 98491,
+ "fibers": 85046,
+ "fiber_steps": 27464948,
+ "seconds": 213.2,
+ "second_run_seconds": 78.0,
+ "steps_per_s": 128826,
+ "repeat_identical": true,
+ "vs_f64": {
+  "both": 85023,
+  "only_first": 23,
+  "only_second": 17,
+  "same_point_count": 79107,
+  "max_point_distance_mm": [
+   0.0014,
+   0.0775,
+   1.38,
+   96.4
+  ],
+  "within_1e-3_mm": 35107,
+  "within_0.1_mm": 72241,
+  "ends_within_0.06_mm_fraction_same_count": 0.9441,
+  "length_diff_mm_abs": [
+   3.65e-05,
+   0.00129,
+   44.9,
+   228.0
+  ],
+  "density_r": 0.99944
+ },
+ "note": "f64 points are float32 on the Volume (as written for TractCloud); differences below ~1e-5 mm are that rounding"
+}
