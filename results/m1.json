@@ -1,0 +1,193 @@
+{
+ "streamlines": 100000,
+ "runs": 5,
+ "target": "tract label differs from run 0 in any of runs 1..R-1",
+ "tract_changed_fraction": 0.2797,
+ "auroc_run0": {
+  "tract best-class margin": 0.8623,
+  "tract mass margin": 0.875,
+  "p_max (winning cluster)": 0.6553,
+  "cluster margin": 0.6377
+ },
+ "auroc_run0_ci95": {
+  "tract best-class margin": [
+   0.8599,
+   0.8643
+  ],
+  "tract mass margin": [
+   0.8726,
+   0.877
+  ],
+  "p_max (winning cluster)": [
+   0.6517,
+   0.6588
+  ],
+  "cluster margin": [
+   0.6341,
+   0.6411
+  ]
+ },
+ "headline": {
+  "best_field": "tract mass margin",
+  "best_baseline": "p_max (winning cluster)",
+  "auroc_gain": 0.2196,
+  "gain_ci95": [
+   0.2166,
+   0.2234
+  ],
+  "bootstrap": 200
+ },
+ "monotone": {
+  "best_field_decile_change_rates": [
+   0.7993,
+   0.6452,
+   0.497,
+   0.3575,
+   0.239,
+   0.1484,
+   0.0757,
+   0.0296,
+   0.0054,
+   0.0003
+  ],
+  "non_increasing": true
+ },
+ "changed_by_m_hat_logits": [
+  {
+   "m_hat": "[0, 0.25)",
+   "n": 3182,
+   "changed": 0.7932
+  },
+  {
+   "m_hat": "[0.25, 0.5)",
+   "n": 3176,
+   "changed": 0.7616
+  },
+  {
+   "m_hat": "[0.5, 1)",
+   "n": 6282,
+   "changed": 0.7092
+  },
+  {
+   "m_hat": "[1, 2)",
+   "n": 12179,
+   "changed": 0.5898
+  },
+  {
+   "m_hat": "[2, 4)",
+   "n": 23659,
+   "changed": 0.3426
+  },
+  {
+   "m_hat": "[4, 8)",
+   "n": 32197,
+   "changed": 0.1002
+  },
+  {
+   "m_hat": "[8, inf)",
+   "n": 19325,
+   "changed": 0.0033
+  }
+ ],
+ "tract_pair_changes": {
+  "events": 58545,
+  "top": [
+   {
+    "pair": "Other / Sup-F",
+    "events": 5965,
+    "share": 0.1019
+   },
+   {
+    "pair": "Intra-CBLM-PaT / Other",
+    "events": 5122,
+    "share": 0.0875
+   },
+   {
+    "pair": "Other / Sup-P",
+    "events": 3699,
+    "share": 0.0632
+   },
+   {
+    "pair": "Other / SF",
+    "events": 3397,
+    "share": 0.058
+   },
+   {
+    "pair": "ILF / Other",
+    "events": 1842,
+    "share": 0.0315
+   },
+   {
+    "pair": "Intra-CBLM-I-P / Other",
+    "events": 1813,
+    "share": 0.031
+   },
+   {
+    "pair": "Other / Sup-PT",
+    "events": 1716,
+    "share": 0.0293
+   },
+   {
+    "pair": "MdLF / Other",
+    "events": 1466,
+    "share": 0.025
+   },
+   {
+    "pair": "Other / TF",
+    "events": 1377,
+    "share": 0.0235
+   },
+   {
+    "pair": "Other / SLF-II",
+    "events": 1315,
+    "share": 0.0225
+   },
+   {
+    "pair": "Other / TP",
+    "events": 1179,
+    "share": 0.0201
+   },
+   {
+    "pair": "Other / Sup-FP",
+    "events": 1107,
+    "share": 0.0189
+   },
+   {
+    "pair": "CB / Other",
+    "events": 1091,
+    "share": 0.0186
+   },
+   {
+    "pair": "Other / SLF-III",
+    "events": 1091,
+    "share": 0.0186
+   },
+   {
+    "pair": "CC6 / Other",
+    "events": 1073,
+    "share": 0.0183
+   }
+  ]
+ },
+ "secondary": {
+  "events_involving_other_share": 0.7867,
+  "named_only": {
+   "streamlines": 37390,
+   "changed_fraction": 0.1309,
+   "auroc_run0": {
+    "tract best-class margin": 0.7916,
+    "tract mass margin": 0.8101,
+    "p_max (winning cluster)": 0.6287,
+    "cluster margin": 0.6155
+   }
+  },
+  "ensemble_mean_m_hat_auroc": 0.9236,
+  "ensemble_mean_m_mass_auroc": 0.9285,
+  "outlier_status_changed_fraction": 0.2351,
+  "plausibility_auroc_for_outlier_change": {
+   "best-class |plaus|": 0.8551,
+   "mass |plaus|": 0.8622,
+   "baseline p_max": 0.7079
+  }
+ }
+}

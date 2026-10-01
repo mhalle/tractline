@@ -88,7 +88,16 @@ n_events = sum(pairs.values())
 # ---- secondary ----
 outlier = ref["cluster"] >= 800
 y_out = (outlier[1:] != outlier[0]).any(0)
+# Every top pair involves "Other". Is the result only Other-vs-tract? Restrict to streamlines
+# that are a named tract in EVERY run, so a change is one named tract to another.
+OTHER = len(TRACT_NAMES) - 1
+other_events = sum(c for (a, b), c in pairs.items() if "Other" in (a, b))
+named = (tract != OTHER).all(0)
 secondary = {
+    "events_involving_other_share": round(other_events / n_events, 4),
+    "named_only": {"streamlines": int(named.sum()),
+                   "changed_fraction": round(float(y[named].mean()), 4),
+                   "auroc_run0": {k: round(auroc(x[named], y[named]), 4) for k, (x, _) in PRED.items()}},
     "ensemble_mean_m_hat_auroc": round(auroc(ref["m_hat"].mean(0)), 4),
     "ensemble_mean_m_mass_auroc": round(auroc(ref["m_mass"].mean(0)), 4),
     "outlier_status_changed_fraction": round(float(y_out.mean()), 4),
