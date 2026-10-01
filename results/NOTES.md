@@ -199,3 +199,43 @@ lost to an edit that commented them out (fixed).
 - **Geometry dominates the download.** The field is 13 % of it. Fewer points per line, or a
   delta encoding of the int16 coordinates, would shrink the export far more than any change to
   the field.
+
+## 2026-10-01 M4: the PicoGL viewer, modes 1-2
+
+`viewer/` (`index.html`, `main.js`, `decode.js`, `serve.py`) → `m4.json`, `m4_viewer.jpg`.
+`serve.py` serves the viewer with the export mounted at `/data/`, on 127.0.0.1 only: HCP data,
+local until the terms are checked.
+
+**How it draws.** One draw call per 2 % chunk, chunks loading progressively. Streamlines are
+`LINES` from a shared index buffer. Each streamline's group and two margins sit in an RGBA32F
+texture read by `gl_VertexID / pointsPerLine`, so the threshold, softness and opacities are
+uniforms: a threshold change re-uploads nothing.
+
+**What it shows:**
+- Mode 1 colors by tract. Mode 2 sets opacity from the margin, with "keep confident" or "keep
+  ambiguous".
+- The threshold is set on a histogram of the loaded streamlines' margins, which shows how many
+  fall below it. Either margin can drive it: best-class (the default, per M2) or mass.
+- "Other" is drawn in gray and can be hidden. It is half the brain, and Slicer's pink for it
+  painted the whole view.
+- View presets L/R/A/P/S/I; drag to rotate, shift-drag to pan, scroll to zoom. The brain is
+  centered beside the controls, and on a phone it sits above a bottom sheet.
+
+**Exit test passes.** A live threshold change at 96,943 streamlines (11 chunks) on the M2's
+integrated GPU, at 2048×1536 with 4× MSAA, takes a median 23.8 ms per frame (p95 25.2 ms), about
+40 fps. The full subject (440,621) runs at 102 ms, about 10 fps: usable, not smooth. In the
+browser, decoding the field takes 12.8 ms for 97 k streamlines and 39 ms for all 440 k, so
+regrouping in M5 can be live.
+
+**The JS decode matches rankfield.** `export_check.mjs` imports `viewer/decode.js`. On chunk 0
+the best-class margins and tracts are bit-identical to `rankfield.decode_groups`, and the mass
+margins agree with `rankfield.probabilities` to 1.6e-7.
+
+**Seen in the viewer:** with "keep ambiguous" the cerebellum stays bright, which is M1's second
+most common change (Intra-CBLM-PaT and Other).
+
+**Fixed along the way:**
+- `gl.finish()` returned at once in this browser, so the first frame times (0.1 ms) were false.
+  A one-pixel `readPixels` is the sync now.
+- Histogram bins of 0.1 logits left empty bins past 5 logits, where the byte levels are
+  farther apart. They are 0.2 logits now.

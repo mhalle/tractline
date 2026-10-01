@@ -7,12 +7,14 @@
 //   - every file's size and sha256 against the manifest, and against the size its header implies
 //   - line counts per chunk and in total; the extra/ indices are a permutation of 0..N-1
 //   - every vertex inside the manifest's bounds
-//   - the decode a viewer runs: for chunk 0, each streamline's own-tract best-class margin from
-//     ranks/support through levels.bin must equal rankfield.decode_groups (written by export.py
-//     to ../web_check/) bit for bit, and its winning tract must match
+//   - the decode the viewer runs (viewer/decode.js, imported, not copied): for chunk 0, each
+//     streamline's winning tract, its own-tract best-class margin bit for bit against
+//     rankfield.decode_groups, and its mass margin against rankfield.probabilities to 1e-9
+//     (float64 both sides; written by export.py to ../web_check/)
 import { readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { join } from "node:path";
+import { parseField, ownGroupMargins } from "./viewer/decode.js";
 
 const dir = process.argv[2];
 if (!dir) { console.error("usage: node export_check.mjs <web dir>"); process.exit(2); }
@@ -36,20 +38,6 @@ function checked(entry) {
   const digest = createHash("sha256").update(new Uint8Array(buf)).digest("hex");
   if (digest !== entry.sha256) fail(`${entry.file}: sha256 differs from the manifest`);
   return buf;
-}
-
-// the own-tract best-class margin, as rankfield's disjoint-group decode computes it: the
-// largest support byte among kept classes outside the winner's tract (0 if none), and the
-// lead is that byte's level floored at the clip - so a missing competitor reads `clip`
-function ownTractMargin(ranks, support, depth, lines, i) {
-  const own = tables.clusterToTract[ranks[i] - 1];
-  let outB = 0;
-  for (let j = 1; j < depth; j++) {
-    const r = ranks[j * lines + i];
-    if (r === 0) break;                                   // sentinels form a suffix
-    if (tables.clusterToTract[r - 1] !== own) outB = Math.max(outB, support[(j - 1) * lines + i]);
-  }
-  return [own, Math.min(levels[outB], clip)];
 }
 
 const t0 = performance.now();
@@ -76,18 +64,21 @@ manifest.chunks.forEach((ch, c) => {
   for (const i of index) { if (i >= N || seen[i]) { fail(`chunk ${c}: index ${i} repeated or out of range`); break; } seen[i] = 1; }
 
   if (c === 0) {
-    const ranks = new Uint16Array(f, 8, depth * lines);
-    const support = new Uint8Array(f, 8 + depth * lines * 2 + lines * 2, (depth - 1) * lines);
-    const expected = new Float32Array(readFileSync(join(dir, "..", "web_check", "chunk0_tract_margin.f32")).buffer.slice(0));
+    const field = parseField(f);
+    const dec = ownGroupMargins(field, Int32Array.from(tables.clusterToTract), levels, clip);
+    const expBest = new Float32Array(readFileSync(join(dir, "..", "web_check", "chunk0_tract_margin.f32")).buffer.slice(0));
+    const expMass = new Float64Array(readFileSync(join(dir, "..", "web_check", "chunk0_tract_mass.f64")).buffer.slice(0));
     const expTract = readFileSync(join(dir, "..", "web_check", "chunk0_tract.u8"));
-    let differ = 0, tractDiffer = 0;
+    let bestDiffer = 0, tractDiffer = 0, massWorst = 0;
     for (let i = 0; i < lines; i++) {
-      const [own, m] = ownTractMargin(ranks, support, depth, lines, i);
-      if (Math.fround(m) !== expected[i]) differ++;
-      if (own !== expTract[i]) tractDiffer++;
+      if (dec.best[i] !== expBest[i]) bestDiffer++;
+      if (dec.group[i] !== expTract[i]) tractDiffer++;
+      massWorst = Math.max(massWorst, Math.abs(dec.mass[i] - expMass[i]) / Math.max(1, Math.abs(expMass[i])));
     }
-    if (differ || tractDiffer) fail(`chunk 0 decode: ${differ} margins and ${tractDiffer} tracts differ from rankfield`);
-    console.log(`chunk 0 decode: ${lines} streamlines, own-tract margin bit-identical to rankfield.decode_groups: ${differ === 0}`);
+    // dec.mass is Float32Array storage of a float64 computation: compare at float32 resolution
+    if (bestDiffer || tractDiffer || massWorst > 1e-6) fail(`chunk 0 decode: ${bestDiffer} best-class margins and ${tractDiffer} tracts differ, worst relative mass error ${massWorst.toExponential(2)}`);
+    console.log(`chunk 0 decode (viewer/decode.js): ${lines} streamlines; best-class bit-identical: ${bestDiffer === 0}; ` +
+                `tracts identical: ${tractDiffer === 0}; worst relative mass error ${massWorst.toExponential(2)}`);
   }
 });
 if (total !== N) fail(`chunks hold ${total} streamlines, manifest says ${N}`);

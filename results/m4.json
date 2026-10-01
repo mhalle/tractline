@@ -1,0 +1,11 @@
+{
+ "viewer": "bench/tractography/viewer (PicoGL 0.17.9, WebGL 2), served by viewer/serve.py with the export at /data/",
+ "gpu": "ANGLE (Apple, ANGLE Metal Renderer: Apple M2), integrated; Chromium in the Claude desktop browser pane",
+ "method": "viewer.benchmark(): sweep the margin threshold through N values, each frame rendered synchronously and timed to a 1-pixel readPixels (gl.finish returned at once here)",
+ "threshold_sweep": [
+  {"streamlines": 96943, "canvas": [2048, 1536], "msaa": 4, "steps": 60, "median_ms": 23.8, "p95_ms": 25.2, "max_ms": 26.3},
+  {"streamlines": 440621, "canvas": [2048, 1536], "msaa": 4, "steps": 30, "median_ms": 102.4, "p95_ms": 105.6, "max_ms": 106.9}
+ ],
+ "decode_ms_in_browser": {"96943 streamlines": 12.8, "440621 streamlines": 39.1},
+ "js_decode_vs_rankfield": "export_check.mjs imports viewer/decode.js: chunk 0 (8,813 streamlines) best-class margin and tract bit-identical to rankfield.decode_groups; mass margin within 1.6e-7 relative of rankfield.probabilities"
+}

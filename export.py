@@ -117,6 +117,15 @@ dg = rf.decode_groups(code0, groups).reshape(len(groups), -1).numpy()
 own = TRACT[ranks[0, idx0].astype(np.int64) - 1]
 (CHECK / "chunk0_tract_margin.f32").write_bytes(dg[own, np.arange(len(idx0))].astype("<f4").tobytes())
 (CHECK / "chunk0_tract.u8").write_bytes(own.astype(np.uint8).tobytes())
+# ...and its mass margin, as encode.py computes it: rankfield.probabilities, the tail counted
+# against the tract, floored at half a tail quantum (float64)
+ids, p = rf.probabilities(code0)
+ids, p = ids.reshape(args.depth, -1), p.reshape(args.depth, -1).astype(np.float64)
+kept = ids >= 0
+in_s = kept & (TRACT[np.clip(ids, 0, None)] == own)
+p_out = (p * (kept & ~in_s)).sum(0) + tail[idx0].astype(np.float64) / rf.TAIL_MAX
+mass = np.log((p * in_s).sum(0)) - np.log(np.maximum(p_out, 0.5 / rf.TAIL_MAX))
+(CHECK / "chunk0_tract_mass.f64").write_bytes(mass.astype("<f8").tobytes())
 
 levels = rf.levels(meta).astype("<f4")
 written["levels.bin"] = len(levels.tobytes())
