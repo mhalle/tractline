@@ -42,3 +42,21 @@ def compare(a: dict, b: dict, i2r, dims_ijk) -> dict:
             "within_1e-3_mm": int((dmax < 1e-3).sum()), "within_0.1_mm": int((dmax < 0.1).sum()),
             "ends_within_0.06_mm_fraction_same_count": round(float((ends < 0.06).mean()), 4) if len(ends) else None,
             "length_diff_mm_abs": q(np.abs(dlen)), "density_r": round(float(np.corrcoef(da, db)[0, 1]), 5)}
+
+
+def step_diff(a: dict, b: dict, vox) -> dict:
+    """One step from identical inputs, a against b (dicts of advance()'s outputs as numpy): relative
+    errors of state and covariance, position error in mm (vox: spacings in (k, j, i)), direction error,
+    FA and mean-signal errors, and how many of each decision flipped."""
+    rel = lambda u, v, ax: np.linalg.norm((u - v).reshape(len(u), -1), axis=1) / np.linalg.norm(v.reshape(len(v), -1), axis=1)
+    ang = np.degrees(np.arccos(np.clip(np.abs((a["dir"] * b["dir"]).sum(1)), 0, 1)))
+    d = {"state_rel_err": q(rel(a["state"], b["state"], 1)), "P_rel_err": q(rel(a["P"], b["P"], 1)),
+         "position_err_mm": q(np.linalg.norm((a["x"] - b["x"]) * vox, axis=1)), "direction_err_deg": q(ang),
+         "fa_abs_err": q(np.abs(a["fa"] - b["fa"])), "mean_signal_abs_err": q(np.abs(a["mean_signal"] - b["mean_signal"]))}
+    for k in ("swap", "swap2", "inside", "stop"):
+        d[f"{k}_flips"] = int((a[k] != b[k]).sum())
+    flip = a["stop"] != b["stop"]
+    if flip.any():                                                    # how close the float64 step was to a threshold
+        d["stop_flips_ref_margin"] = {"fa_minus_0.08": q(b["fa"][flip] - 0.08, (0, 0.5, 1)),
+                                      "mean_signal_minus_0.06": q(b["mean_signal"][flip] - 0.06, (0, 0.5, 1))}
+    return d

@@ -581,3 +581,32 @@ for float64, 5 for the rest); 5-draw majority votes compared seed by seed.
   separate questions.
 - One scan (b = 2000, 2 mm, SNR 24); the wild bootstrap's symmetric signs approximate magnitude
   noise. The same test on HCP-like data (b = 3000, 1.25 mm) would confirm.
+
+## 2026-10-01 UKF as a Metal kernel
+
+`_ukf_metal.py` (the kernel, compiled with `torch.mps.compile_shader`, as labelfield's restore
+backend is), `ukf_metal_check.py` → `ukf_metal.json`. A drop-in for `advance()`:
+`track(backend="metal")`. Eight lanes of a SIMD group per half-fiber, the filter's 10x10 algebra
+redundant in each lane, the gradients split across the lanes; precise:: math, no FMA contraction.
+
+- **Against float64:** one step on 3,335 fixtures, the same distance as torch's float32 step
+  (state 1.3e-5 relative, direction 0.016°, no stop flips). 2,011 seeds: 87 % of fiber ends within
+  0.06 mm, density r 0.971; the whole brain (98,491 seeds) against the float64 CUDA run: 86.7 %,
+  r 0.9989. The float32 profile, which ukf_labels.json put below the noise floor.
+- **Deterministic:** two launches bit-identical, per step and per fiber.
+- **Speed, M2 (10 GPU cores), whole HARDI brain, 27.5 M fiber steps:**
+
+  | | seconds | steps/s |
+  |---|---|---|
+  | Slicer's C++ binary, 8 threads, Rosetta | 1,649 | 16,700 |
+  | torch float64, CPU | ~6,000 (est.) | 4,600 |
+  | torch float32, MPS (eager) | ~4,300 (est.) | 6,400 |
+  | torch float64, A10G | 560 | 49,000 |
+  | torch float32, A10G | 240 | 114,000 |
+  | **Metal kernel, M2** | **176** | **156,000** |
+
+- **What made it fast**, one step at 16k fibers: 32 lanes per fiber 89 k steps/s; keeping the
+  predicted signal between the two sigma-point passes (bit-identical) 99 k; 16 lanes 143 k; **8
+  lanes 175-179 k**; 4 lanes 72 k (the per-lane arrays spill). Fast math adds 15-20 % with errors at
+  float32's level but different bits; it stays off.
+- The host loop (gathers, recording, compaction) is under 1 % of a step.

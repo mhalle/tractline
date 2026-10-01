@@ -332,7 +332,7 @@ def advance(D: dict, xa, sa, Pa, oa, Q, Rs, step, max_steps, step_length=0.3, st
 def track(D: dict, offset_kji, seeding_threshold=0.1, stopping_fa=0.08, stopping_threshold=0.06,
           step_length=0.3, record_length=1.8, max_half_length=250.0, Qm=0.001, Ql=50.0, Rs=0.02,
           batch=50_000, progress=None, select=None, dtype=torch.float64, device=None, capture=None,
-          seed_points=None):
+          seed_points=None, backend="torch"):
     """All fibers. Returns (points list of (n, 3) RAS arrays in seed order, stats). With `select`
     (indices into the seed list), only those seeds are tracked; stats["seed_index"] then says which
     seed each returned fiber came from.
@@ -344,7 +344,12 @@ def track(D: dict, offset_kji, seeding_threshold=0.1, stopping_fa=0.08, stopping
     float64. `capture(step, index, xa, sa, Pa, oa)`, when given, sees every step's inputs before the
     step, `index` being the half-fibers' (for one-step fixtures). `seed_points` (k, j, i), when given,
     replaces the seeds: every point is tracked from its state on this data (seed_states), none
-    rejected, and `select` indexes them."""
+    rejected, and `select` indexes them. `backend` "metal" takes each step with _ukf_metal's kernel
+    (float32, device "mps"); the loop, the recording and the joining stay these."""
+    step_fn = advance
+    if backend == "metal":
+        import _ukf_metal
+        dtype, device, step_fn = torch.float32, "mps", _ukf_metal.advance
     if seed_points is None:
         pts, fwd, inv, e1, fa0 = seeds(D, offset_kji, seeding_threshold)
     else:
@@ -379,7 +384,7 @@ def track(D: dict, offset_kji, seeding_threshold=0.1, stopping_fa=0.08, stopping
             xa, sa, Pa, oa = x[alive], state[alive], P[alive], old[alive]
             if capture:
                 capture(step, s0 + alive, xa, sa, Pa, oa)
-            xa, sa, Pa, m1, stop, _ = advance(D, xa, sa, Pa, oa, Q, Rs, step, max_steps, step_length,
+            xa, sa, Pa, m1, stop, _ = step_fn(D, xa, sa, Pa, oa, Q, Rs, step, max_steps, step_length,
                                               stopping_fa, stopping_threshold)
             go = ~stop
             if (step + 1) % spr == 0:
