@@ -1,0 +1,19 @@
+{
+ "reference_fibers": 85040,
+ "torch_fibers": 85040,
+ "reference_points": 4532077,
+ "torch_points": 4532069,
+ "same_point_count": 85038,
+ "same_point_count_fraction": 0.99998,
+ "max_point_distance_mm_quantiles_50_90_99_99.9_100": [
+  2.43e-06,
+  3.8e-06,
+  4.18e-06,
+  0.000228,
+  0.531
+ ],
+ "within_1e-6_mm": 714,
+ "within_1e-3_mm": 84996,
+ "within_0.1_mm": 85036,
+ "matched_reversed": 8708
+}

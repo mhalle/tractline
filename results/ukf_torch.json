@@ -1,0 +1,13 @@
+{
+ "seeds": 98491,
+ "half_fibers": 196982,
+ "fiber_steps": 27478116,
+ "fibers": 85040,
+ "gpu": "NVIDIA A10G",
+ "torch": "2.14.1+cu130",
+ "dtype": "float64",
+ "load_s": 3.0,
+ "track_s": 544.9,
+ "points": 4532069,
+ "fiber_steps_per_s": 50424
+}

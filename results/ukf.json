@@ -1,0 +1,38 @@
+{
+ "spv1": {
+  "tool": "UKFTractography 2d2b661 (Slicer 5.12.3 extension, macOS x86_64 under Rosetta on an Apple M2)",
+  "data": "Stanford HARDI, 81x106x76 at 2 mm, 150 directions b=2000 + 10 b0",
+  "mask_voxels": 180343,
+  "seeds_per_voxel": 1,
+  "threads": 8,
+  "wall_s": 1648.7,
+  "cpu_s": 10823.0,
+  "peak_rss_mb": 2838.0,
+  "streamlines": 85040,
+  "points": 4532077,
+  "streamlines_over_40mm": 74281,
+  "point_arrays": [
+   "EstimatedUncertainty"
+  ],
+  "parameters_reported": {
+   "stoppingFA": "0.08",
+   "seedingThreshold": "0.1",
+   "Qm": "0.001",
+   "Ql": "50",
+   "Rs": "0.02",
+   "stepLength": "0.3",
+   "recordLength": "1.8",
+   "stoppingThreshold": "0.06",
+   "seedsPerVoxel": "1"
+  },
+  "user_set": [
+   "stoppingFA",
+   "seedingThreshold",
+   "stepLength",
+   "recordLength",
+   "stoppingThreshold"
+  ],
+  "command": "--dwiFile dwi.nhdr --maskFile mask.nrrd --tracts ukf_spv1.vtk --numTensor 2 --seedingThreshold 0.1 --stoppingFA 0.08 --stoppingThreshold 0.06 --recordLength 1.8 --seedsPerVoxel 1 --numThreads 8",
+  "streamlines_per_s": 51.6
+ }
+}
