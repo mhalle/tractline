@@ -638,3 +638,25 @@ whole HARDI brain, ORG settings: DWI to the rankfield field in **232 s**.
   the CPU's; which one upstream's published results used is not stated.
 - UKF is 84 % of the time. On an M1 Max (32 GPU cores to the M2's 10, 4x the memory bandwidth)
   the whole pipeline should take roughly a minute; not measured.
+
+## 2026-10-01 Writing the compact form on a laptop
+
+`encode_timing.py` → `encode_timing.json`. Apple M2 (4 performance cores), the whole HCP 101006
+subject (440,621 streamlines, 21.6 M vertices), inputs in memory, best of 3:
+
+| | size | seconds |
+|---|---|---|
+| geometry, 0.010 mm grid, zstd 9 (payload.json's) | 51.2 MB | 3.5-3.7 |
+| geometry, 0.041 mm grid, zstd 9 | 35.8 MB | 2.5-3.0 |
+| geometry, 0.010 mm, zstd 5 | 64.6 MB | 1.2 |
+| geometry, 0.041 mm, zstd 5 | 39.2 MB | 1.1 |
+| field, depth 6, zstd 9 (rankfield 3efef7f) | 5.5 MB | 3.1 |
+| field, rankfield 0.3.10 as released | 5.5 MB | 7.3 |
+| **all of it, 0.010 mm, zstd 9** | **56.7 MB** | **6.5** |
+| **all of it, 0.041 mm, zstd 9** | **41.3 MB** | **5.5** |
+| all of it, 0.041 mm, zstd 5 | 44.9 MB | 3.8 |
+
+- The field's top rank equals the argmax for every streamline; the geometry round-trips to the grid.
+- int32 residual arithmetic gives identical residuals and halves that step (0.65 s against
+  1.5 s); zstd 9's compression is then most of the geometry time.
+- On an A10G the field encodes in 0.45 s (timing_gpu.json). Geometry was not timed on a GPU.
