@@ -356,3 +356,27 @@ a viewer would take it.
   (55 MB) at 12. On a 100 Mbit/s link that is 4.1 s against 7.6 s (5.7 s gzipped) at 14 bits,
   before any decoding. The chunked form overlaps decoding with downloading; a `.tko` can only
   be parsed after the last byte arrives.
+
+## 2026-10-01 The whole payload: geometry plus field, against TRAKO with labels
+
+`payload.json`, from `payload_field.json` and `payload_trako_labels.json`. Everything a browser
+needs to show the full HCP tractogram (all 21.6 M original vertices) with TractCloud's labels:
+
+| | 12 bits (max 0.02 mm) | 14 bits (max 0.005 mm) |
+|---|---|---|
+| predictive geometry | 35.8 MB | 51.2 MB |
+| rankfield field, depth 6, blosc (12.4 B/streamline) | 5.5 MB | 5.5 MB |
+| level table, class tables, manifest | 0.04 MB | 0.04 MB |
+| **ours, total** | **41.3 MB** | **56.7 MB** |
+| optional: instability counts and margin spread from 5 runs | +0.5 MB | +0.5 MB |
+| TRAKO with each streamline's cluster label (`.tko`; raw Draco) | 74.0 MB (55.5) | 95.2 MB (71.4) |
+| TRAKO with the dense 1600-class field, for scale | about 1,480 MB | about 1,500 MB |
+
+- **The field is 13 % of the payload.** It costs about what TRAKO's base64 overhead alone adds,
+  and it replaces a hard label with every decision downstream of the M1-M2 measurements:
+  margins, regrouping, the outlier threshold.
+- **For the same geometry accuracy, ours with the full field is 1.8× smaller than TRAKO with
+  only a label** (and 1.3× smaller than TRAKO's raw Draco bytes, which no TRAKO file holds). In
+  the browser it reaches the screen 2.8-4.8× sooner, with a first frame in 40-50 ms (render.json).
+- **Hard labels alone would cost 0.13 MB** (tract, uint8) or 0.49 MB (cluster, uint16). Those
+  are the bytes the field replaces.

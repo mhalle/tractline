@@ -1,0 +1,14 @@
+{
+ "14": {
+  "tko_mb": 95.23,
+  "raw_draco_mb": 71.42,
+  "accessors": 3,
+  "label_exact": true
+ },
+ "12": {
+  "tko_mb": 73.98,
+  "raw_draco_mb": 55.49,
+  "accessors": 3,
+  "label_exact": true
+ }
+}

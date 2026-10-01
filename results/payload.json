@@ -1,0 +1,41 @@
+{
+ "subject": "HCP 101006, 440,621 streamlines, 21.6 M vertices, all of them",
+ "max_position_error_mm": {
+  "12 bits": 0.0205,
+  "14 bits": 0.0051
+ },
+ "rows": {
+  "12 bits": {
+   "ours": {
+    "geometry_mb": 35.78,
+    "field_depth6_mb": 5.46,
+    "tables_mb": 0.038,
+    "total_mb": 41.3,
+    "plus_instability_extras_mb": 41.8
+   },
+   "trako_with_cluster_label": {
+    "tko_file_mb": 73.98,
+    "raw_draco_mb": 55.49
+   },
+   "trako_over_ours": 1.79
+  },
+  "14 bits": {
+   "ours": {
+    "geometry_mb": 51.22,
+    "field_depth6_mb": 5.46,
+    "tables_mb": 0.038,
+    "total_mb": 56.7,
+    "plus_instability_extras_mb": 57.3
+   },
+   "trako_with_cluster_label": {
+    "tko_file_mb": 95.23,
+    "raw_draco_mb": 71.42
+   },
+   "trako_over_ours": 1.68
+  }
+ },
+ "dense_fp16_field_mb": 1410.0,
+ "for_scale": {
+  "current web export (20 resampled points, raw)": 64.8
+ }
+}
