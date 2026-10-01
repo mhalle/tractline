@@ -1,0 +1,72 @@
+{
+ "local": [
+  {
+   "device": "cpu",
+   "dtype": "float64",
+   "batch": 20000,
+   "gradients": 150,
+   "step_ms": 2172.59,
+   "fiber_steps_per_s": 9205,
+   "finite": true
+  },
+  {
+   "device": "cpu",
+   "dtype": "float32",
+   "batch": 20000,
+   "gradients": 150,
+   "step_ms": 1380.69,
+   "fiber_steps_per_s": 14485,
+   "finite": true
+  },
+  {
+   "device": "mps",
+   "dtype": "float32",
+   "batch": 20000,
+   "gradients": 150,
+   "step_ms": 402.95,
+   "fiber_steps_per_s": 49633,
+   "finite": true
+  },
+  {
+   "device": "mps",
+   "dtype": "float32",
+   "batch": 100000,
+   "gradients": 150,
+   "step_ms": 2048.93,
+   "fiber_steps_per_s": 48805,
+   "finite": true
+  }
+ ],
+ "a10g": [
+  {
+   "device": "cuda",
+   "dtype": "float32",
+   "batch": 50000,
+   "gradients": 150,
+   "step_ms": 77.86,
+   "fiber_steps_per_s": 642163,
+   "finite": true,
+   "gpu": "NVIDIA A10G"
+  },
+  {
+   "device": "cuda",
+   "dtype": "float32",
+   "batch": 200000,
+   "gradients": 150,
+   "step_ms": 308.3,
+   "fiber_steps_per_s": 648710,
+   "finite": true,
+   "gpu": "NVIDIA A10G"
+  },
+  {
+   "device": "cuda",
+   "dtype": "float64",
+   "batch": 50000,
+   "gradients": 150,
+   "step_ms": 249.11,
+   "fiber_steps_per_s": 200716,
+   "finite": true,
+   "gpu": "NVIDIA A10G"
+  }
+ ]
+}

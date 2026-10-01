@@ -1,0 +1,8 @@
+{
+ "what": "one UKF filter step's pieces at Stanford HARDI's size (N=150, 2N=300 rows, n=10, 21 sigma points), ukf_hotspots.cc, wall microseconds per step per thread on the M2",
+ "arm64_native": {"1": {"rcopy": 15.6, "allocs": 0.9, "H_as_written": 58.0, "H_lean": 24.6},
+                  "8": {"rcopy": 118.2, "allocs": 4.0, "H_as_written": 157.5, "H_lean": 49.5}},
+ "x86_64_rosetta": {"1": {"rcopy": 29.3, "allocs": 2.8, "H_as_written": 138.1, "H_lean": 52.1},
+                    "8": {"rcopy": 55.9, "allocs": 5.9, "H_as_written": 318.7, "H_lean": 119.5}},
+ "torch_batched_step_fiber_steps_per_s": {"A10G float32": 648710, "A10G float64": 200716, "M2 MPS float32": 49633}
+}
