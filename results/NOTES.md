@@ -687,8 +687,9 @@ format-and-speed test, not an accuracy test.
 
 `_ukf_triton_block.py` (compact: [F,16] states, [F,16,16] matrices, batched IEEE tl.dot, Cholesky
 loops), `modal_ukf_triton.py` → `ukf_triton_block_{smoke,tune,full}.json`. The first, fully unrolled
-generator (`_ukf_triton.py`) is correct but took 1,901 s to compile; the block kernel compiles in
-about 40-140 s.
+generator (`_ukf_triton.py`) is correct but took 1,901 s to compile, and its whole-brain run hit
+Modal's 2-hour limit without finishing; it is kept only as the first version. The block kernel
+compiles in about 40-140 s.
 
 - **One step, 3,335 fixtures, against float64:** state error 3.3e-7 median, 40x smaller than torch's
   float32 step (1.3e-5); 2 swap flips against torch float32's 7; no stop flips. The Cholesky-based
