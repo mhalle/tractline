@@ -24,6 +24,7 @@ from pathlib import Path
 import numpy as np, torch
 from scipy.spatial import cKDTree
 import _ukf_torch as U
+import _fibercmp as C
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--fixture-every", type=int, default=197)
@@ -41,7 +42,7 @@ D = U.load(str(H / "dwi.nhdr"), str(H / "mask.nrrd"))
 off = np.array([-4158, -2201, -2855], float); off = off / np.linalg.norm(off) * 0.5    # macOS srand(0)
 pts, *_ = U.seeds(D, off)
 vox = D["voxel"].numpy()
-q = lambda x, ps=(0.5, 0.9, 0.99, 1.0): [float(f"{v:.3g}") for v in np.quantile(x, ps)] if len(x) else []
+q = C.q
 res = {"data": "Stanford HARDI, ORG settings (ukf_bench.py)", "torch": torch.__version__, "devices": DEVICES}
 
 # ---------------------------------------------------------------- 1. one-step fixtures
@@ -109,33 +110,9 @@ for name, dtype, dev in [("f64_cpu", F64, "cpu")] + [(f"f32_{d}", F32, d) for d 
     res.setdefault("runs", {})[name] = {"seeds": int(len(sel)), "fibers": st["fibers"], "fiber_steps": st["fiber_steps"],
                                         "seconds": round(s, 1), "steps_per_s": round(st["fiber_steps"] / s)}
 
-i2r = D["i2r"]; r2i = np.linalg.inv(i2r)
+i2r = D["i2r"]
 dims_ijk = tuple(int(v) for v in D["dim"][::-1])
-def density(fibs):
-    m = np.zeros(dims_ijk, np.int32)
-    for p in fibs:
-        ijk = np.rint(p @ r2i[:3, :3].T + r2i[:3, 3]).astype(int)
-        ijk = np.unique(ijk[(ijk >= 0).all(1) & (ijk < dims_ijk).all(1)], axis=0)
-        m[tuple(ijk.T)] += 1
-    return m.ravel().astype(float)
-
-def compare(a, b):
-    both = sorted(set(a) & set(b))
-    same = [k for k in both if len(a[k]) == len(b[k])]
-    def oriented(k):                                                  # b's fiber in the orientation nearer a's
-        r = b[k][::-1]
-        return r if np.linalg.norm(a[k] - r, axis=1).max() < np.linalg.norm(a[k] - b[k], axis=1).max() else b[k]
-    ob = {k: oriented(k) for k in same}
-    dmax = np.array([np.linalg.norm(a[k] - ob[k], axis=1).max() for k in same])
-    ends = np.concatenate([np.linalg.norm(a[k][[0, -1]] - ob[k][[0, -1]], axis=1) for k in same]) if same else np.array([])
-    lens = lambda f: np.linalg.norm(np.diff(f, axis=0), axis=1).sum()
-    dlen = np.array([lens(a[k]) - lens(b[k]) for k in both])
-    da, db = density(a.values()), density(b.values())
-    return {"both": len(both), "only_first": len(set(a) - set(b)), "only_second": len(set(b) - set(a)),
-            "same_point_count": len(same), "max_point_distance_mm": q(dmax),
-            "within_1e-3_mm": int((dmax < 1e-3).sum()), "within_0.1_mm": int((dmax < 0.1).sum()),
-            "ends_within_0.06_mm_fraction_same_count": round(float((ends < 0.06).mean()), 4) if len(ends) else None,
-            "length_diff_mm_abs": q(np.abs(dlen)), "density_r": round(float(np.corrcoef(da, db)[0, 1]), 5)}
+compare = lambda a, b: C.compare(a, b, i2r, dims_ijk)
 
 res["fibers"] = {f"{k}_vs_f64_cpu": compare(runs[k], runs["f64_cpu"]) for k in runs if k != "f64_cpu"}
 if "f32_mps" in runs:

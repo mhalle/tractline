@@ -530,3 +530,25 @@ nearly equidistant from the previous direction. CPU and MPS float32 are alike.
   Eager MPS is launch-bound; the fused Metal kernel is what would change this.
 - **Not yet decided:** whether float32's 12 % of diverging fibers matter. That is the bootstrap
   test: the spread the scan's own measurement noise gives the float64 pipeline.
+
+## 2026-10-01 The noise floor: what the scan's own noise does to the float64 tracker
+
+`ukf_noise_floor.py` → `ukf_noise_floor.json`. Wild-bootstrap replicates of HARDI (`_bootstrap.py`:
+spherical harmonics order 6 fitted per voxel, residuals scaled by leverage, random signs per voxel
+and volume, rounded to int16). The residuals are noise, not model error: their RMS hardly moves
+from order 4 to 8 (22.5, 22.4, 22.5), below the b0 repeats' spread (33.5), as magnitude noise is at
+low signal. Each replicate tracked in float64 from the same 2,011 seed points as the original
+(`track(seed_points=...)`, starting from each point's state on the replicate).
+
+| 2,011 seeds | ends within 0.06 mm | fibers within 0.1 mm everywhere | same point count | density r | median worst point |
+|---|---|---|---|---|---|
+| float32 vs float64 | 88 % | 1,256 / 1,728 | 1,508 | 0.972 | 0.012 mm |
+| bootstrap replicate vs original (4) | 9-10 % | 1-2 / ~1,710 | ~320 | 0.740-0.747 | 1.2 mm |
+| replicate vs replicate (3 pairs) | 5-8 % | 0 / ~1,705 | ~240 | 0.712-0.718 | 1.5-1.8 mm |
+
+- **Data noise moves every fiber; float32 moves one in eight.** Replicates also change which seeds
+  the binary would accept (29-40 of 2,011) and which fibers survive the 10-point rule (~35 per pair).
+- At the fiber level float32 sits far below the noise floor: its density maps correlate with
+  float64's at 0.97, where two equally valid acquisitions correlate at 0.72-0.75 (sparse maps from
+  2,011 fibers; whole-brain maps correlate higher, in both cases).
+- Whether the same holds for TractCloud's labels is `modal_ukf_labels.py`.

@@ -1,0 +1,248 @@
+{
+ "data": "Stanford HARDI, ORG settings",
+ "seeds": 2011,
+ "every": 49,
+ "bootstrap": {
+  "sh_order": 6,
+  "sh_coefficients": 28,
+  "dw_volumes": 150,
+  "b0_volumes": 10,
+  "b0_noise_sd": 33.53,
+  "dw_residual_rms": 22.43,
+  "dw_residual_over_b0_sd": 0.669,
+  "b0_snr": 24.4
+ },
+ "original": {
+  "fibers": 1729,
+  "fiber_steps": 556988,
+  "seconds": 116.8
+ },
+ "replicates": [
+  {
+   "seed": 20261001,
+   "fibers": 1725,
+   "seconds": 116.7,
+   "seeds_the_replicate_would_reject": 40,
+   "vs_original": {
+    "both": 1709,
+    "only_first": 16,
+    "only_second": 20,
+    "same_point_count": 324,
+    "max_point_distance_mm": [
+     1.26,
+     7.19,
+     22.1,
+     63.2
+    ],
+    "within_1e-3_mm": 0,
+    "within_0.1_mm": 2,
+    "ends_within_0.06_mm_fraction_same_count": 0.0895,
+    "length_diff_mm_abs": [
+     5.39,
+     68.7,
+     172.0,
+     234.0
+    ],
+    "density_r": 0.7473
+   }
+  },
+  {
+   "seed": 20261002,
+   "fibers": 1725,
+   "seconds": 117.0,
+   "seeds_the_replicate_would_reject": 35,
+   "vs_original": {
+    "both": 1707,
+    "only_first": 18,
+    "only_second": 22,
+    "same_point_count": 311,
+    "max_point_distance_mm": [
+     1.22,
+     6.16,
+     50.3,
+     63.7
+    ],
+    "within_1e-3_mm": 0,
+    "within_0.1_mm": 2,
+    "ends_within_0.06_mm_fraction_same_count": 0.0949,
+    "length_diff_mm_abs": [
+     5.42,
+     71.9,
+     167.0,
+     228.0
+    ],
+    "density_r": 0.74243
+   }
+  },
+  {
+   "seed": 20261003,
+   "fibers": 1730,
+   "seconds": 116.6,
+   "seeds_the_replicate_would_reject": 32,
+   "vs_original": {
+    "both": 1712,
+    "only_first": 18,
+    "only_second": 17,
+    "same_point_count": 316,
+    "max_point_distance_mm": [
+     1.18,
+     7.13,
+     48.5,
+     98.3
+    ],
+    "within_1e-3_mm": 0,
+    "within_0.1_mm": 1,
+    "ends_within_0.06_mm_fraction_same_count": 0.0981,
+    "length_diff_mm_abs": [
+     5.41,
+     70.2,
+     172.0,
+     250.0
+    ],
+    "density_r": 0.74016
+   }
+  },
+  {
+   "seed": 20261004,
+   "fibers": 1737,
+   "seconds": 120.9,
+   "seeds_the_replicate_would_reject": 29,
+   "vs_original": {
+    "both": 1715,
+    "only_first": 22,
+    "only_second": 14,
+    "same_point_count": 334,
+    "max_point_distance_mm": [
+     1.23,
+     5.8,
+     58.3,
+     110.0
+    ],
+    "within_1e-3_mm": 0,
+    "within_0.1_mm": 2,
+    "ends_within_0.06_mm_fraction_same_count": 0.1003,
+    "length_diff_mm_abs": [
+     5.4,
+     71.9,
+     176.0,
+     263.0
+    ],
+    "density_r": 0.74024
+   }
+  }
+ ],
+ "replicate_pairs": [
+  {
+   "both": 1702,
+   "only_first": 23,
+   "only_second": 23,
+   "same_point_count": 235,
+   "max_point_distance_mm": [
+    1.74,
+    10.5,
+    48.3,
+    62.0
+   ],
+   "within_1e-3_mm": 0,
+   "within_0.1_mm": 0,
+   "ends_within_0.06_mm_fraction_same_count": 0.0809,
+   "length_diff_mm_abs": [
+    7.24,
+    75.3,
+    165.0,
+    221.0
+   ],
+   "density_r": 0.71565
+  },
+  {
+   "both": 1699,
+   "only_first": 26,
+   "only_second": 31,
+   "same_point_count": 241,
+   "max_point_distance_mm": [
+    1.82,
+    9.71,
+    43.3,
+    130.0
+   ],
+   "within_1e-3_mm": 0,
+   "within_0.1_mm": 0,
+   "ends_within_0.06_mm_fraction_same_count": 0.0539,
+   "length_diff_mm_abs": [
+    7.2,
+    73.7,
+    164.0,
+    273.0
+   ],
+   "density_r": 0.71761
+  },
+  {
+   "both": 1708,
+   "only_first": 17,
+   "only_second": 29,
+   "same_point_count": 242,
+   "max_point_distance_mm": [
+    1.53,
+    8.3,
+    61.0,
+    119.0
+   ],
+   "within_1e-3_mm": 0,
+   "within_0.1_mm": 0,
+   "ends_within_0.06_mm_fraction_same_count": 0.0682,
+   "length_diff_mm_abs": [
+    7.2,
+    77.8,
+    173.0,
+    279.0
+   ],
+   "density_r": 0.71175
+  }
+ ],
+ "float32_for_scale": {
+  "f32_cpu_vs_f64_cpu": {
+   "both": 1728,
+   "only_first": 0,
+   "only_second": 1,
+   "same_point_count": 1508,
+   "max_point_distance_mm": [
+    0.0121,
+    0.216,
+    2.88,
+    35.1
+   ],
+   "within_1e-3_mm": 98,
+   "within_0.1_mm": 1256,
+   "ends_within_0.06_mm_fraction_same_count": 0.884,
+   "length_diff_mm_abs": [
+    6.74e-05,
+    1.8,
+    80.4,
+    221.0
+   ],
+   "density_r": 0.9715
+  },
+  "f32_mps_vs_f64_cpu": {
+   "both": 1729,
+   "only_first": 0,
+   "only_second": 0,
+   "same_point_count": 1518,
+   "max_point_distance_mm": [
+    0.0128,
+    0.213,
+    2.36,
+    35.1
+   ],
+   "within_1e-3_mm": 100,
+   "within_0.1_mm": 1249,
+   "ends_within_0.06_mm_fraction_same_count": 0.8867,
+   "length_diff_mm_abs": [
+    7.13e-05,
+    1.8,
+    86.5,
+    221.0
+   ],
+   "density_r": 0.97282
+  }
+ }
+}

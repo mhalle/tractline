@@ -51,9 +51,14 @@ KAPPA, P0, LMIN = 0.01, 0.01, 100.0
 
 # ------------------------------------------------------------------------------- data
 
-def load(nhdr: str, mask_path: str, device="cpu") -> dict:
+def load(nhdr: str, mask_path: str, device="cpu", data=None) -> dict:
+    """The DWI as the binary normalizes it. `data`, when given, replaces the file's voxels (same
+    shape, (i, j, k, G)): a bootstrap replicate keeps the header, gradients and mask."""
     import nrrd
     raw, h = nrrd.read(nhdr)                                  # (i, j, k, G), Fortran index order
+    if data is not None:
+        assert data.shape == raw.shape, (data.shape, raw.shape)
+        raw = data
     keys = sorted(k for k in h if k.startswith("DWMRI_gradient_"))
     gtxt = [h[k] for k in keys]
     bmax_int = int(re.match(r"\s*(-?\d+)", h["DWMRI_b-value"]).group(1))
@@ -236,7 +241,32 @@ def seeds(D: dict, offset_kji, seeding_threshold=0.1):
     N = D["N"]
     keep = (S[:, :N] >= 0).all(1) & torch.isfinite(S[:, :N]).all(1) & (S.mean(1) >= seeding_threshold)
     pts, S = pts[keep], S[keep]
+    e1, l1, l2, fa = _seed_tensor(D, S)
+    ok = fa > seeding_threshold
+    pts, e1, l1, l2, fa = pts[ok], e1[ok], l1[ok], l2[ok], fa[ok]
+    lam = torch.stack([l1, l2], 1)
+    fwd = torch.cat([e1, lam, e1, lam], 1)
+    inv = torch.cat([-e1, lam, e1, lam], 1)
+    return pts, fwd, inv, e1, fa
+
+
+def seed_states(D: dict, pts: torch.Tensor, seeding_threshold=0.1):
+    """The initial states at given seed points (k, j, i), none rejected: (fwd, inv, e1, fa, accepted),
+    `accepted` saying whether seeds() would have kept each point on this data. For tracking the same
+    points through different data (a bootstrap replicate)."""
+    N = D["N"]
+    S = torch.cat([interp(D, pts[s:s + 65536]) for s in range(0, len(pts), 65536)])
+    e1, l1, l2, fa = _seed_tensor(D, S)
+    accepted = ((S[:, :N] >= 0).all(1) & torch.isfinite(S[:, :N]).all(1) & (S.mean(1) >= seeding_threshold)
+                & (fa > seeding_threshold))
+    lam = torch.stack([l1, l2], 1)
+    return torch.cat([e1, lam, e1, lam], 1), torch.cat([-e1, lam, e1, lam], 1), e1, fa, accepted
+
+
+def _seed_tensor(D: dict, S: torch.Tensor):
+    """The seed tensor from interpolated signals S (B, 2N): (e1, l1, l2, fa), tractography.cc's rules."""
     g, b = D["g"], D["b"]
+    dev = S.device
     B = -b[:, None] * torch.stack([g[:, 0] ** 2, 2 * g[:, 0] * g[:, 1], 2 * g[:, 0] * g[:, 2], g[:, 1] ** 2,
                                    2 * g[:, 1] * g[:, 2], g[:, 2] ** 2], 1)
     logS = torch.log(torch.where(S <= 0, torch.full_like(S, 10e-8), S))
@@ -248,13 +278,7 @@ def seeds(D: dict, offset_kji, seeding_threshold=0.1):
     e1 = U[:, :, 0]
     l1 = sv[:, 0] * 1e6
     l2 = (sv[:, 1] * 1e6 + sv[:, 2] * 1e6) / 2.0
-    fa = l2fa(l1, l2, l2)
-    ok = fa > seeding_threshold
-    pts, e1, l1, l2, fa = pts[ok], e1[ok], l1[ok], l2[ok], fa[ok]
-    lam = torch.stack([l1, l2], 1)
-    fwd = torch.cat([e1, lam, e1, lam], 1)
-    inv = torch.cat([-e1, lam, e1, lam], 1)
-    return pts, fwd, inv, e1, fa
+    return e1, l1, l2, l2fa(l1, l2, l2)
 
 
 # ------------------------------------------------------------------------------- tracking
@@ -307,7 +331,8 @@ def advance(D: dict, xa, sa, Pa, oa, Q, Rs, step, max_steps, step_length=0.3, st
 
 def track(D: dict, offset_kji, seeding_threshold=0.1, stopping_fa=0.08, stopping_threshold=0.06,
           step_length=0.3, record_length=1.8, max_half_length=250.0, Qm=0.001, Ql=50.0, Rs=0.02,
-          batch=50_000, progress=None, select=None, dtype=torch.float64, device=None, capture=None):
+          batch=50_000, progress=None, select=None, dtype=torch.float64, device=None, capture=None,
+          seed_points=None):
     """All fibers. Returns (points list of (n, 3) RAS arrays in seed order, stats). With `select`
     (indices into the seed list), only those seeds are tracked; stats["seed_index"] then says which
     seed each returned fiber came from.
@@ -317,8 +342,14 @@ def track(D: dict, offset_kji, seeding_threshold=0.1, stopping_fa=0.08, stopping
     same half-fibers and differ only in the steps. `device` is where the steps run (default: where D
     is); seeds are made where D is, so a float64 D on the CPU can seed an MPS run, which has no
     float64. `capture(step, index, xa, sa, Pa, oa)`, when given, sees every step's inputs before the
-    step, `index` being the half-fibers' (for one-step fixtures)."""
-    pts, fwd, inv, e1, fa0 = seeds(D, offset_kji, seeding_threshold)
+    step, `index` being the half-fibers' (for one-step fixtures). `seed_points` (k, j, i), when given,
+    replaces the seeds: every point is tracked from its state on this data (seed_states), none
+    rejected, and `select` indexes them."""
+    if seed_points is None:
+        pts, fwd, inv, e1, fa0 = seeds(D, offset_kji, seeding_threshold)
+    else:
+        pts = torch.as_tensor(seed_points, dtype=torch.float64, device=D["A"].device)
+        fwd, inv, e1, fa0, _ = seed_states(D, pts, seeding_threshold)
     sel = torch.arange(len(pts), device=pts.device) if select is None else torch.as_tensor(select, device=pts.device)
     D = at_dtype(D, dtype, device)
     dev = D["A"].device
