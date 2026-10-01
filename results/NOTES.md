@@ -380,3 +380,18 @@ needs to show the full HCP tractogram (all 21.6 M original vertices) with TractC
   the browser it reaches the screen 2.8-4.8× sooner, with a first frame in 40-50 ms (render.json).
 - **Hard labels alone would cost 0.13 MB** (tract, uint8) or 0.49 MB (cluster, uint16). Those
   are the bytes the field replaces.
+
+**The fair baseline is TRX, not TRAKO** (`payload_trx.json`). TRAKO is a 2020 research
+prototype: a paper with code, unmaintained since February 2025, and it needed four repairs to run.
+The format the field adopted is TRX, which BIDS BEP046 requires. Written per its spec, with
+TractCloud's tract labels as groups:
+
+| TRX, all 21.6 M vertices, labels as groups | max position error | size |
+|---|---|---|
+| float16 positions (its suggested default), stored | 0.031 mm | 135.1 MB |
+| float16, zip deflate (must be decompressed before loading) | 0.031 mm | 117.4 MB |
+| float32, stored | 0 | 265.0 MB |
+
+Against that, our 41.3 MB carries the full field as well, at a smaller position error (0.02 mm):
+**3.3× smaller than TRX with labels only** (2.8× against deflated TRX). TRX's strength is
+different: its stored arrays memory-map with no decode at all, which suits local analysis.

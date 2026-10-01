@@ -1,0 +1,9 @@
+{
+ "what": "TRX with TractCloud's tract labels as groups, all 21.6 M vertices",
+ "mb": {
+  "trx float16 stored": 135.1,
+  "trx float16 deflate": 117.4,
+  "trx float32 stored": 265.0,
+  "trx float32 deflate": 238.2
+ }
+}
