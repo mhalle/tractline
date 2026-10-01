@@ -259,10 +259,14 @@ def seeds(D: dict, offset_kji, seeding_threshold=0.1):
 
 def track(D: dict, offset_kji, seeding_threshold=0.1, stopping_fa=0.08, stopping_threshold=0.06,
           step_length=0.3, record_length=1.8, max_half_length=250.0, Qm=0.001, Ql=50.0, Rs=0.02,
-          batch=50_000, progress=None):
-    """All fibers. Returns (points list of (n, 3) RAS arrays in seed order, stats)."""
+          batch=50_000, progress=None, select=None):
+    """All fibers. Returns (points list of (n, 3) RAS arrays in seed order, stats). With `select`
+    (indices into the seed list), only those seeds are tracked; stats["seed_index"] then says which
+    seed each returned fiber came from."""
     dev = D["A"].device
     pts, fwd, inv, e1, fa0 = seeds(D, offset_kji, seeding_threshold)
+    sel = torch.arange(len(pts), device=dev) if select is None else torch.as_tensor(select, device=dev)
+    pts, fwd, inv, e1, fa0 = pts[sel], fwd[sel], inv[sel], e1[sel], fa0[sel]
     S = len(pts)
     x0 = torch.stack([pts, pts], 1).reshape(-1, 3)                    # half-fibers 2s (fwd), 2s+1 (inv)
     st0 = torch.stack([fwd, inv], 1).reshape(-1, 10)
@@ -324,12 +328,13 @@ def track(D: dict, offset_kji, seeding_threshold=0.1, stopping_fa=0.08, stopping
         halves += [r[k, :nr[k]] for k in range(nb)]
     # join: first half reversed without its seed, then the second half with it; drop < 10 points
     i2r = D["i2r"]
-    fibers = []
+    fibers, kept = [], []
     for s in range(S):
         a, c = halves[2 * s], halves[2 * s + 1]
         if len(a) + len(c) - 1 < 10:
             continue
+        kept.append(int(sel[s]))
         kji = np.concatenate([a[:0:-1], c])
         ijk = kji[:, ::-1]
         fibers.append(ijk @ i2r[:3, :3].T + i2r[:3, 3])
-    return fibers, {"seeds": S, "half_fibers": 2 * S, "fiber_steps": steps_total, "fibers": len(fibers)}
+    return fibers, {"seeds": S, "half_fibers": 2 * S, "fiber_steps": steps_total, "fibers": len(fibers), "seed_index": kept}

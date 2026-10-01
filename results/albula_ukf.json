@@ -1,0 +1,27 @@
+{
+ "seeds_tested": 2011,
+ "every": 49,
+ "port": {
+  "fibers": 2011,
+  "seedsUsed": 2011,
+  "seedsRejected": 0,
+  "steps": 554055,
+  "ms": 148799,
+  "wall_s": 150.6
+ },
+ "torch_cpu_s": 247.8,
+ "reference_fibers": 1729,
+ "both": 1728,
+ "ref_only": 1,
+ "port_only": 1,
+ "port_short_kept": 282,
+ "same_len": 1174,
+ "same_len_max_point_distance_mm_quantiles_50_90_99_100": [
+  2.88e-06,
+  0.505,
+  11.6,
+  71.2
+ ],
+ "same_len_within_1e-3_mm": 791,
+ "same_len_within_0.1_mm": 937
+}
