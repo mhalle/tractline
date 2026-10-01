@@ -1,0 +1,71 @@
+{
+ "node": "v25.8.1",
+ "results": [
+  {
+   "bits": 14,
+   "rep": 0,
+   "trako_parse": 46,
+   "trako_base64": 39,
+   "trako_decode": 1732,
+   "trako_total": 1818,
+   "ours_decompress": 236,
+   "ours_reconstruct": 94,
+   "ours_total": 330
+  },
+  {
+   "bits": 14,
+   "rep": 1,
+   "trako_parse": 48,
+   "trako_base64": 35,
+   "trako_decode": 1183,
+   "trako_total": 1267,
+   "ours_decompress": 176,
+   "ours_reconstruct": 85,
+   "ours_total": 261
+  },
+  {
+   "bits": 14,
+   "rep": 2,
+   "trako_parse": 37,
+   "trako_base64": 30,
+   "trako_decode": 1171,
+   "trako_total": 1238,
+   "ours_decompress": 166,
+   "ours_reconstruct": 83,
+   "ours_total": 249
+  },
+  {
+   "bits": 12,
+   "rep": 0,
+   "trako_parse": 36,
+   "trako_base64": 12,
+   "trako_decode": 1032,
+   "trako_total": 1081,
+   "ours_decompress": 113,
+   "ours_reconstruct": 112,
+   "ours_total": 225
+  },
+  {
+   "bits": 12,
+   "rep": 1,
+   "trako_parse": 28,
+   "trako_base64": 14,
+   "trako_decode": 1010,
+   "trako_total": 1052,
+   "ours_decompress": 112,
+   "ours_reconstruct": 110,
+   "ours_total": 222
+  },
+  {
+   "bits": 12,
+   "rep": 2,
+   "trako_parse": 28,
+   "trako_base64": 15,
+   "trako_decode": 1007,
+   "trako_total": 1050,
+   "ours_decompress": 113,
+   "ours_reconstruct": 111,
+   "ours_total": 224
+  }
+ ]
+}

@@ -319,3 +319,40 @@ the entropy coder. The figures below use the raw Draco buffers.
 - **Running TRAKO in 2026 took repairs** (scratch environment only): its Draco binding's
   `setup.py` (a cmake < 3.15 pin and `packaging.LegacyVersion`), its pre-3.11 Cython output, and
   the NumPy aliases removed in 1.24.
+
+## 2026-10-01 Time to display, TRAKO against the predictive encoding
+
+`decode/render/` (a page plus its server) → `render.json`; `decode/pipeline_node.mjs` →
+`pipeline_node.json`; inputs from `decode/render_prep.py`. The whole HCP tractogram (440,621
+streamlines, 21.6 M vertices) goes from a localhost server to a drawn frame, each format the way
+a viewer would take it.
+- **TRAKO's path:** fetch the `.tko`, parse the glTF JSON, decode its base64 data-URI buffers
+  (as three.js's GLTFLoader does), Draco-decode positions and lengths with Google's WASM decoder,
+  upload float32.
+- **Ours:** fetch the blosc blobs, decompress with Blosc WASM, reconstruct, upload either
+  float32 or int16 grid coordinates that the shader dequantizes.
+- **Both:** the same draw, one `multiDrawArrays` of line strips.
+
+| | 14 bits: total | 12 bits: total | GPU |
+|---|---|---|---|
+| TRAKO | 3.64 s (base64 1.46, Draco 1.86) | 4.92 s (base64 1.32, Draco 3.15) | 260 MB |
+| predictive, float32 | 1.47 s | 1.08 s | 260 MB |
+| predictive, int16 grid | **1.32 s** | **1.02 s** | 130 MB |
+| predictive, 50 chunks: first frame / all | **49 ms** / 1.41 s | **40 ms** / 1.53 s | 130 MB |
+
+- **The whole tractogram is on screen 2.8-4.8× sooner.** First pixels arrive 75-120× sooner:
+  progressive loading draws the first 8,813 streamlines while the rest load. TRAKO's single
+  Draco stream shows nothing until all of it has decoded.
+- **TRAKO loses time in two places:** base64 data URIs (1.3-1.5 s, eliminated by any binary
+  container, glTF's `.glb` included) and Draco decoding (1.9-3.2 s here). Even with
+  free base64, it would take 2.5-3.5 s here.
+- **Absolute numbers are inflated.** The pane was hidden and driven over CDP, and every stage
+  ran 2-4× slower than in Node. Node's CPU-only cross-check: TRAKO 1.05-1.24 s (base64 is cheap
+  there), predictive 0.22-0.25 s, 4.7-5×.
+- **Upload and draw cost the same for both** (about 50-90 ms and 105-127 ms). The int16 grid
+  halves GPU memory and saves the float conversion; its dequantization in the vertex shader costs
+  nothing measurable.
+- **On the wire:** 51 MB against TRAKO's 95 MB (72 MB gzipped) at 14 bits; 36 MB against 73 MB
+  (55 MB) at 12. On a 100 Mbit/s link that is 4.1 s against 7.6 s (5.7 s gzipped) at 14 bits,
+  before any decoding. The chunked form overlaps decoding with downloading; a `.tko` can only
+  be parsed after the last byte arrives.

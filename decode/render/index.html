@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Time to display</title>
+<style>
+  :root { color-scheme: dark; --bg: #0f1724; --ink: #e4e9f1; --ink-2: #95a1b5; font-family: system-ui, sans-serif; font-size: 14px; }
+  body { margin: 0; background: var(--bg); color: var(--ink); padding: 16px; }
+  canvas { width: 512px; height: 384px; display: block; background: #0b111b; border-radius: 6px; max-width: 100%; }
+  pre { color: var(--ink-2); font-size: 12px; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<canvas id="gl" width="1024" height="768"></canvas>
+<pre id="log">Loading…</pre>
+<script src="/data/draco/draco_wasm_wrapper.js"></script>
+<script type="module" src="render.js"></script>
+</body>
+</html>
