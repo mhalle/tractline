@@ -1,0 +1,96 @@
+{
+ "labels": {
+  "floor_tractcloud_draws_on_f64": {
+   "single_draw_pairs_mean": 0.8607,
+   "vote_0_4_vs_vote_5_9": 0.9258,
+   "streamlines": 74281,
+   "other_fraction_draw0": 0.6526,
+   "vote_tract_mix_r": 0.99933,
+   "vote_per_tract_count_change_median_abs_rel": 0.0513,
+   "vote_other_fraction_5_9": 0.6487
+  },
+  "f32": {
+   "streamlines_ge_40mm": 74247,
+   "both": 74049,
+   "fibers_moved_fraction": 0.3251,
+   "single_draw_agreement_with_f64_mean": 0.8523,
+   "vote_agreement_with_f64": 0.905,
+   "vote_agreement_unmoved_fibers": 0.905,
+   "vote_agreement_moved_fibers": 0.905,
+   "other_fraction_vote": 0.6358,
+   "tract_mix_r_vs_f64": 0.99861,
+   "per_tract_count_change_median_abs_rel": 0.0566
+  },
+  "boot0": {
+   "streamlines_ge_40mm": 74099,
+   "both": 71526,
+   "fibers_moved_fraction": 1.0,
+   "single_draw_agreement_with_f64_mean": 0.7434,
+   "vote_agreement_with_f64": 0.7807,
+   "vote_agreement_unmoved_fibers": 1.0,
+   "vote_agreement_moved_fibers": 0.7807,
+   "other_fraction_vote": 0.6324,
+   "tract_mix_r_vs_f64": 0.99909,
+   "per_tract_count_change_median_abs_rel": 0.0555
+  },
+  "boot1": {
+   "streamlines_ge_40mm": 74126,
+   "both": 71453,
+   "fibers_moved_fraction": 1.0,
+   "single_draw_agreement_with_f64_mean": 0.7438,
+   "vote_agreement_with_f64": 0.7767,
+   "vote_agreement_unmoved_fibers": 1.0,
+   "vote_agreement_moved_fibers": 0.7766,
+   "other_fraction_vote": 0.6421,
+   "tract_mix_r_vs_f64": 0.99884,
+   "per_tract_count_change_median_abs_rel": 0.0613
+  },
+  "f64": {
+   "streamlines_ge_40mm": 74281,
+   "other_fraction_vote": 0.6409,
+   "named_tracts_50_plus": 35
+  }
+ },
+ "tracking": [
+  {
+   "name": "f64",
+   "dtype": "float64",
+   "bootstrap_seed": null,
+   "seeds": 98491,
+   "fibers": 85040,
+   "fiber_steps": 27478322,
+   "track_s": 559.9,
+   "steps_per_s": 49078
+  },
+  {
+   "name": "f32",
+   "dtype": "float32",
+   "bootstrap_seed": null,
+   "seeds": 98491,
+   "fibers": 85026,
+   "fiber_steps": 27442911,
+   "track_s": 240.1,
+   "steps_per_s": 114296
+  },
+  {
+   "name": "boot0",
+   "dtype": "float64",
+   "bootstrap_seed": 20261001,
+   "seeds": 98491,
+   "fibers": 84976,
+   "fiber_steps": 27422152,
+   "track_s": 566.8,
+   "steps_per_s": 48381
+  },
+  {
+   "name": "boot1",
+   "dtype": "float64",
+   "bootstrap_seed": 20261002,
+   "seeds": 98491,
+   "fibers": 84945,
+   "fiber_steps": 27435783,
+   "track_s": 540.8,
+   "steps_per_s": 50736
+  }
+ ]
+}

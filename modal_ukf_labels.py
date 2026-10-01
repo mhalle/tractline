@@ -121,6 +121,11 @@ def label() -> dict:
         "streamlines": int(T0.shape[1]), "other_fraction_draw0": round(float((T0[0] == 42).mean()), 4)}}
     v_ref = vote(T0[:5])
     counts = lambda t: np.bincount(t, minlength=43)
+    v_alt = vote(T0[5:])
+    out["floor_tractcloud_draws_on_f64"].update({
+        "vote_tract_mix_r": round(float(np.corrcoef(counts(v_alt)[:42], counts(v_ref)[:42])[0, 1]), 5),
+        "vote_per_tract_count_change_median_abs_rel": round(float(np.median(np.abs(counts(v_alt)[:42] - counts(v_ref)[:42]) / np.maximum(counts(v_ref)[:42], 1))), 4),
+        "vote_other_fraction_5_9": round(float((v_alt == 42).mean()), 4)})
     for name in ("f32", "boot0", "boot1"):
         x = tr[name]; T = lab[name]
         both = [(i, rk[int(s)]) for i, s in enumerate(x["seed_index"]) if int(s) in rk]

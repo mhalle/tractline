@@ -552,3 +552,32 @@ low signal. Each replicate tracked in float64 from the same 2,011 seed points as
   float64's at 0.97, where two equally valid acquisitions correlate at 0.72-0.75 (sparse maps from
   2,011 fibers; whole-brain maps correlate higher, in both cases).
 - Whether the same holds for TractCloud's labels is `modal_ukf_labels.py`.
+
+## 2026-10-01 float32 against the noise floor, through TractCloud
+
+`modal_ukf_labels.py` → `ukf_labels.json`. Whole HARDI, the 98,491 seed points the binary accepts,
+tracked four ways on A10Gs: float64 (the reference), float32, and float64 on two bootstrap
+replicates. Each cut at 40 mm, resampled, labeled by upstream TractCloud (10 seeded context draws
+for float64, 5 for the rest); 5-draw majority votes compared seed by seed.
+
+| against float64's labels | single draw | 5-draw vote | tract mix r | per-tract count change (median) | Other |
+|---|---|---|---|---|---|
+| TractCloud's own draws (the floor) | 0.861 | 0.926 | 0.9993 | 5.1 % | 64.9 % vs 64.1 % |
+| float32 | 0.852 | 0.905 | 0.9986 | 5.7 % | 63.6 % |
+| bootstrap replicates (2) | 0.743-0.744 | 0.777-0.781 | 0.9988-0.9991 | 5.6-6.1 % | 63.2-64.2 % |
+
+- **float32 costs about 2 points of label agreement; the scan's noise costs about 15.** float32's
+  loss is the same on fibers that did not move (0.905) as on those that did: it comes from
+  TractCloud's context, which shifts when any third of the brain's fibers shift, not from the
+  fibers themselves.
+- **Per-tract counts and the tract mix are at TractCloud's own floor for all three** (5-6 %, r ≥
+  0.998): aggregates do not see float32, and barely see data noise.
+- **Tracking speed, eager torch on an A10G:** float64 49,000 steps/s (560 s for the brain), float32
+  114,000 (240 s).
+- **Conclusion:** float32 tracking meets the bar set for every optimization: its effect is small
+  against what the original pipeline already has (TractCloud's randomness, the scan's noise). A
+  float32 Metal kernel is principled for a Mac. albula-diffusion's float32 GPU UKF is defensible on
+  the same grounds; its other departures (free water, seeding, precision of the signal) are
+  separate questions.
+- One scan (b = 2000, 2 mm, SNR 24); the wild bootstrap's symmetric signs approximate magnitude
+  noise. The same test on HCP-like data (b = 3000, 1.25 mm) would confirm.
