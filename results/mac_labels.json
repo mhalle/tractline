@@ -1,0 +1,23 @@
+{
+ "device": "mps",
+ "floor_f64_vote_0_4_vs_5_9": 0.9265,
+ "metal": {
+  "both": 74041,
+  "vs_f64_vote_0_4": 0.8892,
+  "vs_f64_vote_5_9": 0.8961,
+  "other_fraction": 0.6475
+ },
+ "f32": {
+  "both": 74049,
+  "vs_f64_vote_0_4": 0.8785,
+  "vs_f64_vote_5_9": 0.8893,
+  "other_fraction": 0.6358
+ },
+ "boot0": {
+  "both": 71526,
+  "vs_f64_vote_0_4": 0.7686,
+  "vs_f64_vote_5_9": 0.7651,
+  "other_fraction": 0.6324
+ },
+ "seconds": 376
+}

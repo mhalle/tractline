@@ -610,3 +610,31 @@ redundant in each lane, the gradients split across the lanes; precise:: math, no
   lanes 175-179 k**; 4 lanes 72 k (the per-lane arrays spill). Fast math adds 15-20 % with errors at
   float32's level but different bits; it stays off.
 - The host loop (gathers, recording, compaction) is under 1 % of a step.
+
+## 2026-10-01 The faithful pipeline on a Mac, end to end
+
+`mac_pipeline.py` → `mac_pipeline.json`, `mac_labels.py` → `mac_labels.json`. Apple M2 (16 GB),
+whole HARDI brain, ORG settings: DWI to the rankfield field in **232 s**.
+
+| stage | seconds |
+|---|---|
+| load and normalize the DWI | 1.2 |
+| seeds (float64, CPU) | 6.5 |
+| UKF, Metal kernel (27.5 M steps, 142 k/s) | 194 |
+| 40 mm cut, 15-point resampling | 0.9 |
+| TractCloud context (upstream, CPU) | 0.4 |
+| TractCloud network, MPS float32 | 10.6 (float16 autocast: 14.0, slower) |
+| field encode, depth 6 (19.0 B/streamline) | 4.8 |
+
+- **TractCloud on MPS gives the CPU's labels exactly** (74,281 of 74,281 on one context draw), and
+  the same floor as CUDA (two 5-draw votes agree 0.9265). float16 on MPS is slower than float32 and
+  changes 1,064 tract labels: float32 stays the Mac default.
+- **Labels, all four tractographies labeled on MPS**, each against two independent float64 votes:
+  Metal 0.889 / 0.896, CUDA float32 0.879 / 0.889, bootstrap 0.769 / 0.765, floor 0.927. The Metal
+  kernel is as good as torch's float32 on CUDA; vote comparisons move 1-2 points from one set of
+  draws to another (CUDA float32 scored 0.905 in ukf_labels.json).
+- Open: TractCloud's single-draw floor is 0.861 on CUDA (cudnn off) and 0.846 on MPS / CPU with the
+  same seeded draws, though the vote floors agree. CUDA's network arithmetic likely differs from
+  the CPU's; which one upstream's published results used is not stated.
+- UKF is 84 % of the time. On an M1 Max (32 GPU cores to the M2's 10, 4x the memory bandwidth)
+  the whole pipeline should take roughly a minute; not measured.

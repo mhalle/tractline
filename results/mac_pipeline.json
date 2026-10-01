@@ -1,0 +1,38 @@
+{
+ "machine": "Apple M2",
+ "torch": "2.14.1",
+ "rankfield": "0.3.10",
+ "seeds": 98491,
+ "fibers": 85034,
+ "fiber_steps": 27459263,
+ "streamlines_ge_40mm": 74245,
+ "seconds": {
+  "load": 1.17,
+  "seeds": 6.51,
+  "ukf": 193.92,
+  "features": 0.92,
+  "context": 0.39,
+  "network_fp32": 10.56,
+  "network_fp16": 14.0,
+  "field": 4.84
+ },
+ "total_s": 232.3,
+ "ukf_steps_per_s": 141601,
+ "fp16_vs_fp32_on_mps": {
+  "cluster_labels_differ": 3329,
+  "tract_labels_differ": 1064
+ },
+ "field": {
+  "depth": 6,
+  "bytes": 1410655,
+  "bytes_per_streamline": 19.0
+ },
+ "labels_metal_vs_f64_cuda": {
+  "both": 74041,
+  "vote_agreement": 0.8892,
+  "other_fraction_metal": 0.6475,
+  "other_fraction_f64": 0.6474,
+  "seconds": 158.6,
+  "for_scale": "ukf_labels.json: float32 on CUDA 0.905, TractCloud's own floor 0.926, bootstrap 0.78"
+ }
+}
