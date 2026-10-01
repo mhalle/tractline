@@ -708,3 +708,41 @@ compiles in about 40-140 s.
 | torch float32, A10G | 240 |
 | Metal kernel, M2 | 176 |
 | **Triton block kernel, A10G** | **78** |
+
+## 2026-10-01 Is albula's sparse seeding reasonable? PAT16
+
+`pat16_prep.py` (ds001226 PAT16, CC0: b0 + the b = 2800 shell, 2.5 mm, median_otsu mask; the
+gradient table checked by axis flips: mean fiber 77 mm as converted, 47-54 mm with any axis flipped),
+`pat16_seeding.py` → `pat16_seeding.json`, `pat16_seeding_floor.json`. Same scan, mask, tracker
+(Metal kernel, ORG settings) and TractCloud; only the seeds differ. Faithful: UKF's own 47,856 seeds.
+Sparse: albula's rule, 25,000 of the 28,037 voxels with FA > 0.2 (89 % of the candidates: on this
+2.5 mm scan the draw changes little but the position inside each voxel), 5 draws.
+
+| | faithful | sparse (5 draws) |
+|---|---|---|
+| streamlines >= 40 mm | 32,137 | 20,225-20,277 |
+| Other | 56.1 % | 58.3-60.3 % |
+| tract mix r against faithful's 5-draw vote | 0.995-0.999 (single context draws) | 0.988-0.995 |
+| tracking on the M2 | 41 s (11.5 M steps) | 25 s (7.1 M steps) |
+
+- **Tract shares:** median 9-12 % relative error per tract against faithful, 7 % spread across draws.
+  The largest shortfalls are where FA is low: cerebellar Intra-CBLM-PaT (7 % of faithful's share) and
+  the superficial tracts (Sup-FP 68 %, Sup-PO 70 %, Sup-O 76 %, Sup-P 80 %).
+- **The near rule** (a tract is near when >= 5 of its streamlines pass within 8 mm), 20 test spheres
+  (10 mm, at FA > 0.3; PAT16's tumor outline is not public), against faithful's 5-draw vote:
+
+  | | recall of faithful's near tracts | draw-to-draw Jaccard | spheres where draws disagree |
+  |---|---|---|---|
+  | faithful, single context draws (the floor) | 0.972 | 0.914 | 20 / 20 |
+  | sparse, rule as albula applies it | 0.899 | 0.888 | 19 / 20 |
+  | sparse, against faithful with the threshold scaled to its density | 0.945 (precision 0.949) | | |
+
+- **Reading it:** the near-tract answer moves from run to run mainly because of TractCloud's own
+  random context (Jaccard 0.914 with the tractogram fixed); sparse seeding adds a little (0.888) and
+  misses about 7 % more of the tracts faithful finds near a region, mostly through lower density
+  (scaling the threshold recovers half). Defensible on this scan, with a known bias against low-FA
+  (superficial, cerebellar, and plausibly edematous peritumoral) white matter.
+- **Caveats:** our tracker and settings, not albula's free-water defaults, which give about 11,000
+  streamlines from the same 25,000 seeds (sparser still, so the effects would be larger); test
+  spheres, not a tumor; one subject. At HCP's 1.25 mm the same 25,000 seeds would be about 5 % of
+  faithful seeding, not 52 %.

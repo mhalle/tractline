@@ -1,0 +1,114 @@
+{
+ "data": "OpenNeuro ds001226 PAT16 (CC0), b0 + b=2800 shell, 2.5 mm",
+ "tracker": "Metal kernel, ORG settings",
+ "faithful": {
+  "seeds": 47856,
+  "streamlines_ge_40mm": 32137,
+  "other_fraction": 0.5612
+ },
+ "sparse": {
+  "candidate_voxels_fa_gt_0.2": 28037,
+  "seeds_per_draw": 25000,
+  "draws": 5,
+  "streamlines_ge_40mm": [
+   20253,
+   20225,
+   20234,
+   20264,
+   20277
+  ],
+  "other_fraction": [
+   0.5827,
+   0.6008,
+   0.6026,
+   0.5907,
+   0.5854
+  ]
+ },
+ "timing_s_and_steps": {
+  "faithful_track": [
+   41.1,
+   11465742
+  ],
+  "sparse_track_0": [
+   24.8,
+   7093583
+  ],
+  "sparse_track_1": [
+   24.6,
+   7106428
+  ],
+  "sparse_track_2": [
+   24.6,
+   7074126
+  ],
+  "sparse_track_3": [
+   25.0,
+   7116781
+  ],
+  "sparse_track_4": [
+   24.4,
+   7077952
+  ]
+ },
+ "tract_shares": {
+  "r_faithful_vs_each_draw": [
+   0.9877,
+   0.9937,
+   0.9927,
+   0.995,
+   0.9902
+  ],
+  "median_abs_rel_error_vs_faithful": [
+   0.115,
+   0.089,
+   0.103,
+   0.123,
+   0.118
+  ],
+  "median_cv_across_draws": 0.073,
+  "tracts_compared": 42,
+  "largest_relative_shortfalls_draw0": [
+   [
+    "Intra-CBLM-PaT",
+    0.07
+   ],
+   [
+    "Sup-FP",
+    0.68
+   ],
+   [
+    "Sup-PO",
+    0.7
+   ],
+   [
+    "Sup-O",
+    0.76
+   ],
+   [
+    "Sup-P",
+    0.8
+   ],
+   [
+    "CB",
+    0.88
+   ]
+  ]
+ },
+ "near_rule": {
+  "rois": 20,
+  "roi_radius_mm": 10.0,
+  "within_mm": 8.0,
+  "min_streamlines": 5,
+  "near_tracts_per_roi_mean": {
+   "faithful_rule_5": 16.05,
+   "faithful_rule_scaled_7.9": 14.9,
+   "sparse": 14.83
+  },
+  "sparse_recall_vs_faithful_rule_5": 0.899,
+  "sparse_recall_vs_faithful_scaled": 0.945,
+  "sparse_precision_vs_faithful_scaled": 0.949,
+  "sparse_draw_to_draw_jaccard": 0.888,
+  "rois_where_draws_disagree": 19
+ }
+}

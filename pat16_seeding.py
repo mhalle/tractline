@@ -30,7 +30,9 @@ import _ukf_torch as U
 from _resample import resample
 from _data import DATA as TDATA, MODEL, MASS_CENTER
 
-ap = argparse.ArgumentParser(); ap.add_argument("--draws", type=int, default=5); args = ap.parse_args()
+ap = argparse.ArgumentParser(); ap.add_argument("--draws", type=int, default=5)
+ap.add_argument("--floor", action="store_true", help="only the faithful tractogram, single context draws: TractCloud's own floor")
+args = ap.parse_args()
 HERE = Path(__file__).resolve().parent
 O = TDATA / "ds001226/derived/PAT16"
 sys.path.insert(0, str(TDATA / "TractCloud/src")); sys.modules.setdefault("vtk", types.ModuleType("vtk"))
@@ -83,6 +85,31 @@ pts_f, *_ = U.seeds(D, off)
 fib_f, t, steps = track(pts_f)
 T["faithful_track"] = (round(t, 1), steps)
 lab_f, kept_f = labels(fib_f, range(5))
+
+if args.floor:
+    lens = np.array([len(f) for f in fib_f]); P = np.concatenate(fib_f).astype(np.float32).astype(np.float64)
+    o = np.r_[0, np.cumsum(lens)]; seg = np.r_[0, np.cumsum(np.linalg.norm(np.diff(P, axis=0), axis=1))]
+    keepf = (seg[o[1:] - 1] - seg[o[:-1]]) >= 40
+    singles = [labels(fib_f, [d])[0] for d in range(args.draws)]
+    mask_kji = torch.nonzero(D["mask"] > 0).double()
+    rng = np.random.default_rng(7)
+    _, _, _, fa_all, _ = U.seed_states(D, mask_kji)
+    hi = mask_kji[fa_all > 0.3].numpy()
+    roi = hi[rng.choice(len(hi), N_ROI, replace=False)][:, ::-1] @ i2r[:3, :3].T + i2r[:3, 3]
+    lens = np.array([len(f) for f in kept_f]); Pk = np.concatenate(kept_f)
+    ok = np.r_[0, np.cumsum(lens)][:-1]
+    close = np.stack([np.minimum.reduceat(np.linalg.norm(Pk - c, axis=1), ok) for c in roi], 1) <= R_MM + NEAR_MM
+    sets = lambda lab: [set(np.flatnonzero(np.bincount(lab[close[:, r]], minlength=43)[:42] >= NEAR_N).tolist()) for r in range(N_ROI)]
+    V, Sd = sets(lab_f), [sets(l) for l in singles]
+    jac = lambda A, B: len(A & B) / len(A | B) if (A | B) else 1.0
+    out = {"faithful_single_context_draws": args.draws,
+           "draw_to_draw_jaccard": round(float(np.mean([jac(Sd[a][r], Sd[b][r]) for r in range(N_ROI) for a in range(args.draws) for b in range(a + 1, args.draws)])), 3),
+           "recall_vs_vote": round(float(np.mean([len(Sd[d][r] & V[r]) / len(V[r]) for d in range(args.draws) for r in range(N_ROI) if V[r]])), 3),
+           "rois_where_draws_disagree": int(sum(len({frozenset(Sd[d][r]) for d in range(args.draws)}) > 1 for r in range(N_ROI))),
+           "tract_share_r_single_vs_vote": [round(float(np.corrcoef(np.bincount(l, minlength=43)[:42], np.bincount(lab_f, minlength=43)[:42])[0, 1]), 4) for l in singles]}
+    print(json.dumps(out, indent=1))
+    (HERE / "results" / "pat16_seeding_floor.json").write_text(json.dumps(out, indent=1))
+    raise SystemExit(0)
 
 # ---- the sparse arm: albula's candidate voxels, then `draws` draws
 mask_kji = torch.nonzero(D["mask"] > 0).double()
