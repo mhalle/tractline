@@ -1,0 +1,155 @@
+"""What float32 does to UKF tractography, against the float64 tracker that reproduces the Slicer
+binary (ukf_compare.json). An Apple GPU has no float64, so float32 is the only GPU arithmetic on a
+Mac; this measures its cost before any Metal kernel is written.
+
+    DATA/.venv/bin/python bench/tractography/ukf32_compare.py [--fixture-every 197] [--every 49]
+
+1. One-step fixtures. A float64 run over every `fixture-every`-th seed keeps the inputs of a sample
+   of steps (position, state, covariance, previous direction, step number): DATA/ukf32/steps.npz,
+   the fixture a Metal kernel will be tested against. Each step is then taken once more in float64
+   (CPU), float32 (CPU) and float32 (MPS) from identical inputs, and the outputs compared: state,
+   covariance, new position, FA, and the decisions (both swaps, inside the mask, stop).
+2. Whole fibers. Every `every`-th seed tracked in float64 (CPU), float32 (CPU) and float32 (MPS),
+   the same seeds made in float64 for all three. Per seed: kept by both or one, the same point count,
+   the largest point distance, the ends' distances (albula-diffusion's GPU-vs-CPU measure: "fiber
+   ends within 0.06 mm"), and streamline-density maps on the DWI grid (Pearson r).
+3. The floor for scale: the same float64 fibers against the full float64 run on CUDA
+   (torch_fibers.npz, modal_ukf_track.py), matched through each fiber's seed point: two float64
+   implementations whose only differences are rounding order.
+
+Writes results/ukf32.json.
+"""
+import argparse, json, time
+from pathlib import Path
+import numpy as np, torch
+from scipy.spatial import cKDTree
+import _ukf_torch as U
+
+ap = argparse.ArgumentParser()
+ap.add_argument("--fixture-every", type=int, default=197)
+ap.add_argument("--every", type=int, default=49)
+ap.add_argument("--per-step", type=int, default=4, help="fixture rows kept per step")
+args = ap.parse_args()
+HERE = Path(__file__).resolve().parent
+DATA = Path.home() / "tmp/data/tractography"
+H, OUT = DATA / "ukf/hardi", DATA / "ukf32"
+OUT.mkdir(exist_ok=True)
+F64, F32 = torch.float64, torch.float32
+DEVICES = ["cpu"] + (["mps"] if torch.backends.mps.is_available() else [])
+
+D = U.load(str(H / "dwi.nhdr"), str(H / "mask.nrrd"))
+off = np.array([-4158, -2201, -2855], float); off = off / np.linalg.norm(off) * 0.5    # macOS srand(0)
+pts, *_ = U.seeds(D, off)
+vox = D["voxel"].numpy()
+q = lambda x, ps=(0.5, 0.9, 0.99, 1.0): [float(f"{v:.3g}") for v in np.quantile(x, ps)] if len(x) else []
+res = {"data": "Stanford HARDI, ORG settings (ukf_bench.py)", "torch": torch.__version__, "devices": DEVICES}
+
+# ---------------------------------------------------------------- 1. one-step fixtures
+fix = OUT / "steps.npz"
+if not fix.exists():
+    rng = np.random.default_rng(20261001)
+    rows = []
+    def keep(step, idx, xa, sa, Pa, oa):
+        k = rng.choice(len(xa), min(args.per_step, len(xa)), replace=False)
+        rows.append((np.full(len(k), step), xa[k].numpy(), sa[k].numpy(), Pa[k].numpy(), oa[k].numpy()))
+    U.track(D, off, select=np.arange(0, len(pts), args.fixture_every), capture=keep)
+    st, x, s, P, o = (np.concatenate(c) for c in zip(*rows))
+    np.savez(fix, step=st, x=x, state=s, P=P, old=o, seed_every=args.fixture_every)
+Z = np.load(fix)
+res["fixture"] = {"file": str(fix), "rows": int(len(Z["step"])), "seed_every": int(Z["seed_every"]),
+                  "steps_covered": [int(Z["step"].min()), int(Z["step"].max())]}
+
+def one_step(dtype, device):
+    Dd = U.at_dtype(D, dtype, device)
+    t = lambda a: torch.as_tensor(a).to(dtype).to(device)
+    Q = torch.diag(torch.tensor([0.001] * 3 + [50.0] * 2 + [0.001] * 3 + [50.0] * 2, dtype=dtype)).to(device)
+    out = {"x": [], "state": [], "P": [], "dir": [], "stop": [], "swap": [], "swap2": [], "fa": [], "mean_signal": [], "inside": []}
+    for s in np.unique(Z["step"]):                                    # the step number enters only through max_steps
+        r = Z["step"] == s
+        x, sa, Pa, m1, stop, info = U.advance(Dd, t(Z["x"][r]), t(Z["state"][r]), t(Z["P"][r]), t(Z["old"][r]), Q, 0.02,
+                                              int(s), 834)
+        for k, v in (("x", x), ("state", sa), ("P", Pa), ("dir", m1), ("stop", stop), *info.items()):
+            out[k].append(v.cpu().double().numpy() if v.dtype != torch.bool else v.cpu().numpy())
+    order = np.argsort(np.concatenate([np.flatnonzero(Z["step"] == s) for s in np.unique(Z["step"])]))  # back to row order
+    return {k: np.concatenate(v)[order] for k, v in out.items()}
+
+ref = one_step(F64, "cpu")
+again = one_step(F64, "cpu")
+res["one_step"] = {"f64_repeat_identical": bool(all(np.array_equal(ref[k], again[k]) for k in ref))}
+
+def step_diff(a, b):
+    rel = lambda u, v, ax: np.linalg.norm((u - v).reshape(len(u), -1), axis=1) / np.linalg.norm(v.reshape(len(v), -1), axis=1)
+    ang = np.degrees(np.arccos(np.clip(np.abs((a["dir"] * b["dir"]).sum(1)), 0, 1)))
+    d = {"state_rel_err": q(rel(a["state"], b["state"], 1)), "P_rel_err": q(rel(a["P"], b["P"], 1)),
+         "position_err_mm": q(np.linalg.norm((a["x"] - b["x"]) * vox, axis=1)), "direction_err_deg": q(ang),
+         "fa_abs_err": q(np.abs(a["fa"] - b["fa"])), "mean_signal_abs_err": q(np.abs(a["mean_signal"] - b["mean_signal"]))}
+    for k in ("swap", "swap2", "inside", "stop"):
+        d[f"{k}_flips"] = int((a[k] != b[k]).sum())
+    flip = a["stop"] != b["stop"]
+    if flip.any():                                                    # how close the float64 step was to a threshold
+        d["stop_flips_ref_margin"] = {"fa_minus_0.08": q(b["fa"][flip] - 0.08, (0, 0.5, 1)),
+                                      "mean_signal_minus_0.06": q(b["mean_signal"][flip] - 0.06, (0, 0.5, 1))}
+    return d
+
+steps = {}
+for dev in DEVICES:
+    steps[dev] = one_step(F32, dev)
+    res["one_step"][f"f32_{dev}_vs_f64"] = step_diff(steps[dev], ref)
+if "mps" in steps:
+    res["one_step"]["f32_mps_vs_f32_cpu"] = step_diff(steps["mps"], steps["cpu"])
+
+# ---------------------------------------------------------------- 2. whole fibers
+sel = np.arange(0, len(pts), args.every)
+runs = {}
+for name, dtype, dev in [("f64_cpu", F64, "cpu")] + [(f"f32_{d}", F32, d) for d in DEVICES]:
+    t0 = time.time()
+    f, st = U.track(D, off, select=sel, dtype=dtype, device=dev)
+    s = time.time() - t0
+    runs[name] = {int(k): p for k, p in zip(st["seed_index"], f)}
+    res.setdefault("runs", {})[name] = {"seeds": int(len(sel)), "fibers": st["fibers"], "fiber_steps": st["fiber_steps"],
+                                        "seconds": round(s, 1), "steps_per_s": round(st["fiber_steps"] / s)}
+
+i2r = D["i2r"]; r2i = np.linalg.inv(i2r)
+dims_ijk = tuple(int(v) for v in D["dim"][::-1])
+def density(fibs):
+    m = np.zeros(dims_ijk, np.int32)
+    for p in fibs:
+        ijk = np.rint(p @ r2i[:3, :3].T + r2i[:3, 3]).astype(int)
+        ijk = np.unique(ijk[(ijk >= 0).all(1) & (ijk < dims_ijk).all(1)], axis=0)
+        m[tuple(ijk.T)] += 1
+    return m.ravel().astype(float)
+
+def compare(a, b):
+    both = sorted(set(a) & set(b))
+    same = [k for k in both if len(a[k]) == len(b[k])]
+    def oriented(k):                                                  # b's fiber in the orientation nearer a's
+        r = b[k][::-1]
+        return r if np.linalg.norm(a[k] - r, axis=1).max() < np.linalg.norm(a[k] - b[k], axis=1).max() else b[k]
+    ob = {k: oriented(k) for k in same}
+    dmax = np.array([np.linalg.norm(a[k] - ob[k], axis=1).max() for k in same])
+    ends = np.concatenate([np.linalg.norm(a[k][[0, -1]] - ob[k][[0, -1]], axis=1) for k in same]) if same else np.array([])
+    lens = lambda f: np.linalg.norm(np.diff(f, axis=0), axis=1).sum()
+    dlen = np.array([lens(a[k]) - lens(b[k]) for k in both])
+    da, db = density(a.values()), density(b.values())
+    return {"both": len(both), "only_first": len(set(a) - set(b)), "only_second": len(set(b) - set(a)),
+            "same_point_count": len(same), "max_point_distance_mm": q(dmax),
+            "within_1e-3_mm": int((dmax < 1e-3).sum()), "within_0.1_mm": int((dmax < 0.1).sum()),
+            "ends_within_0.06_mm_fraction_same_count": round(float((ends < 0.06).mean()), 4) if len(ends) else None,
+            "length_diff_mm_abs": q(np.abs(dlen)), "density_r": round(float(np.corrcoef(da, db)[0, 1]), 5)}
+
+res["fibers"] = {f"{k}_vs_f64_cpu": compare(runs[k], runs["f64_cpu"]) for k in runs if k != "f64_cpu"}
+if "f32_mps" in runs:
+    res["fibers"]["f32_mps_vs_f32_cpu"] = compare(runs["f32_mps"], runs["f32_cpu"])
+
+# ---------------------------------------------------------------- 3. the float64 floor: CPU vs CUDA
+T = np.load(H / "torch_fibers.npz")
+tp, to = T["points"], T["offsets"]
+seed_ras = pts[sel].numpy()[:, ::-1] @ i2r[:3, :3].T + i2r[:3, 3]
+dd, ii = cKDTree(tp).query(seed_ras)
+fi = np.searchsorted(to, ii, side="right") - 1
+cuda = {int(sel[k]): tp[to[f]:to[f + 1]] for k, (d, f) in enumerate(zip(dd, fi)) if d < 1e-6}
+res["fibers"]["f64_cuda_vs_f64_cpu"] = compare({k: v for k, v in cuda.items()}, {k: v for k, v in runs["f64_cpu"].items()})
+res["fibers"]["f64_cuda_vs_f64_cpu"]["note"] = "CUDA fibers matched by seed point; seeds whose CUDA fiber was dropped (< 10 points) count as only_second"
+
+print(json.dumps(res, indent=1))
+(HERE / "results" / "ukf32.json").write_text(json.dumps(res, indent=1))

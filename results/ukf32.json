@@ -1,0 +1,260 @@
+{
+ "data": "Stanford HARDI, ORG settings (ukf_bench.py)",
+ "torch": "2.14.1",
+ "devices": [
+  "cpu",
+  "mps"
+ ],
+ "fixture": {
+  "file": "/Users/halazar/tmp/data/tractography/ukf32/steps.npz",
+  "rows": 3335,
+  "seed_every": 197,
+  "steps_covered": [
+   1,
+   835
+  ]
+ },
+ "one_step": {
+  "f64_repeat_identical": true,
+  "f32_cpu_vs_f64": {
+   "state_rel_err": [
+    1.3e-05,
+    4.6e-05,
+    0.000112,
+    0.00198
+   ],
+   "P_rel_err": [
+    8.6e-07,
+    3.27e-06,
+    1.05e-05,
+    4.21e-05
+   ],
+   "position_err_mm": [
+    6.29e-06,
+    1.37e-05,
+    3.11e-05,
+    0.000108
+   ],
+   "direction_err_deg": [
+    0.00135,
+    0.0156,
+    0.0206,
+    0.0262
+   ],
+   "fa_abs_err": [
+    4.16e-06,
+    1.73e-05,
+    4.95e-05,
+    0.000164
+   ],
+   "mean_signal_abs_err": [
+    1.33e-06,
+    4.76e-06,
+    9.62e-06,
+    3.84e-05
+   ],
+   "swap_flips": 4,
+   "swap2_flips": 1,
+   "inside_flips": 0,
+   "stop_flips": 0
+  },
+  "f32_mps_vs_f64": {
+   "state_rel_err": [
+    1.25e-05,
+    4.66e-05,
+    0.000122,
+    0.00198
+   ],
+   "P_rel_err": [
+    9.1e-07,
+    3.35e-06,
+    1.15e-05,
+    3.54e-05
+   ],
+   "position_err_mm": [
+    6.39e-06,
+    1.51e-05,
+    3.56e-05,
+    8.66e-05
+   ],
+   "direction_err_deg": [
+    0.0,
+    0.016,
+    0.0205,
+    0.0267
+   ],
+   "fa_abs_err": [
+    4.01e-06,
+    1.75e-05,
+    5.03e-05,
+    0.000133
+   ],
+   "mean_signal_abs_err": [
+    1.47e-06,
+    5.27e-06,
+    1.1e-05,
+    1.87e-05
+   ],
+   "swap_flips": 4,
+   "swap2_flips": 1,
+   "inside_flips": 0,
+   "stop_flips": 0
+  },
+  "f32_mps_vs_f32_cpu": {
+   "state_rel_err": [
+    1.77e-05,
+    6.52e-05,
+    0.000169,
+    0.00179
+   ],
+   "P_rel_err": [
+    1.1e-06,
+    4.68e-06,
+    1.58e-05,
+    4.2e-05
+   ],
+   "position_err_mm": [
+    7.63e-06,
+    1.87e-05,
+    4.68e-05,
+    0.000133
+   ],
+   "direction_err_deg": [
+    0.00165,
+    0.0191,
+    0.0258,
+    0.0301
+   ],
+   "fa_abs_err": [
+    5.6e-06,
+    2.5e-05,
+    6.57e-05,
+    0.00018
+   ],
+   "mean_signal_abs_err": [
+    1.91e-06,
+    6.99e-06,
+    1.53e-05,
+    5.11e-05
+   ],
+   "swap_flips": 2,
+   "swap2_flips": 2,
+   "inside_flips": 0,
+   "stop_flips": 0
+  }
+ },
+ "runs": {
+  "f64_cpu": {
+   "seeds": 2011,
+   "fibers": 1729,
+   "fiber_steps": 556988,
+   "seconds": 120.8,
+   "steps_per_s": 4611
+  },
+  "f32_cpu": {
+   "seeds": 2011,
+   "fibers": 1728,
+   "fiber_steps": 556016,
+   "seconds": 68.4,
+   "steps_per_s": 8133
+  },
+  "f32_mps": {
+   "seeds": 2011,
+   "fibers": 1729,
+   "fiber_steps": 558553,
+   "seconds": 87.2,
+   "steps_per_s": 6405
+  }
+ },
+ "fibers": {
+  "f32_cpu_vs_f64_cpu": {
+   "both": 1728,
+   "only_first": 0,
+   "only_second": 1,
+   "same_point_count": 1508,
+   "max_point_distance_mm": [
+    0.0121,
+    0.216,
+    2.88,
+    35.1
+   ],
+   "within_1e-3_mm": 98,
+   "within_0.1_mm": 1256,
+   "ends_within_0.06_mm_fraction_same_count": 0.884,
+   "length_diff_mm_abs": [
+    6.74e-05,
+    1.8,
+    80.4,
+    221.0
+   ],
+   "density_r": 0.9715
+  },
+  "f32_mps_vs_f64_cpu": {
+   "both": 1729,
+   "only_first": 0,
+   "only_second": 0,
+   "same_point_count": 1518,
+   "max_point_distance_mm": [
+    0.0128,
+    0.213,
+    2.36,
+    35.1
+   ],
+   "within_1e-3_mm": 100,
+   "within_0.1_mm": 1249,
+   "ends_within_0.06_mm_fraction_same_count": 0.8867,
+   "length_diff_mm_abs": [
+    7.13e-05,
+    1.8,
+    86.5,
+    221.0
+   ],
+   "density_r": 0.97282
+  },
+  "f32_mps_vs_f32_cpu": {
+   "both": 1728,
+   "only_first": 1,
+   "only_second": 0,
+   "same_point_count": 1485,
+   "max_point_distance_mm": [
+    0.0167,
+    0.292,
+    3.37,
+    93.5
+   ],
+   "within_1e-3_mm": 69,
+   "within_0.1_mm": 1177,
+   "ends_within_0.06_mm_fraction_same_count": 0.8593,
+   "length_diff_mm_abs": [
+    0.000102,
+    1.8,
+    79.1,
+    146.0
+   ],
+   "density_r": 0.96977
+  },
+  "f64_cuda_vs_f64_cpu": {
+   "both": 1729,
+   "only_first": 0,
+   "only_second": 0,
+   "same_point_count": 1729,
+   "max_point_distance_mm": [
+    3.87e-11,
+    2.12e-09,
+    3.74e-07,
+    6.59e-05
+   ],
+   "within_1e-3_mm": 1729,
+   "within_0.1_mm": 1729,
+   "ends_within_0.06_mm_fraction_same_count": 1.0,
+   "length_diff_mm_abs": [
+    1.56e-13,
+    6.09e-12,
+    9.59e-10,
+    1.8e-07
+   ],
+   "density_r": 1.0,
+   "note": "CUDA fibers matched by seed point; seeds whose CUDA fiber was dropped (< 10 points) count as only_second"
+  }
+ }
+}

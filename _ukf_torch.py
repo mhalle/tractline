@@ -36,6 +36,8 @@ to that commit. Every rule below is the binary's, including the ones that look l
 
 Arithmetic is float64 where the binary's is double. Floating-point order inside Eigen's small
 products is not reproduced, so fibers agree to rounding until a threshold decision flips.
+track(dtype=torch.float32) runs the steps in float32 instead (an Apple GPU has no float64), from
+the same float64 seeds; ukf32_compare.py measures what that changes.
 """
 from __future__ import annotations
 
@@ -112,8 +114,8 @@ def interp(D: dict, pos: torch.Tensor) -> torch.Tensor:
     N = D["N"]
     sigma = float(vox.min())
     r = cround(pos).long()
-    out = torch.zeros(pos.shape[0], N, dtype=torch.float64, device=pos.device)
-    wsum = torch.full((pos.shape[0],), 1e-16, dtype=torch.float64, device=pos.device)
+    out = torch.zeros(pos.shape[0], N, dtype=pos.dtype, device=pos.device)
+    wsum = torch.full((pos.shape[0],), 1e-16, dtype=pos.dtype, device=pos.device)
     for xx in (-1, 0, 1):
         x = r[:, 0] + xx
         okx = (x >= 0) & (x < nk)
@@ -128,7 +130,7 @@ def interp(D: dict, pos: torch.Tensor) -> torch.Tensor:
                 dz = (z - pos[:, 2]) * vox[2]
                 w = torch.exp(-(dx * dx + dy * dy + dz * dz) / sigma)
                 w = torch.where(ok, w, torch.zeros_like(w))
-                vals = A[x.clamp(0, nk - 1), y.clamp(0, nj - 1), z.clamp(0, ni - 1)].double()
+                vals = A[x.clamp(0, nk - 1), y.clamp(0, nj - 1), z.clamp(0, ni - 1)].to(pos.dtype)
                 out += w[:, None] * vals
                 wsum += w
     out = out / wsum[:, None]
@@ -257,32 +259,85 @@ def seeds(D: dict, offset_kji, seeding_threshold=0.1):
 
 # ------------------------------------------------------------------------------- tracking
 
+def at_dtype(D: dict, dtype, device=None) -> dict:
+    """D with its float64 tensors (gradients, b-values, spacings) in `dtype`, and everything on
+    `device` (default: where D is); the signal stays float32, as dwi_normalize.cc makes it, and is
+    cast where it is read (interp)."""
+    device = D["A"].device if device is None else torch.device(device)
+    if dtype == torch.float64 and device == D["A"].device:
+        return D
+    return {**D, "A": D["A"].to(device), "mask": D["mask"].to(device),
+            **{k: D[k].to(device=device, dtype=dtype) for k in ("g", "b", "voxel")}}
+
+
+def advance(D: dict, xa, sa, Pa, oa, Q, Rs, step, max_steps, step_length=0.3, stopping_fa=0.08,
+            stopping_threshold=0.06):
+    """One step of every live half-fiber: the filter at xa, the tensors, the swaps, the Euler step
+    and the stopping checks at the new position (tractography.cc:1641-1776, 1341-1382). Every
+    tensor in `dtype` of the state. Returns (x, state, P, direction, stop, info), info holding the
+    intermediate decisions the one-step fixtures compare: both swaps, fa, mean signal, in-mask."""
+    vox = D["voxel"]
+    z = interp(D, xa)
+    sa, Pa = ukf_step(D, sa, Pa, z, Q, Rs)
+    # State2Tensor2T
+    m1, m2 = _normalize(sa[:, 0:3]), _normalize(sa[:, 5:8])
+    L1 = torch.stack([sa[:, 3].clamp_min(LMIN), sa[:, 4].clamp_min(LMIN)], 1)
+    L2 = torch.stack([sa[:, 8].clamp_min(LMIN), sa[:, 9].clamp_min(LMIN)], 1)
+    m1 = torch.where(((m1 * oa).sum(1) < 0)[:, None], -m1, m1)
+    m2 = torch.where(((m2 * oa).sum(1) < 0)[:, None], -m2, m2)
+    fat1, fat2 = l2fa(L1[:, 0], L1[:, 1], L1[:, 1]), l2fa(L2[:, 0], L2[:, 1], L2[:, 1])
+    angle = torch.rad2deg(torch.acos((m1 * m2).sum(1)))
+    sw = (m1 * oa).sum(1) < (m2 * oa).sum(1)
+    m1, m2 = torch.where(sw[:, None], m2, m1), torch.where(sw[:, None], m1, m2)
+    L1, L2 = torch.where(sw[:, None], L2, L1), torch.where(sw[:, None], L1, L2)
+    fat1, fat2 = torch.where(sw, fat2, fat1), torch.where(sw, fat1, fat2)
+    sa, Pa = _swap(sa, Pa, sw)
+    sw2 = (angle <= 20) & (torch.minimum(fat1, fat2) <= 0.2) & ~(fat1 > 0.2)
+    m1, m2 = torch.where(sw2[:, None], m2, m1), torch.where(sw2[:, None], m1, m2)
+    L1, L2 = torch.where(sw2[:, None], L2, L1), torch.where(sw2[:, None], L1, L2)
+    sa, Pa = _swap(sa, Pa, sw2)
+    fa = torch.where(L1[:, 0] < L1[:, 1], torch.zeros_like(fat1), l2fa(L1[:, 0], L1[:, 1], L1[:, 1]))
+    xa = xa + torch.stack([m1[:, 2] / vox[0], m1[:, 1] / vox[1], m1[:, 0] / vox[2]], 1) * step_length
+    # the checks, at the new position
+    mean_sig = H(D, sa[:, None])[:, 0].mean(1)
+    inside = mask_at(D, xa) > 0
+    stop = ~inside | (mean_sig < stopping_threshold) | (fa < stopping_fa) | (step > max_steps)
+    return xa, sa, Pa, m1, stop, {"swap": sw, "swap2": sw2, "fa": fa, "mean_signal": mean_sig, "inside": inside}
+
+
 def track(D: dict, offset_kji, seeding_threshold=0.1, stopping_fa=0.08, stopping_threshold=0.06,
           step_length=0.3, record_length=1.8, max_half_length=250.0, Qm=0.001, Ql=50.0, Rs=0.02,
-          batch=50_000, progress=None, select=None):
+          batch=50_000, progress=None, select=None, dtype=torch.float64, device=None, capture=None):
     """All fibers. Returns (points list of (n, 3) RAS arrays in seed order, stats). With `select`
     (indices into the seed list), only those seeds are tracked; stats["seed_index"] then says which
-    seed each returned fiber came from."""
-    dev = D["A"].device
+    seed each returned fiber came from.
+
+    `dtype` is the tracking arithmetic: float64 is the binary's; float32 is what an Apple GPU can do.
+    Seeds and their initial states are computed in float64 either way, so two dtypes start from the
+    same half-fibers and differ only in the steps. `device` is where the steps run (default: where D
+    is); seeds are made where D is, so a float64 D on the CPU can seed an MPS run, which has no
+    float64. `capture(step, index, xa, sa, Pa, oa)`, when given, sees every step's inputs before the
+    step, `index` being the half-fibers' (for one-step fixtures)."""
     pts, fwd, inv, e1, fa0 = seeds(D, offset_kji, seeding_threshold)
-    sel = torch.arange(len(pts), device=dev) if select is None else torch.as_tensor(select, device=dev)
-    pts, fwd, inv, e1, fa0 = pts[sel], fwd[sel], inv[sel], e1[sel], fa0[sel]
+    sel = torch.arange(len(pts), device=pts.device) if select is None else torch.as_tensor(select, device=pts.device)
+    D = at_dtype(D, dtype, device)
+    dev = D["A"].device
+    pts, fwd, inv, e1, fa0 = (t[sel].to(dtype).to(dev) for t in (pts, fwd, inv, e1, fa0))
+    sel = sel.cpu()
     S = len(pts)
     x0 = torch.stack([pts, pts], 1).reshape(-1, 3)                    # half-fibers 2s (fwd), 2s+1 (inv)
     st0 = torch.stack([fwd, inv], 1).reshape(-1, 10)
     dir0 = torch.stack([e1, -e1], 1).reshape(-1, 3)
-    fa_0 = torch.stack([fa0, fa0], 1).reshape(-1)
-    Q = torch.diag(torch.tensor([Qm] * 3 + [Ql] * 2 + [Qm] * 3 + [Ql] * 2, dtype=torch.float64, device=dev))
+    Q = torch.diag(torch.tensor([Qm] * 3 + [Ql] * 2 + [Qm] * 3 + [Ql] * 2, dtype=dtype, device=dev))
     max_steps = math.ceil(max_half_length / step_length)
     spr = int(record_length / step_length)
-    vox = D["voxel"]
     halves = []                                                      # per half-fiber: (n_rec, 3) in (k, j, i)
     steps_total = 0
     for s0 in range(0, len(x0), batch):
         x = x0[s0:s0 + batch].clone(); state = st0[s0:s0 + batch].clone(); old = dir0[s0:s0 + batch].clone()
         nb = len(x)
-        P = (P0 * torch.eye(10, dtype=torch.float64, device=dev)).expand(nb, 10, 10).clone()
-        rec = torch.full((nb, max_steps // spr + 2, 3), float("nan"), dtype=torch.float64, device=dev)
+        P = (P0 * torch.eye(10, dtype=dtype, device=dev)).expand(nb, 10, 10).clone()
+        rec = torch.full((nb, max_steps // spr + 2, 3), float("nan"), dtype=dtype, device=dev)
         rec[:, 0] = x
         nrec = torch.ones(nb, dtype=torch.long, device=dev)
         alive = torch.arange(nb, device=dev)
@@ -291,30 +346,10 @@ def track(D: dict, offset_kji, seeding_threshold=0.1, stopping_fa=0.08, stopping
             step += 1
             steps_total += len(alive)
             xa, sa, Pa, oa = x[alive], state[alive], P[alive], old[alive]
-            z = interp(D, xa)
-            sa, Pa = ukf_step(D, sa, Pa, z, Q, Rs)
-            # State2Tensor2T
-            m1, m2 = _normalize(sa[:, 0:3]), _normalize(sa[:, 5:8])
-            L1 = torch.stack([sa[:, 3].clamp_min(LMIN), sa[:, 4].clamp_min(LMIN)], 1)
-            L2 = torch.stack([sa[:, 8].clamp_min(LMIN), sa[:, 9].clamp_min(LMIN)], 1)
-            m1 = torch.where(((m1 * oa).sum(1) < 0)[:, None], -m1, m1)
-            m2 = torch.where(((m2 * oa).sum(1) < 0)[:, None], -m2, m2)
-            fat1, fat2 = l2fa(L1[:, 0], L1[:, 1], L1[:, 1]), l2fa(L2[:, 0], L2[:, 1], L2[:, 1])
-            angle = torch.rad2deg(torch.acos((m1 * m2).sum(1)))
-            sw = (m1 * oa).sum(1) < (m2 * oa).sum(1)
-            m1, m2 = torch.where(sw[:, None], m2, m1), torch.where(sw[:, None], m1, m2)
-            L1, L2 = torch.where(sw[:, None], L2, L1), torch.where(sw[:, None], L1, L2)
-            fat1, fat2 = torch.where(sw, fat2, fat1), torch.where(sw, fat1, fat2)
-            sa, Pa = _swap(sa, Pa, sw)
-            sw2 = (angle <= 20) & (torch.minimum(fat1, fat2) <= 0.2) & ~(fat1 > 0.2)
-            m1, m2 = torch.where(sw2[:, None], m2, m1), torch.where(sw2[:, None], m1, m2)
-            L1, L2 = torch.where(sw2[:, None], L2, L1), torch.where(sw2[:, None], L1, L2)
-            sa, Pa = _swap(sa, Pa, sw2)
-            fa = torch.where(L1[:, 0] < L1[:, 1], torch.zeros_like(fat1), l2fa(L1[:, 0], L1[:, 1], L1[:, 1]))
-            xa = xa + torch.stack([m1[:, 2] / vox[0], m1[:, 1] / vox[1], m1[:, 0] / vox[2]], 1) * step_length
-            # the checks, at the new position
-            mean_sig = H(D, sa[:, None])[:, 0].mean(1)
-            stop = (mask_at(D, xa) <= 0) | (mean_sig < stopping_threshold) | (fa < stopping_fa) | (step > max_steps)
+            if capture:
+                capture(step, s0 + alive, xa, sa, Pa, oa)
+            xa, sa, Pa, m1, stop, _ = advance(D, xa, sa, Pa, oa, Q, Rs, step, max_steps, step_length,
+                                              stopping_fa, stopping_threshold)
             go = ~stop
             if (step + 1) % spr == 0:
                 ia = alive[go]

@@ -494,3 +494,39 @@ each step is marked.
    `region_mask` is 0/1. **The code that did this was not found**: not in TractCloud, not in WMA's
    scripts, not in a GitHub code search. Slicer's Probe Volume With Model, or a lab script, is a guess.
    TractCloud does not read either array.
+
+## 2026-10-01 UKF in float32: what an Apple GPU's arithmetic does
+
+`ukf32_compare.py` → `ukf32.json`. Stanford HARDI, ORG settings. `track(dtype=..., device=...)`
+now runs the steps in float32 on the CPU or on MPS (which has no float64), from the same float64
+seeds; the float64 path is bit-identical to before the change. `advance()` is one step, and
+`DATA/ukf32/steps.npz` holds 3,335 captured step inputs (steps 1-835): the fixture a Metal kernel
+will be tested against.
+
+**One step, identical inputs, float32 against float64.** State relative error 1.3e-5 median
+(2e-3 worst), direction 0.016° (90th percentile), position 1.4e-5 mm, FA 1.7e-5. Decisions: no
+stop and no in-mask flips in 3,335 steps; 5 tensor-swap flips (0.15 %), where the two tensors are
+nearly equidistant from the previous direction. CPU and MPS float32 are alike.
+
+**Whole fibers, 2,011 seeds:**
+
+| | ends within 0.06 mm | fibers within 0.1 mm everywhere | same point count | density r | worst |
+|---|---|---|---|---|---|
+| float64 CPU vs float64 CUDA (the floor) | 100 % | 1,729 / 1,729 | 1,729 | 1.000 | 6.6e-5 mm |
+| float32 CPU vs float64 | 88.4 % | 1,256 / 1,728 | 1,508 | 0.972 | 35 mm |
+| float32 MPS vs float64 | 88.7 % | 1,249 / 1,729 | 1,518 | 0.973 | 35 mm |
+| float32 MPS vs float32 CPU | 85.9 % | 1,177 / 1,728 | 1,485 | 0.970 | 94 mm |
+
+- **float64 is robust to rounding order; float32 is not.** Two float64 implementations agree to
+  6.6e-5 mm on every fiber. In float32 a 1e-5 per-step error flips a swap or stop decision in about
+  one fiber in eight, and that fiber then diverges (13 % change length by at least one 1.8 mm
+  record point; the 99th percentile is 80 mm).
+- **The device does not matter; the precision does.** MPS float32 differs from CPU float32 as much
+  as either differs from float64.
+- **albula-diffusion's own GPU-vs-CPU figures** (README: 90 % of fiber ends within 0.06 mm,
+  density maps r = 0.97) are what float32 alone produces here (88 %, 0.97). His GPU port behaves
+  like a correct float32 version of his CPU port.
+- **Speed (eager torch, M2):** float64 CPU 4,600 steps/s, float32 CPU 8,100, float32 MPS 6,400.
+  Eager MPS is launch-bound; the fused Metal kernel is what would change this.
+- **Not yet decided:** whether float32's 12 % of diverging fibers matter. That is the bootstrap
+  test: the spread the scan's own measurement noise gives the float64 pipeline.
