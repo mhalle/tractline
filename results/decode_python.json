@@ -1,0 +1,32 @@
+{
+ "vertices": 21641984,
+ "rows": [
+  {
+   "bits": 14,
+   "draco_bytes": 70490294,
+   "predictive_bytes": 51219954,
+   "python_draco_decode_s": 2.027,
+   "python_draco_points_to_numpy_s": 1.455,
+   "python_predictive_decompress_s": 0.422,
+   "python_predictive_reconstruct_s": 1.838
+  },
+  {
+   "bits": 12,
+   "draco_bytes": 54560678,
+   "predictive_bytes": 35776475,
+   "python_draco_decode_s": 2.155,
+   "python_draco_points_to_numpy_s": 1.522,
+   "python_predictive_decompress_s": 0.398,
+   "python_predictive_reconstruct_s": 1.87
+  },
+  {
+   "bits": 11,
+   "draco_bytes": 46557843,
+   "predictive_bytes": 29032908,
+   "python_draco_decode_s": 1.902,
+   "python_draco_points_to_numpy_s": 1.442,
+   "python_predictive_decompress_s": 0.374,
+   "python_predictive_reconstruct_s": 1.767
+  }
+ ]
+}

@@ -1,0 +1,59 @@
+{
+ "node": "v25.8.1",
+ "results": [
+  {
+   "bits": 14,
+   "vertices": 21641984,
+   "draco": {
+    "ms": 1157,
+    "first_ms": 1632,
+    "values": 64925952,
+    "max_diff_from_grid_mm": 0.0102,
+    "mvert_per_s": 18.7
+   },
+   "predictive": {
+    "ms": 258,
+    "decompress_ms": 169,
+    "reconstruct_ms": 87,
+    "max_diff_from_grid_mm": 0,
+    "mvert_per_s": 83.9
+   }
+  },
+  {
+   "bits": 12,
+   "vertices": 21641984,
+   "draco": {
+    "ms": 1008,
+    "first_ms": 1011,
+    "values": 64925952,
+    "max_diff_from_grid_mm": 0.041,
+    "mvert_per_s": 21.5
+   },
+   "predictive": {
+    "ms": 222,
+    "decompress_ms": 114,
+    "reconstruct_ms": 108,
+    "max_diff_from_grid_mm": 0,
+    "mvert_per_s": 97.5
+   }
+  },
+  {
+   "bits": 11,
+   "vertices": 21641984,
+   "draco": {
+    "ms": 894,
+    "first_ms": 895,
+    "values": 64925952,
+    "max_diff_from_grid_mm": 0.0819,
+    "mvert_per_s": 24.2
+   },
+   "predictive": {
+    "ms": 214,
+    "decompress_ms": 107,
+    "reconstruct_ms": 108,
+    "max_diff_from_grid_mm": 0,
+    "mvert_per_s": 101.1
+   }
+  }
+ ]
+}

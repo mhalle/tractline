@@ -274,35 +274,48 @@ export, which discards more than half the vertices.
   is known to be biased. Shen et al. 2026 independently found rankfield's group-blind depth cut
   ("mass is not decision support"). No standard accepts top-k soft labels.
 
-## 2026-10-01 TRAKO, head to head
+## 2026-10-01 TRAKO, head to head: size and decode speed
 
-`trako_compare.py` → `trako.json`. TRAKO (Haehn et al., MICCAI 2020) was run on the same HCP
-tractogram, coordinates only, against the predictive encoding on **the same grid**. Draco
-quantizes over the bounding box's largest extent, 168 mm, so both sides share the grid and
-origin. Errors are therefore identical to four decimals, and the sizes differ only in coding.
+`trako_compare.py` → `trako.json`; `decode/decode_prep.py` and `decode/decode_bench.mjs` →
+`decode_python.json`, `decode_js.json`. TRAKO (Haehn et al., MICCAI 2020; glTF + Draco) was run on
+the same HCP tractogram, coordinates only, against the predictive encoding on Draco's grid. Draco
+quantizes over the bounding box's largest extent (168 mm). Its float32 arithmetic puts 0.005-0.02 %
+of coordinates one step from exact rounding; its error to the original stays within half a step,
+as ours does, so the sizes compare like for like.
 
-| bits | grid | max / mean error | TRAKO (Draco, 1st order) | 1st order, our coder | 2nd order, our coder | TRAKO / ours |
-|---|---|---|---|---|---|---|
-| 14 (TRAKO's default) | 0.0102 mm | 0.0051 / 0.0049 mm | 4.37 B/v | 2.89 | **2.37** | 1.85× |
-| 12 | 0.0409 mm | 0.0205 / 0.0197 mm | 3.39 | 2.14 | **1.65** | 2.05× |
-| 11 | 0.0819 mm | 0.0410 / 0.0393 mm | 2.89 | 1.79 | **1.34** | 2.16× |
+*Corrected the same day.* The first version of this section compared the predictive encoding
+with TRAKO's whole `.tko` file. That file embeds its Draco buffers base64 in glTF JSON, a third
+larger than the bytes themselves, which put TRAKO at 1.85-2.16× and credited the difference to
+the entropy coder. The figures below use the raw Draco buffers.
 
-Draco's compression level (1 or 10) changes TRAKO's size by under 1 %.
+| bits | grid | max error | raw Draco | `.tko` file | 1st order, our coder | 2nd order, our coder | Draco / ours |
+|---|---|---|---|---|---|---|---|
+| 14 (TRAKO's default) | 0.0102 mm | 0.0051 mm | 3.27 B/v | 4.37 | 2.89 | **2.37** | 1.38× |
+| 12 | 0.0409 mm | 0.0205 mm | 2.54 | 3.39 | 2.14 | **1.65** | 1.54× |
+| 11 | 0.0819 mm | 0.0410 mm | 2.17 | 2.89 | 1.79 | **1.34** | 1.62× |
 
-**Reading:**
-- **The entropy coder matters more than the prediction order.** At 12 bits, Draco's first-order
-  coding takes 3.39 B/vertex. The same first-order deltas under bitshuffle and zstd take 2.14
-  (-37 %), and second-order prediction takes 1.65 (a further -23 %).
-- **TRAKO is the right comparison**, since both are lossless at a grid. Its paper's errors
-  (0.08-0.15 mm mean) come from its own test data and settings; here its default is a 0.01 mm
-  grid.
-- **What TRAKO has that this does not:**
-  - glTF packaging, which browser glTF loaders with a Draco decoder can open;
-  - per-vertex and per-streamline attributes in the same container;
-  - an existing file format.
+- **Prediction order matters more than the coder.** At 12 bits, first-order deltas under
+  bitshuffle and zstd save 16 % on Draco's first-order coding, and second-order prediction saves
+  a further 23 %. Draco's compression level (1 or 10) changes its size by under 1 %.
 
-  The predictive encoding is a measurement, not a format.
-- **Running TRAKO in 2026 took repairs** (scratch environment only, not in the repo): its Draco
-  binding's `setup.py` (a cmake < 3.15 pin and `packaging.LegacyVersion`), its pre-3.11 Cython
-  output (regenerated), and NumPy aliases removed in 1.24 (`np.float`/`np.int` → `float`/`int`).
-  That is a fact about its maintenance, worth knowing before building on it.
+**Decode speed**, all 21.6 M vertices to float32 positions, best of 5 (3 in Python), on the M2:
+
+| | Draco (TRAKO's buffer) | predictive |
+|---|---|---|
+| Node 25: draco3d WASM vs numcodecs Blosc WASM + a JS loop | 894-1157 ms, **19-24 Mvertex/s** | 214-258 ms, **84-101 Mvertex/s** (decompress 107-169, reconstruct 87-108) |
+| Python: TrakoDracoPy vs blosc + numpy | 1.9-2.2 s, plus 1.4-1.5 s to turn its point list into an array | 0.37-0.42 s decompress + 1.8-1.9 s reconstruct |
+
+- **In JS the predictive decode is 4-4.7× faster than Draco.** The reconstruction is two running
+  sums per streamline; Blosc's bitshuffle and zstd do the rest.
+- **The Python reconstruction is not tuned:** whole-array numpy passes over int64. A compiled
+  loop would cost about what JS's does.
+- **Random access differs.** Prediction restarts at every streamline, so any chunk or streamline
+  decodes on its own given the lengths. TRAKO stores one Draco buffer for the whole tractogram,
+  so it decodes all or nothing; progressive or region-of-interest loading would need it split
+  into many buffers, each a separate Draco stream.
+- **What TRAKO has that this does not:** glTF packaging that browser glTF loaders with a Draco
+  decoder can open; per-vertex and per-streamline attributes in the same container; an existing
+  file format.
+- **Running TRAKO in 2026 took repairs** (scratch environment only): its Draco binding's
+  `setup.py` (a cmake < 3.15 pin and `packaging.LegacyVersion`), its pre-3.11 Cython output, and
+  the NumPy aliases removed in 1.24.

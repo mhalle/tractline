@@ -10,21 +10,23 @@
    "grid_mm": 0.0102,
    "draco_compression_level": 1,
    "trako": {
-    "bytes": 94510137,
-    "B_per_vertex": 4.367,
+    "tko_file_bytes": 94510137,
+    "tko_B_per_vertex": 4.367,
+    "bytes": 70881481,
+    "B_per_vertex": 3.275,
     "max_axis_err_mm": 0.0051,
     "mean_euclid_err_mm": 0.0049,
-    "encode_s": 8.4,
-    "decode_s": 5.2
+    "encode_s": 8.1,
+    "decode_s": 5.3
    },
    "predictive": {
     "bytes": 51219954,
     "B_per_vertex": 2.367,
     "max_axis_err_mm": 0.0051,
     "mean_euclid_err_mm": 0.0049,
-    "encode_s": 4.8
+    "encode_s": 4.6
    },
-   "trako_over_predictive": 1.85,
+   "trako_over_predictive": 1.38,
    "first_order_same_coder": {
     "B_per_vertex": 2.887
    }
@@ -34,42 +36,49 @@
    "grid_mm": 0.0102,
    "draco_compression_level": 10,
    "trako": {
-    "bytes": 94430293,
-    "B_per_vertex": 4.363,
+    "tko_file_bytes": 94430293,
+    "tko_B_per_vertex": 4.363,
+    "bytes": 70821598,
+    "B_per_vertex": 3.272,
     "max_axis_err_mm": 0.0051,
     "mean_euclid_err_mm": 0.0049,
-    "encode_s": 8.3,
-    "decode_s": 5.3
+    "encode_s": 8.6,
+    "decode_s": 5.5
    },
    "predictive": {
     "bytes": 51219954,
     "B_per_vertex": 2.367,
     "max_axis_err_mm": 0.0051,
     "mean_euclid_err_mm": 0.0049,
-    "encode_s": 5.9
+    "encode_s": 5.0
    },
-   "trako_over_predictive": 1.84
+   "trako_over_predictive": 1.38,
+   "first_order_same_coder": {
+    "B_per_vertex": 2.887
+   }
   },
   {
    "bits": 12,
    "grid_mm": 0.0409,
    "draco_compression_level": 1,
    "trako": {
-    "bytes": 73272129,
-    "B_per_vertex": 3.386,
+    "tko_file_bytes": 73272129,
+    "tko_B_per_vertex": 3.386,
+    "bytes": 54952975,
+    "B_per_vertex": 2.539,
     "max_axis_err_mm": 0.0205,
     "mean_euclid_err_mm": 0.0197,
-    "encode_s": 10.1,
-    "decode_s": 5.6
+    "encode_s": 7.9,
+    "decode_s": 5.3
    },
    "predictive": {
     "bytes": 35776475,
     "B_per_vertex": 1.653,
     "max_axis_err_mm": 0.0205,
     "mean_euclid_err_mm": 0.0197,
-    "encode_s": 4.5
+    "encode_s": 5.1
    },
-   "trako_over_predictive": 2.05,
+   "trako_over_predictive": 1.54,
    "first_order_same_coder": {
     "B_per_vertex": 2.14
    }
@@ -79,42 +88,49 @@
    "grid_mm": 0.0409,
    "draco_compression_level": 10,
    "trako": {
-    "bytes": 72890165,
-    "B_per_vertex": 3.368,
+    "tko_file_bytes": 72890165,
+    "tko_B_per_vertex": 3.368,
+    "bytes": 54666503,
+    "B_per_vertex": 2.526,
     "max_axis_err_mm": 0.0205,
     "mean_euclid_err_mm": 0.0197,
-    "encode_s": 8.0,
-    "decode_s": 5.5
+    "encode_s": 7.9,
+    "decode_s": 5.8
    },
    "predictive": {
     "bytes": 35776475,
     "B_per_vertex": 1.653,
     "max_axis_err_mm": 0.0205,
     "mean_euclid_err_mm": 0.0197,
-    "encode_s": 4.5
+    "encode_s": 4.4
    },
-   "trako_over_predictive": 2.04
+   "trako_over_predictive": 1.53,
+   "first_order_same_coder": {
+    "B_per_vertex": 2.14
+   }
   },
   {
    "bits": 11,
    "grid_mm": 0.0819,
    "draco_compression_level": 1,
    "trako": {
-    "bytes": 62601421,
-    "B_per_vertex": 2.893,
+    "tko_file_bytes": 62601421,
+    "tko_B_per_vertex": 2.893,
+    "bytes": 46949944,
+    "B_per_vertex": 2.169,
     "max_axis_err_mm": 0.041,
     "mean_euclid_err_mm": 0.0393,
-    "encode_s": 8.8,
-    "decode_s": 5.6
+    "encode_s": 8.2,
+    "decode_s": 5.0
    },
    "predictive": {
     "bytes": 29032908,
     "B_per_vertex": 1.342,
     "max_axis_err_mm": 0.041,
     "mean_euclid_err_mm": 0.0393,
-    "encode_s": 4.8
+    "encode_s": 4.3
    },
-   "trako_over_predictive": 2.16,
+   "trako_over_predictive": 1.62,
    "first_order_same_coder": {
     "B_per_vertex": 1.79
    }
@@ -124,21 +140,26 @@
    "grid_mm": 0.0819,
    "draco_compression_level": 10,
    "trako": {
-    "bytes": 62214933,
-    "B_per_vertex": 2.875,
+    "tko_file_bytes": 62214933,
+    "tko_B_per_vertex": 2.875,
+    "bytes": 46660079,
+    "B_per_vertex": 2.156,
     "max_axis_err_mm": 0.041,
     "mean_euclid_err_mm": 0.0393,
-    "encode_s": 8.1,
-    "decode_s": 5.5
+    "encode_s": 7.9,
+    "decode_s": 5.2
    },
    "predictive": {
     "bytes": 29032908,
     "B_per_vertex": 1.342,
     "max_axis_err_mm": 0.041,
     "mean_euclid_err_mm": 0.0393,
-    "encode_s": 4.4
+    "encode_s": 4.7
    },
-   "trako_over_predictive": 2.14
+   "trako_over_predictive": 1.61,
+   "first_order_same_coder": {
+    "B_per_vertex": 1.79
+   }
   }
  ]
 }

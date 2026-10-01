@@ -12,7 +12,9 @@ Both sides encode the HCP tractogram's coordinates only (`coords_only=True`: its
 arrays are left out of both). For each TRAKO setting the predictive encoding runs on the SAME
 grid (Draco's quantum: extent / (2^bits - 1)), so the two differ only in prediction and entropy
 coding. Errors are measured against the original float32 vertices, in streamline order; file
-sizes are the whole .tko on TRAKO's side, and residuals plus lengths on ours.
+sizes are TRAKO's raw Draco buffers (its .tko file is a third larger again: the buffers are
+base64 in glTF JSON), and residuals plus lengths on ours. Draco's float32 arithmetic puts some
+vertices one grid step from exact rounding; its error to the original stays within half a step.
 
 TRAKO_PY: a Python with trako and TrakoDracoPy installed. In 2026 that took building
 TrakoDracoPy from source: its setup.py pins cmake < 3.15 and imports packaging.LegacyVersion
@@ -26,6 +28,8 @@ Writes results/trako.json.
 import json, os, sys, tempfile, time
 from pathlib import Path
 import numpy as np
+import base64
+import pygltflib
 import trako as TKO
 from vtk.util.numpy_support import vtk_to_numpy
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -70,6 +74,10 @@ for bits in (14, 12, 11):
             TKO.Encoder.fromVtp(str(VTP), config=conf, verbose=False, coords_only=True).save(out)
             t_enc = time.time() - t0
             size = os.path.getsize(out)
+            # a .tko embeds its Draco buffers base64 in glTF JSON (data: URIs); the raw Draco
+            # bytes are what a binary container would hold, and what is compared below
+            g = pygltflib.GLTF2().load(out)
+            raw = sum(bv.byteLength for bv in g.bufferViews)
             t0 = time.time()
             D, doff = vertices(TKO.Decoder.toVtp(out, verbose=False))
             t_dec = time.time() - t0
@@ -83,13 +91,13 @@ for bits in (14, 12, 11):
         oerr = np.abs(Q * q + lo - P)
         rows.append({
             "bits": bits, "grid_mm": round(q, 4), "draco_compression_level": cl,
-            "trako": {"bytes": size, "B_per_vertex": round(size / V, 3), "max_axis_err_mm": round(float(err.max()), 4),
+            "trako": {"tko_file_bytes": size, "tko_B_per_vertex": round(size / V, 3), "bytes": raw, "B_per_vertex": round(raw / V, 3), "max_axis_err_mm": round(float(err.max()), 4),
                       "mean_euclid_err_mm": round(float(np.linalg.norm(D - P, axis=1).mean()), 4),
                       "encode_s": round(t_enc, 1), "decode_s": round(t_dec, 1)},
             "predictive": {"bytes": int(ours), "B_per_vertex": round(ours / V, 3), "max_axis_err_mm": round(float(oerr.max()), 4),
                            "mean_euclid_err_mm": round(float(np.linalg.norm(Q * q + lo - P, axis=1).mean()), 4),
                            "encode_s": round(t_ours, 1)},
-            "trako_over_predictive": round(size / ours, 2)})
+            "trako_over_predictive": round(raw / ours, 2)})
         print(json.dumps(rows[-1]), flush=True)
 
 (HERE / "results" / "trako.json").write_text(json.dumps(
