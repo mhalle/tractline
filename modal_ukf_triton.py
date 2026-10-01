@@ -3,6 +3,7 @@
     modal run bench/tractography/modal_ukf_triton.py --stage smoke    # compile, one step on the fixtures
     modal run bench/tractography/modal_ukf_triton.py --stage tune     # one-step throughput by launch config
     modal run bench/tractography/modal_ukf_triton.py --stage full     # the whole brain, against float64
+    ... --kind block                                                   # the compact kernel (_ukf_triton_block.py)
 
 smoke: every fixture of DATA/ukf32/steps.npz (ukf32_compare.py) stepped by the kernel, against float64
        and torch's float32 step (both on the GPU), and against itself (two launches, bit for bit).
@@ -23,6 +24,7 @@ image = (modal.Image.debian_slim(python_version="3.12").pip_install("torch>=2.7"
          .env({"PYTHONPATH": "/root", "TRITON_CACHE_DIR": "/vol/triton-cache"})  # compile once per kernel source
          .add_local_file(str(HERE / "_ukf_torch.py"), remote_path="/root/_ukf_torch.py")
          .add_local_file(str(HERE / "_ukf_triton.py"), remote_path="/root/_ukf_triton.py")
+         .add_local_file(str(HERE / "_ukf_triton_block.py"), remote_path="/root/_ukf_triton_block.py")
          .add_local_file(str(HERE / "_fibercmp.py"), remote_path="/root/_fibercmp.py")
          .add_local_file(str(DATA / "ukf32/steps.npz"), remote_path="/root/steps.npz"))
 vol = modal.Volume.from_name("tractography-bench")
@@ -53,11 +55,20 @@ def _one_step(fn, Dd, dtype, Z, **kw):
     return {k: np.concatenate(v)[order] for k, v in out.items()}
 
 
+def _kernel(kind):
+    if kind == "block":
+        import _ukf_triton_block as T
+    else:
+        import _ukf_triton as T
+    return T
+
+
 @app.function(gpu="A10G", volumes={"/vol": vol}, timeout=3600, memory=32768)
-def smoke() -> dict:
+def smoke(kind: str = "unrolled") -> dict:
     import time
     import numpy as np, torch, triton
-    import _ukf_torch as U, _ukf_triton as T, _fibercmp as C
+    import _ukf_torch as U, _fibercmp as C
+    T = _kernel(kind)
     D, off = _setup()
     Z = np.load("/root/steps.npz")
     vox = D["voxel"].numpy()
@@ -68,7 +79,7 @@ def smoke() -> dict:
     tri2 = _one_step(T.advance, Dt, torch.float32, Z)
     ref = _one_step(U.advance, U.at_dtype(D, torch.float64, "cuda"), torch.float64, Z)
     t32 = _one_step(U.advance, Dt, torch.float32, Z)
-    return {"gpu": torch.cuda.get_device_name(0), "torch": str(torch.__version__), "triton": triton.__version__,
+    return {"kernel": kind, "gpu": torch.cuda.get_device_name(0), "torch": str(torch.__version__), "triton": triton.__version__,
             "first_call_s_with_compile": round(compile_s, 1), "rows": int(len(Z["step"])),
             "triton_vs_f64": C.step_diff(tri, ref, vox), "torch32_vs_f64": C.step_diff(t32, ref, vox),
             "triton_vs_torch32": C.step_diff(tri, t32, vox),
@@ -76,10 +87,11 @@ def smoke() -> dict:
 
 
 @app.function(gpu="A10G", volumes={"/vol": vol}, timeout=7200, memory=32768)
-def tune() -> dict:
+def tune(kind: str = "unrolled") -> dict:
     import time
     import numpy as np, torch
-    import _ukf_torch as U, _ukf_triton as T
+    import _ukf_torch as U
+    T = _kernel(kind)
     D, off = _setup()
     pts, fwd, inv, e1, fa = U.seeds(D, off)
     Dt = U.at_dtype(D, torch.float32, "cuda")
@@ -88,18 +100,19 @@ def tune() -> dict:
     P = (0.01 * torch.eye(10)).expand(B, 10, 10).contiguous().cuda()
     Q = torch.diag(torch.tensor([0.001] * 3 + [50.0] * 2 + [0.001] * 3 + [50.0] * 2)).cuda()
     rows = []
-    for math in ("precise", "fast"):
-        for F in (1, 2, 4, 8):
-            for w in (1, 2, 4, 8):
+    kw = (lambda m: {"math": m}) if kind == "unrolled" else (lambda m: {})
+    for math in (("precise", "fast") if kind == "unrolled" else ("precise",)):
+        for F in ((1, 2, 4, 8) if kind == "unrolled" else (1, 2, 4)):
+            for w in ((1, 2, 4, 8) if kind == "unrolled" else (2, 4, 8)):
                 try:
                     t0 = time.time()
-                    T.advance(Dt, x, s, P, o, Q, 0.02, 1, 834, F=F, num_warps=w, math=math)
+                    T.advance(Dt, x, s, P, o, Q, 0.02, 1, 834, F=F, num_warps=w, **kw(math))
                     torch.cuda.synchronize(); comp = time.time() - t0
                     for _ in range(2):
-                        T.advance(Dt, x, s, P, o, Q, 0.02, 1, 834, F=F, num_warps=w, math=math)
+                        T.advance(Dt, x, s, P, o, Q, 0.02, 1, 834, F=F, num_warps=w, **kw(math))
                     torch.cuda.synchronize(); t0 = time.time()
                     for _ in range(5):
-                        T.advance(Dt, x, s, P, o, Q, 0.02, 1, 834, F=F, num_warps=w, math=math)
+                        T.advance(Dt, x, s, P, o, Q, 0.02, 1, 834, F=F, num_warps=w, **kw(math))
                     torch.cuda.synchronize(); dt = (time.time() - t0) / 5
                     rows.append({"math": math, "F": F, "warps": w, "steps_per_s": round(B / dt), "first_call_s": round(comp, 1)})
                 except Exception as e:
@@ -109,10 +122,11 @@ def tune() -> dict:
 
 
 @app.function(gpu="A10G", volumes={"/vol": vol}, timeout=7200, memory=32768)
-def full(F: int = 0, warps: int = 0) -> dict:
+def full(F: int = 0, warps: int = 0, kind: str = "unrolled") -> dict:
     import time
     import numpy as np, torch
-    import _ukf_torch as U, _ukf_triton as T, _fibercmp as C
+    import _ukf_torch as U, _fibercmp as C
+    T = _kernel(kind)
     if F:
         T.F_DEFAULT, T.WARPS_DEFAULT = F, warps
     D, off = _setup()
@@ -120,7 +134,7 @@ def full(F: int = 0, warps: int = 0) -> dict:
     runs = []
     for _ in range(2):
         t0 = time.time()
-        f, st = U.track(D, off, seed_points=pts, backend="triton")
+        f, st = U.track(D, off, seed_points=pts, backend="triton" if kind == "unrolled" else "triton_block")
         torch.cuda.synchronize()
         runs.append((f, st, time.time() - t0))
     (f, st, s), (f2, _, s2) = runs
@@ -129,7 +143,7 @@ def full(F: int = 0, warps: int = 0) -> dict:
     ref = {int(k): z["points"][o[i]:o[i + 1]].astype(np.float64) for i, k in enumerate(z["seed_index"])}
     mine = {int(k): p for k, p in zip(st["seed_index"], f)}
     i2r, dims = D["i2r"], tuple(int(v) for v in D["dim"][::-1])
-    return {"gpu": torch.cuda.get_device_name(0), "F": T.F_DEFAULT, "warps": T.WARPS_DEFAULT,
+    return {"kernel": kind, "gpu": torch.cuda.get_device_name(0), "F": T.F_DEFAULT, "warps": T.WARPS_DEFAULT,
             "seeds": st["seeds"], "fibers": st["fibers"], "fiber_steps": st["fiber_steps"],
             "seconds": round(s, 1), "second_run_seconds": round(s2, 1), "steps_per_s": round(st["fiber_steps"] / s),
             "repeat_identical": bool(len(f) == len(f2) and all(np.array_equal(a, b) for a, b in zip(f, f2))),
@@ -138,8 +152,9 @@ def full(F: int = 0, warps: int = 0) -> dict:
 
 
 @app.local_entrypoint()
-def main(stage: str = "smoke", f: int = 0, warps: int = 0):
+def main(stage: str = "smoke", f: int = 0, warps: int = 0, kind: str = "unrolled"):
     fn = {"smoke": smoke, "tune": tune, "full": full}[stage]
-    r = fn.remote(f, warps) if stage == "full" else fn.remote()
+    r = fn.remote(f, warps, kind) if stage == "full" else fn.remote(kind)
     print(json.dumps(r, indent=1))
-    (HERE / "results" / f"ukf_triton_{stage}.json").write_text(json.dumps(r, indent=1))
+    tag = "" if kind == "unrolled" else f"_{kind}"
+    (HERE / "results" / f"ukf_triton{tag}_{stage}.json").write_text(json.dumps(r, indent=1))

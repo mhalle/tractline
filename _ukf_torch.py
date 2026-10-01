@@ -345,8 +345,8 @@ def track(D: dict, offset_kji, seeding_threshold=0.1, stopping_fa=0.08, stopping
     step, `index` being the half-fibers' (for one-step fixtures). `seed_points` (k, j, i), when given,
     replaces the seeds: every point is tracked from its state on this data (seed_states), none
     rejected, and `select` indexes them. `backend` "metal" takes each step with _ukf_metal's kernel
-    (float32, device "mps"), "triton" with _ukf_triton's (float32, "cuda"); the loop, the recording
-    and the joining stay these."""
+    (float32, device "mps"), "triton" with _ukf_triton's and "triton_block" with _ukf_triton_block's
+    (float32, "cuda"); the loop, the recording and the joining stay these."""
     step_fn = advance
     if backend == "metal":
         import _ukf_metal
@@ -354,6 +354,9 @@ def track(D: dict, offset_kji, seeding_threshold=0.1, stopping_fa=0.08, stopping
     elif backend == "triton":
         import _ukf_triton
         dtype, device, step_fn = torch.float32, "cuda", _ukf_triton.advance
+    elif backend == "triton_block":
+        import _ukf_triton_block
+        dtype, device, step_fn = torch.float32, "cuda", _ukf_triton_block.advance
     if seed_points is None:
         pts, fwd, inv, e1, fa0 = seeds(D, offset_kji, seeding_threshold)
     else:

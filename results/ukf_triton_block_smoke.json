@@ -1,0 +1,135 @@
+{
+ "kernel": "block",
+ "gpu": "NVIDIA A10G",
+ "torch": "2.14.1+cu130",
+ "triton": "3.8.0",
+ "first_call_s_with_compile": 136.6,
+ "rows": 3335,
+ "triton_vs_f64": {
+  "state_rel_err": [
+   3.3e-07,
+   6.88e-07,
+   1.22e-06,
+   0.00198
+  ],
+  "P_rel_err": [
+   3.96e-07,
+   6.75e-07,
+   1.03e-06,
+   1.2e-05
+  ],
+  "position_err_mm": [
+   4.56e-06,
+   8.15e-06,
+   1.32e-05,
+   1.84e-05
+  ],
+  "direction_err_deg": [
+   0.0,
+   0.0155,
+   0.021,
+   0.0242
+  ],
+  "fa_abs_err": [
+   1.31e-07,
+   4.31e-07,
+   8.87e-07,
+   1.59e-06
+  ],
+  "mean_signal_abs_err": [
+   3.88e-08,
+   1.04e-07,
+   1.91e-07,
+   5.51e-07
+  ],
+  "swap_flips": 2,
+  "swap2_flips": 0,
+  "inside_flips": 0,
+  "stop_flips": 0
+ },
+ "torch32_vs_f64": {
+  "state_rel_err": [
+   1.26e-05,
+   4.6e-05,
+   0.000111,
+   0.00195
+  ],
+  "P_rel_err": [
+   9.17e-07,
+   3.51e-06,
+   1e-05,
+   3.77e-05
+  ],
+  "position_err_mm": [
+   6.32e-06,
+   1.46e-05,
+   3.29e-05,
+   8.33e-05
+  ],
+  "direction_err_deg": [
+   0.00282,
+   0.0154,
+   0.0203,
+   0.025
+  ],
+  "fa_abs_err": [
+   3.86e-06,
+   1.72e-05,
+   4.86e-05,
+   0.00023
+  ],
+  "mean_signal_abs_err": [
+   1.37e-06,
+   5.19e-06,
+   1.13e-05,
+   2.73e-05
+  ],
+  "swap_flips": 7,
+  "swap2_flips": 0,
+  "inside_flips": 0,
+  "stop_flips": 0
+ },
+ "triton_vs_torch32": {
+  "state_rel_err": [
+   1.26e-05,
+   4.6e-05,
+   0.000111,
+   0.00198
+  ],
+  "P_rel_err": [
+   8.94e-07,
+   3.51e-06,
+   9.75e-06,
+   3.76e-05
+  ],
+  "position_err_mm": [
+   3.81e-06,
+   1.57e-05,
+   3.32e-05,
+   8.64e-05
+  ],
+  "direction_err_deg": [
+   0.000995,
+   0.0187,
+   0.025,
+   0.0304
+  ],
+  "fa_abs_err": [
+   3.9e-06,
+   1.72e-05,
+   4.87e-05,
+   0.00023
+  ],
+  "mean_signal_abs_err": [
+   1.37e-06,
+   5.19e-06,
+   1.13e-05,
+   2.73e-05
+  ],
+  "swap_flips": 7,
+  "swap2_flips": 0,
+  "inside_flips": 0,
+  "stop_flips": 0
+ },
+ "triton_repeat_identical": true
+}

@@ -660,3 +660,25 @@ subject (440,621 streamlines, 21.6 M vertices), inputs in memory, best of 3:
 - int32 residual arithmetic gives identical residuals and halves that step (0.65 s against
   1.5 s); zstd 9's compression is then most of the geometry time.
 - On an A10G the field encodes in 0.45 s (timing_gpu.json). Geometry was not timed on a GPU.
+
+## 2026-10-01 The field at connectome scale: DeepMultiConnectome
+
+`dmc_field.py` → `dmc_field.json`. DeepMultiConnectome's pretrained two-head model
+(SlicerDMRI/DeepMultiConnectome 6c606ec; PointNet, no context) on HCP 101006's UKF tractogram
+(440,621 streamlines), both log-softmax heads encoded as rank fields (depth 6, clip 8) on an M2.
+The input is off the model's domain (UKF in ACPC space; trained on iFOD2 in MNI), so this is a
+format-and-speed test, not an accuracy test.
+
+- **The heads are 3,655 and 13,695 classes,** not the paper's 3,571 and 13,631: the weights count
+  "unknown" as a node (85 and 165 nodes, n(n+1)/2 pairs).
+- **Size:** dense float16 is 3.2 GB and 12.1 GB for this subject (21 GB and 80 GB at the paper's
+  2.93 M streamlines). The fields are 5.6 MB and 6.2 MB (12.7 and 14.1 B/streamline compressed,
+  19.0 raw), the same bytes per streamline as TractCloud's 1,600 classes. Top rank = argmax for
+  every streamline in both heads.
+- **The outputs are diffuse here:** 79 % (DK) and 85 % (Destrieux) of streamlines keep all 6
+  planes; median dropped mass 0.7 % and 2.3 %, 99th percentile 33 % and 43 %. Off-domain input
+  likely widens them; on its own data a deeper field (8-12) may still be worth it for Destrieux.
+- **Time, M2:** features 2.9 s, inference (MPS, both heads) 16.4 s (26,900 streamlines/s), encode
+  on the CPU 5.7 s (3,655 classes) and 26.2 s (13,695): encoding cost grows with the class count.
+  At the paper's 2.93 M streamlines: about 110 s inference, 40 s and 175 s encode on this laptop's
+  CPU. The GPU encode path (0.45 s for TractCloud on an A10G) is the obvious next step.
