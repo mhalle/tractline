@@ -1,0 +1,74 @@
+{
+ "gpu": "NVIDIA A10G",
+ "torch": "2.14.1+cu130",
+ "streamlines": 440621,
+ "context_cpu_s": 3.37,
+ "context_gpu": {
+  "seconds": 0.39,
+  "streamlines_with_identical_context": 440138,
+  "of": 440621
+ },
+ "variants": [
+  {
+   "variant": "A upstream",
+   "seconds": 28.0,
+   "streamlines_per_s": 15734
+  },
+  {
+   "variant": "B context on GPU",
+   "seconds": 25.84,
+   "streamlines_per_s": 17050,
+   "cluster_labels_differ": 0,
+   "tract_labels_differ": 0,
+   "max_abs_logp_diff": 0.0
+  },
+  {
+   "variant": "C + cudnn",
+   "seconds": 7.65,
+   "streamlines_per_s": 57601,
+   "cluster_labels_differ": 2,
+   "tract_labels_differ": 1,
+   "max_abs_logp_diff": 1.7032
+  },
+  {
+   "variant": "D + TF32",
+   "seconds": 7.37,
+   "streamlines_per_s": 59794,
+   "cluster_labels_differ": 2625,
+   "tract_labels_differ": 967,
+   "max_abs_logp_diff": 12.9982
+  },
+  {
+   "variant": "E + fp16 autocast",
+   "seconds": 5.32,
+   "streamlines_per_s": 82845,
+   "cluster_labels_differ": 12216,
+   "tract_labels_differ": 4393,
+   "max_abs_logp_diff": 18.6701
+  },
+  {
+   "variant": "F + bf16 autocast",
+   "seconds": 5.22,
+   "streamlines_per_s": 84361,
+   "cluster_labels_differ": 38176,
+   "tract_labels_differ": 13671,
+   "max_abs_logp_diff": 26.7719
+  },
+  {
+   "variant": "G fp16, batch 4096",
+   "seconds": 5.25,
+   "streamlines_per_s": 83935,
+   "cluster_labels_differ": 12216,
+   "tract_labels_differ": 4393,
+   "max_abs_logp_diff": 18.6701
+  },
+  {
+   "variant": "H + torch.compile",
+   "seconds": 1.6,
+   "streamlines_per_s": 275894,
+   "cluster_labels_differ": 12222,
+   "tract_labels_differ": 4386,
+   "max_abs_logp_diff": 18.6725
+  }
+ ]
+}

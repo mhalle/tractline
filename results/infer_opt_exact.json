@@ -1,0 +1,33 @@
+{
+ "all_margin_median": 4.12,
+ "all_with_margin_under_0.5": 0.064,
+ "rows": {
+  "reference fp32, cudnn off": {
+   "seconds": 25.9
+  },
+  "fp32 cudnn, batch 4096": {
+   "seconds": 7.55,
+   "cluster_labels_differ": 2,
+   "tract_labels_differ": 1,
+   "max_abs_logp_diff": 1.7032,
+   "relabeled_margin_median": 0.0,
+   "relabeled_with_margin_under_0.5": 1.0
+  },
+  "fp32 cudnn + torch.compile, batch 4096": {
+   "seconds": 3.28,
+   "cluster_labels_differ": 9,
+   "tract_labels_differ": 5,
+   "max_abs_logp_diff": 4.407,
+   "relabeled_margin_median": 0.216,
+   "relabeled_with_margin_under_0.5": 1.0
+  },
+  "fp16 autocast + torch.compile, batch 4096": {
+   "seconds": 1.83,
+   "cluster_labels_differ": 12234,
+   "tract_labels_differ": 4395,
+   "max_abs_logp_diff": 18.6725,
+   "relabeled_margin_median": 0.19,
+   "relabeled_with_margin_under_0.5": 0.838
+  }
+ }
+}
