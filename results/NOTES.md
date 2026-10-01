@@ -56,3 +56,36 @@ where the grouping is chosen after inference: categories, custom merges, the out
 cluster-level views. M1 shows the margin is the right quantity. Whether deferring the grouping
 is worth storing the field is the next test: repeat M1 at category level and for merged groups
 (SLF I+II+III, CC1-7), each margin decoded from the same stored field.
+
+## 2026-10-01 M1b: regrouping after inference, field margin vs scalars stored at inference
+
+`regroup.py` → `m1b.json`, `m1b_regroup.png`. For each grouping, a streamline's label is the
+group of its argmax cluster, and the target is that label changing in runs 1-4 relative to
+run 0. Margins come from run 0's full fp16 field; M2 checks that rankfield reproduces them. The
+competitors are every scalar that could be stored at inference: p_max, the cluster margin, and
+the tract mass margin for TractCloud's fixed 42 tracts.
+
+| grouping | groups | change | field mass margin | best scalar at inference | gain (95 % CI) |
+|---|---|---|---|---|---|
+| tract (TractCloud's) | 43 | 28.0 % | 0.875 | 0.875, tract margin | 0 (the same number) |
+| category | 6 | 24.2 % | 0.878 | 0.861, tract margin | +0.017 (0.016-0.018) |
+| merged tracts (SLF, CC) | 35 | 27.2 % | 0.877 | 0.873, tract margin | +0.004 (0.003-0.004) |
+| tract, outliers folded in | 43 | 26.1 % | **0.886** | 0.725, tract margin | **+0.161** (0.158-0.165) |
+| cluster, outliers folded in | 800 | 63.9 % | 0.786 | 0.743, p_max | +0.043 (0.041-0.044) |
+
+**Reading:**
+- **Coarsening the tracts buys almost nothing.** For a category or a merge of a few tracts,
+  the stored 42-tract margin is nearly as good. Merging 2-7 tracts barely moves which
+  streamlines are near a boundary, because most boundaries are against "Other".
+- **The field's case is the outlier decision.** Fold each outlier twin into its cluster's tract
+  and the stored tract margin collapses to 0.725: it measures a boundary, tract against Other,
+  that this grouping removes. The field margin recovers 0.886. Moving the outlier threshold is
+  the decision the plan's claim 4 wanted to defer, and it is where storing the field pays.
+- **Finer groupings also gain.** At cluster level, with outliers folded, the field gains
+  +0.043 over the best scalar.
+- **This is not an argument against precomputing.** Any one grouping known at inference can be
+  stored as its own byte and would match the field on that grouping. What 19 bytes buy over k
+  bytes is every grouping, including the ones nobody named at inference.
+- **The viewer's emphasis should follow.** The outlier threshold and outlier-folded tracts
+  are the controls where the field shows something a stored label cannot. Category view and
+  tract merges are conveniences.

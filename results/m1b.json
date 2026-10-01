@@ -1,0 +1,93 @@
+{
+ "streamlines": 100000,
+ "runs": 5,
+ "bootstrap": 200,
+ "target": "the group of the argmax cluster differs from run 0 in any of runs 1..R-1",
+ "groupings": {
+  "tract (TractCloud's)": {
+   "groups": 43,
+   "changed_fraction": 0.2797,
+   "auroc_run0": {
+    "field mass margin": 0.875,
+    "field best-class margin": 0.8623,
+    "p_max": 0.6553,
+    "cluster margin": 0.6377,
+    "tract mass margin (42, fixed)": 0.875
+   },
+   "best_fixed": "tract mass margin (42, fixed)",
+   "gain_over_best_fixed": 0.0,
+   "gain_ci95": [
+    0.0,
+    0.0
+   ]
+  },
+  "category": {
+   "groups": 6,
+   "changed_fraction": 0.2422,
+   "auroc_run0": {
+    "field mass margin": 0.8779,
+    "field best-class margin": 0.8672,
+    "p_max": 0.6671,
+    "cluster margin": 0.6459,
+    "tract mass margin (42, fixed)": 0.8612
+   },
+   "best_fixed": "tract mass margin (42, fixed)",
+   "gain_over_best_fixed": 0.0167,
+   "gain_ci95": [
+    0.016,
+    0.0176
+   ]
+  },
+  "merged tracts (SLF, CC)": {
+   "groups": 35,
+   "changed_fraction": 0.2715,
+   "auroc_run0": {
+    "field mass margin": 0.8771,
+    "field best-class margin": 0.8646,
+    "p_max": 0.6596,
+    "cluster margin": 0.6405,
+    "tract mass margin (42, fixed)": 0.8733
+   },
+   "best_fixed": "tract mass margin (42, fixed)",
+   "gain_over_best_fixed": 0.0038,
+   "gain_ci95": [
+    0.0034,
+    0.0043
+   ]
+  },
+  "tract, outliers folded in": {
+   "groups": 43,
+   "changed_fraction": 0.2609,
+   "auroc_run0": {
+    "field mass margin": 0.8861,
+    "field best-class margin": 0.8766,
+    "p_max": 0.6598,
+    "cluster margin": 0.6328,
+    "tract mass margin (42, fixed)": 0.7247
+   },
+   "best_fixed": "tract mass margin (42, fixed)",
+   "gain_over_best_fixed": 0.1613,
+   "gain_ci95": [
+    0.1581,
+    0.1647
+   ]
+  },
+  "cluster, outliers folded in": {
+   "groups": 800,
+   "changed_fraction": 0.6394,
+   "auroc_run0": {
+    "field mass margin": 0.7857,
+    "field best-class margin": 0.773,
+    "p_max": 0.7431,
+    "cluster margin": 0.7153,
+    "tract mass margin (42, fixed)": 0.6223
+   },
+   "best_fixed": "p_max",
+   "gain_over_best_fixed": 0.0426,
+   "gain_ci95": [
+    0.0407,
+    0.0444
+   ]
+  }
+ }
+}
