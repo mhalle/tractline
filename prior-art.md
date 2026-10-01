@@ -35,7 +35,7 @@ derived here rather than reported are marked "derived".*
 | Rheault et al., [Front. Neuroinform. 2017](https://doi.org/10.3389/fninf.2017.00042) | linearization only, now dipy's `compress_streamlines` | up to 85 % of points removed at 0.1 mm; point-based ROI queries then miss streamlines |
 | QFib, Mercier et al., [Neuroinformatics 2020](https://doi.org/10.1007/s12021-020-09452-0) | constant step; each direction quantized relative to the previous one (8-bit Fibonacci or 16-bit octahedral) | about 1 B/vertex at 0.1 mm steps, 18 µm mean / 47 µm max (iFOD1); error drifts |
 | Fiblets, Schertzer et al., [CGF 2022](https://perso.telecom-paristech.fr/boubek/papers/Fiblets/Fiblets_lowres.pdf) | QFib in 60-point blocks for the GPU, re-anchored | about 1.3 B/vertex, 5 µm mean / 17 µm max |
-| TRAKO, Haehn et al., [MICCAI 2020](https://arxiv.org/abs/2004.13630) | glTF + Draco point cloud: 14-bit quantization, difference prediction, attributes | 10-28×, 0.08-0.15 mm mean; its table sizes contradict its vertex counts |
+| TRAKO, Haehn et al., [MICCAI 2020](https://arxiv.org/abs/2004.13630) | glTF + Draco point cloud: 14-bit quantization, difference prediction, attributes | paper: 10-28×, 0.08-0.15 mm mean (its table sizes contradict its vertex counts). **Measured here** on the HCP tractogram at matched grids: 4.37 / 3.39 / 2.89 B/vertex at 14 / 12 / 11 bits, 1.85-2.16× the predictive encoding (`trako.json`) |
 | dictionary / prototype methods (Alexandroni 2017, Zimmerman Moreno 2016, Gori 2016) | sparse codes, prototypes | lossy at the mm level |
 
 No tractogram-compression paper from 2021-2026 was found.

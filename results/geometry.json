@@ -45,11 +45,12 @@
    "max_error_mm": 0.005
   },
   {
-   "encoding": "0.01 mm grid, 1st-order deltas, i2, bitshuffle zstd-9",
+   "encoding": "0.01 mm grid, 1st-order deltas, i2 residuals, bitshuffle zstd-9",
    "mb": 62.2,
    "bytes_per_vertex": 2.87,
    "max_error_mm": 0.005,
-   "residual_max": 180
+   "residual_max": 180,
+   "residual_p99": 179.0
   },
   {
    "encoding": "0.01 mm grid, 2nd-order prediction, i2 residuals, bitshuffle zstd-9",
@@ -66,11 +67,12 @@
    "max_error_mm": 0.025
   },
   {
-   "encoding": "0.05 mm grid, 1st-order deltas, i1, bitshuffle zstd-9",
+   "encoding": "0.05 mm grid, 1st-order deltas, i1 residuals, bitshuffle zstd-9",
    "mb": 45.1,
    "bytes_per_vertex": 2.08,
    "max_error_mm": 0.025,
-   "residual_max": 36
+   "residual_max": 36,
+   "residual_p99": 36.0
   },
   {
    "encoding": "0.05 mm grid, 2nd-order prediction, i1 residuals, bitshuffle zstd-9",
@@ -87,11 +89,12 @@
    "max_error_mm": 0.05
   },
   {
-   "encoding": "0.1 mm grid, 1st-order deltas, i1, bitshuffle zstd-9",
+   "encoding": "0.1 mm grid, 1st-order deltas, i1 residuals, bitshuffle zstd-9",
    "mb": 37.7,
    "bytes_per_vertex": 1.74,
    "max_error_mm": 0.05,
-   "residual_max": 18
+   "residual_max": 18,
+   "residual_p99": 18.0
   },
   {
    "encoding": "0.1 mm grid, 2nd-order prediction, i1 residuals, bitshuffle zstd-9",

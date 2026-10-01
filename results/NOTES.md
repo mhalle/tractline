@@ -273,3 +273,36 @@ export, which discards more than half the vertices.
 - **Soft output.** The closest designs are LLM-distillation top-K with one residual mass, which
   is known to be biased. Shen et al. 2026 independently found rankfield's group-blind depth cut
   ("mass is not decision support"). No standard accepts top-k soft labels.
+
+## 2026-10-01 TRAKO, head to head
+
+`trako_compare.py` → `trako.json`. TRAKO (Haehn et al., MICCAI 2020) was run on the same HCP
+tractogram, coordinates only, against the predictive encoding on **the same grid**. Draco
+quantizes over the bounding box's largest extent, 168 mm, so both sides share the grid and
+origin. Errors are therefore identical to four decimals, and the sizes differ only in coding.
+
+| bits | grid | max / mean error | TRAKO (Draco, 1st order) | 1st order, our coder | 2nd order, our coder | TRAKO / ours |
+|---|---|---|---|---|---|---|
+| 14 (TRAKO's default) | 0.0102 mm | 0.0051 / 0.0049 mm | 4.37 B/v | 2.89 | **2.37** | 1.85× |
+| 12 | 0.0409 mm | 0.0205 / 0.0197 mm | 3.39 | 2.14 | **1.65** | 2.05× |
+| 11 | 0.0819 mm | 0.0410 / 0.0393 mm | 2.89 | 1.79 | **1.34** | 2.16× |
+
+Draco's compression level (1 or 10) changes TRAKO's size by under 1 %.
+
+**Reading:**
+- **The entropy coder matters more than the prediction order.** At 12 bits, Draco's first-order
+  coding takes 3.39 B/vertex. The same first-order deltas under bitshuffle and zstd take 2.14
+  (-37 %), and second-order prediction takes 1.65 (a further -23 %).
+- **TRAKO is the right comparison**, since both are lossless at a grid. Its paper's errors
+  (0.08-0.15 mm mean) come from its own test data and settings; here its default is a 0.01 mm
+  grid.
+- **What TRAKO has that this does not:**
+  - glTF packaging, which browser glTF loaders with a Draco decoder can open;
+  - per-vertex and per-streamline attributes in the same container;
+  - an existing file format.
+
+  The predictive encoding is a measurement, not a format.
+- **Running TRAKO in 2026 took repairs** (scratch environment only, not in the repo): its Draco
+  binding's `setup.py` (a cmake < 3.15 pin and `packaging.LegacyVersion`), its pre-3.11 Cython
+  output (regenerated), and NumPy aliases removed in 1.24 (`np.float`/`np.int` → `float`/`int`).
+  That is a fact about its maintenance, worth knowing before building on it.
