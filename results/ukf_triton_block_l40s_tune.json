@@ -1,0 +1,66 @@
+{
+ "gpu": "NVIDIA L40S",
+ "batch": 50000,
+ "configs": [
+  {
+   "math": "precise",
+   "F": 1,
+   "warps": 2,
+   "steps_per_s": 1710749,
+   "first_call_s": 28.1
+  },
+  {
+   "math": "precise",
+   "F": 1,
+   "warps": 4,
+   "steps_per_s": 2177434,
+   "first_call_s": 27.1
+  },
+  {
+   "math": "precise",
+   "F": 1,
+   "warps": 8,
+   "steps_per_s": 1346132,
+   "first_call_s": 26.4
+  },
+  {
+   "math": "precise",
+   "F": 2,
+   "warps": 2,
+   "steps_per_s": 760543,
+   "first_call_s": 40.0
+  },
+  {
+   "math": "precise",
+   "F": 2,
+   "warps": 4,
+   "steps_per_s": 1576801,
+   "first_call_s": 33.1
+  },
+  {
+   "math": "precise",
+   "F": 2,
+   "warps": 8,
+   "steps_per_s": 1852529,
+   "first_call_s": 31.6
+  },
+  {
+   "math": "precise",
+   "F": 4,
+   "warps": 2,
+   "error": "out of resource: shared memory, Required: 135168, Hardware limit: 101376. Reducing block sizes or `num_stages` may help."
+  },
+  {
+   "math": "precise",
+   "F": 4,
+   "warps": 4,
+   "error": "out of resource: shared memory, Required: 135168, Hardware limit: 101376. Reducing block sizes or `num_stages` may help."
+  },
+  {
+   "math": "precise",
+   "F": 4,
+   "warps": 8,
+   "error": "out of resource: shared memory, Required: 135168, Hardware limit: 101376. Reducing block sizes or `num_stages` may help."
+  }
+ ]
+}

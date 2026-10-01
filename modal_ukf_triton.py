@@ -4,13 +4,17 @@
     modal run bench/tractography/modal_ukf_triton.py --stage tune     # one-step throughput by launch config
     modal run bench/tractography/modal_ukf_triton.py --stage full     # the whole brain, against float64
     ... --kind block                                                   # the compact kernel (_ukf_triton_block.py)
+    ... --gpu L40S                                                     # another GPU (results file tagged)
 
 smoke: every fixture of DATA/ukf32/steps.npz (ukf32_compare.py) stepped by the kernel, against float64
        and torch's float32 step (both on the GPU), and against itself (two launches, bit for bit).
 tune:  one step of 50,000 half-fibers per launch configuration (fibers per program F, warps), precise
        and fast math; the fastest precise one becomes the default.
-full:  the whole brain (98,491 seeds) with the kernel, timed, compared seed by seed with the float64
-       run modal_ukf_labels.py left on the Volume (variants/f64.npz), and a second run for determinism.
+full:  the whole brain (98,491 seeds) with the kernel, timed once (--repeat: twice, for determinism),
+       the fibers written to the Volume and compared seed by seed with the float64 run
+       modal_ukf_labels.py left there (variants/f64.npz) on this machine, not on the GPU.
+Costs: GPUs bill per second (an A10G about $1.10/h, an L40S $1.95/h); sweeps compile one kernel per
+configuration and are worth running once per GPU type. Timeouts are short on purpose.
 
 Inputs on the tractography-bench Volume (ukf/hardi/). Writes results/ukf_triton_<stage>.json.
 """
@@ -63,7 +67,7 @@ def _kernel(kind):
     return T
 
 
-@app.function(gpu="A10G", volumes={"/vol": vol}, timeout=3600, memory=32768)
+@app.function(gpu="A10G", volumes={"/vol": vol}, timeout=1200, memory=32768)
 def smoke(kind: str = "unrolled") -> dict:
     import time
     import numpy as np, torch, triton
@@ -86,7 +90,7 @@ def smoke(kind: str = "unrolled") -> dict:
             "triton_repeat_identical": bool(all(np.array_equal(tri[k], tri2[k]) for k in tri))}
 
 
-@app.function(gpu="A10G", volumes={"/vol": vol}, timeout=7200, memory=32768)
+@app.function(gpu="A10G", volumes={"/vol": vol}, timeout=1800, memory=32768)
 def tune(kind: str = "unrolled") -> dict:
     import time
     import numpy as np, torch
@@ -121,40 +125,61 @@ def tune(kind: str = "unrolled") -> dict:
     return {"gpu": torch.cuda.get_device_name(0), "batch": B, "configs": rows}
 
 
-@app.function(gpu="A10G", volumes={"/vol": vol}, timeout=7200, memory=32768)
-def full(F: int = 0, warps: int = 0, kind: str = "unrolled") -> dict:
-    import time
+@app.function(gpu="A10G", volumes={"/vol": vol}, timeout=900, memory=32768, cpu=4)  # seeds are CPU work
+def full(F: int = 0, warps: int = 0, kind: str = "block", repeat: bool = False, tag: str = "") -> dict:
+    """Track the whole brain once (twice with `repeat`, for determinism) and write the fibers to the
+    Volume (ukf/hardi/variants/triton_<tag>.npz); the comparison with float64 runs locally (compare
+    stage), so the GPU is not billed for CPU work."""
+    import os, time
     import numpy as np, torch
-    import _ukf_torch as U, _fibercmp as C
+    import _ukf_torch as U
     T = _kernel(kind)
     if F:
         T.F_DEFAULT, T.WARPS_DEFAULT = F, warps
     D, off = _setup()
     pts, *_ = U.seeds(D, off)
     runs = []
-    for _ in range(2):
+    for _ in range(2 if repeat else 1):
         t0 = time.time()
         f, st = U.track(D, off, seed_points=pts, backend="triton" if kind == "unrolled" else "triton_block")
         torch.cuda.synchronize()
         runs.append((f, st, time.time() - t0))
-    (f, st, s), (f2, _, s2) = runs
-    z = np.load(HD + "variants/f64.npz")
-    o = z["offsets"]
-    ref = {int(k): z["points"][o[i]:o[i + 1]].astype(np.float64) for i, k in enumerate(z["seed_index"])}
-    mine = {int(k): p for k, p in zip(st["seed_index"], f)}
-    i2r, dims = D["i2r"], tuple(int(v) for v in D["dim"][::-1])
-    return {"kernel": kind, "gpu": torch.cuda.get_device_name(0), "F": T.F_DEFAULT, "warps": T.WARPS_DEFAULT,
-            "seeds": st["seeds"], "fibers": st["fibers"], "fiber_steps": st["fiber_steps"],
-            "seconds": round(s, 1), "second_run_seconds": round(s2, 1), "steps_per_s": round(st["fiber_steps"] / s),
-            "repeat_identical": bool(len(f) == len(f2) and all(np.array_equal(a, b) for a, b in zip(f, f2))),
-            "vs_f64": C.compare(mine, ref, i2r, dims),
-            "note": "f64 points are float32 on the Volume (as written for TractCloud); differences below ~1e-5 mm are that rounding"}
+    f, st, s = runs[-1]
+    lens = np.array([len(x) for x in f])
+    os.makedirs(HD + "variants", exist_ok=True)
+    np.savez(HD + f"variants/triton_{tag or kind}.npz", points=np.concatenate(f).astype(np.float32),
+             offsets=np.r_[0, np.cumsum(lens)], seed_index=np.array(st["seed_index"]))
+    vol.commit()
+    out = {"kernel": kind, "gpu": torch.cuda.get_device_name(0), "F": T.F_DEFAULT, "warps": T.WARPS_DEFAULT,
+           "seeds": st["seeds"], "fibers": st["fibers"], "fiber_steps": st["fiber_steps"],
+           "seconds_per_run": [round(r[2], 1) for r in runs], "steps_per_s_last_run": round(st["fiber_steps"] / s),
+           "fibers_file": f"ukf/hardi/variants/triton_{tag or kind}.npz"}
+    if repeat:
+        (fa, _, _), (fb, _, _) = runs
+        out["repeat_identical"] = bool(len(fa) == len(fb) and all(np.array_equal(a, b) for a, b in zip(fa, fb)))
+    return out
+
+
+def compare_local(tag: str) -> dict:
+    """compare_variant.py in the data environment (numpy, the tracker), not the modal CLI's."""
+    import subprocess
+    r = subprocess.run([str(DATA / ".venv/bin/python"), str(HERE / "compare_variant.py"), f"triton_{tag}"],
+                       capture_output=True, text=True, cwd=str(HERE))
+    if r.returncode:
+        return {"error": r.stderr[-1500:]}
+    return json.loads(r.stdout.strip().splitlines()[-1])
 
 
 @app.local_entrypoint()
-def main(stage: str = "smoke", f: int = 0, warps: int = 0, kind: str = "unrolled"):
-    fn = {"smoke": smoke, "tune": tune, "full": full}[stage]
-    r = fn.remote(f, warps, kind) if stage == "full" else fn.remote(kind)
+def main(stage: str = "smoke", f: int = 0, warps: int = 0, kind: str = "block", gpu: str = "A10G", repeat: bool = False):
+    tag = ("" if kind == "unrolled" else f"_{kind}") + ("" if gpu == "A10G" else f"_{gpu.lower()}")
+    if stage == "full":
+        r = full.with_options(gpu=gpu).remote(f, warps, kind, repeat, tag.lstrip("_"))
+        out = HERE / "results" / f"ukf_triton{tag}_{stage}.json"
+        out.write_text(json.dumps(r, indent=1))                            # saved before anything can fail
+        print(json.dumps(r, indent=1), flush=True)
+        r["vs_f64"] = compare_local(tag.lstrip("_"))                     # on this machine, not the GPU's
+    else:
+        r = {"smoke": smoke, "tune": tune}[stage].with_options(gpu=gpu).remote(kind)
     print(json.dumps(r, indent=1))
-    tag = "" if kind == "unrolled" else f"_{kind}"
     (HERE / "results" / f"ukf_triton{tag}_{stage}.json").write_text(json.dumps(r, indent=1))
