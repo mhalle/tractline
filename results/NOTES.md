@@ -89,3 +89,68 @@ the tract mass margin for TractCloud's fixed 42 tracts.
 - **The viewer's emphasis should follow.** The outlier threshold and outlier-folded tracts
   are the controls where the field shows something a stored label cannot. Category view and
   tract merges are conveniences.
+
+## 2026-10-01 M2: rankfield encoding of run 0, fidelity against the full field
+
+`encode.py` → `m2.json`. rankfield v0.3.10 with `keep="clip"`, clip 8, the default log byte
+curve and a T = 1 tail. Run 0's (100 k, 1600) fp16 log-softmax goes in as a (1600, 100 k, 1, 1)
+view. Encoding takes 1.5 s per depth on the CPU.
+
+**Labels are exact** at every depth: 0 of 100,000 differ from the reference argmax.
+
+**The field is wide.** Unlike the torso segmentation, where the shell held about 1.2 classes,
+most streamlines have more than six classes within 8 logits of the winner:
+
+| depth | kept planes (mean) | all planes used | tail median / 99th pct | tail > 1 % | raw B | blosc B |
+|---|---|---|---|---|---|---|
+| 4 | 3.87 | 91 % | 0.8 % / 24 % | 46 % | 13 | 9.5 |
+| **6** | **5.44** | **74 %** | **0.2 % / 12 %** | **24 %** | **19** | **13.2** |
+| 8 | 6.66 | 56 % | 0.09 % / 6 % | 12 % | 25 | 16.5 |
+
+For comparison, per streamline: dense fp16 is 3200 B (2252 B compressed with blosc zstd), a
+naive top-6 (fp16 values plus uint16 indices) is 24 B, argmax alone 2 B, argmax plus a p_max
+byte 3 B. Depth 6 is 170 times smaller than the compressed dense field.
+
+**AUROC from decoded margins against the full-field reference, depth 6** (the targets are the
+M1/M1b ones):
+
+| grouping | best-class decoded / ref | mass decoded / ref | best scalar at inference |
+|---|---|---|---|
+| tract (TractCloud's) | 0.860 / 0.862 | 0.863 / 0.875 | 0.875 |
+| category | 0.864 / 0.867 | 0.867 / 0.878 | 0.861 |
+| merged tracts (SLF, CC) | 0.862 / 0.865 | 0.865 / 0.877 | 0.873 |
+| **tract, outliers folded in** | **0.872 / 0.877** | 0.868 / 0.886 | **0.725** |
+| cluster, outliers folded in | 0.773 / 0.773 | 0.786 / 0.786 | 0.743 |
+| plausibility, for outlier change | 0.853 / 0.855 | 0.859 / 0.862 | 0.708 (p_max) |
+
+**Reading:**
+- **The best-class margin survives encoding.** Its AUROC is within 0.005 of the full field for
+  every grouping at depth 6, and within 0.001 at depth 8.
+- **The headline survives too.** For outlier-folded tracts, the margin decoded from 19 bytes
+  scores 0.872 where the best stored scalar scores 0.725.
+- **The best-class margin overestimates where the depth cut hits.**
+  - For 8.7 % of streamlines (tract grouping, depth 6) the decoded best-class margin is more
+    than 0.05 logits too high: by up to 3.6 logits at the 99th percentile and 5.4 at the 99.9th.
+  - The cause: `keep="clip"` fills the planes with the classes closest overall. When the winner's
+    own tract has several sibling clusters close by, they take the planes and the nearest
+    *non-member* is cut, so the margin is read against a farther class or the clip.
+  - This is the "margin is an upper bound" caveat, in group form. It falls to 5.7 % at depth 8.
+  - Everywhere else the error is the byte step, within 0.07 logits.
+- **The mass margin is a loose lower bound.**
+  - The tail is one number with no class attached, so counting it all against the group makes
+    the decoded mass margin low by up to 10.8 logits at the 1st percentile at depth 6. Its sign
+    flips for 274 streamlines (0.27 %).
+  - The AUROC cost is 0.012 for the tract grouping and 0.018 for outlier-folded tracts at
+    depth 6. Depth 8 halves it.
+  - At depth 6 the decoded best-class margin beats the decoded mass margin, the reverse of the
+    full-field ranking. The viewer should lead with the best-class margin unless it ships depth 8.
+- **The plan's exit test passes in substance, not to the letter.** Labels are exact and every
+  AUROC conclusion of M1 and M1b holds from the encoded field. But "margins within the byte
+  step" holds for about 90 % of streamlines at depth 6, not all of them; the rest are the
+  depth-cut overestimates above.
+
+**Where rankfield could do better here (not changed, for discussion):** the depth cut is
+group-blind by design, since the grouping is unknown when the field is written. Two cheap
+options are raising the depth (8 costs 3.3 compressed bytes more per streamline) or storing a
+second, outside-the-winner's-tract runner-up. That second option builds TractCloud's tract
+table into the encoding, which gives up some of the point of deferring the grouping.

@@ -33,61 +33,12 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from sklearn.metrics import roc_auc_score
 from _data import HCP
-from tractcloud.tract_mapping import TRACT_NAMES, TRACT_CATEGORIES, _CLUSTER_TO_TRACT_LUT as TRACT
+from _groups import GROUPINGS, lse, margins
 
 OUT = Path(__file__).resolve().parent / "results"
 ref = dict(np.load(HCP / "reference.npz"))
 cluster = ref["cluster"].astype(np.int64)            # (R, N)
 R, N = cluster.shape
-TRACT = TRACT.astype(np.int64)
-
-
-def relabel(lut, names):
-    """Compact a class -> group table to 0..G-1 (G = groups actually used)."""
-    used, compact = np.unique(lut, return_inverse=True)
-    return compact.astype(np.int64), [names[u] for u in used]
-
-
-cat_of_tract = {t: c for c, ts in TRACT_CATEGORIES.items() for t in ts}
-CATS = list(TRACT_CATEGORIES)
-merge = {**{t: "SLF" for t in ("SLF-I", "SLF-II", "SLF-III")}, **{f"CC{i}": "CC" for i in range(1, 8)}}
-MERGED = sorted({merge.get(t, t) for t in TRACT_NAMES})
-no_outlier_tract = TRACT.copy()
-no_outlier_tract[800:] = TRACT[:800]
-GROUPINGS = {
-    "tract (TractCloud's)": relabel(TRACT, TRACT_NAMES),
-    "category": relabel(np.array([CATS.index(cat_of_tract[TRACT_NAMES[t]]) for t in TRACT]), CATS),
-    "merged tracts (SLF, CC)": relabel(np.array([MERGED.index(merge.get(TRACT_NAMES[t], TRACT_NAMES[t]))
-                                                 for t in TRACT]), MERGED),
-    "tract, outliers folded in": relabel(no_outlier_tract, TRACT_NAMES),
-    "cluster, outliers folded in": relabel(np.arange(1600) % 800, [str(c) for c in range(800)]),
-}
-
-
-def lse(x, axis):
-    m = x.max(axis, keepdims=True)
-    with np.errstate(divide="ignore", invalid="ignore"):
-        return (np.log(np.exp(x - m).sum(axis, keepdims=True)) + m).squeeze(axis)
-
-
-def margins(l, lut):
-    """Mass and best-class margin of each streamline's own group (the group of its argmax)."""
-    order = np.argsort(lut, kind="stable")
-    starts = np.flatnonzero(np.r_[True, np.diff(lut[order]) != 0])
-    lo = l[:, order]
-    top = l.max(1, keepdims=True)
-    with np.errstate(divide="ignore"):
-        glse = np.log(np.add.reduceat(np.exp(lo - top), starts, axis=1)) + top
-    gmax = np.maximum.reduceat(lo, starts, axis=1)
-    own = lut[l.argmax(1)]
-    rows = np.arange(len(l))
-    out = {}
-    for name, g, agg in (("mass", glse, lambda o: lse(o, 1)), ("best", gmax, lambda o: o.max(1))):
-        other = g.copy()
-        other[rows, own] = -np.inf
-        out[name] = g[rows, own] - agg(other)
-    return out
-
 
 l0 = np.load(HCP / "logp_run0.npy").astype(np.float32)
 l0 -= lse(l0, 1)[:, None]
