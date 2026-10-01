@@ -466,3 +466,31 @@ test data, and were not run here.
   its 18 minutes on a laptop CPU.
 - **Encode the field where the logits are.** On the GPU the encode takes 0.45 s and only the
   19-byte planes leave it, not the 1.4 GB of fp16 logits.
+
+## 2026-10-01 Where the test tractogram came from
+
+`TestData/HCP/101006_ukf_pp_with_region.vtp` carries no provenance: no tracking parameters, no
+field data. This is reconstructed from the file, the code and the papers; the confidence of
+each step is marked.
+
+1. **Diffusion data:** HCP subject 101006 (TractCloud's paper: "HCP dataset ... subjects not part of
+   the training atlas"). Which HCP shell or preprocessing was used is not stated in what was read.
+2. **Tractography: two-tensor UKF**, [pnlbwh/ukftractography](https://github.com/pnlbwh/ukftractography)
+   (`UKFTractography`, also the SlicerDMRI extension). *Stated* by TractCloud's paper (§2.1, citing
+   the ORG atlas, Zhang et al. 2018, for "the same parameter settings"). SupWMA
+   ([arXiv 2207.08975](https://arxiv.org/abs/2207.08975), same group) gives them: seeds in brain-mask
+   voxels with FA > 0.1, stop at FA < 0.08 or normalized mean signal < 0.06. These differ from UKF's
+   defaults (0.18 / 0.15 / 0.1), so they were set explicitly.
+   - *Measured, not stated:* points are recorded every 1.8 mm (median step 1.799 mm, 98 % within
+     1.5-1.8). UKF's `recordLength` default is 0.9, so it was set to 1.8.
+3. **"pp": [whitematteranalysis](https://github.com/SlicerDMRI/whitematteranalysis)
+   `wm_preprocess_all.py`**, which writes `{subject}_pp.vtp` and removes fibers shorter than `-l` mm.
+   *Consistent* with `-l 40`: the shortest streamline is 38.8 mm of arc (23 points at 1.8 mm), and the
+   papers keep "streamlines longer than 40 mm". By default it does not keep per-point data, which
+   matches the absence of UKF's FA and tensor arrays (`recordFA` and `recordTensors` default on).
+4. **"with_region": per-point FreeSurfer labels.** `region_label` holds 183 FreeSurfer
+   aparc/wmparc values (subcortical 1-99, cortex 1000s/2000s, white matter 3000s/4000s,
+   unsegmented 5001/5002), so a wmparc-style label volume was sampled at every vertex.
+   `region_mask` is 0/1. **The code that did this was not found**: not in TractCloud, not in WMA's
+   scripts, not in a GitHub code search. Slicer's Probe Volume With Model, or a lab script, is a guess.
+   TractCloud does not read either array.
