@@ -395,3 +395,45 @@ TractCloud's tract labels as groups:
 Against that, our 41.3 MB carries the full field as well, at a smaller position error (0.02 mm):
 **3.3× smaller than TRX with labels only** (2.8× against deflated TRX). TRX's strength is
 different: its stored arrays memory-map with no decode at all, which suits local analysis.
+
+## 2026-10-01 Converting between the compact form and TRX
+
+`convert_bench.py` → `convert.json`. The full HCP tractogram on the 12-bit grid (0.041 mm)
+with run 0's depth-6 field: 41.2 MB compact. Best of 3 on the M2, Blosc with 8 threads. The
+per-vertex loops run two ways: numpy (whole-array passes) and numba (compiled, one core, about
+what a C or Rust converter gets).
+
+**Compact → TRX** (TRX directory: 273 MB in float32, 143 MB in float16, field and groups included)
+
+| stage | ms |
+|---|---|
+| decompress geometry / field | 17.5 / 5.0 |
+| offsets from lengths | 1.0 |
+| reconstruct positions, float32: numba / numpy | **56** / 2,107 |
+| to float16 (TRX's suggested default) | 13 |
+| labels to TRX groups, field planes to dps arrays | 21 + 3 |
+| **in memory, numba** | **104 ms** (about 210 Mvertex/s) |
+| write the TRX directory to the SSD, float32 / float16 | 145 / 53 |
+
+**TRX → compact**
+
+| stage | ms |
+|---|---|
+| open TRX (memory-mapped) | 0.5 |
+| quantize + predict: numba / numpy | **80** / 1,752 |
+| compress geometry, zstd 1 / 5 / 9 | 18 (42.6 MB) / 51 (39.2 MB) / 1,257 (35.8 MB) |
+| compress the field from dps (zstd 9) | 327 |
+| **total, numba, zstd 5** | **458 ms** |
+
+- **Both directions take well under a second** for a 440 k-streamline, 21.6 M-vertex tractogram
+  with a compiled loop. With numpy the loop alone is about 2 s each way.
+- **The zstd level is the encode-side choice.** Level 9 saves 9 % over level 5 at 25× the time;
+  decoding speed hardly depends on it.
+- **Round trips:**
+  - float32 TRX returns to the grid exactly: re-encoding reproduces every residual.
+  - **float16 TRX does not.** 729,241 vertices (3.4 %) land off the 0.041 mm grid, because
+    float16's spacing is 0.0625 mm beyond 64 mm from the origin. Convert to float32 TRX when the
+    data must come back, or re-encode from the original.
+- **The expensive encode is upstream.** Producing the field from TractCloud's logits
+  (`rankfield.encode`) took 10.7 s for this subject on 8 cores (M3). It runs once, at inference;
+  converting the stored field to and from TRX is only repacking (3 ms out, 327 ms back at zstd 9).
