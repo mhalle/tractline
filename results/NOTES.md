@@ -437,3 +437,32 @@ what a C or Rust converter gets).
 - **The expensive encode is upstream.** Producing the field from TractCloud's logits
   (`rankfield.encode`) took 10.7 s for this subject on 8 cores (M3). It runs once, at inference;
   converting the stored field to and from TRX is only repacking (3 ms out, 327 ms back at zstd 9).
+
+## 2026-10-01 Stage timings, tractogram to browser
+
+`modal_timing.py` → `timing_gpu.json`; the other rows are from earlier entries (`m0/`,
+`convert.json`, `render.json`). The full HCP subject: 440,621 streamlines, 21.6 M vertices. The
+diffusion images, preprocessing and UKF tractography come before this table, ship as TractCloud's
+test data, and were not run here.
+
+| stage | where | time |
+|---|---|---|
+| read the tractogram (VTP, 370 MB) | M2 CPU | 3.6 s |
+| TractCloud's 15-point features | M2 CPU | 2.4 s |
+| load the model | Modal | 1.9 s |
+| context: kNN within 10 k chunks, 80 global streamlines | CPU | 2.2-2.8 s |
+| **TractCloud inference, 1600 classes** | **A10G** | **28.5 s** (M2 CPU: about 18 min, from 244 s per 100 k) |
+| field encode, rankfield depth 6, from the logits on the GPU | A10G | **0.45 s** (identical ranks and gaps to the CPU's) |
+| field encode on 8 CPU cores: this branch / v0.3.10 | Modal CPU | 2.5 s / 5.0 s |
+| geometry: quantize + predict (numba) | M2 CPU | 0.08 s |
+| geometry compress: zstd 5 / zstd 9 | M2 CPU | 0.05 s (39 MB) / 1.26 s (36 MB) |
+| field compress, zstd 9 | M2 CPU | 0.33 s |
+| **tractogram → 41 MB payload, total** | GPU + CPU | **about 40 s, three quarters of it inference** |
+| download 41 MB at 100 Mbit/s / 1 Gbit/s | network | 3.3 s / 0.3 s |
+| decode and first full frame in the browser | M2 | about 1 s (first chunk drawn at 40-50 ms) |
+
+- **Inference is the pipeline.** Everything this experiment added - the field, the geometry
+  encoding, the packaging - costs under 1 s beside TractCloud's 28.5 s on a GPU, and nothing beside
+  its 18 minutes on a laptop CPU.
+- **Encode the field where the logits are.** On the GPU the encode takes 0.45 s and only the
+  19-byte planes leave it, not the 1.4 GB of fp16 logits.
