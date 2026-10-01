@@ -154,3 +154,48 @@ group-blind by design, since the grouping is unknown when the field is written. 
 options are raising the depth (8 costs 3.3 compressed bytes more per streamline) or storing a
 second, outside-the-winner's-tract runner-up. That second option builds TractCloud's tract
 table into the encoding, which gives up some of the point of deferring the grouping.
+
+## 2026-10-01 M3: the full subject on Modal, and the web export
+
+`modal_capture.py` → `m3.json`. All 440,621 streamlines, five seeded runs, on A10/A10G GPUs
+(torch 2.14.1+cu130, cudnn off as upstream). Inputs are on the Modal Volume
+`tractography-bench`, uploaded from DATA. The five 1.4 GB fields stay on the Volume, and only
+`derived.npz` (77 MB) came down. Run 0's timing was not kept, and the timings of runs 1-4 were
+lost to an edit that commented them out (fixed).
+
+- **The full brain reproduces the 100 k subsample.**
+
+  | | 100 k subsample | full subject |
+  |---|---|---|
+  | tract changes | 28.0 % | 27.9 % |
+  | cluster changes | 69.0 % | 69.1 % |
+  | run-0 AUROC, tract (best-class / mass / p_max) | 0.862 / 0.875 / 0.655 | 0.862 / 0.875 / 0.653 |
+  | outlier-folded tracts (mass margin / fixed tract margin) | 0.886 / 0.725 | 0.886 / 0.722 |
+
+- **GPU and CPU agree.** The same seed gives the same context on both, and the cluster labels
+  of the 100 k targets differ between GPU and CPU at 4-12 streamlines per run: arithmetic only.
+- **Encoding the whole brain** with rankfield (keep="clip", depth 6) takes 10.7 s on 8 CPU cores.
+
+**The web export** (`export.py` → `DATA/hcp/web/`, 62 MB; `export_check.mjs` checks it):
+
+| part | bytes | per streamline |
+|---|---|---|
+| geometry, 20 points, int16 at 0.01 mm, original RAS | 52.9 MB | 120 |
+| field, rankfield depth 6 | 8.4 MB | 19.0 |
+| extras (index, three change counts, margin spread) | 3.5 MB | 8 |
+| dense fp16 field, for scale | 1410 MB | 3200 |
+
+- **Chunks.** 50 chunks of about 8,813 streamlines, in one seeded shuffle, so any prefix of
+  chunks is a uniform sample. The 100 k target is about 11 chunks, 14 MB.
+- **Exit test passes.**
+  - `node export_check.mjs` loads the manifest and all 150 chunk files in 146 ms.
+  - Every size and sha256 matches the manifest and its own header.
+  - The extra/ indices are a permutation of all streamlines.
+  - The viewer's decode, ported to JS (the own-tract best-class margin from ranks and support
+    through `levels.bin`), is bit-identical to `rankfield.decode_groups` on all 8,813
+    streamlines of chunk 0.
+  - A one-byte corruption fails the check twice, once by hash and once by decode.
+- **Not done:** the TRX export, which was the plan's optional second target.
+- **Geometry dominates the download.** The field is 13 % of it. Fewer points per line, or a
+  delta encoding of the int16 coordinates, would shrink the export far more than any change to
+  the field.
