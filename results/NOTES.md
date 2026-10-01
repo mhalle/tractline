@@ -239,3 +239,37 @@ most common change (Intra-CBLM-PaT and Other).
   A one-pixel `readPixels` is the sync now.
 - Histogram bins of 0.1 logits left empty bins past 5 logits, where the byte levels are
   farther apart. They are 0.2 logits now.
+
+## 2026-10-01 Geometry encodings, and the prior art
+
+`geometry_bench.py` → `geometry.json`. It covers all 21.6 M original vertices of the HCP
+tractogram. UKF steps are 1.50-1.80 mm for 98 % of steps. Every predictive encoding is
+round-tripped through its decoder before its size is reported.
+
+| encoding | B/vertex | max error |
+|---|---|---|
+| float32 raw / zstd | 12.0 / 9.36 | 0 |
+| float16 raw / zstd (TRX's suggested default) | 6.0 / 4.01 | 0.031 mm |
+| 0.05 mm grid, 1st-order int8 deltas (the `.tt.gz` idea), bitshuffle zstd-9 | 2.08 | 0.025 mm |
+| **0.05 mm grid, 2nd-order prediction, int8 residuals, bitshuffle zstd-9** | **1.55** | 0.025 mm |
+| 0.01 mm grid, 2nd-order (archival) | 2.36 | 0.005 mm |
+| 0.1 mm grid, 2nd-order | 1.24 | 0.05 mm |
+
+At 0.05 mm the second-order encoding is 8 times smaller than float32, 2.6 times smaller than
+float16 with zstd, and more accurate than float16. It is also smaller than the 20-point web
+export, which discards more than half the vertices.
+
+`prior-art.md` records three literature searches. What they mean for this work:
+- **Geometry.** Nobody reports second-order prediction, lossless at a stated grid, with entropy
+  coding. DSI Studio's `.tt.gz` ships first-order int8 deltas, without a paper and not lossless.
+  QFib and Fiblets are lossy direction coders. The Allen Institute's Zarr Vectors draft already
+  puts streamlines in Zarr with spatial chunks and multiscale, but without prediction. BIDS
+  BEP046 mandates TRX.
+- **Instability.** TractCloud's run-to-run instability has not been reported. The closest work,
+  RapidParc (Imaging Neuroscience 2026), counts per-streamline flips for its own model and finds
+  them at the inlier/"Other" boundary, but offers no single-run predictor. Tract-level
+  aggregation for abstention is established in general ML (Hierarchical Selective
+  Classification, NeurIPS 2024), not in this field.
+- **Soft output.** The closest designs are LLM-distillation top-K with one residual mass, which
+  is known to be biased. Shen et al. 2026 independently found rankfield's group-blind depth cut
+  ("mass is not decision support"). No standard accepts top-k soft labels.
