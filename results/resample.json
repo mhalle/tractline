@@ -1,0 +1,7 @@
+{
+ "cpu_float64_s": 3.48,
+ "float64_identical_to_upstream": true,
+ "float64_max_abs_diff": 0.0,
+ "mps_float32_s": 0.72,
+ "mps_float32_max_abs_diff_mm": 4.477938921354507e-05
+}
