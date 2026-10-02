@@ -1128,3 +1128,11 @@ One CPU step profiled (`_ukf_torch`, float32): H about 60 %, the rest of the fil
 - **8 workers, fast: 79 k steps/s, 4x the CPU tracker's 19.7 k.** The pipeline's CPU setting
   (`_pipeline.track(device="cpu")`): float32, fast, batch 1,024, one process per core. float64 stays
   the binary's arithmetic and order, the reference.
+- **The pipeline on the CPU, again** (`cpu_timing.json`): **259 s** scan to payload (714 before; GPU
+  61 s) - UKF 121 s (94 k steps/s over the whole brain), field estimate 77 s (float64), TractCloud
+  58 s. CPU against GPU: field 0.07 / 0.5 mm (median / 99th), fibers 41,898 / 41,895, tract mix r
+  0.994, single-draw labels agreeing 0.757 on the 31,145 streamlines tracked from the same seed voxel
+  (matching by seed index paired different seeds - each run's seeds come from its own mask - and gave
+  0.39). For scale, TractCloud's own single draws on one tractogram agree 0.82-0.88 (tract mix r
+  0.989-0.998): the tract mix is within TractCloud's own spread; per streamline, the CPU and GPU
+  pipelines differ beyond it, by the tracking and field differences on top of the draw.
