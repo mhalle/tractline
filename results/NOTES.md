@@ -920,3 +920,30 @@ against topup's 617 s on the CPU.
   7.5-8.6 mm); its effect on the tract mix (r 0.993) is outside the noise. The main reason to
   correct for planning is alignment with the T1 the tumor is outlined on (displacements up to
   19.5 mm), which tract centers in diffusion space do not measure; a T1-alignment test would.
+
+## 2026-10-01 Against the T1: correction is what puts PAT16's tracts where the anatomy is
+
+`t1_alignment.py`: each arm's mean AP b0 aligned rigidly to the T1 (MPRAGE 1 mm, which none of the
+corrections saw), then jointly with a smooth residual displacement along phase encoding (B-spline,
+15 mm knots, mean held at zero), normalized-gradient-field cost (contrast-free: T1 against a
+T2-weighted b0). The residual is what an overlay on the T1 would be off by. ~2 min per arm on CPU.
+
+- **The measure is valid:** on the uncorrected scan the T1 alone recovers topup's displacement map,
+  r 0.91, slope 0.78 (the smooth model underestimates the largest displacements by about a fifth).
+  Precision (fit on b0s 1-3 against 4-6): 0.07 / 0.16-0.19 / 0.33-0.37 mm.
+- **|residual| mm, median / 90th / 99th** (`t1_alignment.json`, maps in `t1_alignment.png`):
+
+  | | brain | where topup displaces > 3 mm (orbitofrontal, temporal poles) | elsewhere |
+  |---|---|---|---|
+  | uncorrected | 0.95 / 3.25 / 6.79 | 3.68 / 6.38 / 8.62 | 0.78 / 2.22 / 3.47 |
+  | topup | 0.27 / 0.79 / 1.65 | 0.42 / 1.21 / 2.12 | 0.26 / 0.72 / 1.44 |
+  | ours | 0.34 / 0.82 / 1.53 | 0.45 / 1.09 / 1.99 | 0.33 / 0.77 / 1.37 |
+
+  Both corrections leave sub-voxel residuals (voxel 2.5 mm); the T1 cannot tell them apart (ours
+  slightly lower at the 99th percentile, slightly higher at the median). Their residuals do not
+  correlate with topup's displacement (r -0.13, 0.00): nothing systematic is left of the distortion.
+- **For the demo:** uncorrected, tracts overlaid on the T1 are off by 4-9 mm (more, given the slope)
+  across the orbitofrontal cortex and temporal poles, and by up to 3.5 mm elsewhere; corrected,
+  by under 2 mm almost everywhere. Within diffusion space the tract centers barely moved (previous
+  entry); against the anatomy they do. Correction belongs in any pipeline whose tracts are shown
+  on a T1.

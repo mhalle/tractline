@@ -1,0 +1,190 @@
+{
+ "data": "ds001226 PAT16: mean AP b0 of each arm against the T1w (MPRAGE 1 mm)",
+ "regions": {
+  "brain_voxels": 94458,
+  "topup_displaces_gt_3mm_voxels": 13233
+ },
+ "columns": "|residual displacement| along PE, mm: median / 90th / 99th percentile",
+ "arms": {
+  "uncorrected": {
+   "residual_brain": [
+    0.95,
+    3.25,
+    6.79
+   ],
+   "residual_where_topup_gt_3mm": [
+    3.68,
+    6.38,
+    8.62
+   ],
+   "residual_elsewhere": [
+    0.78,
+    2.22,
+    3.47
+   ],
+   "half_split_error_brain": [
+    0.07,
+    0.19,
+    0.37
+   ],
+   "half_split_error_where_topup_gt_3mm": [
+    0.09,
+    0.26,
+    0.47
+   ],
+   "ngf_rigid_only": 0.45834,
+   "ngf_after": 0.40272,
+   "r_residual_vs_topup_displacement": 0.908,
+   "rigid_start_translation_mm": [
+    -0.21,
+    -0.32,
+    0.85
+   ],
+   "rigid_start_rotation_deg": 2.91,
+   "seconds": 125.6,
+   "levels": [
+    {
+     "knots_mm": 25,
+     "fwhm_mm": 6,
+     "ngf": 0.30796,
+     "bending": 6.84351397891656e-05
+    },
+    {
+     "knots_mm": 20,
+     "fwhm_mm": 4,
+     "ngf": 0.32368,
+     "bending": 0.00010988898297919253
+    },
+    {
+     "knots_mm": 15,
+     "fwhm_mm": 0,
+     "ngf": 0.40272,
+     "bending": 0.00018963323929339424
+    }
+   ]
+  },
+  "topup": {
+   "residual_brain": [
+    0.27,
+    0.79,
+    1.65
+   ],
+   "residual_where_topup_gt_3mm": [
+    0.42,
+    1.21,
+    2.12
+   ],
+   "residual_elsewhere": [
+    0.26,
+    0.72,
+    1.44
+   ],
+   "half_split_error_brain": [
+    0.07,
+    0.16,
+    0.33
+   ],
+   "half_split_error_where_topup_gt_3mm": [
+    0.09,
+    0.22,
+    0.38
+   ],
+   "ngf_rigid_only": 0.40203,
+   "ngf_after": 0.39288,
+   "r_residual_vs_topup_displacement": -0.125,
+   "rigid_start_translation_mm": [
+    -0.21,
+    -0.03,
+    0.87
+   ],
+   "rigid_start_rotation_deg": 3.19,
+   "seconds": 125.0,
+   "levels": [
+    {
+     "knots_mm": 25,
+     "fwhm_mm": 6,
+     "ngf": 0.29134,
+     "bending": 3.711072379448458e-05
+    },
+    {
+     "knots_mm": 20,
+     "fwhm_mm": 4,
+     "ngf": 0.30873,
+     "bending": 4.774522117579431e-05
+    },
+    {
+     "knots_mm": 15,
+     "fwhm_mm": 0,
+     "ngf": 0.39288,
+     "bending": 7.271626484683142e-05
+    }
+   ]
+  },
+  "ours": {
+   "residual_brain": [
+    0.34,
+    0.82,
+    1.53
+   ],
+   "residual_where_topup_gt_3mm": [
+    0.45,
+    1.09,
+    1.99
+   ],
+   "residual_elsewhere": [
+    0.33,
+    0.77,
+    1.37
+   ],
+   "half_split_error_brain": [
+    0.07,
+    0.18,
+    0.37
+   ],
+   "half_split_error_where_topup_gt_3mm": [
+    0.11,
+    0.28,
+    0.48
+   ],
+   "ngf_rigid_only": 0.40546,
+   "ngf_after": 0.39482,
+   "r_residual_vs_topup_displacement": -0.003,
+   "rigid_start_translation_mm": [
+    -0.22,
+    -0.2,
+    0.83
+   ],
+   "rigid_start_rotation_deg": 3.07,
+   "seconds": 126.6,
+   "levels": [
+    {
+     "knots_mm": 25,
+     "fwhm_mm": 6,
+     "ngf": 0.29214,
+     "bending": 3.466593621044709e-05
+    },
+    {
+     "knots_mm": 20,
+     "fwhm_mm": 4,
+     "ngf": 0.31021,
+     "bending": 4.236777851495005e-05
+    },
+    {
+     "knots_mm": 15,
+     "fwhm_mm": 0,
+     "ngf": 0.39482,
+     "bending": 6.978930321562019e-05
+    }
+   ]
+  }
+ },
+ "validation": {
+  "topup_displacement_brain": [
+   0.78,
+   3.53,
+   9.38
+  ],
+  "uncorrected_residual_r_vs_topup": 0.908,
+  "uncorrected_residual_slope_vs_topup": 0.781
+ }
+}
