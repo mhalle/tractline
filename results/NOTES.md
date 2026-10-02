@@ -1216,3 +1216,21 @@ transcribed from its log, and it returns JSON text now.
 - **The 12-patient cohort again, on the GPU path with the torch mask**: all 12 reproduce their committed
   results exactly (timings aside). The mask costs 3.1 s against 0.65 (median); the other stages ran
   6-8 % slower this time (the laptop, not the change: UKF 27.2 → 29.4 s, estimate 29.4 → 31.2 s).
+
+## 2026-10-02 The M2's GPU path again: the CPU speedups do not transfer
+
+GPU timings on the M2 move with what the display is doing (WindowServer shares the GPU), so variants
+were timed alternately in one session:
+- field estimate: trilinear 33.5 / 30.3 s, `linear_pe` 30.6 / 28.6 s (~7 %; 2.3x on the CPU) - MPS's
+  grid_sample is already efficient;
+- TractCloud: upstream 4.9 / 4.9 / 4.2 s, `MatmulDGCNN` 5.6 / 4.6 / 4.7 s (none; 10x on the CPU) -
+  MPS's convolutions are not the CPU's slow path;
+- the mask: MPS 3.1 s, CPU 3.6 s.
+- one grid_sample call for all eight b0s instead of a loop: the sampling itself bit-identical (CPU
+  float64, MPS float32), 17 % faster on the CPU, 5 % on MPS. But the **whole estimate is not**: the
+  gradient sums the volumes in another order, L-BFGS takes another path, and the field ends up to
+  56 Hz different somewhere (MPS; 64 Hz on the CPU) - the estimate's path sensitivity again, from
+  summation order alone. Not adopted (small gain, and it would move the committed results).
+The GPU path stays ~60-65 s: estimate ~29 s, UKF ~27 s. Remaining levers: tracking on the GPU and the
+CPU at once (the CPU's 96 k steps/s beside the GPU's 428 k), the Metal kernel's inverses split
+(5-8 % of tracking), a Metal kernel for the mask (3 s), and the estimate's convergence.
