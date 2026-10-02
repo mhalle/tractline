@@ -1,5 +1,25 @@
 # An optimized pipeline to the confidence-enhanced format
 
+## 0. The pipeline as built (2026-10-02)
+
+`_pipeline.py`, scan to payload, in memory, on the M2 laptop (16 GB). Measured on ds001226 PAT16
+(`results/cohort/PAT16.json`; the 12-patient cohort in `results/cohort_summary.md`):
+
+| stage | module | where | PAT16 |
+|---|---|---|---|
+| susceptibility field from the b0s + reversed pair (topup's model) | `_susc.estimate` | GPU, float32 | 29.0 s |
+| apply it (cubic along phase encoding, Jacobian) | `_susc.apply` | CPU, float64 | 1.3 s |
+| tracker input (b = 2800 shell, RAS gradients, median_otsu mask) | `_prep.prepare`, `_median` | CPU | 0.7 s |
+| UKF two-tensor, ORG settings, the binary's seeds | `_ukf_torch.track` (Metal) | GPU, float32 steps | 27.0 s |
+| TractCloud, one draw | `_tractcloud.Labeler` | GPU, float32 | 4.1 s |
+| rank field + geometry (0.05 mm grid) | rankfield, `_geometry` | CPU | 0.9 s |
+| **scan → payload** | | | **63 s; 3.0 MB for 32 k streamlines** |
+
+For scale: FSL topup + applytopup take 665 s for the correction alone on the same machine; the whole
+Stanford HARDI brain tracks in 135 s on the M2 and 78 s on an A10G (`_ukf_triton_block`). Against
+the T1, the correction cuts the tumor margin's misplacement from 4.7 mm to 1.75 mm (99th percentile,
+median of 12 patients). Sections 1-5 below are the format work on the HCP tractogram that preceded it.
+
 *2026-10-01. Measured on the HCP test subject (440,621 streamlines, 21.6 M vertices): an A10G on
 Modal for the GPU, the M2 laptop and Modal CPUs for the rest. Every number below cites the
 results file it came from. "Projected" marks a sum of measured stages that was not run end to end.*
@@ -8,7 +28,7 @@ results file it came from. "Projected" marks a sum of measured stages that was n
 
 | stage | as run (upstream code) | optimized, measured | how |
 |---|---|---|---|
-| DWI → tractogram (UKF two-tensor) | **not measured** (§5) | — | prebuilt UKF from the Slicer extension server; GPU trackers report 68-200× over one CPU core |
+| DWI → tractogram (UKF two-tensor) | Slicer binary (CPU) | **135 s** whole HARDI brain on the M2 (Metal), 78 s on an A10G (Triton) | `_ukf_torch` + kernels, float32 steps below the scan's noise (§0) |
 | read the tractogram | 3.6 s (VTP) | ~0 s (TRX, memory-mapped) | `convert.json` |
 | 15-point features | 2.4 s (CPU) | small on the GPU (not timed) | arc-length resampling, vectorized |
 | context (kNN in 10 k chunks + 80 global) | 2.8-3.4 s (CPU) | **0.39 s** (GPU, same random draws; 99.89 % identical context) | `infer_opt.json` |
@@ -86,8 +106,11 @@ JSON, beside the arrays:
  "pipeline": {"name": "tractcloud-rankfield", "version": "…", "commit": "…"},
  "inputs": {
   "dwi": {"sha256": "…", "bvals_sha256": "…", "bvecs_sha256": "…"},
-  "mask": {"sha256": "…", "method": "Slicer DiffusionBrainMasking", "params": {"…": "…"}}
+  "mask": {"sha256": "…", "method": "dipy median_otsu (computed by _median.py, identical)", "params": {"median_radius": 4, "numpass": 4}}
  },
+ "correction": {"model": "FSL topup's (b02b0.cnf schedule), reimplemented (_susc.py)", "interp": "trilinear estimate, cubic application",
+                "motion_convention": "first volume of each acquisition: no phase-encoding translation", "device": "mps", "dtype": "float32",
+                "inputs": {"b0_ap": 6, "b0_pa": 2, "readout_s": 0.0266}, "seconds": "…"},
  "tractography": {
   "tool": "UKFTractography", "source": "github.com/pnlbwh/ukftractography", "commit": "2d2b661",
   "binary": {"package": "34627-macosx-amd64-UKFTractography-git2d2b661-2025-06-02.tar.gz",
@@ -127,11 +150,10 @@ The rules carried over:
 
 ## 5. Open
 
-- **Tractography time.** UKF has not been run here. A prebuilt UKF for this Mac's Slicer 5.12.3
-  exists (872 KB, x86_64, Rosetta), and Slicer 5.8.1 has the last Linux build. Timing it on a
-  public DWI is the next measurement. Published GPU trackers report 68× (Grün & Schultz, CDMRI 2024)
-  and about 200× (DIPY GPU, ISMRM 2021) over a single CPU core, for different algorithms.
-- **End to end.** The stages above were timed separately on two machines. One GPU-resident run is
-  the check on the projected 5 s.
+- **The field estimate's sensitivity.** Deterministic for a given input, but negligible input noise
+  moves the field by up to 1 mm at the 99th percentile of a tumor margin (median 0.33 mm over 12
+  patients): L-BFGS's path. Firmer convergence is the next thing to try.
+- **PAT23's frontal base.** Under a 104 cm³ meningioma, topup and our correction agree with each
+  other and both disagree with the T1 by 4-8 mm in 4 % of the margin; which is wrong is open.
 - **Upstream.** Enabling cudnn in TractCloud's own pipeline is a one-line change worth proposing
   to its authors: 3.4×, 2 labels in 440 k.
