@@ -1,0 +1,63 @@
+{
+ "seconds": {
+  "field_estimate": 29.73,
+  "field_apply": 1.59,
+  "prep": 0.56,
+  "load": 0.23,
+  "ukf": 27.28,
+  "tractcloud": 4.34,
+  "encode_field": 0.61,
+  "encode_geometry": 0.39,
+  "write_trx": 0.48,
+  "write_trx_dir_float16_labeled": 0.5
+ },
+ "variants": {
+  "zip, all streamlines, float32": {
+   "all_checks": true,
+   "checks": {
+    "header_affine": true,
+    "header_dimensions": true,
+    "nb_streamlines": true,
+    "points_exact": true,
+    "groups_partition_labeled": true,
+    "groups_are_tracts": true,
+    "tract": true,
+    "rf_ranks": true,
+    "rf_gaps": true,
+    "rf_tail": true,
+    "cluster_maps_to_tract": true,
+    "probability_in_0_1": true,
+    "rankfield_meta_in_header": true
+   },
+   "streamlines": 41895,
+   "mb": 24.43,
+   "max_point_error_mm": 0.0,
+   "trx_python_load_s": 0.03,
+   "margin_median_labeled": 0.934
+  },
+  "directory, labeled only, float16": {
+   "all_checks": true,
+   "checks": {
+    "header_affine": true,
+    "header_dimensions": true,
+    "nb_streamlines": true,
+    "points_within_float16": true,
+    "groups_partition_labeled": true,
+    "groups_are_tracts": true,
+    "tract": true,
+    "rf_ranks": true,
+    "rf_gaps": true,
+    "rf_tail": true,
+    "cluster_maps_to_tract": true,
+    "probability_in_0_1": true,
+    "rankfield_meta_in_header": true
+   },
+   "streamlines": 31993,
+   "mb": 11.81,
+   "max_point_error_mm": 0.0312,
+   "trx_python_load_s": 0.01,
+   "margin_median_labeled": 0.934
+  }
+ },
+ "payload_mb": 3.01
+}

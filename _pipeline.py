@@ -12,6 +12,7 @@ Stages, and where they run:
   label     TractCloud, one context draw (_tractcloud.Labeler: GPU, float32, ~4 s)
   encode    the rank field of the cluster log-probabilities (rankfield: depth 6, keep "clip", clip 8)
             and the geometry (a 0.05 mm grid, second-order prediction, int8 residuals; _geometry)
+  TRX       optional: the tractogram with labels, tract probabilities and the rank field (_trx.py)
 
 Conventions at every module boundary (_ds001226, _susc, _prep, _ukf_torch, _tractcloud, _t1check):
   volumes   numpy (X, Y, Z[, V]) in the NIfTI's voxel order; affine voxel -> RAS mm; voxel sizes as
@@ -77,6 +78,8 @@ class Payload:
     field_compressed_bytes: int  # the same, Blosc zstd 9
     geometry_bytes: int          # positions (0.05 mm grid, second order, compressed) + streamline lengths
     streamlines: int
+    field: tuple = ()            # the rank field: (ranks, support, tail) for the labeled streamlines
+    field_meta: dict = None      # its meta block (what decodes it)
 
     @property
     def total_mb(self):
@@ -120,19 +123,25 @@ def encode(tg: Tractogram, labels: Labels, timer: Timer, prefix="") -> Payload:
         P = np.concatenate(kept); off = np.r_[0, np.cumsum([len(f) for f in kept])]
         nb, _ = gencode(P, off, GEOMETRY_GRID_MM, P.min(0))
         geometry = nb + lengths_bytes(off)
-    return Payload(int(raw), int(packed), int(geometry), len(kept))
+    return Payload(int(raw), int(packed), int(geometry), len(kept), (code.ranks, code.support, code.tail), code.meta)
 
 
 STAGES = ("field_estimate", "field_apply", "prep", "load", "ukf", "tractcloud", "encode_field", "encode_geometry")
 
 
-def run(s, labeler: Labeler, timer: Timer, prefix=""):
+def run(s, labeler: Labeler, timer: Timer, prefix="", trx=None, **trx_options):
     """The whole pipeline on a subject: (Correction, Tractogram, Labels, Payload). Its time is
-    timer.total(*pipeline_stages(prefix))."""
+    timer.total(*pipeline_stages(prefix)). trx: also write the tractogram there as TRX (_trx.write;
+    trx_options: positions="float16", labeled_only=True), timed apart as "write_trx"."""
     corr = correct(s, timer)
     tg = track(s, corr.dwi, timer, prefix)
     labels = label(tg, labeler, timer, prefix)
-    return corr, tg, labels, encode(tg, labels, timer, prefix)
+    payload = encode(tg, labels, timer, prefix)
+    if trx is not None:
+        import _trx
+        with timer("write_trx"):
+            _trx.write(trx, s, tg, labels, payload.field, payload.field_meta, **trx_options)
+    return corr, tg, labels, payload
 
 
 def pipeline_stages(prefix=""):

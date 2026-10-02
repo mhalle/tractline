@@ -1084,3 +1084,18 @@ to end reproduces the committed `cohort/PAT16.json` exactly apart from timings, 
   thread, cleared by removing each row's last window, with a coarse layer of 256-bin block counts the
   median's walk skips through: **0.29 s corrected, 0.18 s as acquired**; `median_check.py` still
   identical on all 14 volumes and the random filters.
+
+## 2026-10-02 TRX output
+
+`_trx.py`, an option of the pipeline (`_pipeline.run(..., trx=path)`, `run_pipeline.py --trx`): the
+tractogram as TRX - a stored zip (memory-mappable) or a directory - with the DWI's affine and grid in
+the header, the rank field's meta block under "RANKFIELD", tracts as groups, and per streamline:
+tract, TractCloud's top cluster, the tract's probability (its clusters' summed) and its margin over
+the next tract, length, seed index, and the rank field's arrays. Every streamline the tracker kept
+is written, those under 40 mm unlabeled (tract 255): the 40 mm cut a reader's filter, as
+pipeline.md recommended, not a deletion; `labeled_only` writes the payload's set.
+`trx_check.py` → `trx_check.json`, PAT16, read back by trx-python 0.6: header, every point (float32:
+exact; float16: within 0.031 mm), groups partitioning the labeled streamlines, and every
+per-streamline array row for row - all pass. 0.5 s to write. Sizes: **24.4 MB** (zip, all 41,895
+streamlines, float32), **11.8 MB** (labeled 31,993, float16), against the compact payload's 3.0 MB.
+Median tract margin 0.93 (probability units).

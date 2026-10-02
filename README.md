@@ -18,6 +18,7 @@ states the conventions every module below follows (array layouts, units, devices
 | `_ukf_torch.py`, `_ukf_metal.py` | UKF two-tensor tractography as the Slicer binary does it; the Metal kernel for the steps |
 | `_tractcloud.py`, `_resample.py` | TractCloud labels and log-probabilities |
 | `_geometry.py` (+ rankfield) | the payload: predictive geometry, the rank field |
+| `_trx.py` | optional output: the tractogram as TRX, with labels, tract probabilities and the rank field |
 | `_t1check.py` | measurement, not pipeline: the distortion left against the T1 |
 
 `_ukf_triton_block.py` is the CUDA counterpart of the Metal kernel (`_ukf_triton.py`, the unrolled
@@ -25,6 +26,8 @@ first attempt, compiles too slowly to use).
 
 ## Running and checking it
 
+- `run_pipeline.py --sub PATnn [--trx [PATH]] [--float16] [--labeled-only]`: the pipeline on one
+  subject, optionally written as TRX; `trx_check.py` reads that TRX back with trx-python and checks it.
 - `cohort.py --sub PATnn`: one ds001226 patient - the pipeline, the scan as acquired for comparison,
   both against the T1 and tumor; `cohort_summary.py` tabulates `results/cohort/`; `cohort_topup.py`
   adds FSL topup as a second reference.
