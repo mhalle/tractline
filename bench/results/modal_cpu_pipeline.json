@@ -1,12 +1,12 @@
 {
  "seconds": {
-  "field_estimate": 38.23,
-  "field_apply": 0.56,
-  "prep": 0.73,
-  "load": 0.16,
-  "ukf": 49.21,
-  "tractcloud": 3.31
+  "field_estimate": 37.13,
+  "field_apply": 0.59,
+  "prep": 0.99,
+  "load": 0.23,
+  "ukf": 50.88,
+  "tractcloud": 4.11
  },
- "scan_to_labels_s": 92.2,
+ "scan_to_labels_s": 93.9,
  "estimate_threads": 16
 }
