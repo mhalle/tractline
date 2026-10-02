@@ -1,0 +1,77 @@
+{
+ "subject": "PAT14",
+ "configs": {
+  "optimizer gn, fold 10": {
+   "seconds": [
+    89.7,
+    85.4
+   ],
+   "stability_deep": [
+    0.002,
+    0.057,
+    0.404
+   ],
+   "stability_edge": [
+    0.002,
+    0.106,
+    0.415
+   ],
+   "t1": {
+    "brain": [
+     0.35,
+     0.79,
+     1.57
+    ],
+    "tumor": [
+     0.24,
+     0.34,
+     0.43
+    ],
+    "margin": [
+     0.25,
+     0.44,
+     0.68
+    ]
+   },
+   "folds_brain": 0,
+   "folds_outside": 0,
+   "outside_max_mm": 43.5
+  },
+  "optimizer gn, fold 10, iter_scale 1": {
+   "seconds": [
+    47.2,
+    48.9
+   ],
+   "stability_deep": [
+    0.002,
+    0.054,
+    0.248
+   ],
+   "stability_edge": [
+    0.002,
+    0.08,
+    0.516
+   ],
+   "t1": {
+    "brain": [
+     0.31,
+     0.73,
+     1.59
+    ],
+    "tumor": [
+     0.2,
+     0.3,
+     0.4
+    ],
+    "margin": [
+     0.22,
+     0.41,
+     0.64
+    ]
+   },
+   "folds_brain": 0,
+   "folds_outside": 0,
+   "outside_max_mm": 42.7
+  }
+ }
+}

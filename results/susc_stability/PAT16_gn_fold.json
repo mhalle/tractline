@@ -1,0 +1,77 @@
+{
+ "subject": "PAT16",
+ "configs": {
+  "optimizer gn, fold 1": {
+   "seconds": [
+    102.0,
+    108.3
+   ],
+   "stability_deep": [
+    0.063,
+    0.47,
+    0.978
+   ],
+   "stability_edge": [
+    0.065,
+    0.666,
+    3.638
+   ],
+   "t1": {
+    "brain": [
+     0.29,
+     0.8,
+     1.67
+    ],
+    "tumor": [
+     0.28,
+     0.87,
+     1.39
+    ],
+    "margin": [
+     0.4,
+     0.93,
+     2.18
+    ]
+   },
+   "folds_brain": 0,
+   "folds_outside": 0,
+   "outside_max_mm": 49.5
+  },
+  "optimizer gn, fold 10": {
+   "seconds": [
+    82.7,
+    82.3
+   ],
+   "stability_deep": [
+    0.002,
+    0.069,
+    0.651
+   ],
+   "stability_edge": [
+    0.002,
+    0.296,
+    1.697
+   ],
+   "t1": {
+    "brain": [
+     0.31,
+     0.83,
+     1.66
+    ],
+    "tumor": [
+     0.3,
+     0.86,
+     1.32
+    ],
+    "margin": [
+     0.44,
+     0.92,
+     1.92
+    ]
+   },
+   "folds_brain": 0,
+   "folds_outside": 0,
+   "outside_max_mm": 37.8
+  }
+ }
+}

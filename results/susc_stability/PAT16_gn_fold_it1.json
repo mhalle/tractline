@@ -1,0 +1,41 @@
+{
+ "subject": "PAT16",
+ "configs": {
+  "optimizer gn, fold 10, iter_scale 1": {
+   "seconds": [
+    52.8,
+    55.1
+   ],
+   "stability_deep": [
+    0.003,
+    0.105,
+    0.845
+   ],
+   "stability_edge": [
+    0.003,
+    0.268,
+    2.402
+   ],
+   "t1": {
+    "brain": [
+     0.3,
+     0.81,
+     1.63
+    ],
+    "tumor": [
+     0.29,
+     0.88,
+     1.31
+    ],
+    "margin": [
+     0.44,
+     0.94,
+     1.92
+    ]
+   },
+   "folds_brain": 0,
+   "folds_outside": 0,
+   "outside_max_mm": 37.7
+  }
+ }
+}

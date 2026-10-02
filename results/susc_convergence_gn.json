@@ -1,0 +1,368 @@
+{
+ "subject": "PAT16",
+ "device": "mps",
+ "options": {
+  "optimizer": "gn"
+ },
+ "seconds": [
+  116.2,
+  111.4
+ ],
+ "levels": [
+  {
+   "level": 1,
+   "knots": [
+    15,
+    15,
+    11
+   ],
+   "motion": true,
+   "iterations": [
+    15,
+    15
+   ],
+   "max_iter": 15,
+   "evals": [
+    15,
+    15
+   ],
+   "ssd_after": [
+    33.42913055419922,
+    33.4354133605957
+   ],
+   "diff_deep": [
+    0.001,
+    0.006,
+    0.016
+   ],
+   "diff_edge": [
+    0.001,
+    0.008,
+    0.028
+   ],
+   "diff_outside": [
+    0.014,
+    0.285,
+    1.728
+   ],
+   "motion_diff_max": 0.0005
+  },
+  {
+   "level": 2,
+   "knots": [
+    19,
+    19,
+    13
+   ],
+   "motion": true,
+   "iterations": [
+    15,
+    15
+   ],
+   "max_iter": 15,
+   "evals": [
+    15,
+    23
+   ],
+   "ssd_after": [
+    40.36306381225586,
+    40.39069747924805
+   ],
+   "diff_deep": [
+    0.001,
+    0.014,
+    0.054
+   ],
+   "diff_edge": [
+    0.001,
+    0.024,
+    0.109
+   ],
+   "diff_outside": [
+    0.023,
+    0.913,
+    16.041
+   ],
+   "motion_diff_max": 0.0014
+  },
+  {
+   "level": 3,
+   "knots": [
+    19,
+    19,
+    13
+   ],
+   "motion": true,
+   "iterations": [
+    13,
+    14
+   ],
+   "max_iter": 15,
+   "evals": [
+    21,
+    14
+   ],
+   "ssd_after": [
+    72.29190826416016,
+    72.3080825805664
+   ],
+   "diff_deep": [
+    0.001,
+    0.014,
+    0.04
+   ],
+   "diff_edge": [
+    0.001,
+    0.037,
+    0.125
+   ],
+   "diff_outside": [
+    0.032,
+    1.709,
+    33.058
+   ],
+   "motion_diff_max": 0.0011
+  },
+  {
+   "level": 4,
+   "knots": [
+    27,
+    27,
+    18
+   ],
+   "motion": true,
+   "iterations": [
+    15,
+    15
+   ],
+   "max_iter": 15,
+   "evals": [
+    15,
+    15
+   ],
+   "ssd_after": [
+    75.48896026611328,
+    75.52776336669922
+   ],
+   "diff_deep": [
+    0.004,
+    0.056,
+    0.214
+   ],
+   "diff_edge": [
+    0.004,
+    0.082,
+    0.305
+   ],
+   "diff_outside": [
+    0.059,
+    3.373,
+    61.19
+   ],
+   "motion_diff_max": 0.0031
+  },
+  {
+   "level": 5,
+   "knots": [
+    27,
+    27,
+    18
+   ],
+   "motion": true,
+   "iterations": [
+    13,
+    10
+   ],
+   "max_iter": 15,
+   "evals": [
+    13,
+    10
+   ],
+   "ssd_after": [
+    75.34173583984375,
+    75.33895874023438
+   ],
+   "diff_deep": [
+    0.002,
+    0.046,
+    0.145
+   ],
+   "diff_edge": [
+    0.002,
+    0.053,
+    0.317
+   ],
+   "diff_outside": [
+    0.056,
+    3.75,
+    62.052
+   ],
+   "motion_diff_max": 0.0011
+  },
+  {
+   "level": 6,
+   "knots": [
+    51,
+    51,
+    33
+   ],
+   "motion": false,
+   "iterations": [
+    30,
+    30
+   ],
+   "max_iter": 30,
+   "evals": [
+    30,
+    30
+   ],
+   "ssd_after": [
+    162.2752685546875,
+    162.27960205078125
+   ],
+   "diff_deep": [
+    0.002,
+    0.091,
+    0.949
+   ],
+   "diff_edge": [
+    0.002,
+    0.162,
+    2.657
+   ],
+   "diff_outside": [
+    0.103,
+    4.286,
+    70.974
+   ],
+   "motion_diff_max": 0.0011
+  },
+  {
+   "level": 7,
+   "knots": [
+    51,
+    51,
+    33
+   ],
+   "motion": false,
+   "iterations": [
+    27,
+    26
+   ],
+   "max_iter": 30,
+   "evals": [
+    27,
+    26
+   ],
+   "ssd_after": [
+    178.25404357910156,
+    178.30368041992188
+   ],
+   "diff_deep": [
+    0.002,
+    0.146,
+    0.719
+   ],
+   "diff_edge": [
+    0.002,
+    0.201,
+    3.825
+   ],
+   "diff_outside": [
+    0.113,
+    4.582,
+    73.508
+   ],
+   "motion_diff_max": 0.0011
+  },
+  {
+   "level": 8,
+   "knots": [
+    51,
+    51,
+    33
+   ],
+   "motion": false,
+   "iterations": [
+    4,
+    4
+   ],
+   "max_iter": 60,
+   "evals": [
+    4,
+    8
+   ],
+   "ssd_after": [
+    178.22964477539062,
+    178.27915954589844
+   ],
+   "diff_deep": [
+    0.002,
+    0.159,
+    0.762
+   ],
+   "diff_edge": [
+    0.002,
+    0.214,
+    3.822
+   ],
+   "diff_outside": [
+    0.115,
+    4.682,
+    73.786
+   ],
+   "motion_diff_max": 0.0011
+  },
+  {
+   "level": 9,
+   "knots": [
+    51,
+    51,
+    33
+   ],
+   "motion": false,
+   "iterations": [
+    4,
+    6
+   ],
+   "max_iter": 60,
+   "evals": [
+    7,
+    6
+   ],
+   "ssd_after": [
+    178.21412658691406,
+    178.2584686279297
+   ],
+   "diff_deep": [
+    0.002,
+    0.161,
+    0.737
+   ],
+   "diff_edge": [
+    0.002,
+    0.223,
+    3.826
+   ],
+   "diff_outside": [
+    0.116,
+    4.828,
+    73.774
+   ],
+   "motion_diff_max": 0.0011
+  }
+ ],
+ "columns": "|displacement difference| mm: median / 99th / max",
+ "vs_topup_brain": {
+  "as is": [
+   0.222,
+   2.001,
+   10.611
+  ],
+  "plus noise 0.01": [
+   0.221,
+   2.007,
+   10.602
+  ]
+ }
+}

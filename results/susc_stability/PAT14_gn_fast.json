@@ -1,0 +1,41 @@
+{
+ "subject": "PAT14",
+ "configs": {
+  "optimizer gn, fold 10, iter_scale 1, coarse_device cpu, gn {'ftol': 0.0001, 'cg_rtol': 0.1, 'cg_iters': 30, 'cg_check': 5}": {
+   "seconds": [
+    15.5,
+    17.7
+   ],
+   "stability_deep": [
+    0.004,
+    0.081,
+    0.916
+   ],
+   "stability_edge": [
+    0.004,
+    0.115,
+    0.538
+   ],
+   "t1": {
+    "brain": [
+     0.32,
+     0.74,
+     1.56
+    ],
+    "tumor": [
+     0.19,
+     0.29,
+     0.39
+    ],
+    "margin": [
+     0.23,
+     0.43,
+     0.67
+    ]
+   },
+   "folds_brain": 0,
+   "folds_outside": 0,
+   "outside_max_mm": 42.4
+  }
+ }
+}

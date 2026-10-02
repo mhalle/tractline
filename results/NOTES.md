@@ -1301,3 +1301,44 @@ iterations and field): two runs on PAT16's b0s, as they are and plus noise of SD
 - **Uncertainty**: field-map approaches have used per-voxel confidence (from phase unwrapping) to
   control the deformation's smoothness locally - the adaptive regularization idea, from the field-map
   side. No reversed-phase-encoding method found that reports per-voxel uncertainty.
+
+## 2026-10-02 The field estimate by Gauss-Newton: converged, steadier, closer to the T1, faster
+
+`_susc.gauss_newton()` (estimate(optimizer="gn")): Levenberg-Marquardt Gauss-Newton on the same cost,
+matrix-free - the residual's Jacobian from the sampled images' derivative by position (autograd,
+pointwise), the B-spline basis and the Jacobian factor's derivative, plus the rigid parameters at the
+motion levels - each step by preconditioned conjugate gradients (the Gauss-Newton matrix's diagonal,
+separably), stopping on the cost's relative decrease. Gradient and Gauss-Newton product checked against
+finite differences in float64 (exact to 6 digits at the full-resolution levels, trilinear, linear and
+cubic; within trilinear's kinks at the motion levels).
+- **Plain Gauss-Newton converges where L-BFGS did not, and folds.** PAT16: SSD 33 against 135 at level
+  1, 178 against 256 at the end; the two runs (as is / plus noise 0.01) agree to 0.16 mm deep (99th;
+  L-BFGS 0.65) - but outside the brain the field runs to 1760 Hz with 13,242 folded voxels (a polarity's
+  Jacobian 1 -/+ readout dh/dpe below zero; topup 0, L-BFGS 13): with nothing to fit, the cost falls by
+  pushing signal around.
+- **HySCO's anti-folding penalty** (fold_phi: x^4 / (1 - x^2) of the displacement's derivative along
+  the phase-encoding axis, weighted as the bending energy by the current SSD; estimate(fold=10)) removes
+  every fold, in the brain and out. Weight 1 left PAT16 less stable (deep 99th 0.47); 10 is used.
+  The field outside the brain still drifts further than L-BFGS's or topup's (34-75 mm against 15-20) -
+  harmless to the brain so far, to be addressed.
+- **topup's own iteration counts suffice** (iter_scale 1): it is the schedule tuned for this optimizer.
+- **Speed** (PAT16, M2): 116 s plain; the bending energy as one contraction by per-axis Gram matrices
+  (exact); stopping at a relative decrease of 1e-4 (from level 7 on, iterations moved the cost 1e-4
+  and the field 0.03 voxel at the 99th - a few voxels outside the brain kept them going); conjugate
+  gradients to 0.1, at most 30, tested every 5th (each test a GPU sync): 27 s. The subsampled levels
+  are launch-bound on the GPU (22 ms a CG step on a grid 8x smaller than full resolution's 16 ms; 3x
+  faster on the CPU), so estimate(coarse_device="cpu") runs them there: **18 s**. Against the
+  tight-tolerance field: 0.08 mm deep, 0.27 edge (99th) - the size of the run-to-run spread.
+  CPU only, float32: 22.5 s trilinear, 27.6 s linear_pe - with one sampling per iteration instead of
+  L-BFGS's many evaluations, linear_pe is no longer faster, and trilinear gives the GPU's field (0.08
+  mm deep, against linear_pe's 0.38).
+- **Four patients** (`susc_stability.py`, `results/susc_stability/*_gn_fast.json`; L-BFGS → GN fast,
+  fold 10, iter_scale 1, coarse levels on the CPU; stability deep / edge 99th; T1 brain / tumor /
+  margin 99th; s): PAT16 0.65/0.84 → 0.06/0.16, 1.73/1.67/2.45 → 1.63/1.33/1.90, 33 → 18 - PAT13
+  0.27/0.41 → 0.04/0.07, 1.46/3.35/3.41 → 1.40/2.76/2.87, 34 → 23 - PAT23 0.30/0.51 → 0.08/0.16,
+  2.49/3.62/5.20 → 2.27/3.60/3.92, 32 → 20 - PAT14 0.44/0.46 → 0.08/0.12, 1.69/0.54/0.62 →
+  1.56/0.39/0.67, 31 → 17. No folds. Better or equal everywhere but PAT14's margin (0.05 mm).
+- Not yet the default: the noise-0.01 rerun measures the optimizer's sensitivity, not repeatability
+  from independent data. Next: split-half and held-out tests from the scan's own b0s (6 AP spread over
+  the 15-minute scan, 2 PA), on all 12 patients, then the default and the cohort rerun. The default
+  L-BFGS path still reproduces the cohort's field exactly.

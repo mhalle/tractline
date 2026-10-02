@@ -1,0 +1,41 @@
+{
+ "subject": "PAT23",
+ "configs": {
+  "optimizer gn, fold 10, iter_scale 1, coarse_device cpu, gn {'ftol': 0.0001, 'cg_rtol': 0.1, 'cg_iters': 30, 'cg_check': 5}": {
+   "seconds": [
+    20.1,
+    20.8
+   ],
+   "stability_deep": [
+    0.003,
+    0.083,
+    0.305
+   ],
+   "stability_edge": [
+    0.003,
+    0.164,
+    1.169
+   ],
+   "t1": {
+    "brain": [
+     0.38,
+     0.94,
+     2.27
+    ],
+    "tumor": [
+     0.6,
+     1.65,
+     3.6
+    ],
+    "margin": [
+     0.37,
+     1.41,
+     3.92
+    ]
+   },
+   "folds_brain": 0,
+   "folds_outside": 0,
+   "outside_max_mm": 63.1
+  }
+ }
+}
