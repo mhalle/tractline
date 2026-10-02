@@ -1,0 +1,206 @@
+{
+ "interp": "cubic_pe",
+ "motion_mode": "estimate",
+ "device": "mps",
+ "iter_scale": 3,
+ "lam_scale": 10000000.0,
+ "seconds": 57.4,
+ "brain_voxels": 94505,
+ "field_r_vs_topup": 0.9736,
+ "field_abs_diff_hz_median_99th": [
+  9.42,
+  37.16
+ ],
+ "displacement_diff_mm_median_99th_max": [
+  0.626,
+  2.471,
+  6.083
+ ],
+ "field_hz_ours_1_50_99": [
+  -60.6,
+  5.9,
+  149.5
+ ],
+ "field_hz_topup_1_50_99": [
+  -76.1,
+  -3.7,
+  138.3
+ ],
+ "motion_ours_translation_mm_max": 1.227,
+ "motion_topup_translation_mm_max": 1.049,
+ "motion_abs_diff_translation_mm_max": 2.276,
+ "levels": [
+  {
+   "level": 1,
+   "grid": [
+    48,
+    48,
+    30
+   ],
+   "knots": [
+    15,
+    15,
+    11
+   ],
+   "ssd_before": 439.9429016113281,
+   "ssd_after": 352.9669494628906,
+   "motion": true,
+   "interp": "trilinear"
+  },
+  {
+   "level": 2,
+   "grid": [
+    48,
+    48,
+    30
+   ],
+   "knots": [
+    19,
+    19,
+    13
+   ],
+   "ssd_before": 464.7008361816406,
+   "ssd_after": 450.8155822753906,
+   "motion": true,
+   "interp": "trilinear"
+  },
+  {
+   "level": 3,
+   "grid": [
+    48,
+    48,
+    30
+   ],
+   "knots": [
+    19,
+    19,
+    13
+   ],
+   "ssd_before": 590.3275756835938,
+   "ssd_after": 538.6287231445312,
+   "motion": true,
+   "interp": "trilinear"
+  },
+  {
+   "level": 4,
+   "grid": [
+    48,
+    48,
+    30
+   ],
+   "knots": [
+    27,
+    27,
+    18
+   ],
+   "ssd_before": 625.2362060546875,
+   "ssd_after": 460.50323486328125,
+   "motion": true,
+   "interp": "trilinear"
+  },
+  {
+   "level": 5,
+   "grid": [
+    48,
+    48,
+    30
+   ],
+   "knots": [
+    27,
+    27,
+    18
+   ],
+   "ssd_before": 460.50323486328125,
+   "ssd_after": 351.4822082519531,
+   "motion": true,
+   "interp": "trilinear"
+  },
+  {
+   "level": 6,
+   "grid": [
+    96,
+    96,
+    60
+   ],
+   "knots": [
+    51,
+    51,
+    33
+   ],
+   "ssd_before": 865.8535766601562,
+   "ssd_after": 416.4403076171875,
+   "motion": false,
+   "interp": "cubic along pe"
+  },
+  {
+   "level": 7,
+   "grid": [
+    96,
+    96,
+    60
+   ],
+   "knots": [
+    51,
+    51,
+    33
+   ],
+   "ssd_before": 447.8529968261719,
+   "ssd_after": 339.8311462402344,
+   "motion": false,
+   "interp": "cubic along pe"
+  },
+  {
+   "level": 8,
+   "grid": [
+    96,
+    96,
+    60
+   ],
+   "knots": [
+    51,
+    51,
+    33
+   ],
+   "ssd_before": 339.8312072753906,
+   "ssd_after": 288.3907775878906,
+   "motion": false,
+   "interp": "cubic along pe"
+  },
+  {
+   "level": 9,
+   "grid": [
+    96,
+    96,
+    60
+   ],
+   "knots": [
+    51,
+    51,
+    33
+   ],
+   "ssd_before": 288.3907775878906,
+   "ssd_after": 281.3380126953125,
+   "motion": false,
+   "interp": "cubic along pe"
+  }
+ ],
+ "displacement_diff_mm_99th_deep_vs_edge": [
+  2.145,
+  3.364
+ ],
+ "displacement_diff_mm_median_by_signal_quartile": [
+  0.666,
+  0.646,
+  0.625,
+  0.593
+ ],
+ "unwarped_b0_vs_topup": {
+  "corr_ours": 0.9693,
+  "corr_uncorrected": 0.8985,
+  "rel_rms_ours": 0.2038,
+  "rel_rms_uncorrected": 0.376,
+  "ap_pa_rel_rms_ours": 0.1301,
+  "ap_pa_rel_rms_topup": 0.1223,
+  "ap_pa_rel_rms_uncorrected": 0.5431
+ }
+}

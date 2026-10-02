@@ -889,3 +889,34 @@ against topup's 617 s on the CPU.
   confirms the sign convention. Ours closes about two-thirds of the gap on tract centers and a third
   on the tract mix: the field itself has to come closer. Next: cubic B-spline sampling along the
   phase-encoding axis at the fine levels (topup's interp=spline) and in the application.
+
+## 2026-10-01 Our susceptibility correction against topup: within the scan's noise
+
+- **Cubic B-splines along phase encoding** (fine levels and the application, topup's interp=spline):
+  no change to the field's agreement (r 0.965 against 0.967); kept as the default, it matches
+  topup's interpolation. **Lambda** up to x1e8: no trend (r 0.955-0.974, optimizer path noise).
+- **The offset:** our field ran a constant ~6 Hz above topup's (a uniform 0.4 mm). topup_movpar.txt
+  shows its convention: the first volume of each acquisition (the first PA b0) has no translation
+  along the phase-encoding axis, which fixes the otherwise free trade between a field offset and
+  those translations. Adopted: field r 0.972, displacement difference median 0.24 mm, 99th
+  percentile 2.1 mm (1.6 deep, 3.9 at the edge); corrected b0s correlate 0.975 with topup's; AP-PA
+  disagreement after correction 0.126 (topup 0.122). 50 s on MPS. Our motion parameters still follow
+  another convention than topup's (a common rotation of about -0.7 deg about y against volume 0,
+  some translations with the opposite sign); left as is, the downstream test below being the bar.
+- **Downstream, against topup + applytopup** (faithful pipeline, `pat16_topup_compare_*.json`):
+
+  | | tract mix r | per-tract change, median / 90th | tract centers moved, median / 90th / max |
+  |---|---|---|---|
+  | uncorrected | 0.993 | 9 % / 26 % | 2.3 / 4.5 / 8.6 mm |
+  | **ours** | **0.998** | 5 % / 21 % | **1.5 / 3.7 / 8.1 mm** |
+  | topup's field, our cubic application (interpolation floor) | 0.999 | 5 % / 13 % | 1.2 / 2.5 / 4.5 mm |
+  | scan noise: 2 wild-bootstrap replicates of the corrected scan | 0.996 | 7-9 % / 21-24 % | 2.3-2.5 / 4.5-5.9 / 7.5-8.6 mm |
+
+  Ours sits between the interpolation floor and the scan's noise on every measure. The largest
+  center moves (TO 8.1 mm, ILF 6.1) are inside what noise does to those tracts (TO 6.3-8.6, ILF
+  2.0-7.0).
+- **A correction to the previous entry:** within diffusion space, topup's correction moves tract
+  centers about as much as the scan's noise does (2.3 / 4.5 / 8.6 against 2.3-2.5 / 4.5-5.9 /
+  7.5-8.6 mm); its effect on the tract mix (r 0.993) is outside the noise. The main reason to
+  correct for planning is alignment with the T1 the tumor is outlined on (displacements up to
+  19.5 mm), which tract centers in diffusion space do not measure; a T1-alignment test would.

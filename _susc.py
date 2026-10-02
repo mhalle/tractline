@@ -12,8 +12,11 @@ The model (Andersson, Skare & Ashburner 2003; topup's b02b0.cnf schedule):
   - levels as b02b0.cnf: knot spacing (mm), subsampling, Gaussian smoothing (FWHM mm), iterations,
     lambda, motion estimated or not; the field carried from level to level by least-squares
     projection onto the next level's basis (exact for tensor-product bases);
-  - volumes scaled to a common mean intensity first (--scale=1).
-Departures from topup, measured not hidden: trilinear interpolation (topup: cubic spline), L-BFGS
+  - volumes scaled to a common mean intensity first (--scale=1);
+  - no translation along the phase-encoding axis for the first volume of each acquisition (topup's
+    convention, which fixes the trade between a field offset and such translations).
+Departures from topup, measured not hidden: trilinear interpolation where motion is estimated, cubic
+B-splines along the phase-encoding axis only where it is held (topup: cubic splines throughout), L-BFGS
 (topup: Levenberg-Marquardt, then scaled conjugate gradients), motion composed with the displacement
 to first order (M_v(x) + d_v(x)).
 """
@@ -130,6 +133,48 @@ def unwarp(img, h, dh, pe_ax, pe_scale, R, t, vox, jac=True):
     return torch.stack(out)
 
 
+def prefilter(img, ax):
+    """Cubic B-spline coefficients of images (V, X, Y, Z) along axis ax (0-2 of the image), mirrored
+    edges: solves c[i-1]/6 + 4 c[i]/6 + c[i+1]/6 = f[i] with a dense (n, n) inverse (n <= a few hundred)."""
+    n = img.shape[1 + ax]
+    M = torch.zeros(n, n, dtype=torch.float64)
+    for i in range(n):
+        M[i, i] = 4 / 6
+        for j in (i - 1, i + 1):
+            jj = -j if j < 0 else (2 * (n - 1) - j if j > n - 1 else j)        # mirror (whole-sample)
+            M[i, jj] += 1 / 6
+    Minv = torch.linalg.inv(M).to(img.device, img.dtype)
+    return torch.movedim(torch.tensordot(torch.movedim(img, 1 + ax, -1), Minv, dims=([3], [1])), -1, 1 + ax)
+
+
+def sample_pe(coef, pos, ax):
+    """Cubic B-spline samples of coef (V, X, Y, Z) at positions pos (V, X, Y, Z) along axis ax (voxels),
+    the other coordinates being the voxel's own; mirrored edges."""
+    n = coef.shape[1 + ax]
+    i0 = torch.floor(pos)
+    t = pos - i0
+    w = [(1 - t) ** 3 / 6, (3 * t ** 3 - 6 * t ** 2 + 4) / 6, (-3 * t ** 3 + 3 * t ** 2 + 3 * t + 1) / 6, t ** 3 / 6]
+    out = torch.zeros_like(pos)
+    for k, wk in zip(range(-1, 3), w):
+        idx = (i0 + k).long()
+        idx = torch.where(idx < 0, -idx, idx)
+        idx = torch.where(idx > n - 1, 2 * (n - 1) - idx, idx).clamp(0, n - 1)
+        out = out + wk * torch.gather(coef, 1 + ax, idx)
+    return out
+
+
+def unwarp_pe_cubic(coef, h, dh, pe_ax, pe_scale, jac=True):
+    """unwarp() without motion, cubic B-spline along the phase-encoding axis (coef: prefilter() of the
+    already moved images): volume v sampled at x + pe_scale_v h along pe_ax, times 1 + pe_scale_v dh."""
+    V = coef.shape[0]
+    n = coef.shape[1 + pe_ax]
+    shape = [1, 1, 1, 1]; shape[1 + pe_ax] = n
+    base = torch.arange(n, dtype=coef.dtype, device=coef.device).view(shape)
+    pos = base + pe_scale.view(V, 1, 1, 1) * h[None]
+    s = sample_pe(coef, pos, pe_ax)
+    return s * (1 + pe_scale.view(V, 1, 1, 1) * dh[None]) if jac else s
+
+
 def bending(c, Bs, dBs, d2Bs, vox):
     """Bending energy of h, mean over voxels, in (Hz / mm^2)^2."""
     hxx = sep(d2Bs[0], Bs[1], Bs[2], c) / vox[0] ** 2
@@ -144,9 +189,12 @@ def bending(c, Bs, dBs, d2Bs, vox):
 # ------------------------------------------------------------------ the fit
 
 def estimate(b0s: np.ndarray, vox, pe: np.ndarray, trt: np.ndarray, device="cpu", schedule=B02B0, iter_scale=3,
-             lam_scale=1.0, fixed_motion=None, progress=None):
+             lam_scale=1.0, fixed_motion=None, interp="cubic_pe", progress=None):
     """b0s (X, Y, Z, V), voxel sizes (mm), pe (V, 3) phase-encoding vectors, trt (V,) total readout
-    times (s). Returns (field Hz on the full grid as numpy, motion (V, 6), per-level log)."""
+    times (s). Returns (field Hz on the full grid as numpy, motion (V, 6), per-level log).
+    interp "cubic_pe": at levels whose motion is held, the images are moved once (trilinear) and
+    sampled with cubic B-splines along the phase-encoding axis (topup's --interp=spline, in the
+    direction the distortion acts); "trilinear": trilinear throughout."""
     dev = torch.device(device)
     dt = torch.float32 if dev.type == "mps" else torch.float64
     img = torch.as_tensor(np.moveaxis(b0s, -1, 0), dtype=dt, device=dev)    # (V, X, Y, Z)
@@ -157,6 +205,16 @@ def estimate(b0s: np.ndarray, vox, pe: np.ndarray, trt: np.ndarray, device="cpu"
     vox_t = torch.as_tensor(np.asarray(vox, float), dtype=dt, device=dev)
     CS = 10.0                                                                # Hz per optimizer unit
     MS = torch.tensor([1.0, 1.0, 1.0, 0.01, 0.01, 0.01], dtype=dt, device=dev)   # mm, mm, mm, rad, rad, rad per unit
+    # topup's convention: the first volume of each acquisition (distinct phase encoding and readout)
+    # has no translation along the phase-encoding axis - a field offset and such translations
+    # are otherwise interchangeable (topup_movpar.txt shows it: the first PA volume's is exactly 0)
+    first_of = {}
+    for v in range(V):
+        first_of.setdefault((tuple(np.round(pe[v], 6)), round(float(trt[v]), 9)), v)
+    mmask = torch.ones(V - 1, 6, dtype=dt, device=dev)
+    for v in first_of.values():
+        if v > 0:
+            mmask[v - 1, pe_ax] = 0.0
     mov = torch.zeros(V - 1, 6, dtype=dt, device=dev)
     if fixed_motion is not None:                                             # (V, 6), volume 0's row ignored: not estimated
         mov = torch.as_tensor(np.asarray(fixed_motion)[1:], dtype=dt, device=dev)
@@ -181,11 +239,24 @@ def estimate(b0s: np.ndarray, vox, pe: np.ndarray, trt: np.ndarray, device="cpu"
         pe_scale = pe_scale_full / f                                           # displacement in this level's voxels
         lam = schedule["lam"][lev] * lam_scale                                   # topup's lambda units are not ours: lam_scale calibrates
 
+        cubic = interp == "cubic_pe" and not est
+        if cubic:                                                                # motion held: move once, then cubic along pe
+            with torch.no_grad():
+                Rs0, ts0 = [torch.eye(3, dtype=dt, device=dev)], [torch.zeros(3, dtype=dt, device=dev)]
+                for v in range(V - 1):
+                    R, t = rigid(mov[v], center); Rs0.append(R); ts0.append(t)
+                moved = unwarp(im, torch.zeros_like(im[0]), torch.zeros_like(im[0]), pe_ax, pe_scale, Rs0, ts0, vl, jac=False)
+                coef = prefilter(moved, pe_ax)
+
         def cost():
             c = cs * CS
-            m = ms * MS
+            m = ms * MS * mmask
             h = field(c, Bs)
             dh = sep(*[(dBs[a] if a == pe_ax else Bs[a]) for a in range(3)], c)
+            if cubic:
+                u = unwarp_pe_cubic(coef, h, dh, pe_ax, pe_scale)
+                ssd = ((u - u.mean(0, keepdim=True)) ** 2).mean()
+                return ssd + lam * ssd.detach() * bending(c, Bs, dBs, d2Bs, vl), ssd
             Rs, ts = [torch.eye(3, dtype=dt, device=dev)], [torch.zeros(3, dtype=dt, device=dev)]
             for v in range(V - 1):
                 R, t = rigid(m[v], center); Rs.append(R); ts.append(t)
@@ -208,9 +279,9 @@ def estimate(b0s: np.ndarray, vox, pe: np.ndarray, trt: np.ndarray, device="cpu"
         with torch.no_grad():
             after = float(cost()[1])
             h_prev = field(cs * CS, Bs).detach()
-            mov = (ms * MS).detach()
+            mov = (ms * MS * mmask).detach()
         log.append({"level": lev + 1, "grid": [X, Y, Z], "knots": [B.shape[1] for B in Bs], "ssd_before": before, "ssd_after": after,
-                    "motion": est})
+                    "motion": est, "interp": "cubic along pe" if cubic else "trilinear"})
         if progress:
             progress(log[-1])
     full = Fnn.interpolate(h_prev[None, None], size=tuple(b0s.shape[:3]), mode="trilinear", align_corners=True)[0, 0]

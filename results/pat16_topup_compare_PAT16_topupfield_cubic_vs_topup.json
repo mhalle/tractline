@@ -1,0 +1,106 @@
+{
+ "data": "ds001226 PAT16, b0 + b=2800: PAT16_topupfield_cubic against PAT16_topup",
+ "PAT16_topupfield_cubic": {
+  "seeds": 47690,
+  "streamlines_ge_40mm": 32204,
+  "median_length_mm": 87.5,
+  "other_fraction": 0.5815,
+  "track_s": 29.1
+ },
+ "PAT16_topup": {
+  "seeds": 47470,
+  "streamlines_ge_40mm": 32155,
+  "median_length_mm": 87.5,
+  "other_fraction": 0.5798,
+  "track_s": 31.3
+ },
+ "tract_mix_r": 0.9988,
+ "per_tract_abs_rel_change_median_90th": [
+  0.05,
+  0.13
+ ],
+ "largest_share_changes": [
+  [
+   "EmC",
+   1.2
+  ],
+  [
+   "SO",
+   1.19
+  ],
+  [
+   "CC1",
+   1.17
+  ],
+  [
+   "SP",
+   1.16
+  ],
+  [
+   "CR-F",
+   0.87
+  ],
+  [
+   "PLIC",
+   0.88
+  ],
+  [
+   "CC5",
+   1.13
+  ],
+  [
+   "SLF-III",
+   0.89
+  ]
+ ],
+ "tract_center_moved_mm_median_90th_max": [
+  1.2,
+  2.5,
+  4.5
+ ],
+ "tract_center_moved_mm": {
+  "Intra-CBLM-PaT": 4.5,
+  "Sup-T": 3.3,
+  "MdLF": 2.9,
+  "Sup-FP": 2.9,
+  "SF": 2.5,
+  "TO": 2.4,
+  "SLF-III": 2.3,
+  "Sup-O": 2.3,
+  "CC5": 2.0,
+  "ICP": 2.0,
+  "Sup-P": 2.0,
+  "CC3": 1.9,
+  "SO": 1.7,
+  "TT": 1.6,
+  "Sup-PT": 1.6,
+  "SLF-II": 1.5,
+  "TP": 1.3,
+  "CC2": 1.3,
+  "CC4": 1.3,
+  "CPC": 1.3,
+  "Sup-PO": 1.3,
+  "ILF": 1.2,
+  "SP": 1.1,
+  "CR-P": 1.0,
+  "TF": 1.0,
+  "EmC": 0.9,
+  "SLF-I": 0.9,
+  "CB": 0.8,
+  "UF": 0.8,
+  "PLIC": 0.8,
+  "CC6": 0.8,
+  "Sup-F": 0.7,
+  "EC": 0.6,
+  "CST": 0.6,
+  "CR-F": 0.6,
+  "CC1": 0.6,
+  "Sup-OT": 0.6,
+  "AF": 0.5,
+  "CC7": 0.5,
+  "IOFF": 0.3,
+  "MCP": 0.2,
+  "Intra-CBLM-I-P": 0.1
+ },
+ "for_scale": "TractCloud's own redraws on one tractogram: tract mix r 0.995-0.999 (pat16_seeding_floor.json)"
+}

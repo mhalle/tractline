@@ -13,7 +13,8 @@ import numpy as np, nibabel as nib, torch
 import _susc as S
 
 ap = argparse.ArgumentParser(); ap.add_argument("--field", default="field_hz_scaled.nii.gz")
-ap.add_argument("--out", default="dwi_AP_ours.nii.gz"); args = ap.parse_args()
+ap.add_argument("--out", default="dwi_AP_ours.nii.gz")
+ap.add_argument("--interp", choices=("cubic_pe", "trilinear"), default="cubic_pe"); args = ap.parse_args()
 TD = Path.home() / "tmp/data/tractography/ds001226"
 SRC = TD / "sub-PAT16/ses-preop/dwi/sub-PAT16_ses-preop_acq-AP_dwi"
 SU = TD / "derived/PAT16/susc"
@@ -29,7 +30,11 @@ V = dwi.shape[-1]
 eye = [torch.eye(3, dtype=torch.float64)] * V
 zero = [torch.zeros(3, dtype=torch.float64)] * V
 scale = torch.full((V,), pe[1] * side["TotalReadoutTime"], dtype=torch.float64)
-out = S.unwarp(torch.as_tensor(np.moveaxis(dwi, -1, 0)), h, dh, pe[0], scale, eye, zero, vox).numpy()
+vols = torch.as_tensor(np.moveaxis(dwi, -1, 0))
+if args.interp == "cubic_pe":                                           # applytopup interpolates with splines
+    out = S.unwarp_pe_cubic(S.prefilter(vols, pe[0]), h, dh, pe[0], scale).numpy()
+else:
+    out = S.unwarp(vols, h, dh, pe[0], scale, eye, zero, vox).numpy()
 out = np.moveaxis(np.clip(out, 0, None), 0, -1).astype(np.float32)
 nib.save(nib.Nifti1Image(out, img.affine), SU / args.out)
 print(json.dumps({"volumes": V, "seconds": round(time.time() - t0, 1), "out": str(SU / args.out)}))

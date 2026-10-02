@@ -17,6 +17,7 @@ import _susc as S
 
 ap = argparse.ArgumentParser(); ap.add_argument("--device", default="mps"); ap.add_argument("--iter-scale", type=int, default=3)
 ap.add_argument("--lam-scale", type=float, default=1.0); ap.add_argument("--tag", default="")
+ap.add_argument("--interp", choices=("cubic_pe", "trilinear"), default="cubic_pe")
 ap.add_argument("--motion", choices=("estimate", "zero", "topup", "topup_neg"), default="estimate",
                 help="diagnostic: hold the motion fixed (none, topup's movpar as given, or with its sign reversed)")
 args = ap.parse_args()
@@ -33,7 +34,7 @@ pe, trt = acq[:, :3], acq[:, 3]
 mp = np.loadtxt(TP / "topup_movpar.txt")
 fixed = {"estimate": None, "zero": np.zeros_like(mp), "topup": mp, "topup_neg": -mp}[args.motion]
 t0 = time.time()
-h, motion, log = S.estimate(b0s, vox, pe, trt, device=args.device, iter_scale=args.iter_scale, lam_scale=args.lam_scale, fixed_motion=fixed,
+h, motion, log = S.estimate(b0s, vox, pe, trt, device=args.device, iter_scale=args.iter_scale, lam_scale=args.lam_scale, fixed_motion=fixed, interp=args.interp,
                             progress=lambda r: print(f"level {r['level']}: grid {r['grid']}, ssd {r['ssd_before']:.4g} -> {r['ssd_after']:.4g}, "
                                                      f"{time.time() - t0:.0f} s", flush=True))
 secs = time.time() - t0
@@ -48,7 +49,7 @@ r = float(np.corrcoef(a, b)[0, 1])
 d = np.abs(a - b)
 mm = d * trt[0] * vox[int(np.argmax(np.abs(pe).sum(0)))]
 mov_ref = np.loadtxt(TP / "topup_movpar.txt")
-res = {"motion_mode": args.motion, "device": args.device, "iter_scale": args.iter_scale, "lam_scale": args.lam_scale, "seconds": round(secs, 1), "brain_voxels": int(brain.sum()),
+res = {"interp": args.interp, "motion_mode": args.motion, "device": args.device, "iter_scale": args.iter_scale, "lam_scale": args.lam_scale, "seconds": round(secs, 1), "brain_voxels": int(brain.sum()),
        "field_r_vs_topup": round(r, 4),
        "field_abs_diff_hz_median_99th": [round(float(np.median(d)), 2), round(float(np.quantile(d, 0.99)), 2)],
        "displacement_diff_mm_median_99th_max": [round(float(np.median(mm)), 3), round(float(np.quantile(mm, 0.99)), 3), round(float(mm.max()), 3)],
