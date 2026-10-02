@@ -1,9 +1,9 @@
 {
  "kernel": "block",
- "gpu": "NVIDIA A10G",
+ "gpu": "NVIDIA A10",
  "torch": "2.14.1+cu130",
  "triton": "3.8.0",
- "first_call_s_with_compile": 136.6,
+ "first_call_s_with_compile": 4.4,
  "rows": 3335,
  "triton_vs_f64": {
   "state_rel_err": [
