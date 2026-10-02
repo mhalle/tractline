@@ -1453,3 +1453,32 @@ planes are identical to the full encode; the tail (dropped mass) is not (96 % di
 sum over all 1,600 classes; with that one number stored, 49,997 of 50,000 tails match, 3 differ by up
 to 21 / 65,535 (not chased). Deeper fields, the "shell" rule and other tail temperatures would need
 the full log-probabilities.
+
+## 2026-10-02 The pipeline on CUDA (Modal: A10, A10G, L40S); HARDI on three paths
+
+`pipeline.run(device="cuda")`: the field estimate in float32 on the GPU (all levels), the Triton block
+kernel for the tracker, TractCloud on CUDA. `modal_gpu_pipeline.py` (PAT16, two runs per container,
+results/modal_gpu_pipeline_*.json), `gpu_pipeline_compare.py` (against the M2, gpu_pipeline_compare.json).
+- **Time, PAT16, scan to labels, steady state:** A10 16.5 s (field 4.8, UKF 8.9, TractCloud 1.2), A10G
+  17.5 s, L40S 12.2 s (9.6 with TF32) - against the M2's 53 s and 32 x86 cores' 94 s. The first run in
+  a container pays the Triton compile when the Volume's cache misses (~200 s; cached: ~20 s).
+- **TF32.** PyTorch lets cuDNN run float32 convolutions as TF32 by default on Ampere and newer.
+  `pipeline.exact_float32` now turns it (and matmul's) off for the pipeline's stages on CUDA and
+  restores it after: on the same card it moves PAT16's Other fraction by ~1.2 points (A10 62.6 →
+  61.5 %, L40S 64.0 → 62.8 %) and the field by up to 1 mm; it costs nothing on the A10, 2.6 s on the
+  L40S (the field estimate's convolutions). With it off, TractCloud on CUDA labels a tractogram exactly
+  as the M2 does: the A10's 42,169 fibers, 32,268 of 32,268 labels identical.
+- **Determinism.** Within a card type every run is bit-identical (two containers x two runs on an A10:
+  one field hash, one fiber hash). Modal's "A10" lands on an A10 or an A10G; the two differ in
+  float32 rounding (42,169 against 42,150 fibers), as an L40S does.
+- **The Other fraction is sensitive on PAT16.** Fields agree with the M2's within the estimate's own
+  rounding sensitivity (deep 99th 0.05-0.08 mm), fibers within ~20 of 42,170, but the share TractCloud
+  labels Other spans 58-63 %: M2 (Metal) 58.1 %, A10G 59.9 %, A10 61.5 %, L40S 62.8 %. On the A10's own
+  field: the float64 tracker (CPU) 62.2 %, Triton 61.5 %, Metal 58.8 % - the field moves it 0.7 points,
+  the tracker's float32 rounding the rest, and Metal is the farthest from float64. Open: the label
+  noise floor on PAT16 (the scan's own noise, as ukf_noise_floor.py measured fibers) - whether 3-4
+  points of Other is within it, and if not, why Metal's rounding leans one way.
+- **HARDI on three paths** (`hardi_paths.py`, `modal_hardi_paths.py`; results/hardi_paths_*.json; no
+  correction - no reversed pair; prep, UKF, TractCloud): M2 Metal 105.3 s (UKF 93.9), L40S 39.7 s (UKF
+  36.5; first run 49.9), 32 x86 cores 119.5 s (UKF 110.4). 78,404-78,417 fibers; Other 76.6-77.4 % -
+  on this scan the paths agree within 0.8 points. Repeat runs bit-identical on the M2 and the L40S.

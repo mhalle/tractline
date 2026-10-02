@@ -21,7 +21,8 @@ swappable component with our own TractCloud as the default.
 
 ## The package (`src/tractline`)
 
-`pipeline.py` runs it in memory: correct → track → label, then optionally TRX. Its docstring states
+`pipeline.py` runs it in memory: correct → track → label, then optionally TRX, on an Apple GPU
+(`mps`), a CUDA GPU or the CPU. Its docstring states
 the conventions every module follows (array layouts, units, devices). The default path needs numpy,
 scipy, torch, nibabel and TractCloud's code and weights, nothing more (`bench/dependency_check.py`).
 
@@ -54,8 +55,10 @@ Results and the running journal are in `bench/results/` (`NOTES.md`, newest entr
 - The field estimate: `susc_held_out.py` (+ `_summary`: split-half, held-out prediction and drift from
   each scan's own b0s, 12 patients - the test that picks its settings), `susc_stability.py`,
   `susc_convergence.py`.
-- Speed: `cpu_timing.py`, `modal_cpu_scaling.py` (x86, CPU only), `modal_infer_opt.py` (TractCloud
-  inference), `ukf_cpu_check.py`.
+- Speed: `cpu_timing.py`, `modal_cpu_scaling.py` (x86, CPU only), `modal_gpu_pipeline.py` (+
+  `gpu_pipeline_compare.py`: the pipeline on CUDA GPUs against the M2), `hardi_paths.py` +
+  `modal_hardi_paths.py` (the HARDI brain on the M2, an L40S and 32 x86 cores), `modal_infer_opt.py`
+  (TractCloud inference), `ukf_cpu_check.py`.
 
 Records kept because committed results came from them: `pat16_prep.py`, `susc_apply.py`,
 `topup_ref.py`, `pat16_topup_compare.py`, `pat16_seeding.py`, `mac_labels.py`, `ukf_bench.py`,

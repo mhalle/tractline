@@ -1,0 +1,21 @@
+{
+ "device": "cpu",
+ "torch": "2.14.1+cu130",
+ "cpu_count": 48,
+ "runs": [
+  {
+   "seconds": {
+    "prep": 1.13,
+    "load": 0.9,
+    "ukf": 110.39,
+    "tractcloud": 7.11
+   },
+   "track_and_label_s": 119.5,
+   "fibers": 78417,
+   "fiber_steps": 17913897,
+   "labeled": 49661,
+   "other_fraction": 0.7738,
+   "fibers_sha": "b47d93c6db105e70"
+  }
+ ]
+}

@@ -1,0 +1,35 @@
+{
+ "device": "mps",
+ "torch": "2.14.1",
+ "cpu_count": 8,
+ "runs": [
+  {
+   "seconds": {
+    "prep": 3.78,
+    "load": 1.15,
+    "ukf": 97.06,
+    "tractcloud": 6.76
+   },
+   "track_and_label_s": 108.8,
+   "fibers": 78409,
+   "fiber_steps": 17909995,
+   "labeled": 49650,
+   "other_fraction": 0.7671,
+   "fibers_sha": "0f506cb9e2b2b422"
+  },
+  {
+   "seconds": {
+    "prep": 3.63,
+    "load": 1.18,
+    "ukf": 93.92,
+    "tractcloud": 6.56
+   },
+   "track_and_label_s": 105.3,
+   "fibers": 78409,
+   "fiber_steps": 17909995,
+   "labeled": 49650,
+   "other_fraction": 0.7671,
+   "fibers_sha": "0f506cb9e2b2b422"
+  }
+ ]
+}

@@ -1,0 +1,36 @@
+{
+ "device": "cuda",
+ "torch": "2.14.1+cu130",
+ "cpu_count": 24,
+ "runs": [
+  {
+   "seconds": {
+    "prep": 0.37,
+    "load": 1.54,
+    "ukf": 45.99,
+    "tractcloud": 1.97
+   },
+   "track_and_label_s": 49.9,
+   "fibers": 78404,
+   "fiber_steps": 17908562,
+   "labeled": 49647,
+   "other_fraction": 0.7662,
+   "fibers_sha": "8cf323683b8b5623"
+  },
+  {
+   "seconds": {
+    "prep": 0.26,
+    "load": 1.7,
+    "ukf": 36.49,
+    "tractcloud": 1.21
+   },
+   "track_and_label_s": 39.7,
+   "fibers": 78404,
+   "fiber_steps": 17908562,
+   "labeled": 49647,
+   "other_fraction": 0.7662,
+   "fibers_sha": "8cf323683b8b5623"
+  }
+ ],
+ "gpu": "NVIDIA L40S"
+}

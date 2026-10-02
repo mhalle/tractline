@@ -21,7 +21,7 @@ Conventions at every module boundary (_ds001226, susceptibility, prep, ukf, trac
   fields    Hz on that grid; displacements mm along the phase-encoding axis, signed, as the DWI's
             own phase encoding moves the anatomy (susceptibility.displacement_mm)
   fibers    lists of (n, 3) RAS mm arrays, in seed order; labels for those >= 40 mm (Labels.keep)
-  devices   device="mps" | "cpu"; timings through Timer, which waits for the GPU
+  devices   device="mps" | "cuda" | "cpu"; timings through Timer, which waits for the GPU
 """
 from __future__ import annotations
 
@@ -36,6 +36,24 @@ from .labelers.tractcloud import Labeler, Labels
 
 ESTIMATE_THREADS = 16            # the field estimate on the CPU: its problem is small (~5e5 voxels); on 48 vCPUs
                                  # 8 threads 43 s, 16 36.5 s, 32 41 s, 48 72.5 s (modal_cpu_field_timing.json)
+
+
+@contextmanager
+def exact_float32(device):
+    """On CUDA, float32 as float32 for the pipeline's stages: no TF32 in cuDNN's convolutions or in
+    matmul (PyTorch allows it in cuDNN by default on Ampere and newer, a 10-bit mantissa), restored
+    after. With TF32, TractCloud on an A10 labeled 62.6 % of PAT16's streamlines Other against 59.9 %
+    without, and the field moved by up to 1 mm; without it, the A10 labels a tractogram as the M2 does,
+    every streamline, at no cost in time (NOTES 2026-10-02, "The pipeline on CUDA")."""
+    if torch.device(device).type != "cuda":
+        yield
+        return
+    before = torch.backends.cudnn.allow_tf32, torch.backends.cuda.matmul.allow_tf32
+    torch.backends.cudnn.allow_tf32 = torch.backends.cuda.matmul.allow_tf32 = False
+    try:
+        yield
+    finally:
+        torch.backends.cudnn.allow_tf32, torch.backends.cuda.matmul.allow_tf32 = before
 
 
 @contextmanager
@@ -61,6 +79,8 @@ class Timer:
         yield
         if torch.backends.mps.is_available():
             torch.mps.synchronize()
+        if torch.cuda.is_available():
+            torch.cuda.synchronize()
         self.seconds[name] = round(time.time() - t0, 2)
         if self.echo is not None:
             print(f"{self.echo} {name} {self.seconds[name]} s", flush=True)
@@ -87,12 +107,12 @@ class Tractogram:
 
 def correct(s, timer: Timer, device="mps") -> Correction:
     """The field estimate is susceptibility.estimate's defaults (Gauss-Newton, NOTES 2026-10-02): on "mps" its
-    subsampled levels on the CPU, on the CPU in float32 - the same model on both, 18 s / 22.5 s on the
-    M2. Either way the CPU's levels get ESTIMATE_THREADS."""
+    subsampled levels on the CPU, on the CPU and on "cuda" in float32 (all levels on the GPU there) -
+    the same model on each, 18 s / 22.5 s on the M2. The CPU's levels get ESTIMATE_THREADS."""
     import os
-    cpu = torch.device(device).type == "cpu"
+    f32 = torch.device(device).type in ("cpu", "cuda")
     with timer("field_estimate"), threads(min(ESTIMATE_THREADS, os.cpu_count() or 1)):
-        h, motion, _ = S.estimate(s.b0s, s.vox, s.pe_vectors, s.readout_s, device=device, **(dict(dtype=torch.float32) if cpu else {}))
+        h, motion, _ = S.estimate(s.b0s, s.vox, s.pe_vectors, s.readout_s, device=device, **(dict(dtype=torch.float32) if f32 else {}))
     with timer("field_apply"):
         dwi = S.apply(s.dwi, h, s.pe_axis, s.pe_sign, s.readout_s)
     return Correction(dwi, h, motion, S.displacement_mm(h, s.readout_s, s.pe_sign, s.vox[s.pe_axis]))
@@ -101,18 +121,22 @@ def correct(s, timer: Timer, device="mps") -> Correction:
 CPU_BATCH = 1024                 # half-fibers per batch on the CPU: cache-sized (ukf_cpu_check.py)
 
 
-def track(s, dwi, timer: Timer, prefix="", device="mps", workers=None) -> Tractogram:
-    """device "mps": the Metal kernel; "cpu": ukf's steps in float32 with the fast algebra
-    (closer to float64 than the binary's operation order in float32: ukf_cpu_check.json), batches of
+def track(s, dwi, timer: Timer, prefix="", device="mps", workers=None, shell=2800.0) -> Tractogram:
+    """device "mps": the Metal kernel; "cuda": the Triton block kernel (ukf_triton_block); "cpu": ukf's
+    steps in float32 with the fast algebra (closer to float64 than the binary's operation order in
+    float32: ukf_cpu_check.json), batches of
     CPU_BATCH on `workers` processes of one thread (default: one per core). Workers are spawned, so a
-    script running the CPU path needs an `if __name__ == "__main__":` guard."""
+    script running the CPU path needs an `if __name__ == "__main__":` guard. shell: the b-value tracked
+    (prep.prepare; ds001226's 2800, the nearest to TractCloud's training b = 3000)."""
     with timer(prefix + "prep"):
-        t = prepare(dwi, s.affine, s.bval, s.bvec, device=device)
+        t = prepare(dwi, s.affine, s.bval, s.bvec, shell=shell, device=device)
     with timer(prefix + "load"):
         D = U.from_arrays(t.dwi, t.header, t.mask)
     with timer(prefix + "ukf"):
         if device == "mps":
             fibers, stats = U.track(D, backend="metal")
+        elif torch.device(device).type == "cuda":
+            fibers, stats = U.track(D, backend="triton_block")
         else:
             import os
             fibers, stats = U.track(D, dtype=torch.float32, device=device, fast=True, batch=CPU_BATCH,
@@ -135,9 +159,10 @@ def run(s, labeler: Labeler, timer: Timer, prefix="", trx=None, device="mps", wo
     the estimate and the tracking run ("mps" or "cpu"; the labeler has its own); workers: the CPU
     tracker's processes (default one per core as os.cpu_count() sees them - in a container, pass the
     container's own)."""
-    corr = correct(s, timer, device)
-    tg = track(s, corr.dwi, timer, prefix, device, workers)
-    labels = label(tg, labeler, timer, prefix)
+    with exact_float32(device):
+        corr = correct(s, timer, device)
+        tg = track(s, corr.dwi, timer, prefix, device, workers)
+        labels = label(tg, labeler, timer, prefix)
     if trx is not None:
         from . import trx as _trx
         with timer("write_trx"):
