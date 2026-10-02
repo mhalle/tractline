@@ -5,11 +5,12 @@
     space right-anterior-superior and the identity measurement frame.
   - shell: the b0s and one shell (2800, the nearest to the b = 3000 of TractCloud's training
     tractography), as the ORG pipeline tracked one shell.
-  - mask: DIPY median_otsu on the mean b0 (median_radius 4, numpass 4).
+  - mask: DIPY median_otsu on the mean b0 (median_radius 4, numpass 4), computed by _median.py
+    (identical voxel for voxel, ~100x faster).
 """
 from pathlib import Path
 import numpy as np, nrrd
-from dipy.segment.mask import median_otsu
+from _median import median_otsu                                          # dipy's, exactly (median_check.py), 0.1 s instead of 10
 
 
 def prep(data, A, bval, bvec, out: Path, shell=2800.0):

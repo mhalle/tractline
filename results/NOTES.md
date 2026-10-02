@@ -1055,3 +1055,18 @@ Medians over 12: margin vs T1 99th, uncorrected 4.74 mm, ours 1.75 mm; brain 99t
   the tracker loads costs ~0.15 s, so an in-memory hand-off would save almost nothing), UKF 28 s
   (20-36, 408 k steps/s median, ~32 k streamlines ≥ 40 mm), TractCloud one draw 4.5 s. The T1 check
   (3 min) and the 5-draw vote are measurement, not pipeline.
+
+## 2026-10-02 The brain mask: 10 s → 0.12 s, the same mask
+
+The cohort's 12 s preparation was DIPY `median_otsu` (10 s: four passes of SciPy's 9^3 median
+filter); writing and reading the NRRD the tracker loads costs ~0.15 s. `_median.py` computes the same
+thing exactly: the volume's values replaced by their ranks (a median is one of its window's values, so
+all passes stay in rank space and map back exactly), each pass by Huang's sliding-window histogram
+along x (81 values leave, 81 enter per step; rows in parallel with numba), then DIPY's own `otsu`.
+`median_check.py` → `median_check.json`: the filter identical to `scipy.ndimage.median_filter` on
+random volumes with ties and odd shapes; the mask identical to `dipy.segment.mask.median_otsu`,
+voxel for voxel, on all 14 volumes (the 12 patients as acquired, PAT16 corrected by topup and by
+ours); **0.12 s against 10.07 s** (median). A torch version (unfold + median, MPS or CPU) was also
+exact but 3.0 s: sorting 729 values per voxel. `_prep.py` uses it: preparation 0.22 s (int16) /
+0.36 s (float32) instead of 10-12 s, so scan to labels with correction is about **64 s** (76 s less
+11.9 s; not re-measured end to end). The first call in a fresh environment compiles (numba, cached).

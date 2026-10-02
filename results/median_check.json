@@ -1,0 +1,122 @@
+{
+ "filter_vs_scipy": [
+  {
+   "shape": [
+    17,
+    23,
+    11
+   ],
+   "distinct_values": 5,
+   "identical": true
+  },
+  {
+   "shape": [
+    40,
+    31,
+    29
+   ],
+   "distinct_values": 1000,
+   "identical": true
+  },
+  {
+   "shape": [
+    96,
+    96,
+    60
+   ],
+   "distinct_values": 30,
+   "identical": true
+  }
+ ],
+ "mask_vs_dipy": [
+  {
+   "volume": "PAT05",
+   "identical": true,
+   "voxels_differ": 0,
+   "mask_voxels": 77315
+  },
+  {
+   "volume": "PAT07",
+   "identical": true,
+   "voxels_differ": 0,
+   "mask_voxels": 94173
+  },
+  {
+   "volume": "PAT08",
+   "identical": true,
+   "voxels_differ": 0,
+   "mask_voxels": 94278
+  },
+  {
+   "volume": "PAT13",
+   "identical": true,
+   "voxels_differ": 0,
+   "mask_voxels": 73834
+  },
+  {
+   "volume": "PAT14",
+   "identical": true,
+   "voxels_differ": 0,
+   "mask_voxels": 72776
+  },
+  {
+   "volume": "PAT16",
+   "identical": true,
+   "voxels_differ": 0,
+   "mask_voxels": 93157
+  },
+  {
+   "volume": "PAT19",
+   "identical": true,
+   "voxels_differ": 0,
+   "mask_voxels": 72746
+  },
+  {
+   "volume": "PAT20",
+   "identical": true,
+   "voxels_differ": 0,
+   "mask_voxels": 76095
+  },
+  {
+   "volume": "PAT23",
+   "identical": true,
+   "voxels_differ": 0,
+   "mask_voxels": 94583
+  },
+  {
+   "volume": "PAT25",
+   "identical": true,
+   "voxels_differ": 0,
+   "mask_voxels": 84111
+  },
+  {
+   "volume": "PAT26",
+   "identical": true,
+   "voxels_differ": 0,
+   "mask_voxels": 106580
+  },
+  {
+   "volume": "PAT29",
+   "identical": true,
+   "voxels_differ": 0,
+   "mask_voxels": 99309
+  },
+  {
+   "volume": "PAT16 topup",
+   "identical": true,
+   "voxels_differ": 0,
+   "mask_voxels": 94458
+  },
+  {
+   "volume": "PAT16 ours",
+   "identical": true,
+   "voxels_differ": 0,
+   "mask_voxels": 94739
+  }
+ ],
+ "seconds_median": {
+  "dipy": 10.07,
+  "ours": 0.12
+ },
+ "all_identical": true
+}
