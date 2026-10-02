@@ -1,0 +1,95 @@
+{
+ "subject": "PAT23",
+ "seconds": {
+  "topup": 613.9,
+  "applytopup": 45.4,
+  "ours_estimate": 29.7
+ },
+ "fields": {
+  "r_brain": 0.9711,
+  "displacement_diff_mm_brain": [
+   0.21,
+   0.62,
+   1.88
+  ],
+  "displacement_diff_mm_margin": [
+   0.18,
+   0.57,
+   2.0
+  ],
+  "spot_voxels": 398,
+  "displacement_diff_mm_spot": [
+   0.32,
+   1.19,
+   3.03
+  ],
+  "spot_median_displacement_mm_ours_topup": [
+   -2.52,
+   -2.3
+  ]
+ },
+ "t1_residual": {
+  "topup": {
+   "brain": [
+    0.36,
+    0.89,
+    2.36
+   ],
+   "tumor": [
+    0.6,
+    1.69,
+    3.77
+   ],
+   "margin": [
+    0.34,
+    1.52,
+    5.42
+   ],
+   "spot": [
+    4.22,
+    6.5,
+    7.78
+   ]
+  },
+  "ours": {
+   "brain": [
+    0.38,
+    0.97,
+    2.49
+   ],
+   "tumor": [
+    0.6,
+    1.72,
+    3.62
+   ],
+   "margin": [
+    0.38,
+    1.36,
+    5.2
+   ],
+   "spot": [
+    4.03,
+    6.29,
+    7.51
+   ]
+  },
+  "uncorrected": {
+   "brain": [
+    1.1,
+    2.82,
+    6.16
+   ],
+   "margin": [
+    1.17,
+    3.32,
+    4.9
+   ],
+   "spot": [
+    1.82,
+    3.6,
+    4.5
+   ]
+  }
+ },
+ "columns": "|x| mm: median / 90th / 99th percentile"
+}

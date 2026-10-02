@@ -1,0 +1,227 @@
+{
+ "subject": "PAT20",
+ "data": "ds001226 sub-PAT20 ses-preop (CC0): AP j- + PA j, readout 0.0266003 s",
+ "tumor": {
+  "volume_cm3_on_T1": 12.5,
+  "centroid_ras_mm": [
+   48.7,
+   -27.4,
+   28.3
+  ],
+  "t1_mean_inside_vs_mirror": [
+   186.7,
+   146.2
+  ]
+ },
+ "pa_slab_offset": {
+  "center_shift_mm": 0.02,
+  "rotation_deg": 0.8
+ },
+ "seconds": {
+  "field_estimate": 28.82,
+  "field_estimate_perturbed": 26.19,
+  "field_apply": 1.15,
+  "uncorrected_prep": 10.38,
+  "uncorrected_load": 0.33,
+  "uncorrected_seeds": 0.76,
+  "uncorrected_ukf": 21.94,
+  "uncorrected_tractcloud_one_draw": 3.41,
+  "uncorrected_tractcloud_five_draws": 15.36,
+  "ours_prep": 12.28,
+  "ours_load": 0.36,
+  "ours_seeds": 0.94,
+  "ours_ukf": 22.0,
+  "ours_tractcloud_one_draw": 3.46,
+  "ours_tractcloud_five_draws": 15.14,
+  "t1_check": 175.53
+ },
+ "pipeline_seconds_corrected": 69.0,
+ "field_hz_1_50_99": [
+  -78.3,
+  -1.7,
+  158.6
+ ],
+ "motion_translation_mm_max": 0.58,
+ "arms": {
+  "uncorrected": {
+   "seeds": 40226,
+   "fibers": 35691,
+   "fiber_steps": 9029904,
+   "ukf_steps_per_s": 411573,
+   "mask_voxels": 76095,
+   "streamlines_ge_40mm": 25286,
+   "median_length_mm": 82.1,
+   "other_fraction": 0.6218
+  },
+  "ours": {
+   "seeds": 39696,
+   "fibers": 35457,
+   "fiber_steps": 8910793,
+   "ukf_steps_per_s": 405036,
+   "mask_voxels": 76699,
+   "streamlines_ge_40mm": 25100,
+   "median_length_mm": 82.1,
+   "other_fraction": 0.6113
+  }
+ },
+ "correction_changes": {
+  "tract_mix_r": 0.998,
+  "per_tract_abs_rel_change_median_90th": [
+   0.086,
+   0.291
+  ],
+  "tract_center_moved_mm_median_90th_max": [
+   2.1,
+   5.5,
+   11.9
+  ],
+  "tract_center_moved_mm": {
+   "EmC": 11.9,
+   "Sup-OT": 9.4,
+   "TT": 6.6,
+   "TO": 5.7,
+   "Sup-PO": 5.5,
+   "Intra-CBLM-PaT": 4.9,
+   "Sup-FP": 4.4,
+   "AF": 4.2,
+   "CC1": 4.2,
+   "IOFF": 3.9,
+   "Sup-O": 3.4,
+   "SP": 3.2,
+   "SF": 3.0,
+   "MdLF": 2.8,
+   "SLF-I": 2.6,
+   "CPC": 2.5,
+   "MCP": 2.5,
+   "ICP": 2.2,
+   "UF": 2.1,
+   "TP": 2.1,
+   "Sup-PT": 2.1,
+   "CC5": 2.0,
+   "CB": 1.9,
+   "CC3": 1.8,
+   "CC2": 1.7,
+   "Intra-CBLM-I-P": 1.7,
+   "EC": 1.6,
+   "SLF-II": 1.6,
+   "CST": 1.6,
+   "CC4": 1.6,
+   "Sup-P": 1.6,
+   "CR-F": 1.5,
+   "Sup-T": 1.5,
+   "SLF-III": 1.2,
+   "ILF": 1.0,
+   "TF": 0.9,
+   "CC6": 0.7,
+   "SO": 0.6,
+   "Sup-F": 0.6
+  }
+ },
+ "t1": {
+  "uncorrected": {
+   "residual_brain": [
+    1.16,
+    4.24,
+    7.89
+   ],
+   "residual_where_ours_displaces_gt_3mm": [
+    4.58,
+    7.05,
+    10.64
+   ],
+   "residual_tumor": [
+    1.21,
+    2.43,
+    3.41
+   ],
+   "residual_tumor_margin_10mm": [
+    0.74,
+    1.81,
+    3.01
+   ],
+   "tumor_voxels": 793,
+   "margin_voxels": 2192,
+   "ngf_after": 0.39471,
+   "rigid_start_translation_mm": [
+    0.08,
+    0.73,
+    0.08
+   ],
+   "rigid_start_rotation_deg": 0.49
+  },
+  "ours": {
+   "residual_brain": [
+    0.39,
+    0.93,
+    1.59
+   ],
+   "residual_where_ours_displaces_gt_3mm": [
+    0.63,
+    1.32,
+    1.89
+   ],
+   "residual_tumor": [
+    0.33,
+    0.59,
+    0.69
+   ],
+   "residual_tumor_margin_10mm": [
+    0.34,
+    0.6,
+    0.85
+   ],
+   "tumor_voxels": 795,
+   "margin_voxels": 2186,
+   "ngf_after": 0.38491,
+   "rigid_start_translation_mm": [
+    -0.02,
+    0.83,
+    0.11
+   ],
+   "rigid_start_rotation_deg": 0.37,
+   "half_split_error_brain": [
+    0.04,
+    0.12,
+    0.21
+   ],
+   "half_split_error_tumor_margin": [
+    0.05,
+    0.09,
+    0.16
+   ]
+  },
+  "validation": {
+   "our_displacement_brain": [
+    1.0,
+    3.62,
+    10.66
+   ],
+   "our_displacement_tumor": [
+    1.44,
+    2.63,
+    4.27
+   ],
+   "our_displacement_tumor_margin_10mm": [
+    1.08,
+    2.12,
+    3.48
+   ],
+   "uncorrected_residual_r_vs_our_displacement": 0.911,
+   "uncorrected_residual_slope_vs_our_displacement": 0.856,
+   "ours_residual_r_vs_our_displacement": 0.058
+  },
+  "estimate_sensitivity_mm": {
+   "brain": [
+    0.03,
+    0.1,
+    0.29
+   ],
+   "tumor_margin_10mm": [
+    0.03,
+    0.07,
+    0.14
+   ]
+  }
+ },
+ "columns": "|displacement| mm: median / 90th / 99th percentile"
+}

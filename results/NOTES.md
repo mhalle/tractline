@@ -990,3 +990,67 @@ alike. The margin is where the uncinate, IFOF and arcuate run past it.
 - **PAT16 end to end on the M2:** correction 30 s (estimate 29, application 1) + the pipeline 34 s
   (UKF 27.6, TractCloud 3.7, the rest 2.8) = **about 64 s** before any file writing; topup +
   applytopup alone take 665 s.
+
+## 2026-10-02 Twelve patients: correction, pipeline and T1 check across ds001226
+
+`cohort.py --sub <PAT>` per patient, on the M2: our correction (`_susc`, estimate on MPS, application
+on CPU), the faithful pipeline on the scan as acquired and as corrected (`_prep`, UKF Metal,
+`_tractcloud` 5-draw vote), both against the patient's T1 and tumor mask (`_t1check`, the measure of
+`t1_alignment.py`, now shared). `cohort_summary.py` → `cohort_summary.md` / `.png`. Patients chosen
+for spread: meningiomas PAT13, PAT19 (skull base), PAT23, PAT08 (frontal), PAT14 (parietal); gliomas
+and an ependymoma PAT07, PAT25, PAT26 (temporal), PAT29, PAT05 (frontal), PAT20 (parietal); PAT16.
+
+- **Data, two surprises:** PAT03's "PA" series was phase-encoded left-right (`i-`, its image agrees),
+  the only one of 25 patients: no reversed pair, replaced by PAT14. PAT19, PAT20, PAT23 and PAT29 have
+  the PA slab rotated 0.8 deg about its center against the AP: the PA b0s are put onto the AP grid by
+  the headers first (`_subject.py`), the estimate's motion taking what is left (max 0.6-2.0 mm).
+- **The table** (`cohort_summary.md`; tumor margin = 10 mm around the mask; mm, percentiles):
+
+| subject | tumor | cm3 | side | our displacement at the margin, 99th | margin vs T1, uncorrected 90th / 99th | margin vs T1, ours 90th / 99th | validation r / slope | tract mix r | centers moved median / max | scan to labels |
+|---|---|---|---|---|---|---|---|---|---|---|
+| PAT05 | Oligo-astrocytoma II, Frontal | 11.4 | L | 5.63 | 3.04 / 6.08 | 0.74 / 1.08 | 0.863 / 0.874 | 0.9948 | 2.6 / 9.3 | 75.7 s |
+| PAT07 | Ependymoma II, Temporal | 29.7 | L | 5.19 | 2.52 / 3.86 | 1.2 / 1.64 | 0.798 / 0.715 | 0.9984 | 1.9 / 8.0 | 83.5 s |
+| PAT08 | Meningioma I, Frontal | 17.7 | mid | 3.11 | 1.99 / 3.27 | 0.67 / 1.37 | 0.818 / 0.76 | 0.9973 | 2.8 / 10.7 | 85.3 s |
+| PAT13 | Meningioma I, Skullbase | 1.7 | mid | 18.53 | 7.8 / 8.97 | 1.96 / 3.41 | 0.846 / 0.752 | 0.9955 | 2.0 / 10.0 | 73.9 s |
+| PAT14 | Meningioma I, Parietal | 3.5 | L | 1.83 | 1.09 / 1.48 | 0.45 / 0.62 | 0.835 / 0.724 | 0.9955 | 1.9 / 8.2 | 66.3 s |
+| PAT16 | Anaplastic astrocytoma II-III, Fronto-temporal | 45.4 | R | 16.81 | 4.79 / 8.17 | 0.96 / 2.45 | 0.861 / 0.732 | 0.9945 | 1.9 / 10.2 | 75.9 s |
+| PAT19 | Meningioma I, Frontal skullbase | 2.8 | R | 16.05 | 6.47 / 7.89 | 1.83 / 2.64 | 0.863 / 0.708 | 0.9918 | 1.9 / 11.3 | 76.3 s |
+| PAT20 | Anaplastic astrocytoma III, Parietal | 12.5 | R | 3.48 | 1.81 / 3.01 | 0.6 / 0.85 | 0.911 / 0.856 | 0.998 | 2.1 / 11.9 | 69.0 s |
+| PAT23 | Meningioma I, Frontal | 103.5 | mid | 11.34 | 3.32 / 4.9 | 1.36 / 5.2 | 0.833 / 0.799 | 0.9961 | 2.8 / 13.8 | 84.9 s |
+| PAT25 | Glioma II, Temporal | 16.5 | R | 7.75 | 3.97 / 5.9 | 1.24 / 2.12 | 0.696 / 0.608 | 0.9938 | 2.7 / 12.3 | 75.6 s |
+| PAT26 | Anaplastic astrocytoma III, Temporal | 55.3 | R | 8.47 | 1.58 / 4.2 | 0.73 / 1.27 | 0.768 / 0.665 | 0.9976 | 1.6 / 7.2 | 82.3 s |
+| PAT29 | Oligo-astrocytoma III, Frontal | 33.8 | L | 5.35 | 3.15 / 4.57 | 1.1 / 1.85 | 0.807 / 0.711 | 0.9926 | 2.9 / 11.2 | 80.7 s |
+
+Medians over 12: margin vs T1 99th, uncorrected 4.74 mm, ours 1.75 mm; brain 99th 6.02 / 1.71 mm; precision (half-split, brain 99th) 0.40 mm; estimate sensitivity at the margin 99th 0.33 mm; validation r 0.83, slope 0.73; tract mix r 0.9955; scan to labels 76 s (field estimate 29 s, UKF 28 s).
+
+- **Correction where it matters:** the margin's misplacement against the T1 falls from a median 99th
+  percentile of 4.7 mm to 1.75 mm; how much it matters is where the tumor is - frontal-base and
+  midline frontal tumors (PAT13, PAT19, PAT16) are displaced 16-19 mm at their margin, parietal ones
+  (PAT14, PAT20) 2-3.5 mm. Over the brain, 99th percentile 6.0 → 1.7 mm (1.25-2.5 for ours).
+- **The measure holds in every patient:** the uncorrected residual recovers our displacement map,
+  r 0.70-0.91 (median 0.83), slope 0.61-0.87 (0.73); the corrected residual does not follow it
+  (r -0.16 to 0.18). Precision (b0 halves, brain 99th) 0.21-0.74 mm.
+- **PAT23, the exception:** margin 99th 5.2 mm corrected against 4.9 uncorrected (90th: 1.36 against
+  3.32) - 398 margin voxels (4 %) at the frontal base under the 104 cm3 meningioma, where the T1 check
+  puts the corrected scan 4 mm off and the uncorrected 1.8. `cohort_topup.py`: FSL topup from the same
+  b0 stack agrees with ours (field r 0.971; displacement difference 0.21 / 0.62 / 1.88 mm over the
+  brain, 0.32 / 1.19 / 3.03 at the spot; median displacement there -2.52 ours, -2.30 topup) and its
+  corrected scan is as far off at the spot (4.22 / 6.50 / 7.78 against ours 4.03 / 6.29 / 7.51; margin
+  99th 5.42). Not our implementation: either the T1 check is misled at the meningioma's base (tumor
+  and edema differ between b0 and T1) or both reversed-pair corrections fail there alike; these data
+  cannot tell which. topup 614 s + 45 s, ours 29.7 s.
+- **The estimate's own sensitivity:** the same b0s plus noise of SD 0.01 (signals in the hundreds)
+  move the field by 0.14-1.08 mm at the margin's 99th percentile (median 0.33), 0.04-0.08 mm at the
+  median: L-BFGS's path, deterministic for a given input (two runs on one input: identical) but not
+  insensitive to it. Found when PAT16's cohort run gave margin 99th 2.45 mm against 1.96 before: the
+  input differed by topup_ref.py's int16 quantization of the b0s (≤ 0.03), which moved the field by
+  0.08 / 0.68 mm (median / 99th). The T1 check's own fit moves by up to 0.05 mm when the voxel sizes
+  change by 1e-8 (the affine's column norms against the header's): `_t1check` takes the header's.
+- **What correction changes in the tracts:** tract-mix r 0.992-0.998, tract centers moved median
+  1.6-2.9 mm (max 7-14) - the size of the scan's own noise on PAT16 (bootstrap 2.3-2.5 / max 7.5-8.6),
+  as there: the change that matters is against the anatomy, not within the scan. "Other" 56-71 % of
+  streamlines (PAT16 57 % before; HCP 49 %), highest under PAT23's meningioma.
+- **Time, scan to labels with correction: median 76 s (66-85)** - field estimate 29 s, application
+  1.1 s, preparation 12 s (NRRD written for the tracker, median_otsu: avoidable in memory), UKF 28 s
+  (20-36, 408 k steps/s median, ~32 k streamlines ≥ 40 mm), TractCloud one draw 4.5 s. The T1 check
+  (3 min) and the 5-draw vote are measurement, not pipeline.

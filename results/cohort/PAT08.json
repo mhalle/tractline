@@ -1,0 +1,222 @@
+{
+ "subject": "PAT08",
+ "data": "ds001226 sub-PAT08 ses-preop (CC0): AP j- + PA j, readout 0.0266003 s",
+ "tumor": {
+  "volume_cm3_on_T1": 17.7,
+  "centroid_ras_mm": [
+   -0.1,
+   47.0,
+   65.8
+  ],
+  "t1_mean_inside_vs_mirror": [
+   184.0,
+   197.8
+  ]
+ },
+ "seconds": {
+  "field_estimate": 29.95,
+  "field_estimate_perturbed": 27.33,
+  "field_apply": 1.15,
+  "uncorrected_prep": 10.66,
+  "uncorrected_load": 0.29,
+  "uncorrected_seeds": 1.05,
+  "uncorrected_ukf": 33.65,
+  "uncorrected_tractcloud_one_draw": 5.22,
+  "uncorrected_tractcloud_five_draws": 22.97,
+  "ours_prep": 11.92,
+  "ours_load": 0.29,
+  "ours_seeds": 1.04,
+  "ours_ukf": 35.48,
+  "ours_tractcloud_one_draw": 5.43,
+  "ours_tractcloud_five_draws": 22.92,
+  "t1_check": 172.98
+ },
+ "pipeline_seconds_corrected": 85.3,
+ "field_hz_1_50_99": [
+  -81.3,
+  -1.0,
+  127.1
+ ],
+ "motion_translation_mm_max": 1.04,
+ "arms": {
+  "uncorrected": {
+   "seeds": 56244,
+   "fibers": 49889,
+   "fiber_steps": 13841082,
+   "ukf_steps_per_s": 411325,
+   "mask_voxels": 94278,
+   "streamlines_ge_40mm": 38029,
+   "median_length_mm": 89.3,
+   "other_fraction": 0.6104
+  },
+  "ours": {
+   "seeds": 56318,
+   "fibers": 50245,
+   "fiber_steps": 13960136,
+   "ukf_steps_per_s": 393465,
+   "mask_voxels": 95990,
+   "streamlines_ge_40mm": 38331,
+   "median_length_mm": 89.3,
+   "other_fraction": 0.6239
+  }
+ },
+ "correction_changes": {
+  "tract_mix_r": 0.9973,
+  "per_tract_abs_rel_change_median_90th": [
+   0.098,
+   0.396
+  ],
+  "tract_center_moved_mm_median_90th_max": [
+   2.8,
+   8.9,
+   10.7
+  ],
+  "tract_center_moved_mm": {
+   "Sup-O": 10.7,
+   "SLF-III": 9.1,
+   "CST": 9.1,
+   "Sup-T": 9.0,
+   "CR-F": 8.8,
+   "TO": 8.4,
+   "Sup-PO": 6.7,
+   "Sup-FP": 5.6,
+   "TP": 5.5,
+   "Intra-CBLM-I-P": 5.1,
+   "PLIC": 4.9,
+   "ILF": 4.6,
+   "EmC": 4.5,
+   "UF": 4.5,
+   "EC": 3.8,
+   "SLF-II": 3.8,
+   "CC3": 3.1,
+   "CC1": 2.9,
+   "CC5": 2.8,
+   "Sup-OT": 2.7,
+   "AF": 2.6,
+   "IOFF": 2.3,
+   "TT": 2.3,
+   "SP": 2.1,
+   "SF": 1.9,
+   "Sup-PT": 1.9,
+   "MdLF": 1.8,
+   "Intra-CBLM-PaT": 1.4,
+   "CC7": 1.3,
+   "CB": 1.2,
+   "CC6": 1.2,
+   "TF": 1.1,
+   "CC2": 1.1,
+   "CPC": 1.0,
+   "Sup-P": 1.0,
+   "SLF-I": 0.8,
+   "CC4": 0.7,
+   "Sup-F": 0.7
+  }
+ },
+ "t1": {
+  "uncorrected": {
+   "residual_brain": [
+    1.08,
+    3.24,
+    6.54
+   ],
+   "residual_where_ours_displaces_gt_3mm": [
+    3.93,
+    6.46,
+    8.41
+   ],
+   "residual_tumor": [
+    1.14,
+    1.7,
+    2.27
+   ],
+   "residual_tumor_margin_10mm": [
+    1.35,
+    1.99,
+    3.27
+   ],
+   "tumor_voxels": 1139,
+   "margin_voxels": 3281,
+   "ngf_after": 0.43666,
+   "rigid_start_translation_mm": [
+    0.69,
+    0.61,
+    0.75
+   ],
+   "rigid_start_rotation_deg": 0.49
+  },
+  "ours": {
+   "residual_brain": [
+    0.44,
+    1.07,
+    1.94
+   ],
+   "residual_where_ours_displaces_gt_3mm": [
+    0.65,
+    1.57,
+    2.93
+   ],
+   "residual_tumor": [
+    0.21,
+    0.6,
+    1.04
+   ],
+   "residual_tumor_margin_10mm": [
+    0.26,
+    0.67,
+    1.37
+   ],
+   "tumor_voxels": 1137,
+   "margin_voxels": 3297,
+   "ngf_after": 0.43054,
+   "rigid_start_translation_mm": [
+    0.72,
+    0.64,
+    0.73
+   ],
+   "rigid_start_rotation_deg": 0.5,
+   "half_split_error_brain": [
+    0.07,
+    0.2,
+    0.39
+   ],
+   "half_split_error_tumor_margin": [
+    0.06,
+    0.18,
+    0.3
+   ]
+  },
+  "validation": {
+   "our_displacement_brain": [
+    0.83,
+    3.06,
+    8.69
+   ],
+   "our_displacement_tumor": [
+    1.28,
+    2.03,
+    2.98
+   ],
+   "our_displacement_tumor_margin_10mm": [
+    1.05,
+    1.85,
+    3.11
+   ],
+   "uncorrected_residual_r_vs_our_displacement": 0.818,
+   "uncorrected_residual_slope_vs_our_displacement": 0.76,
+   "ours_residual_r_vs_our_displacement": 0.079
+  },
+  "estimate_sensitivity_mm": {
+   "brain": [
+    0.04,
+    0.13,
+    0.31
+   ],
+   "tumor_margin_10mm": [
+    0.04,
+    0.12,
+    0.28
+   ]
+  }
+ },
+ "columns": "|displacement| mm: median / 90th / 99th percentile"
+}
