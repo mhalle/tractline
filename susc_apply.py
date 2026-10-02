@@ -1,6 +1,6 @@
 """Apply our susceptibility field to PAT16's AP DWI: applytopup's equivalent (--inindex=1 --method=jac:
 the field, the AP phase-encoding direction and readout time, the Jacobian; volume 1's motion, which is
-zero), with _susc.unwarp (trilinear; applytopup uses splines).
+zero), with cubic B-splines along phase encoding as applytopup (--interp trilinear: _susc.unwarp).
 
     DATA/.venv/bin/python bench/tractography/susc_apply.py [--field field_hz_scaled.nii.gz]
 
