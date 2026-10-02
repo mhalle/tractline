@@ -804,3 +804,27 @@ here). Ablations on a throwaway copy (wrong results, timings only):
 No single hotspot: the rest (~55 %) is the per-fiber algebra every one of a fiber's 8 lanes repeats
 (sigma points, their normalization and tensors, the 21-point covariance sum, the Cholesky of P).
 The remaining structural lever is to split that algebra across the lanes instead of repeating it.
+
+## 2026-10-01 Metal kernel: sigma points split across the lanes
+
+Each of a half-fiber's 8 lanes used to build all 21 sigma points four times (mean, covariance,
+predicted signal, cross-covariance passes) and all 21 tensors. Now (`SPLIT`) each lane builds the
+2-3 it owns once; the mean and covariance are sums across the lanes; each sigma point's tensors, then
+its deviation, are broadcast from its owner (simd_shuffle) for the two passes over the lane's own
+gradients. It only pays with the per-lane arrays sized to the data's gradient count (`NGRAD`,
+compiled per count) instead of the worst case of 256: otherwise they spill.
+
+| one step, 16,384 half-fibers, HARDI (150 gradients), M2 | steps/s |
+|---|---|
+| Cholesky inverses (previous default) | 207 k |
+| + arrays sized to the data | 220 k |
+| + sigma points split, worst-case arrays | 116 k |
+| **+ split, arrays sized to the data (new default)** | **230 k** |
+| the same with 16 or 32 lanes | 196 k, 161 k |
+| + the Ht-free update (SFORM) | 208 k |
+
+Accuracy unchanged (state error 3.4e-7; 1 swap flip in 3,335 fixtures instead of 6; no stop flips),
+deterministic. 2,011 HARDI seeds: 1,491 / 1,729 fibers within 0.1 mm of float64, 95 % of ends within
+0.06 mm, density r 0.988. **PAT16 (50 gradients): UKF 27.6 s (416 k steps/s)**, against 34.3 s with
+the Cholesky inverses alone and 43.9 s before; the pipeline 38 s with the float16 comparison pass
+(34 s without). The fewer the gradients, the more the right-sized arrays help.

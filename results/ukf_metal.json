@@ -6,43 +6,43 @@
   "rows": 3335,
   "metal_vs_f64": {
    "state_rel_err": [
-    3.47e-07,
-    7.46e-07,
-    1.35e-06,
-    0.00195
+    3.41e-07,
+    7.37e-07,
+    1.3e-06,
+    0.00169
    ],
    "P_rel_err": [
-    4e-07,
-    6.89e-07,
+    4.02e-07,
+    7.02e-07,
     1.03e-06,
-    9.55e-05
+    1.57e-06
    ],
    "position_err_mm": [
-    4.55e-06,
-    8.15e-06,
-    1.33e-05,
-    4.35e-05
+    4.57e-06,
+    8.14e-06,
+    1.31e-05,
+    1.84e-05
    ],
    "direction_err_deg": [
-    0.00186,
-    0.0156,
-    0.0202,
-    0.0239
+    0.00036,
+    0.0157,
+    0.0208,
+    0.0246
    ],
    "fa_abs_err": [
-    1.48e-07,
-    4.74e-07,
-    1e-06,
-    9.84e-06
+    1.41e-07,
+    4.69e-07,
+    9.66e-07,
+    1.5e-06
    ],
    "mean_signal_abs_err": [
     4.08e-08,
-    1.14e-07,
-    2.05e-07,
-    3.69e-07
+    1.12e-07,
+    2.02e-07,
+    4.28e-07
    ],
-   "swap_flips": 6,
-   "swap2_flips": 1,
+   "swap_flips": 1,
+   "swap2_flips": 0,
    "inside_flips": 0,
    "stop_flips": 0
   },
@@ -90,16 +90,16 @@
   },
   "metal_vs_torch32_cpu": {
    "state_rel_err": [
-    1.29e-05,
-    4.6e-05,
-    0.000113,
+    1.3e-05,
+    4.58e-05,
+    0.00011,
     0.00198
    ],
    "P_rel_err": [
-    8.36e-07,
-    3.29e-06,
-    1.08e-05,
-    9.56e-05
+    8.38e-07,
+    3.27e-06,
+    1.04e-05,
+    4.19e-05
    ],
    "position_err_mm": [
     3.81e-06,
@@ -108,25 +108,25 @@
     0.00011
    ],
    "direction_err_deg": [
-    0.00119,
-    0.0191,
-    0.0251,
-    0.0353
+    0.000758,
+    0.0192,
+    0.0252,
+    0.0291
    ],
    "fa_abs_err": [
     4.17e-06,
-    1.74e-05,
-    4.96e-05,
-    0.000165
+    1.72e-05,
+    4.97e-05,
+    0.000164
    ],
    "mean_signal_abs_err": [
-    1.33e-06,
-    4.79e-06,
-    9.61e-06,
-    3.86e-05
+    1.31e-06,
+    4.77e-06,
+    9.65e-06,
+    3.84e-05
    ],
-   "swap_flips": 6,
-   "swap2_flips": 2,
+   "swap_flips": 3,
+   "swap2_flips": 1,
    "inside_flips": 0,
    "stop_flips": 0
   },
@@ -137,37 +137,37 @@
   "f64_cpu": {
    "fibers": 1729,
    "fiber_steps": 556988,
-   "seconds": 120.6,
-   "steps_per_s": 4618
+   "seconds": 119.9,
+   "steps_per_s": 4644
   },
   "metal": {
    "fibers": 1729,
-   "fiber_steps": 555615,
-   "seconds": 11.7,
-   "steps_per_s": 47668,
-   "second_run_seconds": 11.0
+   "fiber_steps": 556691,
+   "seconds": 10.2,
+   "steps_per_s": 54558,
+   "second_run_seconds": 10.2
   },
   "metal_vs_f64": {
    "both": 1729,
    "only_first": 0,
    "only_second": 0,
-   "same_point_count": 1619,
+   "same_point_count": 1626,
    "max_point_distance_mm": [
-    0.00132,
-    0.0619,
-    0.996,
-    20.9
+    0.00129,
+    0.068,
+    0.945,
+    7.11
    ],
-   "within_1e-3_mm": 723,
-   "within_0.1_mm": 1495,
-   "ends_within_0.06_mm_fraction_same_count": 0.9509,
+   "within_1e-3_mm": 726,
+   "within_0.1_mm": 1491,
+   "ends_within_0.06_mm_fraction_same_count": 0.9496,
    "length_diff_mm_abs": [
-    3.48e-05,
-    0.000877,
-    45.7,
-    180.0
+    3.59e-05,
+    0.000714,
+    39.5,
+    151.0
    ],
-   "density_r": 0.98644
+   "density_r": 0.98751
   },
   "metal_repeat_identical": true,
   "for_scale_torch32_vs_f64": {

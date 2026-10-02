@@ -27,6 +27,11 @@ Compile-time options (`defines`), measured on an M2 with HARDI (ukf_metal.json):
                   float32's level, but not the same bits; off by default
   SIGHALF         the signal read as float16 (the caller passes it so): +1.4 % speed for 5x the
                   per-step error (1.7e-6); off
+  SPLIT           each lane builds only the sigma points it owns (L, L + LPF, L + 2 LPF) and broadcasts
+                  their tensors and deviations; mean and covariance summed across lanes. With NGRAD
+                  230 k steps/s against 220 k; without NGRAD it spills (116 k)
+  NGRAD           per-lane arrays sized to the data's gradient count (bare NGRAD: advance() fills in
+                  N; one compile per count): 220 k against 207 k on its own
   SFORM           the update with Ht never formed (S = sum Pxz Pxz', I = 2/Rs Yk S Yk), as the Triton
                   kernel does: the same accuracy, no faster here (195 k against 207 k); off
   SPDINV          both 10x10 inverses (Pm, Yk + I: symmetric positive definite) through Cholesky,
@@ -50,7 +55,11 @@ using namespace metal;
 #ifndef LPF
 #define LPF 32
 #endif
+#ifdef NGRAD
+#define MAXG ((NGRAD + LPF - 1) / LPF)          // sized to this data's gradients (compiled per gradient count)
+#else
 #define MAXG (256 / LPF)
+#endif
 
 // a sum over the LPF lanes of one fiber; a fixed butterfly, so the same on every launch
 static inline float lanesum(float v) {
@@ -259,6 +268,82 @@ kernel void ukf_step(
         if ((si) >= 1) { int j_ = ((si) - 1) % NS; float sg_ = (si) <= NS ? 1.0f : -1.0f; \
             for (int q_ = 0; q_ < NS; q_++) OUT[q_] = s[q_] + sg_ * (c * Lc[q_ * NS + j_]); } Ffun(OUT); }
 
+#ifdef SPLIT
+    // Each of the fiber's LPF lanes owns sigma points si = L, L + LPF, L + 2 LPF (< 21) and builds
+    // them once; the mean and the covariance are sums across the lanes, and each sigma point's
+    // tensors, then its deviation from the mean, are broadcast from its owner (simd_shuffle) for the
+    // two passes over this lane's gradients. The arithmetic is the same; sums run in another order.
+    #define NOWN ((NSIG + LPF - 1) / LPF)
+    const ushort base = ushort(lane) - ushort(L);
+    float Xo[NOWN][NS], Do[NOWN][18];
+    float xh[NS];
+    {
+        float xp[NS];
+        for (int i = 0; i < NS; i++) xp[i] = 0.0f;
+        _Pragma("unroll") for (int r = 0; r < NOWN; r++) {
+            int si = L + LPF * r;
+            if (si < NSIG) {
+                SIGMA(si, Xo[r]);
+                float w = si == 0 ? W0 : Wi;
+                for (int i = 0; i < NS; i++) xp[i] = xp[i] + w * Xo[r][i];
+                tensors(Xo[r], Do[r]);
+            } else {
+                for (int i = 0; i < NS; i++) Xo[r][i] = 0.0f;
+                for (int i = 0; i < 18; i++) Do[r][i] = 0.0f;
+            }
+        }
+        for (int i = 0; i < NS; i++) xh[i] = lanesum(xp[i]);
+    }
+    float Pm[NS * NS];
+    {
+        float pp[55];
+        for (int i = 0; i < 55; i++) pp[i] = 0.0f;
+        _Pragma("unroll") for (int r = 0; r < NOWN; r++) {
+            int si = L + LPF * r;
+            if (si < NSIG) {
+                float w = si == 0 ? W0 : Wi;
+                for (int i = 0; i < NS; i++) Xo[r][i] = Xo[r][i] - xh[i];          // Xo is now the deviation
+                for (int i = 0; i < NS; i++) for (int j = 0; j <= i; j++) pp[TRI(i, j)] = pp[TRI(i, j)] + Xo[r][i] * w * Xo[r][j];
+            }
+        }
+        for (int i = 0; i < NS; i++) for (int j = 0; j <= i; j++) { float v = lanesum(pp[TRI(i, j)]); Pm[i * NS + j] = v; Pm[j * NS + i] = v; }
+    }
+    for (int i = 0; i < NS; i++) Pm[i * NS + i] = Pm[i * NS + i] + ((i % 5) < 3 ? Qm : Ql);
+    INV10(Pm);                                                 // Pm is now Yk
+    float yh[NS];
+    for (int i = 0; i < NS; i++) { float v = 0.0f; for (int j = 0; j < NS; j++) v = v + Pm[i * NS + j] * xh[j]; yh[i] = v; }
+
+    float zh[MAXG];
+    for (int k = 0; k < MAXG; k++) zh[k] = 0.0f;
+    float u[MAXG][3], bb[MAXG];
+    for (int k = 0; k < ng; k++) { int n = gidx[k]; u[k][0] = g[3 * n]; u[k][1] = g[3 * n + 1]; u[k][2] = g[3 * n + 2]; bb[k] = bval[n]; }
+    float Zc[NSIG][MAXG];
+    _Pragma("unroll") for (int si = 0; si < NSIG; si++) {
+        const ushort src = base + ushort(si % LPF);
+        const int r = si / LPF;
+        float Dm[18];
+        for (int i = 0; i < 18; i++) Dm[i] = simd_shuffle(Do[r][i], src);
+        float w = si == 0 ? W0 : Wi;
+        for (int k = 0; k < ng; k++) {
+            float h = Hn(Dm, u[k][0], u[k][1], u[k][2], bb[k]);
+            Zc[si][k] = h;
+            zh[k] = zh[k] + w * h;
+        }
+    }
+    float Pxz[NS][MAXG];
+    for (int i = 0; i < NS; i++) for (int k = 0; k < MAXG; k++) Pxz[i][k] = 0.0f;
+    _Pragma("unroll") for (int si = 0; si < NSIG; si++) {
+        const ushort src = base + ushort(si % LPF);
+        const int r = si / LPF;
+        float t[NS];
+        for (int i = 0; i < NS; i++) t[i] = simd_shuffle(Xo[r][i], src);
+        float w = si == 0 ? W0 : Wi;
+        for (int k = 0; k < ng; k++) {
+            float dz = Zc[si][k] - zh[k];
+            for (int i = 0; i < NS; i++) Pxz[i][k] = Pxz[i][k] + t[i] * w * dz;
+        }
+    }
+#else
     float xh[NS];
     for (int i = 0; i < NS; i++) xh[i] = 0.0f;
     for (int si = 0; si < NSIG; si++) {
@@ -316,6 +401,7 @@ kernel void ukf_step(
             for (int i = 0; i < NS; i++) Pxz[i][k] = Pxz[i][k] + Xs[i] * w * dz;
         }
     }
+#endif
     const float rr = pdiv(1.0f, Rs);
     float Ip[NS * NS], iv[NS];
 #ifdef SFORM
@@ -418,8 +504,9 @@ kernel void ukf_step(
 """
 
 _LIBS: dict = {}
-#: the defaults: 8 lanes per half-fiber, H cached between passes, Cholesky inverses, precise math
-DEFINES: tuple = ("ZCACHE", "LPF=8", "SPDINV")
+#: the defaults: 8 lanes per half-fiber, H cached between passes, Cholesky inverses, sigma points split
+#: across the lanes, per-lane arrays sized to the data's gradient count, precise math
+DEFINES: tuple = ("ZCACHE", "LPF=8", "SPDINV", "SPLIT", "NGRAD")
 
 
 def available() -> bool:
@@ -445,6 +532,9 @@ def advance(D: dict, xa, sa, Pa, oa, Q, Rs, step, max_steps, step_length=0.3, st
     if N > MAX_GRADIENTS:
         raise ValueError(f"_ukf_metal: {N} gradients; the kernel takes at most {MAX_GRADIENTS}")
     defs = DEFINES if defines is None else tuple(defines)
+    if "NGRAD" in defs:                                                      # bare NGRAD: fill in this data's count
+        defs = tuple(f"NGRAD={N}" if d == "NGRAD" else d for d in defs)
+    defines = defs
     lpf = next((int(d.split("=")[1]) for d in defs if d.startswith("LPF=")), 32)
     B = xa.shape[0]
     nk, nj, ni = (int(v) for v in D["dim"])
