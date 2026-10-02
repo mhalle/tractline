@@ -1136,3 +1136,26 @@ One CPU step profiled (`_ukf_torch`, float32): H about 60 %, the rest of the fil
   0.39). For scale, TractCloud's own single draws on one tractogram agree 0.82-0.88 (tract mix r
   0.989-0.998): the tract mix is within TractCloud's own spread; per streamline, the CPU and GPU
   pipelines differ beyond it, by the tracking and field differences on top of the draw.
+
+## 2026-10-02 The CPU path's other two stages: TractCloud 10x, the field estimate 2.3x
+
+- **TractCloud on the CPU** (58 s): the network is all of it (features and context 0.3 s), and 67 %
+  of the network is conv5 (512 → 1024 channels, 1x1). PyTorch's CPU 1x1 convolution without oneDNN
+  (macOS builds) runs at 16 GFLOPS; the same product through BLAS (Accelerate) at 755: 1,024 → 21 ms
+  per 1,024 streamlines. `_tractcloud.MatmulDGCNN`: TractCloud's weights, every 1x1 convolution with
+  its BatchNorm folded into one matrix product, each edge convolution W [f_j - x_i; x_i] split as
+  Wa f_j + (Wb - Wa) x_i (the neighbors' term once per point, gathered), the max over neighbors taken
+  before the monotone terms (exact). **50.7 → 5.0 s.** In float64 it equals upstream's forward to
+  1.5e-13 (algebraically exact); in float32 to 6e-5 typically, more where float32 flips a near-tie in
+  the graph layers' nearest neighbors. PAT16: all 31,993 tract labels and top clusters identical; the
+  rank field's ranks identical for 99.99 % of streamlines, gaps 99.86 %, tails 98.6 %. The CPU
+  Labeler's default; the GPU keeps upstream's forward.
+- **The field estimate on the CPU** (77 s float64; 61 s float32): trilinear sampling and its gradient
+  are 47 %, and the full-resolution levels 6-9 - motion held - 52 of 59 s. `interp="linear_pe"`: at
+  those levels the b0s are moved once, then sampled linearly along the phase-encoding axis (two gathers
+  a voxel). **26 s** in float32 (the GPU's trilinear: 27.6 s). Its field is 0.12 / 0.81 mm (median /
+  99th) from the GPU's, against topup 0.30 / 2.51 mm, r 0.962 (GPU 0.27 / 2.36, 0.964); against the
+  T1 - the arbiter - no worse: brain 0.36 / 0.88 / 1.57, tumor 0.27 / 0.80 / 1.34, margin 0.38 / 0.92
+  / 2.13 mm, against the GPU's 0.38 / 0.94 / 1.73, 0.28 / 0.85 / 1.67, 0.38 / 0.96 / 2.45 (within the
+  measure's precision, ~0.46 mm at the brain's 99th). The CPU pipeline's setting; the GPU keeps
+  trilinear.

@@ -7,6 +7,7 @@ from __future__ import annotations
 import sys, types
 from dataclasses import dataclass
 import numpy as np, torch
+import torch.nn.functional as F
 from _resample import resample
 from _data import DATA, MODEL, MASS_CENTER
 
@@ -29,11 +30,64 @@ class Labels:
         return [f for f, k in zip(fibers, self.keep) if k]
 
 
+def _fold(conv, bn):
+    """A 1x1 convolution and its BatchNorm (eval) as one affine map: (W (out, in), bias (out,))."""
+    s = bn.weight / torch.sqrt(bn.running_var + bn.eps)
+    return (conv.weight.reshape(conv.weight.shape[0], -1) * s[:, None]).contiguous(), bn.bias - bn.running_mean * s
+
+
+class MatmulDGCNN(torch.nn.Module):
+    """TractCloud's TractDGCNN, its weights, its arithmetic up to rounding, for the CPU: every 1x1
+    convolution with its BatchNorm as one matrix product (PyTorch's CPU 1x1 convolution without oneDNN
+    is ~50x slower than BLAS: 1,024 against 21 ms for conv5 on the M2), and each edge convolution
+    W [f_j - x_i; x_i] split as Wa f_j + (Wb - Wa) x_i, so the neighbors' term is computed once per
+    point and gathered. The max over neighbors is taken before adding the point's term and before the
+    LeakyReLU: both are monotone, so the max commutes with them exactly."""
+    def __init__(self, m):
+        super().__init__()
+        self.k, self.kp = m.fiber_level_k + m.fiber_level_k_global, m.k_point_level
+        self.edge = []
+        for c in (m.conv1, m.conv2, m.conv3, m.conv4):
+            W, b = _fold(c[0], c[1])
+            n = W.shape[1] // 2
+            self.edge.append((W[:, :n].T.contiguous(), (W[:, n:] - W[:, :n]).T.contiguous(), b))
+        W5, self.b5 = _fold(m.conv5[0], m.conv5[1]); self.W5 = W5.T.contiguous()
+        self.head = m
+
+    def _graph(self, h, Wa, Wd, b):
+        """h (B, P, C) points' features -> (B, P, out): an edge convolution over each point's kp nearest."""
+        from tractcloud.models import tract_knn
+        idx = tract_knn(h.transpose(1, 2), k=self.kp)                    # (B, P, kp), upstream's neighbors
+        a = h @ Wa                                                       # (B, P, out): every point's neighbor term, once
+        nb = torch.gather(a, 1, idx.reshape(len(h), -1, 1).expand(-1, -1, a.shape[-1])).reshape(*idx.shape, -1)
+        return F.leaky_relu(nb.amax(2) + h @ Wd + b, 0.2)
+
+    def forward(self, x, info_point_set):
+        """x (B, 3, P), info_point_set (B, 3, P, k): as TractDGCNN.forward; log-softmax (B, classes)."""
+        Wa, Wd, b = self.edge[0]
+        pts = x.transpose(1, 2)                                          # (B, P, 3)
+        ctx = info_point_set.permute(0, 2, 3, 1)                         # (B, P, k, 3)
+        h1 = F.leaky_relu((ctx @ Wa).amax(2) + pts @ Wd + b, 0.2)        # (B, P, 64)
+        h2 = self._graph(h1, *self.edge[1])
+        h3 = self._graph(h2, *self.edge[2])
+        h4 = self._graph(h3, *self.edge[3])
+        h = F.leaky_relu(torch.cat((h1, h2, h3, h4), 2) @ self.W5 + self.b5, 0.2)   # (B, P, 1024)
+        m = self.head
+        z = torch.cat((h.amax(1), h.mean(1)), 1)
+        z = F.leaky_relu(m.bn6(m.linear1(z)), 0.2)
+        z = F.leaky_relu(m.bn7(m.linear2(z)), 0.2)
+        return F.log_softmax(m.linear3(z), dim=1)
+
+
 class Labeler:
-    def __init__(self, device="mps"):
+    def __init__(self, device="mps", exact=None):
+        """exact: upstream's forward (default on the GPU); otherwise MatmulDGCNN (default on the CPU)."""
         self.device = torch.device(device)
         self.model, _ = inf.load_model(str(MODEL / "best_tract_f1_model.pth"), str(MODEL / "cli_args.txt"), self.device,
                                        k_override=20, k_global_override=80)
+        if not (self.device.type != "cpu" if exact is None else exact):
+            with torch.no_grad():
+                self.model = MatmulDGCNN(self.model.eval())
         self.center = np.load(MASS_CENTER)
         self.lut = LUT.astype(np.int64)
 

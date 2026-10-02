@@ -180,6 +180,24 @@ def unwarp_pe_cubic(coef, h, dh, pe_ax, pe_scale, jac=True):
     return s * (1 + pe_scale.view(V, 1, 1, 1) * dh[None]) if jac else s
 
 
+def unwarp_pe_linear(moved, h, dh, pe_ax, pe_scale, jac=True):
+    """unwarp() without motion, linear along the phase-encoding axis (moved: the already moved images,
+    (V, X, Y, Z)): volume v sampled at x + pe_scale_v h along pe_ax, zero outside (grid_sample's
+    padding), times 1 + pe_scale_v dh. Two gathers a voxel instead of a 3D trilinear sample."""
+    V, n = moved.shape[0], moved.shape[1 + pe_ax]
+    shape = [1, 1, 1, 1]; shape[1 + pe_ax] = n
+    pos = torch.arange(n, dtype=moved.dtype, device=moved.device).view(shape) + pe_scale.view(V, 1, 1, 1) * h[None]
+    i0 = torch.floor(pos)
+    f = pos - i0
+    out = 0
+    for k, w in ((0, 1 - f), (1, f)):
+        idx = (i0 + k).long()
+        ok = (idx >= 0) & (idx <= n - 1)
+        v = torch.gather(moved, 1 + pe_ax, idx.clamp(0, n - 1))
+        out = out + torch.where(ok, w * v, torch.zeros_like(v))
+    return out * (1 + pe_scale.view(V, 1, 1, 1) * dh[None]) if jac else out
+
+
 def bending(c, Bs, dBs, d2Bs, vox):
     """Bending energy of h, mean over voxels, in (Hz / mm^2)^2."""
     hxx = sep(d2Bs[0], Bs[1], Bs[2], c) / vox[0] ** 2
@@ -193,12 +211,13 @@ def bending(c, Bs, dBs, d2Bs, vox):
 
 # ------------------------------------------------------------------ the fit
 
-def estimate(b0s: np.ndarray, vox, pe_vectors: np.ndarray, readout_s, *, device="cpu", progress=None,
+def estimate(b0s: np.ndarray, vox, pe_vectors: np.ndarray, readout_s, *, device="cpu", dtype=None, progress=None,
              schedule=B02B0, iter_scale=3, lam_scale=1.0, fixed_motion=None, interp="trilinear"):
     """The susceptibility field from b0s with at least two phase-encoding directions.
 
     b0s (X, Y, Z, V); vox (3,) mm; pe_vectors (V, 3), each b0's phase-encoding vector; readout_s the
-    total readout time (s), one for all or (V,). device "mps" runs in float32, "cpu" in float64;
+    total readout time (s), one for all or (V,). device "mps" runs in float32, "cpu" in float64 unless
+    dtype says otherwise;
     progress(level_log) is called after each level. Returns (field Hz (X, Y, Z) numpy float64,
     motion (V, 6): translations mm, rotations rad, volume 0 fixed; the per-level log).
 
@@ -206,11 +225,12 @@ def estimate(b0s: np.ndarray, vox, pe_vectors: np.ndarray, readout_s, *, device=
     iter_scale (iterations per level x 3), lam_scale (topup's lambda, rescaled: its units are not
     ours), fixed_motion ((V, 6) held instead of estimated), interp ("cubic_pe": at levels whose motion
     is held, cubic B-splines along the phase-encoding axis, topup's --interp=spline; measured no
-    better, 70 % slower)."""
+    better, 70 % slower; "linear_pe": the same, linear along the axis - the images moved once per level,
+    then two gathers a voxel instead of a 3D trilinear sample and its gradient)."""
     pe = np.asarray(pe_vectors, float)
     trt = np.broadcast_to(np.asarray(readout_s, float), (len(pe),))
     dev = torch.device(device)
-    dt = torch.float32 if dev.type == "mps" else torch.float64
+    dt = dtype or (torch.float32 if dev.type == "mps" else torch.float64)
     img = torch.as_tensor(np.moveaxis(b0s, -1, 0), dtype=dt, device=dev)    # (V, X, Y, Z)
     img = img * (img.mean() / img.mean(dim=(1, 2, 3), keepdim=True))         # --scale=1
     V = img.shape[0]
@@ -254,21 +274,22 @@ def estimate(b0s: np.ndarray, vox, pe_vectors: np.ndarray, readout_s, *, device=
         lam = schedule["lam"][lev] * lam_scale                                   # topup's lambda units are not ours: lam_scale calibrates
 
         cubic = interp == "cubic_pe" and not est
-        if cubic:                                                                # motion held: move once, then cubic along pe
+        linear = interp == "linear_pe" and not est
+        if cubic or linear:                                                      # motion held: move once, then sample along pe
             with torch.no_grad():
                 Rs0, ts0 = [torch.eye(3, dtype=dt, device=dev)], [torch.zeros(3, dtype=dt, device=dev)]
                 for v in range(V - 1):
                     R, t = rigid(mov[v], center); Rs0.append(R); ts0.append(t)
                 moved = unwarp(im, torch.zeros_like(im[0]), torch.zeros_like(im[0]), pe_ax, pe_scale, Rs0, ts0, vl, jac=False)
-                coef = prefilter(moved, pe_ax)
+                coef = prefilter(moved, pe_ax) if cubic else moved
 
         def cost():
             c = cs * CS
             m = ms * MS * mmask
             h = field(c, Bs)
             dh = sep(*[(dBs[a] if a == pe_ax else Bs[a]) for a in range(3)], c)
-            if cubic:
-                u = unwarp_pe_cubic(coef, h, dh, pe_ax, pe_scale)
+            if cubic or linear:
+                u = (unwarp_pe_cubic if cubic else unwarp_pe_linear)(coef, h, dh, pe_ax, pe_scale)
                 ssd = ((u - u.mean(0, keepdim=True)) ** 2).mean()
                 return ssd + lam * ssd.detach() * bending(c, Bs, dBs, d2Bs, vl), ssd
             Rs, ts = [torch.eye(3, dtype=dt, device=dev)], [torch.zeros(3, dtype=dt, device=dev)]
@@ -295,7 +316,7 @@ def estimate(b0s: np.ndarray, vox, pe_vectors: np.ndarray, readout_s, *, device=
             h_prev = field(cs * CS, Bs).detach()
             mov = (ms * MS * mmask).detach()
         log.append({"level": lev + 1, "grid": [X, Y, Z], "knots": [B.shape[1] for B in Bs], "ssd_before": before, "ssd_after": after,
-                    "motion": est, "interp": "cubic along pe" if cubic else "trilinear"})
+                    "motion": est, "interp": "cubic along pe" if cubic else "linear along pe" if linear else "trilinear"})
         if progress:
             progress(log[-1])
     full = Fnn.interpolate(h_prev[None, None], size=tuple(b0s.shape[:3]), mode="trilinear", align_corners=True)[0, 0]

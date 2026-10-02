@@ -10,7 +10,8 @@ Stages, and where they run:
             median_otsu mask; CPU, <1 s), UKF two-tensor with the ORG settings and the binary's seeds
             (_ukf_torch.track, Metal kernel: float32 steps from float64 seeds, ~27 s; or on the CPU,
             one process per core, fast algebra)
-  label     TractCloud, one context draw (_tractcloud.Labeler: GPU, float32, ~4 s)
+  label     TractCloud, one context draw (_tractcloud.Labeler: GPU, float32, ~4 s; on the CPU its
+            network as matrix products, MatmulDGCNN, ~5 s)
   encode    the rank field of the cluster log-probabilities (rankfield: depth 6, keep "clip", clip 8)
             and the geometry (a 0.05 mm grid, second-order prediction, int8 residuals; _geometry)
   TRX       optional: the tractogram with labels, tract probabilities and the rank field (_trx.py)
@@ -88,8 +89,13 @@ class Payload:
 
 
 def correct(s, timer: Timer, device="mps") -> Correction:
+    """On the CPU: float32, and the full-resolution levels (motion held) sampled linearly along the
+    phase-encoding axis after one move per level - 26 s against 61 s trilinear; against the T1 no
+    worse than the GPU's trilinear (NOTES 2026-10-02)."""
+    cpu = torch.device(device).type == "cpu"
     with timer("field_estimate"):
-        h, motion, _ = S.estimate(s.b0s, s.vox, s.pe_vectors, s.readout_s, device=device)
+        h, motion, _ = S.estimate(s.b0s, s.vox, s.pe_vectors, s.readout_s, device=device,
+                                  **(dict(dtype=torch.float32, interp="linear_pe") if cpu else {}))
     with timer("field_apply"):
         dwi = S.apply(s.dwi, h, s.pe_axis, s.pe_sign, s.readout_s)
     return Correction(dwi, h, motion, S.displacement_mm(h, s.readout_s, s.pe_sign, s.vox[s.pe_axis]))
