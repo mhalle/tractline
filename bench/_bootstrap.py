@@ -49,8 +49,7 @@ class WildBootstrap:
         sign = rng.integers(0, 2, self.res.shape, dtype=np.int8) * 2 - 1
         x = np.rint(self.fit + self.res * sign)
         info = np.iinfo(self.dtype) if np.issubdtype(self.dtype, np.integer) else None
-        if info is not None:
-            x = np.clip(x, max(info.min, 0), info.max)
+        x = np.clip(x, max(info.min, 0), info.max) if info is not None else np.clip(x, 0, None)   # a float input (a corrected DWI): no negative signal either
         return x.astype(self.dtype).reshape(self.raw.shape)
 
     def noise_check(self, mask) -> dict:

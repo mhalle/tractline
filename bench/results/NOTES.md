@@ -1482,3 +1482,24 @@ results/modal_gpu_pipeline_*.json), `gpu_pipeline_compare.py` (against the M2, g
   correction - no reversed pair; prep, UKF, TractCloud): M2 Metal 105.3 s (UKF 93.9), L40S 39.7 s (UKF
   36.5; first run 49.9), 32 x86 cores 119.5 s (UKF 110.4). 78,404-78,417 fibers; Other 76.6-77.4 % -
   on this scan the paths agree within 0.8 points. Repeat runs bit-identical on the M2 and the L40S.
+
+## 2026-10-02 PAT16's Other fraction: TractCloud's draw, not the tracker (`label_noise_floor.py`)
+
+The M2's field held fixed; `results/label_noise_floor.json`.
+- **TractCloud's own draws** (one Metal tractogram, context draws 0-9): Other 58.1, 59.2, 55.5, 56.2,
+  **66.2**, 56.3, 56.4, 62.2, 55.9, 56.9 % - a single draw's aggregate moves by 11 points with the
+  fibers unchanged.
+- **Metal against float64, the scan as acquired:** 42,170 / 42,171 fibers, Other 58.1 / 58.8 %; matched
+  by seed, 88.8 % of 32,228 labeled streamlines agree, the flips go both ways (1,460 Metal-Other /
+  float64-tract, 1,686 the reverse), the flipping fibers' lengths do not differ (median 0.0 mm).
+- **Rounding alone:** float64 at batch 1,024 and 4,096 - fibers not bit-identical, Other 58.8 % both.
+- **The scan's noise** (wild bootstrap of the corrected tracker input, 4 replicates, each tracked by
+  Metal and float64): Other 57.8-61.0 % (Metal), 57.9-59.9 % (float64); Metal minus float64 +1.1,
+  +1.1, -1.0, -0.5 points - the sign changes, no bias. Caveat: the b0s' residuals (SD 67, against 6.2
+  for the DW volumes) carry the 15-minute series' motion and CSF fluctuation, so the replicates perturb
+  the b0s by the scan's variability, more than thermal noise.
+- **So** the 58-63 % across cards and kernels ("The pipeline on CUDA") is inside both floors: any small
+  change in the fibers acts as a new context draw. The earlier reading - Metal leaning one way - does
+  not hold. The pipeline's single-draw labels are what is unstable (M0's 28 % per-streamline, now
+  ±5 points in the aggregate on a clinical scan). Next: how labels and the aggregate settle with the
+  number of draws (log-probabilities averaged), and what the pipeline should use.

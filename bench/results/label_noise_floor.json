@@ -1,0 +1,126 @@
+{
+ "subject": "PAT16",
+ "field": "pipeline.correct (mps)",
+ "bootstrap": {
+  "sh_order": 6,
+  "sh_coefficients": 28,
+  "dw_volumes": 50,
+  "b0_volumes": 6,
+  "b0_noise_sd": 67.4,
+  "dw_residual_rms": 6.21,
+  "dw_residual_over_b0_sd": 0.092,
+  "b0_snr": 4.4
+ },
+ "replicates": [
+  {
+   "seed": 1,
+   "metal": {
+    "fibers": 42894,
+    "labeled": 32440,
+    "other": 0.5903,
+    "seconds": 31.0
+   },
+   "f64": {
+    "fibers": 42892,
+    "labeled": 32435,
+    "other": 0.5793,
+    "seconds": 355.0
+   },
+   "metal_minus_f64": 0.011
+  },
+  {
+   "seed": 2,
+   "metal": {
+    "fibers": 42900,
+    "labeled": 32509,
+    "other": 0.6096,
+    "seconds": 27.1
+   },
+   "f64": {
+    "fibers": 42903,
+    "labeled": 32515,
+    "other": 0.5986,
+    "seconds": 350.6
+   },
+   "metal_minus_f64": 0.011
+  },
+  {
+   "seed": 3,
+   "metal": {
+    "fibers": 42938,
+    "labeled": 32564,
+    "other": 0.5799,
+    "seconds": 27.1
+   },
+   "f64": {
+    "fibers": 42940,
+    "labeled": 32553,
+    "other": 0.5897,
+    "seconds": 353.2
+   },
+   "metal_minus_f64": -0.0098
+  },
+  {
+   "seed": 4,
+   "metal": {
+    "fibers": 42891,
+    "labeled": 32454,
+    "other": 0.5783,
+    "seconds": 27.1
+   },
+   "f64": {
+    "fibers": 42890,
+    "labeled": 32459,
+    "other": 0.5837,
+    "seconds": 355.1
+   },
+   "metal_minus_f64": -0.0054
+  }
+ ],
+ "draws_metal": [
+  0.5809,
+  0.5916,
+  0.5545,
+  0.5621,
+  0.6624,
+  0.5628,
+  0.5638,
+  0.6222,
+  0.5587,
+  0.5692
+ ],
+ "rounding_f64": {
+  "batch_1024": 0.588,
+  "batch_4096": 0.588,
+  "fibers": [
+   42171,
+   42171
+  ],
+  "identical_fibers": false
+ },
+ "scan_as_acquired": {
+  "metal": {
+   "fibers": 42170,
+   "labeled": 32264,
+   "other": 0.5809,
+   "seconds": 26.7
+  },
+  "f64": {
+   "fibers": 42171,
+   "labeled": 32265,
+   "other": 0.588,
+   "seconds": 349.3
+  },
+  "matched_labeled": 32228,
+  "label_agreement": 0.8879,
+  "metal_other_f64_tract": 1460,
+  "metal_tract_f64_other": 1686,
+  "median_length_diff_mm_metal_minus_f64": {
+   "metal_other_f64_tract": 0.0,
+   "metal_tract_f64_other": 0.0,
+   "all_matched": 0.0
+  },
+  "only_in_metal_labeled": 36,
+  "only_in_f64_labeled": 37
+ }
+}

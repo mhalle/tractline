@@ -28,9 +28,10 @@ pipeline takes 16.5 s on an A10 and 12.2 s on an L40S, steady state.
 
 ## Open
 
-- **TractCloud's Other fraction on PAT16 moves with float32 rounding:** 58-63 % across the M2, A10,
-  A10G and L40S (float64: 62.2 %); its noise floor on this scan is not measured (NOTES 2026-10-02, "The
-  pipeline on CUDA").
+- **One TractCloud draw is not a stable label.** On PAT16 a single draw's Other fraction ranges
+  55.5-66.2 % over context draws with the fibers fixed; the scan's noise moves it ~3 points; cards and
+  kernels (58-63 %) sit inside both, no tracker bias. The pipeline labels with one draw; averaging
+  draws is next (NOTES 2026-10-02, "PAT16's Other fraction").
 - **The field estimate's repeatability.** Gauss-Newton fixed the optimizer's sensitivity (negligible
   input noise: 0.07 mm at the margin's 99th, was 0.33 under L-BFGS) and predicts held-out b0s better on
   all 12 patients; fits from independent pairs of b0s still differ by ~1.3 mm at the brain's edge
