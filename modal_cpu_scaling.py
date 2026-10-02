@@ -3,7 +3,7 @@ tracker scales with worker processes, and the pipeline end to end, on PAT16. One
 
     modal run bench/tractography/modal_cpu_scaling.py [--what field | --what pipeline]
 
-  1. our correction on the CPU (float32, linear along phase encoding), once;
+  1. our correction on the CPU (float32, Gauss-Newton: the pipeline's default), once;
   2. the tracker on the corrected scan (float32, fast, batch 1,024) with 8, 16, 32 and 64 workers
      (64: one per vCPU, hyperthreads) - the fibers checked identical across worker counts;
   3. the whole pipeline (_pipeline.run, device "cpu") at the fastest worker count.

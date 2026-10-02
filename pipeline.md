@@ -19,7 +19,7 @@ For scale: FSL topup + applytopup take 665 s for the correction alone on the sam
 Stanford HARDI brain tracks in 135 s on the M2 and 78 s on an A10G (`_ukf_triton_block`). Against
 the T1, the correction cuts the tumor margin's misplacement from 4.8 mm to 1.6 mm (99th percentile,
 median of 12 patients). On the CPU alone the field takes 22.6 s, the same field as the GPU's (0.03 mm
-at the brain's 99th percentile). Sections 1-5 below are the format work on the HCP tractogram that preceded it.
+at the brain's 99th percentile); on 32 x86 cores (Modal) 38.5 s, the pipeline 95 s. Sections 1-5 below are the format work on the HCP tractogram that preceded it.
 
 *2026-10-01. Measured on the HCP test subject (440,621 streamlines, 21.6 M vertices): an A10G on
 Modal for the GPU, the M2 laptop and Modal CPUs for the rest. Every number below cites the

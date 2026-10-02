@@ -1421,3 +1421,13 @@ derived/<sub>/cohort_fields_lbfgs.npz), L-BFGS → Gauss-Newton, medians:
   CSF), worst at the ventricles (slices 26-34), no N/2 ghost: CSF flow or pulsation, 4x the others'.
   Physiology the model has no term for; every estimator sees it alike, and the same-polarity mismatch
   calibrates for it.
+
+## 2026-10-02 Gauss-Newton on 32 x86 cores (Modal, CPU only): no faster there
+
+`modal run bench/tractography/modal_cpu_scaling.py --what field` (`results/modal_cpu_field_timing.json`,
+48 vCPU visible): the estimate by threads 8 / 16 / 32 / 48 - 48.9 / 40.2 / 44.6 / 51.5 s (16 best, as
+before: ESTIMATE_THREADS stays); 41.6 s after a tracking pool. The pipeline end to end: **95.1 s** scan
+to labels (estimate 38.5 s, UKF 50.7, TractCloud 4.1), against 92.2 s with L-BFGS (estimate 38.2):
+on this machine Gauss-Newton costs what L-BFGS did - its gain here is accuracy, not time. On the M2
+the same estimate takes 22.6 s on the CPU and 18 s with the GPU; the x86 run's per-step cost (small
+tensor contractions, many syncs into torch's thread pool) is the likely difference, not measured.
