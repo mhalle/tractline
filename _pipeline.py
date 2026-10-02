@@ -85,7 +85,7 @@ class Payload:
 
 def correct(s, timer: Timer, device="mps") -> Correction:
     with timer("field_estimate"):
-        h, motion, _ = S.estimate(s.b0s, s.vox, s.pe_vectors, np.full(len(s.pe_vectors), s.readout_s), device=device)
+        h, motion, _ = S.estimate(s.b0s, s.vox, s.pe_vectors, s.readout_s, device=device)
     with timer("field_apply"):
         dwi = S.apply(s.dwi, h, s.pe_axis, s.pe_sign, s.readout_s)
     return Correction(dwi, h, motion, S.displacement_mm(h, s.readout_s, s.pe_sign, s.vox[s.pe_axis]))

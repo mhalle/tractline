@@ -49,7 +49,7 @@ h_top = np.asarray(nib.load(OUT / "field_hz.nii.gz").dataobj, dtype=np.float64)
 top = np.asarray(nib.load(OUT / "dwi_AP_topup.nii.gz").dataobj, dtype=np.float64)
 
 t0 = time.time()
-h_ours, _, _ = S.estimate(s.b0s, s.vox, s.pe_vectors, np.full(len(s.pe_vectors), s.readout_s), device="mps")
+h_ours, _, _ = S.estimate(s.b0s, s.vox, s.pe_vectors, s.readout_s, device="mps")
 t_ours = round(time.time() - t0, 1)
 h_ours = np.asarray(h_ours, dtype=np.float64)
 

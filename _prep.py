@@ -23,12 +23,12 @@ class TrackerInput:
     info: dict
 
 
-def prepare(data, A, bval, bvec, shell=2800.0) -> TrackerInput:
-    """data (X, Y, Z, G) int or float, A its affine, bval (G,), bvec (3, G) FSL. In memory:
+def prepare(dwi, affine, bval, bvec, shell=2800.0) -> TrackerInput:
+    """dwi (X, Y, Z, G) int or float, affine its voxel -> RAS matrix, bval (G,), bvec (3, G) FSL. In memory:
     _ukf_torch.from_arrays(t.dwi, t.header, t.mask) takes it."""
     keep = (bval < 50) | (np.abs(bval - shell) < 50)
-    data, bval, bvec = data[..., keep], bval[keep], bvec[:, keep]
-    M = A[:3, :3]
+    dwi, bval, bvec = dwi[..., keep], bval[keep], bvec[:, keep]
+    M = affine[:3, :3]
     spacing = np.linalg.norm(M, axis=0)
     R = M / spacing                                                       # columns: the axes' directions
     g = bvec.copy()
@@ -37,31 +37,31 @@ def prepare(data, A, bval, bvec, shell=2800.0) -> TrackerInput:
     g = (R @ g).T                                                         # (G, 3) RAS
     bmax = float(bval.max())
     g = np.where((bval > 50)[:, None], g / np.linalg.norm(g, axis=1, keepdims=True) * np.sqrt(bval / bmax)[:, None], 0.0)
-    floating = not np.issubdtype(data.dtype, np.integer)
-    hdr = {"type": "float" if floating else "short", "dimension": 4, "space": "right-anterior-superior", "sizes": list(data.shape),
+    floating = not np.issubdtype(dwi.dtype, np.integer)
+    hdr = {"type": "float" if floating else "short", "dimension": 4, "space": "right-anterior-superior", "sizes": list(dwi.shape),
            "space directions": [M[:, 0].tolist(), M[:, 1].tolist(), M[:, 2].tolist(), [np.nan] * 3],
            "kinds": ["space", "space", "space", "list"], "endian": "little", "encoding": "raw",
-           "space origin": A[:3, 3].tolist(), "measurement frame": np.eye(3).tolist(),
+           "space origin": affine[:3, 3].tolist(), "measurement frame": np.eye(3).tolist(),
            "modality": "DWMRI", "DWMRI_b-value": f"{bmax:g}"}
     for n, v in enumerate(g):
         hdr[f"DWMRI_gradient_{n:04d}"] = f"{v[0]:.8f} {v[1]:.8f} {v[2]:.8f}"
-    stored = data.astype(np.float32 if floating else np.int16)
-    b0 = data[..., bval < 50].astype(np.float32).mean(-1)
+    stored = dwi.astype(np.float32 if floating else np.int16)
+    b0 = dwi[..., bval < 50].astype(np.float32).mean(-1)
     _, mask = median_otsu(b0, median_radius=4, numpass=4)
-    info = {"shape": list(data.shape), "voxel_mm": [round(float(v), 3) for v in spacing], "b0": int((bval < 50).sum()),
+    info = {"shape": list(dwi.shape), "voxel_mm": [round(float(v), 3) for v in spacing], "b0": int((bval < 50).sum()),
             "shell": shell, "directions": int((bval > 50).sum()), "affine_det_positive": bool(np.linalg.det(M) > 0),
             "mask_voxels": int(mask.sum())}
     return TrackerInput(stored, hdr, mask, info)
 
 
-def prep(data, A, bval, bvec, out: Path, shell=2800.0):
+def prep(dwi, affine, bval, bvec, out: Path, shell=2800.0):
     """prepare(), written to out/{dwi.nhdr, dwi.raw, mask.nrrd} for _ukf_torch.load; returns (info, mask)."""
     out.mkdir(parents=True, exist_ok=True)
-    t = prepare(data, A, bval, bvec, shell)
-    mask, info, M = t.mask, t.info, A[:3, :3]
+    t = prepare(dwi, affine, bval, bvec, shell)
+    mask, info, M = t.mask, t.info, affine[:3, :3]
     nrrd.write(str(out / "dwi.nhdr"), t.dwi, t.header, detached_header=True)
     nrrd.write(str(out / "mask.nrrd"), mask.astype(np.uint8),
                {"type": "unsigned char", "dimension": 3, "space": "right-anterior-superior", "sizes": list(mask.shape),
                 "space directions": [M[:, 0].tolist(), M[:, 1].tolist(), M[:, 2].tolist()], "kinds": ["space"] * 3,
-                "space origin": A[:3, 3].tolist(), "encoding": "gzip"})
+                "space origin": affine[:3, 3].tolist(), "encoding": "gzip"})
     return info, mask

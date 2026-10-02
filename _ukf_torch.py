@@ -69,17 +69,17 @@ def load(nhdr: str, mask_path: str, device="cpu", data=None) -> dict:
     return from_arrays(raw, h, m, device)
 
 
-def from_arrays(raw, h: dict, m, device="cpu") -> dict:
+def from_arrays(dwi, header: dict, mask, device="cpu") -> dict:
     """load() without files: the DWI's voxels (i, j, k, G), its NRRD header as a dict (as pynrrd reads
     it, or as _prep.prepare builds it) and the mask (i, j, k)."""
-    keys = sorted(k for k in h if k.startswith("DWMRI_gradient_"))
-    gtxt = [h[k] for k in keys]
-    bmax_int = int(re.match(r"\s*(-?\d+)", h["DWMRI_b-value"]).group(1))
-    b_hdr = float(h["DWMRI_b-value"])
+    keys = sorted(k for k in header if k.startswith("DWMRI_gradient_"))
+    gtxt = [header[k] for k in keys]
+    bmax_int = int(re.match(r"\s*(-?\d+)", header["DWMRI_b-value"]).group(1))
+    b_hdr = float(header["DWMRI_b-value"])
     g32 = np.array([[np.float32(v) for v in s.split()] for s in gtxt], np.float32)
     mag = np.sqrt(g32[:, 0] * g32[:, 0] + g32[:, 1] * g32[:, 1] + g32[:, 2] * g32[:, 2], dtype=np.float32)
     nonzero = (np.float32(bmax_int) * mag * mag) > 50
-    data = raw.astype(np.float32)
+    data = dwi.astype(np.float32)
     acc = np.zeros(data.shape[:3], np.float32)
     for gi in np.flatnonzero(~nonzero):                       # the float32 running sum, in gradient order
         acc = acc + data[..., gi]
@@ -94,11 +94,11 @@ def from_arrays(raw, h: dict, m, device="cpu") -> dict:
     gn = np.linalg.norm(g, axis=1)
     b = np.where(np.abs(gn - 1) > 1e-4, gn * gn * b_hdr, b_hdr)
     g = g / gn[:, None]
-    dirs = np.asarray(h["space directions"], dtype=object)
+    dirs = np.asarray(header["space directions"], dtype=object)
     sd = np.array([np.asarray(dirs[a], float) for a in range(3)])        # rows: axes i, j, k
-    origin = np.asarray(h["space origin"], float).copy()
-    mf = np.asarray(h.get("measurement frame", np.eye(3)), float).copy()  # mf[vector][component]
-    space = h.get("space", "")
+    origin = np.asarray(header["space origin"], float).copy()
+    mf = np.asarray(header.get("measurement frame", np.eye(3)), float).copy()  # mf[vector][component]
+    space = header.get("space", "")
     if space in ("left-posterior-superior", "left-anterior-superior"):
         sd[:, 0] *= -1; mf[:, 0] *= -1; origin[0] *= -1
     if space == "left-posterior-superior":
@@ -112,7 +112,7 @@ def from_arrays(raw, h: dict, m, device="cpu") -> dict:
     g = g / np.linalg.norm(g, axis=1)[:, None]
     g2 = np.concatenate([g, -g]); b2 = np.concatenate([b, b])
 
-    mask = np.ascontiguousarray(np.asarray(m).transpose(2, 1, 0)).astype(np.uint8).view(np.int8)  # signed char
+    mask = np.ascontiguousarray(np.asarray(mask).transpose(2, 1, 0)).astype(np.uint8).view(np.int8)  # signed char
     voxel = spacing[::-1].copy()                               # (k, j, i)
     t = lambda a, dt=torch.float64: torch.as_tensor(np.ascontiguousarray(a), dtype=dt, device=device)
     return {"A": torch.as_tensor(A, device=device), "g": t(g2), "b": t(b2), "voxel": t(voxel), "i2r": i2r,

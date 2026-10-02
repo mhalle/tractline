@@ -35,16 +35,16 @@ def tumor_regions(t1img, mask_img, margin_mm=10):
 
 
 class T1Check:
-    def __init__(self, t1img, affine, shape, fit_mask, pe_ax, vox):
+    def __init__(self, t1img, affine, shape, fit_mask, pe_axis, vox):
         """t1img: the T1 (nibabel); affine, shape: the b0 grid; fit_mask: where the cost is taken (the
-        brain, dilated: its edge carries the signal); pe_ax: the b0 grid's phase-encoding axis; vox:
+        brain, dilated: its edge carries the signal); pe_axis: the b0 grid's phase-encoding axis; vox:
         its voxel sizes as the header states them (the affine's column norms differ by ~1e-8, enough
         to move L-BFGS's path by up to 0.05 mm in the result)."""
         t1 = np.asarray(t1img.dataobj, dtype=np.float64)
         self.t1 = t1
         self.T1s = torch.as_tensor(S.smooth(torch.as_tensor(t1[None]), 1.5, np.ones(3))[0].numpy())   # anti-alias for 2.5 mm
         self.Ainv_t1 = torch.as_tensor(np.linalg.inv(t1img.affine), dtype=dt)
-        self.shape, self.pe = tuple(shape), pe_ax
+        self.shape, self.pe = tuple(shape), pe_axis
         self.vox = np.asarray(vox, float)
         At = torch.as_tensor(affine, dtype=dt)
         grid = torch.stack(torch.meshgrid(*[torch.arange(n, dtype=dt) for n in shape], indexing="ij"), -1)

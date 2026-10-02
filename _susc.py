@@ -193,13 +193,22 @@ def bending(c, Bs, dBs, d2Bs, vox):
 
 # ------------------------------------------------------------------ the fit
 
-def estimate(b0s: np.ndarray, vox, pe: np.ndarray, trt: np.ndarray, device="cpu", schedule=B02B0, iter_scale=3,
-             lam_scale=1.0, fixed_motion=None, interp="trilinear", progress=None):
-    """b0s (X, Y, Z, V), voxel sizes (mm), pe (V, 3) phase-encoding vectors, trt (V,) total readout
-    times (s). Returns (field Hz on the full grid as numpy, motion (V, 6), per-level log).
-    interp "cubic_pe": at levels whose motion is held, the images are moved once (trilinear) and
-    sampled with cubic B-splines along the phase-encoding axis (topup's --interp=spline, in the
-    direction the distortion acts); "trilinear": trilinear throughout."""
+def estimate(b0s: np.ndarray, vox, pe_vectors: np.ndarray, readout_s, *, device="cpu", progress=None,
+             schedule=B02B0, iter_scale=3, lam_scale=1.0, fixed_motion=None, interp="trilinear"):
+    """The susceptibility field from b0s with at least two phase-encoding directions.
+
+    b0s (X, Y, Z, V); vox (3,) mm; pe_vectors (V, 3), each b0's phase-encoding vector; readout_s the
+    total readout time (s), one for all or (V,). device "mps" runs in float32, "cpu" in float64;
+    progress(level_log) is called after each level. Returns (field Hz (X, Y, Z) numpy float64,
+    motion (V, 6): translations mm, rotations rad, volume 0 fixed; the per-level log).
+
+    The rest are experiment options, their defaults the pipeline's: schedule (topup's b02b0.cnf),
+    iter_scale (iterations per level x 3), lam_scale (topup's lambda, rescaled: its units are not
+    ours), fixed_motion ((V, 6) held instead of estimated), interp ("cubic_pe": at levels whose motion
+    is held, cubic B-splines along the phase-encoding axis, topup's --interp=spline; measured no
+    better, 70 % slower)."""
+    pe = np.asarray(pe_vectors, float)
+    trt = np.broadcast_to(np.asarray(readout_s, float), (len(pe),))
     dev = torch.device(device)
     dt = torch.float32 if dev.type == "mps" else torch.float64
     img = torch.as_tensor(np.moveaxis(b0s, -1, 0), dtype=dt, device=dev)    # (V, X, Y, Z)

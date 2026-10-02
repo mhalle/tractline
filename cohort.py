@@ -42,8 +42,7 @@ labeler = Labeler()
 # ------------------------------------------------------------------ the pipeline, and the scan as acquired
 corr, tg, lab1, payload = P.run(s, labeler, timer, prefix="ours_")
 with timer("field_estimate_perturbed"):
-    h_p, _, _ = S.estimate(s.b0s + np.random.default_rng(0).normal(0, 0.01, s.b0s.shape), s.vox, s.pe_vectors,
-                           np.full(len(s.pe_vectors), s.readout_s), device="mps")
+    h_p, _, _ = S.estimate(s.b0s + np.random.default_rng(0).normal(0, 0.01, s.b0s.shape), s.vox, s.pe_vectors, s.readout_s, device="mps")
 arms = {"uncorrected": P.track(s, s.dwi, timer, prefix="uncorrected_"), "ours": tg}
 P.label(arms["uncorrected"], labeler, timer, prefix="uncorrected_")             # the pipeline's one draw, timed
 votes = {}
