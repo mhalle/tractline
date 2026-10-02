@@ -1,67 +1,74 @@
-# Tractography incubation
+# tractline
 
-Diffusion MRI to named white-matter tracts with confidence, in the rank-field format. Data lives
-outside the repo (`_data.py`: `$TRACTOGRAPHY_DATA`, default `~/tmp/data/tractography`); results and
-the running journal are in `results/` (`results/NOTES.md`, newest entries last). `pipeline.md`
-describes the pipeline and its timings; `labelers.md` plans the labeling stage as a swappable component
-(our TractCloud, upstream's, later DeepMultiConnectome); `plan.md` and `prior-art.md` are the original
-plan and survey.
+Diffusion MRI to named white-matter tracts, in torch: susceptibility correction from a reversed
+phase-encoding pair, UKF two-tensor tractography, and tract labeling, as one pipeline from the scan
+to labeled streamlines. Each stage is our own implementation of a published method, checked against
+the original: FSL topup's model, the Slicer UKFTractography binary, and TractCloud.
 
-## The pipeline
+Private while it is being tested. It was incubated in medseg (`bench/tractography` on the
+`tractography-incubation` branch); this repository keeps that history.
 
-`_pipeline.py` runs it in memory: correct → track → label, then TRX (and, for the format work, the
-compact payload). Its docstring states the conventions every module below follows (array layouts,
-units, devices). The default path needs numpy, scipy, torch, nibabel and TractCloud's code and weights,
-nothing more (`dependency_check.py` runs it with the others unimportable).
+## Install
+
+```
+pip install -e .            # numpy, scipy, torch, nibabel
+pip install -e ".[nrrd]"    # NRRD input/output for the tracker
+```
+
+TractCloud's code and trained weights are read from the data directory for now (`tractline.data`:
+`$TRACTOGRAPHY_DATA`, default `~/tmp/data/tractography`); `docs/labelers.md` plans the labeler as a
+swappable component with our own TractCloud as the default.
+
+## The package (`src/tractline`)
+
+`pipeline.py` runs it in memory: correct → track → label, then optionally TRX. Its docstring states
+the conventions every module follows (array layouts, units, devices). The default path needs numpy,
+scipy, torch, nibabel and TractCloud's code and weights, nothing more (`bench/dependency_check.py`).
 
 | module | stage |
 |---|---|
-| `_ds001226.py` | a subject: the DWI, the reversed-phase-encoding b0s, the T1, the tumor mask |
-| `_susc.py` | susceptibility correction: `estimate` (FSL topup's model by Gauss-Newton; GPU or CPU), `apply`, `displacement_mm` |
-| `_prep.py`, `_median.py` | the tracker's input: one shell, gradients in RAS, DIPY's `median_otsu` mask (exactly, in torch, CPU or GPU) |
-| `_ukf_torch.py`, `_ukf_metal.py` | UKF two-tensor tractography as the Slicer binary does it; the Metal kernel for the steps |
-| `_tractcloud.py`, `_resample.py` | TractCloud labels and log-probabilities |
-| `_geometry.py` (+ rankfield) | optional, the format work: the compact payload (predictive geometry, the rank field) |
-| `_trx.py` | optional output: the tractogram as TRX, with labels, tract probabilities and the rank field |
-| `_t1check.py` | measurement, not pipeline: the distortion left against the T1 |
+| `susceptibility.py` | `estimate` (FSL topup's model by Gauss-Newton, with HySCO's anti-folding penalty; GPU or CPU), `apply`, `displacement_mm` |
+| `prep.py`, `mask.py` | the tracker's input: one shell, gradients in RAS, DIPY's `median_otsu` mask (exactly, in torch) |
+| `ukf.py`, `ukf_metal.py`, `ukf_triton_block.py` | UKF two-tensor tractography as the Slicer binary does it; the Metal (Apple) and Triton (CUDA) kernels for the steps (`ukf_triton.py`, the unrolled first attempt, compiles too slowly to use) |
+| `labelers/tractcloud.py`, `resample.py` | TractCloud labels and log-probabilities |
+| `trx.py` | optional output: the tractogram as TRX, with tract labels and probabilities |
+| `t1check.py` | measurement, not pipeline: the distortion left against the T1 |
+| `data.py` | where data and weights live |
 
-`_ukf_triton_block.py` is the CUDA counterpart of the Metal kernel (`_ukf_triton.py`, the unrolled
-first attempt, compiles too slowly to use).
+## The bench (`bench/`)
 
-## Running and checking it
+Run from the repository root with the package installed, e.g. `python bench/cohort.py --sub PAT16`.
+Results and the running journal are in `bench/results/` (`NOTES.md`, newest entries last).
 
-- `run_pipeline.py --sub PATnn [--trx [PATH]] [--float16] [--labeled-only]`: the pipeline on one
-  subject, optionally written as TRX; `trx_check.py` reads that TRX back with trx-python and checks it.
-- `cohort.py --sub PATnn`: one ds001226 patient - the pipeline, the scan as acquired for comparison,
-  both against the T1 and tumor; `cohort_summary.py` tabulates `results/cohort/`; `cohort_topup.py`
-  adds FSL topup as a second reference.
-- Component checks, each against its reference: `ukf_compare.py` / `modal_ukf_track.py` (the Slicer
-  binary), `ukf_metal_check.py` and `modal_ukf_triton.py` (the GPU kernels against `_ukf_torch`),
-  `ukf32_compare.py`, `ukf_noise_floor.py` and `modal_ukf_labels.py` (float32 against the scan's noise),
-  `resample_check.py` (upstream's features), `median_check.py` (DIPY), `susc_check.py` and
+- `run_pipeline.py --sub PATnn [--trx [PATH]]`: the pipeline on one subject; `trx_check.py` reads the
+  TRX back with trx-python and checks it.
+- `cohort.py --sub PATnn`: one ds001226 patient (`_ds001226.py`) - the pipeline, the scan as acquired
+  for comparison, both against the T1 and tumor; `cohort_summary.py` tabulates `results/cohort/`;
+  `cohort_topup.py` adds FSL topup as a second reference. Every change to the pipeline is checked by
+  reproducing the 12-patient cohort.
+- Against the originals: `ukf_compare.py` / `modal_ukf_track.py` (the Slicer binary),
+  `ukf_metal_check.py` and `modal_ukf_triton.py` (the GPU kernels against `ukf`), `ukf32_compare.py`,
+  `ukf_noise_floor.py` and `modal_ukf_labels.py` (float32 against the scan's noise),
+  `resample_check.py` (TractCloud's features), `median_check.py` (DIPY), `susc_check.py` and
   `t1_alignment.py` (topup, the T1; PAT16).
-- The field estimate's own tests: `susc_held_out.py` (+ `_summary`: split-half, held-out prediction and
-  drift from each scan's own b0s, 12 patients - the test that picks its settings), `susc_stability.py`
-  (against the T1, plus a noise-0.01 rerun), `susc_convergence.py` (level by level).
+- The field estimate: `susc_held_out.py` (+ `_summary`: split-half, held-out prediction and drift from
+  each scan's own b0s, 12 patients - the test that picks its settings), `susc_stability.py`,
+  `susc_convergence.py`.
+- Speed: `cpu_timing.py`, `modal_cpu_scaling.py` (x86, CPU only), `modal_infer_opt.py` (TractCloud
+  inference), `ukf_cpu_check.py`.
 
-## The format work (rankfield on TractCloud)
+Records kept because committed results came from them: `pat16_prep.py`, `susc_apply.py`,
+`topup_ref.py`, `pat16_topup_compare.py`, `pat16_seeding.py`, `mac_labels.py`, `ukf_bench.py`,
+`ukf_step_bench.py`, `modal_ukf_step.py`, `compare_variant.py`, `t1_alignment_figure.py`.
 
-M0-M3 on the HCP test subject: `capture.py`, `modal_capture.py`, `reference.py`, `analyze.py`,
-`regroup.py`, `_groups.py`, `encode.py`, `export.py` (+ `export_check.mjs`, `viewer/`, `decode/`),
-`features.py`; encodings and speed: `geometry_bench.py`, `trako_compare.py`, `convert_bench.py`,
-`encode_timing.py`, `modal_infer_opt.py`, `modal_timing.py`, `modal_context_variant.py`;
-`dmc_field.py` (DeepMultiConnectome's 13,695-class head).
+## Documents (`docs/`)
 
-## Records, superseded
+`pipeline.md` (the pipeline as built, its timings, what is open), `labelers.md` (the labeling stage as
+a swappable component), `prior-art.md` (the incubation's survey: streamline storage, the confidence of
+streamline parcellation, compact soft output).
 
-Kept because committed results came from them; new work uses the pipeline modules instead.
+## Not here
 
-| script | superseded by |
-|---|---|
-| `pat16_prep.py` | `_prep.prepare` (it now calls `_prep.prep`) |
-| `susc_apply.py` | `_susc.apply` |
-| `topup_ref.py` (PAT16; wrote the b0s through the int16 header, quantizing them by up to 0.03) | `cohort_topup.py` |
-| `pat16_topup_compare.py`, `mac_pipeline.py`, `mac_labels.py` | `_pipeline.py`, `cohort.py` |
-| `pat16_seeding.py`, `albula_compare.py`, `albula_fw_compare.py`, `albula/` | (questions answered: NOTES) |
-| `ukf_bench.py`, `ukf_step_bench.py`, `modal_ukf_step.py`, `compare_variant.py`, `modal_tc_hardi.py` | (early timings and variants) |
-| `t1_alignment_figure.py` | (PAT16's figure) |
+The compact format work (the rank field, predictive geometry, the viewers, DeepMultiConnectome's
+field test, and the incubation's original plan for it) stays in medseg; when it returns it will be wired into an exporter from the labeler's
+in-memory probabilities, not through the TRX.

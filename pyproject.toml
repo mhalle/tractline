@@ -1,0 +1,23 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "tractline"
+version = "0.1.0"
+description = "Diffusion MRI to named white-matter tracts: susceptibility correction, UKF tractography and tract labeling in torch"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "numpy>=2",
+    "scipy",
+    "torch>=2.7",
+    "nibabel",
+]
+
+[project.optional-dependencies]
+nrrd = ["pynrrd"]          # tracker input/output as NRRD files (prep.prep, ukf.load)
+triton = ["triton"]        # the UKF kernel on CUDA
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/tractline"]
