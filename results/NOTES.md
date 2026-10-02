@@ -1051,6 +1051,7 @@ Medians over 12: margin vs T1 99th, uncorrected 4.74 mm, ours 1.75 mm; brain 99t
   as there: the change that matters is against the anatomy, not within the scan. "Other" 56-71 % of
   streamlines (PAT16 57 % before; HCP 49 %), highest under PAT23's meningioma.
 - **Time, scan to labels with correction: median 76 s (66-85)** - field estimate 29 s, application
-  1.1 s, preparation 12 s (NRRD written for the tracker, median_otsu: avoidable in memory), UKF 28 s
+  1.1 s, preparation 12 s (10 s of it DIPY median_otsu for the mask; writing and reading the NRRD
+  the tracker loads costs ~0.15 s, so an in-memory hand-off would save almost nothing), UKF 28 s
   (20-36, 408 k steps/s median, ~32 k streamlines ≥ 40 mm), TractCloud one draw 4.5 s. The T1 check
   (3 min) and the 5-draw vote are measurement, not pipeline.
