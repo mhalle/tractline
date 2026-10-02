@@ -1,0 +1,151 @@
+{
+ "subject": "PAT29",
+ "fits": {
+  "A": [
+   0,
+   6
+  ],
+  "B": [
+   1,
+   7
+  ]
+ },
+ "same_polarity_AP0_AP1": {
+  "brain": 0.0598,
+  "deep": 0.059
+ },
+ "configs": {
+  "gn": {
+   "seconds": {
+    "A": 8.1,
+    "B": 7.3
+   },
+   "split_half_deep": [
+    0.091,
+    0.897,
+    3.725
+   ],
+   "split_half_edge": [
+    0.084,
+    1.344,
+    7.427
+   ],
+   "held_out": {
+    "A corrects B": {
+     "brain": 0.1283,
+     "deep": 0.1148,
+     "edge": 0.1378,
+     "uncorrected_brain": 0.5029,
+     "in_sample_brain": 0.1171
+    },
+    "B corrects A": {
+     "brain": 0.1248,
+     "deep": 0.1106,
+     "edge": 0.1351,
+     "uncorrected_brain": 0.4995,
+     "in_sample_brain": 0.1193
+    }
+   },
+   "folds_brain_A": 0
+  },
+  "gn_lam1e3": {
+   "seconds": {
+    "A": 7.0,
+    "B": 7.6
+   },
+   "split_half_deep": [
+    0.089,
+    0.807,
+    4.042
+   ],
+   "split_half_edge": [
+    0.08,
+    1.266,
+    5.609
+   ],
+   "held_out": {
+    "A corrects B": {
+     "brain": 0.1284,
+     "deep": 0.115,
+     "edge": 0.1378,
+     "uncorrected_brain": 0.5029,
+     "in_sample_brain": 0.1171
+    },
+    "B corrects A": {
+     "brain": 0.1247,
+     "deep": 0.1105,
+     "edge": 0.135,
+     "uncorrected_brain": 0.4996,
+     "in_sample_brain": 0.1191
+    }
+   },
+   "folds_brain_A": 0
+  },
+  "gn_lam1e4": {
+   "seconds": {
+    "A": 8.5,
+    "B": 7.9
+   },
+   "split_half_deep": [
+    0.091,
+    0.797,
+    3.839
+   ],
+   "split_half_edge": [
+    0.082,
+    1.119,
+    4.908
+   ],
+   "held_out": {
+    "A corrects B": {
+     "brain": 0.1285,
+     "deep": 0.1151,
+     "edge": 0.1381,
+     "uncorrected_brain": 0.5025,
+     "in_sample_brain": 0.1174
+    },
+    "B corrects A": {
+     "brain": 0.1249,
+     "deep": 0.1107,
+     "edge": 0.1351,
+     "uncorrected_brain": 0.4995,
+     "in_sample_brain": 0.1194
+    }
+   },
+   "folds_brain_A": 0
+  },
+  "gn_lam1e5": {
+   "seconds": {
+    "A": 9.4,
+    "B": 8.7
+   },
+   "split_half_deep": [
+    0.072,
+    0.727,
+    3.552
+   ],
+   "split_half_edge": [
+    0.066,
+    0.997,
+    4.223
+   ],
+   "held_out": {
+    "A corrects B": {
+     "brain": 0.1294,
+     "deep": 0.1151,
+     "edge": 0.1396,
+     "uncorrected_brain": 0.5044,
+     "in_sample_brain": 0.1187
+    },
+    "B corrects A": {
+     "brain": 0.1254,
+     "deep": 0.1112,
+     "edge": 0.1356,
+     "uncorrected_brain": 0.4986,
+     "in_sample_brain": 0.1202
+    }
+   },
+   "folds_brain_A": 0
+  }
+ }
+}

@@ -1342,3 +1342,30 @@ cubic; within trilinear's kinks at the motion levels).
   from independent data. Next: split-half and held-out tests from the scan's own b0s (6 AP spread over
   the 15-minute scan, 2 PA), on all 12 patients, then the default and the cohort rerun. The default
   L-BFGS path still reproduces the cohort's field exactly.
+
+## 2026-10-02 Repeatability from independent b0s: Gauss-Newton predicts better, is no steadier at the edge
+
+The noise-0.01 rerun measured the optimizer's sensitivity, not repeatability. `susc_held_out.py`
+(`results/susc_held_out/`, `susc_held_out_summary.py`) uses each scan's own b0s - 6 AP spread over the
+~15-minute series (volumes 0, 1, 26, 51, 76, 101), 2 PA back to back just before it: fits A = {AP0,
+PA0}, B = {AP1, PA1} (one TR apart: independent noise, little motion), C = {AP last, PA1}; split-half
+(A's field against B's), held-out (each fit corrects the other pair: RMS of corrected AP minus PA,
+relative to the brain's mean), drift (A against C, carried by the full fit's motion). Twelve patients,
+medians (`summary.json`):
+- **Held-out residual: Gauss-Newton better on all 12**, 0.132 against L-BFGS's 0.145 (deep 0.120 /
+  0.131, edge 0.138 / 0.153); uncorrected ~0.5. It is still 2-3x the same-polarity mismatch (AP0
+  against AP1, ~0.05 on still patients): model error, not noise, limits the correction.
+- **Split-half: no steadier.** Deep 99th 0.76 against 0.78 mm, edge 1.34 against 1.21, deep max 2.96
+  against 2.68; drift (15 min) deep 1.32 / 1.33, edge 2.31 / 2.03. With two volumes a fit, Gauss-
+  Newton's closer fit carries the noise at the edge. The noise-0.01 test (4-10x) overstated it.
+- **No folds** (L-BFGS: 27 brain voxels over the 12 A-fits).
+- **PAT08 moves within volumes**: AP0 against AP1, one TR apart, 0.24 (others ~0.05), worst in
+  alternating even slices - interleaved acquisition, the head moving between slice groups, which a
+  rigid per-volume model cannot follow. Its residual is 0.23 for every estimator. PAT23's mismatch is
+  0.12.
+- **Regularization by cross-validation** (`*_lam.json`, `summary_lam.json`; GN, topup's lambda x1e3 /
+  1e4 / 1e5): the held-out residual rises with lambda on 11 of 12 (0.1318 → 0.1324 / 0.1325 / 0.1333),
+  and the split-half barely moves (edge 99th 1.34 → 1.30 / 1.21 / 1.24; deep max no better): smoother
+  fields do not remove the edge's variance - dropout, motion between slice groups and two-volume fits
+  are likelier sources. topup's lambda is the cross-validated choice; a Morozov lambda is no longer a
+  priority. x1e4 would buy L-BFGS's edge repeatability for 0.5 % of the residual.
