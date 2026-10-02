@@ -1,15 +1,15 @@
 {
  "seconds": {
-  "field_estimate": 29.73,
-  "field_apply": 1.59,
-  "prep": 0.56,
-  "load": 0.23,
-  "ukf": 27.28,
-  "tractcloud": 4.34,
-  "encode_field": 0.61,
-  "encode_geometry": 0.39,
-  "write_trx": 0.48,
-  "write_trx_dir_float16_labeled": 0.5
+  "field_estimate": 28.78,
+  "field_apply": 1.22,
+  "prep": 3.05,
+  "load": 0.24,
+  "ukf": 26.45,
+  "tractcloud": 4.16,
+  "encode_field": 0.59,
+  "encode_geometry": 0.37,
+  "write_trx": 0.83,
+  "write_trx_dir_float16_labeled": 0.73
  },
  "variants": {
   "zip, all streamlines, float32": {
@@ -55,7 +55,7 @@
    "streamlines": 31993,
    "mb": 11.81,
    "max_point_error_mm": 0.0312,
-   "trx_python_load_s": 0.01,
+   "trx_python_load_s": 0.0,
    "margin_median_labeled": 0.934
   }
  },

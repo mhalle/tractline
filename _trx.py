@@ -2,8 +2,8 @@
 than the compact payload: a zip (stored, not deflated, so it can be memory-mapped) or a directory.
 
   header.json      VOXEL_TO_RASMM and DIMENSIONS of the DWI the tracts came from; NB_STREAMLINES,
-                   NB_VERTICES; and "RANKFIELD": the rank field's meta block (what decodes the rf_*
-                   arrays), with the pipeline's settings
+                   NB_VERTICES; with rank_field=True, "RANKFIELD": the rank field's meta block (what
+                   decodes the rf_* arrays)
   positions        RAS mm, float32 (the tracker's points), or float16 (TRX's suggestion: error up to
                    0.03 mm at 100 mm from the origin)
   offsets.uint64   NB_STREAMLINES + 1, the last NB_VERTICES
@@ -15,7 +15,8 @@ than the compact payload: a zip (stored, not deflated, so it can be memory-mappe
                      tract_margin.float16      that, less the most probable other tract's (negative when the
                                                summed probabilities favor another tract than the top cluster's)
                      length_mm.float32, seed.uint32 (the seed's index, the binary's order)
-                     rf_ranks.6.uint16, rf_gaps.5.uint8, rf_tail.uint16: the rank field (0 when not labeled)
+                     with rank_field=True: rf_ranks.6.uint16, rf_gaps.5.uint8, rf_tail.uint16, the
+                     rank field (0 when not labeled; needs rankfield)
 
 Every streamline the tracker kept is written, those under 40 mm unlabeled (TractCloud was trained on
 >= 40 mm): the 40 mm cut becomes a filter a reader applies, not a deletion. labeled_only=True writes
@@ -38,11 +39,17 @@ def tract_probabilities(logp):
     return (p @ onehot).numpy()
 
 
-def write(path, s, tg, labels, field=None, field_meta=None, positions="float32", labeled_only=False):
+def write(path, s, tg, labels, positions="float32", labeled_only=False, rank_field=False):
     """path ending in .trx: a zip; otherwise a directory. s: the Subject (the DWI's grid); tg: the
-    Tractogram; labels: its Labels (with logp); field: the rank field's (ranks, support, tail) for
-    the labeled streamlines, field_meta its meta block. Returns the path."""
+    Tractogram; labels: its Labels (with logp). rank_field: also the rank field's arrays and meta
+    block (encoded here from labels.logp, the pipeline's settings; needs rankfield). Returns the path."""
     path = Path(path)
+    field = field_meta = None
+    if rank_field:
+        import rankfield as rf
+        from _pipeline import FIELD
+        code = rf.encode(labels.logp.T[:, :, None, None], **FIELD)
+        field, field_meta = (code.ranks, code.support, code.tail), code.meta
     keep = labels.keep
     which = np.flatnonzero(keep) if labeled_only else np.arange(len(tg.fibers))
     fibers = [tg.fibers[i] for i in which]

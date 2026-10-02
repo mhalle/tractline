@@ -7,14 +7,17 @@ Stages, and where they run:
   correct   the susceptibility field from the b0s and their reversed pair (_susc.estimate: GPU,
             float32, ~29 s), then applied to the DWI (_susc.apply: CPU, float64, ~1 s)
   track     the tracker's input (_prep.prepare: b0s + the b = 2800 shell, gradients in RAS, the
-            median_otsu mask; CPU, <1 s), UKF two-tensor with the ORG settings and the binary's seeds
+            median_otsu mask, exact in torch on the pipeline's device; ~3 s), UKF two-tensor with the ORG settings and the binary's seeds
             (_ukf_torch.track, Metal kernel: float32 steps from float64 seeds, ~27 s; or on the CPU,
             one process per core, fast algebra)
   label     TractCloud, one context draw (_tractcloud.Labeler: GPU, float32, ~4 s; on the CPU its
             network as matrix products, MatmulDGCNN, ~5 s)
-  encode    the rank field of the cluster log-probabilities (rankfield: depth 6, keep "clip", clip 8)
-            and the geometry (a 0.05 mm grid, second-order prediction, int8 residuals; _geometry)
-  TRX       optional: the tractogram with labels, tract probabilities and the rank field (_trx.py)
+  TRX       optional: the tractogram with labels and tract probabilities (_trx.py; the rank field's
+            arrays too with rank_field=True, which needs rankfield)
+  encode    optional, the format work: the compact payload - the rank field of the cluster
+            log-probabilities (rankfield: depth 6, keep "clip", clip 8) and the geometry (a 0.05 mm grid,
+            second-order prediction, int8 residuals; _geometry, numcodecs)
+Dependencies of the default path: numpy, scipy, torch, nibabel, TractCloud's code and weights.
 
 Conventions at every module boundary (_ds001226, _susc, _prep, _ukf_torch, _tractcloud, _t1check):
   volumes   numpy (X, Y, Z[, V]) in the NIfTI's voxel order; affine voxel -> RAS mm; voxel sizes as
@@ -125,7 +128,7 @@ def track(s, dwi, timer: Timer, prefix="", device="mps", workers=None) -> Tracto
     CPU_BATCH on `workers` processes of one thread (default: one per core). Workers are spawned, so a
     script running the CPU path needs an `if __name__ == "__main__":` guard."""
     with timer(prefix + "prep"):
-        t = prepare(dwi, s.affine, s.bval, s.bvec)
+        t = prepare(dwi, s.affine, s.bval, s.bvec, device=device)
     with timer(prefix + "load"):
         D = U.from_arrays(t.dwi, t.header, t.mask)
     with timer(prefix + "ukf"):
@@ -143,7 +146,7 @@ def label(tg: Tractogram, labeler: Labeler, timer: Timer, prefix="") -> Labels:
         return labeler(tg.fibers, draws=(0,), logp=True)
 
 
-def encode(tg: Tractogram, labels: Labels, timer: Timer, prefix="") -> Payload:
+def encode_payload(tg: Tractogram, labels: Labels, timer: Timer, prefix="") -> Payload:
     import rankfield as rf
     from numcodecs import Blosc
     from _geometry import encode as gencode, lengths_bytes
@@ -160,26 +163,29 @@ def encode(tg: Tractogram, labels: Labels, timer: Timer, prefix="") -> Payload:
     return Payload(int(raw), int(packed), int(geometry), len(kept), (code.ranks, code.support, code.tail), code.meta)
 
 
-STAGES = ("field_estimate", "field_apply", "prep", "load", "ukf", "tractcloud", "encode_field", "encode_geometry")
+STAGES = ("field_estimate", "field_apply", "prep", "load", "ukf", "tractcloud")
+ENCODE_STAGES = ("encode_field", "encode_geometry")
 
 
-def run(s, labeler: Labeler, timer: Timer, prefix="", trx=None, device="mps", workers=None, **trx_options):
-    """The whole pipeline on a subject: (Correction, Tractogram, Labels, Payload). Its time is
-    timer.total(*pipeline_stages(prefix)). trx: also write the tractogram there as TRX (_trx.write;
-    trx_options: positions="float16", labeled_only=True), timed apart as "write_trx". device: where
+def run(s, labeler: Labeler, timer: Timer, prefix="", trx=None, device="mps", workers=None, encode=False, **trx_options):
+    """The whole pipeline on a subject: (Correction, Tractogram, Labels, Payload or None). Its time is
+    timer.total(*pipeline_stages(prefix, encode)). encode: also the compact payload (the format work's:
+    needs rankfield and numcodecs; off by default). trx: also write the tractogram there as TRX
+    (_trx.write; trx_options: positions="float16", labeled_only=True, rank_field=True), timed apart as
+    "write_trx". device: where
     the estimate and the tracking run ("mps" or "cpu"; the labeler has its own); workers: the CPU
     tracker's processes (default one per core as os.cpu_count() sees them - in a container, pass the
     container's own)."""
     corr = correct(s, timer, device)
     tg = track(s, corr.dwi, timer, prefix, device, workers)
     labels = label(tg, labeler, timer, prefix)
-    payload = encode(tg, labels, timer, prefix)
+    payload = encode_payload(tg, labels, timer, prefix) if encode else None
     if trx is not None:
         import _trx
         with timer("write_trx"):
-            _trx.write(trx, s, tg, labels, payload.field, payload.field_meta, **trx_options)
+            _trx.write(trx, s, tg, labels, **trx_options)
     return corr, tg, labels, payload
 
 
-def pipeline_stages(prefix=""):
-    return [n if n.startswith("field_") else prefix + n for n in STAGES]
+def pipeline_stages(prefix="", encode=False):
+    return [n if n.startswith("field_") else prefix + n for n in STAGES + (ENCODE_STAGES if encode else ())]

@@ -20,9 +20,9 @@ HERE = Path(__file__).resolve().parent
 s = load("PAT16")
 timer = P.Timer(echo="PAT16")
 OUT = ROOT / "derived/PAT16"
-corr, tg, labels, payload = P.run(s, Labeler(), timer, trx=OUT / "PAT16.trx")
+corr, tg, labels, payload = P.run(s, Labeler(), timer, trx=OUT / "PAT16.trx", encode=True, rank_field=True)
 with timer("write_trx_dir_float16_labeled"):
-    _trx.write(OUT / "PAT16_labeled_f16_trx", s, tg, labels, payload.field, payload.field_meta, positions="float16", labeled_only=True)
+    _trx.write(OUT / "PAT16_labeled_f16_trx", s, tg, labels, positions="float16", labeled_only=True, rank_field=True)
 
 res = {"seconds": timer.seconds, "variants": {}}
 keep = labels.keep

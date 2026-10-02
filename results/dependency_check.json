@@ -1,0 +1,41 @@
+{
+ "blocked": [
+  "numba",
+  "dipy",
+  "nrrd",
+  "rankfield",
+  "numcodecs",
+  "sklearn"
+ ],
+ "runs": {
+  "mps": {
+   "seconds": {
+    "field_estimate": 28.47,
+    "field_apply": 1.56,
+    "prep": 3.07,
+    "load": 0.24,
+    "ukf": 26.48,
+    "tractcloud": 4.26,
+    "write_trx": 0.33
+   },
+   "scan_to_labels_s": 64.1,
+   "fibers": 41895,
+   "labeled": 31993
+  },
+  "cpu": {
+   "seconds": {
+    "field_estimate": 24.96,
+    "field_apply": 1.87,
+    "prep": 3.33,
+    "load": 0.24,
+    "ukf": 122.08,
+    "tractcloud": 5.43,
+    "write_trx": 0.32
+   },
+   "scan_to_labels_s": 157.9,
+   "fibers": 41910,
+   "labeled": 32077
+  }
+ },
+ "loaded_blocked_modules": []
+}

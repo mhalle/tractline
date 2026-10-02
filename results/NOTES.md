@@ -1193,3 +1193,23 @@ transcribed from its log, and it returns JSON text now.
   slower across the board: tracking at 32 workers took 38.5, 46.7 and 68.1 s in the three containers
   (1.8x), TractCloud 5.0, 4.7 and 7.6 s. Modal's CPU type is not chosen or visible here; quote x86
   numbers as ranges. Scan to payload on 32 x86 cores: roughly 90-130 s (the M2's CPU: 155 s).
+
+## 2026-10-02 The pipeline without numba, dipy, pynrrd, rankfield or numcodecs
+
+- **The mask in torch** (`_median.py`): numba's sliding-window histogram (0.2 s, a 137 MB dependency
+  pinning numpy) replaced by the exact torch version - every voxel's 9^3 window as an unfold view, its
+  median by slabs, scipy's "reflect" padding by index arithmetic - and DIPY's Otsu by its own dozen
+  lines (scikit-image's). `median_check.json`: identical to `dipy.segment.mask.median_otsu` on all 14
+  volumes on the CPU and on the GPU, thresholds identical, the filter identical to SciPy's on the random
+  volumes; 3.5 s (CPU) / 3.0 s (MPS) against DIPY's 10.3. The mask runs on the pipeline's device.
+- **The payload out of the default path**: `_pipeline.run(encode=False)` by default (rankfield,
+  numcodecs and `_geometry` only with `encode=True`, the format work's); the TRX's rank-field arrays
+  only with `rank_field=True`, encoded inside `_trx.write` (`trx_check.py` asks for both: all checks
+  pass again). pynrrd only where NRRD files are written (`_prep.prep`, `_ukf_torch.load`).
+- **Checked on every path**: `dependency_check.py` → `dependency_check.json` runs the pipeline with
+  numba, dipy, nrrd, rankfield, numcodecs and sklearn unimportable (probes allowed: torch._dynamo
+  probes for optional packages), GPU and CPU paths, TRX written: no blocked module loaded; fibers as
+  before on each path (GPU 41,895, CPU 41,910); scan to labels 64.1 s (GPU), 157.9 s (CPU). On Modal
+  with an image of torch (CPU wheel), numpy, scipy and nibabel only (`modal_cpu_pipeline.json`): the
+  CPU path in **92.2 s** on 32 x86 cores (estimate 38.2 s at 16 threads, UKF 49.2 s, TractCloud
+  3.3 s, mask 0.7 s; no numba compile).

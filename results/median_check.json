@@ -31,92 +31,149 @@
  "mask_vs_dipy": [
   {
    "volume": "PAT05",
-   "identical": true,
-   "voxels_differ": 0,
-   "mask_voxels": 77315
+   "mask_voxels": 77315,
+   "identical_cpu": true,
+   "voxels_differ_cpu": 0,
+   "identical_mps": true,
+   "voxels_differ_mps": 0,
+   "otsu_identical": true,
+   "identical": true
   },
   {
    "volume": "PAT07",
-   "identical": true,
-   "voxels_differ": 0,
-   "mask_voxels": 94173
+   "mask_voxels": 94173,
+   "identical_cpu": true,
+   "voxels_differ_cpu": 0,
+   "identical_mps": true,
+   "voxels_differ_mps": 0,
+   "otsu_identical": true,
+   "identical": true
   },
   {
    "volume": "PAT08",
-   "identical": true,
-   "voxels_differ": 0,
-   "mask_voxels": 94278
+   "mask_voxels": 94278,
+   "identical_cpu": true,
+   "voxels_differ_cpu": 0,
+   "identical_mps": true,
+   "voxels_differ_mps": 0,
+   "otsu_identical": true,
+   "identical": true
   },
   {
    "volume": "PAT13",
-   "identical": true,
-   "voxels_differ": 0,
-   "mask_voxels": 73834
+   "mask_voxels": 73834,
+   "identical_cpu": true,
+   "voxels_differ_cpu": 0,
+   "identical_mps": true,
+   "voxels_differ_mps": 0,
+   "otsu_identical": true,
+   "identical": true
   },
   {
    "volume": "PAT14",
-   "identical": true,
-   "voxels_differ": 0,
-   "mask_voxels": 72776
+   "mask_voxels": 72776,
+   "identical_cpu": true,
+   "voxels_differ_cpu": 0,
+   "identical_mps": true,
+   "voxels_differ_mps": 0,
+   "otsu_identical": true,
+   "identical": true
   },
   {
    "volume": "PAT16",
-   "identical": true,
-   "voxels_differ": 0,
-   "mask_voxels": 93157
+   "mask_voxels": 93157,
+   "identical_cpu": true,
+   "voxels_differ_cpu": 0,
+   "identical_mps": true,
+   "voxels_differ_mps": 0,
+   "otsu_identical": true,
+   "identical": true
   },
   {
    "volume": "PAT19",
-   "identical": true,
-   "voxels_differ": 0,
-   "mask_voxels": 72746
+   "mask_voxels": 72746,
+   "identical_cpu": true,
+   "voxels_differ_cpu": 0,
+   "identical_mps": true,
+   "voxels_differ_mps": 0,
+   "otsu_identical": true,
+   "identical": true
   },
   {
    "volume": "PAT20",
-   "identical": true,
-   "voxels_differ": 0,
-   "mask_voxels": 76095
+   "mask_voxels": 76095,
+   "identical_cpu": true,
+   "voxels_differ_cpu": 0,
+   "identical_mps": true,
+   "voxels_differ_mps": 0,
+   "otsu_identical": true,
+   "identical": true
   },
   {
    "volume": "PAT23",
-   "identical": true,
-   "voxels_differ": 0,
-   "mask_voxels": 94583
+   "mask_voxels": 94583,
+   "identical_cpu": true,
+   "voxels_differ_cpu": 0,
+   "identical_mps": true,
+   "voxels_differ_mps": 0,
+   "otsu_identical": true,
+   "identical": true
   },
   {
    "volume": "PAT25",
-   "identical": true,
-   "voxels_differ": 0,
-   "mask_voxels": 84111
+   "mask_voxels": 84111,
+   "identical_cpu": true,
+   "voxels_differ_cpu": 0,
+   "identical_mps": true,
+   "voxels_differ_mps": 0,
+   "otsu_identical": true,
+   "identical": true
   },
   {
    "volume": "PAT26",
-   "identical": true,
-   "voxels_differ": 0,
-   "mask_voxels": 106580
+   "mask_voxels": 106580,
+   "identical_cpu": true,
+   "voxels_differ_cpu": 0,
+   "identical_mps": true,
+   "voxels_differ_mps": 0,
+   "otsu_identical": true,
+   "identical": true
   },
   {
    "volume": "PAT29",
-   "identical": true,
-   "voxels_differ": 0,
-   "mask_voxels": 99309
+   "mask_voxels": 99309,
+   "identical_cpu": true,
+   "voxels_differ_cpu": 0,
+   "identical_mps": true,
+   "voxels_differ_mps": 0,
+   "otsu_identical": true,
+   "identical": true
   },
   {
    "volume": "PAT16 topup",
-   "identical": true,
-   "voxels_differ": 0,
-   "mask_voxels": 94458
+   "mask_voxels": 94458,
+   "identical_cpu": true,
+   "voxels_differ_cpu": 0,
+   "identical_mps": true,
+   "voxels_differ_mps": 0,
+   "otsu_identical": true,
+   "identical": true
   },
   {
    "volume": "PAT16 ours",
-   "identical": true,
-   "voxels_differ": 0,
-   "mask_voxels": 94739
+   "mask_voxels": 94739,
+   "identical_cpu": true,
+   "voxels_differ_cpu": 0,
+   "identical_mps": true,
+   "voxels_differ_mps": 0,
+   "otsu_identical": true,
+   "identical": true
   }
  ],
  "seconds_median": {
-  "dipy": 10.19,
-  "ours": 0.187
+  "dipy": 10.31,
+  "ours_cpu": 3.5,
+  "ours_mps": 3.03
  },
  "all_identical": true
 }

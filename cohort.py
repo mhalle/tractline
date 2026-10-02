@@ -40,7 +40,7 @@ timer = P.Timer(echo=args.sub)
 labeler = Labeler()
 
 # ------------------------------------------------------------------ the pipeline, and the scan as acquired
-corr, tg, lab1, payload = P.run(s, labeler, timer, prefix="ours_")
+corr, tg, lab1, payload = P.run(s, labeler, timer, prefix="ours_", encode=True)
 with timer("field_estimate_perturbed"):
     h_p, _, _ = S.estimate(s.b0s + np.random.default_rng(0).normal(0, 0.01, s.b0s.shape), s.vox, s.pe_vectors, s.readout_s, device="mps")
 arms = {"uncorrected": P.track(s, s.dwi, timer, prefix="uncorrected_"), "ours": tg}
@@ -111,8 +111,8 @@ res = {"subject": args.sub,
                  "t1_mean_inside_vs_mirror": [round(float(C.t1[tumor_t1].mean()), 1), round(float(C.t1[tumor_t1[::-1]].mean()), 1)]},
        "pa_slab_offset": s.pa_offset,
        "seconds": T,
-       "pipeline_seconds": timer.total(*P.pipeline_stages("ours_")),
-       "scan_to_labels_seconds": timer.total(*P.pipeline_stages("ours_")[:6]),
+       "pipeline_seconds": timer.total(*P.pipeline_stages("ours_", encode=True)),
+       "scan_to_labels_seconds": timer.total(*P.pipeline_stages("ours_")),
        "payload": {"streamlines": payload.streamlines, "field_bytes": payload.field_bytes, "field_compressed_bytes": payload.field_compressed_bytes,
                    "geometry_bytes": payload.geometry_bytes, "total_mb": payload.total_mb},
        "field_hz_1_50_99": [round(float(v), 1) for v in np.quantile(np.asarray(corr.field_hz)[brain], [0.01, 0.5, 0.99])],

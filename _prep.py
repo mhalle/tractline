@@ -7,12 +7,12 @@ pat16_prep.py's rules, for any ds001226 subject.
   - shell: the b0s and one shell (2800, the nearest to the b = 3000 of TractCloud's training
     tractography), as the ORG pipeline tracked one shell.
   - mask: DIPY median_otsu on the mean b0 (median_radius 4, numpass 4), computed by _median.py
-    (identical voxel for voxel, ~100x faster).
+    (identical voxel for voxel; torch, CPU or GPU).
 """
 from dataclasses import dataclass
 from pathlib import Path
-import numpy as np, nrrd
-from _median import median_otsu                                          # dipy's, exactly (median_check.py), 0.1 s instead of 10
+import numpy as np
+from _median import median_otsu                                          # dipy's, exactly, in torch (median_check.py)
 
 
 @dataclass
@@ -23,9 +23,10 @@ class TrackerInput:
     info: dict
 
 
-def prepare(dwi, affine, bval, bvec, shell=2800.0) -> TrackerInput:
+def prepare(dwi, affine, bval, bvec, shell=2800.0, device="cpu") -> TrackerInput:
     """dwi (X, Y, Z, G) int or float, affine its voxel -> RAS matrix, bval (G,), bvec (3, G) FSL. In memory:
-    _ukf_torch.from_arrays(t.dwi, t.header, t.mask) takes it."""
+    _ukf_torch.from_arrays(t.dwi, t.header, t.mask) takes it. device: where the mask's median passes
+    run (the same mask either way)."""
     keep = (bval < 50) | (np.abs(bval - shell) < 50)
     dwi, bval, bvec = dwi[..., keep], bval[keep], bvec[:, keep]
     M = affine[:3, :3]
@@ -47,7 +48,7 @@ def prepare(dwi, affine, bval, bvec, shell=2800.0) -> TrackerInput:
         hdr[f"DWMRI_gradient_{n:04d}"] = f"{v[0]:.8f} {v[1]:.8f} {v[2]:.8f}"
     stored = dwi.astype(np.float32 if floating else np.int16)
     b0 = dwi[..., bval < 50].astype(np.float32).mean(-1)
-    _, mask = median_otsu(b0, median_radius=4, numpass=4)
+    _, mask = median_otsu(b0, median_radius=4, numpass=4, device=device)
     info = {"shape": list(dwi.shape), "voxel_mm": [round(float(v), 3) for v in spacing], "b0": int((bval < 50).sum()),
             "shell": shell, "directions": int((bval > 50).sum()), "affine_det_positive": bool(np.linalg.det(M) > 0),
             "mask_voxels": int(mask.sum())}
@@ -56,6 +57,7 @@ def prepare(dwi, affine, bval, bvec, shell=2800.0) -> TrackerInput:
 
 def prep(dwi, affine, bval, bvec, out: Path, shell=2800.0):
     """prepare(), written to out/{dwi.nhdr, dwi.raw, mask.nrrd} for _ukf_torch.load; returns (info, mask)."""
+    import nrrd
     out.mkdir(parents=True, exist_ok=True)
     t = prepare(dwi, affine, bval, bvec, shell)
     mask, info, M = t.mask, t.info, affine[:3, :3]

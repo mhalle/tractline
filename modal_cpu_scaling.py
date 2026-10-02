@@ -17,14 +17,13 @@ import modal
 
 HERE = Path(__file__).resolve().parent
 DATA = Path.home() / "tmp/data/tractography"
-RANKFIELD = "rankfield[torch] @ git+https://github.com/mhalle/rankfield.git@v0.3.10"
 MODULES = ("_pipeline.py", "_ds001226.py", "_susc.py", "_prep.py", "_median.py", "_ukf_torch.py", "_tractcloud.py",
-           "_resample.py", "_geometry.py", "_data.py")
+           "_resample.py", "_data.py")
 PAT = "ds001226/sub-PAT16/ses-preop/dwi"
 
-image = (modal.Image.debian_slim(python_version="3.12").apt_install("git")
+image = (modal.Image.debian_slim(python_version="3.12")
          .pip_install("torch", index_url="https://download.pytorch.org/whl/cpu")
-         .pip_install("numpy>=2", "scipy", "nibabel", "pynrrd", "numba", "dipy", "numcodecs", "scikit-learn", RANKFIELD)
+         .pip_install("numpy>=2", "scipy", "nibabel")                       # the default pipeline's dependencies, no more
          .env({"PYTHONPATH": "/root/bench", "TRACTOGRAPHY_DATA": "/data"})
          .add_local_dir(str(DATA / "TractCloud/src"), remote_path="/data/TractCloud/src")
          .add_local_dir(str(DATA / "TrainedModel"), remote_path="/data/TrainedModel")
@@ -77,8 +76,8 @@ def scaling():
     best = max(ok, key=lambda r: r["k_steps_per_s"])["workers"] if ok else 1
     timer = P.Timer(echo="pipeline")
     corr, tg, labels, payload = P.run(s, Labeler("cpu"), timer, device="cpu", workers=best)
-    res["pipeline"] = {"workers": best, "seconds": timer.seconds, "scan_to_payload_s": timer.total(*P.pipeline_stages()),
-                       "fibers": tg.stats["fibers"], "labeled": payload.streamlines, "payload_mb": payload.total_mb}
+    res["pipeline"] = {"workers": best, "seconds": timer.seconds, "scan_to_labels_s": timer.total(*P.pipeline_stages()),
+                       "fibers": tg.stats["fibers"], "labeled": int(labels.keep.sum())}
     return json.dumps(res, default=float)                            # text: the local client has no torch to unpickle with
 
 
@@ -124,7 +123,7 @@ def pipeline_only():
     s = load("PAT16")
     timer = P.Timer(echo="pipeline")
     P.run(s, Labeler("cpu"), timer, device="cpu", workers=32)
-    return json.dumps({"seconds": timer.seconds, "scan_to_payload_s": timer.total(*P.pipeline_stages()),
+    return json.dumps({"seconds": timer.seconds, "scan_to_labels_s": timer.total(*P.pipeline_stages()),
                        "estimate_threads": P.ESTIMATE_THREADS})
 
 

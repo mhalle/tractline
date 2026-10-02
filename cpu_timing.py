@@ -42,7 +42,7 @@ if __name__ == "__main__":
     chip = subprocess.run(["sysctl", "-n", "machdep.cpu.brand_string"], capture_output=True, text=True).stdout.strip()
     res = {"subject": args.sub, "machine": chip, "torch_threads": torch.get_num_threads(),
            "seconds": {d: r[0].seconds for d, r in runs.items()},
-           "scan_to_payload_s": {d: r[0].total(*P.pipeline_stages()) for d, r in runs.items()},
+           "scan_to_labels_s": {d: r[0].total(*P.pipeline_stages()) for d, r in runs.items()},
            "ukf_steps_per_s": {d: round(r[2].stats["fiber_steps"] / r[0].seconds["ukf"]) for d, r in runs.items()},
            "cpu_vs_gpu": {"field_displacement_diff_mm_median_99th": [round(float(np.median(dd[brain])), 3), round(float(np.quantile(dd[brain], 0.99)), 3)],
                           "fibers": [gc.stats["fibers"], gg.stats["fibers"]], "fiber_steps": [gc.stats["fiber_steps"], gg.stats["fiber_steps"]],

@@ -7,17 +7,19 @@ describes the pipeline and its timings; `plan.md` and `prior-art.md` are the ori
 
 ## The pipeline
 
-`_pipeline.py` runs it, scan to payload, in memory: correct → track → label → encode. Its docstring
-states the conventions every module below follows (array layouts, units, devices).
+`_pipeline.py` runs it in memory: correct → track → label, then TRX (and, for the format work, the
+compact payload). Its docstring states the conventions every module below follows (array layouts,
+units, devices). The default path needs numpy, scipy, torch, nibabel and TractCloud's code and weights,
+nothing more (`dependency_check.py` runs it with the others unimportable).
 
 | module | stage |
 |---|---|
 | `_ds001226.py` | a subject: the DWI, the reversed-phase-encoding b0s, the T1, the tumor mask |
 | `_susc.py` | susceptibility correction: `estimate` (FSL topup's model, GPU), `apply`, `displacement_mm` |
-| `_prep.py`, `_median.py` | the tracker's input: one shell, gradients in RAS, DIPY's `median_otsu` mask (exactly, ~100x faster) |
+| `_prep.py`, `_median.py` | the tracker's input: one shell, gradients in RAS, DIPY's `median_otsu` mask (exactly, in torch, CPU or GPU) |
 | `_ukf_torch.py`, `_ukf_metal.py` | UKF two-tensor tractography as the Slicer binary does it; the Metal kernel for the steps |
 | `_tractcloud.py`, `_resample.py` | TractCloud labels and log-probabilities |
-| `_geometry.py` (+ rankfield) | the payload: predictive geometry, the rank field |
+| `_geometry.py` (+ rankfield) | optional, the format work: the compact payload (predictive geometry, the rank field) |
 | `_trx.py` | optional output: the tractogram as TRX, with labels, tract probabilities and the rank field |
 | `_t1check.py` | measurement, not pipeline: the distortion left against the T1 |
 

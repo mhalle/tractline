@@ -1,14 +1,12 @@
 {
  "seconds": {
-  "field_estimate": 43.32,
-  "field_apply": 0.91,
-  "prep": 4.81,
-  "load": 0.43,
-  "ukf": 68.1,
-  "tractcloud": 7.63,
-  "encode_field": 1.0,
-  "encode_geometry": 1.41
+  "field_estimate": 38.23,
+  "field_apply": 0.56,
+  "prep": 0.73,
+  "load": 0.16,
+  "ukf": 49.21,
+  "tractcloud": 3.31
  },
- "scan_to_payload_s": 127.6,
+ "scan_to_labels_s": 92.2,
  "estimate_threads": 16
 }
