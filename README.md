@@ -3,7 +3,9 @@
 Diffusion MRI to named white-matter tracts with confidence, in the rank-field format. Data lives
 outside the repo (`_data.py`: `$TRACTOGRAPHY_DATA`, default `~/tmp/data/tractography`); results and
 the running journal are in `results/` (`results/NOTES.md`, newest entries last). `pipeline.md`
-describes the pipeline and its timings; `plan.md` and `prior-art.md` are the original plan and survey.
+describes the pipeline and its timings; `labelers.md` plans the labeling stage as a swappable component
+(our TractCloud, upstream's, later DeepMultiConnectome); `plan.md` and `prior-art.md` are the original
+plan and survey.
 
 ## The pipeline
 
