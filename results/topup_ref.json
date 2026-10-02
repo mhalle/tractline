@@ -1,0 +1,24 @@
+{
+ "fsl": "fsl-topup (FSL conda channel), Part of FSL (ID: 2412.6-dirty)",
+ "config": "b02b0.cnf",
+ "b0_ap": 6,
+ "b0_pa": 2,
+ "total_readout_time_s": 0.0266003,
+ "commands": {
+  "topup": "$FSL/bin/topup --imain=b0s --datain=acqparams.txt --config=$FSL/src/fsl-topup/flirtsch/b02b0.cnf --out=topup --fout=field_hz --iout=b0_unwarped",
+  "applytopup": "$FSL/bin/applytopup --imain=$SRC/sub-PAT16_ses-preop_acq-AP_dwi.nii.gz --inindex=1 --datain=acqparams.txt --topup=topup --method=jac --out=dwi_AP_topup"
+ },
+ "seconds": {
+  "topup": 617.4,
+  "applytopup": 47.6
+ },
+ "field_hz_quantiles_1_50_99": [
+  -105.1,
+  -3.7,
+  81.5
+ ],
+ "shift_voxels_abs_99th_and_max": [
+  3.15,
+  7.8
+ ]
+}

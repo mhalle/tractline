@@ -830,3 +830,32 @@ the Cholesky inverses alone and 43.9 s before; the pipeline 38 s with the float1
 (34 s without). The fewer the gradients, the more the right-sized arrays help.
 Whole HARDI brain with the new default (`mac_pipeline.json`): UKF 135 s (203 k steps/s), against
 176-194 s with the first Metal kernel; the pipeline 154 s without the float16 comparison pass.
+
+## 2026-10-01 Distortion correction: FSL topup as the reference, and what it changes on PAT16
+
+`topup_ref.py` → `topup_ref.json`. FSL topup + applytopup (fsl-topup from FSL's conda channel,
+FSL 2412.6, in DATA/fsl-env; a test reference only, FSL's license is non-commercial), PAT16's 6 AP +
+2 PA b0s, total readout 0.0266 s, b02b0.cnf; applytopup on the 102 AP volumes, Jacobian modulation.
+On the M2: topup 617 s, applytopup 48 s. Off-resonance field -105 to +82 Hz (1st-99th percentile);
+displacement along phase encoding 3.2 voxels (8 mm) at the 99th percentile, 7.8 voxels (19.5 mm) at
+most.
+
+`pat16_topup_compare.py` → `pat16_topup_compare.json`: the faithful pipeline (UKF's own seeds, ORG
+settings, Metal kernel; TractCloud 5-draw vote) on the scan as acquired and as corrected.
+
+| | as acquired | topup-corrected |
+|---|---|---|
+| seeds | 47,856 | 47,470 |
+| streamlines >= 40 mm | 32,129 | 32,155 |
+| median length | 85.8 mm | 87.5 mm |
+| Other | 56.9 % | 58.0 % |
+
+- **Tract mix r 0.9926**, below TractCloud's own redraw floor (0.995-0.999): per tract a median
+  8.8 % change in share, 26 % at the 90th percentile. The largest where susceptibility is: the
+  posterior fossa (ICP x0.62, intracerebellar x0.64) and the frontal and occipital poles (SP x1.57,
+  Sup-O x1.35, TO x0.73).
+- **Tracts move:** each named tract's center shifts by a median 2.3 mm, 4.5 mm at the 90th
+  percentile, 8.6 mm at most - the scale of a planning margin (albula's 8 mm); local shifts near the
+  most distorted regions are larger than a whole tract's center shows.
+- **Conclusion:** correction matters for planning; the faithful clinical pipeline gets a correction
+  stage, topup's output being the reference our own implementation has to match.
