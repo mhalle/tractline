@@ -1388,3 +1388,36 @@ derived/<sub>/cohort_fields_lbfgs.npz), L-BFGS → Gauss-Newton, medians:
 - the noise-0.01 rerun at the margin's 99th 0.33 → 0.07 mm (all 12); the half-split T1 fit 0.40 → 0.39
   (it measures the T1 check's precision more than the field's);
 - field estimate 31.2 → 17.8 s, scan to labels 71 → 56 s (PAT16: 17.5 s, 53 s).
+
+## 2026-10-02 The open items after the switch: where the edge varies, PAT25, the drift, PAT08
+
+- **The edge's split-half variance is the skull base's lost signal.** PAT16 and PAT23, fits A / B:
+  of the edge voxels whose two fields differ by > 1 mm, 90-93 % have one polarity below half the
+  brain's median signal (19-25 % of the edge overall) and 95-97 % lie in the brain's lowest quarter
+  (36-37 %), where the displacement's derivative along the phase encoding is 0.23-0.53 (edge overall
+  0.07): pile-up and dropout, where the data do not set the field. Gauss-Newton fits it sharper than
+  L-BFGS did (PAT23 edge 99th 2.02 against 1.09 mm).
+- **Penalties against it, by the held-out test** (`*_reg.json`; medians over 12, against the default):
+  fold 30 / 100 - held-out 0.1335 / 0.1361 against 0.1318 (worse on 11 / 12 of 12), split-half edge
+  99th 1.17 / 1.04 against 1.34; a first-derivative ("membrane") penalty, new as
+  estimate(membrane=...), which unlike the bending energy charges a linear ramp - 1e-4: held-out
+  0.1318 (better on 9 of 12), edge 1.27, drift outside the brain 39 mm (median max); 1e-3: 0.1326,
+  1.11, 27 mm. A trade, no free win; the default stays (membrane off) - a cohort rerun would buy the
+  edge 0.1-0.3 mm at the held-out's expense.
+- **The drift outside the brain** is far from it (voxels > 20 mm displaced: median 42 mm from the
+  brain, in the lowest slices - neck, face, sinuses); within 5 mm of the brain the 99th percentile is
+  11.7 mm against L-BFGS's 11.0 (PAT16) and 9.6 (PAT23). Linear ramps where nothing constrains the field,
+  which bending energy does not charge; membrane 1e-3 halves it. Harmless to the brain as measured.
+- **PAT25's tumor against topup** (`cohort/PAT25_topup.json`; FSL topup as a reference, cohort_topup.py
+  now with --reuse, empty-region-safe, and the kept L-BFGS fields): Gauss-Newton's field is closer to
+  topup's than L-BFGS's was (tumor 99th 2.12 against 2.98 mm; brain 1.98 against 3.06). Against the T1,
+  99th, brain / margin / tumor: Gauss-Newton 1.91 / 2.03 / 2.76, L-BFGS 2.37 / 2.11 / 2.41, topup
+  2.02 / 2.19 / 1.95. The tumor (1,057 voxels, skull base, bright edema, 5-13 mm displaced) is where
+  the three disagree; elsewhere Gauss-Newton is the closest of the three. The same data-limited region.
+- **PAT08 is not slice-group motion** (correcting the entry above). Its consecutive b0s differ evenly
+  across slices (even/odd ratio 1.00; the alternation index 0.35-0.41 within the others' 0.13-0.47),
+  and its estimated motion between them (0.3-0.4 mm, 0.14 deg) is PAT16's. The background noise is the
+  same for all patients (SD ~4.5); the difference sits in the brightest b0 decile (54 % of its energy;
+  CSF), worst at the ventricles (slices 26-34), no N/2 ghost: CSF flow or pulsation, 4x the others'.
+  Physiology the model has no term for; every estimator sees it alike, and the same-polarity mismatch
+  calibrates for it.

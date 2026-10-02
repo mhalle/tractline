@@ -154,8 +154,8 @@ The rules carried over:
 - **The field estimate's repeatability.** Gauss-Newton fixed the optimizer's sensitivity (negligible
   input noise: 0.07 mm at the margin's 99th, was 0.33 under L-BFGS) and predicts held-out b0s better on
   all 12 patients; fits from independent pairs of b0s still differ by ~1.3 mm at the brain's edge
-  (99th), and stronger regularization does not help (NOTES 2026-10-02). Motion between slice groups
-  (PAT08) is outside the model.
+  (99th), almost all where the signal is lost at the skull base - the data do not determine the field
+  there; stronger regularization trades held-out accuracy for it (NOTES 2026-10-02).
 - **PAT23's frontal base.** Under a 104 cm³ meningioma, topup and our correction agree with each
   other and both disagree with the T1 by 4-8 mm in 4 % of the margin; which is wrong is open.
 - **Upstream.** Enabling cudnn in TractCloud's own pipeline is a one-line change worth proposing

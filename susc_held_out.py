@@ -100,7 +100,7 @@ for name, opts in json.loads(args.configs).items():
                                          "uncorrected_brain": rel_rms(u0[0], u0[1], brain), "in_sample_brain": rel_rms(insample[0], insample[1], brain)}
     jmin = 1 - np.abs(s.readout_s * np.gradient(fit["A"][0], axis=pe_ax))
     r = {"seconds": secs, "split_half_deep": q(split, deep), "split_half_edge": q(split, edge), "held_out": held,
-         "folds_brain_A": int((jmin[brain] < 0).sum())}
+         "folds_brain_A": int((jmin[brain] < 0).sum()), "outside_max_mm_A": round(float(np.abs(mm(fit["A"][0])[~brain]).max()), 1)}
     if not args.quick:
         drift = drift_of(fit)
         r.update(drift_deep=q(drift, deep), drift_edge=q(drift, edge), last_ap_pose=[round(float(x), 3) for x in fit["all"][1][ap_i[-1]]])

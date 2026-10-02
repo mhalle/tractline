@@ -18,12 +18,15 @@ from pathlib import Path
 import numpy as np, nibabel as nib, torch
 from scipy.ndimage import binary_dilation
 from _median import median_otsu
+import _t1check
 import _susc as S
 from _ds001226 import load, ROOT
 from _data import DATA
-from _t1check import T1Check, tumor_regions, stats
+from _t1check import T1Check, tumor_regions
 
-ap = argparse.ArgumentParser(); ap.add_argument("--sub", required=True); args = ap.parse_args()
+ap = argparse.ArgumentParser(); ap.add_argument("--sub", required=True)
+ap.add_argument("--reuse", action="store_true", help="topup's and applytopup's outputs as already written")
+args = ap.parse_args()
 HERE = Path(__file__).resolve().parent
 s = load(args.sub)
 OUT = ROOT / "derived" / args.sub / "topup"; OUT.mkdir(parents=True, exist_ok=True)
@@ -31,6 +34,10 @@ FSL = DATA / "fsl-env"
 env = {**os.environ, "FSLDIR": str(FSL), "FSLOUTPUTTYPE": "NIFTI_GZ", "PATH": f"{FSL / 'bin'}:{os.environ['PATH']}"}
 CNF = FSL / "src/fsl-topup/flirtsch/b02b0.cnf"
 torch.set_num_threads(8)
+
+def stats(x, m):
+    return _t1check.stats(x, m) if m.any() else None                       # a region can be empty (PAT25 has no spot)
+
 
 def run(cmd):
     t0 = time.time()
@@ -43,8 +50,11 @@ hdr = nib.Nifti1Header(); hdr.set_data_dtype(np.float32)
 nib.save(nib.Nifti1Image(s.b0s.astype(np.float32), s.affine, hdr), OUT / "b0s.nii.gz")
 fmt = lambda v: " ".join(f"{int(x)}" for x in v)
 (OUT / "acqparams.txt").write_text("".join(f"{fmt(v)} {s.readout_s}\n" for v in s.pe_vectors))
-t_topup = run([str(FSL / "bin/topup"), "--imain=b0s", "--datain=acqparams.txt", f"--config={CNF}", "--out=topup", "--fout=field_hz", "--iout=b0_unwarped"])
-t_apply = run([str(FSL / "bin/applytopup"), f"--imain={s.dwi_path}", "--inindex=1", "--datain=acqparams.txt", "--topup=topup", "--method=jac", "--out=dwi_AP_topup"])
+if args.reuse and (OUT / "dwi_AP_topup.nii.gz").exists():
+    t_topup = t_apply = None
+else:
+    t_topup = run([str(FSL / "bin/topup"), "--imain=b0s", "--datain=acqparams.txt", f"--config={CNF}", "--out=topup", "--fout=field_hz", "--iout=b0_unwarped"])
+    t_apply = run([str(FSL / "bin/applytopup"), f"--imain={s.dwi_path}", "--inindex=1", "--datain=acqparams.txt", "--topup=topup", "--method=jac", "--out=dwi_AP_topup"])
 h_top = np.asarray(nib.load(OUT / "field_hz.nii.gz").dataobj, dtype=np.float64)
 top = np.asarray(nib.load(OUT / "dwi_AP_topup.nii.gz").dataobj, dtype=np.float64)
 
@@ -81,6 +91,12 @@ res = {"subject": args.sub, "seconds": {"topup": t_topup, "applytopup": t_apply,
                        "ours": {"brain": stats(F["ours"], brain), "tumor": stats(F["ours"], F["ours_tumor"]), "margin": stats(F["ours"], margin), "spot": stats(F["ours"], spot)},
                        "uncorrected": {"brain": stats(F["uncorrected"], brain), "margin": stats(F["uncorrected"], F["uncorrected_margin"]), "spot": stats(F["uncorrected"], spot)}},
        "columns": "|x| mm: median / 90th / 99th percentile"}
+L = ROOT / "derived" / args.sub / "cohort_fields_lbfgs.npz"                     # the cohort's L-BFGS run, kept when Gauss-Newton replaced it
+if L.exists():
+    Lf = np.load(L)
+    res["t1_residual"]["ours_lbfgs"] = {"brain": stats(Lf["ours"], brain), "tumor": stats(Lf["ours"], F["ours_tumor"]), "margin": stats(Lf["ours"], margin)}
+    res["fields"]["displacement_diff_mm_vs_topup"] = {k: {"brain": stats(d - d_top, brain), "tumor": stats(d - d_top, F["ours_tumor"]), "margin": stats(d - d_top, margin)}
+                                                      for k, d in (("ours", d_ours), ("ours_lbfgs", Lf["d_ours"].astype(np.float64)))}
 (HERE / f"results/cohort/{args.sub}_topup.json").write_text(json.dumps(res, indent=1))
 np.savez_compressed(ROOT / "derived" / args.sub / "topup_fields.npz", d_top=d_top.astype(np.float32), topup_residual=d_res.astype(np.float32))
 print(json.dumps(res, indent=1))

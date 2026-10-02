@@ -1,0 +1,132 @@
+{
+ "subject": "PAT25",
+ "seconds": {
+  "topup": null,
+  "applytopup": null,
+  "ours_estimate": 28.3
+ },
+ "fields": {
+  "r_brain": 0.9569,
+  "displacement_diff_mm_brain": [
+   0.26,
+   0.81,
+   1.98
+  ],
+  "displacement_diff_mm_margin": [
+   0.31,
+   1.02,
+   2.57
+  ],
+  "spot_voxels": 0,
+  "displacement_diff_mm_spot": null,
+  "spot_median_displacement_mm_ours_topup": [
+   NaN,
+   NaN
+  ],
+  "displacement_diff_mm_vs_topup": {
+   "ours": {
+    "brain": [
+     0.26,
+     0.81,
+     1.98
+    ],
+    "tumor": [
+     0.39,
+     1.11,
+     2.12
+    ],
+    "margin": [
+     0.31,
+     1.02,
+     2.57
+    ]
+   },
+   "ours_lbfgs": {
+    "brain": [
+     0.41,
+     1.2,
+     3.06
+    ],
+    "tumor": [
+     0.56,
+     1.8,
+     2.98
+    ],
+    "margin": [
+     0.53,
+     1.46,
+     2.76
+    ]
+   }
+  }
+ },
+ "t1_residual": {
+  "topup": {
+   "brain": [
+    0.35,
+    0.96,
+    2.02
+   ],
+   "tumor": [
+    0.76,
+    1.37,
+    1.95
+   ],
+   "margin": [
+    0.71,
+    1.43,
+    2.19
+   ],
+   "spot": null
+  },
+  "ours": {
+   "brain": [
+    0.39,
+    1.0,
+    1.91
+   ],
+   "tumor": [
+    0.76,
+    1.73,
+    2.76
+   ],
+   "margin": [
+    0.66,
+    1.31,
+    2.03
+   ],
+   "spot": null
+  },
+  "uncorrected": {
+   "brain": [
+    1.25,
+    2.73,
+    5.11
+   ],
+   "margin": [
+    2.23,
+    4.01,
+    5.84
+   ],
+   "spot": null
+  },
+  "ours_lbfgs": {
+   "brain": [
+    0.46,
+    1.14,
+    2.37
+   ],
+   "tumor": [
+    0.72,
+    1.67,
+    2.41
+   ],
+   "margin": [
+    0.66,
+    1.24,
+    2.11
+   ]
+  }
+ },
+ "columns": "|x| mm: median / 90th / 99th percentile"
+}

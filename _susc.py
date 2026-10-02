@@ -270,12 +270,13 @@ def _pcg(A, b, Minv, iters, rtol, check=1):
     return x, k
 
 
-def gauss_newton(c, m, *, sample, Bs, dBs, d2Bs, vox, pe_ax, pe_scale, lam, mmask, est, center, max_iter, fold=0.0,
+def gauss_newton(c, m, *, sample, Bs, dBs, d2Bs, vox, pe_ax, pe_scale, lam, mmask, est, center, max_iter, fold=0.0, membrane=0.0,
                  xtol=0.005, ftol=1e-4, cg_iters=30, cg_rtol=0.1, cg_check=5):
     """Levenberg-Marquardt Gauss-Newton on one level's cost (estimate()'s: the unwarped volumes' mean
     squared difference from their mean, plus lam * ssd * bending energy, ssd held within an iteration as
     topup's ssqlambda; with fold > 0, plus fold * ssd * the mean of fold_phi() over the voxels, x the
-    largest-readout volume's displacement derivative along pe - HySCO's anti-folding term).
+    largest-readout volume's displacement derivative along pe - HySCO's anti-folding term; with membrane > 0, plus membrane * ssd * mean |grad h|^2, which,
+    unlike the bending energy, charges a linear ramp - the field's drift where nothing constrains it).
     Matrix-free: the residual's Jacobian is the sampled images' derivative along the sampling position
     (autograd, pointwise) times the field's B-spline basis, the Jacobian factor's
     derivative, and - when motion is estimated - the position's derivative by the six rigid parameters;
@@ -291,6 +292,8 @@ def gauss_newton(c, m, *, sample, Bs, dBs, d2Bs, vox, pe_ax, pe_scale, lam, mmas
     sv = pe_scale.view(V, 1, 1, 1)
     dmats = [dBs[a] if a == pe_ax else Bs[a] for a in range(3)]
     terms = bending_terms(Bs, dBs, d2Bs, vox)
+    v_ = [float(x) for x in vox]
+    mterms = [([dBs[i] if i == a else Bs[i] for i in range(3)], 1 / v_[a] ** 2) for a in range(3)]    # mean |grad h|^2
     nvox = Bs[0].shape[0] * Bs[1].shape[0] * Bs[2].shape[0]
     kshape = c.shape; nc = c.numel()
     mm_ = mmask.reshape(-1)
@@ -298,12 +301,17 @@ def gauss_newton(c, m, *, sample, Bs, dBs, d2Bs, vox, pe_ax, pe_scale, lam, mmas
 
     # each term's sep_t(M, sep(M, v)) is one contraction by its per-axis Gram matrices M_a' M_a (k x k)
     grams = [([Mi.T @ Mi for Mi in M], 2 * w / nvox) for M, w in terms]
+    mgrams = [([Mi.T @ Mi for Mi in M], 2 * w / nvox) for M, w in mterms]
 
-    def grad_b(v):                                                           # gradient of bending(v): linear in v
-        return sum(w2 * sep(*G, v) for G, w2 in grams)
+    def grad_b(v, G=grams):                                                  # gradient of bending(v): linear in v
+        return sum(w2 * sep(*Gi, v) for Gi, w2 in G)
 
-    def bend(c):                                                             # bending(c) = c . grad_b(c) / 2
-        return 0.5 * (c * grad_b(c)).sum()
+    def bend(c, G=grams):                                                    # bending(c) = c . grad_b(c) / 2
+        return 0.5 * (c * grad_b(c, G)).sum()
+
+    def reg_grad(v, s):                                                      # the regularizers' gradient
+        g = lam * s * grad_b(v)
+        return g + membrane * s * grad_b(v, mgrams) if membrane else g
 
     def cost(c, m, s):
         h = field(c, Bs); dh = sep(*dmats, c)
@@ -311,9 +319,11 @@ def gauss_newton(c, m, *, sample, Bs, dBs, d2Bs, vox, pe_ax, pe_scale, lam, mmas
         ssd = ((u - u.mean(0, keepdim=True)) ** 2).mean()
         b = bend(c)
         pf = fold_phi(kx * dh).mean() if fold else 0.0
-        return float(ssd + lam * s * b + fold * s * pf), float(ssd)
+        return float(ssd + lam * s * b + fold * s * pf + (membrane * s * bend(c, mgrams) if membrane else 0)), float(ssd)
 
-    reg_diag = sum(2 * w / nvox * torch.einsum("i,j,k->ijk", *[(Mi ** 2).sum(0) for Mi in M]) for M, w in terms)
+    diag_of = lambda T: sum(2 * w / nvox * torch.einsum("i,j,k->ijk", *[(Mi ** 2).sum(0) for Mi in M]) for M, w in T)
+    reg_diag = diag_of(terms)
+    mem_diag = diag_of(mterms) if membrane else 0
     mu, it, evals, cg_total, converged, trace = 1e-3, 0, 0, 0, False, []
     while it < max_iter:
         h = field(c, Bs); dh = sep(*dmats, c)
@@ -324,6 +334,8 @@ def gauss_newton(c, m, *, sample, Bs, dBs, d2Bs, vox, pe_ax, pe_scale, lam, mmas
         Mtot = u.numel()
         s = float((r ** 2).mean())
         f0 = s + lam * s * float(bend(c))
+        if membrane:
+            f0 += membrane * s * float(bend(c, mgrams))
         xf = kx * dh
         if fold:
             f0 += fold * s * float(fold_phi(xf).mean())
@@ -339,7 +351,7 @@ def gauss_newton(c, m, *, sample, Bs, dBs, d2Bs, vox, pe_ax, pe_scale, lam, mmas
             return gc, gm
 
         gc, gm = JtP(r)
-        gcc = 2 / Mtot * gc + lam * s * grad_b(c) + (sep_t(dmats, ff1) if fold else 0)
+        gcc = 2 / Mtot * gc + reg_grad(c, s) + (sep_t(dmats, ff1) if fold else 0)
         g = torch.cat([gcc.reshape(-1)] + ([(2 / Mtot * gm).reshape(-1)] if est else []))
         # the Gauss-Newton matrix's diagonal, separably: sum over volumes of (A B_i + Bj dB_i)^2 minus V times its mean squared
         W1 = (A ** 2).sum(0) - A.sum(0) ** 2 / V
@@ -347,7 +359,7 @@ def gauss_newton(c, m, *, sample, Bs, dBs, d2Bs, vox, pe_ax, pe_scale, lam, mmas
         W3 = (Bj ** 2).sum(0) - Bj.sum(0) ** 2 / V
         sq = lambda mats: [Mi ** 2 for Mi in mats]
         cross = [Bs[a] * dBs[a] if a == pe_ax else Bs[a] ** 2 for a in range(3)]
-        dc_diag = 2 / Mtot * (sep_t(sq(Bs), W1) + sep_t(cross, W2) + sep_t(sq(dmats), W3)) + lam * s * reg_diag
+        dc_diag = 2 / Mtot * (sep_t(sq(Bs), W1) + sep_t(cross, W2) + sep_t(sq(dmats), W3)) + lam * s * reg_diag + membrane * s * mem_diag
         if fold:
             dc_diag = dc_diag + sep_t(sq(dmats), ff2)
         D = torch.cat([dc_diag.reshape(-1)] + ([(2 / Mtot * (1 - 1 / V) * (Mv ** 2).sum((1, 2, 3))).reshape(-1)] if est else []))
@@ -361,7 +373,7 @@ def gauss_newton(c, m, *, sample, Bs, dBs, d2Bs, vox, pe_ax, pe_scale, lam, mmas
                 dm = v[nc:].reshape(-1, 6) * mmask
                 du = torch.cat([du[:1], du[1:] + (Mv * dm[:, None, None, None, :]).sum(-1)])
             hc, hm = JtP(du - du.mean(0, keepdim=True))
-            hcc = 2 / Mtot * hc + lam * s * grad_b(dc) + (sep_t(dmats, ff2 * sep(*dmats, dc)) if fold else 0)
+            hcc = 2 / Mtot * hc + reg_grad(dc, s) + (sep_t(dmats, ff2 * sep(*dmats, dc)) if fold else 0)
             out = [hcc.reshape(-1)] + ([(2 / Mtot * hm).reshape(-1)] if est else [])
             return torch.cat(out) * free + mu * D * v + (1 - free) * v
 
@@ -396,7 +408,7 @@ def gauss_newton(c, m, *, sample, Bs, dBs, d2Bs, vox, pe_ax, pe_scale, lam, mmas
 
 def estimate(b0s: np.ndarray, vox, pe_vectors: np.ndarray, readout_s, *, device="cpu", dtype=None, progress=None,
              schedule=B02B0, iter_scale=None, lam_scale=1.0, fixed_motion=None, interp="trilinear", optimizer="gn",
-             fold=10.0, gn=None, coarse_device="auto", init=None, diagnostics=False):
+             fold=10.0, membrane=0.0, gn=None, coarse_device="auto", init=None, diagnostics=False):
     """The susceptibility field from b0s with at least two phase-encoding directions.
 
     b0s (X, Y, Z, V); vox (3,) mm; pe_vectors (V, 3), each b0's phase-encoding vector; readout_s the
@@ -412,7 +424,8 @@ def estimate(b0s: np.ndarray, vox, pe_vectors: np.ndarray, readout_s, *, device=
     better, 70 % slower; "linear_pe": the same, linear along the axis - the images moved once per level,
     then two gathers a voxel instead of a 3D trilinear sample and its gradient), optimizer ("gn":
     gauss_newton(); "lbfgs": torch's L-BFGS, the earlier default - never converges, its result where
-    the cap falls), fold (with "gn": the weight of HySCO's anti-folding penalty, fold_phi()), gn
+    the cap falls), fold (with "gn": the weight of HySCO's anti-folding penalty, fold_phi()), membrane (with "gn":
+    gauss_newton()'s first-derivative penalty), gn
     (gauss_newton()'s tolerances), coarse_device (the subsampled levels there, in this dtype, the rest
     on device: small grids are launch-bound on a GPU, 3x slower than the CPU on the M2; "auto": the CPU
     under "mps", else none), init ((field Hz at full resolution, motion (V, 6)) to start from
@@ -426,7 +439,7 @@ def estimate(b0s: np.ndarray, vox, pe_vectors: np.ndarray, readout_s, *, device=
         k = next(i for i, f in enumerate(schedule["subsamp"]) if f == 1)
         dt = dtype or (torch.float32 if torch.device(device).type == "mps" else torch.float64)
         opts = dict(dtype=dt, progress=progress, iter_scale=iter_scale, lam_scale=lam_scale, fixed_motion=fixed_motion,
-                    interp=interp, optimizer=optimizer, fold=fold, gn=gn, coarse_device=None, diagnostics=diagnostics)
+                    interp=interp, optimizer=optimizer, fold=fold, membrane=membrane, gn=gn, coarse_device=None, diagnostics=diagnostics)
         h0, m0, log0 = estimate(b0s, vox, pe_vectors, readout_s, device=coarse_device, init=init,
                                 schedule={key: v[:k] for key, v in schedule.items()}, **opts)
         renumber = lambda L: L.update(level=L["level"] + k) or (progress(L) if progress else None)
@@ -550,7 +563,7 @@ def estimate(b0s: np.ndarray, vox, pe_vectors: np.ndarray, readout_s, *, device=
 
             c_gn, m_gn, info = gauss_newton((cs * CS).detach(), (ms * MS * mmask).detach(), sample=sample, Bs=Bs, dBs=dBs,
                                             d2Bs=d2Bs, vox=vl, pe_ax=pe_ax, pe_scale=pe_scale, lam=lam, mmask=mmask, est=est,
-                                            center=center, max_iter=schedule["miter"][lev] * iter_scale, fold=fold, **(gn or {}))
+                                            center=center, max_iter=schedule["miter"][lev] * iter_scale, fold=fold, membrane=membrane, **(gn or {}))
             with torch.no_grad():
                 cs.copy_(c_gn / CS); ms.copy_(m_gn / MS)
         else:
