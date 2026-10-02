@@ -746,3 +746,23 @@ Sparse: albula's rule, 25,000 of the 28,037 voxels with FA > 0.2 (89 % of the ca
   streamlines from the same 25,000 seeds (sparser still, so the effects would be larger); test
   spheres, not a tumor; one subject. At HCP's 1.25 mm the same 25,000 seeds would be about 5 % of
   faithful seeding, not 52 %.
+
+## 2026-10-01 The faithful pipeline on PAT16, end to end on an M2
+
+`mac_pipeline.py --data pat16` → `mac_pipeline_pat16.json`. ds001226 PAT16 (b0 + b = 2800, 2.5 mm),
+UKF's own 47,856 seeds, ORG settings, Metal kernel; TractCloud on MPS; field and geometry encoded.
+
+| stage | seconds |
+|---|---|
+| load and normalize | 0.4 |
+| seeds (float64, CPU) | 1.0 |
+| UKF, Metal (11.5 M steps, 261 k/s: 50 gradients here against HARDI's 150) | 43.9 |
+| 40 mm cut, resampling | 0.3 |
+| TractCloud context + network (MPS float32) | 4.0 |
+| field encode | 0.3 |
+| geometry encode (two grids, with round-trip check) | 0.8 |
+| **total** | **55** |
+
+Sizes, the 32,137 streamlines >= 40 mm (1.73 M points, a point every 1.8 mm): float32 points 20.7 MB;
+compact 3.0 MB at a 0.05 mm grid, 4.5 MB at 0.01 mm, field included (0.44 MB, 19 B/streamline raw).
+UKF is 80 % of the time. (Distortion correction is not in this pipeline yet.)

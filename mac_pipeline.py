@@ -27,9 +27,13 @@ import _ukf_torch as U
 from _resample import resample
 from _data import DATA, MODEL, MASS_CENTER
 
-ap = argparse.ArgumentParser(); ap.add_argument("--labels", action="store_true"); args = ap.parse_args()
+ap = argparse.ArgumentParser(); ap.add_argument("--labels", action="store_true")
+ap.add_argument("--data", choices=("hardi", "pat16"), default="hardi",
+                help="pat16: OpenNeuro ds001226 PAT16 as pat16_prep.py writes it (b0 + b=2800, 2.5 mm)")
+args = ap.parse_args()
 HERE = Path(__file__).resolve().parent
-H = DATA / "ukf/hardi"
+H = DATA / "ukf/hardi" if args.data == "hardi" else DATA / "ds001226/derived/PAT16"
+assert not (args.labels and args.data != "hardi"), "--labels compares with HARDI's float64 CUDA run"
 sys.path.insert(0, str(DATA / "TractCloud/src"))
 sys.modules.setdefault("vtk", types.ModuleType("vtk"))
 from tractcloud import inference as inf
@@ -84,6 +88,18 @@ t0 = time.time()
 code = rf.encode(lp.cpu().T[:, :, None, None], keep="clip", depth=6, clip=8.0, tail_temperatures=(1.0,))
 T["field"] = round(time.time() - t0, 2); print("field", T["field"], "s")
 field_bytes = sum(np.asarray(a).nbytes for a in (code.ranks, code.support, code.tail))
+from numcodecs import Blosc
+from _geometry import encode as gencode, lengths_bytes
+field_blosc = sum(len(Blosc(cname="zstd", clevel=9, shuffle=Blosc.SHUFFLE).encode(np.ascontiguousarray(np.asarray(a))))
+                  for a in (code.ranks, code.support, code.tail))
+kept_fibers = [f for f, k in zip(fibers, keep) if k]
+Pk = np.concatenate(kept_fibers); offk = np.r_[0, np.cumsum([len(f) for f in kept_fibers])]
+t0 = time.time()
+geom = {}
+for q in (0.05, 0.01):
+    nb, _ = gencode(Pk, offk, q, Pk.min(0))
+    geom[f"{q}_mm_grid_mb"] = round((nb + lengths_bytes(offk)) / 1e6, 2)
+T["geometry_encode_both_grids_with_roundtrip_check"] = round(time.time() - t0, 2)
 
 chip = subprocess.run(["sysctl", "-n", "machdep.cpu.brand_string"], capture_output=True, text=True).stdout.strip()
 res = {"machine": chip, "torch": torch.__version__, "rankfield": rf.__version__,
@@ -92,7 +108,13 @@ res = {"machine": chip, "torch": torch.__version__, "rankfield": rf.__version__,
        "ukf_steps_per_s": round(st["fiber_steps"] / T["ukf"]),
        "fp16_vs_fp32_on_mps": {"cluster_labels_differ": int((c32 != c16).sum()),
                                "tract_labels_differ": int((lut[c32] != lut[c16]).sum())},
-       "field": {"depth": 6, "bytes": int(field_bytes), "bytes_per_streamline": round(field_bytes / len(ds), 2)}}
+       "field": {"depth": 6, "bytes": int(field_bytes), "bytes_per_streamline": round(field_bytes / len(ds), 2),
+                 "blosc_mb": round(field_blosc / 1e6, 2)},
+       "sizes_streamlines_ge_40mm": {"streamlines": len(kept_fibers), "vertices": int(offk[-1]),
+                                     "float32_points_mb": round(offk[-1] * 12 / 1e6, 2), "geometry": geom,
+                                     "compact_total_mb_0.05": round(geom["0.05_mm_grid_mb"] + field_blosc / 1e6, 2),
+                                     "compact_total_mb_0.01": round(geom["0.01_mm_grid_mb"] + field_blosc / 1e6, 2)},
+       "all_streamlines_float32_mb": round(sum(len(f) for f in fibers) * 12 / 1e6, 2), "data": args.data}
 
 if args.labels:
     def vote(Tm):
@@ -118,4 +140,4 @@ if args.labels:
                                        "seconds": round(time.time() - t0, 1),
                                        "for_scale": "ukf_labels.json: float32 on CUDA 0.905, TractCloud's own floor 0.926, bootstrap 0.78"}
 print(json.dumps(res, indent=1))
-(HERE / "results" / "mac_pipeline.json").write_text(json.dumps(res, indent=1))
+(HERE / "results" / ("mac_pipeline.json" if args.data == "hardi" else f"mac_pipeline_{args.data}.json")).write_text(json.dumps(res, indent=1))
