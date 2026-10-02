@@ -1213,3 +1213,6 @@ transcribed from its log, and it returns JSON text now.
   with an image of torch (CPU wheel), numpy, scipy and nibabel only (`modal_cpu_pipeline.json`): the
   CPU path in **92.2 s** on 32 x86 cores (estimate 38.2 s at 16 threads, UKF 49.2 s, TractCloud
   3.3 s, mask 0.7 s; no numba compile).
+- **The 12-patient cohort again, on the GPU path with the torch mask**: all 12 reproduce their committed
+  results exactly (timings aside). The mask costs 3.1 s against 0.65 (median); the other stages ran
+  6-8 % slower this time (the laptop, not the change: UKF 27.2 → 29.4 s, estimate 29.4 → 31.2 s).
