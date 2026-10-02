@@ -30,7 +30,7 @@ HERE = Path(__file__).resolve().parent
 DATA = Path.home() / "tmp/data/tractography"
 H = DATA / "ukf/hardi"
 D = U.load(str(H / "dwi.nhdr"), str(H / "mask.nrrd"))
-off = np.array([-4158, -2201, -2855], float); off = off / np.linalg.norm(off) * 0.5
+off = U.SRAND0_OFFSET                                                    # the binary's seed offset (macOS srand(0))
 pts, *_ = U.seeds(D, off)
 vox = D["voxel"].numpy()
 i2r, dims_ijk = D["i2r"], tuple(int(v) for v in D["dim"][::-1])

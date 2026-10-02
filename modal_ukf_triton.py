@@ -40,7 +40,7 @@ def _setup():
     import numpy as np, torch
     import _ukf_torch as U
     D = U.load(HD + "dwi.nhdr", HD + "mask.nrrd")
-    off = np.array([-4158, -2201, -2855], float); off = off / np.linalg.norm(off) * 0.5
+    off = U.SRAND0_OFFSET                                                    # the binary's seed offset (macOS srand(0))
     return D, off
 
 

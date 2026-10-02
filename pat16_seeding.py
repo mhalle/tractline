@@ -47,7 +47,7 @@ center = np.load(MASS_CENTER)
 
 D = U.load(str(O / "dwi.nhdr"), str(O / "mask.nrrd"))
 i2r = D["i2r"]
-off = np.array([-4158, -2201, -2855], float); off = off / np.linalg.norm(off) * 0.5
+off = U.SRAND0_OFFSET                                                    # the binary's seed offset (macOS srand(0))
 T = {}
 
 def track(points):

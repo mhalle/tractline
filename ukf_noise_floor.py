@@ -30,7 +30,7 @@ H = Path.home() / "tmp/data/tractography/ukf/hardi"
 NHDR, MASK = str(H / "dwi.nhdr"), str(H / "mask.nrrd")
 
 D = U.load(NHDR, MASK)
-off = np.array([-4158, -2201, -2855], float); off = off / np.linalg.norm(off) * 0.5    # macOS srand(0)
+off = U.SRAND0_OFFSET                                                    # the binary's seed offset (macOS srand(0))
 pts, *_ = U.seeds(D, off)
 P = pts[np.arange(0, len(pts), args.every)]
 i2r, dims_ijk = D["i2r"], tuple(int(v) for v in D["dim"][::-1])

@@ -14,7 +14,7 @@ import numpy as np, nibabel as nib
 from scipy.ndimage import median_filter
 from dipy.segment.mask import median_otsu as dipy_mo
 import _median as M
-from _subject import load, TD
+from _ds001226 import load, ROOT
 
 HERE = Path(__file__).resolve().parent
 rng = np.random.default_rng(0)
@@ -26,10 +26,10 @@ for shape, levels in (((17, 23, 11), 5), ((40, 31, 29), 1000), ((96, 96, 60), 30
 vols = {}
 for s in "PAT05 PAT07 PAT08 PAT13 PAT14 PAT16 PAT19 PAT20 PAT23 PAT25 PAT26 PAT29".split():
     X = load(s)
-    vols[s] = X.raw[..., X.bval < 50].astype(np.float32).mean(-1)
+    vols[s] = X.dwi[..., X.b0_index].astype(np.float32).mean(-1)
 X = load("PAT16")
-for name, p in (("PAT16 topup", TD / "derived/PAT16/topup/dwi_AP_topup.nii.gz"), ("PAT16 ours", TD / "derived/PAT16/susc/dwi_AP_ours_fast.nii.gz")):
-    vols[name] = np.asarray(nib.load(p).dataobj, dtype=np.float32)[..., X.bval < 50].mean(-1)
+for name, p in (("PAT16 topup", ROOT / "derived/PAT16/topup/dwi_AP_topup.nii.gz"), ("PAT16 ours", ROOT / "derived/PAT16/susc/dwi_AP_ours_fast.nii.gz")):
+    vols[name] = np.asarray(nib.load(p).dataobj, dtype=np.float32)[..., X.b0_index].mean(-1)
 M.median_otsu(vols["PAT16"])                                              # numba compile
 td, tf = [], []
 for name, b0 in vols.items():

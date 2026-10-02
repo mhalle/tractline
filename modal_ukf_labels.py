@@ -45,7 +45,7 @@ def track(name: str) -> dict:
     from _bootstrap import WildBootstrap, read
     dtype, boot = VARIANTS[name]
     D = U.load(HD + "dwi.nhdr", HD + "mask.nrrd")                    # seeds from the scan as acquired, on the CPU
-    off = np.array([-4158, -2201, -2855], float); off = off / np.linalg.norm(off) * 0.5
+    off = U.SRAND0_OFFSET                                                    # the binary's seed offset (macOS srand(0))
     pts, *_ = U.seeds(D, off)
     if boot is not None:
         raw, g, b0 = read(HD + "dwi.nhdr")

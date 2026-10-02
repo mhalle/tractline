@@ -1,4 +1,4 @@
-"""FSL topup on a cohort subject, from the very b0 stack our estimate used (_subject.py), as a second
+"""FSL topup on a cohort subject, from the very b0 stack our estimate used (_ds001226.py), as a second
 reference where the T1 check is in doubt: the two fields compared, and topup's corrected scan put
 through the same T1 check as cohort.py's arms (same brain and fit masks, same tumor regions).
 
@@ -17,16 +17,17 @@ import argparse, json, os, subprocess, time
 from pathlib import Path
 import numpy as np, nibabel as nib, torch
 from scipy.ndimage import binary_dilation
-from dipy.segment.mask import median_otsu
+from _median import median_otsu
 import _susc as S
-from _subject import load, TD
+from _ds001226 import load, ROOT
+from _data import DATA
 from _t1check import T1Check, tumor_regions, stats
 
 ap = argparse.ArgumentParser(); ap.add_argument("--sub", required=True); args = ap.parse_args()
 HERE = Path(__file__).resolve().parent
-X = load(args.sub)
-OUT = TD / "derived" / args.sub / "topup"; OUT.mkdir(parents=True, exist_ok=True)
-FSL = TD.parent / "fsl-env"
+s = load(args.sub)
+OUT = ROOT / "derived" / args.sub / "topup"; OUT.mkdir(parents=True, exist_ok=True)
+FSL = DATA / "fsl-env"
 env = {**os.environ, "FSLDIR": str(FSL), "FSLOUTPUTTYPE": "NIFTI_GZ", "PATH": f"{FSL / 'bin'}:{os.environ['PATH']}"}
 CNF = FSL / "src/fsl-topup/flirtsch/b02b0.cnf"
 torch.set_num_threads(8)
@@ -39,35 +40,33 @@ def run(cmd):
     return round(time.time() - t0, 1)
 
 hdr = nib.Nifti1Header(); hdr.set_data_dtype(np.float32)
-nib.save(nib.Nifti1Image(X.b0s.astype(np.float32), X.A, hdr), OUT / "b0s.nii.gz")
+nib.save(nib.Nifti1Image(s.b0s.astype(np.float32), s.affine, hdr), OUT / "b0s.nii.gz")
 fmt = lambda v: " ".join(f"{int(x)}" for x in v)
-(OUT / "acqparams.txt").write_text("".join(f"{fmt(v)} {X.trt}\n" for v in X.pe_rows))
+(OUT / "acqparams.txt").write_text("".join(f"{fmt(v)} {s.readout_s}\n" for v in s.pe_vectors))
 t_topup = run([str(FSL / "bin/topup"), "--imain=b0s", "--datain=acqparams.txt", f"--config={CNF}", "--out=topup", "--fout=field_hz", "--iout=b0_unwarped"])
-src = X.SUB / f"dwi/sub-{args.sub}_ses-preop_acq-AP_dwi.nii.gz"
-t_apply = run([str(FSL / "bin/applytopup"), f"--imain={src}", "--inindex=1", "--datain=acqparams.txt", "--topup=topup", "--method=jac", "--out=dwi_AP_topup"])
+t_apply = run([str(FSL / "bin/applytopup"), f"--imain={s.dwi_path}", "--inindex=1", "--datain=acqparams.txt", "--topup=topup", "--method=jac", "--out=dwi_AP_topup"])
 h_top = np.asarray(nib.load(OUT / "field_hz.nii.gz").dataobj, dtype=np.float64)
 top = np.asarray(nib.load(OUT / "dwi_AP_topup.nii.gz").dataobj, dtype=np.float64)
 
 t0 = time.time()
-h_ours, _, _ = S.estimate(X.b0s, X.vox, X.pe_rows, np.full(len(X.pe_rows), X.trt), device="mps")
+h_ours, _, _ = S.estimate(s.b0s, s.vox, s.pe_vectors, np.full(len(s.pe_vectors), s.readout_s), device="mps")
 t_ours = round(time.time() - t0, 1)
 h_ours = np.asarray(h_ours, dtype=np.float64)
 
-F = np.load(TD / "derived" / args.sub / "cohort_fields.npz")
+F = np.load(ROOT / "derived" / args.sub / "cohort_fields.npz")
 brain, margin = F["brain"], F["ours_margin"]
 spot = margin & (np.abs(F["ours"]) > 3)
-mm = X.sign * X.trt * X.vox[X.PE]                                         # Hz -> mm along PE for the AP scan
-d_top, d_ours = h_top * mm, h_ours * mm
+d_top, d_ours = (S.displacement_mm(h, s.readout_s, s.pe_sign, s.vox[s.pe_axis]) for h in (h_top, h_ours))
 dd = np.abs(d_ours - d_top)
 dc = lambda d: d - np.median(d[brain])
 
 # topup's corrected scan through cohort.py's T1 check (the same masks: brain, and the fit mask from both arms' prep masks)
-_, unc_mask = median_otsu(X.raw[..., X.bval < 50].astype(np.float32).mean(-1), median_radius=4, numpass=4)
+_, unc_mask = median_otsu(s.dwi[..., s.b0_index].astype(np.float32).mean(-1), median_radius=4, numpass=4)
 fit_mask = binary_dilation(brain, iterations=2) | binary_dilation(unc_mask, iterations=2)
-t1img = nib.load(X.SUB / f"anat/sub-{args.sub}_ses-preop_T1w.nii.gz")
-tumor_t1, margin_t1 = tumor_regions(t1img, nib.load(TD / f"derivatives/tumor_masks/sub-{args.sub}/anat/sub-{args.sub}_space_T1_label-tumor.nii"))
-C = T1Check(t1img, X.A, X.raw.shape[:3], fit_mask, X.PE, X.vox)
-b0 = top[..., X.b0i].mean(-1)
+t1img = nib.load(s.t1)
+tumor_t1, margin_t1 = tumor_regions(t1img, nib.load(s.tumor_mask))
+C = T1Check(t1img, s.affine, s.dwi.shape[:3], fit_mask, s.pe_axis, s.vox)
+b0 = top[..., s.b0_index].mean(-1)
 T0 = C.rigid_start(b0)
 d_res, Tm, _ = C.fit(b0, T0)
 tm = (C.on_grid(Tm, tumor_t1.astype(float)) > 0.5).numpy()
@@ -83,5 +82,5 @@ res = {"subject": args.sub, "seconds": {"topup": t_topup, "applytopup": t_apply,
                        "uncorrected": {"brain": stats(F["uncorrected"], brain), "margin": stats(F["uncorrected"], F["uncorrected_margin"]), "spot": stats(F["uncorrected"], spot)}},
        "columns": "|x| mm: median / 90th / 99th percentile"}
 (HERE / f"results/cohort/{args.sub}_topup.json").write_text(json.dumps(res, indent=1))
-np.savez_compressed(TD / "derived" / args.sub / "topup_fields.npz", d_top=d_top.astype(np.float32), topup_residual=d_res.astype(np.float32))
+np.savez_compressed(ROOT / "derived" / args.sub / "topup_fields.npz", d_top=d_top.astype(np.float32), topup_residual=d_res.astype(np.float32))
 print(json.dumps(res, indent=1))

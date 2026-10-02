@@ -26,7 +26,7 @@ H, OUT = DATA / "ukf/hardi", DATA / "albula"
 OUT.mkdir(exist_ok=True)
 
 D = U.load(str(H / "dwi.nhdr"), str(H / "mask.nrrd"))
-off = np.array([-4158, -2201, -2855], float); off = off / np.linalg.norm(off) * 0.5
+off = U.SRAND0_OFFSET                                                    # the binary's seed offset (macOS srand(0))
 pts, *_ = U.seeds(D, off)
 sel = np.arange(0, len(pts), args.every)
 N = D["N"]

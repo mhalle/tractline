@@ -6,7 +6,8 @@ Per subject: the tumor (participants.tsv: type, location; the mask's volume), ho
 displaces the tumor's 10 mm margin (99th percentile), the residual against the T1 there for the scan
 as acquired and as corrected (90th / 99th percentile), the validation (the uncorrected residual
 against our displacement map: r, slope), what correction changes in the tracts (tract-mix r, tract
-centers moved: median / max), and the time from the scan to labels with correction.
+centers moved: median / max), the pipeline's time from the scan to the payload (tracts, labels,
+rank field) and the payload's size.
 
 Writes results/cohort_summary.md and results/cohort_summary.png.
 """
@@ -33,19 +34,19 @@ for r in R:
                  "precision": t1["ours"]["half_split_error_brain"], "sens": t1["estimate_sensitivity_mm"]["tumor_margin_10mm"],
                  "r": t1["validation"]["uncorrected_residual_r_vs_our_displacement"], "slope": t1["validation"]["uncorrected_residual_slope_vs_our_displacement"],
                  "mix_r": r["correction_changes"]["tract_mix_r"], "moved": r["correction_changes"]["tract_center_moved_mm_median_90th_max"],
-                 "secs": r["pipeline_seconds_corrected"], "est": r["seconds"]["field_estimate"], "ukf": r["seconds"]["ours_ukf"],
+                 "secs": r["pipeline_seconds"], "est": r["seconds"]["field_estimate"], "ukf": r["seconds"]["ours_ukf"], "mb": r["payload"]["total_mb"],
                  "other": (r["arms"]["uncorrected"]["other_fraction"], r["arms"]["ours"]["other_fraction"])})
 
-L = ["| subject | tumor | cm3 | side | our displacement at the margin, 99th | margin vs T1, uncorrected 90th / 99th | margin vs T1, ours 90th / 99th | validation r / slope | tract mix r | centers moved median / max | scan to labels |",
-     "|---|---|---|---|---|---|---|---|---|---|---|"]
+L = ["| subject | tumor | cm3 | side | our displacement at the margin, 99th | margin vs T1, uncorrected 90th / 99th | margin vs T1, ours 90th / 99th | validation r / slope | tract mix r | centers moved median / max | scan to payload | payload |",
+     "|---|---|---|---|---|---|---|---|---|---|---|---|"]
 for w in rows:
     side = "R" if w["ras"][0] > 5 else ("L" if w["ras"][0] < -5 else "mid")
     L.append(f"| {w['subject']} | {w['tumor']} | {w['cm3']} | {side} | {w['disp_margin'][2]} | {w['unc_margin'][1]} / {w['unc_margin'][2]} | "
-             f"{w['ours_margin'][1]} / {w['ours_margin'][2]} | {w['r']} / {w['slope']} | {w['mix_r']} | {w['moved'][0]} / {w['moved'][2]} | {w['secs']} s |")
+             f"{w['ours_margin'][1]} / {w['ours_margin'][2]} | {w['r']} / {w['slope']} | {w['mix_r']} | {w['moved'][0]} / {w['moved'][2]} | {w['secs']} s | {w['mb']} MB |")
 med = lambda k, i=None: np.median([w[k][i] if i is not None else w[k] for w in rows])
 L += ["", f"Medians over {len(rows)}: margin vs T1 99th, uncorrected {med('unc_margin', 2):.2f} mm, ours {med('ours_margin', 2):.2f} mm; "
       f"brain 99th {med('unc_brain', 2):.2f} / {med('ours_brain', 2):.2f} mm; precision (half-split, brain 99th) {med('precision', 2):.2f} mm; "
-      f"estimate sensitivity at the margin 99th {med('sens', 2):.2f} mm; validation r {med('r'):.2f}, slope {med('slope'):.2f}; tract mix r {med('mix_r'):.4f}; scan to labels {med('secs'):.0f} s "
+      f"estimate sensitivity at the margin 99th {med('sens', 2):.2f} mm; validation r {med('r'):.2f}, slope {med('slope'):.2f}; tract mix r {med('mix_r'):.4f}; scan to payload {med('secs'):.0f} s, payload {med('mb'):.1f} MB "
       f"(field estimate {med('est'):.0f} s, UKF {med('ukf'):.0f} s)."]
 (HERE / "results/cohort_summary.md").write_text("\n".join(L) + "\n")
 print("\n".join(L))

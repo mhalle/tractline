@@ -27,7 +27,7 @@ def run() -> dict:
     H = "/vol/ukf/hardi/"
     t0 = time.time()
     D = U.load(H + "dwi.nhdr", H + "mask.nrrd", device="cuda")
-    off = np.array([-4158, -2201, -2855], float); off = off / np.linalg.norm(off) * 0.5
+    off = U.SRAND0_OFFSET                                                    # the binary's seed offset (macOS srand(0))
     torch.cuda.synchronize(); t1 = time.time()
     fibers, stats = U.track(D, off, progress=lambda s0, step, n: print(f"batch {s0} step {step} alive {n}", flush=True))
     torch.cuda.synchronize(); t2 = time.time()

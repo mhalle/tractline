@@ -292,3 +292,23 @@ def estimate(b0s: np.ndarray, vox, pe: np.ndarray, trt: np.ndarray, device="cpu"
     full = Fnn.interpolate(h_prev[None, None], size=tuple(b0s.shape[:3]), mode="trilinear", align_corners=True)[0, 0]
     motion = torch.cat([torch.zeros(1, 6, dtype=dt, device=dev), mov]).cpu().numpy()
     return full.cpu().double().numpy(), motion, log
+
+
+# ------------------------------------------------------------------ applying a field
+
+def displacement_mm(field_hz, readout_s, pe_sign, vox_pe):
+    """The displacement (mm, along the phase-encoding axis, signed) that a field (Hz) causes in a
+    scan with that readout time (s), phase-encoding sign (+1 / -1) and voxel size along the axis."""
+    return pe_sign * readout_s * np.asarray(field_hz, dtype=np.float64) * vox_pe
+
+
+def apply(dwi, field_hz, pe_axis, pe_sign, readout_s):
+    """A DWI (X, Y, Z, G) corrected by a field (Hz, on its grid): each volume sampled at x + the
+    displacement along the phase-encoding axis, cubic B-splines along that axis (applytopup's
+    splines), times the Jacobian (applytopup --method=jac), clipped at 0. CPU, float64; returns float32
+    (X, Y, Z, G). One field and one readout for every volume: the sampling positions are shared."""
+    h = torch.as_tensor(np.asarray(field_hz, dtype=np.float64))
+    vols = torch.as_tensor(np.moveaxis(dwi, -1, 0).astype(np.float64))
+    out = unwarp_pe_cubic(prefilter(vols, pe_axis), h, torch.gradient(h, dim=pe_axis)[0], pe_axis,
+                          torch.full((vols.shape[0],), pe_sign * readout_s, dtype=torch.float64)).numpy()
+    return np.moveaxis(np.clip(out, 0, None), 0, -1).astype(np.float32)

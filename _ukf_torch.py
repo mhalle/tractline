@@ -48,6 +48,12 @@ import torch
 
 KAPPA, P0, LMIN = 0.01, 0.01, 100.0
 
+#: The binary's one seed offset, added to every mask voxel (tractography.cc:399-556): the vector of
+#: rand() % 10001 - 5000 three times after srand(0), normalized to 0.5 voxel, (k, j, i). These are
+#: macOS libc's draws (-4158, -2201, -2855); another libc draws others.
+SRAND0_DRAWS = (-4158, -2201, -2855)
+SRAND0_OFFSET = np.array(SRAND0_DRAWS, float) / np.linalg.norm(np.array(SRAND0_DRAWS, float)) * 0.5
+
 
 # ------------------------------------------------------------------------------- data
 
@@ -237,7 +243,7 @@ def _swap(state, P, sel):
 
 # ------------------------------------------------------------------------------- seeds
 
-def seeds(D: dict, offset_kji, seeding_threshold=0.1):
+def seeds(D: dict, offset_kji=SRAND0_OFFSET, seeding_threshold=0.1):
     """Seed points (k, j, i) and their two initial states, in the binary's seed order."""
     dev = D["A"].device
     kji = torch.nonzero(D["mask"] > 0)                               # k slowest, i fastest: the binary's loop
@@ -335,7 +341,7 @@ def advance(D: dict, xa, sa, Pa, oa, Q, Rs, step, max_steps, step_length=0.3, st
     return xa, sa, Pa, m1, stop, {"swap": sw, "swap2": sw2, "fa": fa, "mean_signal": mean_sig, "inside": inside}
 
 
-def track(D: dict, offset_kji, seeding_threshold=0.1, stopping_fa=0.08, stopping_threshold=0.06,
+def track(D: dict, offset_kji=SRAND0_OFFSET, seeding_threshold=0.1, stopping_fa=0.08, stopping_threshold=0.06,
           step_length=0.3, record_length=1.8, max_half_length=250.0, Qm=0.001, Ql=50.0, Rs=0.02,
           batch=50_000, progress=None, select=None, dtype=torch.float64, device=None, capture=None,
           seed_points=None, backend="torch"):

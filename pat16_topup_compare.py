@@ -27,7 +27,7 @@ lut = LUT.astype(np.int64)
 dev = torch.device("mps")
 model, _ = inf.load_model(str(MODEL / "best_tract_f1_model.pth"), str(MODEL / "cli_args.txt"), dev, k_override=20, k_global_override=80)
 center = np.load(MASS_CENTER)
-off = np.array([-4158, -2201, -2855], float); off = off / np.linalg.norm(off) * 0.5
+off = U.SRAND0_OFFSET                                                    # the binary's seed offset (macOS srand(0))
 
 def labels(fibers, draws=range(5)):
     lens = np.array([len(f) for f in fibers])

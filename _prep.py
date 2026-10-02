@@ -9,15 +9,23 @@ pat16_prep.py's rules, for any ds001226 subject.
   - mask: DIPY median_otsu on the mean b0 (median_radius 4, numpass 4), computed by _median.py
     (identical voxel for voxel, ~100x faster).
 """
+from dataclasses import dataclass
 from pathlib import Path
 import numpy as np, nrrd
 from _median import median_otsu                                          # dipy's, exactly (median_check.py), 0.1 s instead of 10
 
 
-def prepare(data, A, bval, bvec, shell=2800.0):
-    """data (i, j, k, G) int or float, A its affine, bval (G,), bvec (3, G) FSL. Returns (data kept,
-    as stored: int16 or float32; its NRRD header; mask; info), in memory: _ukf_torch.from_arrays
-    takes the first three."""
+@dataclass
+class TrackerInput:
+    dwi: np.ndarray              # (X, Y, Z, G') the b0s and the shell, as stored: int16, or float32 after a correction
+    header: dict                 # its NRRD header (gradients in RAS, geometry), as pynrrd would read it
+    mask: np.ndarray             # (X, Y, Z) bool: median_otsu of the mean b0
+    info: dict
+
+
+def prepare(data, A, bval, bvec, shell=2800.0) -> TrackerInput:
+    """data (X, Y, Z, G) int or float, A its affine, bval (G,), bvec (3, G) FSL. In memory:
+    _ukf_torch.from_arrays(t.dwi, t.header, t.mask) takes it."""
     keep = (bval < 50) | (np.abs(bval - shell) < 50)
     data, bval, bvec = data[..., keep], bval[keep], bvec[:, keep]
     M = A[:3, :3]
@@ -43,15 +51,15 @@ def prepare(data, A, bval, bvec, shell=2800.0):
     info = {"shape": list(data.shape), "voxel_mm": [round(float(v), 3) for v in spacing], "b0": int((bval < 50).sum()),
             "shell": shell, "directions": int((bval > 50).sum()), "affine_det_positive": bool(np.linalg.det(M) > 0),
             "mask_voxels": int(mask.sum())}
-    return stored, hdr, mask, info
+    return TrackerInput(stored, hdr, mask, info)
 
 
 def prep(data, A, bval, bvec, out: Path, shell=2800.0):
     """prepare(), written to out/{dwi.nhdr, dwi.raw, mask.nrrd} for _ukf_torch.load; returns (info, mask)."""
     out.mkdir(parents=True, exist_ok=True)
-    stored, hdr, mask, info = prepare(data, A, bval, bvec, shell)
-    M = A[:3, :3]
-    nrrd.write(str(out / "dwi.nhdr"), stored, hdr, detached_header=True)
+    t = prepare(data, A, bval, bvec, shell)
+    mask, info, M = t.mask, t.info, A[:3, :3]
+    nrrd.write(str(out / "dwi.nhdr"), t.dwi, t.header, detached_header=True)
     nrrd.write(str(out / "mask.nrrd"), mask.astype(np.uint8),
                {"type": "unsigned char", "dimension": 3, "space": "right-anterior-superior", "sizes": list(mask.shape),
                 "space directions": [M[:, 0].tolist(), M[:, 1].tolist(), M[:, 2].tolist()], "kinds": ["space"] * 3,

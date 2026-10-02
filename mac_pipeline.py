@@ -46,7 +46,7 @@ def stage(name, t0):
     sync(); T[name] = round(time.time() - t0, 2); print(name, T[name], "s", flush=True)
 
 t0 = time.time(); D = U.load(str(H / "dwi.nhdr"), str(H / "mask.nrrd")); stage("load", t0)
-off = np.array([-4158, -2201, -2855], float); off = off / np.linalg.norm(off) * 0.5
+off = U.SRAND0_OFFSET                                                    # the binary's seed offset (macOS srand(0))
 t0 = time.time(); pts, *_ = U.seeds(D, off); stage("seeds", t0)
 t0 = time.time(); fibers, st = U.track(D, off, backend="metal"); stage("ukf", t0)
 
