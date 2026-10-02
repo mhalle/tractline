@@ -53,8 +53,11 @@ def labels(fibers, draws=range(5)):
     vote = np.array([np.bincount(c, minlength=43).argmax() for c in np.stack(out).T])
     return vote, [f for f, k in zip(fibers, keep) if k], length[keep]
 
+import argparse
+ap = argparse.ArgumentParser(); ap.add_argument("--a", default="PAT16"); ap.add_argument("--b", default="PAT16_topup")
+ap.add_argument("--tag", default=""); args = ap.parse_args()
 runs = {}
-for name in ("PAT16", "PAT16_topup"):
+for name in (args.a, args.b):
     O = TD / "ds001226/derived" / name
     D = U.load(str(O / "dwi.nhdr"), str(O / "mask.nrrd"))
     pts, *_ = U.seeds(D, off)
@@ -67,7 +70,7 @@ for name in ("PAT16", "PAT16_topup"):
 def shares(lab):
     c = np.bincount(lab, minlength=43)[:42].astype(float)
     return c / c.sum()
-a, b = runs["PAT16"], runs["PAT16_topup"]
+a, b = runs[args.a], runs[args.b]
 sa, sb = shares(a["lab"]), shares(b["lab"])
 named = (sa > 0.002) | (sb > 0.002)
 rel = np.abs(sb[named] - sa[named]) / np.maximum(sa[named], 1e-9)
@@ -82,10 +85,10 @@ def centers(r):
 ca, cb = centers(a), centers(b)
 moved = {TRACT_NAMES[t]: round(float(np.linalg.norm(ca[t] - cb[t])), 1) for t in ca if t in cb}
 mv = np.array(list(moved.values()))
-res = {"data": "ds001226 PAT16, b0 + b=2800, as acquired against FSL topup + applytopup (topup_ref.json)",
-       "as_acquired": {"seeds": a["seeds"], "streamlines_ge_40mm": len(a["kept"]), "median_length_mm": round(float(np.median(a["length"])), 1),
+res = {"data": f"ds001226 PAT16, b0 + b=2800: {args.a} against {args.b}",
+       args.a: {"seeds": a["seeds"], "streamlines_ge_40mm": len(a["kept"]), "median_length_mm": round(float(np.median(a["length"])), 1),
                        "other_fraction": round(float((a["lab"] == 42).mean()), 4), "track_s": a["track_s"]},
-       "topup_corrected": {"seeds": b["seeds"], "streamlines_ge_40mm": len(b["kept"]), "median_length_mm": round(float(np.median(b["length"])), 1),
+       args.b: {"seeds": b["seeds"], "streamlines_ge_40mm": len(b["kept"]), "median_length_mm": round(float(np.median(b["length"])), 1),
                            "other_fraction": round(float((b["lab"] == 42).mean()), 4), "track_s": b["track_s"]},
        "tract_mix_r": round(float(np.corrcoef(sa, sb)[0, 1]), 4),
        "per_tract_abs_rel_change_median_90th": [round(float(np.median(rel)), 3), round(float(np.quantile(rel, 0.9)), 3)],
@@ -95,4 +98,4 @@ res = {"data": "ds001226 PAT16, b0 + b=2800, as acquired against FSL topup + app
        "tract_center_moved_mm": dict(sorted(moved.items(), key=lambda x: -x[1])),
        "for_scale": "TractCloud's own redraws on one tractogram: tract mix r 0.995-0.999 (pat16_seeding_floor.json)"}
 print(json.dumps(res, indent=1))
-(HERE / "results" / "pat16_topup_compare.json").write_text(json.dumps(res, indent=1))
+(HERE / "results" / f"pat16_topup_compare{args.tag}.json").write_text(json.dumps(res, indent=1))

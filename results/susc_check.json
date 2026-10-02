@@ -1,0 +1,175 @@
+{
+ "device": "mps",
+ "iter_scale": 3,
+ "seconds": 33.4,
+ "brain_voxels": 94505,
+ "field_r_vs_topup": 0.8931,
+ "field_abs_diff_hz_median_99th": [
+  7.42,
+  63.15
+ ],
+ "displacement_diff_mm_median_99th_max": [
+  0.493,
+  4.199,
+  11.572
+ ],
+ "field_hz_ours_1_50_99": [
+  -64.9,
+  -1.8,
+  144.5
+ ],
+ "field_hz_topup_1_50_99": [
+  -76.1,
+  -3.7,
+  138.3
+ ],
+ "motion_ours_translation_mm_max": 1.068,
+ "motion_topup_translation_mm_max": 1.049,
+ "motion_abs_diff_translation_mm_max": 2.117,
+ "levels": [
+  {
+   "level": 1,
+   "grid": [
+    48,
+    48,
+    30
+   ],
+   "knots": [
+    15,
+    15,
+    11
+   ],
+   "ssd_before": 439.9429016113281,
+   "ssd_after": 379.166748046875,
+   "motion": true
+  },
+  {
+   "level": 2,
+   "grid": [
+    48,
+    48,
+    30
+   ],
+   "knots": [
+    19,
+    19,
+    13
+   ],
+   "ssd_before": 506.67047119140625,
+   "ssd_after": 464.4705505371094,
+   "motion": true
+  },
+  {
+   "level": 3,
+   "grid": [
+    48,
+    48,
+    30
+   ],
+   "knots": [
+    19,
+    19,
+    13
+   ],
+   "ssd_before": 620.5003662109375,
+   "ssd_after": 598.4182739257812,
+   "motion": true
+  },
+  {
+   "level": 4,
+   "grid": [
+    48,
+    48,
+    30
+   ],
+   "knots": [
+    27,
+    27,
+    18
+   ],
+   "ssd_before": 698.98046875,
+   "ssd_after": 643.4637451171875,
+   "motion": true
+  },
+  {
+   "level": 5,
+   "grid": [
+    48,
+    48,
+    30
+   ],
+   "knots": [
+    27,
+    27,
+    18
+   ],
+   "ssd_before": 643.4637451171875,
+   "ssd_after": 634.3471069335938,
+   "motion": true
+  },
+  {
+   "level": 6,
+   "grid": [
+    96,
+    96,
+    60
+   ],
+   "knots": [
+    51,
+    51,
+    33
+   ],
+   "ssd_before": 1469.4544677734375,
+   "ssd_after": 381.48419189453125,
+   "motion": false
+  },
+  {
+   "level": 7,
+   "grid": [
+    96,
+    96,
+    60
+   ],
+   "knots": [
+    51,
+    51,
+    33
+   ],
+   "ssd_before": 413.4682922363281,
+   "ssd_after": 369.5810852050781,
+   "motion": false
+  },
+  {
+   "level": 8,
+   "grid": [
+    96,
+    96,
+    60
+   ],
+   "knots": [
+    51,
+    51,
+    33
+   ],
+   "ssd_before": 369.5811462402344,
+   "ssd_after": 345.6723937988281,
+   "motion": false
+  },
+  {
+   "level": 9,
+   "grid": [
+    96,
+    96,
+    60
+   ],
+   "knots": [
+    51,
+    51,
+    33
+   ],
+   "ssd_before": 345.6723937988281,
+   "ssd_after": 338.70794677734375,
+   "motion": false
+  }
+ ]
+}

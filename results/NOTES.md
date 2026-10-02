@@ -859,3 +859,33 @@ settings, Metal kernel; TractCloud 5-draw vote) on the scan as acquired and as c
   most distorted regions are larger than a whole tract's center shows.
 - **Conclusion:** correction matters for planning; the faithful clinical pipeline gets a correction
   stage, topup's output being the reference our own implementation has to match.
+
+## 2026-10-01 Our susceptibility correction (_susc.py), first version, against topup
+
+topup's model in torch (B-spline field, displacement along phase encoding with the Jacobian, rigid
+motion, bending-energy regularization weighted by the current mean squared difference, b02b0.cnf's 9
+levels; L-BFGS; trilinear), `susc_check.py` → `susc_check_*.json`, PAT16's 8 b0s, on MPS: **33 s**
+against topup's 617 s on the CPU.
+
+- Getting there: the 3-axis einsum built a huge intermediate (out of memory, slow) - contracted one
+  axis at a time; lambda over five orders of magnitude made no difference (r 0.893 throughout); the
+  motion was the problem - holding it at zero gave r 0.958, better than estimating it - because L-BFGS
+  stepped field coefficients (tens of Hz) and rotations (hundredths of a radian) alike; with the
+  parameters scaled (10 Hz, 0.01 rad per unit) the estimate with motion reaches **r 0.967**.
+- **Field against topup, in the brain:** median 0.44 mm of displacement difference, 2.4 mm at the
+  99th percentile (1.7 mm deep inside, 4.5 mm at the edge).
+- **The corrected b0s:** AP-PA disagreement (relative RMS, what both minimize) 0.123 ours, 0.122
+  topup's, 0.543 uncorrected; correlation with topup's corrected images 0.964 (uncorrected 0.899).
+- **Downstream** (`pat16_topup_compare.py`, all 102 volumes corrected, faithful pipeline), against
+  topup's correction (topup + applytopup):
+
+  | | tract mix r | tract centers moved, median / 90th / max |
+  |---|---|---|
+  | uncorrected | 0.993 | 2.3 / 4.5 / 8.6 mm |
+  | ours (field and trilinear application) | 0.995 | 1.7 / 3.7 / 8.3 mm |
+  | control: topup's field, our trilinear application | 0.998 | 1.4 / 3.1 / 7.6 mm |
+
+  The control is the floor (tracking is chaotic; any interpolation difference perturbs it) and
+  confirms the sign convention. Ours closes about two-thirds of the gap on tract centers and a third
+  on the tract mix: the field itself has to come closer. Next: cubic B-spline sampling along the
+  phase-encoding axis at the fine levels (topup's interp=spline) and in the application.
