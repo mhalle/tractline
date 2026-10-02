@@ -59,6 +59,13 @@ def load(nhdr: str, mask_path: str, device="cpu", data=None) -> dict:
     if data is not None:
         assert data.shape == raw.shape, (data.shape, raw.shape)
         raw = data
+    m, _ = nrrd.read(mask_path)
+    return from_arrays(raw, h, m, device)
+
+
+def from_arrays(raw, h: dict, m, device="cpu") -> dict:
+    """load() without files: the DWI's voxels (i, j, k, G), its NRRD header as a dict (as pynrrd reads
+    it, or as _prep.prepare builds it) and the mask (i, j, k)."""
     keys = sorted(k for k in h if k.startswith("DWMRI_gradient_"))
     gtxt = [h[k] for k in keys]
     bmax_int = int(re.match(r"\s*(-?\d+)", h["DWMRI_b-value"]).group(1))
@@ -99,7 +106,6 @@ def load(nhdr: str, mask_path: str, device="cpu", data=None) -> dict:
     g = g / np.linalg.norm(g, axis=1)[:, None]
     g2 = np.concatenate([g, -g]); b2 = np.concatenate([b, b])
 
-    m, _ = nrrd.read(mask_path)
     mask = np.ascontiguousarray(np.asarray(m).transpose(2, 1, 0)).astype(np.uint8).view(np.int8)  # signed char
     voxel = spacing[::-1].copy()                               # (k, j, i)
     t = lambda a, dt=torch.float64: torch.as_tensor(np.ascontiguousarray(a), dtype=dt, device=device)

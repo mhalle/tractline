@@ -1070,3 +1070,17 @@ ours); **0.12 s against 10.07 s** (median). A torch version (unfold + median, MP
 exact but 3.0 s: sorting 729 values per voxel. `_prep.py` uses it: preparation 0.22 s (int16) /
 0.36 s (float32) instead of 10-12 s, so scan to labels with correction is about **64 s** (76 s less
 11.9 s; not re-measured end to end). The first call in a fresh environment compiles (numba, cached).
+
+### No files between the scan and the labels
+
+`_prep.prepare` builds the tracker's input in memory (the DWI as stored, its NRRD header, the mask)
+and `_ukf_torch.from_arrays` takes it - `load` now reads the files and calls it, `_prep.prep` writes
+them for the scripts that want them. Tracker inputs identical, tensor for tensor, both ways (int16
+and float32 scans). `cohort.py` keeps everything in memory (only the results are written): PAT16 end
+to end reproduces the committed `cohort/PAT16.json` exactly apart from timings, **scan to labels
+65.2 s** (75.9 before; measured).
+- The corrected scan's mask took 2.3 s there, not 0.12: its b0 has 541,775 distinct values (7,430 as
+  acquired), and `_median` allocated and zeroed a histogram that size per row. Now one histogram per
+  thread, cleared by removing each row's last window, with a coarse layer of 256-bin block counts the
+  median's walk skips through: **0.29 s corrected, 0.18 s as acquired**; `median_check.py` still
+  identical on all 14 volumes and the random filters.

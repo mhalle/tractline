@@ -1,7 +1,7 @@
 """One ds001226 patient end to end on this Mac: our susceptibility correction, the faithful pipeline on
 the scan as acquired and as corrected, and both against the patient's T1 and tumor mask.
 
-    DATA/.venv/bin/python bench/tractography/cohort.py --sub PAT13 [--keep]
+    DATA/.venv/bin/python bench/tractography/cohort.py --sub PAT13
 
   1. correction (_susc.py): the field from the AP b0s and the PA pair (estimate, MPS, trilinear),
      applied to the 102 AP volumes (cubic B-splines along phase encoding, Jacobian, CPU float64);
@@ -18,26 +18,26 @@ the scan as acquired and as corrected, and both against the patient's T1 and tum
      against our own displacement map (r, slope); precision: the ours-arm fit on b0s 1-3 and 4-6.
 
 Writes results/cohort/<sub>.json and DATA/ds001226/derived/<sub>/cohort_fields.npz (residual maps,
-masks, our displacement); the prepared NRRDs and the corrected NIfTI are deleted unless --keep.
+masks, our displacement). Nothing in between touches the disk: the corrected DWI, the tracker's input
+(_prep.prepare -> _ukf_torch.from_arrays) and the tractograms stay in memory.
 """
-import argparse, json, shutil, time
+import argparse, json, time
 from pathlib import Path
 import numpy as np, nibabel as nib, torch
 from scipy.ndimage import binary_dilation
 import _susc as S
 import _ukf_torch as U
-from _prep import prep
+from _prep import prepare
 from _t1check import T1Check, tumor_regions, stats
 from _tractcloud import Labeler, TRACT_NAMES
 from _subject import load
 
-ap = argparse.ArgumentParser(); ap.add_argument("--sub", required=True); ap.add_argument("--keep", action="store_true")
+ap = argparse.ArgumentParser(); ap.add_argument("--sub", required=True)
 args = ap.parse_args()
 HERE = Path(__file__).resolve().parent
 TD = Path.home() / "tmp/data/tractography/ds001226"
 SUB = TD / f"sub-{args.sub}/ses-preop"
-OUT = TD / "derived" / args.sub / "cohort"
-OUT.mkdir(parents=True, exist_ok=True)
+(TD / "derived" / args.sub).mkdir(parents=True, exist_ok=True)
 (HERE / "results/cohort").mkdir(exist_ok=True)
 torch.set_num_threads(8)
 T = {}
@@ -75,8 +75,8 @@ off = np.array([-4158, -2201, -2855], float); off = off / np.linalg.norm(off) * 
 lab = Labeler()
 arms, masks = {}, {}
 for name, data in (("uncorrected", raw), ("ours", corr)):
-    t0 = time.time(); info, masks[name] = prep(data, A, bval, bvec, OUT / name); stage(f"{name}_prep", t0)
-    t0 = time.time(); D = U.load(str(OUT / name / "dwi.nhdr"), str(OUT / name / "mask.nrrd")); stage(f"{name}_load", t0)
+    t0 = time.time(); stored, hdr, masks[name], info = prepare(data, A, bval, bvec); stage(f"{name}_prep", t0)
+    t0 = time.time(); D = U.from_arrays(stored, hdr, masks[name]); stage(f"{name}_load", t0)
     t0 = time.time(); pts, *_ = U.seeds(D, off); stage(f"{name}_seeds", t0)
     t0 = time.time(); fib, st = U.track(D, off, backend="metal"); stage(f"{name}_ukf", t0)
     t0 = time.time(); lab(fib, draws=[0]); stage(f"{name}_tractcloud_one_draw", t0)
@@ -154,6 +154,4 @@ res = {"subject": args.sub, "data": f"ds001226 sub-{args.sub} ses-preop (CC0): A
        "t1": t1res, "columns": "|displacement| mm: median / 90th / 99th percentile"}
 (HERE / f"results/cohort/{args.sub}.json").write_text(json.dumps(res, indent=1))
 np.savez_compressed(TD / "derived" / args.sub / "cohort_fields.npz", **fields)
-if not args.keep:
-    shutil.rmtree(OUT)
 print(json.dumps({k: res[k] for k in ("tumor", "pipeline_seconds_corrected", "correction_changes")} | {"t1": {k: {kk: vv for kk, vv in v.items() if kk.startswith("residual") or kk.startswith("uncorr")} for k, v in t1res.items()}}, indent=1))

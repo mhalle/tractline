@@ -115,8 +115,8 @@
   }
  ],
  "seconds_median": {
-  "dipy": 10.07,
-  "ours": 0.12
+  "dipy": 10.19,
+  "ours": 0.187
  },
  "all_identical": true
 }
