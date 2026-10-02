@@ -1431,3 +1431,16 @@ to labels (estimate 38.5 s, UKF 50.7, TractCloud 4.1), against 92.2 s with L-BFG
 on this machine Gauss-Newton costs what L-BFGS did - its gain here is accuracy, not time. On the M2
 the same estimate takes 22.6 s on the CPU and 18 s with the GPU; the x86 run's per-step cost (small
 tensor contractions, many syncs into torch's thread pool) is the likely difference, not measured.
+
+## 2026-10-02 Can the rank field be rebuilt from a TRX's top-k? (for the record; not the plan)
+
+Decided instead: tractline's TRX stays plain, for compatibility only (tracts as groups, tract
+probabilities); rankfield, when it returns, is wired into the exporter and encodes from the labeler's
+in-memory log-probabilities, as `encode_payload` does - no format arrays or format dependencies in the
+TRX. The test, on 50,000 streamlines of HCP 101006's TractCloud log-probabilities (float16, as the
+pipeline holds them), at the pipeline's field (keep "clip", depth 6, clip 8, temperature 1): from
+each streamline's top 6 classes alone (stable order, ties to the lower index) the rank and gap-byte
+planes are identical to the full encode; the tail (dropped mass) is not (96 % differ) - it needs the
+sum over all 1,600 classes; with that one number stored, 49,997 of 50,000 tails match, 3 differ by up
+to 21 / 65,535 (not chased). Deeper fields, the "shell" rule and other tail temperatures would need
+the full log-probabilities.
