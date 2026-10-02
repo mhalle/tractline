@@ -3,36 +3,43 @@
  "torch": "2.14.1",
  "rankfield": "0.3.10",
  "seeds": 98491,
- "fibers": 85034,
- "fiber_steps": 27459263,
- "streamlines_ge_40mm": 74245,
+ "fibers": 85038,
+ "fiber_steps": 27470256,
+ "streamlines_ge_40mm": 74278,
  "seconds": {
-  "load": 1.17,
-  "seeds": 6.51,
-  "ukf": 193.92,
-  "features": 0.92,
-  "context": 0.39,
-  "network_fp32": 10.56,
-  "network_fp16": 14.0,
-  "field": 4.84
+  "load": 1.1,
+  "seeds": 5.55,
+  "ukf": 135.23,
+  "features": 0.73,
+  "context": 0.37,
+  "network_fp32": 8.67,
+  "network_fp16": 9.29,
+  "field": 0.7,
+  "geometry_encode_both_grids_with_roundtrip_check": 2.02
  },
- "total_s": 232.3,
- "ukf_steps_per_s": 141601,
+ "total_s": 163.7,
+ "ukf_steps_per_s": 203137,
  "fp16_vs_fp32_on_mps": {
-  "cluster_labels_differ": 3329,
-  "tract_labels_differ": 1064
+  "cluster_labels_differ": 2872,
+  "tract_labels_differ": 829
  },
  "field": {
   "depth": 6,
-  "bytes": 1410655,
-  "bytes_per_streamline": 19.0
+  "bytes": 1411282,
+  "bytes_per_streamline": 19.0,
+  "blosc_mb": 1.01
  },
- "labels_metal_vs_f64_cuda": {
-  "both": 74041,
-  "vote_agreement": 0.8892,
-  "other_fraction_metal": 0.6475,
-  "other_fraction_f64": 0.6474,
-  "seconds": 158.6,
-  "for_scale": "ukf_labels.json: float32 on CUDA 0.905, TractCloud's own floor 0.926, bootstrap 0.78"
- }
+ "sizes_streamlines_ge_40mm": {
+  "streamlines": 74278,
+  "vertices": 4357028,
+  "float32_points_mb": 52.28,
+  "geometry": {
+   "0.05_mm_grid_mb": 7.06,
+   "0.01_mm_grid_mb": 10.68
+  },
+  "compact_total_mb_0.05": 8.07,
+  "compact_total_mb_0.01": 11.69
+ },
+ "all_streamlines_float32_mb": 54.37,
+ "data": "hardi"
 }

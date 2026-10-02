@@ -828,3 +828,5 @@ deterministic. 2,011 HARDI seeds: 1,491 / 1,729 fibers within 0.1 mm of float64,
 0.06 mm, density r 0.988. **PAT16 (50 gradients): UKF 27.6 s (416 k steps/s)**, against 34.3 s with
 the Cholesky inverses alone and 43.9 s before; the pipeline 38 s with the float16 comparison pass
 (34 s without). The fewer the gradients, the more the right-sized arrays help.
+Whole HARDI brain with the new default (`mac_pipeline.json`): UKF 135 s (203 k steps/s), against
+176-194 s with the first Metal kernel; the pipeline 154 s without the float16 comparison pass.
