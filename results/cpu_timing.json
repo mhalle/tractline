@@ -1,0 +1,53 @@
+{
+ "subject": "PAT16",
+ "machine": "Apple M2",
+ "torch_threads": 8,
+ "seconds": {
+  "cpu": {
+   "field_estimate": 77.69,
+   "field_apply": 1.27,
+   "prep": 0.78,
+   "load": 0.26,
+   "ukf": 579.79,
+   "tractcloud": 52.89,
+   "encode_field": 0.55,
+   "encode_geometry": 0.42
+  },
+  "mps": {
+   "field_estimate": 29.3,
+   "field_apply": 1.6,
+   "prep": 0.34,
+   "load": 0.25,
+   "ukf": 27.44,
+   "tractcloud": 4.48,
+   "encode_field": 0.62,
+   "encode_geometry": 0.37
+  }
+ },
+ "scan_to_payload_s": {
+  "cpu": 713.6,
+  "mps": 64.4
+ },
+ "ukf_steps_per_s": {
+  "cpu": 19725,
+  "mps": 416422
+ },
+ "cpu_vs_gpu": {
+  "field_displacement_diff_mm_median_99th": [
+   0.068,
+   0.505
+  ],
+  "fibers": [
+   41892,
+   41895
+  ],
+  "fiber_steps": [
+   11436482,
+   11426632
+  ],
+  "tract_mix_r": 0.9932,
+  "same_seed_streamlines": 24161,
+  "label_agreement": 0.3919,
+  "for_scale": "TractCloud's own redraws: label agreement 0.926 (5-draw vote), tract mix r 0.995-0.999"
+ }
+}

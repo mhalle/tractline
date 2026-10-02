@@ -1,0 +1,48 @@
+{
+ "seeds": 2393,
+ "against_float64": {
+  "float32, batch 50000": {
+   "fibers": [
+    2101,
+    2101
+   ],
+   "matched": 2101,
+   "same_point_count": 0.8939,
+   "all_points_within_0.1mm": 0.7592,
+   "ends_within_0.06mm": 0.8386,
+   "density_r": 0.98728
+  },
+  "float32, batch 1024": {
+   "fibers": [
+    2101,
+    2101
+   ],
+   "matched": 2101,
+   "same_point_count": 0.8953,
+   "all_points_within_0.1mm": 0.7592,
+   "ends_within_0.06mm": 0.8384,
+   "density_r": 0.98734
+  },
+  "float32 fast, batch 1024": {
+   "fibers": [
+    2101,
+    2101
+   ],
+   "matched": 2101,
+   "same_point_count": 0.9548,
+   "all_points_within_0.1mm": 0.9015,
+   "ends_within_0.06mm": 0.9341,
+   "density_r": 0.99388
+  }
+ },
+ "speed_quarter_of_seeds": {
+  "8 workers, exact": {
+   "seconds": 50.3,
+   "k_steps_per_s": 57.1
+  },
+  "8 workers, fast": {
+   "seconds": 36.4,
+   "k_steps_per_s": 79.1
+  }
+ }
+}

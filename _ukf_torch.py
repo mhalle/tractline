@@ -168,9 +168,39 @@ def _normalize(v):
     return v / torch.sqrt((v * v).sum(-1, keepdim=True))
 
 
+def _H_gemm(D: dict, X: torch.Tensor) -> torch.Tensor:
+    """H with u'Du as one matrix product: the tensor's six components against the gradients' six
+    products (u0^2, u1^2, u2^2, 2 u0 u1, 2 u0 u2, 2 u1 u2), -b folded in. Another rounding than the
+    binary's order (track(fast=True)); measured against float64 in ukf_cpu_check.py."""
+    N = D["N"]
+    g, b = D["g"][:N], D["b"][:N]
+    G = -b[None] * torch.stack([g[:, 0] * g[:, 0], g[:, 1] * g[:, 1], g[:, 2] * g[:, 2],
+                                2 * g[:, 0] * g[:, 1], 2 * g[:, 0] * g[:, 2], 2 * g[:, 1] * g[:, 2]])   # (6, N)
+    out = 0
+    for o in (0, 5):
+        m = _normalize(X[..., o:o + 3])
+        m = torch.where(m[..., :1] < 0, -m, m)
+        l1 = X[..., o + 3].clamp_min(LMIN)
+        l2 = X[..., o + 4].clamp_min(LMIN)
+        m0, m1, m2 = m[..., 0], m[..., 1], m[..., 2]
+        R = torch.stack([torch.stack([m0, m1, m2], -1),
+                         torch.stack([m1, m1 * m1 / (1 + m0) - 1, m1 * m2 / (1 + m0)], -1),
+                         torch.stack([m2, m1 * m2 / (1 + m0), m2 * m2 / (1 + m0) - 1], -1)], -2)
+        L = torch.stack([l1, l2, l2], -1)
+        Dm = (R * L[..., None, :]) @ R.transpose(-1, -2) * 1e-6
+        d6 = torch.stack([Dm[..., 0, 0], Dm[..., 1, 1], Dm[..., 2, 2], Dm[..., 0, 1], Dm[..., 0, 2], Dm[..., 1, 2]], -1)
+        out = out + torch.exp(d6 @ G) * 0.5
+    return torch.cat([out, out], -1)
+
+
 def H(D: dict, X: torch.Tensor) -> torch.Tensor:
-    """filter_Simple2T::H: X (..., 10) -> (..., 2N)."""
-    g, b = D["g"], D["b"]
+    """filter_Simple2T::H: X (..., 10) -> (..., 2N). Computed for the N gradients and repeated: the
+    other N are the same gradients negated (load), and u'Du is unchanged by u -> -u, bit for bit
+    (every product of two negated factors is the product of the factors, exactly)."""
+    if D.get("fast"):
+        return _H_gemm(D, X)
+    N = D["N"]
+    g, b = D["g"][:N], D["b"][:N]
     out = 0
     for o in (0, 5):
         m = _normalize(X[..., o:o + 3])
@@ -192,7 +222,7 @@ def H(D: dict, X: torch.Tensor) -> torch.Tensor:
             Du_r = Dm[..., r, 0, None] * u0 + Dm[..., r, 1, None] * u1 + Dm[..., r, 2, None] * u2
             q = q + ur * Du_r
         out = out + torch.exp(-b * q) * 0.5
-    return out
+    return torch.cat([out, out], -1)
 
 
 def F(X: torch.Tensor) -> torch.Tensor:
@@ -214,7 +244,10 @@ def ukf_step(D: dict, x, P, z, Q, Rs):
     xh = torch.einsum("s,bsk->bk", W, X)
     Xt = X - xh[:, None]
     Pm = torch.einsum("bsi,s,bsj->bij", Xt, W, Xt) + Q
-    Yk = torch.linalg.inv(Pm)
+    if D.get("fast"):                                                # both SPD: inverses from their Cholesky factors
+        Yk = torch.cholesky_inverse(torch.linalg.cholesky_ex(Pm)[0])
+    else:
+        Yk = torch.linalg.inv(Pm)
     yh = torch.einsum("bij,bj->bi", Yk, xh)
     Z = H(D, X)
     zh = torch.einsum("s,bsn->bn", W, Z)
@@ -223,7 +256,7 @@ def ukf_step(D: dict, x, P, z, Q, Rs):
     r = 1.0 / Rs
     I = (Ht * r) @ Ht.transpose(1, 2)
     i = torch.einsum("bin,bn->bi", Ht * r, (z - zh) + torch.einsum("bin,bi->bn", Pxz, yh))
-    Pn = torch.linalg.inv(Yk + I)
+    Pn = torch.cholesky_inverse(torch.linalg.cholesky_ex(Yk + I)[0]) if D.get("fast") else torch.linalg.inv(Yk + I)
     return torch.einsum("bij,bj->bi", Pn, i + yh), Pn
 
 
@@ -341,13 +374,73 @@ def advance(D: dict, xa, sa, Pa, oa, Q, Rs, step, max_steps, step_length=0.3, st
     return xa, sa, Pa, m1, stop, {"swap": sw, "swap2": sw2, "fa": fa, "mean_signal": mean_sig, "inside": inside}
 
 
+def _track_block(D: dict, x, state, old, step_fn, params, s0=0, capture=None, progress=None):
+    """One batch of half-fibers, from their seed states to their recorded points: (list of (n_rec, 3)
+    (k, j, i) arrays, steps taken). A batch's results depend on its composition at the rounding level
+    (vectorized math rounds by position), so blocks are fixed by `batch`, never by worker count."""
+    dtype, dev = x.dtype, x.device
+    Q, Rs, max_steps, spr = params["Q"], params["Rs"], params["max_steps"], params["spr"]
+    nb = len(x)
+    P = (P0 * torch.eye(10, dtype=dtype, device=dev)).expand(nb, 10, 10).clone()
+    rec = torch.full((nb, max_steps // spr + 2, 3), float("nan"), dtype=dtype, device=dev)
+    rec[:, 0] = x
+    nrec = torch.ones(nb, dtype=torch.long, device=dev)
+    alive = torch.arange(nb, device=dev)
+    xa, sa, Pa, oa = x.clone(), state.clone(), P, old.clone()            # the live half-fibers, compacted as they stop
+    step, steps = 0, 0
+    while len(alive):
+        step += 1
+        steps += len(alive)
+        if capture:
+            capture(step, s0 + alive, xa, sa, Pa, oa)
+        xa, sa, Pa, m1, stop, _ = step_fn(D, xa, sa, Pa, oa, Q, Rs, step, max_steps, params["step_length"],
+                                          params["stopping_fa"], params["stopping_threshold"])
+        go = torch.nonzero(~stop).squeeze(1)                              # one synchronization; then plain gathers
+        if (step + 1) % spr == 0:
+            ia = alive[go]
+            rec[ia, nrec[ia]] = xa[go]
+            nrec[ia] += 1
+        alive = alive[go]
+        xa, sa, Pa, oa = xa[go], sa[go], Pa[go], m1[go]                     # a stopped half-fiber's state is never read again
+        if progress and step % 50 == 0:
+            progress(s0, step, len(alive))
+    r = rec.cpu().numpy(); nr = nrec.cpu().numpy()
+    return [r[k, :nr[k]] for k in range(nb)], steps
+
+
+_WORKER_D = None
+
+
+def _worker_init(D, threads):
+    global _WORKER_D
+    torch.set_num_threads(threads)
+    _WORKER_D = D
+
+
+def _worker_block(args):
+    x, st, d, params = args
+    return _track_block(_WORKER_D, x, st, d, advance, params)
+
+
+def _parallel(D, blocks, params, workers, threads_per_worker):
+    """The blocks on `workers` processes (spawned: macOS and Windows cannot fork safely), D's tensors
+    shared, not copied; results in block order."""
+    import torch.multiprocessing as tmp
+    for v in D.values():
+        if torch.is_tensor(v):
+            v.share_memory_()
+    with tmp.get_context("spawn").Pool(workers, initializer=_worker_init, initargs=(D, threads_per_worker)) as pool:
+        return pool.map(_worker_block, [(x, st, d, params) for _, x, st, d in blocks], chunksize=1)
+
+
 def track(D: dict, offset_kji=SRAND0_OFFSET, seeding_threshold=0.1, stopping_fa=0.08, stopping_threshold=0.06,
           step_length=0.3, record_length=1.8, max_half_length=250.0, Qm=0.001, Ql=50.0, Rs=0.02,
           batch=50_000, progress=None, select=None, dtype=torch.float64, device=None, capture=None,
-          seed_points=None, backend="torch"):
+          seed_points=None, backend="torch", workers=1, threads_per_worker=1, fast=False):
     """All fibers. Returns (points list of (n, 3) RAS arrays in seed order, stats). With `select`
     (indices into the seed list), only those seeds are tracked; stats["seed_index"] then says which
-    seed each returned fiber came from.
+    seed each returned fiber came from, stats["seed_voxel"] its mask voxel (k, j, i) - the key to
+    match fibers across runs whose masks, and so seed lists, differ.
 
     `dtype` is the tracking arithmetic: float64 is the binary's; float32 is what an Apple GPU can do.
     Seeds and their initial states are computed in float64 either way, so two dtypes start from the
@@ -358,7 +451,10 @@ def track(D: dict, offset_kji=SRAND0_OFFSET, seeding_threshold=0.1, stopping_fa=
     replaces the seeds: every point is tracked from its state on this data (seed_states), none
     rejected, and `select` indexes them. `backend` "metal" takes each step with _ukf_metal's kernel
     (float32, device "mps"), "triton" with _ukf_triton's and "triton_block" with _ukf_triton_block's
-    (float32, "cuda"); the loop, the recording and the joining stay these."""
+    (float32, "cuda"); the loop, the recording and the joining stay these. `workers` > 1 (the CPU
+    torch tracker) tracks the batches on that many processes of `threads_per_worker` threads each;
+    the result is the serial one at the same `batch`, bit for bit. `fast` (the torch tracker): H as a
+    matrix product and the two inverses from Cholesky factors - another rounding, not the binary's."""
     step_fn = advance
     if backend == "metal":
         import _ukf_metal
@@ -375,7 +471,10 @@ def track(D: dict, offset_kji=SRAND0_OFFSET, seeding_threshold=0.1, stopping_fa=
         pts = torch.as_tensor(seed_points, dtype=torch.float64, device=D["A"].device)
         fwd, inv, e1, fa0, _ = seed_states(D, pts, seeding_threshold)
     sel = torch.arange(len(pts), device=pts.device) if select is None else torch.as_tensor(select, device=pts.device)
+    vox_kji = np.rint(pts[sel].cpu().numpy() - np.asarray(offset_kji, float)).astype(np.int64)   # each seed's mask voxel (float64 seeds)
     D = at_dtype(D, dtype, device)
+    if fast:
+        D = {**D, "fast": True}
     dev = D["A"].device
     pts, fwd, inv, e1, fa0 = (t[sel].to(dtype).to(dev) for t in (pts, fwd, inv, e1, fa0))
     sel = sel.cpu()
@@ -386,36 +485,16 @@ def track(D: dict, offset_kji=SRAND0_OFFSET, seeding_threshold=0.1, stopping_fa=
     Q = torch.diag(torch.tensor([Qm] * 3 + [Ql] * 2 + [Qm] * 3 + [Ql] * 2, dtype=dtype, device=dev))
     max_steps = math.ceil(max_half_length / step_length)
     spr = int(record_length / step_length)
-    halves = []                                                      # per half-fiber: (n_rec, 3) in (k, j, i)
-    steps_total = 0
-    for s0 in range(0, len(x0), batch):
-        x = x0[s0:s0 + batch].clone(); state = st0[s0:s0 + batch].clone(); old = dir0[s0:s0 + batch].clone()
-        nb = len(x)
-        P = (P0 * torch.eye(10, dtype=dtype, device=dev)).expand(nb, 10, 10).clone()
-        rec = torch.full((nb, max_steps // spr + 2, 3), float("nan"), dtype=dtype, device=dev)
-        rec[:, 0] = x
-        nrec = torch.ones(nb, dtype=torch.long, device=dev)
-        alive = torch.arange(nb, device=dev)
-        step = 0
-        while len(alive):
-            step += 1
-            steps_total += len(alive)
-            xa, sa, Pa, oa = x[alive], state[alive], P[alive], old[alive]
-            if capture:
-                capture(step, s0 + alive, xa, sa, Pa, oa)
-            xa, sa, Pa, m1, stop, _ = step_fn(D, xa, sa, Pa, oa, Q, Rs, step, max_steps, step_length,
-                                              stopping_fa, stopping_threshold)
-            go = ~stop
-            if (step + 1) % spr == 0:
-                ia = alive[go]
-                rec[ia, nrec[ia]] = xa[go]
-                nrec[ia] += 1
-            x[alive], state[alive], P[alive], old[alive] = xa, sa, Pa, m1
-            alive = alive[go]
-            if progress and step % 50 == 0:
-                progress(s0, step, len(alive))
-        r = rec.cpu().numpy(); nr = nrec.cpu().numpy()
-        halves += [r[k, :nr[k]] for k in range(nb)]
+    params = dict(Q=Q, Rs=Rs, max_steps=max_steps, spr=spr, step_length=step_length, stopping_fa=stopping_fa,
+                  stopping_threshold=stopping_threshold)
+    blocks = [(s0, x0[s0:s0 + batch], st0[s0:s0 + batch], dir0[s0:s0 + batch]) for s0 in range(0, len(x0), batch)]
+    if workers > 1:
+        assert backend == "torch" and dev.type == "cpu" and capture is None, "workers: the CPU torch tracker only"
+        done = _parallel(D, blocks, params, workers, threads_per_worker)
+    else:
+        done = [_track_block(D, x, st, d, step_fn, params, s0, capture, progress) for s0, x, st, d in blocks]
+    halves = [h for hs, _ in done for h in hs]                       # per half-fiber: (n_rec, 3) in (k, j, i)
+    steps_total = sum(n for _, n in done)
     # join: first half reversed without its seed, then the second half with it; drop < 10 points
     i2r = D["i2r"]
     fibers, kept = [], []
@@ -427,4 +506,7 @@ def track(D: dict, offset_kji=SRAND0_OFFSET, seeding_threshold=0.1, stopping_fa=
         kji = np.concatenate([a[:0:-1], c])
         ijk = kji[:, ::-1]
         fibers.append(ijk @ i2r[:3, :3].T + i2r[:3, 3])
-    return fibers, {"seeds": S, "half_fibers": 2 * S, "fiber_steps": steps_total, "fibers": len(fibers), "seed_index": kept}
+    row = {int(k): r for r, k in enumerate(sel.tolist())}                 # seed index -> its row here
+    seed_voxel = vox_kji[[row[k] for k in kept]] if kept else np.zeros((0, 3), np.int64)
+    return fibers, {"seeds": S, "half_fibers": 2 * S, "fiber_steps": steps_total, "fibers": len(fibers), "seed_index": kept,
+                    "seed_voxel": seed_voxel}

@@ -8,7 +8,8 @@ Stages, and where they run:
             float32, ~29 s), then applied to the DWI (_susc.apply: CPU, float64, ~1 s)
   track     the tracker's input (_prep.prepare: b0s + the b = 2800 shell, gradients in RAS, the
             median_otsu mask; CPU, <1 s), UKF two-tensor with the ORG settings and the binary's seeds
-            (_ukf_torch.track, Metal kernel: float32 steps from float64 seeds, ~27 s)
+            (_ukf_torch.track, Metal kernel: float32 steps from float64 seeds, ~27 s; or on the CPU,
+            one process per core, fast algebra)
   label     TractCloud, one context draw (_tractcloud.Labeler: GPU, float32, ~4 s)
   encode    the rank field of the cluster log-probabilities (rankfield: depth 6, keep "clip", clip 8)
             and the geometry (a 0.05 mm grid, second-order prediction, int8 residuals; _geometry)
@@ -94,13 +95,25 @@ def correct(s, timer: Timer, device="mps") -> Correction:
     return Correction(dwi, h, motion, S.displacement_mm(h, s.readout_s, s.pe_sign, s.vox[s.pe_axis]))
 
 
-def track(s, dwi, timer: Timer, prefix="") -> Tractogram:
+CPU_BATCH = 1024                 # half-fibers per batch on the CPU: cache-sized (ukf_cpu_check.py)
+
+
+def track(s, dwi, timer: Timer, prefix="", device="mps", workers=None) -> Tractogram:
+    """device "mps": the Metal kernel; "cpu": _ukf_torch's steps in float32 with the fast algebra
+    (closer to float64 than the binary's operation order in float32: ukf_cpu_check.json), batches of
+    CPU_BATCH on `workers` processes of one thread (default: one per core). Workers are spawned, so a
+    script running the CPU path needs an `if __name__ == "__main__":` guard."""
     with timer(prefix + "prep"):
         t = prepare(dwi, s.affine, s.bval, s.bvec)
     with timer(prefix + "load"):
         D = U.from_arrays(t.dwi, t.header, t.mask)
     with timer(prefix + "ukf"):
-        fibers, stats = U.track(D, backend="metal")
+        if device == "mps":
+            fibers, stats = U.track(D, backend="metal")
+        else:
+            import os
+            fibers, stats = U.track(D, dtype=torch.float32, device=device, fast=True, batch=CPU_BATCH,
+                                    workers=workers or os.cpu_count() or 1)
     return Tractogram(fibers, stats, t.mask, t.info)
 
 
@@ -129,12 +142,13 @@ def encode(tg: Tractogram, labels: Labels, timer: Timer, prefix="") -> Payload:
 STAGES = ("field_estimate", "field_apply", "prep", "load", "ukf", "tractcloud", "encode_field", "encode_geometry")
 
 
-def run(s, labeler: Labeler, timer: Timer, prefix="", trx=None, **trx_options):
+def run(s, labeler: Labeler, timer: Timer, prefix="", trx=None, device="mps", **trx_options):
     """The whole pipeline on a subject: (Correction, Tractogram, Labels, Payload). Its time is
     timer.total(*pipeline_stages(prefix)). trx: also write the tractogram there as TRX (_trx.write;
-    trx_options: positions="float16", labeled_only=True), timed apart as "write_trx"."""
-    corr = correct(s, timer)
-    tg = track(s, corr.dwi, timer, prefix)
+    trx_options: positions="float16", labeled_only=True), timed apart as "write_trx". device: where
+    the estimate and the tracking run ("mps" or "cpu"; the labeler has its own)."""
+    corr = correct(s, timer, device)
+    tg = track(s, corr.dwi, timer, prefix, device)
     labels = label(tg, labeler, timer, prefix)
     payload = encode(tg, labels, timer, prefix)
     if trx is not None:

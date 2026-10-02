@@ -1099,3 +1099,32 @@ exact; float16: within 0.031 mm), groups partitioning the labeled streamlines, a
 per-streamline array row for row - all pass. 0.5 s to write. Sizes: **24.4 MB** (zip, all 41,895
 streamlines, float32), **11.8 MB** (labeled 31,993, float16), against the compact payload's 3.0 MB.
 Median tract margin 0.93 (probability units).
+
+## 2026-10-02 The CPU tracker, 4x: one process per core, the fast algebra
+
+The whole pipeline on the CPU (`cpu_timing.py`, PAT16, M2, 8 threads): 714 s scan to payload against
+64 s on the GPU - UKF 580 s (19.7 k steps/s, float32), TractCloud 53 s, field estimate 78 s (float64).
+One CPU step profiled (`_ukf_torch`, float32): H about 60 %, the rest of the filter 30 %, interp 5 %;
+4 threads no faster than 8 - memory and per-op overhead, not arithmetic. Then:
+- **Bit-identical** (against the committed tracker, ~2,400 seeds, float32 and float64 on the CPU,
+  Metal): H computed for the N gradients and repeated (the other N are their negatives; u'Du is
+  unchanged bit for bit); the step loop carries the compacted live arrays instead of gathering and
+  scattering every half-fiber's state each step, one `nonzero` per step (boolean masks synchronized
+  MPS four times a step: Metal fell to 117 k, back to 144-148 k). CPU float32 19.1 → 25.7 k steps/s,
+  float64 12.2 → 17.8 k.
+- **Batch composition changes bits**, even in float64 (vectorized math rounds by position): batches
+  of 512 or 4,096 differ from 50,000. So worker processes take whole fixed blocks (`batch`
+  half-fibers, the serial loop's own blocks), and `workers=k` equals the serial run at that batch,
+  bit for bit (1, 4, 8 workers checked). Spawned, D's tensors shared (macOS and Windows cannot fork).
+- **Workers** (a quarter of the seeds): 1 x 8 threads 29 k steps/s; 4 x 1 47 k; 8 x 1, batch 1,024
+  55 k (2,048: 51 k; 4,096: 50 k; 4 x 2 threads 44 k). The M2's efficiency cores add less than its
+  performance cores; a uniform many-core machine should scale further.
+- **Fast algebra** (`track(fast=True)`: u'Du as one matrix product of the tensor's six components and
+  the gradients' six products; both inverses from Cholesky factors): H 3x, a step 1.6x. Against
+  float64 (`ukf_cpu_check.py` → `ukf_cpu_check.json`, 2,101 fibers) it is **closer than the binary's
+  operation order in float32**: all points within 0.1 mm 90.2 % (75.9 %), ends within 0.06 mm 93.4 %
+  (83.9 %), same point count 95.5 % (89.4 %), density r 0.994 (0.987) - fewer roundings, as the GPU
+  kernels showed. Batch 1,024 against 50,000: the same to the fourth decimal.
+- **8 workers, fast: 79 k steps/s, 4x the CPU tracker's 19.7 k.** The pipeline's CPU setting
+  (`_pipeline.track(device="cpu")`): float32, fast, batch 1,024, one process per core. float64 stays
+  the binary's arithmetic and order, the reference.
