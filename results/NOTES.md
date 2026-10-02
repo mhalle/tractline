@@ -1267,3 +1267,37 @@ iterations and field): two runs on PAT16's b0s, as they are and plus noise of SD
   **Not uniformly better**: stronger regularization steadies the field where the data are weak (PAT16's
   dropout, PAT23) and blunts it where the true field turns sharply (PAT13's skull base). PAT16 is the
   extreme case; the other three were already stable at the current settings. Not adopted.
+
+### What the literature says about it (2026-10-02)
+
+- **topup itself has no convergence criterion** (its user guide: "At present there is no proper
+  convergence criterion implemented in topup. Instead a fixed number of iterations is used"), and
+  b02b0.cnf's values were "found to be useful for registering a set of good quality b=0 images", with no
+  further justification. So the capped iterations are topup's design too - but topup's minimizer is
+  Gauss-Newton with an explicit Hessian (--minmet 0; scaled conjugate gradient optional), which gets
+  far closer to a minimum in its 5-20 iterations than our L-BFGS does in the same count. Our
+  "faithful" port changed the optimizer, and the schedule was tuned for the other one.
+- **HySCO** (Ruthotto et al. 2012, Phys Med Biol, doi:10.1088/0031-9155/57/18/5715; HySCO2 in SPM's
+  ACID toolbox; Macdonald & Ruthotto 2018, J Math Imaging Vis, ADMM with proven convergence on the
+  non-convex problem): Gauss-Newton on the same physical model with a "tailored nonlinear
+  regularization functional" that keeps the transformation diffeomorphic - it penalizes the
+  intensity-modulation factor 1 +/- d_pe u approaching zero, exactly the pile-up and dropout regions
+  where our runs diverge - giving "meaningful, i.e. diffeomorphic, geometric transformations,
+  independent of the actual choice of the regularization parameters".
+- **SuCor** (Chigurupati & Garyfallidis, arXiv 2603.16758, March 2026): per phase-encoding column, the
+  displacement as the Wasserstein-2 barycentre between the two polarities' profiles (closed form by
+  quantile matching), then a bending-energy fit whose strength is set by the Morozov discrepancy
+  principle - the regularized field deviates from the raw one by 1.5 x the background noise (MAD) -
+  so no tuned lambda. HCP: mutual information with T1 0.341 against topup's 0.317, 12 s on one CPU
+  core against 55 min, but LR-RL consistency below topup's ("residual per-column variability"), and
+  the authors name the same smoothness-against-fidelity tension we measured. No dropout handling.
+- **DR-BUDDI** (Irfanoglu et al. 2015, NeuroImage, doi:10.1016/j.neuroimage.2014.11.042): uses the DWIs
+  and a structural image to guide the registration and does not force exact up/down symmetry, robust
+  where motion, ghosting and low SNR break the model; better in the brainstem.
+- **Evaluations** (Graham et al. 2017, PLoS One, doi:10.1371/journal.pone.0185647; Gu & Eklund 2019,
+  Front Neuroinform, doi:10.3389/fninf.2019.00076): reversed phase-encoding methods correct best; the
+  LR-vs-AP difference is a usable but imperfect proxy; none of the common methods models the
+  susceptibility field's interaction with head motion.
+- **Uncertainty**: field-map approaches have used per-voxel confidence (from phase unwrapping) to
+  control the deformation's smoothness locally - the adaptive regularization idea, from the field-map
+  side. No reversed-phase-encoding method found that reports per-voxel uncertainty.
