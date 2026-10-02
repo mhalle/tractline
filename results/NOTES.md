@@ -1180,3 +1180,16 @@ transcribed from its log, and it returns JSON text now.
   estimate 101.8 s against 33.7 s for the same estimate earlier in the same container (same code and
   input); unexplained, possibly contention on a shared host. With the earlier estimate the pipeline
   would be ~84 s. Not rerun (frugal); worth a second look before quoting an x86 end-to-end number.
+- **The 101.8 s estimate, explained** (`modal_cpu_field_timing.json`, a second container): the field
+  estimate on that machine by threads, fresh process: 8 → 43.3 s, **16 → 36.5 s**, 32 → 41.3 s, 48 →
+  72.5 s; and after a 32-worker tracking pool, torch's thread count in the parent read **48** although
+  32 had been set, and the estimate took 80.7 s. So the first run's pipeline estimate ran on all 48
+  vCPUs (likely 24 physical cores), after its pools. Not reproduced on macOS (the count stays as set
+  through pools); likely the Linux build's OpenMP runtime. Fix: each CPU stage sets its own threads
+  (`_pipeline.threads`), the estimate min(16, cores) (`ESTIMATE_THREADS`).
+- **The pipeline again, threads set per stage** (`modal_cpu_pipeline.json`, a third container):
+  **127.6 s** - estimate 43.3 s (16 threads), UKF 68.1 s, TractCloud 7.6 s, preparation 4.8 s (numba
+  compiling `_median` in a fresh container: its on-disk cache is per machine). This container was
+  slower across the board: tracking at 32 workers took 38.5, 46.7 and 68.1 s in the three containers
+  (1.8x), TractCloud 5.0, 4.7 and 7.6 s. Modal's CPU type is not chosen or visible here; quote x86
+  numbers as ranges. Scan to payload on 32 x86 cores: roughly 90-130 s (the M2's CPU: 155 s).

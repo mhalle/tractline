@@ -36,7 +36,21 @@ from _prep import prepare
 from _tractcloud import Labeler, Labels
 
 GEOMETRY_GRID_MM = 0.05
+ESTIMATE_THREADS = 16            # the field estimate on the CPU: its problem is small (~5e5 voxels); on 48 vCPUs
+                                 # 8 threads 43 s, 16 36.5 s, 32 41 s, 48 72.5 s (modal_cpu_field_timing.json)
 FIELD = dict(keep="clip", depth=6, clip=8.0, tail_temperatures=(1.0,))
+
+
+@contextmanager
+def threads(n):
+    """torch's CPU threads set to n for a stage, restored after. Set per stage, not once: on Modal's
+    Linux the count read 48 after a tracking pool though 32 had been set (not seen on macOS)."""
+    before = torch.get_num_threads()
+    torch.set_num_threads(max(1, int(n)))
+    try:
+        yield
+    finally:
+        torch.set_num_threads(before)
 
 
 class Timer:
@@ -92,8 +106,9 @@ def correct(s, timer: Timer, device="mps") -> Correction:
     """On the CPU: float32, and the full-resolution levels (motion held) sampled linearly along the
     phase-encoding axis after one move per level - 26 s against 61 s trilinear; against the T1 no
     worse than the GPU's trilinear (NOTES 2026-10-02)."""
+    import os
     cpu = torch.device(device).type == "cpu"
-    with timer("field_estimate"):
+    with timer("field_estimate"), threads(min(ESTIMATE_THREADS, os.cpu_count() or 1) if cpu else torch.get_num_threads()):
         h, motion, _ = S.estimate(s.b0s, s.vox, s.pe_vectors, s.readout_s, device=device,
                                   **(dict(dtype=torch.float32, interp="linear_pe") if cpu else {}))
     with timer("field_apply"):

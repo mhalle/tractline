@@ -1,7 +1,7 @@
 """The CPU pipeline on a many-core x86 machine (Modal, 32 physical cores = 64 vCPU, 32 GiB): how the
 tracker scales with worker processes, and the pipeline end to end, on PAT16. One run, no GPU.
 
-    modal run bench/tractography/modal_cpu_scaling.py
+    modal run bench/tractography/modal_cpu_scaling.py [--what field | --what pipeline]
 
   1. our correction on the CPU (float32, linear along phase encoding), once;
   2. the tracker on the corrected scan (float32, fast, batch 1,024) with 8, 16, 32 and 64 workers
@@ -82,8 +82,64 @@ def scaling():
     return json.dumps(res, default=float)                            # text: the local client has no torch to unpickle with
 
 
+@app.function(cpu=CORES, memory=32768, timeout=1200)
+def field_timing():
+    """The field estimate's time on this machine: by thread count on a fresh process, then again after
+    a tracking pool has run (the first run's estimate took 101.8 s after the pools, 33.7 s before),
+    then the pipeline end to end."""
+    import os, time
+    import numpy as np, torch
+    import _pipeline as P, _susc as S, _ukf_torch as U
+    from _ds001226 import load
+    from _prep import prepare
+    from _tractcloud import Labeler
+    s = load("PAT16")
+    est = lambda: S.estimate(s.b0s, s.vox, s.pe_vectors, s.readout_s, device="cpu", dtype=torch.float32, interp="linear_pe")
+    res = {"os_cpu_count": os.cpu_count(), "estimate_by_threads": {}}
+    for th in (8, 16, 32, 48):
+        torch.set_num_threads(th)
+        t0 = time.time(); h, *_ = est(); res["estimate_by_threads"][th] = round(time.time() - t0, 1)
+        print("estimate, threads", th, res["estimate_by_threads"][th], flush=True)
+    torch.set_num_threads(32)
+    corr = S.apply(s.dwi, h, s.pe_axis, s.pe_sign, s.readout_s)
+    t = prepare(corr, s.affine, s.bval, s.bvec); D = U.from_arrays(t.dwi, t.header, t.mask)
+    t0 = time.time(); U.track(D, dtype=torch.float32, device="cpu", fast=True, batch=P.CPU_BATCH, workers=32)
+    res["tracking_32_workers_s"] = round(time.time() - t0, 1)
+    res["threads_after_pool"] = torch.get_num_threads()
+    t0 = time.time(); est(); res["estimate_after_pool_32_threads"] = round(time.time() - t0, 1)
+    print(res, flush=True)
+    timer = P.Timer(echo="pipeline")
+    P.run(s, Labeler("cpu"), timer, device="cpu", workers=32)
+    res["pipeline"] = {"seconds": timer.seconds, "scan_to_payload_s": timer.total(*P.pipeline_stages())}
+    return json.dumps(res)
+
+
+@app.function(cpu=CORES, memory=32768, timeout=900)
+def pipeline_only():
+    """The pipeline end to end on the CPU at 32 workers, each stage setting its own threads."""
+    import torch
+    import _pipeline as P
+    from _ds001226 import load
+    from _tractcloud import Labeler
+    s = load("PAT16")
+    timer = P.Timer(echo="pipeline")
+    P.run(s, Labeler("cpu"), timer, device="cpu", workers=32)
+    return json.dumps({"seconds": timer.seconds, "scan_to_payload_s": timer.total(*P.pipeline_stages()),
+                       "estimate_threads": P.ESTIMATE_THREADS})
+
+
 @app.local_entrypoint()
-def main():
+def main(what: str = "scaling"):
+    if what == "pipeline":
+        res = json.loads(pipeline_only.remote())
+        print(json.dumps(res, indent=1))
+        (HERE / "results/modal_cpu_pipeline.json").write_text(json.dumps(res, indent=1))
+        return
+    if what == "field":
+        res = json.loads(field_timing.remote())
+        print(json.dumps(res, indent=1))
+        (HERE / "results/modal_cpu_field_timing.json").write_text(json.dumps(res, indent=1))
+        return
     res = json.loads(scaling.remote())
     print(json.dumps(res, indent=1))
     (HERE / "results/modal_cpu_scaling.json").write_text(json.dumps(res, indent=1))
