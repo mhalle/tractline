@@ -969,3 +969,24 @@ the temporal-base one inferiorly (+6-8 mm). Carried onto each arm's grid by its 
 Uncorrected, a tenth of the tumor and its margin would be drawn 5-16 mm from where the T1 shows
 it (the T1 measure recovers about 0.78 of that); corrected, under 2 mm throughout, ours and topup
 alike. The margin is where the uncinate, IFOF and arcuate run past it.
+
+## 2026-10-01 Correction, faster on the M2: 62 s -> 30 s
+
+- **Application** (`susc_apply.py`): every AP volume shares one field and one readout, so the
+  sampling positions, weights and indices are now computed once (`_susc.sample_pe` takes positions
+  (1, X, Y, Z) and expands them). 102 volumes in **0.8-0.9 s on the CPU** (float64, output
+  bit-identical to before), against 6 s; the GPU (float32, `--device mps`) takes 1.2 s, the copies
+  dominating, output within 0.004 of the CPU's. The 11.7 s timed before included 5.5 s of gzip
+  writing the NIfTI, now reported apart (`write_gzip_s`): a pipeline holding the volumes in memory
+  skips it.
+- **Estimate** (`susc_check_trilinear_conv.json`): trilinear sampling at every level, **28.9 s**
+  against 50.6 s with cubic B-splines along phase encoding. Against topup: field r 0.969 (cubic
+  0.972), displacement difference median 0.27 mm, 99th 2.17 (0.24, 2.11); AP-PA disagreement after
+  correction 0.125 (0.126; topup 0.122). Against the T1 (`t1_alignment.json`, arm `ours_fast`):
+  brain 0.36 / 0.85 / 1.52 mm, tumor 0.25 / 0.67 / 1.16, its margin 0.37 / 0.74 / 1.90 - within 0.07
+  mm of the cubic estimate everywhere, the measure's precision (half-split) 0.06-0.07 / 0.18 / 0.39.
+  **Trilinear is now the default** of `_susc.estimate` and `susc_check.py`; the application keeps
+  cubic B-splines along phase encoding (applytopup's splines, under a second anyway).
+- **PAT16 end to end on the M2:** correction 30 s (estimate 29, application 1) + the pipeline 34 s
+  (UKF 27.6, TractCloud 3.7, the rest 2.8) = **about 64 s** before any file writing; topup +
+  applytopup alone take 665 s.

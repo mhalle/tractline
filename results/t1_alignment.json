@@ -75,7 +75,7 @@
     0.85
    ],
    "rigid_start_rotation_deg": 2.91,
-   "seconds": 131.6,
+   "seconds": 122.2,
    "levels": [
     {
      "knots_mm": 25,
@@ -154,7 +154,7 @@
     0.87
    ],
    "rigid_start_rotation_deg": 3.19,
-   "seconds": 122.9,
+   "seconds": 125.4,
    "levels": [
     {
      "knots_mm": 25,
@@ -233,7 +233,7 @@
     0.83
    ],
    "rigid_start_rotation_deg": 3.07,
-   "seconds": 118.9,
+   "seconds": 127.2,
    "levels": [
     {
      "knots_mm": 25,
@@ -252,6 +252,85 @@
      "fwhm_mm": 0,
      "ngf": 0.39482,
      "bending": 6.978930321562019e-05
+    }
+   ]
+  },
+  "ours_fast": {
+   "residual_tumor": [
+    0.25,
+    0.67,
+    1.16
+   ],
+   "residual_tumor_margin_10mm": [
+    0.37,
+    0.74,
+    1.9
+   ],
+   "topup_displacement_tumor": [
+    0.96,
+    5.26,
+    12.27
+   ],
+   "topup_displacement_tumor_margin_10mm": [
+    1.16,
+    6.0,
+    16.35
+   ],
+   "tumor_voxels": 2925,
+   "margin_voxels": 7293,
+   "residual_brain": [
+    0.36,
+    0.85,
+    1.52
+   ],
+   "residual_where_topup_gt_3mm": [
+    0.47,
+    1.09,
+    1.93
+   ],
+   "residual_elsewhere": [
+    0.34,
+    0.82,
+    1.4
+   ],
+   "half_split_error_brain": [
+    0.06,
+    0.18,
+    0.39
+   ],
+   "half_split_error_where_topup_gt_3mm": [
+    0.12,
+    0.31,
+    0.47
+   ],
+   "ngf_rigid_only": 0.40652,
+   "ngf_after": 0.39571,
+   "r_residual_vs_topup_displacement": 0.007,
+   "rigid_start_translation_mm": [
+    -0.22,
+    -0.22,
+    0.83
+   ],
+   "rigid_start_rotation_deg": 3.07,
+   "seconds": 125.7,
+   "levels": [
+    {
+     "knots_mm": 25,
+     "fwhm_mm": 6,
+     "ngf": 0.29202,
+     "bending": 3.5817605559455166e-05
+    },
+    {
+     "knots_mm": 20,
+     "fwhm_mm": 4,
+     "ngf": 0.31028,
+     "bending": 4.588423545834878e-05
+    },
+    {
+     "knots_mm": 15,
+     "fwhm_mm": 0,
+     "ngf": 0.39571,
+     "bending": 6.837497452240614e-05
     }
    ]
   }

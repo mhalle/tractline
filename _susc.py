@@ -15,10 +15,11 @@ The model (Andersson, Skare & Ashburner 2003; topup's b02b0.cnf schedule):
   - volumes scaled to a common mean intensity first (--scale=1);
   - no translation along the phase-encoding axis for the first volume of each acquisition (topup's
     convention, which fixes the trade between a field offset and such translations).
-Departures from topup, measured not hidden: trilinear interpolation where motion is estimated, cubic
-B-splines along the phase-encoding axis only where it is held (topup: cubic splines throughout), L-BFGS
-(topup: Levenberg-Marquardt, then scaled conjugate gradients), motion composed with the displacement
-to first order (M_v(x) + d_v(x)).
+Departures from topup, measured not hidden: trilinear interpolation throughout the estimate by default
+(interp="cubic_pe": cubic B-splines along the phase-encoding axis where motion is held, as topup's
+splines; 50 s against 29 s on the M2, the same field against topup's and the same residual against
+the T1 to 0.07 mm, t1_alignment.json), L-BFGS (topup: Levenberg-Marquardt, then scaled conjugate
+gradients), motion composed with the displacement to first order (M_v(x) + d_v(x)).
 """
 from __future__ import annotations
 
@@ -149,17 +150,19 @@ def prefilter(img, ax):
 
 def sample_pe(coef, pos, ax):
     """Cubic B-spline samples of coef (V, X, Y, Z) at positions pos (V, X, Y, Z) along axis ax (voxels),
-    the other coordinates being the voxel's own; mirrored edges."""
+    the other coordinates being the voxel's own; mirrored edges. pos (1, X, Y, Z): the same positions
+    for every volume, the weights and indices computed once."""
     n = coef.shape[1 + ax]
     i0 = torch.floor(pos)
     t = pos - i0
     w = [(1 - t) ** 3 / 6, (3 * t ** 3 - 6 * t ** 2 + 4) / 6, (-3 * t ** 3 + 3 * t ** 2 + 3 * t + 1) / 6, t ** 3 / 6]
-    out = torch.zeros_like(pos)
+    out = None
     for k, wk in zip(range(-1, 3), w):
         idx = (i0 + k).long()
         idx = torch.where(idx < 0, -idx, idx)
         idx = torch.where(idx > n - 1, 2 * (n - 1) - idx, idx).clamp(0, n - 1)
-        out = out + wk * torch.gather(coef, 1 + ax, idx)
+        s = wk * torch.gather(coef, 1 + ax, idx.expand(coef.shape[0], *idx.shape[1:]))
+        out = s if out is None else out + s
     return out
 
 
@@ -170,6 +173,8 @@ def unwarp_pe_cubic(coef, h, dh, pe_ax, pe_scale, jac=True):
     n = coef.shape[1 + pe_ax]
     shape = [1, 1, 1, 1]; shape[1 + pe_ax] = n
     base = torch.arange(n, dtype=coef.dtype, device=coef.device).view(shape)
+    if V > 1 and bool((pe_scale == pe_scale[0]).all()):                      # one acquisition: one set of positions
+        pe_scale = pe_scale[:1]; V = 1
     pos = base + pe_scale.view(V, 1, 1, 1) * h[None]
     s = sample_pe(coef, pos, pe_ax)
     return s * (1 + pe_scale.view(V, 1, 1, 1) * dh[None]) if jac else s
@@ -189,7 +194,7 @@ def bending(c, Bs, dBs, d2Bs, vox):
 # ------------------------------------------------------------------ the fit
 
 def estimate(b0s: np.ndarray, vox, pe: np.ndarray, trt: np.ndarray, device="cpu", schedule=B02B0, iter_scale=3,
-             lam_scale=1.0, fixed_motion=None, interp="cubic_pe", progress=None):
+             lam_scale=1.0, fixed_motion=None, interp="trilinear", progress=None):
     """b0s (X, Y, Z, V), voxel sizes (mm), pe (V, 3) phase-encoding vectors, trt (V,) total readout
     times (s). Returns (field Hz on the full grid as numpy, motion (V, 6), per-level log).
     interp "cubic_pe": at levels whose motion is held, the images are moved once (trilinear) and

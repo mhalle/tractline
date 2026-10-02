@@ -38,7 +38,8 @@ SUB = TD / "sub-PAT16/ses-preop"
 DER = TD / "derived"
 ARMS = {"uncorrected": SUB / "dwi/sub-PAT16_ses-preop_acq-AP_dwi.nii.gz",
         "topup": DER / "PAT16/topup/dwi_AP_topup.nii.gz",
-        "ours": DER / "PAT16/susc/dwi_AP_ours2.nii.gz"}
+        "ours": DER / "PAT16/susc/dwi_AP_ours2.nii.gz",
+        "ours_fast": DER / "PAT16/susc/dwi_AP_ours_fast.nii.gz"}                 # the field estimated with trilinear sampling (29 s)
 PE = 1                                                                    # j: AP acquisition, "j-"
 dt = torch.float64
 torch.set_num_threads(8)

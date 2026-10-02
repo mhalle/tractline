@@ -2,7 +2,7 @@
 the field, the AP phase-encoding direction and readout time, the Jacobian; volume 1's motion, which is
 zero), with cubic B-splines along phase encoding as applytopup (--interp trilinear: _susc.unwarp).
 
-    DATA/.venv/bin/python bench/tractography/susc_apply.py [--field field_hz_scaled.nii.gz]
+    DATA/.venv/bin/python bench/tractography/susc_apply.py [--field field_hz_scaled.nii.gz] [--device mps]
 
 Reads DATA/ds001226/derived/PAT16/susc/<field> (susc_check.py) and the AP DWI; writes
 DATA/ds001226/derived/PAT16/susc/dwi_AP_ours.nii.gz, to be prepared by pat16_prep.py --dwi ... --out PAT16_ours.
@@ -14,7 +14,10 @@ import _susc as S
 
 ap = argparse.ArgumentParser(); ap.add_argument("--field", default="field_hz_scaled.nii.gz")
 ap.add_argument("--out", default="dwi_AP_ours.nii.gz")
-ap.add_argument("--interp", choices=("cubic_pe", "trilinear"), default="cubic_pe"); args = ap.parse_args()
+ap.add_argument("--interp", choices=("cubic_pe", "trilinear"), default="cubic_pe")
+ap.add_argument("--device", default="cpu", help="mps: float32 on the GPU (cpu: float64)"); args = ap.parse_args()
+dev = torch.device(args.device)
+dt = torch.float32 if dev.type == "mps" else torch.float64
 TD = Path.home() / "tmp/data/tractography/ds001226"
 SRC = TD / "sub-PAT16/ses-preop/dwi/sub-PAT16_ses-preop_acq-AP_dwi"
 SU = TD / "derived/PAT16/susc"
@@ -22,19 +25,21 @@ side = json.loads(Path(str(SRC) + ".json").read_text())
 pe = {"j": (1, 1), "j-": (1, -1), "i": (0, 1), "i-": (0, -1), "k": (2, 1), "k-": (2, -1)}[side["PhaseEncodingDirection"]]
 img = nib.load(str(SRC) + ".nii.gz")
 dwi = np.asarray(img.dataobj, dtype=np.float64)
-h = torch.as_tensor(np.asarray(nib.load(SU / args.field).dataobj, dtype=np.float64))
-vox = torch.as_tensor(np.asarray(img.header.get_zooms()[:3], float), dtype=torch.float64)
+h = torch.as_tensor(np.asarray(nib.load(SU / args.field).dataobj, dtype=np.float64)).to(dev, dt)
+vox = torch.as_tensor(np.asarray(img.header.get_zooms()[:3], float), dtype=dt, device=dev)
 t0 = time.time()
 dh = torch.gradient(h, dim=pe[0])[0]
 V = dwi.shape[-1]
-eye = [torch.eye(3, dtype=torch.float64)] * V
-zero = [torch.zeros(3, dtype=torch.float64)] * V
-scale = torch.full((V,), pe[1] * side["TotalReadoutTime"], dtype=torch.float64)
-vols = torch.as_tensor(np.moveaxis(dwi, -1, 0))
+eye = [torch.eye(3, dtype=dt, device=dev)] * V
+zero = [torch.zeros(3, dtype=dt, device=dev)] * V
+scale = torch.full((V,), pe[1] * side["TotalReadoutTime"], dtype=dt, device=dev)
+vols = torch.as_tensor(np.moveaxis(dwi, -1, 0)).to(dev, dt)
 if args.interp == "cubic_pe":                                           # applytopup interpolates with splines
-    out = S.unwarp_pe_cubic(S.prefilter(vols, pe[0]), h, dh, pe[0], scale).numpy()
+    out = S.unwarp_pe_cubic(S.prefilter(vols, pe[0]), h, dh, pe[0], scale).cpu().numpy()
 else:
-    out = S.unwarp(vols, h, dh, pe[0], scale, eye, zero, vox).numpy()
+    out = S.unwarp(vols, h, dh, pe[0], scale, eye, zero, vox).cpu().numpy()
+secs = time.time() - t0                                                   # to the result on the CPU, before writing it
 out = np.moveaxis(np.clip(out, 0, None), 0, -1).astype(np.float32)
+t1 = time.time()
 nib.save(nib.Nifti1Image(out, img.affine), SU / args.out)
-print(json.dumps({"volumes": V, "seconds": round(time.time() - t0, 1), "out": str(SU / args.out)}))
+print(json.dumps({"volumes": V, "device": args.device, "seconds": round(secs, 2), "write_gzip_s": round(time.time() - t1, 2), "out": str(SU / args.out)}))
