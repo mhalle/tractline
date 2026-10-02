@@ -1,0 +1,163 @@
+{
+ "medians": {
+  "lbfgs": {
+   "patients": 12,
+   "held_out_brain": 0.1448,
+   "held_out_deep": 0.1313,
+   "held_out_edge": 0.1527,
+   "in_sample_brain": 0.1374,
+   "split_half_deep_99": 0.781,
+   "split_half_edge_99": 1.206,
+   "split_half_deep_max": 2.6815,
+   "drift_deep_99": 1.3285,
+   "drift_edge_99": 2.0295,
+   "seconds_all": 26.7,
+   "folds_brain_A_total": 27
+  },
+  "gn": {
+   "patients": 12,
+   "held_out_brain": 0.1318,
+   "held_out_deep": 0.1198,
+   "held_out_edge": 0.1377,
+   "in_sample_brain": 0.1245,
+   "split_half_deep_99": 0.764,
+   "split_half_edge_99": 1.3395,
+   "split_half_deep_max": 2.9645,
+   "drift_deep_99": 1.3195,
+   "drift_edge_99": 2.309,
+   "seconds_all": 17.95,
+   "folds_brain_A_total": 0
+  },
+  "gn_lam10": {
+   "patients": 12,
+   "held_out_brain": 0.1323,
+   "held_out_deep": 0.1202,
+   "held_out_edge": 0.1378,
+   "in_sample_brain": 0.1246,
+   "split_half_deep_99": 0.7305,
+   "split_half_edge_99": 1.377,
+   "split_half_deep_max": 3.169,
+   "drift_deep_99": 1.34,
+   "drift_edge_99": 2.274,
+   "seconds_all": 18.4,
+   "folds_brain_A_total": 0
+  },
+  "gn_lam100": {
+   "patients": 12,
+   "held_out_brain": 0.1322,
+   "held_out_deep": 0.1202,
+   "held_out_edge": 0.1377,
+   "in_sample_brain": 0.1245,
+   "split_half_deep_99": 0.772,
+   "split_half_edge_99": 1.326,
+   "split_half_deep_max": 3.2445,
+   "drift_deep_99": 1.3335,
+   "drift_edge_99": 2.2835,
+   "seconds_all": 17.3,
+   "folds_brain_A_total": 0
+  }
+ },
+ "held_out_per_patient": {
+  "PAT05": {
+   "same_polarity": 0.057,
+   "uncorrected": 0.5467,
+   "lbfgs": 0.1556,
+   "gn": 0.1316,
+   "gn_lam10": 0.1323,
+   "gn_lam100": 0.1321
+  },
+  "PAT07": {
+   "same_polarity": 0.0548,
+   "uncorrected": 0.5657,
+   "lbfgs": 0.1537,
+   "gn": 0.1352,
+   "gn_lam10": 0.1353,
+   "gn_lam100": 0.1353
+  },
+  "PAT08": {
+   "same_polarity": 0.2364,
+   "uncorrected": 0.579,
+   "lbfgs": 0.2377,
+   "gn": 0.2293,
+   "gn_lam10": 0.2293,
+   "gn_lam100": 0.2293
+  },
+  "PAT13": {
+   "same_polarity": 0.0447,
+   "uncorrected": 0.486,
+   "lbfgs": 0.1247,
+   "gn": 0.1188,
+   "gn_lam10": 0.119,
+   "gn_lam100": 0.119
+  },
+  "PAT14": {
+   "same_polarity": 0.0707,
+   "uncorrected": 0.4748,
+   "lbfgs": 0.1331,
+   "gn": 0.1186,
+   "gn_lam10": 0.1186,
+   "gn_lam100": 0.1186
+  },
+  "PAT16": {
+   "same_polarity": 0.0519,
+   "uncorrected": 0.5377,
+   "lbfgs": 0.1681,
+   "gn": 0.1566,
+   "gn_lam10": 0.1568,
+   "gn_lam100": 0.1568
+  },
+  "PAT19": {
+   "same_polarity": 0.0619,
+   "uncorrected": 0.5399,
+   "lbfgs": 0.1397,
+   "gn": 0.132,
+   "gn_lam10": 0.1322,
+   "gn_lam100": 0.1322
+  },
+  "PAT20": {
+   "same_polarity": 0.0418,
+   "uncorrected": 0.5276,
+   "lbfgs": 0.1336,
+   "gn": 0.127,
+   "gn_lam10": 0.127,
+   "gn_lam100": 0.127
+  },
+  "PAT23": {
+   "same_polarity": 0.1151,
+   "uncorrected": 0.427,
+   "lbfgs": 0.1618,
+   "gn": 0.149,
+   "gn_lam10": 0.1492,
+   "gn_lam100": 0.1491
+  },
+  "PAT25": {
+   "same_polarity": 0.07,
+   "uncorrected": 0.5291,
+   "lbfgs": 0.1499,
+   "gn": 0.1341,
+   "gn_lam10": 0.1343,
+   "gn_lam100": 0.1343
+  },
+  "PAT26": {
+   "same_polarity": 0.0631,
+   "uncorrected": 0.4648,
+   "lbfgs": 0.1292,
+   "gn": 0.1222,
+   "gn_lam10": 0.1222,
+   "gn_lam100": 0.1221
+  },
+  "PAT29": {
+   "same_polarity": 0.0598,
+   "uncorrected": 0.4937,
+   "lbfgs": 0.1352,
+   "gn": 0.1265,
+   "gn_lam10": 0.1266,
+   "gn_lam100": 0.1265
+  }
+ },
+ "patients_better_than_lbfgs": {
+  "gn": 12,
+  "gn_lam10": 12,
+  "gn_lam100": 12
+ }
+}

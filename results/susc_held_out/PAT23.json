@@ -1,0 +1,245 @@
+{
+ "subject": "PAT23",
+ "fits": {
+  "A": [
+   0,
+   6
+  ],
+  "B": [
+   1,
+   7
+  ],
+  "C": [
+   5,
+   7
+  ],
+  "all": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7
+  ]
+ },
+ "noise_floor_AP0_AP1": {
+  "brain": 0.1151,
+  "deep": 0.1068
+ },
+ "configs": {
+  "lbfgs": {
+   "seconds": {
+    "A": 13.8,
+    "B": 11.4,
+    "C": 13.5,
+    "all": 26.4
+   },
+   "split_half_deep": [
+    0.159,
+    0.943,
+    2.494
+   ],
+   "split_half_edge": [
+    0.16,
+    1.121,
+    3.176
+   ],
+   "drift_deep": [
+    0.237,
+    1.351,
+    2.999
+   ],
+   "drift_edge": [
+    0.206,
+    1.881,
+    4.391
+   ],
+   "held_out": {
+    "A corrects B": {
+     "brain": 0.1613,
+     "deep": 0.1368,
+     "edge": 0.1924,
+     "uncorrected_brain": 0.4244,
+     "in_sample_brain": 0.1409
+    },
+    "B corrects A": {
+     "brain": 0.1624,
+     "deep": 0.1355,
+     "edge": 0.1964,
+     "uncorrected_brain": 0.4296,
+     "in_sample_brain": 0.1386
+    }
+   },
+   "last_ap_pose": [
+    0.164,
+    -0.153,
+    0.495,
+    -0.012,
+    -0.009,
+    0.004
+   ],
+   "folds_brain_A": 2
+  },
+  "gn": {
+   "seconds": {
+    "A": 9.9,
+    "B": 9.4,
+    "C": 7.0,
+    "all": 20.1
+   },
+   "split_half_deep": [
+    0.16,
+    0.98,
+    2.871
+   ],
+   "split_half_edge": [
+    0.156,
+    1.966,
+    4.866
+   ],
+   "drift_deep": [
+    0.231,
+    1.398,
+    2.934
+   ],
+   "drift_edge": [
+    0.199,
+    3.521,
+    16.989
+   ],
+   "held_out": {
+    "A corrects B": {
+     "brain": 0.1474,
+     "deep": 0.1306,
+     "edge": 0.1691,
+     "uncorrected_brain": 0.4247,
+     "in_sample_brain": 0.1249
+    },
+    "B corrects A": {
+     "brain": 0.1506,
+     "deep": 0.1332,
+     "edge": 0.1732,
+     "uncorrected_brain": 0.4317,
+     "in_sample_brain": 0.1241
+    }
+   },
+   "last_ap_pose": [
+    0.024,
+    -0.259,
+    0.511,
+    -0.009,
+    -0.002,
+    0.004
+   ],
+   "folds_brain_A": 0
+  },
+  "gn_lam10": {
+   "seconds": {
+    "A": 8.9,
+    "B": 9.3,
+    "C": 6.7,
+    "all": 22.1
+   },
+   "split_half_deep": [
+    0.159,
+    0.998,
+    3.067
+   ],
+   "split_half_edge": [
+    0.155,
+    1.804,
+    4.034
+   ],
+   "drift_deep": [
+    0.229,
+    1.417,
+    2.937
+   ],
+   "drift_edge": [
+    0.198,
+    3.481,
+    11.68
+   ],
+   "held_out": {
+    "A corrects B": {
+     "brain": 0.1475,
+     "deep": 0.1307,
+     "edge": 0.1692,
+     "uncorrected_brain": 0.4246,
+     "in_sample_brain": 0.1251
+    },
+    "B corrects A": {
+     "brain": 0.1509,
+     "deep": 0.1333,
+     "edge": 0.1737,
+     "uncorrected_brain": 0.4311,
+     "in_sample_brain": 0.1245
+    }
+   },
+   "last_ap_pose": [
+    0.024,
+    -0.258,
+    0.51,
+    -0.009,
+    -0.002,
+    0.004
+   ],
+   "folds_brain_A": 0
+  },
+  "gn_lam100": {
+   "seconds": {
+    "A": 10.0,
+    "B": 9.0,
+    "C": 5.9,
+    "all": 19.7
+   },
+   "split_half_deep": [
+    0.161,
+    0.999,
+    2.885
+   ],
+   "split_half_edge": [
+    0.156,
+    1.884,
+    6.185
+   ],
+   "drift_deep": [
+    0.232,
+    1.43,
+    2.923
+   ],
+   "drift_edge": [
+    0.198,
+    3.837,
+    20.753
+   ],
+   "held_out": {
+    "A corrects B": {
+     "brain": 0.1474,
+     "deep": 0.1305,
+     "edge": 0.169,
+     "uncorrected_brain": 0.4248,
+     "in_sample_brain": 0.1249
+    },
+    "B corrects A": {
+     "brain": 0.1507,
+     "deep": 0.1332,
+     "edge": 0.1734,
+     "uncorrected_brain": 0.4317,
+     "in_sample_brain": 0.1241
+    }
+   },
+   "last_ap_pose": [
+    0.022,
+    -0.257,
+    0.514,
+    -0.009,
+    -0.002,
+    0.004
+   ],
+   "folds_brain_A": 0
+  }
+ }
+}
