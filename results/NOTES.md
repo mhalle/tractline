@@ -785,3 +785,22 @@ faster than Gauss-Jordan (207 k against 183 k). Now the default (`SPDINV`).
 
 PAT16 end to end (`mac_pipeline_pat16.json`): UKF 34.3 s (334 k steps/s) against 43.9 s; the
 pipeline 41 s without the float16 comparison pass.
+
+## 2026-10-01 Metal kernel: where the time goes
+
+One step of 16,384 half-fibers (HARDI, 150 gradients), M2, defaults (8 lanes, cached H, Cholesky
+inverses, precise math): 195-207 k steps/s. Two options measured and left off: float16 signal
+(+1.4 %, 5x the per-step error) and the Triton kernel's Ht-free update (same accuracy, 6 % slower
+here). Ablations on a throwaway copy (wrong results, timings only):
+
+| removed or cheapened | steps/s | share of a step |
+|---|---|---|
+| nothing | 195 k | |
+| exp() in the predicted signal (fast or none) | 220 k | ~11 % |
+| the 3x3x3 signal gathers | 216 k | ~10 % |
+| both 10x10 inverses | 226 k | ~14 % |
+| divides made fast | 216 k | ~10 % |
+
+No single hotspot: the rest (~55 %) is the per-fiber algebra every one of a fiber's 8 lanes repeats
+(sigma points, their normalization and tensors, the 21-point covariance sum, the Cholesky of P).
+The remaining structural lever is to split that algebra across the lanes instead of repeating it.

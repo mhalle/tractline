@@ -25,6 +25,10 @@ Compile-time options (`defines`), measured on an M2 with HARDI (ukf_metal.json):
                   recomputing it: same arithmetic, bit-identical output, +12 %
   MATHNS=fast     fast:: instead of precise:: exp, sqrt, divide, acos: +15-20 %, errors still at
                   float32's level, but not the same bits; off by default
+  SIGHALF         the signal read as float16 (the caller passes it so): +1.4 % speed for 5x the
+                  per-step error (1.7e-6); off
+  SFORM           the update with Ht never formed (S = sum Pxz Pxz', I = 2/Rs Yk S Yk), as the Triton
+                  kernel does: the same accuracy, no faster here (195 k against 207 k); off
   SPDINV          both 10x10 inverses (Pm, Yk + I: symmetric positive definite) through Cholesky,
                   L^-T L^-1 with packed triangles, instead of Gauss-Jordan: per-step state error
                   against float64 3.5e-7 instead of 1.3e-5, and faster (207 k against 183 k steps/s)
@@ -176,7 +180,11 @@ static inline void spd_inv10(thread float* A) {
 static inline float cround(float x) { return x < 0.0f ? -floor(-x + 0.5f) : floor(x + 0.5f); }
 
 kernel void ukf_step(
+#ifdef SIGHALF
+    device const half*  A       [[buffer(0)]],    // (nk, nj, ni, N) normalized signal, float16
+#else
     device const float* A       [[buffer(0)]],    // (nk, nj, ni, N) normalized signal
+#endif
     device const char*  mask    [[buffer(1)]],    // (nk, nj, ni) signed char
     device const float* g       [[buffer(2)]],    // (N, 3) gradients, voxel frame (k, j, i order as _ukf_torch)
     device const float* bval    [[buffer(3)]],    // (N,)
@@ -222,7 +230,7 @@ kernel void ukf_step(
                 float w = MATHNS::exp(pdiv(-(dx * dx + dy * dy + dz * dz), sigma));
                 if (!ok) w = 0.0f;
                 long v = ((long(clamp(X0, 0, nk - 1)) * nj + clamp(Y0, 0, nj - 1)) * ni + clamp(Z0, 0, ni - 1)) * N;
-                for (int k = 0; k < ng; k++) z[k] = z[k] + w * A[v + gidx[k]];
+                for (int k = 0; k < ng; k++) z[k] = z[k] + w * float(A[v + gidx[k]]);
                 wsum = wsum + w;
             }
         }
@@ -308,9 +316,43 @@ kernel void ukf_step(
             for (int i = 0; i < NS; i++) Pxz[i][k] = Pxz[i][k] + Xs[i] * w * dz;
         }
     }
-    // Ht = Yk Pxz; I = 2/Rs sum_n Ht Ht'; i = 2/Rs sum_n Ht ((z - zh) + Pxz' yh)
     const float rr = pdiv(1.0f, Rs);
     float Ip[NS * NS], iv[NS];
+#ifdef SFORM
+    // the same update with Ht never formed: S = sum_n Pxz_n Pxz_n' (packed), v = sum_n Pxz_n term_n,
+    // then I = 2/Rs Yk S Yk and i = 2/Rs Yk v (Yk symmetric) - 65 terms per gradient instead of 210
+    float Sp[55], vv[NS];
+    for (int i = 0; i < 55; i++) Sp[i] = 0.0f;
+    for (int i = 0; i < NS; i++) vv[i] = 0.0f;
+    for (int k = 0; k < ng; k++) {
+        float py = 0.0f;
+        for (int i = 0; i < NS; i++) py = py + Pxz[i][k] * yh[i];
+        float term = (z[k] - zh[k]) + py;
+        for (int i = 0; i < NS; i++) {
+            vv[i] = vv[i] + Pxz[i][k] * term;
+            for (int j = 0; j <= i; j++) Sp[TRI(i, j)] = Sp[TRI(i, j)] + Pxz[i][k] * Pxz[j][k];
+        }
+    }
+    for (int i = 0; i < 55; i++) Sp[i] = lanesum(Sp[i]);
+    for (int i = 0; i < NS; i++) vv[i] = lanesum(vv[i]);
+    for (int i = 0; i < NS; i++) {                                   // row i of T = Yk S, then of Yk + 2/Rs T Yk
+        float Trow[NS];
+        for (int j = 0; j < NS; j++) {
+            float t = 0.0f;
+            for (int k = 0; k < NS; k++) t = t + Pm[i * NS + k] * Sp[k >= j ? TRI(k, j) : TRI(j, k)];
+            Trow[j] = t;
+        }
+        for (int j = 0; j < NS; j++) {
+            float t = 0.0f;
+            for (int k = 0; k < NS; k++) t = t + Trow[k] * Pm[k * NS + j];
+            Ip[i * NS + j] = Pm[i * NS + j] + 2.0f * (rr * t);
+        }
+        float u = 0.0f;
+        for (int j = 0; j < NS; j++) u = u + Pm[i * NS + j] * vv[j];
+        iv[i] = 2.0f * (rr * u);
+    }
+#else
+    // Ht = Yk Pxz; I = 2/Rs sum_n Ht Ht'; i = 2/Rs sum_n Ht ((z - zh) + Pxz' yh)
     for (int i = 0; i < NS * NS; i++) Ip[i] = 0.0f;
     for (int i = 0; i < NS; i++) iv[i] = 0.0f;
     for (int k = 0; k < ng; k++) {
@@ -327,6 +369,7 @@ kernel void ukf_step(
     for (int i = 0; i < NS * NS; i++) Ip[i] = 2.0f * lanesum(Ip[i]);
     for (int i = 0; i < NS; i++) iv[i] = 2.0f * lanesum(iv[i]);
     for (int i = 0; i < NS * NS; i++) Ip[i] = Pm[i] + Ip[i];       // Yk + I
+#endif
     INV10(Ip);                                                      // Pn
     for (int i = 0; i < NS; i++) { float v = 0.0f; for (int j = 0; j < NS; j++) v = v + Ip[i * NS + j] * (iv[j] + yh[j]); s[i] = v; }
     for (int i = 0; i < NS * NS; i++) Pc[i] = Ip[i];
@@ -416,7 +459,12 @@ def advance(D: dict, xa, sa, Pa, oa, Q, Rs, step, max_steps, step_length=0.3, st
     fp = torch.tensor([float(vox[0]), float(vox[1]), float(vox[2]), float(vox.min()), step_length, stopping_fa,
                        stopping_threshold, float(Rs), float(q[0]), float(q[3])], dtype=torch.float32, device=dev)
     g = D["g"][:N].contiguous(); b = D["b"][:N].contiguous()
-    library(defines).ukf_step(D["A"], D["mask"], g, b, x, s, P, o, d, flags, fa, ms, ip, fp, threads=lpf * B, group_size=group_size)
+    A = D["A"]
+    if "SIGHALF" in defs:
+        A = D.get("A_half")
+        if A is None:
+            A = D["A_half"] = D["A"].half().contiguous()                 # cached on D: converted once per tractography
+    library(defines).ukf_step(A, D["mask"], g, b, x, s, P, o, d, flags, fa, ms, ip, fp, threads=lpf * B, group_size=group_size)
     stop = (flags & 1).bool()
     info = {"swap": (flags & 2).bool(), "swap2": (flags & 4).bool(), "fa": fa, "mean_signal": ms, "inside": (flags & 8).bool()}
     return x, s, P.reshape(B, 10, 10), d, stop, info
