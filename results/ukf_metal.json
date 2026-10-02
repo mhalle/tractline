@@ -6,43 +6,43 @@
   "rows": 3335,
   "metal_vs_f64": {
    "state_rel_err": [
-    1.29e-05,
-    4.94e-05,
-    0.000122,
-    0.00198
+    3.47e-07,
+    7.46e-07,
+    1.35e-06,
+    0.00195
    ],
    "P_rel_err": [
-    1.75e-06,
-    6.12e-06,
-    1.7e-05,
+    4e-07,
+    6.89e-07,
+    1.03e-06,
     9.55e-05
    ],
    "position_err_mm": [
-    7.69e-06,
-    2.11e-05,
-    4.67e-05,
-    7.53e-05
+    4.55e-06,
+    8.15e-06,
+    1.33e-05,
+    4.35e-05
    ],
    "direction_err_deg": [
-    0.00244,
+    0.00186,
     0.0156,
-    0.0205,
-    0.0244
+    0.0202,
+    0.0239
    ],
    "fa_abs_err": [
-    4.94e-06,
-    2.11e-05,
-    5.4e-05,
-    0.000163
+    1.48e-07,
+    4.74e-07,
+    1e-06,
+    9.84e-06
    ],
    "mean_signal_abs_err": [
-    8.26e-07,
-    2.84e-06,
-    5.97e-06,
-    1.46e-05
+    4.08e-08,
+    1.14e-07,
+    2.05e-07,
+    3.69e-07
    ],
    "swap_flips": 6,
-   "swap2_flips": 2,
+   "swap2_flips": 1,
    "inside_flips": 0,
    "stop_flips": 0
   },
@@ -90,43 +90,43 @@
   },
   "metal_vs_torch32_cpu": {
    "state_rel_err": [
-    1.84e-05,
-    6.83e-05,
-    0.00016,
-    0.00179
+    1.29e-05,
+    4.6e-05,
+    0.000113,
+    0.00198
    ],
    "P_rel_err": [
-    1.98e-06,
-    6.89e-06,
-    1.89e-05,
+    8.36e-07,
+    3.29e-06,
+    1.08e-05,
     9.56e-05
    ],
    "position_err_mm": [
-    7.86e-06,
-    2.41e-05,
-    5.63e-05,
-    9.92e-05
+    3.81e-06,
+    1.53e-05,
+    3.15e-05,
+    0.00011
    ],
    "direction_err_deg": [
-    0.00195,
-    0.0188,
-    0.0254,
-    0.0355
+    0.00119,
+    0.0191,
+    0.0251,
+    0.0353
    ],
    "fa_abs_err": [
-    7.12e-06,
-    2.78e-05,
-    7.89e-05,
-    0.000204
+    4.17e-06,
+    1.74e-05,
+    4.96e-05,
+    0.000165
    ],
    "mean_signal_abs_err": [
-    1.62e-06,
-    5.56e-06,
-    1.14e-05,
-    4.2e-05
+    1.33e-06,
+    4.79e-06,
+    9.61e-06,
+    3.86e-05
    ],
-   "swap_flips": 4,
-   "swap2_flips": 3,
+   "swap_flips": 6,
+   "swap2_flips": 2,
    "inside_flips": 0,
    "stop_flips": 0
   },
@@ -137,72 +137,43 @@
   "f64_cpu": {
    "fibers": 1729,
    "fiber_steps": 556988,
-   "seconds": 138.2,
-   "steps_per_s": 4031
+   "seconds": 120.6,
+   "steps_per_s": 4618
   },
   "metal": {
-   "fibers": 1730,
-   "fiber_steps": 556386,
-   "seconds": 11.6,
-   "steps_per_s": 48030,
-   "second_run_seconds": 12.1
+   "fibers": 1729,
+   "fiber_steps": 555615,
+   "seconds": 11.7,
+   "steps_per_s": 47668,
+   "second_run_seconds": 11.0
   },
   "metal_vs_f64": {
    "both": 1729,
-   "only_first": 1,
+   "only_first": 0,
    "only_second": 0,
-   "same_point_count": 1478,
+   "same_point_count": 1619,
    "max_point_distance_mm": [
-    0.0151,
-    0.185,
-    2.2,
-    33.7
+    0.00132,
+    0.0619,
+    0.996,
+    20.9
    ],
-   "within_1e-3_mm": 74,
-   "within_0.1_mm": 1213,
-   "ends_within_0.06_mm_fraction_same_count": 0.8725,
+   "within_1e-3_mm": 723,
+   "within_0.1_mm": 1495,
+   "ends_within_0.06_mm_fraction_same_count": 0.9509,
    "length_diff_mm_abs": [
-    7.58e-05,
-    1.8,
-    73.2,
-    182.0
+    3.48e-05,
+    0.000877,
+    45.7,
+    180.0
    ],
-   "density_r": 0.97098
+   "density_r": 0.98644
   },
   "metal_repeat_identical": true,
   "for_scale_torch32_vs_f64": {
    "within_0.1_mm": 1249,
    "ends_within_0.06_mm_fraction_same_count": 0.8867,
    "density_r": 0.97282
-  }
- },
- "full": {
-  "seeds": 98491,
-  "fibers": 85034,
-  "fiber_steps": 27459263,
-  "seconds": 176.2,
-  "steps_per_s": 155860,
-  "metal_vs_f64_cuda": {
-   "both": 84997,
-   "only_first": 37,
-   "only_second": 43,
-   "same_point_count": 73050,
-   "max_point_distance_mm": [
-    0.0158,
-    0.262,
-    2.69,
-    135.0
-   ],
-   "within_1e-3_mm": 4270,
-   "within_0.1_mm": 58638,
-   "ends_within_0.06_mm_fraction_same_count": 0.8672,
-   "length_diff_mm_abs": [
-    7.87e-05,
-    1.8,
-    73.7,
-    244.0
-   ],
-   "density_r": 0.99887
   }
  }
 }

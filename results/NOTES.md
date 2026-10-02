@@ -766,3 +766,22 @@ UKF's own 47,856 seeds, ORG settings, Metal kernel; TractCloud on MPS; field and
 Sizes, the 32,137 streamlines >= 40 mm (1.73 M points, a point every 1.8 mm): float32 points 20.7 MB;
 compact 3.0 MB at a 0.05 mm grid, 4.5 MB at 0.01 mm, field included (0.44 MB, 19 B/streamline raw).
 UKF is 80 % of the time. (Distortion correction is not in this pipeline yet.)
+
+## 2026-10-01 Metal kernel: Cholesky inverses (more accurate and faster)
+
+The Triton block kernel's accuracy came from its inverses: both 10x10 inverses in the UKF update
+(Pm and Yk + I) are symmetric positive definite, and inverting them through Cholesky (L^-T L^-1)
+instead of Gauss-Jordan cuts the Metal kernel's per-step state error against float64 from 1.3e-5 to
+3.5e-7 (covariance 1.8e-6 to 4.0e-7). With unpacked 10x10 scratch matrices it ran at half speed
+(82 k against 172 k steps/s, register spills); with L and L^-1 as packed 55-float triangles it is
+faster than Gauss-Jordan (207 k against 183 k). Now the default (`SPDINV`).
+
+| Metal kernel against float64, 2,011 HARDI seeds | Gauss-Jordan | Cholesky |
+|---|---|---|
+| fibers within 0.1 mm everywhere | 1,213 / 1,729 | 1,495 / 1,729 |
+| fiber ends within 0.06 mm | 87.3 % | 95.1 % |
+| density r | 0.971 | 0.986 |
+| deterministic (two launches) | yes | yes |
+
+PAT16 end to end (`mac_pipeline_pat16.json`): UKF 34.3 s (334 k steps/s) against 43.9 s; the
+pipeline 41 s without the float16 comparison pass.

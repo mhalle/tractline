@@ -3,43 +3,43 @@
  "torch": "2.14.1",
  "rankfield": "0.3.10",
  "seeds": 47856,
- "fibers": 42198,
- "fiber_steps": 11465742,
- "streamlines_ge_40mm": 32137,
+ "fibers": 42197,
+ "fiber_steps": 11456611,
+ "streamlines_ge_40mm": 32120,
  "seconds": {
-  "load": 0.37,
-  "seeds": 1.03,
-  "ukf": 43.89,
-  "features": 0.31,
+  "load": 0.32,
+  "seeds": 0.96,
+  "ukf": 34.31,
+  "features": 0.34,
   "context": 0.17,
-  "network_fp32": 3.8,
-  "network_fp16": 4.17,
-  "field": 0.32,
-  "geometry_encode_both_grids_with_roundtrip_check": 0.79
+  "network_fp32": 3.79,
+  "network_fp16": 4.04,
+  "field": 0.28,
+  "geometry_encode_both_grids_with_roundtrip_check": 0.8
  },
- "total_s": 54.9,
- "ukf_steps_per_s": 261238,
+ "total_s": 45.0,
+ "ukf_steps_per_s": 333915,
  "fp16_vs_fp32_on_mps": {
-  "cluster_labels_differ": 1180,
-  "tract_labels_differ": 457
+  "cluster_labels_differ": 1277,
+  "tract_labels_differ": 477
  },
  "field": {
   "depth": 6,
-  "bytes": 610603,
+  "bytes": 610280,
   "bytes_per_streamline": 19.0,
   "blosc_mb": 0.44
  },
  "sizes_streamlines_ge_40mm": {
-  "streamlines": 32137,
-  "vertices": 1726061,
-  "float32_points_mb": 20.71,
+  "streamlines": 32120,
+  "vertices": 1724191,
+  "float32_points_mb": 20.69,
   "geometry": {
-   "0.05_mm_grid_mb": 2.56,
-   "0.01_mm_grid_mb": 4.01
+   "0.05_mm_grid_mb": 2.55,
+   "0.01_mm_grid_mb": 4.0
   },
-  "compact_total_mb_0.05": 3.0,
-  "compact_total_mb_0.01": 4.45
+  "compact_total_mb_0.05": 2.99,
+  "compact_total_mb_0.01": 4.44
  },
- "all_streamlines_float32_mb": 22.6,
+ "all_streamlines_float32_mb": 22.58,
  "data": "pat16"
 }

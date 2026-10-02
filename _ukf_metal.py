@@ -14,8 +14,8 @@ The rules are _ukf_torch's, which are the binary's; three choices are this kerne
   - the binary measures 2N rows, each gradient and its negation; u'Du is the same for both, so the
     kernel measures N and doubles the two sums over rows (the mean is unchanged). Exact in arithmetic,
     different in rounding order.
-  - Cholesky and the two inverses are written out (Cholesky-Banachiewicz; Gauss-Jordan with partial
-    pivoting), not LAPACK's.
+  - Cholesky and the two inverses are written out (Cholesky-Banachiewicz; the inverses through
+    Cholesky by default, Gauss-Jordan with partial pivoting without SPDINV), not LAPACK's.
   - sums run in a fixed order (sigma points 0..20; within a lane gradients in order; across lanes the
     fixed reduction); precise:: math and no FMA contraction, so the kernel is deterministic on a device.
 
@@ -25,6 +25,9 @@ Compile-time options (`defines`), measured on an M2 with HARDI (ukf_metal.json):
                   recomputing it: same arithmetic, bit-identical output, +12 %
   MATHNS=fast     fast:: instead of precise:: exp, sqrt, divide, acos: +15-20 %, errors still at
                   float32's level, but not the same bits; off by default
+  SPDINV          both 10x10 inverses (Pm, Yk + I: symmetric positive definite) through Cholesky,
+                  L^-T L^-1 with packed triangles, instead of Gauss-Jordan: per-step state error
+                  against float64 3.5e-7 instead of 1.3e-5, and faster (207 k against 183 k steps/s)
 Tested against the float32 torch step and float64 on captured fixtures (ukf_metal_check.py).
 """
 from __future__ import annotations
@@ -131,6 +134,45 @@ static inline void inv10(thread float* A) {
     for (int i = 0; i < NS * NS; i++) A[i] = B[i];
 }
 
+// in-place inverse of a symmetric positive definite 10x10 through Cholesky: A^-1 = L^-T L^-1
+// (the lower triangle is read; the full inverse is written, symmetric by construction). L and
+// M = L^-1 are kept as packed lower triangles (55 floats each), which keeps the kernel out of spills.
+#define TRI(i, j) ((i) * ((i) + 1) / 2 + (j))
+static inline void spd_inv10(thread float* A) {
+    float L[55], M[55];
+    for (int j = 0; j < NS; j++) {
+        float d = A[j * NS + j];
+        for (int k = 0; k < j; k++) d = d - L[TRI(j, k)] * L[TRI(j, k)];
+        float ljj = MATHNS::sqrt(d);
+        L[TRI(j, j)] = ljj;
+        for (int i = j + 1; i < NS; i++) {
+            float v = A[i * NS + j];
+            for (int k = 0; k < j; k++) v = v - L[TRI(i, k)] * L[TRI(j, k)];
+            L[TRI(i, j)] = pdiv(v, ljj);
+        }
+    }
+    for (int i = 0; i < NS; i++) {                            // M = L^-1, forward substitution row by row
+        M[TRI(i, i)] = pdiv(1.0f, L[TRI(i, i)]);
+        for (int j = 0; j < i; j++) {
+            float acc = 0.0f;
+            for (int k = j; k < i; k++) acc = acc + L[TRI(i, k)] * M[TRI(k, j)];
+            M[TRI(i, j)] = pdiv(-acc, L[TRI(i, i)]);
+        }
+    }
+    for (int i = 0; i < NS; i++)                               // (M' M)_ij = sum_{k >= max(i, j)} M_ki M_kj
+        for (int j = 0; j <= i; j++) {
+            float acc = 0.0f;
+            for (int k = i; k < NS; k++) acc = acc + M[TRI(k, i)] * M[TRI(k, j)];
+            A[i * NS + j] = acc; A[j * NS + i] = acc;
+        }
+}
+
+#ifdef SPDINV
+#define INV10 spd_inv10
+#else
+#define INV10 inv10
+#endif
+
 static inline float cround(float x) { return x < 0.0f ? -floor(-x + 0.5f) : floor(x + 0.5f); }
 
 kernel void ukf_step(
@@ -225,7 +267,7 @@ kernel void ukf_step(
         for (int i = 0; i < NS; i++) for (int j = 0; j < NS; j++) Pm[i * NS + j] = Pm[i * NS + j] + Xs[i] * w * Xs[j];
     }
     for (int i = 0; i < NS; i++) Pm[i * NS + i] = Pm[i * NS + i] + ((i % 5) < 3 ? Qm : Ql);
-    inv10(Pm);                                                 // Pm is now Yk
+    INV10(Pm);                                                 // Pm is now Yk
     float yh[NS];
     for (int i = 0; i < NS; i++) { float v = 0.0f; for (int j = 0; j < NS; j++) v = v + Pm[i * NS + j] * xh[j]; yh[i] = v; }
 
@@ -285,7 +327,7 @@ kernel void ukf_step(
     for (int i = 0; i < NS * NS; i++) Ip[i] = 2.0f * lanesum(Ip[i]);
     for (int i = 0; i < NS; i++) iv[i] = 2.0f * lanesum(iv[i]);
     for (int i = 0; i < NS * NS; i++) Ip[i] = Pm[i] + Ip[i];       // Yk + I
-    inv10(Ip);                                                      // Pn
+    INV10(Ip);                                                      // Pn
     for (int i = 0; i < NS; i++) { float v = 0.0f; for (int j = 0; j < NS; j++) v = v + Ip[i * NS + j] * (iv[j] + yh[j]); s[i] = v; }
     for (int i = 0; i < NS * NS; i++) Pc[i] = Ip[i];
 
@@ -333,8 +375,8 @@ kernel void ukf_step(
 """
 
 _LIBS: dict = {}
-#: the defaults: 8 lanes per half-fiber, H cached between passes, precise math
-DEFINES: tuple = ("ZCACHE", "LPF=8")
+#: the defaults: 8 lanes per half-fiber, H cached between passes, Cholesky inverses, precise math
+DEFINES: tuple = ("ZCACHE", "LPF=8", "SPDINV")
 
 
 def available() -> bool:
