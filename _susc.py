@@ -212,7 +212,7 @@ def bending(c, Bs, dBs, d2Bs, vox):
 # ------------------------------------------------------------------ the fit
 
 def estimate(b0s: np.ndarray, vox, pe_vectors: np.ndarray, readout_s, *, device="cpu", dtype=None, progress=None,
-             schedule=B02B0, iter_scale=3, lam_scale=1.0, fixed_motion=None, interp="trilinear"):
+             schedule=B02B0, iter_scale=3, lam_scale=1.0, fixed_motion=None, interp="trilinear", diagnostics=False):
     """The susceptibility field from b0s with at least two phase-encoding directions.
 
     b0s (X, Y, Z, V); vox (3,) mm; pe_vectors (V, 3), each b0's phase-encoding vector; readout_s the
@@ -226,7 +226,8 @@ def estimate(b0s: np.ndarray, vox, pe_vectors: np.ndarray, readout_s, *, device=
     ours), fixed_motion ((V, 6) held instead of estimated), interp ("cubic_pe": at levels whose motion
     is held, cubic B-splines along the phase-encoding axis, topup's --interp=spline; measured no
     better, 70 % slower; "linear_pe": the same, linear along the axis - the images moved once per level,
-    then two gathers a voxel instead of a 3D trilinear sample and its gradient)."""
+    then two gathers a voxel instead of a 3D trilinear sample and its gradient). diagnostics: each
+    level's log also holds L-BFGS's iterations and evaluations and the field at full resolution."""
     pe = np.asarray(pe_vectors, float)
     trt = np.broadcast_to(np.asarray(readout_s, float), (len(pe),))
     dev = torch.device(device)
@@ -317,6 +318,11 @@ def estimate(b0s: np.ndarray, vox, pe_vectors: np.ndarray, readout_s, *, device=
             mov = (ms * MS * mmask).detach()
         log.append({"level": lev + 1, "grid": [X, Y, Z], "knots": [B.shape[1] for B in Bs], "ssd_before": before, "ssd_after": after,
                     "motion": est, "interp": "cubic along pe" if cubic else "linear along pe" if linear else "trilinear"})
+        if diagnostics:
+            st = opt.state[opt._params[0]]
+            log[-1].update(n_iter=int(st.get("n_iter", 0)), func_evals=int(st.get("func_evals", 0)), max_iter=opt.defaults["max_iter"],
+                           field=Fnn.interpolate(h_prev[None, None], size=tuple(b0s.shape[:3]), mode="trilinear", align_corners=True)[0, 0].cpu().double().numpy(),
+                           motion_now=torch.cat([torch.zeros(1, 6, dtype=dt, device=dev), mov]).cpu().numpy())
         if progress:
             progress(log[-1])
     full = Fnn.interpolate(h_prev[None, None], size=tuple(b0s.shape[:3]), mode="trilinear", align_corners=True)[0, 0]

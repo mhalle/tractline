@@ -1234,3 +1234,36 @@ were timed alternately in one session:
 The GPU path stays ~60-65 s: estimate ~29 s, UKF ~27 s. Remaining levers: tracking on the GPU and the
 CPU at once (the CPU's 96 k steps/s beside the GPU's 428 k), the Metal kernel's inverses split
 (5-8 % of tracking), a Metal kernel for the mask (3 s), and the estimate's convergence.
+
+## 2026-10-02 The field estimate's convergence: why it moves, and what fixing it costs
+
+`susc_convergence.py` (`results/susc_convergence*.json`; estimate(diagnostics=True) logs each level's
+iterations and field): two runs on PAT16's b0s, as they are and plus noise of SD 0.01, on the GPU.
+- **L-BFGS never converges.** Every level stops at its cap (15, 30, 60 iterations at iter_scale 3) -
+  and still at 50-200 with iter_scale 10: in float32 the cost's rounding keeps the line search finding
+  "improvements", so the tolerances never fire. The result is wherever the cap falls.
+- **The runs diverge at full resolution.** Coarse levels 1-5 agree within 0.2 mm (99th); at level 6,
+  the first at full resolution, the two jump to 0.42 mm deep in the brain, ending at 0.65 (deep) /
+  0.84 (edge). Motion, estimated only at the coarse levels, differs by up to 0.26 and is then frozen.
+- **More iterations alone make it worse**: iter_scale 10 fits better (SSD 256 → 196) and settles the
+  motion (0.085), but topup's schedule leaves the fine levels almost unregularized (lambda 5e-10,
+  1e-11), and the field grows local features that differ between runs: edge 99th 2.3 mm, max 17.8. The
+  capped iterations were the regularization.
+- **What moves**: with converged, regularized fits (iter_scale 10, lam_scale 1e4) only 70 of 94,518
+  brain voxels differ by > 2 mm, 59 of them one blob at the orbitofrontal base (b0 signal 68 against the
+  brain's 202): signal lost in both phase-encoding directions, where only the regularization can set
+  the field.
+- **Settings, PAT16** (stability deep / edge, median / 99th / max mm; against topup median / 99th; s):
+  current (3, 1) 0.067/0.65/1.5, 0.069/0.84/3.1, 0.27/2.36, 33; (10, 1e4) 0.021/0.21/3.4,
+  0.022/0.52/12.0, 0.22/2.12, 104; **(10, 1e5) 0.029/0.27/0.77, 0.027/0.35/1.31**, 0.23/2.60, 102;
+  (10, 1e6) 0.042/0.45/1.8, 0.051/0.65/2.6, 0.24/2.63, 102; (5, 1e4) 0.061/0.67/2.7, 0.069/0.86/4.3,
+  0.23/2.51, 52; **(5, 1e5) 0.050/0.35/1.04, 0.059/0.56/2.1**, 0.23/2.50, 52. Against the T1 (99th:
+  brain / tumor / margin): current 1.73 / 1.67 / 2.45; (5, 1e5) 1.60 / 1.08 / 1.71 (second run 1.63 /
+  1.07 / 1.88); (10, 1e5) 1.59 / 1.20 / 1.87.
+- **On three more patients** (`susc_stability.py` → `results/susc_stability/`; current → (5, 1e5);
+  stability deep / edge 99th; T1 tumor / margin 99th): PAT13 0.27 → 0.25, 0.41 → 0.44; T1 2.25 → 2.40,
+  1.96 → 2.14 (and the tumor's median 0.89 → 1.21: worse) - PAT23 0.30 → 0.19, 0.51 → 0.33; T1
+  1.72 → 1.63, 1.36 → 1.40 - PAT14 0.44 → 0.38, 0.46 → 0.47; T1 0.45 → 0.45, 0.45 → 0.48.
+  **Not uniformly better**: stronger regularization steadies the field where the data are weak (PAT16's
+  dropout, PAT23) and blunts it where the true field turns sharply (PAT13's skull base). PAT16 is the
+  extreme case; the other three were already stable at the current settings. Not adopted.
