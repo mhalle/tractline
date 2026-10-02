@@ -93,7 +93,7 @@ def field_timing():
     from _prep import prepare
     from _tractcloud import Labeler
     s = load("PAT16")
-    est = lambda: S.estimate(s.b0s, s.vox, s.pe_vectors, s.readout_s, device="cpu", dtype=torch.float32, interp="linear_pe")
+    est = lambda: S.estimate(s.b0s, s.vox, s.pe_vectors, s.readout_s, device="cpu", dtype=torch.float32)
     res = {"os_cpu_count": os.cpu_count(), "estimate_by_threads": {}}
     for th in (8, 16, 32, 48):
         torch.set_num_threads(th)

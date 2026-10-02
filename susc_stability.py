@@ -2,7 +2,8 @@
 
     DATA/.venv/bin/python bench/tractography/susc_stability.py --sub PAT13 [--configs '[[3, 1], [5, 1e5]]']
 
-Per configuration ([iter_scale, lam_scale], or a dict of estimate options), on the GPU: the field from the b0s as they are and plus noise
+Per configuration ([iter_scale, lam_scale] of L-BFGS, as recorded before Gauss-Newton, or a dict of
+estimate options), on the GPU: the field from the b0s as they are and plus noise
 of SD 0.01 - their displacement difference deep in the brain (the cohort's mask, eroded 3 voxels) and at
 its edge (median / 99th / max) - and the scan corrected by each field against the subject's T1
 (_t1check: brain, tumor, 10 mm margin; median / 90th / 99th); the first field's folds (voxels where
@@ -20,7 +21,7 @@ from _prep import prepare
 
 HERE = Path(__file__).resolve().parent
 ap = argparse.ArgumentParser(); ap.add_argument("--sub", required=True)
-ap.add_argument("--configs", default="[[3, 1], [5, 1e5]]", help='[[iter_scale, lam_scale], {"optimizer": "gn"}, ...]')
+ap.add_argument("--configs", default='[[3, 1], {}]', help='[[iter_scale, lam_scale], {"optimizer": "gn"}, ...]')
 ap.add_argument("--tag", default="")
 args = ap.parse_args()
 torch.set_num_threads(8)
@@ -45,7 +46,7 @@ def t1(h):
 
 res = {"subject": args.sub, "configs": {}}
 for cfg in json.loads(args.configs):
-    opts = cfg if isinstance(cfg, dict) else {"iter_scale": cfg[0], "lam_scale": cfg[1]}
+    opts = cfg if isinstance(cfg, dict) else {"optimizer": "lbfgs", "iter_scale": cfg[0], "lam_scale": cfg[1]}
     name = f"iter_scale {cfg[0]}, lam_scale {cfg[1]:g}" if isinstance(cfg, list) else ", ".join(f"{k} {v}" for k, v in cfg.items())
     fields, secs = [], []
     for b0s in (s.b0s, s.b0s + np.random.default_rng(0).normal(0, 0.01, s.b0s.shape)):

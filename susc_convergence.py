@@ -1,6 +1,6 @@
 """How stable is the field estimate, and where does it diverge? Two runs on PAT16's b0s - as they are,
 and plus noise of SD 0.01 (signals in the hundreds; the scan's own noise ~3 orders larger) - level by
-level: L-BFGS's iterations against its cap, the cost, and the two fields' displacement difference
+level: the optimizer's iterations against its cap, the cost, and the two fields' displacement difference
 inside the brain (the cohort's mask), at its edge, and outside.
 
     DATA/.venv/bin/python bench/tractography/susc_convergence.py [--device mps] [--tag NAME] [estimate options as JSON]

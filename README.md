@@ -15,7 +15,7 @@ nothing more (`dependency_check.py` runs it with the others unimportable).
 | module | stage |
 |---|---|
 | `_ds001226.py` | a subject: the DWI, the reversed-phase-encoding b0s, the T1, the tumor mask |
-| `_susc.py` | susceptibility correction: `estimate` (FSL topup's model, GPU), `apply`, `displacement_mm` |
+| `_susc.py` | susceptibility correction: `estimate` (FSL topup's model by Gauss-Newton; GPU or CPU), `apply`, `displacement_mm` |
 | `_prep.py`, `_median.py` | the tracker's input: one shell, gradients in RAS, DIPY's `median_otsu` mask (exactly, in torch, CPU or GPU) |
 | `_ukf_torch.py`, `_ukf_metal.py` | UKF two-tensor tractography as the Slicer binary does it; the Metal kernel for the steps |
 | `_tractcloud.py`, `_resample.py` | TractCloud labels and log-probabilities |
@@ -38,6 +38,9 @@ first attempt, compiles too slowly to use).
   `ukf32_compare.py`, `ukf_noise_floor.py` and `modal_ukf_labels.py` (float32 against the scan's noise),
   `resample_check.py` (upstream's features), `median_check.py` (DIPY), `susc_check.py` and
   `t1_alignment.py` (topup, the T1; PAT16).
+- The field estimate's own tests: `susc_held_out.py` (+ `_summary`: split-half, held-out prediction and
+  drift from each scan's own b0s, 12 patients - the test that picks its settings), `susc_stability.py`
+  (against the T1, plus a noise-0.01 rerun), `susc_convergence.py` (level by level).
 
 ## The format work (rankfield on TractCloud)
 

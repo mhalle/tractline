@@ -106,14 +106,13 @@ class Payload:
 
 
 def correct(s, timer: Timer, device="mps") -> Correction:
-    """On the CPU: float32, and the full-resolution levels (motion held) sampled linearly along the
-    phase-encoding axis after one move per level - 26 s against 61 s trilinear; against the T1 no
-    worse than the GPU's trilinear (NOTES 2026-10-02)."""
+    """The field estimate is _susc.estimate's defaults (Gauss-Newton, NOTES 2026-10-02): on "mps" its
+    subsampled levels on the CPU, on the CPU in float32 - the same model on both, 18 s / 22.5 s on the
+    M2. Either way the CPU's levels get ESTIMATE_THREADS."""
     import os
     cpu = torch.device(device).type == "cpu"
-    with timer("field_estimate"), threads(min(ESTIMATE_THREADS, os.cpu_count() or 1) if cpu else torch.get_num_threads()):
-        h, motion, _ = S.estimate(s.b0s, s.vox, s.pe_vectors, s.readout_s, device=device,
-                                  **(dict(dtype=torch.float32, interp="linear_pe") if cpu else {}))
+    with timer("field_estimate"), threads(min(ESTIMATE_THREADS, os.cpu_count() or 1)):
+        h, motion, _ = S.estimate(s.b0s, s.vox, s.pe_vectors, s.readout_s, device=device, **(dict(dtype=torch.float32) if cpu else {}))
     with timer("field_apply"):
         dwi = S.apply(s.dwi, h, s.pe_axis, s.pe_sign, s.readout_s)
     return Correction(dwi, h, motion, S.displacement_mm(h, s.readout_s, s.pe_sign, s.vox[s.pe_axis]))

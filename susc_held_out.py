@@ -27,10 +27,9 @@ import _susc as S
 from _ds001226 import load, ROOT
 
 HERE = Path(__file__).resolve().parent
-GN_FAST = {"optimizer": "gn", "fold": 10, "iter_scale": 1, "coarse_device": "cpu",
-           "gn": {"ftol": 1e-4, "cg_rtol": 0.1, "cg_iters": 30, "cg_check": 5}}
 ap = argparse.ArgumentParser(); ap.add_argument("--sub", required=True)
-ap.add_argument("--configs", default=json.dumps({"lbfgs": {}, "gn": GN_FAST}))
+ap.add_argument("--configs", default=json.dumps({"lbfgs": {"optimizer": "lbfgs"}, "gn": {}}),
+                help="name: estimate options; the results' 'gn' runs were the options now estimate's defaults")
 ap.add_argument("--quick", action="store_true"); ap.add_argument("--tag", default="")
 args = ap.parse_args()
 torch.set_num_threads(8)

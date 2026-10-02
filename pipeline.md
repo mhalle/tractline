@@ -7,18 +7,19 @@
 
 | stage | module | where | PAT16 |
 |---|---|---|---|
-| susceptibility field from the b0s + reversed pair (topup's model) | `_susc.estimate` | GPU, float32 | 29.0 s |
+| susceptibility field from the b0s + reversed pair (topup's model, Gauss-Newton) | `_susc.estimate` | GPU, float32; subsampled levels on the CPU | 17.5 s |
 | apply it (cubic along phase encoding, Jacobian) | `_susc.apply` | CPU, float64 | 1.3 s |
 | tracker input (b = 2800 shell, RAS gradients, median_otsu mask) | `_prep.prepare`, `_median` | CPU | 0.7 s |
 | UKF two-tensor, ORG settings, the binary's seeds | `_ukf_torch.track` (Metal) | GPU, float32 steps | 27.0 s |
 | TractCloud, one draw | `_tractcloud.Labeler` | GPU, float32 | 4.1 s |
 | rank field + geometry (0.05 mm grid) | rankfield, `_geometry` | CPU | 0.9 s |
-| **scan → payload** | | | **63 s; 3.0 MB for 32 k streamlines** |
+| **scan → payload** | | | **54 s; 3.0 MB for 32 k streamlines** |
 
 For scale: FSL topup + applytopup take 665 s for the correction alone on the same machine; the whole
 Stanford HARDI brain tracks in 135 s on the M2 and 78 s on an A10G (`_ukf_triton_block`). Against
-the T1, the correction cuts the tumor margin's misplacement from 4.7 mm to 1.75 mm (99th percentile,
-median of 12 patients). Sections 1-5 below are the format work on the HCP tractogram that preceded it.
+the T1, the correction cuts the tumor margin's misplacement from 4.8 mm to 1.6 mm (99th percentile,
+median of 12 patients). On the CPU alone the field takes 22.6 s, the same field as the GPU's (0.03 mm
+at the brain's 99th percentile). Sections 1-5 below are the format work on the HCP tractogram that preceded it.
 
 *2026-10-01. Measured on the HCP test subject (440,621 streamlines, 21.6 M vertices): an A10G on
 Modal for the GPU, the M2 laptop and Modal CPUs for the rest. Every number below cites the
@@ -150,9 +151,11 @@ The rules carried over:
 
 ## 5. Open
 
-- **The field estimate's sensitivity.** Deterministic for a given input, but negligible input noise
-  moves the field by up to 1 mm at the 99th percentile of a tumor margin (median 0.33 mm over 12
-  patients): L-BFGS's path. Firmer convergence is the next thing to try.
+- **The field estimate's repeatability.** Gauss-Newton fixed the optimizer's sensitivity (negligible
+  input noise: 0.07 mm at the margin's 99th, was 0.33 under L-BFGS) and predicts held-out b0s better on
+  all 12 patients; fits from independent pairs of b0s still differ by ~1.3 mm at the brain's edge
+  (99th), and stronger regularization does not help (NOTES 2026-10-02). Motion between slice groups
+  (PAT08) is outside the model.
 - **PAT23's frontal base.** Under a 104 cm³ meningioma, topup and our correction agree with each
   other and both disagree with the T1 by 4-8 mm in 4 % of the margin; which is wrong is open.
 - **Upstream.** Enabling cudnn in TractCloud's own pipeline is a one-line change worth proposing

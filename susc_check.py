@@ -15,7 +15,7 @@ import numpy as np, nibabel as nib
 from dipy.segment.mask import median_otsu
 import _susc as S
 
-ap = argparse.ArgumentParser(); ap.add_argument("--device", default="mps"); ap.add_argument("--iter-scale", type=int, default=3)
+ap = argparse.ArgumentParser(); ap.add_argument("--device", default="mps"); ap.add_argument("--iter-scale", type=int, default=None)
 ap.add_argument("--lam-scale", type=float, default=1.0); ap.add_argument("--tag", default="")
 ap.add_argument("--interp", choices=("cubic_pe", "trilinear"), default="trilinear")
 ap.add_argument("--motion", choices=("estimate", "zero", "topup", "topup_neg"), default="estimate",

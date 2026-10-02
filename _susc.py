@@ -15,11 +15,14 @@ The model (Andersson, Skare & Ashburner 2003; topup's b02b0.cnf schedule):
   - volumes scaled to a common mean intensity first (--scale=1);
   - no translation along the phase-encoding axis for the first volume of each acquisition (topup's
     convention, which fixes the trade between a field offset and such translations).
+The fit: Levenberg-Marquardt Gauss-Newton (gauss_newton(); topup's --minmet 0), matrix-free, at
+topup's iteration counts, stopping earlier on the cost's relative decrease.
 Departures from topup, measured not hidden: trilinear interpolation throughout the estimate by default
 (interp="cubic_pe": cubic B-splines along the phase-encoding axis where motion is held, as topup's
-splines; 50 s against 29 s on the M2, the same field against topup's and the same residual against
-the T1 to 0.07 mm, t1_alignment.json), L-BFGS (topup: Levenberg-Marquardt, then scaled conjugate
-gradients), motion composed with the displacement to first order (M_v(x) + d_v(x)).
+splines; measured no better, slower); HySCO's anti-folding penalty (fold_phi(), Ruthotto et al. 2012)
+added to the cost - without it Gauss-Newton folds the field outside the brain; motion composed with the
+displacement to first order (M_v(x) + d_v(x)). Measured: NOTES 2026-10-02 "by Gauss-Newton" and
+"Repeatability from independent b0s" (the held-out prediction on 12 patients picks topup's lambda).
 """
 from __future__ import annotations
 
@@ -268,7 +271,7 @@ def _pcg(A, b, Minv, iters, rtol, check=1):
 
 
 def gauss_newton(c, m, *, sample, Bs, dBs, d2Bs, vox, pe_ax, pe_scale, lam, mmask, est, center, max_iter, fold=0.0,
-                 xtol=0.005, ftol=1e-5, cg_iters=60, cg_rtol=0.05, cg_check=1):
+                 xtol=0.005, ftol=1e-4, cg_iters=30, cg_rtol=0.1, cg_check=5):
     """Levenberg-Marquardt Gauss-Newton on one level's cost (estimate()'s: the unwarped volumes' mean
     squared difference from their mean, plus lam * ssd * bending energy, ssd held within an iteration as
     topup's ssqlambda; with fold > 0, plus fold * ssd * the mean of fold_phi() over the voxels, x the
@@ -392,8 +395,8 @@ def gauss_newton(c, m, *, sample, Bs, dBs, d2Bs, vox, pe_ax, pe_scale, lam, mmas
 # ------------------------------------------------------------------ the fit
 
 def estimate(b0s: np.ndarray, vox, pe_vectors: np.ndarray, readout_s, *, device="cpu", dtype=None, progress=None,
-             schedule=B02B0, iter_scale=3, lam_scale=1.0, fixed_motion=None, interp="trilinear", optimizer="lbfgs",
-             fold=0.0, gn=None, coarse_device=None, init=None, diagnostics=False):
+             schedule=B02B0, iter_scale=None, lam_scale=1.0, fixed_motion=None, interp="trilinear", optimizer="gn",
+             fold=10.0, gn=None, coarse_device="auto", init=None, diagnostics=False):
     """The susceptibility field from b0s with at least two phase-encoding directions.
 
     b0s (X, Y, Z, V); vox (3,) mm; pe_vectors (V, 3), each b0's phase-encoding vector; readout_s the
@@ -403,22 +406,27 @@ def estimate(b0s: np.ndarray, vox, pe_vectors: np.ndarray, readout_s, *, device=
     motion (V, 6): translations mm, rotations rad, volume 0 fixed; the per-level log).
 
     The rest are experiment options, their defaults the pipeline's: schedule (topup's b02b0.cnf),
-    iter_scale (iterations per level x 3), lam_scale (topup's lambda, rescaled: its units are not
+    iter_scale (the schedule's iterations per level times this; default 1, 3 for "lbfgs"), lam_scale (topup's lambda, rescaled: its units are not
     ours), fixed_motion ((V, 6) held instead of estimated), interp ("cubic_pe": at levels whose motion
     is held, cubic B-splines along the phase-encoding axis, topup's --interp=spline; measured no
     better, 70 % slower; "linear_pe": the same, linear along the axis - the images moved once per level,
-    then two gathers a voxel instead of a 3D trilinear sample and its gradient), optimizer ("lbfgs";
-    "gn": gauss_newton(), Levenberg-Marquardt as topup's, stopping when converged; iterations capped at
-    the same count), fold (with "gn": the weight of HySCO's anti-folding penalty, fold_phi(); gn: gauss_newton()'s
-    tolerances), coarse_device (the subsampled levels there, in this dtype, the rest on device: small
-    grids are launch-bound on a GPU), init ((field Hz at full resolution, motion (V, 6)) to start from
+    then two gathers a voxel instead of a 3D trilinear sample and its gradient), optimizer ("gn":
+    gauss_newton(); "lbfgs": torch's L-BFGS, the earlier default - never converges, its result where
+    the cap falls), fold (with "gn": the weight of HySCO's anti-folding penalty, fold_phi()), gn
+    (gauss_newton()'s tolerances), coarse_device (the subsampled levels there, in this dtype, the rest
+    on device: small grids are launch-bound on a GPU, 3x slower than the CPU on the M2; "auto": the CPU
+    under "mps", else none), init ((field Hz at full resolution, motion (V, 6)) to start from
     instead of zero). diagnostics: each level's log also holds the optimizer's iterations and evaluations
     and the field at full resolution."""
+    if iter_scale is None:
+        iter_scale = 3 if optimizer == "lbfgs" else 1
+    if coarse_device == "auto":
+        coarse_device = "cpu" if torch.device(device).type == "mps" else None
     if coarse_device is not None and torch.device(coarse_device) != torch.device(device):
         k = next(i for i, f in enumerate(schedule["subsamp"]) if f == 1)
         dt = dtype or (torch.float32 if torch.device(device).type == "mps" else torch.float64)
         opts = dict(dtype=dt, progress=progress, iter_scale=iter_scale, lam_scale=lam_scale, fixed_motion=fixed_motion,
-                    interp=interp, optimizer=optimizer, fold=fold, gn=gn, diagnostics=diagnostics)
+                    interp=interp, optimizer=optimizer, fold=fold, gn=gn, coarse_device=None, diagnostics=diagnostics)
         h0, m0, log0 = estimate(b0s, vox, pe_vectors, readout_s, device=coarse_device, init=init,
                                 schedule={key: v[:k] for key, v in schedule.items()}, **opts)
         renumber = lambda L: L.update(level=L["level"] + k) or (progress(L) if progress else None)

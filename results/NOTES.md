@@ -1369,3 +1369,22 @@ medians (`summary.json`):
   fields do not remove the edge's variance - dropout, motion between slice groups and two-volume fits
   are likelier sources. topup's lambda is the cross-validated choice; a Morozov lambda is no longer a
   priority. x1e4 would buy L-BFGS's edge repeatability for 0.5 % of the residual.
+
+## 2026-10-02 Gauss-Newton is the default: the cohort again
+
+`_susc.estimate`'s defaults are now the held-out test's choice: optimizer "gn", fold 10, topup's
+iteration counts and lambda, the gauss_newton() tolerances of "by Gauss-Newton", the subsampled levels
+on the CPU under "mps" (coarse_device "auto"). The CPU path drops linear_pe: trilinear in float32,
+22.6 s, the GPU's field to 0.03 mm (brain 99th; L-BFGS's two paths differed by 0.38). L-BFGS stays as
+optimizer="lbfgs" (iter_scale 3 by default there); susc_stability.py's [iter_scale, lam_scale] configs
+and susc_held_out.py's "lbfgs" mean it. The new defaults reproduce the tuned run bit for bit.
+`cohort.py` on the 12 patients (`results/cohort/`, `cohort_summary.md`; the L-BFGS fields kept as
+derived/<sub>/cohort_fields_lbfgs.npz), L-BFGS → Gauss-Newton, medians:
+- against the T1, 99th percentile: brain 1.71 → 1.62 mm (better on 10 of 12), tumor 1.65 → 1.39
+  (8 of 12), tumor margin 1.75 → 1.58 (10 of 12). Largest gains where L-BFGS did worst: PAT23's
+  margin 5.20 → 3.85, PAT13's tumor 3.35 → 2.61, PAT16's margin 2.45 → 1.97. Worse: PAT25's tumor
+  2.38 → 2.76, PAT19's 2.93 → 3.04, PAT05's 1.08 → 1.21 (margin 1.08 → 1.26), PAT14's margin
+  0.62 → 0.72;
+- the noise-0.01 rerun at the margin's 99th 0.33 → 0.07 mm (all 12); the half-split T1 fit 0.40 → 0.39
+  (it measures the T1 check's precision more than the field's);
+- field estimate 31.2 → 17.8 s, scan to labels 71 → 56 s (PAT16: 17.5 s, 53 s).
