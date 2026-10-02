@@ -148,13 +148,15 @@ def encode(tg: Tractogram, labels: Labels, timer: Timer, prefix="") -> Payload:
 STAGES = ("field_estimate", "field_apply", "prep", "load", "ukf", "tractcloud", "encode_field", "encode_geometry")
 
 
-def run(s, labeler: Labeler, timer: Timer, prefix="", trx=None, device="mps", **trx_options):
+def run(s, labeler: Labeler, timer: Timer, prefix="", trx=None, device="mps", workers=None, **trx_options):
     """The whole pipeline on a subject: (Correction, Tractogram, Labels, Payload). Its time is
     timer.total(*pipeline_stages(prefix)). trx: also write the tractogram there as TRX (_trx.write;
     trx_options: positions="float16", labeled_only=True), timed apart as "write_trx". device: where
-    the estimate and the tracking run ("mps" or "cpu"; the labeler has its own)."""
+    the estimate and the tracking run ("mps" or "cpu"; the labeler has its own); workers: the CPU
+    tracker's processes (default one per core as os.cpu_count() sees them - in a container, pass the
+    container's own)."""
     corr = correct(s, timer, device)
-    tg = track(s, corr.dwi, timer, prefix, device)
+    tg = track(s, corr.dwi, timer, prefix, device, workers)
     labels = label(tg, labeler, timer, prefix)
     payload = encode(tg, labels, timer, prefix)
     if trx is not None:

@@ -1,0 +1,63 @@
+{
+ "source": "transcribed from the container's log (app ap-loJmS3zffRyy7L7EkUWToe, 2026-10-02): the run finished; returning its dict failed on the local side (torch not installed there) - fixed since, the function now returns JSON text",
+ "cpu_model": "unknown (/proc/cpuinfo)",
+ "os_cpu_count": 48,
+ "affinity": 48,
+ "physical_cores_requested": 32,
+ "dev_shm_gib": 16.0,
+ "shared_memory": true,
+ "torch": "2.14.1+cpu",
+ "correct_seconds": {
+  "field_estimate": 33.65,
+  "field_apply": 0.46
+ },
+ "tracking_sweep": [
+  {
+   "workers": 8,
+   "seconds": 80.2,
+   "k_steps_per_s": 142.7,
+   "fibers": 41941,
+   "fiber_steps": 11437564,
+   "identical_to_8_workers": null
+  },
+  {
+   "workers": 16,
+   "seconds": 50.2,
+   "k_steps_per_s": 227.7,
+   "fibers": 41941,
+   "fiber_steps": 11437564,
+   "identical_to_8_workers": true
+  },
+  {
+   "workers": 32,
+   "seconds": 38.5,
+   "k_steps_per_s": 297.1,
+   "fibers": 41941,
+   "fiber_steps": 11437564,
+   "identical_to_8_workers": true
+  },
+  {
+   "workers": 64,
+   "seconds": 46.1,
+   "k_steps_per_s": 248.0,
+   "fibers": 41941,
+   "fiber_steps": 11437564,
+   "identical_to_8_workers": true
+  }
+ ],
+ "pipeline": {
+  "workers": 32,
+  "seconds": {
+   "field_estimate": 101.84,
+   "field_apply": 0.52,
+   "prep": 0.15,
+   "load": 0.19,
+   "ukf": 38.46,
+   "tractcloud": 4.98,
+   "encode_field": 0.53,
+   "encode_geometry": 0.59
+  },
+  "scan_to_payload_s": 147.3,
+  "note": "the field estimate took 101.8 s here against 33.7 s in step 1 of the same container, same code and input - unexplained (contention on the host?)"
+ }
+}

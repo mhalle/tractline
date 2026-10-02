@@ -414,7 +414,10 @@ _WORKER_D = None
 def _worker_init(D, threads):
     global _WORKER_D
     torch.set_num_threads(threads)
-    _WORKER_D = D
+    _WORKER_D = {k: torch.from_numpy(v) if k in _SHARED_KEYS and isinstance(v, np.ndarray) else v for k, v in D.items()}
+
+
+_SHARED_KEYS = ("A", "g", "b", "voxel", "mask")
 
 
 def _worker_block(args):
@@ -424,11 +427,15 @@ def _worker_block(args):
 
 def _parallel(D, blocks, params, workers, threads_per_worker):
     """The blocks on `workers` processes (spawned: macOS and Windows cannot fork safely), D's tensors
-    shared, not copied; results in block order."""
-    import torch.multiprocessing as tmp
-    for v in D.values():
-        if torch.is_tensor(v):
-            v.share_memory_()
+    shared through shared memory - or copied to each worker when TRACTOGRAPHY_SHARE=0 (a container's
+    /dev/shm can be smaller than the signal); results in block order."""
+    import os, torch.multiprocessing as tmp
+    if os.environ.get("TRACTOGRAPHY_SHARE", "1") == "1":
+        for v in D.values():
+            if torch.is_tensor(v):
+                v.share_memory_()
+    else:                                                            # a small /dev/shm (containers): each worker gets a copy
+        D = {k: v.numpy() if torch.is_tensor(v) and k in _SHARED_KEYS else v for k, v in D.items()}
     with tmp.get_context("spawn").Pool(workers, initializer=_worker_init, initargs=(D, threads_per_worker)) as pool:
         return pool.map(_worker_block, [(x, st, d, params) for _, x, st, d in blocks], chunksize=1)
 

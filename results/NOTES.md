@@ -1164,3 +1164,19 @@ One CPU step profiled (`_ukf_torch`, float32): H about 60 %, the rest of the fil
   steps/s, 77 % of the total now), TractCloud 5.0 s, the rest 3 s. CPU against GPU: field 0.12 /
   0.81 mm, fibers 41,910 / 41,895, tract mix r 0.996 (within TractCloud's own 0.989-0.998), single-draw
   labels 0.749 on 30,706 same-seed streamlines (TractCloud's own single draws: 0.82-0.88).
+
+## 2026-10-02 The CPU tracker on a many-core x86 machine (Modal, CPU only)
+
+`modal_cpu_scaling.py` → `modal_cpu_scaling.json`: one container, `cpu=32` (the container saw 48
+vCPUs; CPU model not exposed), 32 GiB, PAT16 on the CPU path, ~7 minutes, about $0.20. The function's
+returned dict did not unpickle locally (no torch in the Modal client's environment); the numbers are
+transcribed from its log, and it returns JSON text now.
+- **Tracking, the whole brain** (float32, fast, batch 1,024): 8 workers 80.2 s (143 k steps/s),
+  16 50.2 s (228 k), **32 38.5 s (297 k)**, 64 46.1 s (248 k: more workers than vCPUs). Fibers
+  identical across 8, 16, 32 and 64 workers (41,941; the M2's CPU run 41,910, its GPU run 41,895: x86
+  vector math rounds otherwise). 297 k steps/s is 3.1x the M2's 8 workers (96 k) and 70 % of the M2's
+  Metal kernel (428 k); scaling from 8 to 32 workers 2.1x.
+- **The pipeline at 32 workers**: 147 s scan to payload - UKF 38.5 s, TractCloud 5.0 s, but the field
+  estimate 101.8 s against 33.7 s for the same estimate earlier in the same container (same code and
+  input); unexplained, possibly contention on a shared host. With the earlier estimate the pipeline
+  would be ~84 s. Not rerun (frugal); worth a second look before quoting an x86 end-to-end number.
