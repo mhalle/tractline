@@ -1159,3 +1159,8 @@ One CPU step profiled (`_ukf_torch`, float32): H about 60 %, the rest of the fil
   / 2.13 mm, against the GPU's 0.38 / 0.94 / 1.73, 0.28 / 0.85 / 1.67, 0.38 / 0.96 / 2.45 (within the
   measure's precision, ~0.46 mm at the brain's 99th). The CPU pipeline's setting; the GPU keeps
   trilinear.
+- **The pipeline on the CPU, end to end** (`cpu_timing.json`): **155 s** scan to payload (714 at the
+  start of the day, 259 after the tracker; the GPU 61 s): field estimate 27.5 s, UKF 120 s (96 k
+  steps/s, 77 % of the total now), TractCloud 5.0 s, the rest 3 s. CPU against GPU: field 0.12 /
+  0.81 mm, fibers 41,910 / 41,895, tract mix r 0.996 (within TractCloud's own 0.989-0.998), single-draw
+  labels 0.749 on 30,706 same-seed streamlines (TractCloud's own single draws: 0.82-0.88).

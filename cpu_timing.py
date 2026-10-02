@@ -48,6 +48,7 @@ if __name__ == "__main__":
                           "fibers": [gc.stats["fibers"], gg.stats["fibers"]], "fiber_steps": [gc.stats["fiber_steps"], gg.stats["fiber_steps"]],
                           "tract_mix_r": round(float(np.corrcoef(shares(lc.tract), shares(lg.tract))[0, 1]), 4),
                           "same_seed_streamlines": len(pairs), "label_agreement": round(float((lc.tract[a] == lg.tract[b]).mean()), 4),
-                          "for_scale": "TractCloud's own redraws: label agreement 0.926 (5-draw vote), tract mix r 0.995-0.999"}}
+                          "for_scale": ("TractCloud's own single draws on one tractogram (PAT16, 4 draws, 6 pairs): label agreement "
+                                    "0.823-0.879, tract mix r 0.989-0.998; 5-draw votes: 0.926")}}
     print(json.dumps(res, indent=1))
     (HERE / "results/cpu_timing.json").write_text(json.dumps(res, indent=1))
