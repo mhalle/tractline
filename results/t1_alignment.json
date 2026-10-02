@@ -1,5 +1,17 @@
 {
  "data": "ds001226 PAT16: mean AP b0 of each arm against the T1w (MPRAGE 1 mm)",
+ "tumor": {
+  "volume_cm3_on_T1": 45.4,
+  "centroid_ras_mm": [
+   30.7,
+   36.2,
+   -13.2
+  ],
+  "t1_mean_inside_vs_mirror": [
+   159.5,
+   209.5
+  ]
+ },
  "regions": {
   "brain_voxels": 94458,
   "topup_displaces_gt_3mm_voxels": 13233
@@ -7,6 +19,28 @@
  "columns": "|residual displacement| along PE, mm: median / 90th / 99th percentile",
  "arms": {
   "uncorrected": {
+   "residual_tumor": [
+    0.73,
+    4.57,
+    7.53
+   ],
+   "residual_tumor_margin_10mm": [
+    1.0,
+    4.93,
+    8.62
+   ],
+   "topup_displacement_tumor": [
+    0.96,
+    5.31,
+    12.3
+   ],
+   "topup_displacement_tumor_margin_10mm": [
+    1.17,
+    6.01,
+    16.33
+   ],
+   "tumor_voxels": 2928,
+   "margin_voxels": 7265,
    "residual_brain": [
     0.95,
     3.25,
@@ -41,7 +75,7 @@
     0.85
    ],
    "rigid_start_rotation_deg": 2.91,
-   "seconds": 125.6,
+   "seconds": 131.6,
    "levels": [
     {
      "knots_mm": 25,
@@ -64,6 +98,28 @@
    ]
   },
   "topup": {
+   "residual_tumor": [
+    0.22,
+    0.78,
+    1.36
+   ],
+   "residual_tumor_margin_10mm": [
+    0.32,
+    0.88,
+    1.94
+   ],
+   "topup_displacement_tumor": [
+    0.96,
+    5.27,
+    12.29
+   ],
+   "topup_displacement_tumor_margin_10mm": [
+    1.15,
+    5.97,
+    16.3
+   ],
+   "tumor_voxels": 2913,
+   "margin_voxels": 7319,
    "residual_brain": [
     0.27,
     0.79,
@@ -98,7 +154,7 @@
     0.87
    ],
    "rigid_start_rotation_deg": 3.19,
-   "seconds": 125.0,
+   "seconds": 122.9,
    "levels": [
     {
      "knots_mm": 25,
@@ -121,6 +177,28 @@
    ]
   },
   "ours": {
+   "residual_tumor": [
+    0.24,
+    0.7,
+    1.23
+   ],
+   "residual_tumor_margin_10mm": [
+    0.38,
+    0.78,
+    1.95
+   ],
+   "topup_displacement_tumor": [
+    0.96,
+    5.27,
+    12.27
+   ],
+   "topup_displacement_tumor_margin_10mm": [
+    1.16,
+    6.0,
+    16.35
+   ],
+   "tumor_voxels": 2926,
+   "margin_voxels": 7291,
    "residual_brain": [
     0.34,
     0.82,
@@ -155,7 +233,7 @@
     0.83
    ],
    "rigid_start_rotation_deg": 3.07,
-   "seconds": 126.6,
+   "seconds": 118.9,
    "levels": [
     {
      "knots_mm": 25,

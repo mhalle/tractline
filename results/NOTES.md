@@ -947,3 +947,25 @@ T2-weighted b0). The residual is what an overlay on the T1 would be off by. ~2 m
   by under 2 mm almost everywhere. Within diffusion space the tract centers barely moved (previous
   entry); against the anatomy they do. Correction belongs in any pipeline whose tracts are shown
   on a T1.
+
+### PAT16's tumor against the distortion
+
+ds001226 `participants.tsv`: anaplastic astrocytoma II-III, 50 cm3, fronto-temporal. The dataset's
+mask (`derivatives/tumor_masks/sub-PAT16/anat/sub-PAT16_space_T1_label-tumor.nii`, manual +
+disconnectome; its array stored left-right flipped against the T1's, its header matching: read by
+the header it covers the hypointense lesion, T1 mean 159.5 against 209.5 in the mirror region):
+45 cm3, centroid RAS (31, 36, -13) mm: **right** anterior temporal lobe, insula and frontal
+operculum. It borders both distortion lobes: the orbitofrontal one medially (displaced ~ -8 mm),
+the temporal-base one inferiorly (+6-8 mm). Carried onto each arm's grid by its own rigid fit
+(`t1_alignment.json`, the figure now cuts through and outlines it):
+
+| |mm, median / 90th / 99th | tumor | 10 mm margin around it |
+|---|---|---|---|
+| topup's displacement of the scan (median over brain removed) | | 1.0 / 5.3 / 12.3 | 1.2 / 6.0 / 16.3 |
+| residual against the T1 | uncorrected | 0.7 / 4.6 / 7.5 | 1.0 / 4.9 / 8.6 |
+| | topup | 0.2 / 0.8 / 1.4 | 0.3 / 0.9 / 1.9 |
+| | ours | 0.2 / 0.7 / 1.2 | 0.4 / 0.8 / 2.0 |
+
+Uncorrected, a tenth of the tumor and its margin would be drawn 5-16 mm from where the T1 shows
+it (the T1 measure recovers about 0.78 of that); corrected, under 2 mm throughout, ours and topup
+alike. The margin is where the uncinate, IFOF and arcuate run past it.

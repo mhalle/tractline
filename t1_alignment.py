@@ -17,14 +17,18 @@ would be off by.
   - validation: the uncorrected arm's d against topup's own displacement (field x readout x voxel):
     if the T1 recovers topup's map independently, the measure measures distortion;
   - precision: the fit repeated on b0s 1-3 and 4-6 separately, |d_a - d_b| / 2 the error of one;
-  - regions: inside the topup arm's brain mask, where topup displaces > 3 mm and elsewhere.
+  - regions: inside the topup arm's brain mask, where topup displaces > 3 mm and elsewhere; the
+    tumor (ds001226 derivatives/tumor_masks, manual + disconnectome, on the T1; its array is stored
+    left-right flipped against the T1's with a header to match: read by its header it covers the
+    hypointense lesion, by voxel order the healthy mirror) and a 10 mm margin around it, each
+    carried onto the b0 grid by the arm's own rigid fit.
 
 Writes results/t1_alignment.json and results/t1_alignment.png.
 """
 import json, time
 from pathlib import Path
 import numpy as np, nibabel as nib, nrrd
-from scipy.ndimage import binary_dilation
+from scipy.ndimage import binary_dilation, affine_transform, distance_transform_edt
 import torch
 import _susc as S
 
@@ -55,6 +59,11 @@ side = json.loads((SUB / "dwi/sub-PAT16_ses-preop_acq-AP_dwi.json").read_text())
 h_topup = np.asarray(nib.load(DER / "PAT16/topup/field_hz.nii.gz").dataobj, dtype=np.float64)
 d_topup = -1 * side["TotalReadoutTime"] * h_topup * vox[PE]               # mm, j-: the AP scan's displacement
 big = topup_mask & (np.abs(d_topup) > 3)
+tm = nib.load(TD / "derivatives/tumor_masks/sub-PAT16/anat/sub-PAT16_space_T1_label-tumor.nii")
+Mt = np.linalg.inv(tm.affine) @ t1img.affine                            # T1 voxel -> mask voxel, by the headers
+tumor_t1 = affine_transform(np.asarray(tm.dataobj, float), Mt[:3, :3], Mt[:3, 3], order=1) > 0.5
+dist = distance_transform_edt(~tumor_t1, sampling=t1img.header.get_zooms()[:3])
+margin_t1 = (dist > 0) & (dist <= 10)
 
 # ------------------------------------------------------------------ the fit
 
@@ -74,10 +83,10 @@ def sample(img, vx):
     return torch.nn.functional.grid_sample(img[None, None], g[None], mode="bilinear", padding_mode="zeros", align_corners=True)[0, 0]
 
 
-def t1_on_grid(T):
-    """The T1 resampled on the b0 grid by T (4x4: b0 world -> T1 world)."""
+def t1_on_grid(T, img=None):
+    """The T1 (or another image on its grid) resampled on the b0 grid by T (4x4: b0 world -> T1 world)."""
     w = world @ T[:3, :3].T + T[:3, 3]
-    return sample(T1s, w @ Ainv_t1[:3, :3].T + Ainv_t1[:3, 3])
+    return sample(T1s if img is None else img, w @ Ainv_t1[:3, :3].T + Ainv_t1[:3, 3])
 
 
 def ngf(a, b, mask):
@@ -163,6 +172,8 @@ def stats(x, m):
 
 
 res = {"data": "ds001226 PAT16: mean AP b0 of each arm against the T1w (MPRAGE 1 mm)",
+       "tumor": {"volume_cm3_on_T1": round(float(tumor_t1.sum()) / 1000, 1), "centroid_ras_mm": [round(float(v), 1) for v in t1img.affine[:3, :3] @ np.argwhere(tumor_t1).mean(0) + t1img.affine[:3, 3]],
+                 "t1_mean_inside_vs_mirror": [round(float(t1[tumor_t1].mean()), 1), round(float(t1[tumor_t1[::-1]].mean()), 1)]},
        "regions": {"brain_voxels": int(topup_mask.sum()), "topup_displaces_gt_3mm_voxels": int(big.sum())},
        "columns": "|residual displacement| along PE, mm: median / 90th / 99th percentile", "arms": {}}
 fields = {}
@@ -178,7 +189,14 @@ for name, path in ARMS.items():
     db, _, _ = fit(b0s[..., 3:].mean(-1), T0)
     err = np.abs(da - db) / 2
     fields[name] = d
+    tumor = (t1_on_grid(T, torch.as_tensor(tumor_t1, dtype=dt)) > 0.5).numpy()
+    margin = (t1_on_grid(T, torch.as_tensor(margin_t1, dtype=dt)) > 0.5).numpy() & topup_mask & ~tumor
+    fields[name + "_T"] = T.numpy(); fields[name + "_tumor"] = tumor; fields[name + "_margin"] = margin
     res["arms"][name] = {
+        "residual_tumor": stats(d, tumor), "residual_tumor_margin_10mm": stats(d, margin),
+        "topup_displacement_tumor": stats(d_topup - np.median(d_topup[topup_mask]), tumor),
+        "topup_displacement_tumor_margin_10mm": stats(d_topup - np.median(d_topup[topup_mask]), margin),
+        "tumor_voxels": int(tumor.sum()), "margin_voxels": int(margin.sum()),
         "residual_brain": stats(d, topup_mask), "residual_where_topup_gt_3mm": stats(d, big), "residual_elsewhere": stats(d, topup_mask & ~big),
         "half_split_error_brain": stats(err, topup_mask), "half_split_error_where_topup_gt_3mm": stats(err, big),
         "ngf_rigid_only": round(rigid_only_ngf(b0, T0), 5), "ngf_after": log[-1]["ngf"],
