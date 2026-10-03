@@ -7,6 +7,8 @@ name = "tractline"
 version = "0.1.0"
 description = "Diffusion MRI to named white-matter tracts: susceptibility correction, UKF tractography and tract labeling in torch"
 readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md"]
 requires-python = ">=3.11"
 dependencies = [
     "numpy>=2",

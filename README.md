@@ -103,5 +103,5 @@ labeler's in-memory probabilities, not through the TRX.
 
 ## Licenses
 
-tractline's license is not chosen yet. What it takes from others, and on what terms, is in
+Apache License 2.0 (`LICENSE`). What tractline takes from others, and on what terms, is in
 `THIRD_PARTY_NOTICES.md`.

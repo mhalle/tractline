@@ -1,7 +1,8 @@
 # Third-party notices (draft)
 
-tractline's own license is not yet chosen. This file lists what the repository takes from others, how,
-and under what terms. It is a draft for review before the repository is made public.
+tractline is licensed under the Apache License 2.0 (`LICENSE`). This file lists what the repository
+takes from others, how, and under what terms; those parts keep their own licenses. It is a draft for
+review before the repository is made public.
 
 ## Redistributed or derived in the package (`src/tractline`)
 
