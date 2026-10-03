@@ -138,6 +138,7 @@ made (`susc_apply.py`, `pat16_prep.py`).
 ## Documents (`docs/`)
 
 `pipeline.md` (the pipeline as built, its timings, what is open), `labelers.md` (the labelers),
+`duckn-proposal.md` (what a duckn 2.0 store would need to carry for tractline to read it),
 `prior-art.md` (the incubation's survey: streamline storage, the confidence of streamline parcellation,
 compact soft output - some of its references point to format work that is not in this repository).
 
