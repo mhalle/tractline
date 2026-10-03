@@ -1,15 +1,13 @@
 {
  "seconds": {
-  "field_estimate": 28.78,
-  "field_apply": 1.22,
+  "field_estimate": 17.25,
+  "field_apply": 1.26,
   "prep": 3.05,
-  "load": 0.24,
-  "ukf": 26.45,
-  "tractcloud": 4.16,
-  "encode_field": 0.59,
-  "encode_geometry": 0.37,
-  "write_trx": 0.83,
-  "write_trx_dir_float16_labeled": 0.73
+  "load": 0.23,
+  "ukf": 26.85,
+  "label": 0.68,
+  "write_trx": 0.29,
+  "write_trx_dir_float16_labeled": 0.25
  },
  "variants": {
   "zip, all streamlines, float32": {
@@ -22,18 +20,14 @@
     "groups_partition_labeled": true,
     "groups_are_tracts": true,
     "tract": true,
-    "rf_ranks": true,
-    "rf_gaps": true,
-    "rf_tail": true,
     "cluster_maps_to_tract": true,
-    "probability_in_0_1": true,
-    "rankfield_meta_in_header": true
+    "probability_in_0_1": true
    },
-   "streamlines": 41895,
-   "mb": 24.43,
+   "streamlines": 42170,
+   "mb": 23.9,
    "max_point_error_mm": 0.0,
    "trx_python_load_s": 0.03,
-   "margin_median_labeled": 0.934
+   "margin_median_labeled": 0.996
   },
   "directory, labeled only, float16": {
    "all_checks": true,
@@ -45,19 +39,14 @@
     "groups_partition_labeled": true,
     "groups_are_tracts": true,
     "tract": true,
-    "rf_ranks": true,
-    "rf_gaps": true,
-    "rf_tail": true,
     "cluster_maps_to_tract": true,
-    "probability_in_0_1": true,
-    "rankfield_meta_in_header": true
+    "probability_in_0_1": true
    },
-   "streamlines": 31993,
-   "mb": 11.81,
+   "streamlines": 32264,
+   "mb": 11.34,
    "max_point_error_mm": 0.0312,
-   "trx_python_load_s": 0.0,
-   "margin_median_labeled": 0.934
+   "trx_python_load_s": 0.01,
+   "margin_median_labeled": 0.996
   }
- },
- "payload_mb": 3.01
+ }
 }

@@ -1628,3 +1628,18 @@ paths, no blocked module loaded (59.1 s / 166.7 s). The label stage's timer is n
   script - each re-ran the comparison's GPU pipeline. Guarded, the workers are ~240 MB each. The tracker
   now refuses to spawn from an unguarded script (`ukf._require_main_guard`: a clear error first; REPL and
   notebooks unaffected).
+
+## 2026-10-03 The cohort with RapidParc: the new reference
+
+`cohort.py` on the 12 patients (one process each, ~4.6 min a patient), labeling by the default
+RapidParc; against the committed reference (Gauss-Newton, TractCloud at upstream's 80): **the field and
+every T1 measure identical** (labeler-independent, as they should be); what changed is what labels:
+- Other (ours): 0.56-0.68 → 0.50-0.62 (PAT16 0.583 → 0.498).
+- Tract mix between the scan as acquired and as corrected: median r 0.9967 → 0.9968.
+- **Tract centers moved by correction** (per tract, median / 90th / max mm): medians 1.9-3.0 → 1.4-1.9,
+  maxima down sharply (PAT23 20.9 → 5.9, PAT07 17.6 → 5.8, PAT20 18.0 → 8.6). Part of the old movement
+  was TractCloud's label noise - streamlines changing tract between the two arms' runs - not correction.
+- `cohort_summary.md`: margin vs T1 99th 4.78 → 1.58 mm (unchanged), scan to labels 54 s (field 18 s,
+  UKF 29 s, RapidParc ~1 s).
+- `trx_check.py` with RapidParc's labels: all checks pass, both variants (42,170 streamlines float32 zip
+  23.9 MB; 32,264 labeled, float16 directory 11.3 MB).
