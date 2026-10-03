@@ -1,7 +1,7 @@
 # Third-party notices
 
 tractline's code and files are its own, licensed under the Apache License 2.0 (`LICENSE`), except the
-two items under Redistributed. Several modules implement published methods independently, following the original software's
+one file under Redistributed. Several modules implement published methods independently, following the original software's
 behavior so they can be checked against it; they are not distributed under the originals' licenses.
 This file credits those originals and records their licenses for reference, lists the third-party
 material the package redistributes with the notices its licenses require, and names the software and
@@ -47,48 +47,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ```
 
 
-### Otsu's threshold, from DIPY (BSD 3-Clause)
-
-`mask.otsu` (nine lines) is DIPY's `dipy.segment.threshold.otsu` as published in DIPY 1.12, which DIPY
-copied from scikit-image (Copyright 2009-2022 the scikit-image team, BSD 3-Clause); it is kept verbatim so
-the mask matches DIPY's voxel for voxel. DIPY's license asks that this notice accompany it:
-
-```
-Unless otherwise specified by LICENSE.txt files in individual
-directories, or within individual files or functions, all code is:
-
-Copyright (c) 2008-2026, dipy developers
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are
-met:
-
-    * Redistributions of source code must retain the above copyright
-       notice, this list of conditions and the following disclaimer.
-
-    * Redistributions in binary form must reproduce the above
-       copyright notice, this list of conditions and the following
-       disclaimer in the documentation and/or other materials provided
-       with the distribution.
-
-    * Neither the name of the dipy developers nor the names of any
-       contributors may be used to endorse or promote products derived
-       from this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-```
-
 ## Independent implementations (tractline's code; the originals credited)
 
 - **RapidParc** (BSD 3-Clause, the notice above): `labelers/rapidparc.py` implements its inference
@@ -98,9 +56,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   Brigham and Women's Hospital; github.com/pnlbwh/ukftractography, commit 2d2b661): `ukf.py`, `ukf_metal.py`
   and `ukf_triton*.py` implement its two-tensor unscented Kalman filter tractography as the ORG atlas
   configures it.
-- **DIPY** (BSD 3-Clause; dipy developers): `mask.py` implements DIPY's `median_otsu` (the repeated
-  median filter and the masking) in torch, to match it voxel for voxel; its Otsu threshold is DIPY's own
-  function, above.
+- **DIPY** (BSD 3-Clause; dipy developers): `mask.py` implements DIPY's `median_otsu` - the repeated
+  median filter, Otsu's threshold (Otsu, IEEE Trans. SMC 1979) with DIPY's histogram conventions, and the
+  masking - to match it voxel for voxel. DIPY's Otsu function is itself scikit-image's (BSD 3-Clause; the
+  scikit-image team).
 - **FSL topup** (FSL license; FMRIB, University of Oxford): `susceptibility.py` implements the
   susceptibility model of Andersson, Skare & Ashburner (NeuroImage 2003) and follows the multi-resolution
   schedule of topup's `b02b0.cnf` (knot spacing, subsampling, smoothing, iterations, regularization). FSL

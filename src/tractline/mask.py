@@ -5,7 +5,7 @@ threshold, on the CPU or the GPU.
   - each pass: the volume padded by reflection (index arithmetic, scipy's "reflect"), every voxel's
     9^3 window gathered as a view (unfold), its median taken in chunks of slabs - the 365th of 729
     values, one of the window's own, so the result is exact whatever the device;
-  - otsu: DIPY's own function, verbatim (BSD 3-Clause, from scikit-image; THIRD_PARTY_NOTICES.md),
+  - otsu: Otsu's threshold written here, with DIPY's conventions (bin values, the threshold's edge),
     numpy, 256 bins.
 Checked voxel for voxel against dipy.segment.mask.median_otsu (median_check.py). ~3 s on the M2,
 CPU or GPU; numba's sliding-window histogram did it in 0.2 s but cost a 137 MB dependency that pins
@@ -36,16 +36,18 @@ def median3(v: torch.Tensor, radius=4, chunk=8) -> torch.Tensor:
 
 
 def otsu(image, nbins=256):
-    """dipy.segment.threshold.otsu (DIPY copied it from scikit-image), verbatim: BSD 3-Clause, its notice in
-    THIRD_PARTY_NOTICES.md."""
-    hist, bin_centers = np.histogram(image, nbins)
-    hist = hist.astype(float)
-    weight1 = np.cumsum(hist)
-    weight2 = np.cumsum(hist[::-1])[::-1]
-    mean1 = np.cumsum(hist * bin_centers[1:]) / weight1
-    mean2 = (np.cumsum((hist * bin_centers[1:])[::-1]) / weight2[::-1])[::-1]
-    variance12 = weight1[:-1] * weight2[1:] * (mean1[:-1] - mean2[1:]) ** 2
-    return bin_centers[:-1][np.argmax(variance12)]
+    """Otsu's threshold (Otsu 1979): split the histogram into a lower and an upper class where the
+    between-class variance, n0 n1 (mu0 - mu1)^2 up to a constant, is largest. The conventions are
+    DIPY's median_otsu's, so the mask matches it: nbins equal bins over the image's range, each bin
+    standing for its upper edge, and the threshold the lower edge of the lower class's last bin."""
+    counts, edges = np.histogram(image, bins=nbins)
+    n = counts.astype(np.float64)
+    mass = n * edges[1:]                                                  # count x value, per bin
+    # splits k = 0 .. nbins - 2: the lower class is bins 0..k, the upper bins k+1..nbins-1
+    n0, s0 = np.cumsum(n)[:-1], np.cumsum(mass)[:-1]
+    n1, s1 = np.cumsum(n[::-1])[::-1][1:], np.cumsum(mass[::-1])[::-1][1:]
+    between = n0 * n1 * (s0 / n0 - s1 / n1) ** 2                          # every class holds a voxel: the range's
+    return edges[np.argmax(between)]                                      # ends are the first and last bins'
 
 
 def multi_median(vol, radius=4, passes=4, device="cpu"):

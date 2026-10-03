@@ -1735,3 +1735,14 @@ Corrections - committed files that later runs overwrote, so the numbers above ar
   subject and draw; 3.2 s in the first run); its accuracies are unchanged.
 - The 49.9 % Other of `pipeline.md`'s PAT16 row is one draw (`gpu_pipeline_compare.json`'s M2 run); the
   cohort's 49.8 % is five draws averaged.
+
+## 2026-10-03 Otsu's threshold, rewritten
+
+`mask.otsu` was DIPY's function verbatim, which DIPY had itself copied from scikit-image; it is now
+written here from Otsu's definition (the split maximizing n0 n1 (mu0 - mu1)^2), keeping DIPY's
+conventions - each bin stands for its upper edge, the threshold is the lower edge of the lower class's
+last bin - so the mask still matches DIPY's. Checked: the same threshold as `dipy.segment.threshold.otsu`
+on 9,000 random cases (normal, integer, bimodal and gamma data; 256, 64 and 17 bins); `median_check.py`
+again identical on all 14 volumes (the 12 patients, PAT16 corrected by topup and by ours), CPU and GPU -
+its result as committed, timings aside. `THIRD_PARTY_NOTICES.md` credits DIPY as an implementation again;
+RapidParc's scheme file is the one item redistributed.
