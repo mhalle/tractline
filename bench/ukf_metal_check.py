@@ -15,6 +15,7 @@ fixtures first, then whole fibers, then speed.
 Writes results/ukf_metal.json.
 """
 import argparse, json, platform, subprocess, time
+import os
 from pathlib import Path
 import numpy as np, torch
 from scipy.spatial import cKDTree
@@ -27,7 +28,7 @@ ap.add_argument("--every", type=int, default=49)
 ap.add_argument("--full", action="store_true")
 args = ap.parse_args()
 HERE = Path(__file__).resolve().parent
-DATA = Path.home() / "tmp/data/tractography"
+DATA = Path(os.environ.get("TRACTOGRAPHY_DATA", Path.home() / "tmp/data/tractography"))
 H = DATA / "ukf/hardi"
 D = U.load(str(H / "dwi.nhdr"), str(H / "mask.nrrd"))
 off = U.SRAND0_OFFSET                                                    # the binary's seed offset (macOS srand(0))

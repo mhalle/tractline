@@ -1,14 +1,14 @@
-"""TractCloud labels for a tractogram: the 40 mm cut, 15-point resampling, the context the released
-model was trained with (k 20 local neighbors among 10,000 candidate streamlines, k_global 500 global
-streamlines shared by the draw; numpy seeded per draw), the network on the device in float32, cluster
-probabilities averaged over draws, then the 43 tract labels (42: Other).
+"""TractCloud labels for a tractogram (TractCloud's network and weights, upstream's model code; the
+context built here): the 40 mm cut, 15-point resampling, the context the released model was trained
+with (trained_context: each streamline, then its 19 nearest among 10,000 candidates drawn from the whole
+tractogram; 500 global streamlines shared by the draw; numpy seeded per draw), the network on the device
+in float32, cluster probabilities averaged over draws, then the 43 tract labels (42: Other).
 
-Upstream's packaged inference overrides the context to k_global 80 and a 10 % local subsample. On
-PAT16 that made one draw's Other fraction range 55.5-66.2 % (SD 3.5 points; at 500: 50.6-51.6 %, SD
-0.3) and two single draws agree on 75-88 % of streamlines (at 500: 93-94 %); it also shifts the labels
-(+6-7 points of Other). The global sample drives it: one set conditions every streamline of a draw.
-The local setting barely matters (NOTES 2026-10-02, "Why TractCloud's labels move"). upstream=True
-restores upstream's inference settings, for comparison.
+Upstream's packaged inference overrides the context to k_global 80 and a 10 % local subsample taken
+within consecutive ~10,000-streamline chunks (slabs of the brain, in seed order). On TractCloud's own
+test split that costs 5.5 points of tract accuracy (86.6 % against 92.0 %); on PAT16 one draw's Other
+fraction ranged 55.5-66.2 % (NOTES 2026-10-02). upstream=True restores upstream's context exactly, for
+comparison. The pipeline's default labeler is RapidParc (labelers/rapidparc.py); this one is optional.
 """
 from __future__ import annotations
 
@@ -16,9 +16,11 @@ import sys, types
 import numpy as np, torch
 import torch.nn.functional as F
 from ..resample import resample
-from .base import Labels, MIN_LENGTH_MM, OTHER, lengths      # shared by the labelers; re-exported here
+from .base import Labels, MIN_LENGTH_MM, OTHER, LogMean, empty, lengths      # shared by the labelers; re-exported here
 from ..data import DATA, MODEL, MASS_CENTER
 
+import os
+os.environ.setdefault("TRACTCLOUD_DATA_DIR", str(DATA))                   # TractCloud's own model-cache lookup
 sys.path.insert(0, str(DATA / "TractCloud/src")); sys.modules.setdefault("vtk", types.ModuleType("vtk"))
 from tractcloud import inference as inf
 from tractcloud.tract_mapping import TRACT_NAMES, _CLUSTER_TO_TRACT_LUT as LUT
@@ -74,56 +76,101 @@ class MatmulDGCNN(torch.nn.Module):
         return F.log_softmax(m.linear3(z), dim=1)
 
 
-K_GLOBAL, LOCAL_CANDIDATES = 500, 10_000            # as trained (TrainedModel/cli_args.txt: k_global 500, k_ds_rate 1.0 of 10,000)
+K_GLOBAL, LOCAL_CANDIDATES, K = 500, 10_000, 20   # as trained (TrainedModel/cli_args.txt: k 20, k_global 500, k_ds_rate 1.0 of 10,000)
+
+
+def trained_context(feat, seed, k_global=K_GLOBAL, candidates=LOCAL_CANDIDATES, chunk=4096):
+    """The context the released model was trained with, for (n, 15, 3) float32 features: (feat, local
+    (n, 15, 3, k), global (1, 15, 3, k_global)) in RealDataDataset's layouts. Global: k_global streamlines
+    drawn with replacement (np.random.seed(seed), randint, as upstream). Local: each streamline itself,
+    then its k - 1 nearest (upstream's distance) among ONE random set of min(n, candidates) streamlines
+    from the whole tractogram - training's: k nearest among all of a 10,000-streamline brain, itself
+    first at distance 0. Upstream's RealDataDataset instead subsamples within consecutive index chunks of
+    ~10,000 (seed order: slabs of the brain), so at k_ds_rate r each streamline sees ~r x 10,000 candidates
+    from its own slab - at 10,000 streamlines or fewer the two are the same."""
+    n = len(feat)
+    np.random.seed(seed)
+    glob = feat[np.random.randint(0, n, k_global)].transpose(1, 2, 0)[None].astype(np.float32)
+    cand = np.sort(np.random.choice(n, size=min(n, candidates), replace=False))
+    ft = torch.from_numpy(np.ascontiguousarray(feat.transpose(0, 2, 1)))           # (n, 3, 15)
+    cf = ft[cand]
+    local = np.empty((n, feat.shape[1], 3, K), np.float32)
+    cand_t = torch.from_numpy(cand)
+    for a in range(0, n, chunk):
+        b = min(n, a + chunk)
+        d = inf._fiber_distance_efficient(ft[a:b], cf)                             # (m, C)
+        d[cand_t[None, :] == torch.arange(a, b)[:, None]] = float("inf")            # itself comes first, below
+        nn = d.topk(k=K - 1, largest=False, dim=-1)[1]
+        nb = torch.cat([ft[a:b, None], cf[nn]], 1)                                  # (m, k, 3, 15)
+        local[a:b] = nb.permute(0, 3, 2, 1).numpy()
+    return feat.astype(np.float32), local, glob
 
 
 class Labeler:
     def __init__(self, device="mps", exact=None, upstream=False, batch=256):
         """exact: upstream's forward (default on the GPU); otherwise MatmulDGCNN (default on the CPU).
-        upstream: upstream's inference context (k_global 80, 10 % local subsample) instead of the trained one.
-        batch: streamlines per forward pass - the same labels at any size (checked at 256 and 1,024); at the
-        trained context 1,024 peaked at 5.9 GB on the M2's GPU, 256 at 2.1 GB, as fast."""
+        upstream: upstream's inference context exactly (k_global 80, its RealDataDataset with a 10 % local
+        subsample per chunk) instead of the trained one (trained_context). batch: streamlines per forward
+        pass - the same labels at any size (checked at 256 and 1,024); 1,024 peaked at 5.9 GB on the M2's
+        GPU, 256 at 2.1 GB, as fast."""
         self.device, self.batch = torch.device(device), batch
         self.k_global = 80 if upstream else K_GLOBAL
         self.upstream = upstream
         self.model, _ = inf.load_model(str(MODEL / "best_tract_f1_model.pth"), str(MODEL / "cli_args.txt"), self.device,
-                                       k_override=20, k_global_override=self.k_global)
+                                       k_override=K, k_global_override=self.k_global)
         if not (self.device.type != "cpu" if exact is None else exact):
             with torch.no_grad():
                 self.model = MatmulDGCNN(self.model.eval())
         self.center = np.load(MASS_CENTER)
         self.lut = LUT.astype(np.int64)
 
+    def context(self, feat, seed):
+        """(feat, local, global) for one draw of the centered (n, 15, 3) features."""
+        if self.upstream:
+            np.random.seed(seed)
+            ds = inf.RealDataDataset(feat, k=K, k_global=self.k_global, k_ds_rate=0.1)
+            return ds.feat, ds.local_feat, ds.global_feat
+        return trained_context(feat, seed, self.k_global)
+
+    @torch.no_grad()
+    def log_probs(self, feat, seed):
+        """(n, 1600) cluster log-probabilities (the network's log-softmax, on the device) of one draw, by batch."""
+        Fe, Lo, Gl = self.context(feat, seed)
+        Pf = torch.from_numpy(Fe).float().to(self.device).transpose(2, 1).contiguous()
+        L = torch.from_numpy(Lo).float().to(self.device).transpose(2, 1).contiguous()
+        G = torch.from_numpy(Gl).float().to(self.device).transpose(2, 1).contiguous()
+        for a in range(0, len(Fe), self.batch):
+            b = min(len(Fe), a + self.batch)
+            yield a, self.model(Pf[a:b], torch.cat((L[a:b], G.expand(b - a, -1, -1, -1)), 3)).view(-1, 1600)
+
     def __call__(self, fibers, draws=(0,), logp=False) -> Labels:
-        """fibers: (n, 3) RAS mm arrays. draws: the context seeds whose cluster probabilities are
-        averaged. logp: keep the log of the averaged probabilities (one draw: the network's output)."""
+        """fibers: (n, 3) RAS mm arrays. draws: the context seeds (any iterable) whose cluster probabilities
+        are averaged. logp: keep the cluster log-probabilities (float16; several draws: the log of their
+        mean probability, without underflow)."""
         P, o, length = lengths(fibers)                                     # points as a float32 file would hold them
         keep = length >= MIN_LENGTH_MM
-        feat = resample(torch.from_numpy(P), torch.from_numpy(o)).numpy()[keep]
-        ds_rate = 0.1 if self.upstream else min(1.0, LOCAL_CANDIDATES / max(len(feat), 1))
-        centered = inf.center_tractography(feat, self.center)
-        one = len(draws) == 1
-        argmax = psum = first = None
-        for d in draws:
-            np.random.seed(d)
-            ds = inf.RealDataDataset(centered, k=20, k_global=self.k_global, k_ds_rate=ds_rate)
-            Pf = torch.from_numpy(ds.feat).float().to(self.device).transpose(2, 1).contiguous()
-            L = torch.from_numpy(ds.local_feat).float().to(self.device).transpose(2, 1).contiguous()
-            G = torch.from_numpy(ds.global_feat).float().to(self.device).transpose(2, 1).contiguous()
-            parts = []
-            with torch.no_grad():
-                for a in range(0, len(ds), self.batch):
-                    b = min(len(ds), a + self.batch)
-                    out = self.model(Pf[a:b], torch.cat((L[a:b], G.expand(b - a, -1, -1, -1)), 3)).view(-1, 1600)
-                    # one draw: its argmax and (if asked) its log-probabilities as float16; several: probabilities summed
-                    parts.append((out.argmax(1).cpu(), out.half().cpu() if logp else None) if one else out.float().exp().cpu())
-            if one:
-                argmax = torch.cat([c for c, _ in parts])
-                first = torch.cat([h for _, h in parts]) if logp else None
-            else:
-                p = torch.cat(parts)
-                psum = p if psum is None else psum.add_(p)
-        if not one:
-            argmax = psum.argmax(1)
-            first = (psum / len(draws)).log().half() if logp else None
-        return Labels(keep=keep, length_mm=length[keep], tract=self.lut[argmax.numpy()], logp=first)
+        draws = tuple(draws)
+        if not keep.any():
+            return empty(keep, length)
+        if keep.sum() < (K / 0.1 if self.upstream else K):
+            raise ValueError(f"TractCloud needs at least {int(K / 0.1) if self.upstream else K} streamlines of {MIN_LENGTH_MM:g} mm "
+                             f"or more for its local context; got {int(keep.sum())}")
+        feat = inf.center_tractography(resample(torch.from_numpy(P), torch.from_numpy(o)).numpy()[keep], self.center)
+        n = len(feat)
+        if len(draws) == 1:
+            arg = torch.empty(n, dtype=torch.int64)
+            lp = torch.empty(n, 1600, dtype=torch.float16) if logp else None
+            for a, out in self.log_probs(feat, draws[0]):
+                arg[a:a + len(out)] = out.argmax(1).cpu()
+                if logp:
+                    lp[a:a + len(out)] = out.half().cpu()
+        else:
+            mean = LogMean()
+            for d in draws:
+                full = torch.empty(n, 1600)
+                for a, out in self.log_probs(feat, d):
+                    full[a:a + len(out)] = out.float().cpu()
+                mean.add(full)
+            m = mean.result()
+            arg, lp = m.argmax(1), (m.half() if logp else None)
+        return Labels(keep=keep, length_mm=length[keep], tract=self.lut[arg.numpy()], logp=lp)

@@ -1643,3 +1643,53 @@ every T1 measure identical** (labeler-independent, as they should be); what chan
   UKF 29 s, RapidParc ~1 s).
 - `trx_check.py` with RapidParc's labels: all checks pass, both variants (42,170 streamlines float32 zip
   23.9 MB; 32,264 labeled, float16 directory 11.3 MB).
+
+## 2026-10-03 An adversarial review of the code and documents, and the fixes
+
+Four reviewers (the field estimate and preprocessing; the tracker and pipeline; the labelers; the
+documents and bench) read the repository for defects. Fixed:
+- **The field estimate**: PCG returns zero for a zero right-hand side (was 0/0); the Marquardt test is
+  `not f1 < f0`, so a NaN step is never accepted; `estimate` refuses fewer than two distinct
+  phase-encoding directions and non-finite b0s (identical b0s now give a finite zero field).
+- **Preprocessing**: `prepare` names a missing shell or missing b0s; integers outside int16's range are
+  stored as float32 (uint16 scans were wrapping).
+- **The tracker**: the main-guard check (`ukf.require_main_guard`, was `_require_main_guard`) parses the
+  script (an `if __name__ == "__main__":` at module level, either order or `in` a tuple; a comment no
+  longer passes) and runs before any work; `pipeline.run` and `track` call it on the CPU path.
+  `TRACTOGRAPHY_SHARE=0` (blocks sent as copies, for systems without shared memory) now sends copies -
+  torch's pickling had moved each block's whole base tensor to shared memory anyway; the same fibers as
+  shared memory on PAT16.
+- **The labelers**: per-streamline lengths (one NaN point made every later streamline's length NaN in
+  the cumulative sum; an empty streamline took a neighbor's length); empty Labels when nothing is 40 mm or longer (both labelers crashed);
+  RapidParc pads the last group as often as needed (fewer than 1,000 streamlines failed) - checked at
+  n = 1, 7, 999, 1,000, 2,500; `draws` may be any iterable (a generator was consumed by `len`); several
+  draws are averaged in the log domain (`base.LogMean`; float32 probabilities underflowed to -inf);
+  TractCloud refuses fewer than its k (20; 200 with `upstream=True`) streamlines.
+- **TractCloud's context, as trained** (`trained_context`): the previous Labeler passed k_ds_rate
+  10,000 / n to upstream's `RealDataDataset`, which subsamples *within consecutive ~10,000-streamline
+  index chunks* - slabs of the brain in seed order - so above 10,000 streamlines each streamline saw
+  candidates only from its own slab. Training's context is the k nearest among all of a 10,000-streamline
+  brain; `trained_context` draws one set of 10,000 candidates from the whole tractogram. At 10,000
+  streamlines the two give the same context (9,999 of 10,000 rows; one tie order). On the test split
+  nothing changes (accuracy 92.01 / 86.55 / RapidParc 94.48 / hemiaug 94.45, all as before, now through
+  the Labeler's own path); on PAT16 (32,264 labeled) the trained context's Other share is 50.62 %
+  (draw 0; was 50.59 %), draws 0 and 1 agree on 92.6 %; `upstream=True` still gives 58.09 %.
+- **TRX**: `trx.write` refuses to replace a directory that is not a TRX (it deleted whatever directory was at the path).
+- **The documents and bench**: `labelers.md` and the README rewritten to what was built; `pipeline.md`'s
+  table from the committed cohort; `results/README.md` says which committed results were made under an
+  older default (L-BFGS, TractCloud); twelve bench scripts honor `$TRACTOGRAPHY_DATA`; `modal_gpu_pipeline`'s
+  CPU function mounts its volume; `run_pipeline.py` imports TractCloud only when asked.
+
+The cohort's PAT16 rerun after the fixes is identical to the committed result (UKF throughput aside).
+
+Corrections to earlier entries:
+- "RapidParc ... identical to its package": on Modal's CPU and A10G, yes; on the M2's GPU one streamline of
+  32,264 differs by cluster in one of four runs (hemiaug, seed 0), every tract identical.
+- "The cohort with RapidParc": the tract centers' maxima went down for most patients, not all - PAT13's
+  rose (8.3 → 9.5 mm, EmC); PAT08 15.8 → 10.0, PAT25 11.2 → 8.7.
+- The "500" TractCloud runs on clinical tractograms before today (`labeler_compare.json`,
+  `label_kglobal.json`, `label_trained_check.json`, `modal_gpu_pipeline_*_tc500.json`, the 500 rows of the
+  2026-10-02 entries) used the chunked local context above, not exactly the training's; the global
+  context - the larger effect - was as trained. On PAT16 the difference is 0.03 points of Other.
+- `upstream=True` reproduces upstream's inference exactly only when every streamline is 40 mm or more:
+  upstream's package labels every streamline; ours cuts first, so the context is drawn from the kept ones.

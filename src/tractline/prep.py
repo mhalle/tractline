@@ -28,6 +28,8 @@ def prepare(dwi, affine, bval, bvec, shell=2800.0, device="cpu") -> TrackerInput
     ukf.from_arrays(t.dwi, t.header, t.mask) takes it. device: where the mask's median passes
     run (the same mask either way)."""
     keep = (bval < 50) | (np.abs(bval - shell) < 50)
+    if not (np.abs(bval - shell) < 50).any() or not (bval < 50).any():
+        raise ValueError(f"prepare: no b = {shell:g} shell or no b0 in this scan (b-values: {sorted(set(np.round(bval).astype(int)))})")
     dwi, bval, bvec = dwi[..., keep], bval[keep], bvec[:, keep]
     M = affine[:3, :3]
     spacing = np.linalg.norm(M, axis=0)
@@ -38,7 +40,8 @@ def prepare(dwi, affine, bval, bvec, shell=2800.0, device="cpu") -> TrackerInput
     g = (R @ g).T                                                         # (G, 3) RAS
     bmax = float(bval.max())
     g = np.where((bval > 50)[:, None], g / np.linalg.norm(g, axis=1, keepdims=True) * np.sqrt(bval / bmax)[:, None], 0.0)
-    floating = not np.issubdtype(dwi.dtype, np.integer)
+    # integers are stored as int16 (the binary's); outside its range (uint16 scanners) as float32 instead
+    floating = not np.issubdtype(dwi.dtype, np.integer) or dwi.max() > 32767 or dwi.min() < -32768
     hdr = {"type": "float" if floating else "short", "dimension": 4, "space": "right-anterior-superior", "sizes": list(dwi.shape),
            "space directions": [M[:, 0].tolist(), M[:, 1].tolist(), M[:, 2].tolist(), [np.nan] * 3],
            "kinds": ["space", "space", "space", "list"], "endian": "little", "encoding": "raw",

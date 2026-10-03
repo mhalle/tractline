@@ -18,12 +18,13 @@ tract labels that differ, and the largest log-probability difference.
     H  G + torch.compile
 Also: the kNN context built on the GPU from the same random draws, against the CPU's.
 """
+import os
 import json
 from pathlib import Path
 import modal
 
 HERE = Path(__file__).resolve().parent
-DATA = Path.home() / "tmp/data/tractography"
+DATA = Path(os.environ.get("TRACTOGRAPHY_DATA", Path.home() / "tmp/data/tractography"))
 image = (modal.Image.debian_slim(python_version="3.12")
          .pip_install("torch>=2.7", "numpy>=2")
          .env({"PYTHONPATH": "/root/pkg"})

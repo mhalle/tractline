@@ -8,7 +8,7 @@ DATA/ds001226/derived/<sub>/<sub>.trx). Prints the stage times and the streamlin
 import argparse, json
 from tractline import pipeline as P
 from _ds001226 import load, ROOT
-from tractline.labelers import rapidparc, tractcloud
+from tractline.labelers import rapidparc
 
 
 if __name__ == "__main__":
@@ -25,7 +25,11 @@ if __name__ == "__main__":
     s = load(args.sub)
     trx = None if args.trx is None else (args.trx or ROOT / "derived" / args.sub / f"{args.sub}.trx")
     timer = P.Timer(echo=args.sub)
-    lab = tractcloud.Labeler(args.device) if args.labeler == "tractcloud" else rapidparc.Labeler(args.device, model=args.labeler)
+    if args.labeler == "tractcloud":                                        # optional: needs TractCloud's code
+        from tractline.labelers import tractcloud
+        lab = tractcloud.Labeler(args.device)
+    else:
+        lab = rapidparc.Labeler(args.device, model=args.labeler)
     corr, tg, labels = P.run(s, lab, timer, trx=trx, device=args.device,
                              positions="float16" if args.float16 else "float32", labeled_only=args.labeled_only)
     print(json.dumps({"seconds": timer.seconds, "scan_to_labels_s": timer.total(*P.pipeline_stages()),

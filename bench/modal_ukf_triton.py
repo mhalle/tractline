@@ -18,13 +18,14 @@ configuration and are worth running once per GPU type. Timeouts are short on pur
 
 Inputs on the tractography-bench Volume (ukf/hardi/). Writes results/ukf_triton_<stage>.json.
 """
+import os
 import json
 from pathlib import Path
 import modal
 
 HERE = Path(__file__).resolve().parent
 PKG = HERE.parent / "src/tractline"                                # the package, shipped as a directory
-DATA = Path.home() / "tmp/data/tractography"
+DATA = Path(os.environ.get("TRACTOGRAPHY_DATA", Path.home() / "tmp/data/tractography"))
 image = (modal.Image.debian_slim(python_version="3.12").pip_install("torch>=2.7", "numpy>=2", "pynrrd", "scipy")
          .env({"PYTHONPATH": "/root/pkg:/root", "TRITON_CACHE_DIR": "/vol/triton-cache"})  # compile once per kernel source
          .add_local_dir(str(PKG), remote_path="/root/pkg/tractline")

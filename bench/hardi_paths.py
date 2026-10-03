@@ -1,6 +1,6 @@
 """The Stanford HARDI brain (2 mm, 150 directions at b = 2000; dipy's stanford_hardi) through the
 pipeline's tracking and labeling on one device: the tracker's input (prep.prepare, its own mask),
-UKF two-tensor with the ORG settings and the binary's seeds, TractCloud one draw. No correction: the
+UKF two-tensor with the ORG settings and the binary's seeds, the default labeler (RapidParc), one draw. No correction: the
 scan has no reversed phase-encoding pair. For timing the paths against each other.
 
     python bench/hardi_paths.py [--device mps|cpu] [--runs 2]       # here (the M2)

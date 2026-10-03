@@ -9,8 +9,8 @@ Measured, beyond the pipeline's own stages:
     hundreds; the scan's noise ~3 orders larger), the displacement difference (the optimizer's path,
     not the scan's noise). PAT16 showed the field move by 0.08 mm (median) / 0.68 mm (99th) when
     topup_ref.py's int16-quantized copy of the b0s (errors <= 0.03) was the input instead;
-  - per arm, a 5-draw TractCloud vote; between the arms the tract-mix correlation, per-tract relative
-    changes and tract centers moved (TractCloud's own redraw floor r 0.995-0.999 on PAT16);
+  - per arm, the default labeler (RapidParc) with 5 draws averaged; between the arms the tract-mix
+    correlation, per-tract relative changes and tract centers moved;
   - against the T1 (t1check.py), per arm: the residual displacement a rigid alignment cannot remove,
     in the brain (the corrected arm's mask), where our field displaces > 3 mm, the tumor and its 10 mm
     margin; validation: the uncorrected arm's residual against our displacement map (r, slope);

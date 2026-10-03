@@ -421,25 +421,39 @@ _SHARED_KEYS = ("A", "g", "b", "voxel", "mask")
 
 
 def _worker_block(args):
-    x, st, d, params = args
+    x, st, d, params = (torch.from_numpy(a) if isinstance(a, np.ndarray) else a for a in args)
     return _track_block(_WORKER_D, x, st, d, advance, params)
 
 
-def _require_main_guard():
+def require_main_guard():
     """Spawned workers re-import the main script: without an `if __name__ == "__main__":` guard, each
     worker re-runs it from the top. A comparison script did - 8 workers each re-ran its GPU pipeline,
-    1.9 GB apiece, and the M2 swapped. Refuse before spawning; a session without a script (REPL,
-    notebook) is fine."""
-    import re, sys
+    1.9 GB apiece, and the M2 swapped. Raises when the running script has no module-level `if` testing
+    `__name__` against "__main__" (read from its syntax, so a comment or string does not count; either
+    order, `==` or `in`). It cannot tell whether work also runs above the guard. A session without a
+    script file (REPL, notebook, -c) passes. pipeline.run and pipeline.track call it before any work on
+    the CPU path."""
+    import ast, sys
     main = sys.modules.get("__main__")
     path = getattr(main, "__file__", None)
-    if not path or not path.endswith(".py"):
+    if not path or not str(path).endswith(".py"):
         return
     try:
-        src = open(path).read()
-    except OSError:
+        tree = ast.parse(open(path, encoding="utf-8", errors="replace").read())
+    except (OSError, SyntaxError, ValueError):
         return
-    if not re.search(r"""__name__\s*==\s*['"]__main__['"]""", src):
+
+    def is_guard(test):
+        if not isinstance(test, ast.Compare) or len(test.ops) != 1:
+            return False
+        sides = [test.left, test.comparators[0]]
+        names = [s for s in sides if isinstance(s, ast.Name) and s.id == "__name__"]
+        consts = [s for s in sides if isinstance(s, ast.Constant) and s.value == "__main__"]
+        seqs = [s for s in sides if isinstance(s, (ast.Tuple, ast.List, ast.Set))
+                and any(isinstance(e, ast.Constant) and e.value == "__main__" for e in s.elts)]
+        return bool(names) and (bool(consts) and isinstance(test.ops[0], ast.Eq) or bool(seqs) and isinstance(test.ops[0], ast.In))
+
+    if not any(isinstance(node, ast.If) and is_guard(node.test) for node in tree.body):
         raise RuntimeError(f"{path}: the CPU tracker spawns worker processes, which re-import the main script - "
                            f"put its work under `if __name__ == \"__main__\":` (or pass workers=1)")
 
@@ -449,15 +463,18 @@ def _parallel(D, blocks, params, workers, threads_per_worker):
     shared through shared memory - or copied to each worker when TRACTOGRAPHY_SHARE=0 (a container's
     /dev/shm can be smaller than the signal); results in block order."""
     import os, torch.multiprocessing as tmp
-    _require_main_guard()
+    require_main_guard()
     if os.environ.get("TRACTOGRAPHY_SHARE", "1") == "1":
         for v in D.values():
             if torch.is_tensor(v):
                 v.share_memory_()
-    else:                                                            # a small /dev/shm (containers): each worker gets a copy
+        tasks = [(x, st, d, params) for _, x, st, d in blocks]
+    else:                                                            # a small /dev/shm (containers): each worker gets a copy,
         D = {k: v.numpy() if torch.is_tensor(v) and k in _SHARED_KEYS else v for k, v in D.items()}
+        # and the blocks go as numpy: torch's reducers would move a tensor (a view: its whole base) to /dev/shm
+        tasks = [(x.numpy().copy(), st.numpy().copy(), d.numpy().copy(), params) for _, x, st, d in blocks]
     with tmp.get_context("spawn").Pool(workers, initializer=_worker_init, initargs=(D, threads_per_worker)) as pool:
-        return pool.map(_worker_block, [(x, st, d, params) for _, x, st, d in blocks], chunksize=1)
+        return pool.map(_worker_block, tasks, chunksize=1)
 
 
 def track(D: dict, offset_kji=SRAND0_OFFSET, seeding_threshold=0.1, stopping_fa=0.08, stopping_threshold=0.06,

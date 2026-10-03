@@ -5,16 +5,16 @@
   positions        RAS mm, float32 (the tracker's points), or float16 (TRX's suggestion: error up to
                    0.03 mm at 100 mm from the origin)
   offsets.uint64   NB_STREAMLINES + 1, the last NB_VERTICES
-  groups/<tract>   the streamlines TractCloud names each tract (one draw: the pipeline's), "Other" too
+  groups/<tract>   the streamlines the labeler names each tract (one draw: the pipeline's), "Other" too
   dps/             per streamline:
                      tract.uint8               0-41 a tract (TRACT_NAMES order), 42 Other, 255 not labeled
-                     cluster.uint16            TractCloud's most probable of its 1600 clusters; 65535 not labeled
+                     cluster.uint16            the labeler's most probable of the 1600 clusters; 65535 not labeled
                      tract_probability.float16 the named tract's probability: its clusters' summed
                      tract_margin.float16      that, less the most probable other tract's (negative when the
                                                summed probabilities favor another tract than the top cluster's)
                      length_mm.float32, seed.uint32 (the seed's index, the binary's order)
 
-Every streamline the tracker kept is written, those under 40 mm unlabeled (TractCloud was trained on
+Every streamline the tracker kept is written, those under 40 mm unlabeled (the labelers were trained on
 >= 40 mm): the 40 mm cut becomes a filter a reader applies, not a deletion. labeled_only=True writes
 the labeled streamlines alone.
 """
@@ -79,5 +79,7 @@ def write(path, s, tg, labels, positions="float32", labeled_only=False):
                     if f.is_file():
                         z.write(f, f.relative_to(d).as_posix())
         else:
+            if path.exists() and (not path.is_dir() or (any(path.iterdir()) and not (path / "header.json").exists())):
+                raise FileExistsError(f"{path} exists and is not a TRX directory: not overwriting it")
             shutil.rmtree(path, ignore_errors=True); shutil.copytree(d, path)
     return path

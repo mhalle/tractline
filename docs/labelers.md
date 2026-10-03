@@ -1,140 +1,65 @@
-# Labelers: a swappable labeling stage (design note, 2026-10-02)
+# Labelers
 
-The pipeline's last stage names the streamlines. Today that is TractCloud, run from upstream's
-package with our resampling and CPU network around it (`tractline.labelers.tractcloud`). This note plans the stage as
-an interface with several implementations: our own TractCloud (a rewrite, the default), upstream's
-TractCloud (the reference), and later DeepMultiConnectome. It is written to move with the code into
-its own repo; nothing here is built yet.
+The pipeline's last stage names the streamlines. A labeler is any object called as
+`labeler(fibers, draws=(0,), logp=False)` that returns `labelers.base.Labels`; `pipeline.run(s, labeler, ...)`
+takes one, and `labeler=None` means the default, `pipeline.default_labeler(device)`.
 
-## Why
+| labeler | module | what it is | default |
+|---|---|---|---|
+| RapidParc | `labelers.rapidparc.Labeler(device, model="rapidparc" or "hemiaug")` | its inference written here (~100 lines of torch), its released weights | **yes** |
+| TractCloud | `labelers.tractcloud.Labeler(device, upstream=False)` | upstream's model code and weights; the resampling, the CPU network (`MatmulDGCNN`) and the context built here | no |
 
-- **Dependencies.** Upstream TractCloud (SlicerDMRI/TractCloud 94de627) is pip-installable but requires
-  `vtk`, which the pipeline never uses; today we put the data directory's copy on `sys.path` and stub
-  `vtk` out. Our own implementation removes both; upstream becomes an optional extra.
-- **Verification.** The tracker and the correction were checked against their originals (the Slicer
-  UKF binary, FSL topup) by ad hoc scripts. Behind one interface, "ours against upstream, identical
-  labels per draw on the cohort" is a standing test, and the same pattern can later hold the tracker's
-  and the correction's references.
-- **Other labelers.** Different labelers answer different questions (named tracts, connectome
-  edges), and the outputs downstream (TRX, the cohort's measures, later the compact exporter) should not
-  be written for one of them.
+Both use the same 43-class scheme - the ORG atlas's 800 clusters and their 800 outlier twins (1,600
+classes) mapped to 42 tracts and Other (class 42) - shipped as `labelers/scheme_43.json` (from RapidParc's
+release files; identical to TractCloud's mapping, checked). Shared in `labelers/base.py`: `Labels`
+(`keep`: the streamlines labeled, those of 40 mm or more; `length_mm`; `tract`; `logp`: the 1,600
+cluster log-probabilities as float16, when asked for), the 40 mm cut, streamline lengths (per streamline:
+a NaN or empty streamline affects only itself), and `LogMean` (several draws' probabilities averaged in
+the log domain, without underflow).
 
-## Where the code is coupled today
+`draws` are seeds (any iterable): TractCloud's context sample, RapidParc's shuffle. Several draws average
+their cluster probabilities. A tractogram with no streamline of 40 mm or more returns empty Labels.
 
-- `trx.py` imports `TRACT_NAMES` and the cluster-to-tract `LUT` from `tractcloud` at module level
-  and assumes 1,600 clusters and 43 classes.
-- `bench/cohort.py` assumes Other is class 42 of 43.
-- `Labels` (`keep`, `length_mm`, `tract`, `logp`) carries tract numbers but not the scheme they belong
-  to. `pipeline.run` already takes the labeler as an argument.
+## RapidParc (the default)
 
-## The interface
+von Bornhaupt, Bisten, ..., Schultz, "RapidParc: A Global-Context Transformer for Parallel, Accurate, and
+Lesion-Robust Tractogram Parcellation", Imaging Neuroscience 2026; github.com/MedVisBonn/RapidParc (BSD-3).
+Per draw: 15 points per streamline, evenly spaced by index; the set scaled to [-1, 1] per axis; shuffled
+(torch.Generator seeded with the draw) and cut into groups of 2,000, each group re-scaled to [-1, 1]
+inside the network; a linear embedding, an 8-layer transformer encoder (d_model 128, 1 head), a two-layer
+classifier to 1,600 logits. Trained and run at the same context size. Weights (`rapidparc`, and `hemiaug`
+trained with one-sided augmentation for lesions and surgery; 6.6 MB each) from its release v1.0.0 in
+`$TRACTOGRAPHY_DATA/RapidParc`, sha256-checked when loaded.
 
-```python
-@dataclass(frozen=True)
-class Scheme:
-    """What a label set's numbers mean."""
-    name: str                          # "tract", "dk_pair", "destrieux_pair"
-    kind: str                          # "tract": named classes; "pair": unordered pairs of nodes
-    names: tuple[str, ...]             # tract names, or node names (kind "pair")
-    other: int | None                  # the class meaning Other / unknown, if any
-    fine: int | None = None            # fine classes under the labels (TractCloud: 1,600 clusters)
-    fine_to_label: np.ndarray | None = None   # (fine,) -> label class
-    # kind "pair": label class <-> (node i, node j), i <= j, by the labeler's own ordering (n(n+1)/2 classes)
+Differences from its package, all deliberate: the 40 mm cut first (its package labels every streamline;
+its training data were 40 mm or longer); the last group padded by repeating the shuffled streamlines as
+often as needed (its package pads once and fails under 1,000 streamlines - the same rows at 1,000 or
+more); probabilities and log-probabilities returned (its package returns only the argmax); TF32 left off
+on CUDA (its package enables it); default draw 0 (its default seed is 42).
 
-@dataclass
-class LabelSet:
-    scheme: Scheme
-    label: np.ndarray                  # (n_kept,) class per labeled streamline (a vote, if draws > 1)
-    logp: torch.Tensor | None          # (n_kept, fine or classes) log-probabilities, when asked for
+Checked: identical 1,600-cluster argmax to its package for both models and seeds 0 and 42, on 32 x86
+cores and an A10G (`modal_rapidparc_check.py`) and on the M2's CPU; on the M2's GPU one streamline of
+32,264 differs by cluster (hemiaug, seed 0; the other three runs identical), every tract identical
+(`rapidparc_check.py`). On
+TractCloud's labeled test split, 94.5 % tract accuracy / 93.2 % macro F1 - its paper's 94.44 / 93.2
+(`accuracy_tractcloud_test.py`).
 
-@dataclass
-class Labels:
-    keep: np.ndarray                   # (n_fibers,) bool: the streamlines labeled (the labeler's own cut)
-    length_mm: np.ndarray              # (n_kept,)
-    sets: dict[str, LabelSet]          # one per head: TractCloud {"tract"}, DeepMultiConnectome {"dk_pair", "destrieux_pair"}
+## TractCloud (optional)
 
-class Labeler(Protocol):
-    name: str                          # "tractcloud", "tractcloud-upstream", "deepmulticonnectome"
-    schemes: dict[str, Scheme]
-    space: str                         # the input it expects: "native" (TractCloud centers it itself) or "mni"
-    stochastic: bool                   # TractCloud: random context draws; DeepMultiConnectome: none
-    def __call__(self, fibers, *, to_space=None, draws=(0,), logp=False) -> Labels: ...
-```
+Xue, Zhang, O'Donnell et al., MICCAI 2023; github.com/SlicerDMRI/TractCloud. Needs its code
+(`$TRACTOGRAPHY_DATA/TractCloud/src`) and weights (`TrainedModel/`, `HCP_mass_center.npy`). By default it
+runs with the context the released model was trained with (`trained_context`): each streamline, then its
+19 nearest among one random set of 10,000 candidates from the whole tractogram, and 500 global
+streamlines shared by the draw. `upstream=True` uses upstream's packaged inference context instead (80
+global streamlines; a 10 % local subsample taken within consecutive ~10,000-streamline chunks, i.e.
+slabs of the brain in seed order). On TractCloud's own test split (10,000 streamlines a subject, where
+the two local contexts coincide): 92.0 % at the trained context (its paper: 92.12, as RapidParc's paper
+tabulates it), 86.6 % at upstream's.
 
-- **Draws** only for stochastic labelers; a deterministic labeler takes `draws=(0,)` and ignores it.
-- **Space**: the labeler declares it; the pipeline supplies `to_space` (a transform of streamline
-  points), so registration stays a pipeline stage, not a labeler's business.
-- **Consumers read the scheme from the result.** TRX: a `tract` set becomes groups (one per name) and
-  per-streamline arrays (`<set>`, `<set>_probability`, and `cluster` when `fine` is set); a `pair` set
-  becomes per-streamline arrays only (13,695 groups would be noise), its node names in the header, and a
-  connectome matrix (pair counts per scheme) as its own output. The cohort's tract measures apply to
-  `tract` sets; the compact exporter (the rank field, in medseg for now) encodes any set's `logp`
-  directly, not through the TRX.
+## Not built
 
-## Implementations
-
-### 1. Our TractCloud (`tractcloud`, the default)
-
-Upstream's method and weights, our code:
-
-| piece | upstream | ours |
-|---|---|---|
-| 15-point arc-length resampling | `extract_ras_features` | `resample.py`, already bit-identical in float64 |
-| the network | `TractDGCNN`, `load_model` | `MatmulDGCNN` (1x1 convolutions with their batch norms folded into matrix products), weights loaded from upstream's state dict; to serve the GPU too |
-| context per streamline: 20 neighbors among a random 10 % subsample, 80 random global streamlines | `RealDataDataset`, `_compute_local_features`, `tract_knn` (~60 lines) | to write: the same numpy draws in the same order, so labels match per draw; on the device |
-| 42 tract names, 1,600 -> 43 map | `tract_mapping.py` | copied as data, credited |
-| 40 mm cut, centering by HCP's mass center, vote over draws | (our `Labeler`) | kept |
-
-Weights: upstream's `best_tract_f1_model.pth` and `cli_args.txt`, plus `HCP_mass_center.npy`,
-fetched from a pinned location (to settle with the repo). License: upstream's (Slicer, permissive);
-credit in the repo.
-
-**Acceptance:** on the 12-patient cohort, per draw, labels identical to `tractcloud-upstream` in
-float64 (the standard `resample_check.py` and `MatmulDGCNN` already meet); in float32, the agreement
-reported (rounding can move near-ties); then switch the default and rerun the cohort.
-
-### 2. Upstream TractCloud (`tractcloud-upstream`, the reference)
-
-A thin adapter over the pip package (optional extra: brings `vtk`). Built first, so the interface
-lands with no change in results: the cohort must reproduce exactly through it.
-
-### 2b. RapidParc (`rapidparc`, built: `tractline.labelers.rapidparc`)
-
-RapidParc (von Bornhaupt, Bisten, ..., Schultz; Imaging Neuroscience 2026; github.com/MedVisBonn/RapidParc,
-BSD-3) - a transformer over groups of 2,000 shuffled streamlines, each group its own context, trained
-and run at the same size, on TractCloud's training data, in the same 43-class scheme (its 1,600 -> 43
-mapping and tract names are TractCloud's, checked identical). Its inference is ~100 lines of torch;
-its package pins pandas, scikit-learn, matplotlib and more and returns only the argmax, so the
-inference is written here (`rapidparc.py`), the weights its release publishes (`rapidparc`, and
-`hemiaug` for one-sided lesions; 6.6 MB each, sha256-checked) loaded under its parameter names. Draws
-are shuffle seeds; several average their probabilities. Checked against its package in its own
-environment (`bench/rapidparc_check.py`).
-
-### 3. DeepMultiConnectome (`deepmulticonnectome`, planned, not now)
-
-What we know from the format work (medseg's `dmc_field.py`, NOTES 2026-10-01 "The field at connectome
-scale"): SlicerDMRI/DeepMultiConnectome 6c606ec, `models.pointnet.PointNetCls` with two log-softmax
-heads; no context (k = k_global = 0), so deterministic; 15 points per streamline (our resampling);
-heads of 3,655 classes (Desikan-Killiany, 85 nodes counting "unknown") and 13,695 (Destrieux, 165
-nodes), n(n+1)/2 pairs (the paper says 3,571 and 13,631: it does not count "unknown"); rank fields of
-both heads cost what TractCloud's does per streamline; inference 26,900 streamlines/s on the M2's GPU.
-
-Its needs, beyond the interface:
-- **Registration to MNI**: trained in MNI space; the pipeline has no template registration (the T1
-  check aligns the scan to the T1, not the T1 to a template). A T1 -> MNI affine (or nonlinear) stage,
-  composed with the existing scan -> T1 alignment, supplies `to_space`.
-- **The pair ordering and length cut**: to read from upstream's code (`test_realdata.py`, its data
-  preparation) before writing the scheme.
-- **Reference**: upstream's `PointNetCls` on identical input, labels identical.
-- **Accuracy is its own experiment**: trained on iFOD2 tractograms, not UKF; ground truth needs
-  FreeSurfer parcellations (`aparc+aseg`, `aparc.a2009s+aseg`), which ds001226 does not have and which
-  tumor brains would make doubtful. HCP has them (under its data-use agreement; ask before downloading).
-
-## Order of work
-
-1. The interface, with `tractcloud-upstream` behind it; consumers (`trx`, `bench/cohort.py`, later the exporter)
-   read schemes from `Labels`. The cohort reproduces exactly.
-2. Our `tractcloud`: context construction, the network on both devices, weights loading. Accepted
-   against upstream per draw; becomes the default; cohort rerun.
-3. Later: DeepMultiConnectome - registration to MNI, the adapter, then the accuracy question.
-4. Perhaps: the same reference-behind-an-interface pattern for the tracker and the correction.
+The interface sketched before RapidParc was added - several label sets per labeler, "pair" schemes for
+connectome labels, a declared input space with a registration stage - was not needed for the two
+labelers above. DeepMultiConnectome (two heads of region pairs, 3,655 and 13,695 classes, trained in
+MNI space on iFOD2 tractograms) would need it, a T1 -> MNI registration, and an accuracy study with
+FreeSurfer parcellations (HCP has them, under its data-use agreement).

@@ -1,5 +1,5 @@
 """The pipeline end to end on CUDA GPUs (Modal), PAT16: the field estimate in float32 on the GPU, the
-Triton block kernel for the tracker, TractCloud on the GPU.
+Triton block kernel for the tracker, the default labeler (RapidParc) on the GPU.
 
     modal run bench/modal_gpu_pipeline.py [--gpus A10,L40S,CPU]          # CPU: 32 x86 cores [--runs 2] [--tf32 on] [--save-fibers] [--copies 1]
 
@@ -7,26 +7,24 @@ Per GPU, one container runs the pipeline twice: the first run pays for torch's a
 (the kernel's compile is cached on the tractography-bench Volume, per GPU architecture), the second is
 the steady state. Each run returns its stage times, the fiber and label counts and the tract counts;
 the first also the field (float32, for the comparison with the M2's, `gpu_pipeline_compare.py`).
-Everything the pipeline needs travels in the image (TractCloud's code and weights, PAT16's two DWI
+Everything the pipeline needs travels in the image (RapidParc's weights, PAT16's two DWI
 series: ~60 MB). Costs: an A10 about $1.10/h, an L40S $1.95/h; a few minutes each.
 
 Writes results/modal_gpu_pipeline_<gpu>.json and DATA/ds001226/derived/PAT16/gpu_field_<gpu>.b64.
 """
+import os
 import json
 from pathlib import Path
 import modal
 
 HERE = Path(__file__).resolve().parent
-DATA = Path.home() / "tmp/data/tractography"
+DATA = Path(os.environ.get("TRACTOGRAPHY_DATA", Path.home() / "tmp/data/tractography"))
 PKG = HERE.parent / "src/tractline"                                # the package, shipped as a directory
 PAT = "ds001226/sub-PAT16/ses-preop/dwi"
 
 image = (modal.Image.debian_slim(python_version="3.12")
          .pip_install("torch>=2.7", "numpy>=2", "scipy", "nibabel")      # torch's CUDA wheel brings Triton
          .env({"PYTHONPATH": "/root/bench:/root/pkg", "TRACTOGRAPHY_DATA": "/data", "TRITON_CACHE_DIR": "/vol/triton-cache"})
-         .add_local_dir(str(DATA / "TractCloud/src"), remote_path="/data/TractCloud/src")
-         .add_local_dir(str(DATA / "TrainedModel"), remote_path="/data/TrainedModel")
-         .add_local_file(str(DATA / "TrainData_800clu800ol/HCP_mass_center.npy"), remote_path="/data/TrainData_800clu800ol/HCP_mass_center.npy")
          .add_local_dir(str(DATA / "RapidParc"), remote_path="/data/RapidParc")
          .add_local_dir(str(DATA / PAT), remote_path=f"/data/{PAT}")
          .add_local_dir(str(PKG), remote_path="/root/pkg/tractline")
@@ -40,7 +38,7 @@ def pipeline(runs: int = 2, tf32: str = "default", save_fibers: bool = False) ->
     return body("cuda", runs, tf32, save_fibers)
 
 
-@app.function(cpu=32, memory=32768, timeout=1800)
+@app.function(cpu=32, memory=32768, timeout=1800, volumes={"/vol": vol})
 def pipeline_cpu(runs: int = 1, tf32: str = "default", save_fibers: bool = False) -> str:
     """The CPU path on 32 x86 cores: the tracker on 32 worker processes."""
     import os, shutil
@@ -85,8 +83,7 @@ def body(device, runs, tf32, save_fibers):
             out["field_b64"] = base64.b64encode(zlib.compress(corr.field_hz.astype(np.float32).tobytes())).decode()
             out["field_shape"] = list(corr.field_hz.shape)
         print(json.dumps({k: v for k, v in out["runs"][-1].items() if k != "tract_counts"}), flush=True)
-    if cuda:
-        vol.commit()                                                       # the Triton cache, for the next run
+    vol.commit()                                                           # the Triton cache; any saved fibers
     return json.dumps(out)
 
 

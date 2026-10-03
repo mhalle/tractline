@@ -1,1 +1,1 @@
-"""Labelers: streamlines in, labels out (docs/labelers.md). Today TractCloud (`tractcloud`)."""
+"""Labelers: streamlines in, labels out (docs/labelers.md). RapidParc (`rapidparc`, the default) and TractCloud (`tractcloud`)."""

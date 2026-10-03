@@ -10,12 +10,13 @@ Per model (rapidparc, hemiaug) and shuffle seed (0, 42): RapidParc's 1,600-clust
 RapidParc's package fetches its weights from its GitHub release; ours reads the same files shipped from
 DATA/RapidParc. Writes results/rapidparc_check_modal.json.
 """
+import os
 import json
 from pathlib import Path
 import modal
 
 HERE = Path(__file__).resolve().parent
-DATA = Path.home() / "tmp/data/tractography"
+DATA = Path(os.environ.get("TRACTOGRAPHY_DATA", Path.home() / "tmp/data/tractography"))
 PKG = HERE.parent / "src/tractline"
 INPUT = "ds001226/derived/PAT16/PAT16_a10_tf32off.npz"
 

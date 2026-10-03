@@ -5,7 +5,7 @@
 
 Stages, and where they run:
   correct   the susceptibility field from the b0s and their reversed pair (susceptibility.estimate: GPU,
-            float32, ~29 s), then applied to the DWI (susceptibility.apply: CPU, float64, ~1 s)
+            float32, ~18 s on the M2), then applied to the DWI (susceptibility.apply: CPU, float64, ~1 s)
   track     the tracker's input (prep.prepare: b0s + the b = 2800 shell, gradients in RAS, the
             median_otsu mask, exact in torch on the pipeline's device; ~3 s), UKF two-tensor with the ORG settings and the binary's seeds
             (ukf.track, Metal kernel: float32 steps from float64 seeds, ~27 s; or on the CPU,
@@ -25,7 +25,7 @@ Conventions at every module boundary (_ds001226, susceptibility, prep, ukf, the 
 """
 from __future__ import annotations
 
-import time
+import os, time
 from contextlib import contextmanager
 from dataclasses import dataclass
 import numpy as np, torch
@@ -35,7 +35,7 @@ from .prep import prepare
 from .labelers.base import Labels
 
 ESTIMATE_THREADS = 16            # the field estimate on the CPU: its problem is small (~5e5 voxels); on 48 vCPUs
-                                 # 8 threads 43 s, 16 36.5 s, 32 41 s, 48 72.5 s (modal_cpu_field_timing.json)
+                                 # 8 threads 48.9 s, 16 40.2 s, 32 44.6 s, 48 51.5 s (modal_cpu_field_timing.json)
 
 
 def release_memory(device):
@@ -56,9 +56,10 @@ def release_memory(device):
 def exact_float32(device):
     """On CUDA, float32 as float32 for the pipeline's stages: no TF32 in cuDNN's convolutions or in
     matmul (PyTorch allows it in cuDNN by default on Ampere and newer, a 10-bit mantissa), restored
-    after. With TF32, TractCloud on an A10 labeled 62.6 % of PAT16's streamlines Other against 59.9 %
-    without, and the field moved by up to 1 mm; without it, the A10 labels a tractogram as the M2 does,
-    every streamline, at no cost in time (NOTES 2026-10-02, "The pipeline on CUDA")."""
+    after. With TF32, TractCloud (at 80) on an A10 labeled 62.6 % of PAT16's streamlines Other against
+    61.5 % without, on an L40S 64.0 % against 62.8 %, and the field moved by up to 1 mm; without it,
+    TractCloud on an A10 labels a tractogram as the M2 does, every streamline. It costs nothing on the
+    A10, 2.6 s on the L40S (NOTES 2026-10-02, "The pipeline on CUDA")."""
     if torch.device(device).type != "cuda":
         yield
         return
@@ -142,14 +143,17 @@ def track(s, dwi, timer: Timer, prefix="", device="mps", workers=None, shell=280
     CPU_BATCH on `workers` processes of one thread (default: one per core). Workers are spawned, so a
     script running the CPU path needs an `if __name__ == "__main__":` guard. shell: the b-value tracked
     (prep.prepare; ds001226's 2800, the nearest to TractCloud's training b = 3000)."""
+    if torch.device(device).type == "cpu" and (workers or os.cpu_count() or 1) > 1:
+        U.require_main_guard()                                             # before any work, not after it
     with timer(prefix + "prep"):
         t = prepare(dwi, s.affine, s.bval, s.bvec, shell=shell, device=device)
     with timer(prefix + "load"):
         D = U.from_arrays(t.dwi, t.header, t.mask)
     with timer(prefix + "ukf"):
-        if device == "mps":
+        kind = torch.device(device).type
+        if kind == "mps":
             fibers, stats = U.track(D, backend="metal")
-        elif torch.device(device).type == "cuda":
+        elif kind == "cuda":
             fibers, stats = U.track(D, backend="triton_block")
         else:
             import os
@@ -175,19 +179,22 @@ def label(tg: Tractogram, labeler, timer: Timer, prefix="") -> Labels:
 STAGES = ("field_estimate", "field_apply", "prep", "load", "ukf", "label")
 
 
-def run(s, labeler, timer: Timer, prefix="", trx=None, device="mps", workers=None, release=True, **trx_options):
+def run(s, labeler, timer: Timer, prefix="", trx=None, device="mps", workers=None, release=True, shell=2800.0, **trx_options):
     """The whole pipeline on a subject: (Correction, Tractogram, Labels). labeler: None for the default
     (default_labeler: RapidParc), or any labeler (labelers.tractcloud.Labeler, ...). Its time is
     timer.total(*pipeline_stages(prefix)). trx: also write the tractogram there as TRX (trx.write;
     trx_options: positions="float16", labeled_only=True), timed apart as "write_trx". release: return
     the GPU allocator's cache after the run (release_memory: batches stay flat). device: where
-    the estimate and the tracking run ("mps" or "cpu"; the labeler has its own); workers: the CPU
+    the estimate and the tracking run ("mps", "cuda" or "cpu"; the labeler has its own); shell: the b-value
+    tracked (track); workers: the CPU
     tracker's processes (default one per core as os.cpu_count() sees them - in a container, pass the
     container's own)."""
+    if torch.device(device).type == "cpu" and (workers or os.cpu_count() or 1) > 1:
+        U.require_main_guard()                                             # before the 20 s field estimate
     labeler = labeler if labeler is not None else default_labeler(device)
     with exact_float32(device):
         corr = correct(s, timer, device)
-        tg = track(s, corr.dwi, timer, prefix, device, workers)
+        tg = track(s, corr.dwi, timer, prefix, device, workers, shell)
         labels = label(tg, labeler, timer, prefix)
     if trx is not None:
         from . import trx as _trx

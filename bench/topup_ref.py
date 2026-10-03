@@ -19,7 +19,7 @@ from pathlib import Path
 import numpy as np, nibabel as nib
 
 HERE = Path(__file__).resolve().parent
-TD = Path.home() / "tmp/data/tractography"
+TD = Path(os.environ.get("TRACTOGRAPHY_DATA", Path.home() / "tmp/data/tractography"))
 FSL = TD / "fsl-env"
 SRC = TD / "ds001226/sub-PAT16/ses-preop/dwi"
 OUT = TD / "ds001226/derived/PAT16/topup"

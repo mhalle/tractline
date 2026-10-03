@@ -259,7 +259,10 @@ def _pcg(A, b, Minv, iters, rtol, check=1):
     """Preconditioned conjugate gradients for A x = b (A symmetric positive definite, as a function);
     returns (x, iterations). The residual is tested every `check` iterations (each test a device sync)."""
     x = torch.zeros_like(b); r = b.clone(); z = Minv * r; p = z.clone(); rz = (r * z).sum()
-    stop = rtol * float(b.norm())
+    bn = float(b.norm())
+    if not bn > 0:                                                       # a zero gradient: no step (and no 0 / 0)
+        return x, 0
+    stop = rtol * bn
     for k in range(1, iters + 1):
         Ap = A(p)
         alpha = rz / (p * Ap).sum()
@@ -391,7 +394,7 @@ def gauss_newton(c, m, *, sample, Bs, dBs, d2Bs, vox, pe_ax, pe_scale, lam, mmas
             if mu > 1e6:
                 break
         it += 1
-        if f1 >= f0:                                                         # no descent left at any damping
+        if not f1 < f0:                                                      # no descent left at any damping (NaN: never accepted)
             converged = True
             break
         step = (pe_scale.abs().max() * field(c_new - c, Bs)).abs()
@@ -447,6 +450,10 @@ def estimate(b0s: np.ndarray, vox, pe_vectors: np.ndarray, readout_s, *, device=
                               schedule={key: v[k:] for key, v in schedule.items()}, **{**opts, "progress": renumber})
         return h, m, log0 + log1
     pe = np.asarray(pe_vectors, float)
+    if len(np.unique(np.round(pe, 6), axis=0)) < 2:
+        raise ValueError("estimate needs b0s with at least two phase-encoding directions (a reversed pair)")
+    if not np.isfinite(b0s).all():
+        raise ValueError("estimate: the b0s contain NaN or infinite values")
     trt = np.broadcast_to(np.asarray(readout_s, float), (len(pe),))
     dev = torch.device(device)
     dt = dtype or (torch.float32 if dev.type == "mps" else torch.float64)

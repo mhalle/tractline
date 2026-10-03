@@ -1,26 +1,24 @@
-"""hardi_paths.py on Modal: an L40S (Triton tracker, TractCloud on CUDA) and 32 x86 cores (the CPU
+"""hardi_paths.py on Modal: an L40S (Triton tracker, RapidParc on CUDA) and 32 x86 cores (the CPU
 tracker, one process per core). The two run in parallel.
 
     modal run bench/modal_hardi_paths.py [--what gpu,cpu] [--gpu L40S]
 
-The HARDI scan (91 MB), TractCloud's code and weights travel in the image; the Triton compile cache is
+The HARDI scan (91 MB) and RapidParc's weights travel in the image; the Triton compile cache is
 on the tractography-bench Volume. Costs: the L40S about $1.95/h, 32 cores about $1.50/h; a few minutes.
 Writes results/hardi_paths_cuda_<gpu>.json and results/hardi_paths_cpu_modal.json.
 """
+import os
 import json
 from pathlib import Path
 import modal
 
 HERE = Path(__file__).resolve().parent
-DATA = Path.home() / "tmp/data/tractography"
+DATA = Path(os.environ.get("TRACTOGRAPHY_DATA", Path.home() / "tmp/data/tractography"))
 PKG = HERE.parent / "src/tractline"
 
 image = (modal.Image.debian_slim(python_version="3.12")
          .pip_install("torch>=2.7", "numpy>=2", "scipy", "nibabel")
          .env({"PYTHONPATH": "/root/bench:/root/pkg", "TRACTOGRAPHY_DATA": "/data", "TRITON_CACHE_DIR": "/vol/triton-cache"})
-         .add_local_dir(str(DATA / "TractCloud/src"), remote_path="/data/TractCloud/src")
-         .add_local_dir(str(DATA / "TrainedModel"), remote_path="/data/TrainedModel")
-         .add_local_file(str(DATA / "TrainData_800clu800ol/HCP_mass_center.npy"), remote_path="/data/TrainData_800clu800ol/HCP_mass_center.npy")
          .add_local_dir(str(DATA / "RapidParc"), remote_path="/data/RapidParc")
          .add_local_file(str(DATA / "ukf/hardi/HARDI150.nii.gz"), remote_path="/data/ukf/hardi/HARDI150.nii.gz")
          .add_local_file(str(DATA / "ukf/hardi/HARDI150.bval"), remote_path="/data/ukf/hardi/HARDI150.bval")

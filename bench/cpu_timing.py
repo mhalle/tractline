@@ -3,8 +3,8 @@ GPU: what a machine without a GPU would pay, and what changes.
 
     python bench/cpu_timing.py [--sub PAT16]
 
-CPU: the field estimate in float64 (susceptibility's CPU dtype), the tracking in float32 (ukf's own
-steps, the GPU kernel's arithmetic), TractCloud on the CPU; torch on 8 threads. Then the GPU run.
+CPU: the field estimate in float32 (pipeline.correct's CPU dtype), the tracking in float32 (ukf's own
+steps, the GPU kernel's arithmetic), the default labeler (RapidParc) on the CPU; torch on 8 threads. Then the GPU run.
 Compared: the field (displacement difference), the tractograms (fibers, steps), the labels (tract
 mix r, label agreement where both tracked from the same seed). Writes results/cpu_timing.json.
 """
@@ -47,8 +47,6 @@ if __name__ == "__main__":
            "cpu_vs_gpu": {"field_displacement_diff_mm_median_99th": [round(float(np.median(dd[brain])), 3), round(float(np.quantile(dd[brain], 0.99)), 3)],
                           "fibers": [gc.stats["fibers"], gg.stats["fibers"]], "fiber_steps": [gc.stats["fiber_steps"], gg.stats["fiber_steps"]],
                           "tract_mix_r": round(float(np.corrcoef(shares(lc.tract), shares(lg.tract))[0, 1]), 4),
-                          "same_seed_streamlines": len(pairs), "label_agreement": round(float((lc.tract[a] == lg.tract[b]).mean()), 4),
-                          "for_scale": ("TractCloud's own single draws on one tractogram (PAT16, 4 draws, 6 pairs): label agreement "
-                                    "0.823-0.879, tract mix r 0.989-0.998; 5-draw votes: 0.926")}}
+                          "same_seed_streamlines": len(pairs), "label_agreement": round(float((lc.tract[a] == lg.tract[b]).mean()), 4)}}
     print(json.dumps(res, indent=1))
     (HERE / "results/cpu_timing.json").write_text(json.dumps(res, indent=1))

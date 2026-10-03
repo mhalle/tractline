@@ -1,4 +1,4 @@
-"""The default pipeline needs only numpy, scipy, torch, nibabel and TractCloud: run it with the other
+"""The default pipeline needs only numpy, scipy, torch, nibabel and RapidParc's weights: run it with the other
 packages the bench uses made unimportable, on the GPU path and the CPU path.
 
     python bench/dependency_check.py [--sub PAT16]

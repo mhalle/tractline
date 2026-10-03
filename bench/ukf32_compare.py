@@ -20,6 +20,7 @@ Mac; this measures its cost before any Metal kernel is written.
 Writes results/ukf32.json.
 """
 import argparse, json, time
+import os
 from pathlib import Path
 import numpy as np, torch
 from scipy.spatial import cKDTree
@@ -32,7 +33,7 @@ ap.add_argument("--every", type=int, default=49)
 ap.add_argument("--per-step", type=int, default=4, help="fixture rows kept per step")
 args = ap.parse_args()
 HERE = Path(__file__).resolve().parent
-DATA = Path.home() / "tmp/data/tractography"
+DATA = Path(os.environ.get("TRACTOGRAPHY_DATA", Path.home() / "tmp/data/tractography"))
 H, OUT = DATA / "ukf/hardi", DATA / "ukf32"
 OUT.mkdir(exist_ok=True)
 F64, F32 = torch.float64, torch.float32

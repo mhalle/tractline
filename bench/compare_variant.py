@@ -6,13 +6,14 @@ float64 run there (variants/f64.npz), on this machine. Prints the comparison as 
 modal_ukf_triton.py calls this after a full run: the `modal` CLI runs in its own environment, without
 numpy, and comparing is CPU work that should not be billed at GPU rates.
 """
+import os
 import json, subprocess, sys
 from pathlib import Path
 import numpy as np
 from tractline import ukf as U
 import _fibercmp as C
 
-DATA = Path.home() / "tmp/data/tractography"
+DATA = Path(os.environ.get("TRACTOGRAPHY_DATA", Path.home() / "tmp/data/tractography"))
 name = sys.argv[1]
 V = DATA / "ukf32/variants"
 V.mkdir(parents=True, exist_ok=True)

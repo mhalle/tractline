@@ -30,7 +30,7 @@ ap.add_argument("--seeds-per-voxel", type=int, default=1)
 ap.add_argument("--threads", type=int, default=8)
 args = ap.parse_args()
 
-DATA = Path(os.environ.get("TRACTOGRAPHY_DATA", Path.home() / "tmp/data/tractography"))
+DATA = Path(os.environ.get("TRACTOGRAPHY_DATA", Path(os.environ.get("TRACTOGRAPHY_DATA", Path.home() / "tmp/data/tractography"))))
 H = DATA / "ukf" / "hardi"
 PKG = DATA / "ukf" / "34627-macosx-amd64-UKFTractography-git2d2b661-2025-06-02" / "Slicer.app" / "Contents"
 UKF = PKG / "Extensions-34627/UKFTractography/lib/Slicer-5.12/cli-modules/UKFTractography"

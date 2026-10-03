@@ -25,19 +25,13 @@ HERE = Path(__file__).resolve().parent
 SEEDS = (0, 1)
 
 
-def tc_clusters(lab, feat, seed, k_global, ds_rate, batch=1024):
-    """TractCloud's cluster argmax for one subject's (n, 15, 3) features (the Labeler's forward)."""
-    np.random.seed(seed)
-    ds = inf.RealDataDataset(inf.center_tractography(feat, lab.center), k=20, k_global=k_global, k_ds_rate=ds_rate)
-    Pf = torch.from_numpy(ds.feat).float().to(lab.device).transpose(2, 1).contiguous()
-    L = torch.from_numpy(ds.local_feat).float().to(lab.device).transpose(2, 1).contiguous()
-    G = torch.from_numpy(ds.global_feat).float().to(lab.device).transpose(2, 1).contiguous()
-    out = []
-    with torch.no_grad():
-        for a in range(0, len(ds), batch):
-            b = min(len(ds), a + batch)
-            out.append(lab.model(Pf[a:b], torch.cat((L[a:b], G.expand(b - a, -1, -1, -1)), 3)).view(-1, 1600).argmax(1).cpu())
-    return torch.cat(out).numpy()
+def tc_clusters(lab, feat, seed):
+    """TractCloud's cluster argmax for one subject's (n, 15, 3) features, through the Labeler's own
+    context (lab.upstream: upstream's; otherwise trained_context) and forward."""
+    out = torch.empty(len(feat), dtype=torch.int64)
+    for a, lp in lab.log_probs(inf.center_tractography(feat, lab.center), seed):
+        out[a:a + len(lp)] = lp.argmax(1).cpu()
+    return out.numpy()
 
 
 if __name__ == "__main__":
@@ -47,8 +41,8 @@ if __name__ == "__main__":
     tc80, tc500 = tractcloud.Labeler("mps", upstream=True), tractcloud.Labeler("mps")
     rp, rph = rapidparc.Labeler("mps"), rapidparc.Labeler("mps", model="hemiaug")
     lut = rp.lut
-    runs = {"tractcloud_80": lambda f, s: tc_clusters(tc80, f, s, 80, 0.1),
-            "tractcloud_500": lambda f, s: tc_clusters(tc500, f, s, 500, min(1.0, tractcloud.LOCAL_CANDIDATES / len(f))),
+    runs = {"tractcloud_80": lambda f, s: tc_clusters(tc80, f, s),
+            "tractcloud_500": lambda f, s: tc_clusters(tc500, f, s),
             "rapidparc": lambda f, s: rp.logits(torch.from_numpy(f), s).argmax(1).numpy(),
             "rapidparc_hemiaug": lambda f, s: rph.logits(torch.from_numpy(f), s).argmax(1).numpy()}
     truth_t = lut[label]

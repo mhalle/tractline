@@ -11,12 +11,13 @@ Everything the pipeline needs travels in the image (TractCloud's code and weight
 series: ~60 MB); no Volume. Costs ~$0.30 (CPU $0.0000131 / core / s, memory $0.00000222 / GiB / s, about
 10 minutes); the timeout caps it near $0.60. Writes results/modal_cpu_scaling.json.
 """
+import os
 import json
 from pathlib import Path
 import modal
 
 HERE = Path(__file__).resolve().parent
-DATA = Path.home() / "tmp/data/tractography"
+DATA = Path(os.environ.get("TRACTOGRAPHY_DATA", Path.home() / "tmp/data/tractography"))
 PKG = HERE.parent / "src/tractline"                                # the package, shipped as a directory
 BENCH = ("_ds001226.py",)
 PAT = "ds001226/sub-PAT16/ses-preop/dwi"

@@ -25,7 +25,7 @@ import json, struct
 import numpy as np, torch
 import torch.nn as nn
 import torch.nn.functional as F
-from .base import Labels, MIN_LENGTH_MM, LUT, lengths
+from .base import Labels, MIN_LENGTH_MM, LUT, LogMean, empty, lengths
 from ..data import DATA
 
 WEIGHTS = DATA / "RapidParc"
@@ -90,44 +90,81 @@ def resample(fibers, points=POINTS):
     return torch.from_numpy(np.stack([f[np.round(np.linspace(0, len(f) - 1, points)).astype(int)] for f in fibers]))
 
 
+HASHES = {"rapidparc": "6a158dad6a0b6124946da102b6037a6f7f8a16fb24e7caec15eaf95213e7b793",      # RapidParc's package's
+          "hemiaug": "b66dfce6135aac56c3f835264e5ae9630b2497859425ad98cdc6d842c6f94435"}        # pypi_package_helper.py
+
+
+def _verified(path, model):
+    import hashlib
+    digest = hashlib.sha256(open(path, "rb").read()).hexdigest()
+    if digest != HASHES[model]:
+        raise ValueError(f"{path}: sha256 {digest} is not RapidParc v1.0.0's {model} weights ({HASHES[model]})")
+    return path
+
+
 class Labeler:
     def __init__(self, device="mps", model="rapidparc", batch=16):
-        """model: "rapidparc" or "hemiaug" (DATA/RapidParc/<model>.safetensors). batch: groups of 2,000
-        streamlines per forward pass (attention memory: ~16 MB a group a layer)."""
+        """model: "rapidparc" or "hemiaug" (DATA/RapidParc/<model>.safetensors, sha256-checked). batch:
+        groups of 2,000 streamlines per forward pass (attention memory: ~16 MB a group a layer)."""
         assert model in MODELS, model
         self.device, self.model_name, self.batch = torch.device(device), model, batch
         self.model = Model(**SETTINGS)
-        self.model.load_state_dict(read_safetensors(WEIGHTS / f"{model}.safetensors"))
+        self.model.load_state_dict(read_safetensors(_verified(WEIGHTS / f"{model}.safetensors", model)))
         self.model = self.model.eval().to(self.device)
         self.lut = LUT                                                     # RapidParc's mapping file, identical (base.py)
 
     @torch.inference_mode()
-    def logits(self, feat, seed):
-        """(n, 1600) logits (float32, CPU) of float32 (n, points, 3) streamlines for one draw."""
+    def batches(self, feat, seed):
+        """One draw, batch by batch: (original indices (m,), logits (m, 1600) float32 on the device). The
+        shuffle, the groups and the padding are RapidParc's; the padding repeats the shuffled streamlines
+        as often as needed (RapidParc's takes the first CONTEXT - n % CONTEXT once - the same rows whenever
+        n >= 1,000 - and fails below); padded rows are dropped here."""
         n = len(feat)
         data = normalize(feat.unsqueeze(0)).squeeze(0)
         perm = torch.randperm(n, generator=torch.Generator(device="cpu").manual_seed(int(seed)))
         data = data[perm]
         if n % CONTEXT:
-            data = torch.cat([data, data[:CONTEXT - n % CONTEXT]], dim=0)
+            reps = -(-(CONTEXT - n % CONTEXT) // n) + 1
+            data = torch.cat([data] * reps, dim=0)[: n + CONTEXT - n % CONTEXT]
         data = data.reshape(-1, CONTEXT, POINTS, 3)
-        out = [self.model(data[a:a + self.batch].to(self.device)).reshape(-1, 1600).float().cpu() for a in range(0, len(data), self.batch)]
-        out = torch.cat(out)[:n]
-        return out[torch.argsort(perm)]
+        for a in range(0, len(data), self.batch):
+            out = self.model(data[a:a + self.batch].to(self.device)).reshape(-1, 1600)
+            r0 = a * CONTEXT
+            real = max(0, min(n - r0, len(out)))                           # rows beyond n are padding
+            yield perm[r0:r0 + real], out[:real]
+
+    def logits(self, feat, seed):
+        """(n, 1600) logits (float32, CPU) for one draw - for checks against RapidParc's package."""
+        out = torch.empty(len(feat), 1600)
+        for idx, lg in self.batches(feat, seed):
+            out[idx] = lg.float().cpu()
+        return out
 
     def __call__(self, fibers, draws=(0,), logp=False) -> Labels:
-        """fibers: (n, 3) RAS mm arrays. draws: the shuffle seeds whose cluster probabilities are averaged.
-        logp: keep the log of the averaged probabilities (float16)."""
+        """fibers: (n, 3) RAS mm arrays. draws: the shuffle seeds (any iterable) whose cluster probabilities
+        are averaged. logp: keep the cluster log-probabilities (float16; several draws: the log of their mean
+        probability, without underflow)."""
         _, _, length = lengths(fibers)
         keep = length >= MIN_LENGTH_MM
+        draws = tuple(draws)
+        if not keep.any():
+            return empty(keep, length)
         feat = resample([np.asarray(f, np.float32) for f, k in zip(fibers, keep) if k])
+        n = len(feat)
         if len(draws) == 1:
-            lg = self.logits(feat, draws[0])
-            arg, lp = lg.argmax(1), (F.log_softmax(lg, 1).half() if logp else None)
+            arg = torch.empty(n, dtype=torch.int64)
+            lp = torch.empty(n, 1600, dtype=torch.float16) if logp else None
+            for idx, lg in self.batches(feat, draws[0]):
+                arg[idx] = lg.argmax(1).cpu()
+                if logp:
+                    lp[idx] = F.log_softmax(lg.float(), 1).half().cpu()
         else:
-            psum = None
+            mean = LogMean()
             for d in draws:
-                p = F.softmax(self.logits(feat, d), 1)
-                psum = p if psum is None else psum.add_(p)
-            arg, lp = psum.argmax(1), ((psum / len(draws)).log().half() if logp else None)
+                full = torch.empty(n, 1600)
+                for idx, lg in self.batches(feat, d):
+                    full[idx] = F.log_softmax(lg.float(), 1).cpu()
+                mean.add(full)
+            m = mean.result()
+            arg, lp = m.argmax(1), (m.half() if logp else None)
         return Labels(keep=keep, length_mm=length[keep], tract=self.lut[arg.numpy()], logp=lp)
