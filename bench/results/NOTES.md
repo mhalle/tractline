@@ -1827,7 +1827,7 @@ compared in the brain (99th percentile of |difference|):
   look at the estimator, e.g. restarts or the coarse levels).
 - **Relative polarity is visible in the images**: labeled opposite, the true pair gives a field whose
   displacement's 99th percentile is 6.2-9.8 mm; a control - the AP b0s split in two halves, one polarity
-  truly, labeled opposite - gives 0.7-1.7 mm. Pair over control: 4.7-13.7x, median 7.2x (smallest PAT25).
+  truly, labeled opposite - gives 0.7-1.7 mm. Pair over control: 4.7-12.8x, median 7.1x (smallest PAT25).
   The first level's cost ratio separates less well (PAT25 0.08 against 0.11, PAT29 0.11 against 0.12): the
   displacement is the statistic. The control is the easy case - halves of one series, seconds apart; two
   same-polarity series minutes apart would show more motion and drift, and are not in ds001226.

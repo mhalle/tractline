@@ -122,9 +122,10 @@
    "flipped_vs_base_99th_mm": 0.0
   }
  ],
- "pair_over_control_99th_min_median": [
+ "pair_over_control_99th_min_median_max": [
   4.74,
-  7.23
+  7.11,
+  12.83
  ],
  "readout_vs_base_99th_mm_max": 0.922,
  "flipped_vs_base_99th_mm_max": 0.0
