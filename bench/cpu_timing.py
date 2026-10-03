@@ -8,10 +8,10 @@ steps, the GPU kernel's arithmetic), the default labeler (RapidParc) on the CPU;
 Compared: the field (displacement difference), the tractograms (fibers, steps), the labels (tract
 mix r, label agreement where both tracked from the same seed). Writes results/cpu_timing.json.
 """
-import argparse, json, platform, subprocess
+import argparse, json, subprocess
 from pathlib import Path
 import numpy as np, torch
-from tractline import pipeline as P, susceptibility as S
+from tractline import pipeline as P
 from _ds001226 import load
 from tractline.labelers.base import OTHER
 

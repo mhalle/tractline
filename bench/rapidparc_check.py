@@ -12,10 +12,9 @@ Writes results/rapidparc_check.json.
 """
 import json, subprocess, time
 from pathlib import Path
-import numpy as np, torch
+import numpy as np
 from tractline import pipeline as P, ukf as U
 from tractline.prep import prepare
-from tractline.data import DATA
 from tractline.labelers.base import lengths, MIN_LENGTH_MM
 from tractline.labelers.rapidparc import Labeler, resample
 from _ds001226 import load, ROOT

@@ -33,6 +33,8 @@ dev = [
     "pynrrd>=1.1",             # NRRD files: the tracker's input as files, the bootstrap
     "trx-python>=0.6",         # trx_check.py
     "matplotlib>=3.11",        # cohort_summary.py's figure
+    "pytest>=8",               # tests/: uv run pytest
+    "ruff>=0.6",               # uv run ruff check
 ]
 dipy = ["dipy>=1.12"]          # the reference median_otsu (median_check.py); the bootstrap's spherical harmonics
                                # (_bootstrap.py: label_noise_floor.py, ukf_noise_floor.py)
@@ -41,3 +43,14 @@ sklearn = ["scikit-learn>=1.9"]   # accuracy_tractcloud_test.py's macro F1
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/tractline"]
+
+[tool.ruff]
+line-length = 150
+
+[tool.ruff.lint]
+# pyflakes (undefined, shadowed and unused names - F823 catches a name read before a local import of it)
+# and syntax errors; style is not checked.
+select = ["F", "E9"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

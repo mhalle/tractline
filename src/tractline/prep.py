@@ -39,7 +39,8 @@ def prepare(dwi, affine, bval, bvec, shell=2800.0, device="cpu") -> TrackerInput
         g[0] *= -1
     g = (R @ g).T                                                         # (G, 3) RAS
     bmax = float(bval.max())
-    g = np.where((bval > 50)[:, None], g / np.linalg.norm(g, axis=1, keepdims=True) * np.sqrt(bval / bmax)[:, None], 0.0)
+    norm = np.linalg.norm(g, axis=1, keepdims=True)
+    g = np.where((bval > 50)[:, None], g / np.where(norm > 0, norm, 1.0) * np.sqrt(bval / bmax)[:, None], 0.0)   # b0s: zero, no 0/0
     # integers are stored as int16 (the binary's); outside its range (uint16 scanners) as float32 instead
     floating = not np.issubdtype(dwi.dtype, np.integer) or dwi.max() > 32767 or dwi.min() < -32768
     hdr = {"type": "float" if floating else "short", "dimension": 4, "space": "right-anterior-superior", "sizes": list(dwi.shape),

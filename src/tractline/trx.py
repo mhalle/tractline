@@ -38,6 +38,8 @@ def tract_probabilities(logp):
 def write(path, s, tg, labels, positions="float32", labeled_only=False):
     """path ending in .trx: a zip; otherwise a directory. s: the Subject (the DWI's grid); tg: the
     Tractogram; labels: its Labels (with logp). Returns the path."""
+    if labels.logp is None:
+        raise ValueError("trx.write needs the labels' cluster log-probabilities: label with logp=True (pipeline.run does)")
     path = Path(path)
     keep = labels.keep
     which = np.flatnonzero(keep) if labeled_only else np.arange(len(tg.fibers))
@@ -47,8 +49,6 @@ def write(path, s, tg, labels, positions="float32", labeled_only=False):
     rows = lab_rows[which]; L = rows >= 0
 
     tract = np.full(n, UNLABELED_TRACT, np.uint8); tract[L] = labels.tract[rows[L]]
-    if labels.logp is None:
-        raise ValueError("trx.write needs the labels' cluster log-probabilities: label with logp=True (pipeline.run does)")
     P = tract_probabilities(labels.logp)
     cluster = np.full(n, UNLABELED_CLUSTER, np.uint16); cluster[L] = labels.logp.float().argmax(1).numpy()[rows[L]]
     prob = np.full(n, np.nan, np.float16); margin = np.full(n, np.nan, np.float16)

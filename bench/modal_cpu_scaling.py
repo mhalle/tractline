@@ -89,7 +89,7 @@ def field_timing():
     a tracking pool has run (the first run's estimate took 101.8 s after the pools, 33.7 s before),
     then the pipeline end to end."""
     import os, time
-    import numpy as np, torch
+    import torch
     from tractline import pipeline as P, susceptibility as S, ukf as U
     from _ds001226 import load
     from tractline.prep import prepare
@@ -117,7 +117,6 @@ def field_timing():
 @app.function(cpu=CORES, memory=32768, timeout=900)
 def pipeline_only():
     """The pipeline end to end on the CPU at 32 workers, each stage setting its own threads."""
-    import torch
     from tractline import pipeline as P
     from _ds001226 import load
     s = load("PAT16")

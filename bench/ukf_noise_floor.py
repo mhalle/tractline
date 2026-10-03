@@ -16,7 +16,7 @@ Writes results/ukf_noise_floor.json.
 import argparse, json, time
 from pathlib import Path
 from tractline.data import DATA as _DATA                          # $TRACTOGRAPHY_DATA
-import numpy as np, torch
+import numpy as np
 from tractline import ukf as U
 import _fibercmp as C
 from _bootstrap import WildBootstrap, read

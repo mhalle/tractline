@@ -49,11 +49,13 @@ def read_safetensors(path) -> dict:
 
 def normalize(x):
     """(bs, n, points, 3) streamlines scaled to [-1, 1] per axis over each batch item (RapidParc's
-    normalize_to_identity_cube)."""
+    normalize_to_identity_cube). An axis with no extent (a lone straight or planar streamline: RapidParc's
+    0/0, NaN) divides by 1 instead; with every extent positive, as in any real tractogram, it is RapidParc's."""
     bs, _, _, dim = x.size()
     mins = torch.amin(x, dim=(1, 2)).view(bs, 1, 1, dim)
     maxs = torch.amax(x, dim=(1, 2)).view(bs, 1, 1, dim)
-    return 2 * (x - mins) / (maxs - mins) - 1.0
+    extent = maxs - mins
+    return 2 * (x - mins) / torch.where(extent > 0, extent, torch.ones_like(extent)) - 1.0
 
 
 class Embedding(nn.Module):

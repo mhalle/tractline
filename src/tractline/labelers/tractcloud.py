@@ -16,7 +16,7 @@ import sys, types
 import numpy as np, torch
 import torch.nn.functional as F
 from ..resample import resample
-from .base import Labels, MIN_LENGTH_MM, OTHER, LogMean, empty, lengths      # shared by the labelers; re-exported here
+from .base import Labels, MIN_LENGTH_MM, OTHER, LogMean, empty, lengths      # noqa: F401 - shared by the labelers; re-exported here
 from ..data import DATA, MODEL, MASS_CENTER
 
 import os
@@ -29,7 +29,7 @@ sys.path.insert(0, str(DATA / "TractCloud/src"))
 _stub = None if "vtk" in sys.modules else sys.modules.setdefault("vtk", types.ModuleType("vtk"))
 try:
     from tractcloud import inference as inf
-    from tractcloud.tract_mapping import TRACT_NAMES, _CLUSTER_TO_TRACT_LUT as LUT
+    from tractcloud.tract_mapping import _CLUSTER_TO_TRACT_LUT as LUT
 finally:
     if _stub is not None and sys.modules.get("vtk") is _stub:
         del sys.modules["vtk"]

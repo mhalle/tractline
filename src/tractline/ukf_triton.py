@@ -154,7 +154,6 @@ def source(math: str = "precise") -> str:
     e(f"z = {DIV('z', 'wsum[:, None]')}")
 
     # ---- Cholesky of P; sigma points X_s = F(x +/- c L[:, j])
-    chol = []
     for j in range(NS):
         d = f"p{j}_{j}"
         for k in range(j):

@@ -81,6 +81,21 @@ which re-import the script (the tracker checks, and refuses without one).
 | `t1check.py` | measurement, not pipeline: the distortion left against the T1 (needs scipy: the `t1check` extra) |
 | `data.py` | where data and weights live |
 
+## Tests (`tests/`)
+
+```
+uv run ruff check src bench tests    # pyflakes: undefined, shadowed and unused names
+uv run pytest                        # ~40 s
+```
+
+The whole pipeline on the CPU path, on a synthetic phantom (`tests/phantom.py`: a band of fibers in a
+block of brain, a reversed-phase pair with no distortion): it runs with the default worker count and
+with two (the same fibers), repeats bit for bit, tracks the band and estimates no field; the package
+with numpy and torch alone (the optional packages blocked); the labelers' edge cases (RapidParc's with its
+weights; skipped without them); the inputs the modules refuse. The GitHub workflow (`.github/workflows/ci.yml`)
+runs both on Linux on every push. The Metal and CUDA paths need their GPUs: the bench checks them
+(`cohort.py`, `dependency_check.py`, the Modal scripts).
+
 ## The bench (`bench/`)
 
 Run from the repository root with `uv run` (it syncs the environment first), e.g. `uv run bench/cohort.py --sub PAT16`.

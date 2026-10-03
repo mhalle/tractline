@@ -13,7 +13,6 @@ valid states, so it bounds what a batched tracker could do per step.
 """
 import json, time
 from pathlib import Path
-import numpy as np
 import torch
 
 KAPPA, RS, QM, QL, LMIN = 0.01, 0.02, 0.001, 50.0, 100.0
@@ -44,7 +43,6 @@ def H(X, g, b):
 
 
 def step(x, P, z, g, b, Wt, Qt):
-    B = x.shape[0]
     L, _ = torch.linalg.cholesky_ex(P)
     dX = SCALE * L.transpose(1, 2)                                      # rows: columns of L
     X = torch.cat([x[:, None], x[:, None] + dX, x[:, None] - dX], 1)  # (B, 21, n)

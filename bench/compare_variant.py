@@ -7,7 +7,6 @@ modal_ukf_triton.py calls this after a full run: the `modal` CLI runs in its own
 numpy, and comparing is CPU work that should not be billed at GPU rates.
 """
 import json, subprocess, sys
-from pathlib import Path
 import numpy as np
 from tractline import ukf as U
 import _fibercmp as C

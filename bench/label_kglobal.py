@@ -10,7 +10,7 @@ Writes results/label_kglobal.json.
 """
 import json, time
 from pathlib import Path
-import numpy as np, torch
+import numpy as np
 from tractline import pipeline as P, ukf as U
 from tractline.prep import prepare
 from tractline.labelers.tractcloud import Labeler, inf, MODEL

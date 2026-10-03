@@ -39,7 +39,6 @@ HD = "/vol/ukf/hardi/"
 
 
 def _setup():
-    import numpy as np, torch
     from tractline import ukf as U
     D = U.load(HD + "dwi.nhdr", HD + "mask.nrrd")
     off = U.SRAND0_OFFSET                                                    # the binary's seed offset (macOS srand(0))
@@ -96,7 +95,7 @@ def smoke(kind: str = "unrolled") -> dict:
 @app.function(gpu="A10G", volumes={"/vol": vol}, timeout=1800, memory=32768)
 def tune(kind: str = "unrolled") -> dict:
     import time
-    import numpy as np, torch
+    import torch
     from tractline import ukf as U
     T = _kernel(kind)
     D, off = _setup()

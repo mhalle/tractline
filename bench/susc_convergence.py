@@ -9,7 +9,7 @@ Writes results/susc_convergence[_tag].json.
 """
 import argparse, json, time
 from pathlib import Path
-import numpy as np, nibabel as nib, torch
+import numpy as np, nibabel as nib
 from scipy.ndimage import binary_erosion
 from tractline import susceptibility as S
 from _ds001226 import load, ROOT

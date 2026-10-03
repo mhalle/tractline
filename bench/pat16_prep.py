@@ -16,7 +16,6 @@ The rules live in prep.py (cohort.py uses them for every subject).
 Writes DATA/ds001226/derived/PAT16/{dwi.nhdr, dwi.raw, mask.nrrd, prep.json}.
 """
 import argparse, json
-from pathlib import Path
 from tractline.data import DATA as _DATA                          # $TRACTOGRAPHY_DATA
 import numpy as np, nibabel as nib
 from tractline.prep import prep

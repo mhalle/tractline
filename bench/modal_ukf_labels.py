@@ -113,7 +113,6 @@ def label() -> dict:
         lab[name] = labels(feat, range(10) if name == "f64" else range(5))
 
     ref = tr["f64"]; rk = {int(s): i for i, s in enumerate(ref["seed_index"])}
-    rfib = {int(s): j for j, s in enumerate(np.flatnonzero(ref["keep"]))}  # kept index -> fiber index
     agree = lambda a, b: round(float((a == b).mean()), 4)
     T0 = lab["f64"]
     out = {"floor_tractcloud_draws_on_f64": {

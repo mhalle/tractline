@@ -1,0 +1,35 @@
+# Lint and tests on Linux, CPU only: GitHub's runners have no GPU, so the Metal and CUDA paths are checked
+# locally and on Modal (bench/). The tests run the whole pipeline on a synthetic phantom (tests/phantom.py);
+# RapidParc's tests use its released weights, fetched here (6.6 MB, sha256-checked when loaded).
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      TRACTOGRAPHY_DATA: /tmp/tractography-data
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Environment (uv.lock; Python from .python-version)
+        run: uv sync --locked
+
+      - name: Lint
+        run: uv run ruff check src bench tests
+
+      - name: RapidParc's weights
+        run: |
+          mkdir -p "$TRACTOGRAPHY_DATA/RapidParc"
+          curl -sSfL -o "$TRACTOGRAPHY_DATA/RapidParc/rapidparc.safetensors" \
+            https://github.com/MedVisBonn/RapidParc/releases/download/v1.0.0/rapidparc.safetensors
+
+      - name: Tests
+        run: uv run pytest -q

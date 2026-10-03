@@ -1791,3 +1791,22 @@ the review's fixes (884fcc0, in v0.1.0): the main-guard check added at the top o
 and a function-local `import os` further down made `os` local to the whole function. The local imports
 are gone (the module imports os). The cohort and the GPU checks run on "mps" and never reached it; the
 review's CPU checks called `ukf.track` directly. ruff's F823 flags this pattern.
+
+## 2026-10-03 Tests and continuous integration
+
+`tests/` (pytest, ~40 s on the M2) and ruff (pyflakes rules) in the `dev` group; `.github/workflows/ci.yml`
+runs both on Linux on every push, fetching RapidParc's weights. The pipeline is tested on a synthetic
+phantom (a 32 x 44 x 20 block at 2 mm, a 4 x 4-voxel band of fibers along y, 30 directions at b = 2800,
+a distortion-free reversed pair): on the M2's CPU 786 fibers, identical across runs and worker counts,
+the field under 1 Hz, over 95 % of the fibers' points within a voxel of the band. Both ways the CPU path's UnboundLocalError (above)
+would have been caught: ruff's F823, and the test once it runs the default worker count - with
+`workers=2` the guard's `workers or os.cpu_count()` never read `os`, so the first version of the test
+passed with the bug in place.
+
+Found by the tests: RapidParc's normalization divides by each axis's extent over a group, so a lone
+straight or planar streamline gave 0/0 and NaN probabilities (RapidParc's package does the same). An
+axis with no extent now divides by 1; with every extent positive the arithmetic is RapidParc's, and
+`rapidparc_check.py` reproduces its committed result. `trx.write` checks for `logp` before anything else.
+`prep.prepare` no longer warns on the b0 rows' 0/0 (it was discarded). Unused imports and variables
+removed from the bench and the package (`ruff --fix`), and upstream's unused TRACT_NAMES no longer
+imported by the TractCloud labeler.
