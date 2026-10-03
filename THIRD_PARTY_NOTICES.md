@@ -1,16 +1,17 @@
-# Third-party notices (draft)
+# Third-party notices
 
-tractline is licensed under the Apache License 2.0 (`LICENSE`). This file lists what the repository
-takes from others, how, and under what terms; those parts keep their own licenses. It is a draft for
-review before the repository is made public.
+All of tractline's code is its own, licensed under the Apache License 2.0 (`LICENSE`). Several modules
+implement published methods independently, following the original software's behavior so they can be
+checked against it; no third-party source file is copied into them, and they are not distributed under
+the originals' licenses. This file credits those originals and records their licenses for reference,
+lists the one third-party file the package redistributes and the notice its license requires, and
+names the software and data used at run time or in the bench but not distributed here.
 
-## Redistributed or derived in the package (`src/tractline`)
+## Redistributed: RapidParc's tract scheme (BSD 3-Clause)
 
-### RapidParc - BSD 3-Clause
-github.com/MedVisBonn/RapidParc (v1.0.4 code, v1.0.0 weights). `labelers/rapidparc.py` writes its
-inference anew following its code (its parameter names, so its released safetensors load directly);
-`labelers/scheme_43.json` (tract names and the 1,600 -> 43 cluster mapping) is taken from its release
-files. Its weights are not in the repository; the user downloads them.
+`labelers/scheme_43.json` (the 42 tract names and the 1,600 -> 43 cluster mapping) is taken from
+RapidParc's release files (github.com/MedVisBonn/RapidParc; the same scheme as TractCloud's). Its
+license asks that this notice accompany it:
 
 ```
 BSD 3-Clause License
@@ -43,33 +44,33 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ```
 
-### UKF Tractography - UKF Tractography Contribution and Software License Agreement (BSD style)
-github.com/pnlbwh/ukftractography, commit 2d2b661 (The Brigham and Women's Hospital). `ukf.py`,
-`ukf_metal.py` and `ukf_triton*.py` re-implement its two-tensor UKF as the ORG atlas configures it, from
-its source; no file of it is copied. Its license is BSD style with Slicer-derived extensions (attribution
-and notices preserved; no endorsement); full text: github.com/pnlbwh/ukftractography/blob/master/LICENSE.txt.
-The binary used as the reference in `bench/` is not in the repository.
 
-### DIPY - BSD 3-Clause; scikit-image - BSD 3-Clause
-`mask.py` reproduces DIPY's `median_otsu` (Copyright (c) 2008-2026, dipy developers) and its `otsu`
-threshold, itself scikit-image's arithmetic (Copyright 2009-2022 the scikit-image team), in torch, to
-match them voxel for voxel. No file is copied. Licenses: github.com/dipy/dipy/blob/master/LICENSE,
-github.com/scikit-image/scikit-image/blob/main/LICENSE.txt.
+## Independent implementations (tractline's code; the originals credited)
 
-### FSL topup - the model and b02b0.cnf's schedule
-`susceptibility.py` implements the susceptibility model of Andersson, Skare & Ashburner (2003), as FSL's
-topup does, and uses the level schedule from topup's `b02b0.cnf` (knot spacing, subsampling, smoothing,
-iterations, regularization). No FSL code is copied or linked. FSL's license is non-commercial; FSL itself
-is used only in `bench/` (topup as a test reference), never by the package. *To review: whether the
-b02b0.cnf parameter values need an attribution or permission beyond the citation.*
+- **RapidParc** (BSD 3-Clause, the notice above): `labelers/rapidparc.py` implements its inference
+  (von Bornhaupt et al., Imaging Neuroscience 2026), with parameter names matching its released weights so
+  they load directly. The weights are not distributed here; the user downloads them from its release.
+- **UKF Tractography** (UKF Tractography Contribution and Software License Agreement, BSD style; The
+  Brigham and Women's Hospital; github.com/pnlbwh/ukftractography, commit 2d2b661): `ukf.py`, `ukf_metal.py`
+  and `ukf_triton*.py` implement its two-tensor unscented Kalman filter tractography as the ORG atlas
+  configures it.
+- **DIPY** (BSD 3-Clause; dipy developers) and **scikit-image** (BSD 3-Clause; the scikit-image team):
+  `mask.py` implements DIPY's `median_otsu` and the Otsu threshold (scikit-image's arithmetic) in torch, to
+  match them voxel for voxel.
+- **FSL topup** (FSL license; FMRIB, University of Oxford): `susceptibility.py` implements the
+  susceptibility model of Andersson, Skare & Ashburner (NeuroImage 2003) and follows the multi-resolution
+  schedule of topup's `b02b0.cnf` (knot spacing, subsampling, smoothing, iterations, regularization). FSL
+  itself is used only in `bench/`, as a test reference.
+- **TractCloud** (3D Slicer Contribution and Software License Agreement, BSD style;
+  github.com/SlicerDMRI/TractCloud; Xue et al., MICCAI 2023): `labelers/tractcloud.py`'s `MatmulDGCNN`
+  re-expresses its network's arithmetic for the CPU, and `trained_context` builds the context its released
+  model was trained with.
 
-## Used at run time, not redistributed
+## Used at run time, not distributed
 
-### TractCloud - 3D Slicer Contribution and Software License Agreement (BSD style)
-github.com/SlicerDMRI/TractCloud. The optional TractCloud labeler imports its code and loads its weights
-from the user's `$TRACTOGRAPHY_DATA`; neither is in the repository. `labelers/tractcloud.py`'s
-`MatmulDGCNN` re-expresses its network's arithmetic for the CPU, reading its weights; its
-`trained_context` builds the context its released model was trained with. Full license text in its repository.
+- **TractCloud's code and weights**: the optional TractCloud labeler imports its code and loads its
+  weights from the user's `$TRACTOGRAPHY_DATA`, under its own license.
+- **RapidParc's weights**: loaded from `$TRACTOGRAPHY_DATA`, under its own license.
 
 ## Data and results in `bench/`
 

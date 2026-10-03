@@ -103,5 +103,5 @@ labeler's in-memory probabilities, not through the TRX.
 
 ## Licenses
 
-Apache License 2.0 (`LICENSE`). What tractline takes from others, and on what terms, is in
-`THIRD_PARTY_NOTICES.md`.
+Apache License 2.0 (`LICENSE`): all of tractline's code. The originals it implements, and the one file it
+redistributes (RapidParc's tract scheme, with its notice), are credited in `THIRD_PARTY_NOTICES.md`.
