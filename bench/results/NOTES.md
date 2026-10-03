@@ -1770,3 +1770,8 @@ tractography files: `ukf_compare.py`, `ukf_bench.py`, `resample_check.py`) and s
 in `accuracy_tractcloud_test.py`) are opt-in groups: `uv run --group vtk ...`, `uv run --group sklearn ...`.
 The default environment went from 1.3 GB to 785 MB (torch is 533 MB of it). Checked: `cohort_summary.py`
 runs; each group installs on request; the optional TractCloud labeler labels with vtk not installed.
+- dipy is opt-in too (`--group dipy`): DIPY as the mask's reference (`median_check.py`) and the
+  bootstrap's spherical-harmonic basis (`_bootstrap.py`, for `label_noise_floor.py` and
+  `ukf_noise_floor.py`). `susc_check.py` masks with `tractline.mask.median_otsu` instead of DIPY's: on its
+  input (topup's mean unwarped b0, float64) the two masks are identical, 94,505 voxels. `dev` is now
+  pynrrd, trx-python and matplotlib.

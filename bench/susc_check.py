@@ -13,7 +13,7 @@ import argparse, json, time
 from pathlib import Path
 from tractline.data import DATA as _DATA                          # $TRACTOGRAPHY_DATA
 import numpy as np, nibabel as nib
-from dipy.segment.mask import median_otsu
+from tractline.mask import median_otsu                             # DIPY's, identical voxel for voxel (median_check.py)
 from tractline import susceptibility as S
 
 ap = argparse.ArgumentParser(); ap.add_argument("--device", default="mps"); ap.add_argument("--iter-scale", type=int, default=None)

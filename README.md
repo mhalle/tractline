@@ -41,10 +41,12 @@ layout in `src/tractline/data.py`):
   (`TestData/`) from its release. For `topup_ref.py` and `cohort_topup.py`: `fsl-env/`, FSL's topup
   (conda, from FSL's channel - FSL is not a Python package).
 
-The bench needs more than the package: pynrrd, dipy, trx-python and matplotlib, the `dev` dependency
-group, which `uv sync` and `uv run` install by default. Two heavy packages are opt-in groups, each for a
-few scripts: `vtk` (0.5 GB; `ukf_compare.py`, `ukf_bench.py`, `resample_check.py`: VTK tractography files)
-and `sklearn` (`accuracy_tractcloud_test.py`) - `uv run --group vtk bench/ukf_compare.py`. `rapidparc_check.py` runs RapidParc's
+The bench needs more than the package: pynrrd, trx-python and matplotlib, the `dev` dependency group,
+which `uv sync` and `uv run` install by default. Three packages are opt-in groups, each needed by a few
+scripts: `dipy` (DIPY as the mask's reference, `median_check.py`; the bootstrap's spherical harmonics,
+`label_noise_floor.py`, `ukf_noise_floor.py`), `vtk` (0.5 GB; VTK tractography files: `ukf_compare.py`,
+`ukf_bench.py`, `resample_check.py`) and `sklearn` (`accuracy_tractcloud_test.py`) -
+`uv run --group vtk bench/ukf_compare.py`. `rapidparc_check.py` runs RapidParc's
 own package in an isolated environment uv builds for it (`uv run --with RapidParc==1.0.4`; its pins would not
 fit the project's). The `modal_*.py` scripts run through the modal CLI, a uv tool (`uv tool install modal`;
 `modal run bench/modal_gpu_pipeline.py`); their images install with uv, torch pinned at 2.14.1 (every committed

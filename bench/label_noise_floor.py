@@ -11,7 +11,7 @@ fraction a bias or noise? The M2's field held fixed (pipeline.correct, the defau
     compared, and where they disagree, which way (tract -> Other or Other -> tract) and how the two
     fibers' lengths differ.
 
-    uv run bench/label_noise_floor.py [--replicates 4]
+    uv run --group dipy bench/label_noise_floor.py [--replicates 4]
 
 TractCloud at upstream's inference context (k_global 80, 10 %), as when it ran (Labeler(upstream=True)).
 
