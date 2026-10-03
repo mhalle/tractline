@@ -1606,3 +1606,25 @@ in labeler_compare's first run, 4 labelers x 2 seeds, which then swapped). gc + 
 after each patient: 0.1 GB, footprint 0.3-2.3 GB, 4 % more time. `pipeline.release_memory(device)` does
 it; `run()` calls it by default. TractCloud at 500 was the peak (batches of 1,024 streamlines: 5.9 GB);
 its Labeler now takes batches of 256 - identical labels, as fast, 2.1 GB.
+
+## 2026-10-02 RapidParc is the default; consistent across platforms
+
+`pipeline.default_labeler(device)` = `labelers.rapidparc.Labeler` ("rapidparc" model); `run(s, None, ...)`
+uses it. The shared 43-class scheme ships as package data (`labelers/scheme_43.json`, from RapidParc's
+release files, identical to TractCloud's mapping), so the default path imports no TractCloud code:
+`dependency_check.py` (TractCloud's `tractcloud` and `vtk` now blocked too) passes on the M2's GPU and CPU
+paths, no blocked module loaded (59.1 s / 166.7 s). The label stage's timer is now "label" (was
+"tractcloud"). TractCloud stays available (`labelers.tractcloud.Labeler`, at its trained context).
+- **PAT16 on five platforms** (`modal_gpu_pipeline.py --gpus A10,L40S,CPU`, `gpu_pipeline_compare.py
+  --m2-cpu`; against the M2's GPU path: fibers / labeled / Other / tract mix r / field deep 99th):
+  M2 GPU 42,170 / 32,264 / 49.88 % / - / -, 56.5 s; M2 CPU 42,176 / 32,259 / 49.86 % / 0.99985 / 0.03 mm,
+  166 s; A10 42,169 / 32,268 / 49.77 % / 0.99983 / 0.08 mm, 16.6 s; L40S 42,161 / 32,248 / 49.98 % /
+  0.99990 / 0.07 mm, 12.4 s; 32 x86 cores 42,165 / 32,250 / 49.69 % / 0.99989 / 0.07 mm, 95 s. Other
+  spans 0.3 points, the tract mix r >= 0.9998 (TractCloud at 500: r 0.9992; at upstream's 80: Other
+  58-63 %). What remains is the trackers' float32 rounding; on identical fibers the labeler matches
+  across CPU, Metal and CUDA.
+- **A swap, and a guard.** The first five-platform run swapped the M2 (8 workers at 1.9 GB): its script
+  had no `if __name__ == "__main__":` guard, and the CPU tracker's spawned workers re-import the main
+  script - each re-ran the comparison's GPU pipeline. Guarded, the workers are ~240 MB each. The tracker
+  now refuses to spawn from an unguarded script (`ukf._require_main_guard`: a clear error first; REPL and
+  notebooks unaffected).

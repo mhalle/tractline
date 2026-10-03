@@ -11,7 +11,7 @@
 | apply it (cubic along phase encoding, Jacobian) | `susceptibility.apply` | CPU, float64 | 1.3 s |
 | tracker input (b = 2800 shell, RAS gradients, median_otsu mask) | `prep.prepare`, `mask` | CPU | 0.7 s |
 | UKF two-tensor, ORG settings, the binary's seeds | `ukf.track` (Metal) | GPU, float32 steps | 27.0 s |
-| TractCloud, one draw | `labelers.tractcloud.Labeler` | GPU, float32 | 4.1 s |
+| RapidParc, one draw (the default labeler) | `labelers.rapidparc.Labeler` | GPU, float32 | ~1 s |
 | **scan → labels** | | | **53 s; 32 k labeled streamlines** |
 
 For scale: FSL topup + applytopup take 665 s for the correction alone on the same machine; the whole
@@ -30,8 +30,9 @@ pipeline takes 16.5 s on an A10 and 12.2 s on an L40S, steady state.
 
 - **Which labeler.** On TractCloud's own test split RapidParc is the most accurate (94.5 % against
   TractCloud's 92.0 % at its trained context, 86.6 % at upstream's inference context), the steadiest and
-  ~25x faster; on the 12 patients the two agree on 83.5 % of streamlines. The pipeline's default is still
-  TractCloud at 500; RapidParc is `tractline.labelers.rapidparc` (NOTES 2026-10-02, "The labelers compared").
+  ~25x faster; on the 12 patients the two agree on 83.5 % of streamlines. RapidParc is the default since
+  2026-10-02; across the M2 (GPU, CPU), an A10, an L40S and 32 x86 cores PAT16's Other share spans 0.3
+  points and the tract mix agrees to r >= 0.9998 (NOTES, "RapidParc is the default").
 - **One TractCloud draw is not a stable label.** On PAT16 a single draw's Other fraction ranges
   55.5-66.2 % over context draws with the fibers fixed; the scan's noise moves it ~3 points; cards and
   kernels (58-63 %) sit inside both, no tracker bias. The pipeline labels with one draw; averaging

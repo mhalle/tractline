@@ -5,34 +5,36 @@
   "nrrd",
   "rankfield",
   "numcodecs",
-  "sklearn"
+  "sklearn",
+  "tractcloud",
+  "vtk"
  ],
  "runs": {
   "mps": {
    "seconds": {
-    "field_estimate": 17.46,
-    "field_apply": 1.03,
-    "prep": 3.05,
-    "load": 0.24,
-    "ukf": 26.77,
-    "tractcloud": 4.27,
-    "write_trx": 0.33
+    "field_estimate": 19.3,
+    "field_apply": 1.42,
+    "prep": 3.21,
+    "load": 0.27,
+    "ukf": 34.07,
+    "label": 0.81,
+    "write_trx": 0.31
    },
-   "scan_to_labels_s": 52.8,
+   "scan_to_labels_s": 59.1,
    "fibers": 42170,
    "labeled": 32264
   },
   "cpu": {
    "seconds": {
-    "field_estimate": 22.83,
-    "field_apply": 1.66,
-    "prep": 3.3,
-    "load": 0.23,
-    "ukf": 125.09,
-    "tractcloud": 9.92,
-    "write_trx": 0.37
+    "field_estimate": 24.42,
+    "field_apply": 1.5,
+    "prep": 3.33,
+    "load": 0.24,
+    "ukf": 135.87,
+    "label": 1.37,
+    "write_trx": 0.38
    },
-   "scan_to_labels_s": 163.0,
+   "scan_to_labels_s": 166.7,
    "fibers": 42176,
    "labeled": 32259
   }

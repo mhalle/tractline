@@ -23,7 +23,7 @@ from __future__ import annotations
 import json, shutil, tempfile, zipfile
 from pathlib import Path
 import numpy as np, torch
-from .labelers.tractcloud import TRACT_NAMES, LUT
+from .labelers.base import TRACT_NAMES, LUT
 
 UNLABELED_TRACT, UNLABELED_CLUSTER = 255, 65535
 

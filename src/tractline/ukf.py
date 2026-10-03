@@ -425,11 +425,31 @@ def _worker_block(args):
     return _track_block(_WORKER_D, x, st, d, advance, params)
 
 
+def _require_main_guard():
+    """Spawned workers re-import the main script: without an `if __name__ == "__main__":` guard, each
+    worker re-runs it from the top. A comparison script did - 8 workers each re-ran its GPU pipeline,
+    1.9 GB apiece, and the M2 swapped. Refuse before spawning; a session without a script (REPL,
+    notebook) is fine."""
+    import re, sys
+    main = sys.modules.get("__main__")
+    path = getattr(main, "__file__", None)
+    if not path or not path.endswith(".py"):
+        return
+    try:
+        src = open(path).read()
+    except OSError:
+        return
+    if not re.search(r"""__name__\s*==\s*['"]__main__['"]""", src):
+        raise RuntimeError(f"{path}: the CPU tracker spawns worker processes, which re-import the main script - "
+                           f"put its work under `if __name__ == \"__main__\":` (or pass workers=1)")
+
+
 def _parallel(D, blocks, params, workers, threads_per_worker):
     """The blocks on `workers` processes (spawned: macOS and Windows cannot fork safely), D's tensors
     shared through shared memory - or copied to each worker when TRACTOGRAPHY_SHARE=0 (a container's
     /dev/shm can be smaller than the signal); results in block order."""
     import os, torch.multiprocessing as tmp
+    _require_main_guard()
     if os.environ.get("TRACTOGRAPHY_SHARE", "1") == "1":
         for v in D.values():
             if torch.is_tensor(v):

@@ -1,7 +1,7 @@
 """The pipeline end to end on CUDA GPUs (Modal), PAT16: the field estimate in float32 on the GPU, the
 Triton block kernel for the tracker, TractCloud on the GPU.
 
-    modal run bench/modal_gpu_pipeline.py [--gpus A10,L40S] [--runs 2] [--tf32 on] [--save-fibers] [--copies 1]
+    modal run bench/modal_gpu_pipeline.py [--gpus A10,L40S,CPU]          # CPU: 32 x86 cores [--runs 2] [--tf32 on] [--save-fibers] [--copies 1]
 
 Per GPU, one container runs the pipeline twice: the first run pays for torch's and Triton's warm-up
 (the kernel's compile is cached on the tractography-bench Volume, per GPU architecture), the second is
@@ -27,6 +27,7 @@ image = (modal.Image.debian_slim(python_version="3.12")
          .add_local_dir(str(DATA / "TractCloud/src"), remote_path="/data/TractCloud/src")
          .add_local_dir(str(DATA / "TrainedModel"), remote_path="/data/TrainedModel")
          .add_local_file(str(DATA / "TrainData_800clu800ol/HCP_mass_center.npy"), remote_path="/data/TrainData_800clu800ol/HCP_mass_center.npy")
+         .add_local_dir(str(DATA / "RapidParc"), remote_path="/data/RapidParc")
          .add_local_dir(str(DATA / PAT), remote_path=f"/data/{PAT}")
          .add_local_dir(str(PKG), remote_path="/root/pkg/tractline")
          .add_local_file(str(HERE / "_ds001226.py"), remote_path="/root/bench/_ds001226.py"))
@@ -36,21 +37,37 @@ vol = modal.Volume.from_name("tractography-bench")
 
 @app.function(gpu="A10", volumes={"/vol": vol}, timeout=1800, memory=32768, cpu=8)
 def pipeline(runs: int = 2, tf32: str = "default", save_fibers: bool = False) -> str:
+    return body("cuda", runs, tf32, save_fibers)
+
+
+@app.function(cpu=32, memory=32768, timeout=1800)
+def pipeline_cpu(runs: int = 1, tf32: str = "default", save_fibers: bool = False) -> str:
+    """The CPU path on 32 x86 cores: the tracker on 32 worker processes."""
+    import os, shutil
+    if shutil.disk_usage("/dev/shm").total < 2 ** 31:
+        os.environ["TRACTOGRAPHY_SHARE"] = "0"
+    return body("cpu", runs, tf32, save_fibers)
+
+
+def body(device, runs, tf32, save_fibers):
     import base64, zlib
     import numpy as np, torch
     from tractline import pipeline as P
-    from tractline.labelers.tractcloud import Labeler
     from _ds001226 import load
     s = load("PAT16")
     if tf32 == "on":                                                       # the experiment: TF32 left on inside the pipeline
         P.exact_float32 = lambda device: __import__("contextlib").nullcontext()
     import subprocess
-    smi = subprocess.run(["nvidia-smi", "--query-gpu=name,pci.device_id,driver_version,memory.total", "--format=csv,noheader"], capture_output=True, text=True).stdout.strip()
-    out = {"nvidia_smi": smi, "tf32": tf32, "gpu": torch.cuda.get_device_name(0), "torch": torch.__version__, "cpu_count": __import__("os").cpu_count(), "runs": []}
-    labeler = Labeler("cuda")
+    cuda = device == "cuda"
+    smi = subprocess.run(["nvidia-smi", "--query-gpu=name,pci.device_id,driver_version,memory.total", "--format=csv,noheader"],
+                         capture_output=True, text=True).stdout.strip() if cuda else None
+    model = next((l.split(":", 1)[1].strip() for l in open("/proc/cpuinfo") if l.startswith("model name")), "?")
+    out = {"nvidia_smi": smi, "tf32": tf32, "gpu": torch.cuda.get_device_name(0) if cuda else f"CPU: {model}", "torch": torch.__version__,
+           "cpu_count": __import__("os").cpu_count(), "runs": []}
+    labeler = P.default_labeler(device)
     for r in range(runs):
         timer = P.Timer(echo=f"run {r}")
-        corr, tg, labels = P.run(s, labeler, timer, device="cuda")
+        corr, tg, labels = P.run(s, labeler, timer, device=device, workers=None if cuda else 32)
         import hashlib
         out["runs"].append({"field_sha": hashlib.sha256(corr.field_hz.astype(np.float32).tobytes()).hexdigest()[:16],
                             "fibers_sha": hashlib.sha256(np.concatenate(tg.fibers).astype(np.float32).tobytes()).hexdigest()[:16],
@@ -60,7 +77,7 @@ def pipeline(runs: int = 2, tf32: str = "default", save_fibers: bool = False) ->
         if r == 0 and save_fibers:                                         # the tractogram and its labels, to label elsewhere
             import os
             os.makedirs("/vol/tractline", exist_ok=True)
-            name = f"/vol/tractline/PAT16_{torch.cuda.get_device_name(0).split()[-1].lower()}_tf32{tf32}.npz"
+            name = f"/vol/tractline/PAT16_{torch.cuda.get_device_name(0).split()[-1].lower() if cuda else 'cpu'}_tf32{tf32}.npz"
             np.savez(name, points=np.concatenate(tg.fibers).astype(np.float32), offsets=np.r_[0, np.cumsum([len(f) for f in tg.fibers])],
                      keep=labels.keep, tract=labels.tract)
             out["fibers_file"] = name
@@ -68,13 +85,15 @@ def pipeline(runs: int = 2, tf32: str = "default", save_fibers: bool = False) ->
             out["field_b64"] = base64.b64encode(zlib.compress(corr.field_hz.astype(np.float32).tobytes())).decode()
             out["field_shape"] = list(corr.field_hz.shape)
         print(json.dumps({k: v for k, v in out["runs"][-1].items() if k != "tract_counts"}), flush=True)
-    vol.commit()                                                           # the Triton cache, for the next run
+    if cuda:
+        vol.commit()                                                       # the Triton cache, for the next run
     return json.dumps(out)
 
 
 @app.local_entrypoint()
 def main(gpus: str = "A10,L40S", runs: int = 2, tf32: str = "default", save_fibers: bool = False, copies: int = 1):
-    calls = {(f"{g}_c{i}" if copies > 1 else g): pipeline.with_options(gpu=g).spawn(runs, tf32, save_fibers)
+    calls = {(f"{g}_c{i}" if copies > 1 else g): (pipeline_cpu.spawn(1, tf32, save_fibers) if g == "CPU" else
+                                                  pipeline.with_options(gpu=g).spawn(runs, tf32, save_fibers))
              for g in gpus.split(",") for i in range(copies)}
     tag = "" if tf32 == "default" else f"_tf32{tf32}"
     for g, c in calls.items():

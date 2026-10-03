@@ -2,10 +2,16 @@
 labelers measure them (docs/labelers.md)."""
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
+from pathlib import Path
 import numpy as np, torch
 
-OTHER = 42                       # the 43-class scheme TractCloud and RapidParc share: 0-41 a tract, 42 Other
+# the 43-class scheme TractCloud and RapidParc share (scheme_43.json): 1,600 clusters -> 42 tracts + Other
+_SCHEME = json.loads((Path(__file__).with_name("scheme_43.json")).read_text())
+TRACT_NAMES = tuple(_SCHEME["tract_names"])           # 0-41 the tracts, 42 "Other"
+LUT = np.asarray(_SCHEME["cluster_to_tract"], np.int64)   # (1600,) cluster -> tract
+OTHER = 42
 MIN_LENGTH_MM = 40.0             # TractCloud's training data: streamlines of 40 mm or more
 
 

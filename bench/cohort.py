@@ -27,7 +27,7 @@ from tractline import susceptibility as S
 from tractline import pipeline as P
 from _ds001226 import load, ROOT
 from tractline.t1check import T1Check, tumor_regions, stats
-from tractline.labelers.tractcloud import Labeler, TRACT_NAMES, OTHER
+from tractline.labelers.base import TRACT_NAMES, OTHER
 
 ap = argparse.ArgumentParser(); ap.add_argument("--sub", required=True); args = ap.parse_args()
 HERE = Path(__file__).resolve().parent
@@ -37,7 +37,7 @@ torch.set_num_threads(8)
 
 s = load(args.sub)
 timer = P.Timer(echo=args.sub)
-labeler = Labeler()
+labeler = P.default_labeler("mps")
 
 # ------------------------------------------------------------------ the pipeline, and the scan as acquired
 corr, tg, lab1 = P.run(s, labeler, timer, prefix="ours_")
@@ -47,7 +47,7 @@ arms = {"uncorrected": P.track(s, s.dwi, timer, prefix="uncorrected_"), "ours": 
 P.label(arms["uncorrected"], labeler, timer, prefix="uncorrected_")             # the pipeline's one draw, timed
 votes = {}
 for name, t in arms.items():
-    with timer(f"{name}_tractcloud_five_draws"):
+    with timer(f"{name}_label_five_draws"):
         votes[name] = labeler(t.fibers, draws=range(5))
 
 # ------------------------------------------------------------------ what correction changes in the tracts

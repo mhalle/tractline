@@ -25,7 +25,7 @@ import json, struct
 import numpy as np, torch
 import torch.nn as nn
 import torch.nn.functional as F
-from .base import Labels, MIN_LENGTH_MM, lengths
+from .base import Labels, MIN_LENGTH_MM, LUT, lengths
 from ..data import DATA
 
 WEIGHTS = DATA / "RapidParc"
@@ -99,7 +99,7 @@ class Labeler:
         self.model = Model(**SETTINGS)
         self.model.load_state_dict(read_safetensors(WEIGHTS / f"{model}.safetensors"))
         self.model = self.model.eval().to(self.device)
-        self.lut = torch.load(WEIGHTS / "mapping_from_800_800_to_43.pt").numpy().astype(np.int64)
+        self.lut = LUT                                                     # RapidParc's mapping file, identical (base.py)
 
     @torch.inference_mode()
     def logits(self, feat, seed):

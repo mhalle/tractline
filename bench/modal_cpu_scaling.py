@@ -28,6 +28,7 @@ image = (modal.Image.debian_slim(python_version="3.12")
          .add_local_dir(str(DATA / "TractCloud/src"), remote_path="/data/TractCloud/src")
          .add_local_dir(str(DATA / "TrainedModel"), remote_path="/data/TrainedModel")
          .add_local_file(str(DATA / "TrainData_800clu800ol/HCP_mass_center.npy"), remote_path="/data/TrainData_800clu800ol/HCP_mass_center.npy")
+         .add_local_dir(str(DATA / "RapidParc"), remote_path="/data/RapidParc")              # the default labeler's weights
          .add_local_dir(str(DATA / PAT), remote_path=f"/data/{PAT}"))
 image = image.add_local_dir(str(PKG), remote_path="/root/pkg/tractline")
 for m in BENCH:
@@ -47,7 +48,6 @@ def scaling():
     from tractline import pipeline as P, ukf as U
     from _ds001226 import load
     from tractline.prep import prepare
-    from tractline.labelers.tractcloud import Labeler
     model = next((l.split(":", 1)[1].strip() for l in open("/proc/cpuinfo") if l.startswith("model name")), "?")
     res = {"cpu_model": model, "os_cpu_count": os.cpu_count(), "affinity": len(os.sched_getaffinity(0)),
            "physical_cores_requested": CORES, "dev_shm_gib": round(shm / 2 ** 30, 2), "shared_memory": os.environ.get("TRACTOGRAPHY_SHARE", "1") == "1",
@@ -76,7 +76,7 @@ def scaling():
     ok = [r for r in sweep if "k_steps_per_s" in r]
     best = max(ok, key=lambda r: r["k_steps_per_s"])["workers"] if ok else 1
     timer = P.Timer(echo="pipeline")
-    corr, tg, labels = P.run(s, Labeler("cpu"), timer, device="cpu", workers=best)
+    corr, tg, labels = P.run(s, P.default_labeler("cpu"), timer, device="cpu", workers=best)
     res["pipeline"] = {"workers": best, "seconds": timer.seconds, "scan_to_labels_s": timer.total(*P.pipeline_stages()),
                        "fibers": tg.stats["fibers"], "labeled": int(labels.keep.sum())}
     return json.dumps(res, default=float)                            # text: the local client has no torch to unpickle with
@@ -92,7 +92,6 @@ def field_timing():
     from tractline import pipeline as P, susceptibility as S, ukf as U
     from _ds001226 import load
     from tractline.prep import prepare
-    from tractline.labelers.tractcloud import Labeler
     s = load("PAT16")
     est = lambda: S.estimate(s.b0s, s.vox, s.pe_vectors, s.readout_s, device="cpu", dtype=torch.float32)
     res = {"os_cpu_count": os.cpu_count(), "estimate_by_threads": {}}
@@ -109,7 +108,7 @@ def field_timing():
     t0 = time.time(); est(); res["estimate_after_pool_32_threads"] = round(time.time() - t0, 1)
     print(res, flush=True)
     timer = P.Timer(echo="pipeline")
-    P.run(s, Labeler("cpu"), timer, device="cpu", workers=32)
+    P.run(s, P.default_labeler("cpu"), timer, device="cpu", workers=32)
     res["pipeline"] = {"seconds": timer.seconds, "scan_to_labels_s": timer.total(*P.pipeline_stages())}
     return json.dumps(res)
 
@@ -120,10 +119,9 @@ def pipeline_only():
     import torch
     from tractline import pipeline as P
     from _ds001226 import load
-    from tractline.labelers.tractcloud import Labeler
     s = load("PAT16")
     timer = P.Timer(echo="pipeline")
-    P.run(s, Labeler("cpu"), timer, device="cpu", workers=32)
+    P.run(s, P.default_labeler("cpu"), timer, device="cpu", workers=32)
     return json.dumps({"seconds": timer.seconds, "scan_to_labels_s": timer.total(*P.pipeline_stages()),
                        "estimate_threads": P.ESTIMATE_THREADS})
 

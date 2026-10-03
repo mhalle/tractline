@@ -3,13 +3,14 @@ packages the bench uses made unimportable, on the GPU path and the CPU path.
 
     python bench/dependency_check.py [--sub PAT16]
 
-Blocked: numba, dipy, nrrd (pynrrd), rankfield, numcodecs, sklearn. Any import of them anywhere on the
+Blocked: numba, dipy, nrrd (pynrrd), rankfield, numcodecs, sklearn, and TractCloud's code (tractcloud, vtk): the
+default labeler is RapidParc. Any import of them anywhere on the
 pipeline's path fails the run. Writes results/dependency_check.json.
 """
 import importlib.abc, json, sys
 from pathlib import Path
 
-BLOCKED = ("numba", "dipy", "nrrd", "rankfield", "numcodecs", "sklearn")
+BLOCKED = ("numba", "dipy", "nrrd", "rankfield", "numcodecs", "sklearn", "tractcloud", "vtk")
 
 
 class _Refuse(importlib.abc.Loader):
@@ -36,7 +37,6 @@ if __name__ == "__main__":
     import torch
     from tractline import pipeline as P
     from _ds001226 import load
-    from tractline.labelers.tractcloud import Labeler
     ap = argparse.ArgumentParser(); ap.add_argument("--sub", default="PAT16"); args = ap.parse_args()
     s = load(args.sub)
     res = {"blocked": BLOCKED, "runs": {}}
@@ -44,7 +44,7 @@ if __name__ == "__main__":
         timer = P.Timer(echo=f"{args.sub} {device}")
         import tempfile
         with tempfile.TemporaryDirectory() as d:                     # the TRX writer is on the path too
-            corr, tg, labels = P.run(s, Labeler(device), timer, device=device, trx=Path(d) / "check.trx")
+            corr, tg, labels = P.run(s, None, timer, device=device, trx=Path(d) / "check.trx")
         res["runs"][device] = {"seconds": timer.seconds, "scan_to_labels_s": timer.total(*P.pipeline_stages()),
                                "fibers": tg.stats["fibers"], "labeled": int(labels.keep.sum())}
     res["loaded_blocked_modules"] = sorted(m for m in sys.modules if m.split(".")[0] in BLOCKED)

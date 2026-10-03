@@ -1,7 +1,7 @@
 """The pipeline, scan to labeled streamlines, in memory: correct -> track -> label [-> TRX].
 
     s = _ds001226.load("PAT16"); timer = Timer()      # the bench's loader; any object with its fields
-    corr, tg, labels = run(s, Labeler(), timer)
+    corr, tg, labels = run(s, None, timer)                  # None: the default labeler (RapidParc)
 
 Stages, and where they run:
   correct   the susceptibility field from the b0s and their reversed pair (susceptibility.estimate: GPU,
@@ -10,12 +10,12 @@ Stages, and where they run:
             median_otsu mask, exact in torch on the pipeline's device; ~3 s), UKF two-tensor with the ORG settings and the binary's seeds
             (ukf.track, Metal kernel: float32 steps from float64 seeds, ~27 s; or on the CPU,
             one process per core, fast algebra)
-  label     TractCloud, one context draw (tractcloud.Labeler: GPU, float32, ~4 s; on the CPU its
-            network as matrix products, MatmulDGCNN, ~5 s)
+  label     RapidParc, one draw (labelers.rapidparc: shuffled groups of 2,000 streamlines; GPU or CPU,
+            float32, ~1 s); TractCloud (labelers.tractcloud, at its trained context) on request
   TRX       optional: the tractogram with labels and tract probabilities (trx.write)
-Dependencies of the default path: numpy, scipy, torch, nibabel, TractCloud's code and weights.
+Dependencies of the default path: numpy, scipy, torch, nibabel, RapidParc's weights (no TractCloud code).
 
-Conventions at every module boundary (_ds001226, susceptibility, prep, ukf, tractcloud, t1check):
+Conventions at every module boundary (_ds001226, susceptibility, prep, ukf, the labelers, t1check):
   volumes   numpy (X, Y, Z[, V]) in the NIfTI's voxel order; affine voxel -> RAS mm; voxel sizes as
             the header states them (the affine's column norms differ by ~1e-8)
   fields    Hz on that grid; displacements mm along the phase-encoding axis, signed, as the DWI's
@@ -32,7 +32,7 @@ import numpy as np, torch
 from . import susceptibility as S
 from . import ukf as U
 from .prep import prepare
-from .labelers.tractcloud import Labeler, Labels
+from .labelers.base import Labels
 
 ESTIMATE_THREADS = 16            # the field estimate on the CPU: its problem is small (~5e5 voxels); on 48 vCPUs
                                  # 8 threads 43 s, 16 36.5 s, 32 41 s, 48 72.5 s (modal_cpu_field_timing.json)
@@ -158,22 +158,33 @@ def track(s, dwi, timer: Timer, prefix="", device="mps", workers=None, shell=280
     return Tractogram(fibers, stats, t.mask, t.info)
 
 
-def label(tg: Tractogram, labeler: Labeler, timer: Timer, prefix="") -> Labels:
-    with timer(prefix + "tractcloud"):
+def default_labeler(device="mps"):
+    """The pipeline's labeler: RapidParc (labelers.rapidparc; its released "rapidparc" model). On TractCloud's
+    own test split 94.5 % tract accuracy against TractCloud's 92.0 % at its trained context, the steadiest
+    across seeds and ~25x faster (NOTES 2026-10-02, "The labelers compared"). TractCloud stays available:
+    labelers.tractcloud.Labeler. Needs no TractCloud code: torch and RapidParc's weights."""
+    from .labelers.rapidparc import Labeler
+    return Labeler(device)
+
+
+def label(tg: Tractogram, labeler, timer: Timer, prefix="") -> Labels:
+    with timer(prefix + "label"):
         return labeler(tg.fibers, draws=(0,), logp=True)
 
 
-STAGES = ("field_estimate", "field_apply", "prep", "load", "ukf", "tractcloud")
+STAGES = ("field_estimate", "field_apply", "prep", "load", "ukf", "label")
 
 
-def run(s, labeler: Labeler, timer: Timer, prefix="", trx=None, device="mps", workers=None, release=True, **trx_options):
-    """The whole pipeline on a subject: (Correction, Tractogram, Labels). Its time is
+def run(s, labeler, timer: Timer, prefix="", trx=None, device="mps", workers=None, release=True, **trx_options):
+    """The whole pipeline on a subject: (Correction, Tractogram, Labels). labeler: None for the default
+    (default_labeler: RapidParc), or any labeler (labelers.tractcloud.Labeler, ...). Its time is
     timer.total(*pipeline_stages(prefix)). trx: also write the tractogram there as TRX (trx.write;
     trx_options: positions="float16", labeled_only=True), timed apart as "write_trx". release: return
     the GPU allocator's cache after the run (release_memory: batches stay flat). device: where
     the estimate and the tracking run ("mps" or "cpu"; the labeler has its own); workers: the CPU
     tracker's processes (default one per core as os.cpu_count() sees them - in a container, pass the
     container's own)."""
+    labeler = labeler if labeler is not None else default_labeler(device)
     with exact_float32(device):
         corr = correct(s, timer, device)
         tg = track(s, corr.dwi, timer, prefix, device, workers)

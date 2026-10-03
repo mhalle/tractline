@@ -2,23 +2,23 @@
  "m2": {
   "fibers": 42170,
   "labeled": 32264,
-  "scan_to_labels_s": 57.5
+  "scan_to_labels_s": 56.5
  },
  "gpus": {
   "a10": {
    "gpu": "NVIDIA A10",
    "tf32": "default",
    "scan_to_labels_s": [
-    23.7,
-    17.9
+    18.4,
+    16.6
    ],
    "seconds_steady": {
-    "field_estimate": 5.03,
+    "field_estimate": 5.2,
     "field_apply": 0.81,
-    "prep": 0.37,
-    "load": 0.55,
-    "ukf": 9.11,
-    "tractcloud": 1.98
+    "prep": 0.36,
+    "load": 0.52,
+    "ukf": 8.93,
+    "label": 0.74
    },
    "fibers": 42169,
    "labeled": 32268,
@@ -35,47 +35,104 @@
      1.119
     ]
    },
-   "tract_mix_r_vs_m2": 0.99932,
+   "tract_mix_r_vs_m2": 0.99983,
    "other_fraction": [
-    0.506,
-    0.5059
+    0.4977,
+    0.4988
    ]
   },
   "l40s": {
    "gpu": "NVIDIA L40S",
    "tf32": "default",
    "scan_to_labels_s": [
-    12.8,
-    10.2
+    15.6,
+    12.4
    ],
    "seconds_steady": {
-    "field_estimate": 3.32,
-    "field_apply": 0.78,
-    "prep": 0.18,
-    "load": 0.39,
-    "ukf": 4.28,
-    "tractcloud": 1.27
+    "field_estimate": 5.67,
+    "field_apply": 0.62,
+    "prep": 0.14,
+    "load": 0.22,
+    "ukf": 4.63,
+    "label": 1.15
    },
-   "fibers": 42169,
-   "labeled": 32257,
+   "fibers": 42161,
+   "labeled": 32248,
    "runs_identical_counts": true,
    "field_vs_m2_mm": {
     "deep": [
      0.002,
-     0.064,
-     0.838
+     0.068,
+     0.9
     ],
     "edge": [
      0.003,
-     0.204,
-     1.103
+     0.153,
+     1.092
     ]
    },
-   "tract_mix_r_vs_m2": 0.99919,
+   "tract_mix_r_vs_m2": 0.9999,
    "other_fraction": [
-    0.5093,
-    0.5059
+    0.4998,
+    0.4988
+   ]
+  },
+  "cpu": {
+   "gpu": "CPU: unknown",
+   "tf32": "default",
+   "scan_to_labels_s": [
+    94.7
+   ],
+   "seconds_steady": {
+    "field_estimate": 41.37,
+    "field_apply": 0.64,
+    "prep": 0.99,
+    "load": 0.24,
+    "ukf": 50.0,
+    "label": 1.49
+   },
+   "fibers": 42165,
+   "labeled": 32250,
+   "runs_identical_counts": true,
+   "field_vs_m2_mm": {
+    "deep": [
+     0.003,
+     0.068,
+     0.916
+    ],
+    "edge": [
+     0.003,
+     0.261,
+     1.162
+    ]
+   },
+   "tract_mix_r_vs_m2": 0.99989,
+   "other_fraction": [
+    0.4969,
+    0.4988
    ]
   }
+ },
+ "m2_cpu": {
+  "fibers": 42176,
+  "labeled": 32259,
+  "scan_to_labels_s": 165.7,
+  "field_vs_m2_mm": {
+   "deep": [
+    0.001,
+    0.026,
+    0.165
+   ],
+   "edge": [
+    0.001,
+    0.053,
+    0.29
+   ]
+  },
+  "tract_mix_r_vs_m2": 0.99985,
+  "other_fraction": [
+   0.4986,
+   0.4988
+  ]
  }
 }

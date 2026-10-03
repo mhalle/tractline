@@ -13,7 +13,7 @@ from pathlib import Path
 import numpy as np, torch
 from tractline import pipeline as P, susceptibility as S
 from _ds001226 import load
-from tractline.labelers.tractcloud import Labeler, OTHER
+from tractline.labelers.base import OTHER
 
 
 if __name__ == "__main__":
@@ -24,7 +24,7 @@ if __name__ == "__main__":
     runs = {}
     for device in ("cpu", "mps"):
         timer = P.Timer(echo=f"{args.sub} {device}")
-        corr, tg, labels = P.run(s, Labeler(device), timer, device=device)
+        corr, tg, labels = P.run(s, P.default_labeler(device), timer, device=device)
         runs[device] = (timer, corr, tg, labels)
 
     def shares(v):

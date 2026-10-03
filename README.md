@@ -3,7 +3,8 @@
 Diffusion MRI to named white-matter tracts, in torch: susceptibility correction from a reversed
 phase-encoding pair, UKF two-tensor tractography, and tract labeling, as one pipeline from the scan
 to labeled streamlines. Each stage is our own implementation of a published method, checked against
-the original: FSL topup's model, the Slicer UKFTractography binary, and TractCloud.
+the original: FSL topup's model, the Slicer UKFTractography binary, and RapidParc (the default labeler)
+or TractCloud.
 
 Private while it is being tested. It was incubated in medseg (`bench/tractography` on the
 `tractography-incubation` branch); this repository keeps that history.
@@ -15,16 +16,18 @@ pip install -e .            # numpy, scipy, torch, nibabel
 pip install -e ".[nrrd]"    # NRRD input/output for the tracker
 ```
 
-TractCloud's code and trained weights, and RapidParc's weights (`RapidParc/`), are read from the data
-directory for now (`tractline.data`: `$TRACTOGRAPHY_DATA`, default `~/tmp/data/tractography`); `docs/labelers.md` plans the labeler as a
-swappable component with our own TractCloud as the default.
+The default labeler needs RapidParc's released weights (`RapidParc/`: `rapidparc.safetensors`, 6.6 MB,
+from github.com/MedVisBonn/RapidParc v1.0.0), read from the data directory (`tractline.data`:
+`$TRACTOGRAPHY_DATA`, default `~/tmp/data/tractography`). TractCloud, optional, also needs its code and
+weights there. `docs/labelers.md` describes the labelers.
 
 ## The package (`src/tractline`)
 
 `pipeline.py` runs it in memory: correct → track → label, then optionally TRX, on an Apple GPU
 (`mps`), a CUDA GPU or the CPU. Its docstring states
 the conventions every module follows (array layouts, units, devices). The default path needs numpy,
-scipy, torch, nibabel and TractCloud's code and weights, nothing more (`bench/dependency_check.py`).
+scipy, torch, nibabel and RapidParc's weights, nothing more - no TractCloud code (`bench/dependency_check.py`).
+A script using the CPU path needs an `if __name__ == "__main__":` guard: the tracker spawns workers.
 
 | module | stage |
 |---|---|
@@ -32,7 +35,7 @@ scipy, torch, nibabel and TractCloud's code and weights, nothing more (`bench/de
 | `prep.py`, `mask.py` | the tracker's input: one shell, gradients in RAS, DIPY's `median_otsu` mask (exactly, in torch) |
 | `ukf.py`, `ukf_metal.py`, `ukf_triton_block.py` | UKF two-tensor tractography as the Slicer binary does it; the Metal (Apple) and Triton (CUDA) kernels for the steps (`ukf_triton.py`, the unrolled first attempt, compiles too slowly to use) |
 | `labelers/tractcloud.py`, `resample.py` | TractCloud labels and log-probabilities (at the context the model was trained with) |
-| `labelers/rapidparc.py` | RapidParc labels (its released weights; the same 43-class scheme) |
+| `labelers/rapidparc.py` | RapidParc labels - the default (its released weights; the same 43-class scheme) |
 | `labelers/base.py` | what labelers share: `Labels`, the 40 mm cut |
 | `trx.py` | optional output: the tractogram as TRX, with tract labels and probabilities |
 | `t1check.py` | measurement, not pipeline: the distortion left against the T1 |

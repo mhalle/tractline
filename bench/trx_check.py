@@ -14,13 +14,13 @@ import numpy as np
 from trx.trx_file_memmap import load as trx_load
 from tractline import pipeline as P, trx as _trx
 from _ds001226 import load, ROOT
-from tractline.labelers.tractcloud import Labeler, TRACT_NAMES
+from tractline.labelers.base import TRACT_NAMES
 
 HERE = Path(__file__).resolve().parent
 s = load("PAT16")
 timer = P.Timer(echo="PAT16")
 OUT = ROOT / "derived/PAT16"
-corr, tg, labels = P.run(s, Labeler(), timer, trx=OUT / "PAT16.trx")
+corr, tg, labels = P.run(s, None, timer, trx=OUT / "PAT16.trx")
 with timer("write_trx_dir_float16_labeled"):
     _trx.write(OUT / "PAT16_labeled_f16_trx", s, tg, labels, positions="float16", labeled_only=True)
 
