@@ -1528,3 +1528,28 @@ The M2's field held fixed; `results/label_noise_floor.json`.
 - **Accuracy is not settled here:** PAT16 has no reference labels; HCP 101006's file carries FreeSurfer
   region labels per point, not tract labels. TractCloud's labeled test subjects (TrainData_800clu800ol,
   of which only HCP_mass_center.npy was kept) would settle 80 against 500.
+
+## 2026-10-02 The labeler at the trained context (k_global 500, 10,000 local candidates)
+
+`labelers.tractcloud.Labeler` now runs TractCloud with the context the released model was trained with:
+500 global streamlines, local neighbors among min(1, 10,000 / n) of the streamlines (the training
+density); several draws average their cluster probabilities (was: a majority vote). `upstream=True`
+restores upstream's inference context (80, 10 %) and reproduces the old labels exactly. Checked: one
+draw = label_context.py's (Other 50.59 %), 5 draws = its ensemble (50.68 %); the CPU network agrees
+with the GPU on every streamline. Time per draw on the M2 9.1 s (was 3.9); CPU 15.5 s.
+- **Local setting** (`label_context.py`, k_global 500): 10 %, the training density (31 % here) and all
+  streamlines give the same stability (Other SD 0.3 points, 5-draw ensembles 97.5-97.6 %) and agree on
+  99.4-99.6 % of streamlines: only the global context matters.
+- **Across trackers** (`label_trained_check.py`, PAT16, one draw, seed-matched Metal / float64): 93.9 %
+  agree (at 80: 88.8 %); Other 50.6 / 51.1 %.
+- **Another scan, HARDI** (healthy, 2 mm, 150 directions): Other over 5 draws 72.8-73.8 % (SD 0.4; at 80:
+  75.0-78.3 %, SD 1.3); two single draws agree 93.9 % (at 80: 86.1 %). Smaller than PAT16's at 80, the
+  same direction (-4 points of Other at 500).
+- **Across cards** (`modal_gpu_pipeline.py`, `gpu_pipeline_compare.py`): Other M2 50.59 %, A10 50.60 %,
+  L40S 50.93 %; tract mix r against the M2 0.9993 / 0.9992 (at 80: 0.987-0.997, Other 58-63 %). Scan to
+  labels, steady: A10 17.9 s, L40S 10.2 s (TractCloud 2.0 / 1.3 s), M2 57.5 s. The L40S this time had
+  49 GB (the last, 46 GB) and gave 42,169 fibers (42,161): card variants differ in rounding.
+- **Ron's albula-diffusion port** (`tractcloud/tractcloud.ts`, read on GitHub) seeds its draws (mulberry32,
+  fixed seed) after measuring the same instability (79 % kept their tract between draws on PAT16), and
+  keeps upstream's 80 / 10 % (`model/make-model.py`): repeatable, but one arbitrary draw of an unstable
+  setting; any change in the streamlines is a new draw.

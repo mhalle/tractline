@@ -1,0 +1,46 @@
+{
+ "pat16_trackers": {
+  "upstream (80, 10 %)": {
+   "other_metal_f64": [
+    0.5809,
+    0.588
+   ],
+   "matched": 32228,
+   "agreement": 0.8879
+  },
+  "trained (500, 10,000)": {
+   "other_metal_f64": [
+    0.5059,
+    0.5107
+   ],
+   "matched": 32228,
+   "agreement": 0.9393
+  }
+ },
+ "hardi": {
+  "upstream (80, 10 %)": {
+   "fibers": 78409,
+   "other_per_draw": [
+    0.7671,
+    0.7698,
+    0.7784,
+    0.7498,
+    0.7826
+   ],
+   "other_sd": 0.0127,
+   "agreement_draw0_draw1": 0.8614
+  },
+  "trained (500, 10,000)": {
+   "fibers": 78409,
+   "other_per_draw": [
+    0.7377,
+    0.7287,
+    0.7321,
+    0.7317,
+    0.7283
+   ],
+   "other_sd": 0.0038,
+   "agreement_draw0_draw1": 0.9387
+  }
+ }
+}

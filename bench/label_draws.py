@@ -34,8 +34,8 @@ OTHER, KS = 42, (1, 2, 3, 5, 10)
 
 class Draws:
     """One tractogram's features, and the network's log-probabilities for a (local seed, global seed)."""
-    def __init__(self, lab, fibers, k_global=80):
-        self.lab, self.k_global = lab, k_global
+    def __init__(self, lab, fibers, k_global=80, k_ds_rate=0.1):
+        self.lab, self.k_global, self.k_ds_rate = lab, k_global, k_ds_rate
         lens = np.array([len(f) for f in fibers])
         Pts = np.concatenate(fibers).astype(np.float32).astype(np.float64)
         o = np.r_[0, np.cumsum(lens)]
@@ -47,7 +47,7 @@ class Draws:
     def dataset(self, seed):
         if seed not in self._ds:
             np.random.seed(seed)
-            self._ds[seed] = inf.RealDataDataset(self.feat, k=20, k_global=self.k_global, k_ds_rate=0.1)
+            self._ds[seed] = inf.RealDataDataset(self.feat, k=20, k_global=self.k_global, k_ds_rate=self.k_ds_rate)
             if len(self._ds) > 6:                                          # keep memory bounded (~120 MB a dataset)
                 self._ds.pop(next(iter(self._ds)))
         return self._ds[seed]

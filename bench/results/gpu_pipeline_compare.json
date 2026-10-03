@@ -2,98 +2,23 @@
  "m2": {
   "fibers": 42170,
   "labeled": 32264,
-  "scan_to_labels_s": 52.8
+  "scan_to_labels_s": 57.5
  },
  "gpus": {
   "a10": {
-   "gpu": "NVIDIA A10G",
-   "tf32": "default",
-   "scan_to_labels_s": [
-    20.9,
-    17.5
-   ],
-   "seconds_steady": {
-    "field_estimate": 6.37,
-    "field_apply": 0.72,
-    "prep": 0.29,
-    "load": 0.29,
-    "ukf": 8.69,
-    "tractcloud": 1.17
-   },
-   "fibers": 42150,
-   "labeled": 32256,
-   "runs_identical_counts": true,
-   "field_vs_m2_mm": {
-    "deep": [
-     0.002,
-     0.05,
-     0.286
-    ],
-    "edge": [
-     0.002,
-     0.133,
-     1.08
-    ]
-   },
-   "tract_mix_r_vs_m2": 0.99667,
-   "other_fraction": [
-    0.5987,
-    0.5809
-   ]
-  },
-  "l40s": {
-   "gpu": "NVIDIA L40S",
-   "tf32": "default",
-   "scan_to_labels_s": [
-    22.3,
-    12.2
-   ],
-   "seconds_steady": {
-    "field_estimate": 5.81,
-    "field_apply": 0.61,
-    "prep": 0.14,
-    "load": 0.23,
-    "ukf": 4.62,
-    "tractcloud": 0.79
-   },
-   "fibers": 42161,
-   "labeled": 32248,
-   "runs_identical_counts": true,
-   "field_vs_m2_mm": {
-    "deep": [
-     0.002,
-     0.068,
-     0.9
-    ],
-    "edge": [
-     0.003,
-     0.153,
-     1.092
-    ]
-   },
-   "tract_mix_r_vs_m2": 0.99459,
-   "other_fraction": [
-    0.6279,
-    0.5809
-   ]
-  },
-  "a10_c0_tf32off": {
    "gpu": "NVIDIA A10",
-   "tf32": {
-    "cudnn": false,
-    "matmul": false
-   },
+   "tf32": "default",
    "scan_to_labels_s": [
-    19.2,
-    16.5
+    23.7,
+    17.9
    ],
    "seconds_steady": {
-    "field_estimate": 4.78,
+    "field_estimate": 5.03,
     "field_apply": 0.81,
-    "prep": 0.36,
-    "load": 0.49,
-    "ukf": 8.91,
-    "tractcloud": 1.17
+    "prep": 0.37,
+    "load": 0.55,
+    "ukf": 9.11,
+    "tractcloud": 1.98
    },
    "fibers": 42169,
    "labeled": 32268,
@@ -110,62 +35,26 @@
      1.119
     ]
    },
-   "tract_mix_r_vs_m2": 0.98901,
+   "tract_mix_r_vs_m2": 0.99932,
    "other_fraction": [
-    0.6153,
-    0.5809
+    0.506,
+    0.5059
    ]
   },
-  "a10_tf32on": {
-   "gpu": "NVIDIA A10",
-   "tf32": null,
-   "scan_to_labels_s": [
-    216.2,
-    16.5
-   ],
-   "seconds_steady": {
-    "field_estimate": 4.78,
-    "field_apply": 0.8,
-    "prep": 0.36,
-    "load": 0.49,
-    "ukf": 8.85,
-    "tractcloud": 1.25
-   },
-   "fibers": 42167,
-   "labeled": 32260,
-   "runs_identical_counts": true,
-   "field_vs_m2_mm": {
-    "deep": [
-     0.003,
-     0.076,
-     1.039
-    ],
-    "edge": [
-     0.003,
-     0.237,
-     1.078
-    ]
-   },
-   "tract_mix_r_vs_m2": 0.99486,
-   "other_fraction": [
-    0.6263,
-    0.5809
-   ]
-  },
-  "l40s_tf32on": {
+  "l40s": {
    "gpu": "NVIDIA L40S",
-   "tf32": null,
+   "tf32": "default",
    "scan_to_labels_s": [
-    209.2,
-    9.6
+    12.8,
+    10.2
    ],
    "seconds_steady": {
-    "field_estimate": 3.25,
+    "field_estimate": 3.32,
     "field_apply": 0.78,
     "prep": 0.18,
-    "load": 0.35,
+    "load": 0.39,
     "ukf": 4.28,
-    "tractcloud": 0.76
+    "tractcloud": 1.27
    },
    "fibers": 42169,
    "labeled": 32257,
@@ -182,10 +71,10 @@
      1.103
     ]
    },
-   "tract_mix_r_vs_m2": 0.98657,
+   "tract_mix_r_vs_m2": 0.99919,
    "other_fraction": [
-    0.6404,
-    0.5809
+    0.5093,
+    0.5059
    ]
   }
  }
