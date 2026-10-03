@@ -1,8 +1,8 @@
 """A DWI (NIfTI array + FSL bval/bvec) into the tracker's input: the DWI, its NRRD header and a mask -
 in memory (prepare, for ukf.from_arrays) or as NRRD files (prep, for ukf.load);
 pat16_prep.py's rules, for any ds001226 subject.
-  - gradients: FSL bvec (image axes; x flipped when the affine's determinant is positive, as dwi.ts
-    fromFsl and dcm2niix do) turned into RAS world by the affine's rotation; written with
+  - gradients: FSL bvec (image axes; x flipped when the affine's determinant is positive, as FSL's
+    convention defines and dcm2niix follows) turned into RAS world by the affine's rotation; written with
     space right-anterior-superior and the identity measurement frame.
   - shell: the b0s and one shell (2800, the nearest to the b = 3000 of TractCloud's training
     tractography), as the ORG pipeline tracked one shell.
