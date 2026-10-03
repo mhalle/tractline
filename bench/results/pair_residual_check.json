@@ -1,0 +1,306 @@
+{
+ "ds005123": {
+  "sub-10317": {
+   "shim_dwi_equals_fieldmaps": false,
+   "pair (AP + PA field maps)": {
+    "left": 0.451,
+    "displacement_99th_mm": 5.81
+   },
+   "re-shimmed pair (dwi b0s + PA field map)": {
+    "left": 0.725,
+    "displacement_99th_mm": 10.45
+   },
+   "bad: dwi b0s + AP field map labeled opposite": {
+    "left": 0.855,
+    "displacement_99th_mm": 9.51
+   }
+  },
+  "sub-10369": {
+   "shim_dwi_equals_fieldmaps": false,
+   "pair (AP + PA field maps)": {
+    "left": 0.444,
+    "displacement_99th_mm": 6.23
+   },
+   "re-shimmed pair (dwi b0s + PA field map)": {
+    "left": 0.78,
+    "displacement_99th_mm": 18.44
+   },
+   "bad: dwi b0s + AP field map labeled opposite": {
+    "left": 0.887,
+    "displacement_99th_mm": 11.62
+   }
+  },
+  "sub-10402": {
+   "shim_dwi_equals_fieldmaps": false,
+   "pair (AP + PA field maps)": {
+    "left": 0.467,
+    "displacement_99th_mm": 4.99
+   },
+   "re-shimmed pair (dwi b0s + PA field map)": {
+    "left": 0.679,
+    "displacement_99th_mm": 15.89
+   },
+   "bad: dwi b0s + AP field map labeled opposite": {
+    "left": 0.702,
+    "displacement_99th_mm": 12.9
+   }
+  },
+  "sub-10418": {
+   "shim_dwi_equals_fieldmaps": false,
+   "pair (AP + PA field maps)": {
+    "left": 0.422,
+    "displacement_99th_mm": 6.19
+   },
+   "re-shimmed pair (dwi b0s + PA field map)": {
+    "left": 0.729,
+    "displacement_99th_mm": 10.96
+   },
+   "bad: dwi b0s + AP field map labeled opposite": {
+    "left": 0.88,
+    "displacement_99th_mm": 9.61
+   }
+  },
+  "sub-10462": {
+   "shim_dwi_equals_fieldmaps": false,
+   "pair (AP + PA field maps)": {
+    "left": 0.344,
+    "displacement_99th_mm": 6.78
+   },
+   "re-shimmed pair (dwi b0s + PA field map)": {
+    "left": 0.662,
+    "displacement_99th_mm": 14.65
+   },
+   "bad: dwi b0s + AP field map labeled opposite": {
+    "left": 0.757,
+    "displacement_99th_mm": 13.51
+   }
+  },
+  "sub-10478": {
+   "shim_dwi_equals_fieldmaps": false,
+   "pair (AP + PA field maps)": {
+    "left": 0.544,
+    "displacement_99th_mm": 6.31
+   },
+   "re-shimmed pair (dwi b0s + PA field map)": {
+    "left": 0.641,
+    "displacement_99th_mm": 11.44
+   },
+   "bad: dwi b0s + AP field map labeled opposite": {
+    "left": 0.728,
+    "displacement_99th_mm": 11.17
+   }
+  },
+  "sub-10486": {
+   "shim_dwi_equals_fieldmaps": false,
+   "pair (AP + PA field maps)": {
+    "left": 0.395,
+    "displacement_99th_mm": 6.46
+   },
+   "re-shimmed pair (dwi b0s + PA field map)": {
+    "left": 0.783,
+    "displacement_99th_mm": 10.76
+   },
+   "bad: dwi b0s + AP field map labeled opposite": {
+    "left": 0.939,
+    "displacement_99th_mm": 11.0
+   }
+  },
+  "sub-10529": {
+   "shim_dwi_equals_fieldmaps": false,
+   "pair (AP + PA field maps)": {
+    "left": 0.378,
+    "displacement_99th_mm": 6.3
+   },
+   "re-shimmed pair (dwi b0s + PA field map)": {
+    "left": 0.608,
+    "displacement_99th_mm": 12.67
+   },
+   "bad: dwi b0s + AP field map labeled opposite": {
+    "left": 0.751,
+    "displacement_99th_mm": 10.81
+   }
+  },
+  "sub-10541": {
+   "shim_dwi_equals_fieldmaps": false,
+   "pair (AP + PA field maps)": {
+    "left": 0.444,
+    "displacement_99th_mm": 5.33
+   },
+   "re-shimmed pair (dwi b0s + PA field map)": {
+    "left": 0.727,
+    "displacement_99th_mm": 21.55
+   },
+   "bad: dwi b0s + AP field map labeled opposite": {
+    "left": 0.792,
+    "displacement_99th_mm": 16.02
+   }
+  },
+  "sub-10559": {
+   "shim_dwi_equals_fieldmaps": false,
+   "pair (AP + PA field maps)": {
+    "left": 0.428,
+    "displacement_99th_mm": 7.04
+   },
+   "re-shimmed pair (dwi b0s + PA field map)": {
+    "left": 0.642,
+    "displacement_99th_mm": 11.65
+   },
+   "bad: dwi b0s + AP field map labeled opposite": {
+    "left": 0.763,
+    "displacement_99th_mm": 10.7
+   }
+  },
+  "sub-10572": {
+   "shim_dwi_equals_fieldmaps": false,
+   "pair (AP + PA field maps)": {
+    "left": 0.386,
+    "displacement_99th_mm": 6.03
+   },
+   "re-shimmed pair (dwi b0s + PA field map)": {
+    "left": 0.677,
+    "displacement_99th_mm": 9.22
+   },
+   "bad: dwi b0s + AP field map labeled opposite": {
+    "left": 0.892,
+    "displacement_99th_mm": 6.97
+   }
+  },
+  "sub-10581": {
+   "shim_dwi_equals_fieldmaps": false,
+   "pair (AP + PA field maps)": {
+    "left": 1.235,
+    "displacement_99th_mm": 6.72
+   },
+   "re-shimmed pair (dwi b0s + PA field map)": {
+    "left": 0.722,
+    "displacement_99th_mm": 11.49
+   },
+   "bad: dwi b0s + AP field map labeled opposite": {
+    "left": 0.842,
+    "displacement_99th_mm": 11.17
+   }
+  }
+ },
+ "ds001226": {
+  "PAT05": {
+   "pair (AP + PA)": {
+    "left": 0.434,
+    "displacement_99th_mm": 9.55
+   },
+   "bad: AP halves labeled opposite": {
+    "left": 0.897,
+    "displacement_99th_mm": 0.92
+   }
+  },
+  "PAT07": {
+   "pair (AP + PA)": {
+    "left": 0.433,
+    "displacement_99th_mm": 7.49
+   },
+   "bad: AP halves labeled opposite": {
+    "left": 1.001,
+    "displacement_99th_mm": 1.13
+   }
+  },
+  "PAT08": {
+   "pair (AP + PA)": {
+    "left": 0.51,
+    "displacement_99th_mm": 8.11
+   },
+   "bad: AP halves labeled opposite": {
+    "left": 1.326,
+    "displacement_99th_mm": 0.95
+   }
+  },
+  "PAT13": {
+   "pair (AP + PA)": {
+    "left": 0.32,
+    "displacement_99th_mm": 8.54
+   },
+   "bad: AP halves labeled opposite": {
+    "left": 0.74,
+    "displacement_99th_mm": 0.68
+   }
+  },
+  "PAT14": {
+   "pair (AP + PA)": {
+    "left": 0.468,
+    "displacement_99th_mm": 8.41
+   },
+   "bad: AP halves labeled opposite": {
+    "left": 0.887,
+    "displacement_99th_mm": 1.16
+   }
+  },
+  "PAT16": {
+   "pair (AP + PA)": {
+    "left": 0.422,
+    "displacement_99th_mm": 8.35
+   },
+   "bad: AP halves labeled opposite": {
+    "left": 0.852,
+    "displacement_99th_mm": 1.2
+   }
+  },
+  "PAT19": {
+   "pair (AP + PA)": {
+    "left": 0.614,
+    "displacement_99th_mm": 7.94
+   },
+   "bad: AP halves labeled opposite": {
+    "left": 0.87,
+    "displacement_99th_mm": 1.44
+   }
+  },
+  "PAT20": {
+   "pair (AP + PA)": {
+    "left": 0.32,
+    "displacement_99th_mm": 9.86
+   },
+   "bad: AP halves labeled opposite": {
+    "left": 0.884,
+    "displacement_99th_mm": 0.77
+   }
+  },
+  "PAT23": {
+   "pair (AP + PA)": {
+    "left": 0.457,
+    "displacement_99th_mm": 8.34
+   },
+   "bad: AP halves labeled opposite": {
+    "left": 0.966,
+    "displacement_99th_mm": 0.81
+   }
+  },
+  "PAT25": {
+   "pair (AP + PA)": {
+    "left": 0.772,
+    "displacement_99th_mm": 8.01
+   },
+   "bad: AP halves labeled opposite": {
+    "left": 0.936,
+    "displacement_99th_mm": 1.69
+   }
+  },
+  "PAT26": {
+   "pair (AP + PA)": {
+    "left": 0.358,
+    "displacement_99th_mm": 6.18
+   },
+   "bad: AP halves labeled opposite": {
+    "left": 0.819,
+    "displacement_99th_mm": 0.95
+   }
+  },
+  "PAT29": {
+   "pair (AP + PA)": {
+    "left": 0.651,
+    "displacement_99th_mm": 7.92
+   },
+   "bad: AP halves labeled opposite": {
+    "left": 0.962,
+    "displacement_99th_mm": 1.31
+   }
+  }
+ }
+}

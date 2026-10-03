@@ -1865,3 +1865,22 @@ GE's shim is three values, (0043,1002-1004), the linear X/Y/Z shim gradients - p
 straight; Siemens records eight (linear and second order), so a GE comparison sees only a linear re-shim.
 dcm_qa_polar's epi_pepolar series alternate polarity volume by volume inside one series: dcm2niix splits
 them, the reversed volumes as series number + 1000 (6 and 1006, 8 and 1008).
+
+## 2026-10-03 A residual check before correcting: catches every bad pair, refuses some good ones
+
+albula-diffusion's planning refuses a pair when its fit leaves more than half of the two scans'
+difference. `pair_residual_check.py` applies that rule to our estimate (left = ||corrected mean A -
+corrected mean B|| / ||mean A - mean B|| in the brain; motion not applied):
+- **Bad pairs, all refused** (24 of 24): ds001226's AP b0s in halves labeled opposite, left 0.74-1.33;
+  ds005123's diffusion b0s with the same-polarity field map labeled opposite, 0.70-0.94; and the
+  **re-shimmed pair** (diffusion b0s with the reversed PA field map, ShimSetting differing on all 12
+  subjects), 0.61-0.78, 12 of 12 refused - the case the image-based polarity test could not catch.
+- **Good pairs, mostly accepted**: ds005123's two field maps (one shim), left 0.34-0.54, median 0.44, but
+  sub-10581 1.24 (its field normal, 6.7 mm: the scans moved between); ds001226's AP/PA, 0.32-0.77, median
+  0.46, refused on 4 of 12 - PAT25 0.77 and PAT29 0.65 the two with the most b0 motion (2.7, 2.1 mm),
+  PAT19 0.61, PAT08 0.51. 6 of 24 good pairs refused at 0.5.
+The bad pairs' lowest (0.61) and the good pairs' highest (1.24) overlap, and the overlap is motion: the
+check counts what motion moved as difference left, and our estimate fits motion but the check does not
+apply it. A motion-aware residual (the estimate's own rigid motion applied before comparing) is the
+next step; the refusal threshold to be set from it. albula-diffusion does not model motion, so its check
+would meet the same false refusals, and its field would carry the motion in those patients.
