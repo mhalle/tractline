@@ -1,7 +1,7 @@
 """The noise floor for UKF: how far the scan's own measurement noise moves the float64 tracker, to judge
 float32 (ukf32.json) against something the original pipeline already has.
 
-    python bench/ukf_noise_floor.py [--every 49] [--replicates 4]
+    uv run bench/ukf_noise_floor.py [--every 49] [--replicates 4]
 
 Stanford HARDI, ORG settings. Wild-bootstrap replicates of the scan (_bootstrap.py, SH order 6),
 each tracked in float64 on the CPU from the SAME seed points as the scan as acquired: every

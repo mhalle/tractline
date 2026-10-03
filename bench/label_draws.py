@@ -16,7 +16,7 @@ shared by every streamline of the draw). So:
      the two ensembles and their Other fractions;
   3. across trackers: Metal against float64, seed-matched, at each K (ensemble 0..K-1 on both).
 
-    python bench/label_draws.py
+    uv run bench/label_draws.py
 
 Writes results/label_draws.json.
 """

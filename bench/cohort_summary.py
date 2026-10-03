@@ -1,6 +1,6 @@
 """The cohort in one table and one figure, from results/cohort/<sub>.json (cohort.py).
 
-    python bench/cohort_summary.py
+    uv run bench/cohort_summary.py
 
 Per subject: the tumor (participants.tsv: type, location; the mask's volume), how far our field
 displaces the tumor's 10 mm margin (99th percentile), the residual against the T1 there for the scan

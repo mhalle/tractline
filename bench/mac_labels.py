@@ -3,7 +3,7 @@
 (ukf_metal_check.py --full), float32 torch on CUDA and one bootstrap replicate (modal_ukf_labels.py,
 from the Volume). Same seeds, 40 mm cut, 15-point resampling, upstream context.
 
-    python bench/mac_labels.py
+    uv run bench/mac_labels.py
 
 Each tractography gets 5-draw majority votes (draws 0-4); float64 gets a second vote (draws 5-9).
 Each is compared seed by seed with BOTH float64 votes, so the spread between the two shows how much

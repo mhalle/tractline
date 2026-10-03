@@ -1,12 +1,12 @@
-"""labelers.rapidparc against RapidParc's own package (v1.0.4, in its own environment: DATA/rapidparc-ref,
-torch 2.14.1 as ours), PAT16's Metal tractogram (the M2's field), the streamlines of 40 mm or more as
+"""labelers.rapidparc against RapidParc's own package (v1.0.4, in its own environment - an isolated uv
+environment with RapidParc==1.0.4 and torch==2.14.1, as ours; its pins would not fit the project's), PAT16's Metal tractogram (the M2's field), the streamlines of 40 mm or more as
 float32.
 
 Per model (rapidparc, hemiaug) and shuffle seed (0, 42): RapidParc's 1,600-cluster argmax
 (return_anatomical_clusters=False) on the CPU, batches of 16 groups, against ours on the CPU (expected
 identical) and on the M2's GPU (agreement); the tract labels too.
 
-    python bench/rapidparc_check.py
+    uv run bench/rapidparc_check.py
 
 Writes results/rapidparc_check.json.
 """
@@ -21,7 +21,8 @@ from tractline.labelers.rapidparc import Labeler, resample
 from _ds001226 import load, ROOT
 
 HERE = Path(__file__).resolve().parent
-REF = DATA / "rapidparc-ref/bin/python"
+# RapidParc's package, in an environment of its own (uv builds it once, then reuses it from its cache)
+REF = ["uv", "run", "--isolated", "--no-project", "--python", "3.12", "--with", "RapidParc==1.0.4", "--with", "torch==2.14.1", "python"]
 INPUT = ROOT / "derived/PAT16/rapidparc_input.npz"
 RUNS = [(m, s) for m in ("rapidparc", "hemiaug") for s in (0, 42)]
 
@@ -48,7 +49,7 @@ if __name__ == "__main__":
     kept = [np.asarray(f, np.float32) for f, k in zip(fibers, length >= MIN_LENGTH_MM) if k]
     np.savez(INPUT, points=np.concatenate(kept), offsets=np.r_[0, np.cumsum([len(f) for f in kept])])
     t0 = time.time()
-    r = subprocess.run([str(REF), "-c", REF_SCRIPT, str(INPUT), json.dumps(RUNS), str(INPUT.with_suffix(""))],
+    r = subprocess.run(REF + ["-c", REF_SCRIPT, str(INPUT), json.dumps(RUNS), str(INPUT.with_suffix(""))],
                        capture_output=True, text=True)
     if r.returncode:
         raise SystemExit(r.stderr[-3000:])

@@ -1,7 +1,7 @@
 """The pipeline on one subject entirely on the CPU, timed by stage, against the same pipeline on the
 GPU: what a machine without a GPU would pay, and what changes.
 
-    python bench/cpu_timing.py [--sub PAT16]
+    uv run bench/cpu_timing.py [--sub PAT16]
 
 CPU: the field estimate in float32 (pipeline.correct's CPU dtype), the tracking in float32 (ukf's own
 steps, the GPU kernel's arithmetic), the default labeler (RapidParc) on the CPU; torch on 8 threads. Then the GPU run.

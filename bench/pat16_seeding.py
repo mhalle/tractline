@@ -2,7 +2,7 @@
 with FA > 0.2 (planning.ts wholeBrainSeeds), where UKF seeds every mask voxel it accepts. On its own
 reference case, OpenNeuro ds001226 PAT16 (pat16_prep.py), on this Mac.
 
-    python bench/pat16_seeding.py [--draws 5]
+    uv run bench/pat16_seeding.py [--draws 5]
 
 Both arms: the same scan (b0 + the b = 2800 shell), mask, tracker (ukf with the Metal kernel,
 the ORG settings: two tensors, stop FA 0.08, stop signal 0.06, a point every 1.8 mm) and TractCloud

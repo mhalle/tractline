@@ -3,7 +3,7 @@ and plus noise of SD 0.01 (signals in the hundreds; the scan's own noise ~3 orde
 level: the optimizer's iterations against its cap, the cost, and the two fields' displacement difference
 inside the brain (the cohort's mask), at its edge, and outside.
 
-    python bench/susc_convergence.py [--device mps] [--tag NAME] [estimate options as JSON]
+    uv run bench/susc_convergence.py [--device mps] [--tag NAME] [estimate options as JSON]
 
 Writes results/susc_convergence[_tag].json.
 """

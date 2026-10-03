@@ -1,6 +1,6 @@
 """mask.py (torch, CPU and GPU) against DIPY and SciPy, voxel for voxel, and timed.
 
-    python bench/median_check.py
+    uv run bench/median_check.py
 
   - one pass of the filter against scipy.ndimage.median_filter on random volumes with many ties
     and odd shapes;

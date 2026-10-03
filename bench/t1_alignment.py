@@ -2,7 +2,7 @@
 (MPRAGE, 1 mm, essentially undistorted) is the independent arbiter between the scan as acquired,
 FSL topup's correction and ours (susceptibility.py) - none of which saw it.
 
-    python bench/t1_alignment.py
+    uv run bench/t1_alignment.py
 
 Per arm, from the mean of the AP DWI's 6 b0s, t1check.py's measure (rigid start, then rigid + a smooth
 residual displacement along phase encoding against the T1, normalized gradient fields).

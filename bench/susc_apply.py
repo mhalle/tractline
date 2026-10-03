@@ -2,7 +2,7 @@
 the field, the AP phase-encoding direction and readout time, the Jacobian; volume 1's motion, which is
 zero), with cubic B-splines along phase encoding as applytopup (--interp trilinear: susceptibility.unwarp).
 
-    python bench/susc_apply.py [--field field_hz_scaled.nii.gz] [--device mps]
+    uv run bench/susc_apply.py [--field field_hz_scaled.nii.gz] [--device mps]
 
 Reads DATA/ds001226/derived/PAT16/susc/<field> (susc_check.py) and the AP DWI; writes
 DATA/ds001226/derived/PAT16/susc/dwi_AP_ours.nii.gz, to be prepared by pat16_prep.py --dwi ... --out PAT16_ours.

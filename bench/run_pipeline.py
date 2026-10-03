@@ -1,6 +1,6 @@
 """The pipeline on one ds001226 subject, scan to labels, optionally written as TRX.
 
-    python bench/run_pipeline.py --sub PAT16 [--trx PATH] [--float16] [--labeled-only] [--device cpu] [--labeler rapidparc|hemiaug|tractcloud]
+    uv run bench/run_pipeline.py --sub PAT16 [--trx PATH] [--float16] [--labeled-only] [--device cpu] [--labeler rapidparc|hemiaug|tractcloud]
 
 --trx PATH: a .trx zip, or a directory for any other name (default for --trx without a path:
 DATA/ds001226/derived/<sub>/<sub>.trx). Prints the stage times and the streamline counts.

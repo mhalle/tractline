@@ -28,7 +28,7 @@ import modal
 HERE = Path(__file__).resolve().parent
 PKG = HERE.parent / "src/tractline"                                # the package, shipped as a directory
 DATA = Path(os.environ.get("TRACTOGRAPHY_DATA", Path.home() / "tmp/data/tractography"))
-image = (modal.Image.debian_slim(python_version="3.12").pip_install("torch>=2.7", "numpy>=2", "pynrrd", "scipy")
+image = (modal.Image.debian_slim(python_version="3.12").uv_pip_install("torch==2.14.1", "numpy>=2", "pynrrd", "scipy")
          .env({"PYTHONPATH": "/root/pkg:/root", "TRITON_CACHE_DIR": "/vol/triton-cache"})  # compile once per kernel source
          .add_local_dir(str(PKG), remote_path="/root/pkg/tractline")
          .add_local_file(str(HERE / "_fibercmp.py"), remote_path="/root/_fibercmp.py")
@@ -164,9 +164,9 @@ def full(F: int = 0, warps: int = 0, kind: str = "block", repeat: bool = False, 
 
 
 def compare_local(tag: str) -> dict:
-    """compare_variant.py in the data environment (numpy, the tracker), not the modal CLI's."""
+    """compare_variant.py in the project's environment (uv run: numpy, the tracker), not the modal CLI's."""
     import subprocess
-    r = subprocess.run([str(DATA / ".venv/bin/python"), str(HERE / "compare_variant.py"), f"triton_{tag}"],
+    r = subprocess.run(["uv", "run", "--project", str(HERE.parent), str(HERE / "compare_variant.py"), f"triton_{tag}"],
                        capture_output=True, text=True, cwd=str(HERE))
     if r.returncode:
         return {"error": r.stderr[-1500:]}

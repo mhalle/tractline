@@ -9,7 +9,7 @@ by TractCloud at upstream's inference context (k_global 80, 10 % local subsample
 the 200,000 streamlines: tract accuracy and macro F1 over the 43 classes (42 tracts + Other), cluster
 accuracy (1,600), and seed 0 against seed 1.
 
-    python bench/accuracy_tractcloud_test.py
+    uv run bench/accuracy_tractcloud_test.py
 
 Writes results/accuracy_tractcloud_test.json.
 """

@@ -1,6 +1,6 @@
 """One UKF filter step, batched in torch, timed: the kernel a GPU re-implementation of UKF rests on.
 
-    python bench/ukf_step_bench.py
+    uv run bench/ukf_step_bench.py
 
 The 2T simple model as pnlbwh/ukftractography 2d2b661 implements it (from its source; ukf.py
 implements the same): state n = 10 ([m1, l1, l2, m2, l1, l2]), 21 sigma points with kappa = 0.01 and

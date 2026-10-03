@@ -2,7 +2,7 @@
 measure, and per patient the held-out residual (mean of the two directions) against the first
 configuration's.
 
-    python bench/susc_held_out_summary.py [--tag T]
+    uv run bench/susc_held_out_summary.py [--tag T]
 
 Writes results/susc_held_out/summary[_tag].json.
 """

@@ -7,7 +7,7 @@ Per patient and labeler: the Other fraction (seed 0, seed 1), per-streamline agr
 two seeds (stability), the seconds a draw; between labelers (seed 0): per-streamline agreement and
 the tract mix (Pearson r of the 42 tracts' counts).
 
-    python bench/labeler_compare.py [--subs PAT16,PAT13]
+    uv run bench/labeler_compare.py [--subs PAT16,PAT13]
 
 Writes results/labeler_compare.json, merged patient by patient: run one process per patient (the
 labelers' GPU memory and the Metal allocator's cache grow across patients in one process - 13 GB on

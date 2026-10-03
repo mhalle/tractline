@@ -6,7 +6,7 @@ upstream's inference context (80, 10 %), beyond PAT16's one tractogram:
   - another scan, the Stanford HARDI brain (healthy, 2 mm, 150 directions, b = 2000; Metal): the Other
     fraction over draws 0-4 and per-streamline agreement between draws 0 and 1, at each context.
 
-    python bench/label_trained_check.py
+    uv run bench/label_trained_check.py
 
 Writes results/label_trained_check.json.
 """

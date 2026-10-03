@@ -23,8 +23,8 @@ BENCH = ("_ds001226.py",)
 PAT = "ds001226/sub-PAT16/ses-preop/dwi"
 
 image = (modal.Image.debian_slim(python_version="3.12")
-         .pip_install("torch", index_url="https://download.pytorch.org/whl/cpu")
-         .pip_install("numpy>=2", "scipy", "nibabel")                       # the default pipeline's dependencies, no more
+         .uv_pip_install("torch==2.14.1", index_url="https://download.pytorch.org/whl/cpu")
+         .uv_pip_install("numpy>=2", "scipy", "nibabel")                       # the default pipeline's dependencies, no more
          .env({"PYTHONPATH": "/root/bench:/root/pkg", "TRACTOGRAPHY_DATA": "/data"})
          .add_local_dir(str(DATA / "TractCloud/src"), remote_path="/data/TractCloud/src")
          .add_local_dir(str(DATA / "TrainedModel"), remote_path="/data/TrainedModel")

@@ -5,7 +5,7 @@ allocator's cache), and the process's physical footprint (what macOS charges it,
 compressed pages included: proc_pid_rusage). Twice: as is, and with cleanup after each patient
 (gc.collect, torch.mps.empty_cache).
 
-    python bench/memory_batch.py [--cleanup] [--subs PAT05,PAT07,PAT08,PAT13]
+    uv run bench/memory_batch.py [--cleanup] [--subs PAT05,PAT07,PAT08,PAT13]
 
 Writes results/memory_batch_<as_is|cleanup>.json.
 """

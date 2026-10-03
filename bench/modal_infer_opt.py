@@ -30,7 +30,7 @@ import modal
 HERE = Path(__file__).resolve().parent
 DATA = Path(os.environ.get("TRACTOGRAPHY_DATA", Path.home() / "tmp/data/tractography"))
 image = (modal.Image.debian_slim(python_version="3.12")
-         .pip_install("torch>=2.7", "numpy>=2")
+         .uv_pip_install("torch==2.14.1", "numpy>=2")
          .env({"PYTHONPATH": "/root/pkg"})
          .add_local_dir(str(DATA / "TractCloud/src/tractcloud"), remote_path="/root/pkg/tractcloud"))
 vol = modal.Volume.from_name("tractography-bench")

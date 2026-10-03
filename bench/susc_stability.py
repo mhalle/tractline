@@ -1,6 +1,6 @@
 """The field estimate's stability and accuracy, current settings against candidates, on one subject.
 
-    python bench/susc_stability.py --sub PAT13 [--configs '[[3, 1], [5, 1e5]]']
+    uv run bench/susc_stability.py --sub PAT13 [--configs '[[3, 1], [5, 1e5]]']
 
 Per configuration ([iter_scale, lam_scale] of L-BFGS, as recorded before Gauss-Newton, or a dict of
 estimate options), on the GPU: the field from the b0s as they are and plus noise

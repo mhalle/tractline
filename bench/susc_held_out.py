@@ -1,7 +1,7 @@
 """The field estimate's repeatability from independent data, from each scan's own b0s (the AP series'
 spread over the ~15-minute scan, the PA's two back to back just before it).
 
-    python bench/susc_held_out.py --sub PAT16 [--configs '{"name": {estimate options}}'] [--quick --tag T]
+    uv run bench/susc_held_out.py --sub PAT16 [--configs '{"name": {estimate options}}'] [--quick --tag T]
 
 Per configuration, four fits:
   A = {AP0, PA0}, B = {AP1, PA1}: one TR apart each, independent noise, barely any motion;

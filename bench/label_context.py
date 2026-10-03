@@ -5,7 +5,7 @@ inference uses 80 and 0.1. Per setting, draws 0-9: the Other fraction (and its S
 agreement between single draws (0 vs 1, 2 vs 3, ...), between disjoint 5-draw ensembles (cluster
 probabilities averaged), each setting's 5-draw ensemble against the others', and the time per draw.
 
-    python bench/label_context.py
+    uv run bench/label_context.py
 
 Writes results/label_context.json.
 """

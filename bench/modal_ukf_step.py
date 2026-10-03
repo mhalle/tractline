@@ -7,7 +7,7 @@ from pathlib import Path
 import modal
 
 HERE = Path(__file__).resolve().parent
-image = (modal.Image.debian_slim(python_version="3.12").pip_install("torch>=2.7", "numpy>=2")
+image = (modal.Image.debian_slim(python_version="3.12").uv_pip_install("torch==2.14.1", "numpy>=2")
          .add_local_file(str(HERE / "ukf_step_bench.py"), remote_path="/root/ukf_step_bench.py"))
 app = modal.App("tractography-ukf-step", image=image)
 

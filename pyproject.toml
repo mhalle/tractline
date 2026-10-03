@@ -18,8 +18,26 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-nrrd = ["pynrrd"]          # tracker input/output as NRRD files (prep.prep, ukf.load)
-triton = ["triton"]        # the UKF kernel on CUDA
+nrrd = ["pynrrd"]                              # tracker input/output as NRRD files (prep.prep, ukf.load)
+triton = ["triton; sys_platform == 'linux'"]   # the UKF kernel on CUDA (Linux; torch's CUDA wheels bring it too)
+
+# What the bench's scripts need beyond the package. A dependency group never reaches the published
+# metadata, and `uv sync` / `uv run` install it by default (default-groups below), so a checkout runs
+# `uv run bench/cohort.py --sub PAT16` as it is. The Modal scripts run through the modal CLI, a uv tool
+# (`uv tool install modal`), not this environment. FSL (topup) and RapidParc's own package live in their
+# own environments under $TRACTOGRAPHY_DATA (README).
+[dependency-groups]
+bench = [
+    "pynrrd>=1.1",
+    "dipy>=1.12",              # median_check.py: the mask checked against dipy 1.12's median_otsu
+    "trx-python>=0.6",
+    "vtk>=9.7",
+    "matplotlib>=3.11",
+    "scikit-learn>=1.9",
+]
+
+[tool.uv]
+default-groups = ["bench"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/tractline"]

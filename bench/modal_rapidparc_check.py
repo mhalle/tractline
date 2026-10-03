@@ -21,7 +21,7 @@ PKG = HERE.parent / "src/tractline"
 INPUT = "ds001226/derived/PAT16/PAT16_a10_tf32off.npz"
 
 image = (modal.Image.debian_slim(python_version="3.12")
-         .pip_install("RapidParc==1.0.4", "torch==2.14.1")
+         .uv_pip_install("RapidParc==1.0.4", "torch==2.14.1")
          .env({"PYTHONPATH": "/root/pkg", "TRACTOGRAPHY_DATA": "/data"})
          .add_local_dir(str(DATA / "RapidParc"), remote_path="/data/RapidParc")
          .add_local_file(str(DATA / INPUT), remote_path=f"/data/{INPUT}")

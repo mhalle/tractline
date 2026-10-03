@@ -1,7 +1,7 @@
 """The default pipeline needs only numpy, scipy, torch, nibabel and RapidParc's weights: run it with the other
 packages the bench uses made unimportable, on the GPU path and the CPU path.
 
-    python bench/dependency_check.py [--sub PAT16]
+    uv run bench/dependency_check.py [--sub PAT16]
 
 Blocked: numba, dipy, nrrd (pynrrd), rankfield, numcodecs, sklearn, and TractCloud's code (tractcloud, vtk): the
 default labeler is RapidParc. Any import of them anywhere on the

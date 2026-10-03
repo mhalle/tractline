@@ -1,6 +1,6 @@
 """resample.resample against upstream extract_ras_features on the HCP tractogram, and its speed.
 
-    python bench/resample_check.py
+    uv run bench/resample_check.py
 """
 import json, time
 from pathlib import Path

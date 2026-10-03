@@ -1,7 +1,7 @@
 """The Metal UKF step (ukf_metal.py) against the torch tracker, in labelfield's pattern: one-step
 fixtures first, then whole fibers, then speed.
 
-    python bench/ukf_metal_check.py [--every 49] [--full]
+    uv run bench/ukf_metal_check.py [--every 49] [--full]
 
 1. One step, every fixture in DATA/ukf32/steps.npz (ukf32_compare.py made them): the kernel against
    float64 (the reference) and against torch's float32 step on the CPU; and the kernel against itself

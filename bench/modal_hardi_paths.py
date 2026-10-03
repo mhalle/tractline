@@ -17,7 +17,7 @@ DATA = Path(os.environ.get("TRACTOGRAPHY_DATA", Path.home() / "tmp/data/tractogr
 PKG = HERE.parent / "src/tractline"
 
 image = (modal.Image.debian_slim(python_version="3.12")
-         .pip_install("torch>=2.7", "numpy>=2", "scipy", "nibabel")
+         .uv_pip_install("torch==2.14.1", "numpy>=2", "scipy", "nibabel")
          .env({"PYTHONPATH": "/root/bench:/root/pkg", "TRACTOGRAPHY_DATA": "/data", "TRITON_CACHE_DIR": "/vol/triton-cache"})
          .add_local_dir(str(DATA / "RapidParc"), remote_path="/data/RapidParc")
          .add_local_file(str(DATA / "ukf/hardi/HARDI150.nii.gz"), remote_path="/data/ukf/hardi/HARDI150.nii.gz")

@@ -1,6 +1,6 @@
 """Our susceptibility-field estimate (susceptibility.py) against FSL topup's (topup_ref.py) on PAT16's 8 b0s.
 
-    python bench/susc_check.py [--device mps|cpu] [--iter-scale 3]
+    uv run bench/susc_check.py [--device mps|cpu] [--iter-scale 3]
 
 Compared inside the brain (median_otsu of topup's mean unwarped b0): the field (Hz) - correlation,
 median and 99th-percentile absolute difference, the same as displacement along the phase-encoding

@@ -27,7 +27,7 @@ import modal
 HERE = Path(__file__).resolve().parent
 PKG = HERE.parent / "src/tractline"                                # the package, shipped as a directory
 DATA = Path(os.environ.get("TRACTOGRAPHY_DATA", Path.home() / "tmp/data/tractography"))
-image = (modal.Image.debian_slim(python_version="3.12").pip_install("torch>=2.7", "numpy>=2", "pynrrd", "dipy")
+image = (modal.Image.debian_slim(python_version="3.12").uv_pip_install("torch==2.14.1", "numpy>=2", "pynrrd", "dipy")
          .env({"PYTHONPATH": "/root/pkg:/root"})
          .add_local_dir(str(PKG), remote_path="/root/pkg/tractline")
          .add_local_file(str(HERE / "_bootstrap.py"), remote_path="/root/_bootstrap.py")

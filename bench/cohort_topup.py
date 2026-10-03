@@ -2,7 +2,7 @@
 reference where the T1 check is in doubt: the two fields compared, and topup's corrected scan put
 through the same T1 check as cohort.py's arms (same brain and fit masks, same tumor regions).
 
-    python bench/cohort_topup.py --sub PAT23
+    uv run bench/cohort_topup.py --sub PAT23
 
   - topup b02b0.cnf on the b0 stack written as float32 with its own header (topup_ref.py wrote PAT16's
     through the int16 DWI's header, which quantized it by up to 0.03), applytopup --method=jac on the

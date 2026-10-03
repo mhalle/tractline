@@ -2,7 +2,7 @@
 the same tracking and labeling on the scan as acquired, and both against the patient's T1 and tumor
 mask. Nothing in between touches the disk.
 
-    python bench/cohort.py --sub PAT13
+    uv run bench/cohort.py --sub PAT13
 
 Measured, beyond the pipeline's own stages:
   - the estimate's sensitivity: the field again from the b0s plus noise of SD 0.01 (signals in the

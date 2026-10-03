@@ -1,6 +1,6 @@
 """The torch UKF (ukf.track, modal_ukf_track.py) against the Slicer UKF binary, fiber by fiber.
 
-    python bench/ukf_compare.py
+    uv run bench/ukf_compare.py
 
 Both are in seed order with the same <10-point rule, so fiber k of one is fiber k of the other
 when the counts agree. Per fiber: same point count, and the largest distance between corresponding

@@ -1,6 +1,6 @@
 """OpenNeuro ds001226 sub-PAT16 (BTC_preop, CC0) into the tracker's input: a NRRD DWI and a NRRD mask.
 
-    python bench/pat16_prep.py [--shell 2800]
+    uv run bench/pat16_prep.py [--shell 2800]
 
 PAT16 is albula-diffusion's reference case: Siemens TrioTim 3 T, 2.5 mm isotropic, b = 700 / 1200 /
 2800 (16 / 30 / 50 directions) + 6 b0, and a reversed-phase-encoding b0 pair (not used here: both

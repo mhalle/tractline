@@ -1,7 +1,7 @@
 """The CPU tracker's speed-ups against float64, on PAT16 (as acquired): what `fast` changes, and what
 the batch size changes, next to what float32 alone changes.
 
-    python bench/ukf_cpu_check.py
+    uv run bench/ukf_cpu_check.py
 
 Every 20th seed (~2,400), tracked by: float64 (the binary's arithmetic; the reference), float32 at the
 default batch, float32 at batch 1024 (the worker setting), float32 `fast` at batch 1024. Against the

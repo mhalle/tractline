@@ -1,6 +1,6 @@
 """tractline.trx's output read back by trx-python (the TRX reference implementation), on PAT16.
 
-    python bench/trx_check.py
+    uv run bench/trx_check.py
 
 Runs the pipeline once, writes the TRX two ways - a .trx zip of every streamline in float32, a
 directory of the labeled ones in float16 - and checks each against what the pipeline holds: the

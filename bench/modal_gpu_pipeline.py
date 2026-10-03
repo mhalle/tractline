@@ -29,7 +29,7 @@ PKG = HERE.parent / "src/tractline"                                # the package
 PAT = "ds001226/sub-PAT16/ses-preop/dwi"
 
 image = (modal.Image.debian_slim(python_version="3.12")
-         .pip_install("torch>=2.7", "numpy>=2", "scipy", "nibabel")      # torch's CUDA wheel brings Triton
+         .uv_pip_install("torch==2.14.1", "numpy>=2", "scipy", "nibabel")      # torch's CUDA wheel brings Triton
          .env({"PYTHONPATH": "/root/bench:/root/pkg", "TRACTOGRAPHY_DATA": "/data", "TRITON_CACHE_DIR": "/vol/triton-cache"})
          .add_local_dir(str(DATA / "RapidParc"), remote_path="/data/RapidParc")
          .add_local_dir(str(DATA / PAT), remote_path=f"/data/{PAT}")

@@ -2,7 +2,7 @@
 binary (ukf_compare.json). An Apple GPU has no float64, so float32 is the only GPU arithmetic on a
 Mac; this measures its cost before any Metal kernel is written.
 
-    python bench/ukf32_compare.py [--fixture-every 197] [--every 49]
+    uv run bench/ukf32_compare.py [--fixture-every 197] [--every 49]
 
 1. One-step fixtures. A float64 run over every `fixture-every`-th seed keeps the inputs of a sample
    of steps (position, state, covariance, previous direction, step number): DATA/ukf32/steps.npz,

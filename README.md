@@ -12,11 +12,22 @@ history.
 
 ## Install
 
+With [uv](https://docs.astral.sh/uv/), from a checkout:
+
 ```
-pip install -e .              # numpy, scipy, torch, nibabel
-pip install -e ".[nrrd]"      # NRRD input/output for the tracker
-pip install -e ".[triton]"    # the tracker's kernel on CUDA (Linux with an NVIDIA GPU)
+uv sync                       # the package (numpy, scipy, torch, nibabel) and the bench's dependencies
+uv sync --extra triton        # + the tracker's kernel on CUDA (Linux with an NVIDIA GPU)
+uv run bench/run_pipeline.py --sub PAT16
 ```
+
+As a dependency of another project (the bench group stays behind - it is not in the package's metadata):
+
+```
+uv add "tractline @ git+https://github.com/mhalle/tractline@v0.1.0"
+uv add "tractline[nrrd,triton] @ git+https://github.com/mhalle/tractline@v0.1.0"   # NRRD input/output, CUDA kernel
+```
+
+`pip install` works too, from the same URL. On Linux, PyPI's torch is the CUDA build (Triton included).
 
 Data and weights live outside the repository, in `$TRACTOGRAPHY_DATA` (default `~/tmp/data/tractography`;
 layout in `src/tractline/data.py`):
@@ -27,17 +38,19 @@ layout in `src/tractline/data.py`):
   weights `TrainedModel/` and `TrainData_800clu800ol/HCP_mass_center.npy` from its release v1.0.0.
 - **The bench's data**: OpenNeuro ds001226 (BTC_preop, CC0) in `ds001226/`; the Stanford HARDI scan in
   `ukf/hardi/`; TractCloud's test split (`TrainData_800clu800ol/test.pickle`) and HCP test tractogram
-  (`TestData/`) from its release. For particular scripts: `fsl-env/` (FSL, for `topup_ref.py` and
-  `cohort_topup.py`), `rapidparc-ref/` (a venv with RapidParc's own package, for `rapidparc_check.py`),
-  `.venv/` (the local venv `modal_ukf_triton.py` compares against).
+  (`TestData/`) from its release. For `topup_ref.py` and `cohort_topup.py`: `fsl-env/`, FSL's topup
+  (conda, from FSL's channel - FSL is not a Python package).
 
-The bench needs more than the package: trx-python, dipy, pynrrd, vtk, matplotlib, scikit-learn, modal (for
-the `modal_*.py` scripts, which also use a Modal Volume `tractography-bench` for inputs and the Triton
+The bench needs more than the package: trx-python, dipy, pynrrd, vtk, matplotlib and scikit-learn, the
+`bench` dependency group, which `uv sync` and `uv run` install by default. `rapidparc_check.py` runs RapidParc's
+own package in an isolated environment uv builds for it (`uv run --with RapidParc==1.0.4`; its pins would not
+fit the project's). The `modal_*.py` scripts run through the modal CLI, a uv tool (`uv tool install modal`;
+`modal run bench/modal_gpu_pipeline.py`); their images install with uv, torch pinned at 2.14.1 (every committed
+Modal result's). They use a Modal Volume `tractography-bench` for inputs and the Triton
 compile cache; most scripts ship their inputs from `$TRACTOGRAPHY_DATA` in the image, and the Volume holds
 the rest: `triton-cache/`, `ukf/hardi/` (`dwi.nhdr`, `mask.nrrd`), `TrainedModel/`,
 `TrainData_800clu800ol/HCP_mass_center.npy`, `hcp/feat.npy`, `variants/f64.npz`, as each script's docstring
-names them; `modal_gpu_pipeline.py --save-fibers` writes to its `tractline/`), and FSL for the topup
-references.
+names them; `modal_gpu_pipeline.py --save-fibers` writes to its `tractline/`.
 
 ## The package (`src/tractline`)
 
@@ -64,7 +77,7 @@ which re-import the script (the tracker checks, and refuses without one).
 
 ## The bench (`bench/`)
 
-Run from the repository root with the package installed, e.g. `python bench/cohort.py --sub PAT16`.
+Run from the repository root with `uv run` (it syncs the environment first), e.g. `uv run bench/cohort.py --sub PAT16`.
 Results and the running journal are in `bench/results/` (`NOTES.md`, newest entries last). Some committed
 results predate a change of default (the field estimate's optimizer, the labeler); `bench/results/README.md`
 says which, and what re-running their scripts would now produce.

@@ -3,7 +3,7 @@ pipeline's tracking and labeling on one device: the tracker's input (prep.prepar
 UKF two-tensor with the ORG settings and the binary's seeds, the default labeler (RapidParc), one draw. No correction: the
 scan has no reversed phase-encoding pair. For timing the paths against each other.
 
-    python bench/hardi_paths.py [--device mps|cpu] [--runs 2]       # here (the M2)
+    uv run bench/hardi_paths.py [--device mps|cpu] [--runs 2]       # here (the M2)
     modal run bench/modal_hardi_paths.py                                # an L40S and 32 x86 cores
 
 Each run returns its stage times, fibers, fiber steps, labeled streamlines, the Other fraction and a

@@ -3,7 +3,7 @@ preprocessing used (the conditions TractCloud's training tractography came from)
 reference here, not a pipeline dependency (non-commercial license); our own correction is to be
 judged against what this writes.
 
-    python bench/topup_ref.py
+    uv run bench/topup_ref.py
 
 FSL: the fsl-topup conda package (FSL's channel) in DATA/fsl-env. Inputs, ds001226 PAT16: the AP DWI
 (phase encoding j-, 6 b0 among 102 volumes) and the PA pair (j, 2 b0), total readout time from the

@@ -13,7 +13,7 @@ import modal
 
 HERE = Path(__file__).resolve().parent
 PKG = HERE.parent / "src/tractline"                                # the package, shipped as a directory
-image = (modal.Image.debian_slim(python_version="3.12").pip_install("torch>=2.7", "numpy>=2", "pynrrd")
+image = (modal.Image.debian_slim(python_version="3.12").uv_pip_install("torch==2.14.1", "numpy>=2", "pynrrd")
          .env({"PYTHONPATH": "/root/pkg"})
          .add_local_dir(str(PKG), remote_path="/root/pkg/tractline"))
 vol = modal.Volume.from_name("tractography-bench")

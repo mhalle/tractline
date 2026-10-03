@@ -4,7 +4,7 @@ M2's field), labeled with each: the Other fraction over draws 0-9, per-streamlin
 draws (0 vs 1, 2 vs 3, ...), between disjoint 5-draw ensembles (cluster probabilities averaged), and
 against each other; the time per draw.
 
-    python bench/label_kglobal.py
+    uv run bench/label_kglobal.py
 
 Writes results/label_kglobal.json.
 """

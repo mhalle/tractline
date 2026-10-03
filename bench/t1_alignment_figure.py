@@ -5,7 +5,7 @@ each arm's grid by its own rigid fit). The b0 grid's i axis runs to the patient'
 slice is shown with the patient's right on the image's left (radiological), anterior up; the sagittal
 with anterior to the right.
 
-    python bench/t1_alignment_figure.py
+    uv run bench/t1_alignment_figure.py
 """
 from pathlib import Path
 from tractline.data import DATA as _DATA                          # $TRACTOGRAPHY_DATA

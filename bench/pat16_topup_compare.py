@@ -3,7 +3,7 @@ against FSL topup's correction of it (topup_ref.py), both prepared by pat16_prep
 each with a mask from its own b0), tracked with UKF's own seeds and the ORG settings (Metal kernel)
 and labeled by TractCloud (5-draw majority vote, MPS), on this Mac.
 
-    python bench/pat16_topup_compare.py
+    uv run bench/pat16_topup_compare.py
 
 Per scan: seeds, streamlines >= 40 mm, median length, the share labeled Other, each tract's share of
 the named streamlines. Between them: the tract-mix correlation and per-tract relative changes (against

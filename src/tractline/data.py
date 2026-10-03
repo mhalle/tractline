@@ -13,7 +13,8 @@ Layout under DATA:
     ds001226/                            OpenNeuro ds001226 (BTC_preop, CC0) and what the bench derives from it
     ukf/hardi/                           the Stanford HARDI scan (dipy's stanford_hardi) for the tracker's checks
     hcp/                                 bench outputs for HCP subject 101006
-    .venv/                               the bench's environment (tractline installed editable)
+    fsl-env/                             FSL's topup (conda), the bench's reference for the correction
+The Python environment is the checkout's own (uv sync: the package and its bench group), not under DATA.
 """
 import os
 from pathlib import Path

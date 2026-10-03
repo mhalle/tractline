@@ -1746,3 +1746,18 @@ on 9,000 random cases (normal, integer, bimodal and gamma data; 256, 64 and 17 b
 again identical on all 14 volumes (the 12 patients, PAT16 corrected by topup and by ours), CPU and GPU -
 its result as committed, timings aside. `THIRD_PARTY_NOTICES.md` credits DIPY as an implementation again;
 RapidParc's scheme file is the one item redistributed.
+
+## 2026-10-03 uv first
+
+The checkout is a uv project: `uv sync` builds its environment (Python 3.12, `.python-version`, the
+version every result here was made with; `uv.lock` committed), and `uv run bench/<script>.py` runs any
+script. What the bench needs beyond the package is the `bench` dependency group (trx-python, dipy,
+pynrrd, vtk, matplotlib, scikit-learn), installed by default and never in the package's metadata; the
+`triton` extra is Linux-only. `rapidparc_check.py` runs RapidParc's package in an isolated uv
+environment (`uv run --isolated --with RapidParc==1.0.4 --with torch==2.14.1`) instead of a hand-made
+venv; `modal_ukf_triton.py` compares through `uv run --project`; the Modal images install with
+`uv_pip_install`, torch pinned at 2.14.1 (what every committed Modal result used); the modal CLI is a uv
+tool. Usage lines say `uv run`. Checked: the lock resolves the same versions as the environment the
+results were made in (torch 2.14.1, numpy 2.5.3, scipy 1.18.1, nibabel 5.4.2, dipy 1.12.1, ...), the
+environment synced entirely from uv's cache, and through `uv run` the PAT16 cohort run is identical to
+the committed result (UKF throughput aside) and `rapidparc_check.py` reproduces its committed result.
