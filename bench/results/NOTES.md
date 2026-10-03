@@ -1503,3 +1503,28 @@ The M2's field held fixed; `results/label_noise_floor.json`.
   not hold. The pipeline's single-draw labels are what is unstable (M0's 28 % per-streamline, now
   ±5 points in the aggregate on a clinical scan). Next: how labels and the aggregate settle with the
   number of draws (log-probabilities averaged), and what the pipeline should use.
+
+## 2026-10-02 Why TractCloud's labels move: the shared global context, and 80 where the model was trained with 500
+
+`label_draws.py` → `label_draws.json`, `label_kglobal.py` → `label_kglobal.json`; PAT16, the M2's field.
+- **The global context drives the aggregate.** Each draw's context is each streamline's 20 nearest
+  neighbors within a random 10 % subsample (its own) and 80 random streamlines (ONE set shared by every
+  streamline of the draw). Over a 5 x 5 grid of local x global seeds the Other fraction's SD is 4.3
+  points along the global axis and 0.1 along the local one: the shared 80 streamlines condition the
+  whole tractogram's labels at once.
+- **Ensembling over draws helps slowly** (two disjoint ensembles of K draws, Metal tractogram;
+  per-streamline agreement, cluster probabilities averaged / tract mass averaged / majority vote): K 1
+  85.7 / 86.6 / 85.7 %, K 3 90.5 / 91.5 / 89.4, K 5 92.4 / 93.2 / 91.9, K 10 94.9 / 95.4 / 94.2. Metal
+  against float64 (seed-matched) 88.8 % at K 1, 94.2 % (cluster mean) / 94.9 % (mass) at K 10 - the same
+  as one tractogram's self-consistency: the trackers differ by draw noise. The mass rule labels ~3-4
+  points more Other than the cluster rule.
+- **The released model was trained with k_global = 500** (TrainedModel/cli_args.txt; the paper's w =
+  500) and local neighbors from all of a 10,000-streamline brain (k_ds_rate 1.0); upstream's packaged
+  inference overrides to k_global = 80, k_ds_rate = 0.1, and this pipeline copied it. At 500 (one Metal
+  tractogram, draws 0-9): Other 50.6-51.6 % per draw (SD 0.3 points; at 80: 55.5-66.2 %, SD 3.5);
+  single-draw agreement 93-94 % (at 80: 75-88 %); disjoint 5-draw ensembles 97.5 % (at 80: 89.7 %);
+  8.8 s a draw on the M2 (3.9). The two settings' 5-draw ensembles agree on 86.1 % of streamlines: 80
+  is noisier AND shifted (+6-7 points of Other).
+- **Accuracy is not settled here:** PAT16 has no reference labels; HCP 101006's file carries FreeSurfer
+  region labels per point, not tract labels. TractCloud's labeled test subjects (TrainData_800clu800ol,
+  of which only HCP_mass_center.npy was kept) would settle 80 against 500.

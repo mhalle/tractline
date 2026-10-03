@@ -120,6 +120,37 @@ single-run tract-level predictor (AUROC 0.875 against 0.65) were not found anywh
 aggregation method is known in general ML; applying it here and validating it against
 run-to-run instability is the contribution. RapidParc is the paper to cite and contrast.
 
+### Focused check, 2026-10-02: run-to-run variability and context ensembling
+
+A second search, aimed at whether the instability findings are new (web; OpenAlex and Semantic
+Scholar citations of TractCloud; no Google Scholar; some citing papers paywalled):
+- **TractCloud's own papers and repository** (MICCAI 2023 and its reviews, TractCloud-FOV HBM 2025,
+  the two GitHub issues) do not discuss randomness at inference. The paper chooses the global
+  streamlines at random (w = 500); the 10 % local subsample is the code's, not the paper's.
+- **The only direct precedent is PETParc / RapidParc** (arXiv 2503.07104; Imaging Neuroscience 2026,
+  doi 10.1162/IMAG.a.1168). PETParc Table 2: accuracy SD 8.0e-4 / 9.7e-4 over 20 runs on a TractCloud
+  test subject. RapidParc Fig. A.4 ("Cluster stability", 20 runs): the share of streamlines given the
+  same class in every run rises with the context size - about 86 % at 100, 94 % at 500, 98 % at 5,000
+  (read off the chart; whether "class" is cluster or tract is unverified) - and the inconsistent ones
+  were sent to "Other" at least once in ~84-92 % of cases. No ensembling.
+- **TractFM** (arXiv 2606.09893) ensembles over 30 geometric transforms of the tractogram (test-time
+  augmentation), not over context draws; its downstream predictions barely move across 10K-streamline
+  subsets. Test-time dropout/augmentation exist for voxel-wise tract segmentation (Lucena et al.,
+  Front. Radiol. 2022).
+- **Numerical variability** in neuroimaging pipelines is established: Glatard et al. 2015 (operating
+  systems), Kiar et al. 2020 (IJHPCA) and 2021 (PLOS ONE: Monte Carlo arithmetic, connectomes), Salari
+  et al. 2021, Gonzalez Pepe et al. 2023 (CNN inference); CPU/GPU tractography: Hernandez-Fernandez et al.
+  2019, Kim et al. 2022 (bedpostx); GPU nondeterminism in segmentation: Renard et al. 2020. No paper was
+  found measuring TF32's effect on medical-imaging results, or a small input perturbation amplified
+  through a random-context classifier.
+- **Where this work stands now:** known - random context makes labels vary, at the "Other" boundary
+  (RapidParc); numerical perturbations propagate. Apparently new - TractCloud's instability measured
+  (28 % tract / 69 % cluster labels within 5 runs, far above RapidParc's ~2-6 % at comparable context
+  sizes); the aggregate Other fraction moving ~11 points across draws on a pathological scan (against
+  PETParc's stable aggregates on a healthy subject); hardware and TF32 acting as a fresh draw; ensembling
+  over context draws and per-streamline tract confidence. Confidence: high that RapidParc is the only
+  direct precedent; moderate on the rest (paywalls, no Google Scholar).
+
 ## 3. Storing soft output compactly
 
 - **The closest designs are in LLM distillation:** top-K logits plus one residual mass.

@@ -1,0 +1,325 @@
+{
+ "subject": "PAT16",
+ "tractograms": {
+  "metal": {
+   "fibers": 42170,
+   "labeled": 32264
+  },
+  "f64": {
+   "fibers": 42171,
+   "labeled": 32265
+  }
+ },
+ "probability_sums_min_max": [
+  1.0,
+  1.0
+ ],
+ "grid_other_local_x_global": [
+  [
+   0.5809,
+   0.5925,
+   0.555,
+   0.5617,
+   0.6595
+  ],
+  [
+   0.5796,
+   0.5916,
+   0.5541,
+   0.5613,
+   0.6624
+  ],
+  [
+   0.5797,
+   0.5935,
+   0.5545,
+   0.5627,
+   0.6634
+  ],
+  [
+   0.5804,
+   0.5917,
+   0.5528,
+   0.5621,
+   0.6606
+  ],
+  [
+   0.5792,
+   0.5913,
+   0.555,
+   0.5632,
+   0.6624
+  ]
+ ],
+ "grid_sd": {
+  "along_global (local fixed)": 0.0427,
+  "along_local (global fixed)": 0.001
+ },
+ "self_consistency": {
+  "metal": {
+   "1": {
+    "cluster_mean": {
+     "agreement_A_B": 0.8567,
+     "other_A_B": [
+      0.5809,
+      0.5514
+     ]
+    },
+    "mass_mean": {
+     "agreement_A_B": 0.8661,
+     "other_A_B": [
+      0.6,
+      0.5688
+     ]
+    },
+    "vote": {
+     "agreement_A_B": 0.8567,
+     "other_A_B": [
+      0.5809,
+      0.5514
+     ]
+    }
+   },
+   "2": {
+    "cluster_mean": {
+     "agreement_A_B": 0.8554,
+     "other_A_B": [
+      0.5792,
+      0.5721
+     ]
+    },
+    "mass_mean": {
+     "agreement_A_B": 0.8678,
+     "other_A_B": [
+      0.6097,
+      0.6027
+     ]
+    },
+    "vote": {
+     "agreement_A_B": 0.8449,
+     "other_A_B": [
+      0.5286,
+      0.5104
+     ]
+    }
+   },
+   "3": {
+    "cluster_mean": {
+     "agreement_A_B": 0.9047,
+     "other_A_B": [
+      0.5676,
+      0.5701
+     ]
+    },
+    "mass_mean": {
+     "agreement_A_B": 0.915,
+     "other_A_B": [
+      0.5987,
+      0.6048
+     ]
+    },
+    "vote": {
+     "agreement_A_B": 0.894,
+     "other_A_B": [
+      0.5747,
+      0.5764
+     ]
+    }
+   },
+   "5": {
+    "cluster_mean": {
+     "agreement_A_B": 0.9243,
+     "other_A_B": [
+      0.572,
+      0.5621
+     ]
+    },
+    "mass_mean": {
+     "agreement_A_B": 0.9315,
+     "other_A_B": [
+      0.6097,
+      0.5921
+     ]
+    },
+    "vote": {
+     "agreement_A_B": 0.919,
+     "other_A_B": [
+      0.5831,
+      0.5648
+     ]
+    }
+   },
+   "10": {
+    "cluster_mean": {
+     "agreement_A_B": 0.9494,
+     "other_A_B": [
+      0.5617,
+      0.5692
+     ]
+    },
+    "mass_mean": {
+     "agreement_A_B": 0.9542,
+     "other_A_B": [
+      0.6044,
+      0.6092
+     ]
+    },
+    "vote": {
+     "agreement_A_B": 0.9422,
+     "other_A_B": [
+      0.5647,
+      0.5692
+     ]
+    }
+   }
+  },
+  "f64": {
+   "1": {
+    "cluster_mean": {
+     "agreement_A_B": 0.856,
+     "other_A_B": [
+      0.588,
+      0.5549
+     ]
+    },
+    "mass_mean": {
+     "agreement_A_B": 0.8629,
+     "other_A_B": [
+      0.6098,
+      0.5729
+     ]
+    },
+    "vote": {
+     "agreement_A_B": 0.856,
+     "other_A_B": [
+      0.588,
+      0.5549
+     ]
+    }
+   },
+   "2": {
+    "cluster_mean": {
+     "agreement_A_B": 0.8369,
+     "other_A_B": [
+      0.5793,
+      0.5638
+     ]
+    },
+    "mass_mean": {
+     "agreement_A_B": 0.8545,
+     "other_A_B": [
+      0.6134,
+      0.5976
+     ]
+    },
+    "vote": {
+     "agreement_A_B": 0.8295,
+     "other_A_B": [
+      0.5203,
+      0.4939
+     ]
+    }
+   },
+   "3": {
+    "cluster_mean": {
+     "agreement_A_B": 0.8702,
+     "other_A_B": [
+      0.5747,
+      0.5761
+     ]
+    },
+    "mass_mean": {
+     "agreement_A_B": 0.889,
+     "other_A_B": [
+      0.6142,
+      0.612
+     ]
+    },
+    "vote": {
+     "agreement_A_B": 0.8647,
+     "other_A_B": [
+      0.5829,
+      0.5844
+     ]
+    }
+   },
+   "5": {
+    "cluster_mean": {
+     "agreement_A_B": 0.8885,
+     "other_A_B": [
+      0.5812,
+      0.5718
+     ]
+    },
+    "mass_mean": {
+     "agreement_A_B": 0.9012,
+     "other_A_B": [
+      0.6231,
+      0.6078
+     ]
+    },
+    "vote": {
+     "agreement_A_B": 0.884,
+     "other_A_B": [
+      0.5892,
+      0.5762
+     ]
+    }
+   },
+   "10": {
+    "cluster_mean": {
+     "agreement_A_B": 0.9246,
+     "other_A_B": [
+      0.5716,
+      0.5653
+     ]
+    },
+    "mass_mean": {
+     "agreement_A_B": 0.9358,
+     "other_A_B": [
+      0.6163,
+      0.6062
+     ]
+    },
+    "vote": {
+     "agreement_A_B": 0.9233,
+     "other_A_B": [
+      0.5739,
+      0.5651
+     ]
+    }
+   }
+  }
+ },
+ "metal_vs_f64": {
+  "matched": 32228,
+  "by_K": {
+   "1": {
+    "cluster_mean": 0.8879,
+    "mass_mean": 0.8936,
+    "vote": 0.8879
+   },
+   "2": {
+    "cluster_mean": 0.8603,
+    "mass_mean": 0.8711,
+    "vote": 0.8519
+   },
+   "3": {
+    "cluster_mean": 0.9021,
+    "mass_mean": 0.9144,
+    "vote": 0.8929
+   },
+   "5": {
+    "cluster_mean": 0.9056,
+    "mass_mean": 0.915,
+    "vote": 0.9014
+   },
+   "10": {
+    "cluster_mean": 0.9415,
+    "mass_mean": 0.9491,
+    "vote": 0.9352
+   }
+  }
+ },
+ "seconds": 646.1
+}
