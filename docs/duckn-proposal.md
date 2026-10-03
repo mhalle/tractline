@@ -1,4 +1,4 @@
-# Proposal to duckn 2.0: the field a series is corrected by, and phase encoding carried from 1.x
+# Proposal to duckn 2.0: the field a series is corrected by, the conditions it holds under, and phase encoding carried from 1.x
 
 **From:** tractline (its reader of duckn stores), 2026-10-03.
 **For:** duckn convention 2.0 (draft, `docs/proposals/duckn-2.0.md`, revision 17) and dwmri 2.0
@@ -9,9 +9,11 @@ dwmri 2.0 already carries almost everything susceptibility correction needs: per
 encoding as a dimension and a polarity (§7), the total readout time (`acquisition`, as 1.0), the
 gradients in a stated `frame` (§3); and between series, a shared frame of reference
 (`world.reference`, duckn 2.0 §3.2), which is how a reversed-phase-encoding series acquired as a
-differently placed slab is put onto the diffusion series' grid. Two things are missing: which series
-together measure a field and which series it corrects (§1), and the phase encoding of 1.x files whose
-layout is in fact known (§2).
+differently placed slab is put onto the diffusion series' grid. Missing: which series together measure
+a field and which series it corrects (§1); the phase encoding of 1.x files whose layout is in fact known
+(§2); and three facts tractline's tests on real data showed a pairing depends on - the shim each series
+was acquired under, a polarity that changes from volume to volume within one series, and whether a value
+was stated, derived or assumed (§3).
 
 ---
 
@@ -61,6 +63,8 @@ Reported by a reader of this extension, as dwmri 2.0 §4's are (the core does no
   all encode one way are reported. (Slabs placed differently encode along nearly, not exactly,
   opposite directions - ds001226 has patients rotated 0.8 degrees - so the comparison takes a
   tolerance, which the extension should state; tractline uses the directions as given.)
+- **Arrays that name one field were acquired under one shim**, when they state it (§3.1): a field
+  measured under one shim does not describe images acquired under another.
 - **The corrected series may name the field too**: its own b0s usually contribute (the common use
   of topup, and tractline's).
 - **A source naming a field that no array in hand identifies** is reported by a reader that needs
@@ -122,20 +126,72 @@ and writes `{ "dimension", "polarity" }` directly, from `PhaseEncodingDirection`
 
 ---
 
-## 3. What tractline would read
+## 3. The conditions a pairing holds under
+
+What these come from: tractline's tests of what correction needs to know (its `bench/results/NOTES.md`,
+2026-10-03). On 12 patients (OpenNeuro ds001226) the absolute polarity does not matter - every sign
+flipped gives the same correction, to 0.0 mm - and the readout time barely does when both series share
+it (scaled by 0.8 or 1.25: at most 0.2 mm, against 6-10 mm of correction). What does matter is that the
+series of a pair differ in polarity and in nothing else that moves the image. On OpenNeuro ds005123 they
+did: the diffusion series and the field maps acquired for it were shimmed differently, and a
+same-polarity field map paired with the diffusion b0s gave a 10 mm "field" - a correction that would have
+been applied with confidence and was wrong.
+
+### 3.1 The shim
+
+| Field | Type | Meaning |
+|---|---|---|
+| `acquisition.shim_setting` | `{ "vendor": string, "values": array of numbers }` | The shim the series was acquired under, as the vendor records it: Siemens, eight values - the linear offsets `sGRADSPEC.asGPAData[0].lOffsetX/Y/Z` (or `sGRADSPEC.lOffsetX/Y/Z`), then the second-order currents `sGRADSPEC.alShimCurrent[0..4]`, from the protocol text (ASCCONV) in the CSA series header, as dcm2niix's `ShimSetting` reads them; GE, three (the linear X, Y, Z shim gradients, (0043,1002-1004)). |
+
+Compared exactly, and only between arrays of one vendor; a reader reports arrays naming one field whose
+`shim_setting` differ, and does not use them as a pair. Absent, nothing is known: a reader may proceed and
+says so. A GE comparison sees only a linear re-shim (its second-order terms are not recorded); ds005123's
+re-shim was mostly second order.
+
+### 3.2 A polarity per volume
+
+GE's `epi_pepolar` sequence alternates the polarity volume by volume within one series (dcm2niix splits it,
+the reversed volumes as series number + 1000). `acquisition.phase_encoding.polarity` may then be an array:
+one `"+"` or `"-"` per index of the series' volume dimension (for a diffusion series, the dimension that
+carries `dwmri`'s per-volume fields), in index order. A converter keeps the series whole rather than
+splitting it: the volumes share one shim, one readout and one frame by construction - the pairing every
+rule of §1 has to check between separate arrays holds here without checking.
+
+### 3.3 Stated, derived or assumed
+
+A readout time read from a header, one computed by a vendor formula (Siemens: from the phase bandwidth and
+the reconstructed matrix; GE: from the echo spacing and acceleration; Philips: estimated from the water-fat
+shift with an empirical constant) and a nominal one put in by a converter or a user are different
+evidence. Across dcm2niix's GE validation series the readout time spans 15 to 122 ms with acceleration and
+partial Fourier, so a nominal value is safe within one protocol and not across protocols.
+
+| Field | Type | Meaning |
+|---|---|---|
+| `acquisition.sources` | object: field name -> `"stated"`, `"derived"` or `"assumed"` | How each `acquisition` value was obtained. `"derived"` names its rule in the provenance step (provenance 1.1, as dwmri 2.0 §5 already asks for vendor-derived directions). |
+
+A reader pairing series with an `"assumed"` readout time checks that their protocols match (echo time,
+echo train length, matrix, spacing) and reports it otherwise.
+
+---
+
+## 4. What tractline would read
 
 | tractline's subject (`pipeline.run`) | duckn 2.0 |
 |---|---|
 | `dwi`, `affine`, `vox` | the diffusion array: `dimensions`, `origin`, `world` |
 | `bval`, `bvec` | `dwmri`: `b_values`, `gradients` in world axes by `frame` (a missing `frame`: the gradients are unusable, and tractline would refuse the series) |
 | `pe_axis`, `pe_sign` | `acquisition.phase_encoding` |
-| `readout_s` | `acquisition.total_readout_time` |
+| `readout_s` | `acquisition.total_readout_time` (`sources` says whether it was stated, derived or assumed) |
+| (a check before correcting) | `acquisition.shim_setting`, equal across the pair |
 | `b0s`, `pe_vectors` | the diffusion series' b0s and every array naming the field its `b0_field_source` names, resampled onto its grid through the shared `reference`; each one's direction in the world as §1 computes it |
 
 ---
 
-## 4. Decisions asked
+## 5. Decisions asked
 
 1. `acquisition.b0_field_identifier` and `acquisition.b0_field_source`, with BIDS's meaning (§1).
 2. Whether MR acquisition fields move to a home outside `dwmri` before 2.0 is released (§1, Open).
 3. Carrying a 1.x `phase_encoding_direction` when `dimension_names` state the layout (§2).
+4. `acquisition.shim_setting`, and the rule that a pairing under different shims is reported (§3.1).
+5. A per-volume polarity, and keeping such series whole (§3.2).
+6. `acquisition.sources`: stated, derived or assumed (§3.3).
