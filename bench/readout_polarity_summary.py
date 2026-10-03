@@ -7,6 +7,7 @@ base, and the first level's cost ratio.
 Writes results/readout_polarity/summary.json and prints a table.
 """
 import json
+import numpy as np
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -30,7 +31,7 @@ if __name__ == "__main__":
         print(" | ".join(str(row[k]) for k in keys))
     ratio = [row["pair_99th_mm"] / row["control_99th_mm"] for row in rows]
     summary = {"patients": len(rows), "rows": rows,
-               "pair_over_control_99th_min_median_max": [round(min(ratio), 2), round(float(__import__("numpy").median(ratio)), 2), round(max(ratio), 2)],
+               "pair_over_control_99th_min_median_max": [round(min(ratio), 2), round(float(np.median(ratio)), 2), round(max(ratio), 2)],
                "readout_vs_base_99th_mm_max": max(max(r["readout_x0.8_vs_base_99th_mm"], r["readout_x1.25_vs_base_99th_mm"]) for r in rows),
                "flipped_vs_base_99th_mm_max": max(r["flipped_vs_base_99th_mm"] for r in rows)}
     print(json.dumps({k: v for k, v in summary.items() if k != "rows"}))
