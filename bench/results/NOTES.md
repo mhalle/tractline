@@ -1775,3 +1775,19 @@ runs; each group installs on request; the optional TractCloud labeler labels wit
   `ukf_noise_floor.py`). `susc_check.py` masks with `tractline.mask.median_otsu` instead of DIPY's: on its
   input (topup's mean unwarped b0, float64) the two masks are identical, 94,505 voxels. `dev` is now
   pynrrd, trx-python and matplotlib.
+
+## 2026-10-03 The package needs numpy and torch; a broken CPU path fixed
+
+**Dependencies.** Nothing on the pipeline's path uses scipy or nibabel: the pipeline takes and returns
+arrays (reading NIfTI is the caller's), and only `t1check.py` (a measurement) uses scipy, while its
+nibabel import was unused. Required now: numpy, torch; scipy is the `t1check` extra (t1check names it
+when missing); both stay in the bench's `dev` group (the loader, most measurements). `dependency_check.py`
+blocks scipy and nibabel once the subject is loaded (the loader uses them): on PAT16 the GPU path
+(49.4 s) and the CPU path (144.6 s) give the committed counts (42,170 / 32,264; 42,176 / 32,259), no
+blocked module loaded. A wheel installed alone (numpy, torch) imports every pipeline module and labels.
+
+**A bug the check found.** `pipeline.track` (and so `run`) failed on the CPU with UnboundLocalError since
+the review's fixes (884fcc0, in v0.1.0): the main-guard check added at the top of `track` reads `os`,
+and a function-local `import os` further down made `os` local to the whole function. The local imports
+are gone (the module imports os). The cohort and the GPU checks run on "mps" and never reached it; the
+review's CPU checks called `ukf.track` directly. ruff's F823 flags this pattern.

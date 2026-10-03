@@ -25,7 +25,8 @@ Stages, and where they run:
   label     RapidParc, one draw (labelers.rapidparc: shuffled groups of 2,000 streamlines; GPU or CPU,
             float32, ~1 s); TractCloud (labelers.tractcloud, at its trained context) on request
   TRX       optional: the tractogram with labels and tract probabilities (trx.write)
-Dependencies of the default path: numpy, scipy, torch, nibabel, RapidParc's weights (no TractCloud code).
+Dependencies of the default path: numpy, torch and RapidParc's weights - no scipy, no nibabel (reading the
+scan is the caller's), no TractCloud code (bench/dependency_check.py).
 
 Conventions at every module boundary (_ds001226, susceptibility, prep, ukf, the labelers, t1check):
   volumes   numpy (X, Y, Z[, V]) in the NIfTI's voxel order; affine voxel -> RAS mm; voxel sizes as
@@ -137,7 +138,6 @@ def correct(s, timer: Timer, device="mps") -> Correction:
     """The field estimate is susceptibility.estimate's defaults (Gauss-Newton, NOTES 2026-10-02): on "mps" its
     subsampled levels on the CPU, on the CPU and on "cuda" in float32 (all levels on the GPU there) -
     the same model on each, 18 s / 22.6 s on the M2. The CPU's levels get ESTIMATE_THREADS."""
-    import os
     f32 = torch.device(device).type in ("cpu", "cuda")
     with timer("field_estimate"), threads(min(ESTIMATE_THREADS, os.cpu_count() or 1)):
         h, motion, _ = S.estimate(s.b0s, s.vox, s.pe_vectors, s.readout_s, device=device, **(dict(dtype=torch.float32) if f32 else {}))
@@ -169,7 +169,6 @@ def track(s, dwi, timer: Timer, prefix="", device="mps", workers=None, shell=280
         elif kind == "cuda":
             fibers, stats = U.track(D, backend="triton_block")
         else:
-            import os
             fibers, stats = U.track(D, dtype=torch.float32, device=device, fast=True, batch=CPU_BATCH,
                                     workers=workers or os.cpu_count() or 1)
     return Tractogram(fibers, stats, t.mask, t.info)

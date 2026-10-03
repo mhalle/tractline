@@ -1808,17 +1808,18 @@ name = "tractline"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
-    { name = "nibabel" },
     { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
     { name = "numpy", version = "2.5.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
-    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
-    { name = "scipy", version = "1.18.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
     { name = "torch" },
 ]
 
 [package.optional-dependencies]
 nrrd = [
     { name = "pynrrd" },
+]
+t1check = [
+    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "scipy", version = "1.18.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
 ]
 triton = [
     { name = "triton", marker = "sys_platform == 'linux'" },
@@ -1827,7 +1828,10 @@ triton = [
 [package.dev-dependencies]
 dev = [
     { name = "matplotlib" },
+    { name = "nibabel" },
     { name = "pynrrd" },
+    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "scipy", version = "1.18.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
     { name = "trx-python" },
 ]
 dipy = [
@@ -1842,19 +1846,20 @@ vtk = [
 
 [package.metadata]
 requires-dist = [
-    { name = "nibabel" },
     { name = "numpy", specifier = ">=2" },
     { name = "pynrrd", marker = "extra == 'nrrd'" },
-    { name = "scipy" },
+    { name = "scipy", marker = "extra == 't1check'" },
     { name = "torch", specifier = ">=2.7" },
     { name = "triton", marker = "sys_platform == 'linux' and extra == 'triton'" },
 ]
-provides-extras = ["nrrd", "triton"]
+provides-extras = ["nrrd", "triton", "t1check"]
 
 [package.metadata.requires-dev]
 dev = [
     { name = "matplotlib", specifier = ">=3.11" },
+    { name = "nibabel" },
     { name = "pynrrd", specifier = ">=1.1" },
+    { name = "scipy" },
     { name = "trx-python", specifier = ">=0.6" },
 ]
 dipy = [{ name = "dipy", specifier = ">=1.12" }]

@@ -7,34 +7,36 @@
   "numcodecs",
   "sklearn",
   "tractcloud",
-  "vtk"
+  "vtk",
+  "scipy",
+  "nibabel"
  ],
  "runs": {
   "mps": {
    "seconds": {
-    "field_estimate": 19.3,
-    "field_apply": 1.42,
-    "prep": 3.21,
-    "load": 0.27,
-    "ukf": 34.07,
-    "label": 0.81,
-    "write_trx": 0.31
+    "field_estimate": 17.47,
+    "field_apply": 1.14,
+    "prep": 3.07,
+    "load": 0.26,
+    "ukf": 26.8,
+    "label": 0.67,
+    "write_trx": 0.28
    },
-   "scan_to_labels_s": 59.1,
+   "scan_to_labels_s": 49.4,
    "fibers": 42170,
    "labeled": 32264
   },
   "cpu": {
    "seconds": {
-    "field_estimate": 24.42,
-    "field_apply": 1.5,
-    "prep": 3.33,
+    "field_estimate": 22.38,
+    "field_apply": 0.9,
+    "prep": 3.37,
     "load": 0.24,
-    "ukf": 135.87,
-    "label": 1.37,
-    "write_trx": 0.38
+    "ukf": 116.36,
+    "label": 1.31,
+    "write_trx": 0.31
    },
-   "scan_to_labels_s": 166.7,
+   "scan_to_labels_s": 144.6,
    "fibers": 42176,
    "labeled": 32259
   }

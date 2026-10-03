@@ -15,7 +15,7 @@ history.
 With [uv](https://docs.astral.sh/uv/), from a checkout:
 
 ```
-uv sync                       # the package (numpy, scipy, torch, nibabel) and the bench's (the dev group)
+uv sync                       # the package (numpy, torch) and the bench's (the dev group)
 uv sync --extra triton        # + the tracker's kernel on CUDA (Linux with an NVIDIA GPU)
 uv run bench/run_pipeline.py --sub PAT16
 ```
@@ -25,6 +25,7 @@ As a dependency of another project (the bench's groups stay behind - they are no
 ```
 uv add "tractline @ git+https://github.com/mhalle/tractline@v0.1.0"
 uv add "tractline[nrrd,triton] @ git+https://github.com/mhalle/tractline@v0.1.0"   # NRRD input/output, CUDA kernel
+uv add nibabel                # to read NIfTI scans: the pipeline takes arrays
 ```
 
 `pip install` works too, from the same URL. On Linux, PyPI's torch is the CUDA build (Triton included).
@@ -62,8 +63,9 @@ names them; `modal_gpu_pipeline.py --save-fibers` writes to its `tractline/`.
 subject it takes (the fields `run(s, ...)` reads) and the conventions every module follows (array
 layouts, units, devices). Two defaults to know: `device="mps"` (pass `"cuda"` or `"cpu"` elsewhere) and
 `shell=2800.0` (ds001226's b-value; pass the scan's own). On the CPU the tracker's workers share their
-input through shared memory; `TRACTOGRAPHY_SHARE=0` sends copies instead, for systems without it. The default path needs numpy, scipy,
-torch, nibabel and RapidParc's weights, nothing more - no TractCloud code (`bench/dependency_check.py`). A
+input through shared memory; `TRACTOGRAPHY_SHARE=0` sends copies instead, for systems without it. The default path needs numpy,
+torch and RapidParc's weights, nothing more - no scipy, no nibabel, no TractCloud code
+(`bench/dependency_check.py`); reading the scan is the caller's (nibabel for NIfTI). A
 script using the CPU path needs an `if __name__ == "__main__":` guard: the tracker spawns worker processes,
 which re-import the script (the tracker checks, and refuses without one).
 
@@ -76,7 +78,7 @@ which re-import the script (the tracker checks, and refuses without one).
 | `labelers/tractcloud.py`, `resample.py` | TractCloud labels, at the context its model was trained with (optional) |
 | `labelers/base.py`, `labelers/scheme_43.json` | what labelers share: `Labels`, the 40 mm cut, the 43-class scheme |
 | `trx.py` | optional output: the tractogram as TRX, with tract labels and probabilities |
-| `t1check.py` | measurement, not pipeline: the distortion left against the T1 |
+| `t1check.py` | measurement, not pipeline: the distortion left against the T1 (needs scipy: the `t1check` extra) |
 | `data.py` | where data and weights live |
 
 ## The bench (`bench/`)

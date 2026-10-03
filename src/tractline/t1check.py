@@ -12,8 +12,11 @@ OpenMP runtimes in one process, so no dipy here).
 """
 from __future__ import annotations
 
-import numpy as np, nibabel as nib, torch
-from scipy.ndimage import affine_transform, distance_transform_edt
+import numpy as np, torch
+try:
+    from scipy.ndimage import affine_transform, distance_transform_edt
+except ImportError as e:                                                  # scipy is optional: t1check alone uses it
+    raise ImportError("tractline.t1check needs scipy: install tractline[t1check]") from e
 from . import susceptibility as S
 
 dt = torch.float64

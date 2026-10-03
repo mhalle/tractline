@@ -1,16 +1,20 @@
-"""The default pipeline needs only numpy, scipy, torch, nibabel and RapidParc's weights: run it with the other
-packages the bench uses made unimportable, on the GPU path and the CPU path.
+"""The default pipeline needs only numpy, torch and RapidParc's weights: run it with the other packages the
+bench uses made unimportable, on the GPU path and the CPU path.
 
     uv run bench/dependency_check.py [--sub PAT16]
 
 Blocked: numba, dipy, nrrd (pynrrd), rankfield, numcodecs, sklearn, and TractCloud's code (tractcloud, vtk): the
-default labeler is RapidParc. Any import of them anywhere on the
-pipeline's path fails the run. Writes results/dependency_check.json.
+default labeler is RapidParc. scipy and nibabel are blocked once the subject is loaded (the bench's loader
+reads NIfTI and resamples with them; the pipeline must not): they are dropped from sys.modules, so a use
+anywhere on the pipeline's path would have to import them again, and fails. The CPU tracker's worker
+processes are not covered (they start without the block; ukf.py imports neither). Writes
+results/dependency_check.json.
 """
 import importlib.abc, json, sys
 from pathlib import Path
 
-BLOCKED = ("numba", "dipy", "nrrd", "rankfield", "numcodecs", "sklearn", "tractcloud", "vtk")
+BLOCKED = ["numba", "dipy", "nrrd", "rankfield", "numcodecs", "sklearn", "tractcloud", "vtk"]
+AFTER_LOAD = ["scipy", "nibabel"]                                          # the loader's, not the pipeline's
 
 
 class _Refuse(importlib.abc.Loader):
@@ -39,6 +43,9 @@ if __name__ == "__main__":
     from _ds001226 import load
     ap = argparse.ArgumentParser(); ap.add_argument("--sub", default="PAT16"); args = ap.parse_args()
     s = load(args.sub)
+    for m in [m for m in sys.modules if m.split(".")[0] in AFTER_LOAD]:
+        del sys.modules[m]
+    BLOCKED += AFTER_LOAD
     res = {"blocked": BLOCKED, "runs": {}}
     for device in (["mps"] if torch.backends.mps.is_available() else []) + ["cpu"]:
         timer = P.Timer(echo=f"{args.sub} {device}")

@@ -10,16 +10,16 @@ readme = "README.md"
 license = "Apache-2.0"
 license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md"]
 requires-python = ">=3.11"
+# The pipeline takes and returns arrays: reading the scan (nibabel, for NIfTI) is the caller's.
 dependencies = [
     "numpy>=2",
-    "scipy",
     "torch>=2.7",
-    "nibabel",
 ]
 
 [project.optional-dependencies]
 nrrd = ["pynrrd"]                              # tracker input/output as NRRD files (prep.prep, ukf.load)
 triton = ["triton; sys_platform == 'linux'"]   # the UKF kernel on CUDA (Linux; torch's CUDA wheels bring it too)
+t1check = ["scipy"]                            # t1check: the distortion left against the T1 (a measurement)
 
 # What the bench's scripts need beyond the package, as dependency groups: they never reach the published
 # metadata. `dev` is uv's default group - `uv sync` / `uv run` install it - and holds what most scripts
@@ -28,6 +28,8 @@ triton = ["triton; sys_platform == 'linux'"]   # the UKF kernel on CUDA (Linux; 
 # The Modal scripts run through the modal CLI, a uv tool (`uv tool install modal`), not this environment.
 [dependency-groups]
 dev = [
+    "scipy",                   # the patients' loader (_ds001226.py), t1check, most measurements
+    "nibabel",                 # reading NIfTI: the loader and most scripts
     "pynrrd>=1.1",             # NRRD files: the tracker's input as files, the bootstrap
     "trx-python>=0.6",         # trx_check.py
     "matplotlib>=3.11",        # cohort_summary.py's figure
