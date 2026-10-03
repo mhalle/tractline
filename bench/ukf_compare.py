@@ -9,10 +9,11 @@ Eigen's SVD and LAPACK's, which reverses the joined order). Writes results/ukf_c
 """
 import json
 from pathlib import Path
+from tractline.data import DATA as _DATA                          # $TRACTOGRAPHY_DATA
 import numpy as np, vtk
 from vtk.util.numpy_support import vtk_to_numpy
 
-H = Path.home() / "tmp/data/tractography/ukf/hardi"
+H = _DATA / "ukf/hardi"
 r = vtk.vtkPolyDataReader(); r.SetFileName(str(H / "ukf_spv1.vtk")); r.Update(); pd = r.GetOutput()
 ro = vtk_to_numpy(pd.GetLines().GetOffsetsArray()).astype(np.int64)
 rp = vtk_to_numpy(pd.GetPoints().GetData()).astype(np.float64)[vtk_to_numpy(pd.GetLines().GetConnectivityArray())]

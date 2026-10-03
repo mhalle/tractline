@@ -12,12 +12,13 @@ Writes results/cohort_summary.md and results/cohort_summary.png.
 """
 import csv, json
 from pathlib import Path
+from tractline.data import DATA as _DATA                          # $TRACTOGRAPHY_DATA
 import numpy as np
 import matplotlib; matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 HERE = Path(__file__).resolve().parent
-TD = Path.home() / "tmp/data/tractography/ds001226"
+TD = _DATA / "ds001226"
 P = {r["participant_id"].strip().replace("sub-", ""): r for r in csv.DictReader(open(TD / "participants.tsv"), delimiter="\t")}
 key = lambda r, k: next(v for kk, v in r.items() if kk.strip() == k)
 R = sorted((json.loads(p.read_text()) for p in (HERE / "results/cohort").glob("PAT??.json")), key=lambda r: r["subject"])

@@ -44,9 +44,10 @@ def lengths(fibers):
     return P, o, np.where(nan, np.nan, length)
 
 
-def empty(keep, length):
+def empty(keep, length, logp=False):
     """Labels with nothing labeled (no streamline of 40 mm or more)."""
-    return Labels(keep=keep, length_mm=length[keep], tract=np.zeros(0, np.int64), logp=torch.zeros(0, 1600, dtype=torch.float16))
+    return Labels(keep=keep, length_mm=length[keep], tract=np.zeros(0, np.int64),
+                  logp=torch.zeros(0, 1600, dtype=torch.float16) if logp else None)
 
 
 class LogMean:

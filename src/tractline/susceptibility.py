@@ -7,7 +7,7 @@ The model (Andersson, Skare & Ashburner 2003; topup's b02b0.cnf schedule):
     its phase-encoding axis by d_v = (pe_v . axis) T_v h voxels, its intensity scaled by the Jacobian
     1 + dd_v/dy, and moved by a rigid transform M_v (volume 0 fixed);
   - unwarping volume v at reference point x samples it at M_v(x) + d_v(x) e_pe and multiplies by the
-    Jacobian; the cost is the sum of squared differences between the unwarped volumes and their mean,
+    Jacobian; the cost is the mean squared difference between the unwarped volumes and their mean,
     plus lambda * ssq * bending energy of h (ssq the current mean squared difference: ssqlambda = 1);
   - levels as b02b0.cnf: knot spacing (mm), subsampling, Gaussian smoothing (FWHM mm), iterations,
     lambda, motion estimated or not; the field carried from level to level by least-squares

@@ -1,7 +1,11 @@
 """TractCloud inference, optimized step by step, on one A10G: what each change buys, and what it
 does to the labels.
 
-    modal run bench/modal_infer_opt.py
+    modal run bench/modal_infer_opt.py::main     # the variants below -> results/infer_opt.json
+    modal run bench/modal_infer_opt.py::exact    # the exact-arithmetic check -> results/infer_opt_exact.json
+
+A record: its input, the HCP subject's features on the Volume (hcp/feat.npy), was made by a script that
+stayed in the incubation repository.
 
 The full HCP subject (440,621 streamlines), one context (np.random.seed(0), upstream
 RealDataDataset), built once and shared by every variant, so only the inference differs. Each

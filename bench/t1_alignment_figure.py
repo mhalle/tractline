@@ -8,12 +8,13 @@ with anterior to the right.
     python bench/t1_alignment_figure.py
 """
 from pathlib import Path
+from tractline.data import DATA as _DATA                          # $TRACTOGRAPHY_DATA
 import numpy as np
 import matplotlib; matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 HERE = Path(__file__).resolve().parent
-F = np.load(Path.home() / "tmp/data/tractography/ds001226/derived/PAT16/t1_alignment_fields.npz")
+F = np.load(_DATA / "ds001226/derived/PAT16/t1_alignment_fields.npz")
 m = F["mask"]
 dt = F["d_topup"] - np.median(F["d_topup"][m])                  # as the residuals: uniform shift to the rigid fit
 panels = [("topup's displacement\n(the uncorrected scan's distortion)", dt), ("uncorrected:\nresidual against the T1", F["uncorrected"]),

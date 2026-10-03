@@ -1294,7 +1294,7 @@ iterations and field): two runs on PAT16's b0s, as they are and plus noise of SD
   where our runs diverge - giving "meaningful, i.e. diffeomorphic, geometric transformations,
   independent of the actual choice of the regularization parameters".
 - **SuCor** (Chigurupati & Garyfallidis, arXiv 2603.16758, March 2026): per phase-encoding column, the
-  displacement as the Wasserstein-2 barycentre between the two polarities' profiles (closed form by
+  displacement as the Wasserstein-2 barycenter between the two polarities' profiles (closed form by
   quantile matching), then a bending-energy fit whose strength is set by the Morozov discrepancy
   principle - the regularized field deviates from the raw one by 1.5 x the background noise (MAD) -
   so no tuned lambda. HCP: mutual information with T1 0.341 against topup's 0.317, 12 s on one CPU
@@ -1433,7 +1433,7 @@ derived/<sub>/cohort_fields_lbfgs.npz), L-BFGS → Gauss-Newton, medians:
 
 ## 2026-10-02 Gauss-Newton on 32 x86 cores (Modal, CPU only): no faster there
 
-`modal run bench/tractography/modal_cpu_scaling.py --what field` (`results/modal_cpu_field_timing.json`,
+`modal run bench/modal_cpu_scaling.py --what field` (`results/modal_cpu_field_timing.json`,
 48 vCPU visible): the estimate by threads 8 / 16 / 32 / 48 - 48.9 / 40.2 / 44.6 / 51.5 s (16 best, as
 before: ESTIMATE_THREADS stays); 41.6 s after a tracking pool. The pipeline end to end: **95.1 s** scan
 to labels (estimate 38.5 s, UKF 50.7, TractCloud 4.1), against 92.2 s with L-BFGS (estimate 38.2):
@@ -1693,3 +1693,45 @@ Corrections to earlier entries:
   context - the larger effect - was as trained. On PAT16 the difference is 0.03 points of Other.
 - `upstream=True` reproduces upstream's inference exactly only when every streamline is 40 mm or more:
   upstream's package labels every streamline; ours cuts first, so the context is drawn from the kept ones.
+
+## 2026-10-03 A documentation review: the package's documents and the bench's records
+
+Two more reviewers read the documents against the code and the records against their results. Fixed:
+- **The package**: `pipeline.py` states the subject `run(s, ...)` takes (its fields, and that the DWI's
+  own b0s come first), the `device="mps"` and `shell=2800.0` defaults (also in the README), that
+  `stats["seed_voxel"]` is (k, j, i), the CUDA path; `trx.write` names a missing `logp` (was a torch
+  dtype error); empty Labels carry logp only when asked; importing `labelers.tractcloud` no longer leaves
+  a stub `vtk` in `sys.modules` (it hid the real one for the rest of the process) and says what it does
+  to `sys.path` and the environment; TractCloud's minimum count, its checked commit (94de627) and the
+  `.[triton]` extra's platform are documented; `resample.py`'s and `susceptibility.py`'s descriptions
+  corrected (the cost is a mean, not a sum).
+- **Licenses**: `mask.otsu` is DIPY's function verbatim (which DIPY took from scikit-image), so
+  `THIRD_PARTY_NOTICES.md` now carries DIPY's BSD notice beside RapidParc's, and no longer says nothing
+  is copied.
+- **The bench**: `label_draws.py` and `label_noise_floor.py` pin TractCloud to upstream's context, as
+  their committed results were made (with the trained context now the default, `label_draws.py` would
+  have fed an 80-streamline global context to a network loaded for 500); eight scripts honor
+  `$TRACTOGRAPHY_DATA`; usage lines and docstrings of `modal_ukf_triton.py` (the block kernel is the
+  default), `gpu_pipeline_compare.py`, `modal_gpu_pipeline.py` (`--tf32`, `--save-fibers` and fetching
+  its file), `modal_infer_opt.py` (two entry points; a record), `modal_rapidparc_check.py` (an A10G),
+  `modal_cpu_scaling.py`, `run_pipeline.py`, `ukf_bench.py`, `ukf_step_bench.py`; the README's index
+  and data layout (the Modal Volume's contents, FSL's and RapidParc's reference environments).
+- **Provenance** (`results/README.md`): `pat16_seeding*.json` and `pat16_topup_compare*.json` carry
+  TractCloud's labels; `cohort/PAT23_topup.json`, `cpu_timing.json` and `modal_cpu_scaling.json` were made
+  with L-BFGS, `cohort/PAT25_topup.json` with Gauss-Newton; `susc_stability/PAT16_gn.json` holds an L-BFGS
+  configuration beside the Gauss-Newton one.
+- **Not for a public repository**: a Modal app id (`modal_cpu_scaling.json`) and a home-directory path
+  (`ukf32.json`; `ukf32_compare.py` now writes it relative to `$TRACTOGRAPHY_DATA`) removed. Both remain in
+  the history, for the audit before the repository goes public.
+
+Corrections - committed files that later runs overwrote, so the numbers above are in NOTES only:
+- `modal_cpu_field_timing.json` now holds the Gauss-Newton run ("Gauss-Newton on 32 x86 cores":
+  48.9 / 40.2 / 44.6 / 51.5 s, 41.6 s after a pool, the thread count then 32). The L-BFGS run's 43.3 /
+  36.5 / 41.3 / 72.5 s and 80.7 s at 48 threads after a pool ("The 101.8 s estimate, explained") are
+  not in any committed file.
+- `modal_cpu_pipeline.json` holds the run from the package layout (commit 6e36ef8: 93.9 s; estimate
+  37.1 s, UKF 50.9 s), not the 127.6 s or 92.2 s runs quoted above.
+- `accuracy_tractcloud_test.json`'s timings are the 2026-10-03 rerun's (TractCloud at 500: 2.93 s a
+  subject and draw; 3.2 s in the first run); its accuracies are unchanged.
+- The 49.9 % Other of `pipeline.md`'s PAT16 row is one draw (`gpu_pipeline_compare.json`'s M2 run); the
+  cohort's 49.8 % is five draws averaged.

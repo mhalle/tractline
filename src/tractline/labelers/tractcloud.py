@@ -20,10 +20,19 @@ from .base import Labels, MIN_LENGTH_MM, OTHER, LogMean, empty, lengths      # s
 from ..data import DATA, MODEL, MASS_CENTER
 
 import os
-os.environ.setdefault("TRACTCLOUD_DATA_DIR", str(DATA))                   # TractCloud's own model-cache lookup
-sys.path.insert(0, str(DATA / "TractCloud/src")); sys.modules.setdefault("vtk", types.ModuleType("vtk"))
-from tractcloud import inference as inf
-from tractcloud.tract_mapping import TRACT_NAMES, _CLUSTER_TO_TRACT_LUT as LUT
+# Importing this module: TractCloud's code goes on sys.path (DATA/TractCloud/src) and TRACTCLOUD_DATA_DIR
+# defaults to DATA (its own model-cache lookup). Its modules import vtk for file input/output this
+# labeler does not use: when vtk is not already imported, a stub stands in during TractCloud's import
+# and is removed after it, so a later `import vtk` gets the real one.
+os.environ.setdefault("TRACTCLOUD_DATA_DIR", str(DATA))
+sys.path.insert(0, str(DATA / "TractCloud/src"))
+_stub = None if "vtk" in sys.modules else sys.modules.setdefault("vtk", types.ModuleType("vtk"))
+try:
+    from tractcloud import inference as inf
+    from tractcloud.tract_mapping import TRACT_NAMES, _CLUSTER_TO_TRACT_LUT as LUT
+finally:
+    if _stub is not None and sys.modules.get("vtk") is _stub:
+        del sys.modules["vtk"]
 
 
 
@@ -151,7 +160,7 @@ class Labeler:
         keep = length >= MIN_LENGTH_MM
         draws = tuple(draws)
         if not keep.any():
-            return empty(keep, length)
+            return empty(keep, length, logp)
         if keep.sum() < (K / 0.1 if self.upstream else K):
             raise ValueError(f"TractCloud needs at least {int(K / 0.1) if self.upstream else K} streamlines of {MIN_LENGTH_MM:g} mm "
                              f"or more for its local context; got {int(keep.sum())}")

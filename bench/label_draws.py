@@ -11,7 +11,8 @@ shared by every streamline of the draw). So:
   2. the number of draws K = 1, 2, 3, 5, 10: two disjoint ensembles on the same tractogram (draws
      0..K-1 and 10..10+K-1), combined three ways - mean cluster probabilities then argmax (upstream's
      rule on the mean), mean tract mass (cluster probabilities summed per tract) then argmax, and the
-     majority vote of per-draw tract labels (the pipeline's Labeler); per-streamline agreement between
+     majority vote of per-draw tract labels (the Labeler's rule when this ran; it now averages
+     log-probabilities, labelers.base.LogMean); per-streamline agreement between
      the two ensembles and their Other fractions;
   3. across trackers: Metal against float64, seed-matched, at each K (ensemble 0..K-1 on both).
 
@@ -101,9 +102,9 @@ if __name__ == "__main__":
     ti = prepare(corr.dwi, s.affine, s.bval, s.bvec, device="mps")
     D = U.from_arrays(ti.dwi, ti.header, ti.mask)
     trk = {"metal": U.track(D, backend="metal"), "f64": U.track(D, dtype=torch.float64, device="cpu", batch=P.CPU_BATCH, workers=8)}
-    lab = Labeler("mps")
+    lab = Labeler("mps", upstream=True)                                   # the network loaded for k_global 80, as Draws feeds it
     onehot = torch.zeros(1600, 43); onehot[torch.arange(1600), torch.as_tensor(lab.lut.astype(np.int64))] = 1
-    res = {"subject": "PAT16", "tractograms": {k: {"fibers": len(f), "labeled": None} for k, (f, _) in trk.items()}}
+    res = {"subject": "PAT16", "labeler": "TractCloud, upstream's context (k_global 80, 10 %)", "tractograms": {k: {"fibers": len(f), "labeled": None} for k, (f, _) in trk.items()}}
     draws = {k: Draws(lab, f) for k, (f, _) in trk.items()}
     for k in draws:
         res["tractograms"][k]["labeled"] = int(draws[k].keep.sum())

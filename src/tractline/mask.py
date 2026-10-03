@@ -5,7 +5,8 @@ threshold, on the CPU or the GPU.
   - each pass: the volume padded by reflection (index arithmetic, scipy's "reflect"), every voxel's
     9^3 window gathered as a view (unfold), its median taken in chunks of slabs - the 365th of 729
     values, one of the window's own, so the result is exact whatever the device;
-  - otsu: dipy.segment.threshold.otsu's arithmetic (itself scikit-image's), numpy, 256 bins.
+  - otsu: DIPY's own function, verbatim (BSD 3-Clause, from scikit-image; THIRD_PARTY_NOTICES.md),
+    numpy, 256 bins.
 Checked voxel for voxel against dipy.segment.mask.median_otsu (median_check.py). ~3 s on the M2,
 CPU or GPU; numba's sliding-window histogram did it in 0.2 s but cost a 137 MB dependency that pins
 numpy (NOTES 2026-10-02).
@@ -35,7 +36,8 @@ def median3(v: torch.Tensor, radius=4, chunk=8) -> torch.Tensor:
 
 
 def otsu(image, nbins=256):
-    """dipy.segment.threshold.otsu (from scikit-image), the same arithmetic."""
+    """dipy.segment.threshold.otsu (DIPY copied it from scikit-image), verbatim: BSD 3-Clause, its notice in
+    THIRD_PARTY_NOTICES.md."""
     hist, bin_centers = np.histogram(image, nbins)
     hist = hist.astype(float)
     weight1 = np.cumsum(hist)

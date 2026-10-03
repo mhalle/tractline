@@ -9,6 +9,7 @@ DATA/ds001226/derived/PAT16/susc/dwi_AP_ours.nii.gz, to be prepared by pat16_pre
 """
 import argparse, json, time
 from pathlib import Path
+from tractline.data import DATA as _DATA                          # $TRACTOGRAPHY_DATA
 import numpy as np, nibabel as nib, torch
 from tractline import susceptibility as S
 
@@ -18,7 +19,7 @@ ap.add_argument("--interp", choices=("cubic_pe", "trilinear"), default="cubic_pe
 ap.add_argument("--device", default="cpu", help="mps: float32 on the GPU (cpu: float64)"); args = ap.parse_args()
 dev = torch.device(args.device)
 dt = torch.float32 if dev.type == "mps" else torch.float64
-TD = Path.home() / "tmp/data/tractography/ds001226"
+TD = _DATA / "ds001226"
 SRC = TD / "sub-PAT16/ses-preop/dwi/sub-PAT16_ses-preop_acq-AP_dwi"
 SU = TD / "derived/PAT16/susc"
 side = json.loads(Path(str(SRC) + ".json").read_text())

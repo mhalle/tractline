@@ -15,6 +15,7 @@ Writes results/ukf_noise_floor.json.
 """
 import argparse, json, time
 from pathlib import Path
+from tractline.data import DATA as _DATA                          # $TRACTOGRAPHY_DATA
 import numpy as np, torch
 from tractline import ukf as U
 import _fibercmp as C
@@ -26,7 +27,7 @@ ap.add_argument("--replicates", type=int, default=4)
 ap.add_argument("--sh-order", type=int, default=6)
 args = ap.parse_args()
 HERE = Path(__file__).resolve().parent
-H = Path.home() / "tmp/data/tractography/ukf/hardi"
+H = _DATA / "ukf/hardi"
 NHDR, MASK = str(H / "dwi.nhdr"), str(H / "mask.nrrd")
 
 D = U.load(NHDR, MASK)

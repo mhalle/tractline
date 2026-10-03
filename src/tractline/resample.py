@@ -9,8 +9,8 @@ chunk at once: each row is summed from zero as upstream sums it (one global cumu
 reach tens of millions of mm, and differences of those lose the last bits), and the search is
 torch's batched searchsorted. In float64 it matches upstream to the last bit (`resample_check.py`).
 
-That makes it the fused pipeline's bridge from a tracker's output - flat vertices and offsets,
-already on the device - to the classifier, with no tractogram file in between.
+The TractCloud labeler uses it (on the CPU, float64, from labelers.base.lengths' flat points and
+offsets); RapidParc resamples by index instead (labelers.rapidparc.resample).
 """
 import numpy as np
 import torch

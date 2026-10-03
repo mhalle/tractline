@@ -17,6 +17,7 @@ Writes DATA/ds001226/derived/PAT16/{dwi.nhdr, dwi.raw, mask.nrrd, prep.json}.
 """
 import argparse, json
 from pathlib import Path
+from tractline.data import DATA as _DATA                          # $TRACTOGRAPHY_DATA
 import numpy as np, nibabel as nib
 from tractline.prep import prep
 
@@ -24,7 +25,7 @@ ap = argparse.ArgumentParser(); ap.add_argument("--shell", type=float, default=2
 ap.add_argument("--dwi", default=None, help="a corrected AP DWI to use instead (e.g. topup_ref.py's dwi_AP_topup.nii.gz)")
 ap.add_argument("--out", default="PAT16", help="the output folder under DATA/ds001226/derived/")
 args = ap.parse_args()
-DATA = Path.home() / "tmp/data/tractography/ds001226"
+DATA = _DATA / "ds001226"
 SRC = DATA / "sub-PAT16/ses-preop/dwi/sub-PAT16_ses-preop_acq-AP_dwi"
 OUT = DATA / "derived" / args.out
 

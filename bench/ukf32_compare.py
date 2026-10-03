@@ -58,7 +58,7 @@ if not fix.exists():
     st, x, s, P, o = (np.concatenate(c) for c in zip(*rows))
     np.savez(fix, step=st, x=x, state=s, P=P, old=o, seed_every=args.fixture_every)
 Z = np.load(fix)
-res["fixture"] = {"file": str(fix), "rows": int(len(Z["step"])), "seed_every": int(Z["seed_every"]),
+res["fixture"] = {"file": "$TRACTOGRAPHY_DATA/" + str(fix.relative_to(DATA)), "rows": int(len(Z["step"])), "seed_every": int(Z["seed_every"]),
                   "steps_covered": [int(Z["step"].min()), int(Z["step"].max())]}
 
 def one_step(dtype, device):

@@ -1,15 +1,27 @@
 """The pipeline, scan to labeled streamlines, in memory: correct -> track -> label [-> TRX].
 
-    s = _ds001226.load("PAT16"); timer = Timer()      # the bench's loader; any object with its fields
-    corr, tg, labels = run(s, None, timer)                  # None: the default labeler (RapidParc)
+    s = _ds001226.load("PAT16"); timer = Timer()      # the bench's loader (bench/_ds001226.py)
+    corr, tg, labels = run(s, None, timer, device="mps")   # None: the default labeler (RapidParc)
+
+The subject s: any object with these fields (the bench's _ds001226.Subject is one):
+  dwi         (X, Y, Z, G) the diffusion series as acquired (one phase-encoding direction)
+  affine      4x4 voxel -> RAS mm; vox (3,) voxel sizes mm
+  bval (G,), bvec (3, G)    FSL convention
+  b0s         (X, Y, Z, V) float64 on the DWI's grid: the DWI's own b0s first (volume 0 is the
+              estimate's fixed reference), then the reversed-phase-encoding b0s
+  pe_vectors  (V, 3) each b0's phase-encoding vector; pe_axis (0-2) and pe_sign (+1/-1): the DWI's
+              (they must agree with pe_vectors[0]); readout_s: total readout time, s
+Defaults to know: device="mps" (pass "cuda" or "cpu" elsewhere); shell=2800.0 (ds001226's b-value -
+prepare refuses a scan without that shell; pass the scan's own).
 
 Stages, and where they run:
   correct   the susceptibility field from the b0s and their reversed pair (susceptibility.estimate: GPU,
             float32, ~18 s on the M2), then applied to the DWI (susceptibility.apply: CPU, float64, ~1 s)
   track     the tracker's input (prep.prepare: b0s + the b = 2800 shell, gradients in RAS, the
-            median_otsu mask, exact in torch on the pipeline's device; ~3 s), UKF two-tensor with the ORG settings and the binary's seeds
-            (ukf.track, Metal kernel: float32 steps from float64 seeds, ~27 s; or on the CPU,
-            one process per core, fast algebra)
+            median_otsu mask, exact in torch on the pipeline's device; ~3 s), UKF two-tensor with the
+            ORG settings and the binary's seeds (ukf.track: on "mps" the Metal kernel, float32 steps
+            from float64 seeds, ~27 s; on "cuda" the Triton block kernel; on the CPU one process per
+            core, fast algebra)
   label     RapidParc, one draw (labelers.rapidparc: shuffled groups of 2,000 streamlines; GPU or CPU,
             float32, ~1 s); TractCloud (labelers.tractcloud, at its trained context) on request
   TRX       optional: the tractogram with labels and tract probabilities (trx.write)
@@ -115,7 +127,8 @@ class Correction:
 @dataclass
 class Tractogram:
     fibers: list                 # (n, 3) RAS mm arrays, seed order
-    stats: dict                  # ukf.track's: seeds, half_fibers, fiber_steps, fibers, seed_index
+    stats: dict                  # ukf.track's: seeds, half_fibers, fiber_steps, fibers, seed_index,
+                                 # seed_voxel - (k, j, i), the binary's order, not the volumes' (i, j, k)
     mask: np.ndarray             # (X, Y, Z) bool, the tracking mask
     info: dict                   # prep's
 
@@ -123,7 +136,7 @@ class Tractogram:
 def correct(s, timer: Timer, device="mps") -> Correction:
     """The field estimate is susceptibility.estimate's defaults (Gauss-Newton, NOTES 2026-10-02): on "mps" its
     subsampled levels on the CPU, on the CPU and on "cuda" in float32 (all levels on the GPU there) -
-    the same model on each, 18 s / 22.5 s on the M2. The CPU's levels get ESTIMATE_THREADS."""
+    the same model on each, 18 s / 22.6 s on the M2. The CPU's levels get ESTIMATE_THREADS."""
     import os
     f32 = torch.device(device).type in ("cpu", "cuda")
     with timer("field_estimate"), threads(min(ESTIMATE_THREADS, os.cpu_count() or 1)):
@@ -183,7 +196,8 @@ def run(s, labeler, timer: Timer, prefix="", trx=None, device="mps", workers=Non
     """The whole pipeline on a subject: (Correction, Tractogram, Labels). labeler: None for the default
     (default_labeler: RapidParc), or any labeler (labelers.tractcloud.Labeler, ...). Its time is
     timer.total(*pipeline_stages(prefix)). trx: also write the tractogram there as TRX (trx.write;
-    trx_options: positions="float16", labeled_only=True), timed apart as "write_trx". release: return
+    trx_options: positions= "float32" (default) or "float16", labeled_only= False (default) or True),
+    timed apart as prefix + "write_trx". release: return
     the GPU allocator's cache after the run (release_memory: batches stay flat). device: where
     the estimate and the tracking run ("mps", "cuda" or "cpu"; the labeler has its own); shell: the b-value
     tracked (track); workers: the CPU
@@ -198,7 +212,7 @@ def run(s, labeler, timer: Timer, prefix="", trx=None, device="mps", workers=Non
         labels = label(tg, labeler, timer, prefix)
     if trx is not None:
         from . import trx as _trx
-        with timer("write_trx"):
+        with timer(prefix + "write_trx"):
             _trx.write(trx, s, tg, labels, **trx_options)
     if release:
         release_memory(device)

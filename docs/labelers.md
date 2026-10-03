@@ -19,6 +19,7 @@ the log domain, without underflow).
 
 `draws` are seeds (any iterable): TractCloud's context sample, RapidParc's shuffle. Several draws average
 their cluster probabilities. A tractogram with no streamline of 40 mm or more returns empty Labels.
+`logp=True` is needed for `trx.write` (which refuses Labels without it); `pipeline.run` asks for it.
 
 ## RapidParc (the default)
 
@@ -37,8 +38,8 @@ often as needed (its package pads once and fails under 1,000 streamlines - the s
 more); probabilities and log-probabilities returned (its package returns only the argmax); TF32 left off
 on CUDA (its package enables it); default draw 0 (its default seed is 42).
 
-Checked: identical 1,600-cluster argmax to its package for both models and seeds 0 and 42, on 32 x86
-cores and an A10G (`modal_rapidparc_check.py`) and on the M2's CPU; on the M2's GPU one streamline of
+Checked: identical 1,600-cluster argmax to its package for both models and seeds 0 and 42, on a Modal CPU
+container and an A10G (`modal_rapidparc_check.py`) and on the M2's CPU; on the M2's GPU one streamline of
 32,264 differs by cluster (hemiaug, seed 0; the other three runs identical), every tract identical
 (`rapidparc_check.py`). On
 TractCloud's labeled test split, 94.5 % tract accuracy / 93.2 % macro F1 - its paper's 94.44 / 93.2
@@ -47,7 +48,12 @@ TractCloud's labeled test split, 94.5 % tract accuracy / 93.2 % macro F1 - its p
 ## TractCloud (optional)
 
 Xue, Zhang, O'Donnell et al., MICCAI 2023; github.com/SlicerDMRI/TractCloud. Needs its code
-(`$TRACTOGRAPHY_DATA/TractCloud/src`) and weights (`TrainedModel/`, `HCP_mass_center.npy`). By default it
+(`$TRACTOGRAPHY_DATA/TractCloud/src`; checked at commit 94de627 - this labeler uses two of its private names,
+`_fiber_distance_efficient` and `_CLUSTER_TO_TRACT_LUT`) and weights (`TrainedModel/`, `HCP_mass_center.npy`).
+Importing `labelers.tractcloud` puts that directory on `sys.path` and sets `TRACTCLOUD_DATA_DIR` (if unset)
+to `$TRACTOGRAPHY_DATA`; TractCloud's modules import vtk, which a stub replaces during the import when vtk is
+not already loaded (removed afterwards). It refuses a tractogram with fewer than 20 streamlines of 40 mm or
+more (its k; 200 with `upstream=True`), where RapidParc labels any number. By default it
 runs with the context the released model was trained with (`trained_context`): each streamline, then its
 19 nearest among one random set of 10,000 candidates from the whole tractogram, and 500 global
 streamlines shared by the draw. `upstream=True` uses upstream's packaged inference context instead (80

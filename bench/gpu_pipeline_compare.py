@@ -2,7 +2,10 @@
 in the brain, deep and at the edge: median / 99th / max mm), the fiber and label counts, and the
 tract mix (Pearson r of the 42 tracts' counts; the Other fraction).
 
-    python bench/gpu_pipeline_compare.py [--gpus a10,l40s,a10_tf32off]
+    python bench/gpu_pipeline_compare.py [--gpus a10,l40s,cpu] [--m2-cpu]
+
+--gpus: which results/modal_gpu_pipeline_<name>.json to compare (the committed comparison: a10,l40s,cpu);
+--m2-cpu: also run the pipeline on the M2's CPU and compare it.
 
 The M2's field is the cohort's (derived/PAT16/cohort_fields.npz, the default estimate); its counts and
 tract mix come from one run of the pipeline here (mps). Writes results/gpu_pipeline_compare.json.

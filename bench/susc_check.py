@@ -11,6 +11,7 @@ Writes DATA/ds001226/derived/PAT16/susc/field_hz.nii.gz and results/susc_check.j
 """
 import argparse, json, time
 from pathlib import Path
+from tractline.data import DATA as _DATA                          # $TRACTOGRAPHY_DATA
 import numpy as np, nibabel as nib
 from dipy.segment.mask import median_otsu
 from tractline import susceptibility as S
@@ -22,7 +23,7 @@ ap.add_argument("--motion", choices=("estimate", "zero", "topup", "topup_neg"), 
                 help="diagnostic: hold the motion fixed (none, topup's movpar as given, or with its sign reversed)")
 args = ap.parse_args()
 HERE = Path(__file__).resolve().parent
-TP = Path.home() / "tmp/data/tractography/ds001226/derived/PAT16/topup"
+TP = _DATA / "ds001226/derived/PAT16/topup"
 OUT = TP.parent / "susc"; OUT.mkdir(exist_ok=True)
 
 img = nib.load(TP / "b0s.nii.gz")

@@ -1,6 +1,6 @@
 """labelers.rapidparc against RapidParc's own package (v1.0.4), side by side in one Modal container: on
-32 x86 cores (expected bit-identical: same machine, same torch) and on an A10 (CUDA; TF32 off for
-both). Input: PAT16's tractogram from the A10 run (derived/PAT16/PAT16_a10_tf32off.npz, 42,169 fibers),
+a Modal CPU container (cpu=32; expected bit-identical: same machine, same torch) and on an A10G (CUDA;
+TF32 off for both; requested as gpu="A10", Modal placed it on an A10G). Input: PAT16's tractogram from the A10 run (derived/PAT16/PAT16_a10_tf32off.npz, 42,169 fibers),
 the streamlines of 40 mm or more as float32.
 
     modal run bench/modal_rapidparc_check.py [--what cpu,gpu]

@@ -13,6 +13,8 @@ fraction a bias or noise? The M2's field held fixed (pipeline.correct, the defau
 
     python bench/label_noise_floor.py [--replicates 4]
 
+TractCloud at upstream's inference context (k_global 80, 10 %), as when it ran (Labeler(upstream=True)).
+
 Writes results/label_noise_floor.json as it goes.
 """
 import argparse, json, re, time
@@ -46,8 +48,8 @@ if __name__ == "__main__":
     g = np.array([[float(v) for v in t.header[k].split()] for k in keys])
     bmax = int(re.match(r"\s*(-?\d+)", t.header["DWMRI_b-value"]).group(1))
     wb = WildBootstrap(np.asarray(t.dwi), g, (bmax * (g * g).sum(1)) <= 50, sh_order=6)
-    lab = Labeler("mps")
-    res = {"subject": "PAT16", "field": "pipeline.correct (mps)", "bootstrap": wb.noise_check(np.asarray(t.mask)), "replicates": []}
+    lab = Labeler("mps", upstream=True)                                   # as the committed result: upstream's context
+    res = {"subject": "PAT16", "labeler": "TractCloud, upstream's context (k_global 80, 10 %)", "field": "pipeline.correct (mps)", "bootstrap": wb.noise_check(np.asarray(t.mask)), "replicates": []}
 
     def track(data, kind, batch=P.CPU_BATCH):
         D = U.from_arrays(data, t.header, t.mask)

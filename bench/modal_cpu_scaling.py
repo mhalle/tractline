@@ -7,8 +7,8 @@ tracker scales with worker processes, and the pipeline end to end, on PAT16. One
   2. the tracker on the corrected scan (float32, fast, batch 1,024) with 8, 16, 32 and 64 workers
      (64: one per vCPU, hyperthreads) - the fibers checked identical across worker counts;
   3. the whole pipeline (pipeline.run, device "cpu") at the fastest worker count.
-Everything the pipeline needs travels in the image (TractCloud's code and weights, PAT16's two DWI
-series: ~60 MB); no Volume. Costs ~$0.30 (CPU $0.0000131 / core / s, memory $0.00000222 / GiB / s, about
+Everything the pipeline needs travels in the image (RapidParc's weights, PAT16's two DWI series: ~60 MB;
+TractCloud's code and weights too, from when it was the default - unused now); no Volume. Costs ~$0.30 (CPU $0.0000131 / core / s, memory $0.00000222 / GiB / s, about
 10 minutes); the timeout caps it near $0.60. Writes results/modal_cpu_scaling.json.
 """
 import os

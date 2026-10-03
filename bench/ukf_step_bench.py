@@ -2,8 +2,8 @@
 
     python bench/ukf_step_bench.py
 
-The 2T simple model as pnlbwh/ukftractography 2d2b661 implements it (spec in pipeline.md §6,
-from the source): state n = 10 ([m1, l1, l2, m2, l1, l2]), 21 sigma points with kappa = 0.01 and
+The 2T simple model as pnlbwh/ukftractography 2d2b661 implements it (from its source; ukf.py
+implements the same): state n = 10 ([m1, l1, l2, m2, l1, l2]), 21 sigma points with kappa = 0.01 and
 equal mean/covariance weights, process model = renormalize m and clamp lambda >= 100, measurement
 y_j = 1/2 exp(-b_j u'D1u) + 1/2 exp(-b_j u'D2u) with u'Du = l2 + (l1 - l2)(u.m)^2 (lambda in
 1e-6 mm^2/s), and the unscented INFORMATION-filter update (Reddy & Rathi 2016) - no measurement-

@@ -15,7 +15,7 @@ history.
 ```
 pip install -e .              # numpy, scipy, torch, nibabel
 pip install -e ".[nrrd]"      # NRRD input/output for the tracker
-pip install -e ".[triton]"    # the tracker's kernel on CUDA
+pip install -e ".[triton]"    # the tracker's kernel on CUDA (Linux with an NVIDIA GPU)
 ```
 
 Data and weights live outside the repository, in `$TRACTOGRAPHY_DATA` (default `~/tmp/data/tractography`;
@@ -27,16 +27,25 @@ layout in `src/tractline/data.py`):
   weights `TrainedModel/` and `TrainData_800clu800ol/HCP_mass_center.npy` from its release v1.0.0.
 - **The bench's data**: OpenNeuro ds001226 (BTC_preop, CC0) in `ds001226/`; the Stanford HARDI scan in
   `ukf/hardi/`; TractCloud's test split (`TrainData_800clu800ol/test.pickle`) and HCP test tractogram
-  (`TestData/`) from its release.
+  (`TestData/`) from its release. For particular scripts: `fsl-env/` (FSL, for `topup_ref.py` and
+  `cohort_topup.py`), `rapidparc-ref/` (a venv with RapidParc's own package, for `rapidparc_check.py`),
+  `.venv/` (the local venv `modal_ukf_triton.py` compares against).
 
 The bench needs more than the package: trx-python, dipy, pynrrd, vtk, matplotlib, scikit-learn, modal (for
 the `modal_*.py` scripts, which also use a Modal Volume `tractography-bench` for inputs and the Triton
-compile cache), and FSL for the topup references.
+compile cache; most scripts ship their inputs from `$TRACTOGRAPHY_DATA` in the image, and the Volume holds
+the rest: `triton-cache/`, `ukf/hardi/` (`dwi.nhdr`, `mask.nrrd`), `TrainedModel/`,
+`TrainData_800clu800ol/HCP_mass_center.npy`, `hcp/feat.npy`, `variants/f64.npz`, as each script's docstring
+names them; `modal_gpu_pipeline.py --save-fibers` writes to its `tractline/`), and FSL for the topup
+references.
 
 ## The package (`src/tractline`)
 
 `pipeline.py` runs it in memory: correct → track → label, then optionally TRX. Its docstring states the
-conventions every module follows (array layouts, units, devices). The default path needs numpy, scipy,
+subject it takes (the fields `run(s, ...)` reads) and the conventions every module follows (array
+layouts, units, devices). Two defaults to know: `device="mps"` (pass `"cuda"` or `"cpu"` elsewhere) and
+`shell=2800.0` (ds001226's b-value; pass the scan's own). On the CPU the tracker's workers share their
+input through shared memory; `TRACTOGRAPHY_SHARE=0` sends copies instead, for systems without it. The default path needs numpy, scipy,
 torch, nibabel and RapidParc's weights, nothing more - no TractCloud code (`bench/dependency_check.py`). A
 script using the CPU path needs an `if __name__ == "__main__":` guard: the tracker spawns worker processes,
 which re-import the script (the tracker checks, and refuses without one).
@@ -80,14 +89,17 @@ says which, and what re-running their scripts would now produce.
   `susc_stability.py`, `susc_convergence.py`.
 - Speed: `cpu_timing.py`, `modal_cpu_scaling.py` (x86, CPU only), `modal_gpu_pipeline.py` (+
   `gpu_pipeline_compare.py`: the pipeline on CUDA GPUs and CPUs against the M2), `hardi_paths.py` +
-  `modal_hardi_paths.py` (the HARDI brain on the M2, an L40S and 32 x86 cores), `modal_infer_opt.py`
-  (TractCloud inference), `ukf_cpu_check.py`.
+  `modal_hardi_paths.py` (the HARDI brain on the M2, an L40S and a Modal CPU container), `ukf_cpu_check.py`.
+- Helpers: `_ds001226.py` (the patients' loader), `_fibercmp.py` (fibers compared by seed), `_bootstrap.py`
+  (bootstrap replicates of a scan).
 
 Records kept because committed results came from them (their inputs are not all reproducible from this
 repository): `pat16_prep.py`, `susc_apply.py`, `topup_ref.py`, `pat16_topup_compare.py`, `pat16_seeding.py`,
 `mac_labels.py`, `ukf_bench.py`, `ukf_step_bench.py`, `modal_ukf_step.py`, `compare_variant.py`,
-`t1_alignment_figure.py`, `resample_check.py` (needs `hcp/feat.npy`, made by a script that stayed in the
-incubation repository).
+`t1_alignment_figure.py`, `resample_check.py` and `modal_infer_opt.py` (TractCloud inference; both need
+`hcp/feat.npy`, made by a script that stayed in the incubation repository), `ukf_hotspots.cc` (the binary's
+profile, `results/ukf_hotspots.json`). `t1_alignment.py` and `median_check.py` read files those records
+made (`susc_apply.py`, `pat16_prep.py`).
 
 ## Documents (`docs/`)
 

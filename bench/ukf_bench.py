@@ -2,7 +2,7 @@
 
     python bench/ukf_bench.py [--seeds-per-voxel 1] [--threads 8]
 
-The one stage of the pipeline not measured elsewhere (pipeline.md §5). Nothing is installed into
+The one stage of the pipeline not measured elsewhere when it ran (a record). Nothing is installed into
 /Applications/Slicer.app:
   - UKFTractography for Slicer 5.12.3 (revision 34627), macOS x86_64, UKF commit 2d2b661:
     34627-macosx-amd64-UKFTractography-git2d2b661-2025-06-02.tar.gz, 871,923 bytes, from
@@ -30,7 +30,7 @@ ap.add_argument("--seeds-per-voxel", type=int, default=1)
 ap.add_argument("--threads", type=int, default=8)
 args = ap.parse_args()
 
-DATA = Path(os.environ.get("TRACTOGRAPHY_DATA", Path(os.environ.get("TRACTOGRAPHY_DATA", Path.home() / "tmp/data/tractography"))))
+DATA = Path(os.environ.get("TRACTOGRAPHY_DATA", Path.home() / "tmp/data/tractography"))
 H = DATA / "ukf" / "hardi"
 PKG = DATA / "ukf" / "34627-macosx-amd64-UKFTractography-git2d2b661-2025-06-02" / "Slicer.app" / "Contents"
 UKF = PKG / "Extensions-34627/UKFTractography/lib/Slicer-5.12/cli-modules/UKFTractography"

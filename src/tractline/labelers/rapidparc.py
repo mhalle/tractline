@@ -148,7 +148,7 @@ class Labeler:
         keep = length >= MIN_LENGTH_MM
         draws = tuple(draws)
         if not keep.any():
-            return empty(keep, length)
+            return empty(keep, length, logp)
         feat = resample([np.asarray(f, np.float32) for f, k in zip(fibers, keep) if k])
         n = len(feat)
         if len(draws) == 1:

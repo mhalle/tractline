@@ -1,6 +1,6 @@
 # The pipeline
 
-## The pipeline as built (2026-10-02)
+## The pipeline as built (2026-10-03)
 
 `tractline.pipeline`, scan to labeled streamlines, in memory, on the M2 laptop (16 GB). Measured on ds001226 PAT16
 (`bench/results/cohort/PAT16.json`; the 12-patient cohort in `bench/results/cohort_summary.md`):
@@ -12,16 +12,17 @@
 | tracker input (b = 2800 shell, RAS gradients, median_otsu mask) | `prep.prepare`, `mask` | GPU | 3.1 s |
 | UKF two-tensor, ORG settings, the binary's seeds (+ 0.2 s loading) | `ukf.track` (Metal) | GPU, float32 steps | 27.3 s |
 | RapidParc, one draw (the default labeler) | `labelers.rapidparc.Labeler` | GPU, float32 | 0.7 s |
-| **scan → labels** | | | **49.6 s; 42,170 streamlines, 32,264 labeled (40 mm or more), 49.9 % Other** |
+| **scan → labels** | | | **49.6 s; 42,170 streamlines, 32,264 labeled (40 mm or more), 49.9 % Other (one draw)** |
 
 For scale: FSL topup + applytopup take 665 s for the correction alone on the same machine. Against the
 T1, the correction cuts the tumor margin's misplacement from 4.8 mm to 1.6 mm (99th percentile, median
 of 12 patients). On the M2's CPU alone the field takes 22.6 s, the same field as the GPU's (0.03 mm at
 the brain's 99th percentile). On CUDA (`device="cuda"`: the field in float32 on the GPU, the Triton
 tracker, float32 without TF32) the pipeline takes 16.6 s on an A10 and 12.4 s on an L40S, steady state;
-on a Modal CPU container (48 logical x86 cores) 95 s, the field 41 s of it (`gpu_pipeline_compare.json`).
+on a Modal CPU container (`cpu=32`; 48 CPUs visible to the process) 95 s, the field 41 s of it
+(`gpu_pipeline_compare.json`; the Other share's 49.9 % is its M2 run, the cohort's five-draw average 49.8 %).
 
-| Stanford HARDI, track and label (no reversed pair) | M2 (Metal) | L40S | 32 x86 cores |
+| Stanford HARDI, track and label (no reversed pair) | M2 (Metal) | L40S | Modal CPU (`cpu=32`) |
 |---|---|---|---|
 | seconds (UKF) | 105 (94) | 40 (37) | 120 (110) |
 
@@ -34,9 +35,10 @@ On TractCloud's own test split RapidParc is the most accurate (94.5 % against
 TractCloud's 92.0 % at its trained context, 86.6 % at upstream's inference context), the steadiest
 (seeds agree on 98 % of tracts) and ~25x faster; on the 12 patients TractCloud at 500 and RapidParc agree
 on 83.5 % of streamlines. RapidParc is the default since 2026-10-02; across the M2 (GPU, CPU), an A10,
-an L40S and x86 CPUs PAT16's Other share spans 0.3 points and the tract mix agrees to r >= 0.9998 (NOTES,
+an L40S and a Modal CPU container PAT16's Other share spans 0.3 points and the tract mix agrees to r >= 0.9998 (NOTES,
 "RapidParc is the default"). One TractCloud draw is not a stable label (PAT16's Other share 55.5-66.2 %
-over context draws at upstream's 80); `draws=` averages several draws' probabilities for either labeler.
+over context draws at upstream's 80). The pipeline labels with one draw; called directly, either labeler
+averages several draws' probabilities (`labeler(fibers, draws=range(5))`).
 
 ## Open
 

@@ -1,7 +1,13 @@
 """The pipeline end to end on CUDA GPUs (Modal), PAT16: the field estimate in float32 on the GPU, the
 Triton block kernel for the tracker, the default labeler (RapidParc) on the GPU.
 
-    modal run bench/modal_gpu_pipeline.py [--gpus A10,L40S,CPU]          # CPU: 32 x86 cores [--runs 2] [--tf32 on] [--save-fibers] [--copies 1]
+    modal run bench/modal_gpu_pipeline.py [--gpus A10,L40S,CPU] [--runs 2] [--tf32 on] [--save-fibers] [--copies 1]
+
+CPU: a Modal CPU container (cpu=32). --tf32 on: TF32 left on inside the pipeline (the experiment; by
+default it is off, as the pipeline runs - earlier results' "--tf32 off" files, _c0_/_c1_tf32off, are that
+default). --save-fibers: the first run's tractogram and labels to the Volume, tractline/PAT16_<gpu>_tf32<mode>.npz;
+fetch one with `modal volume get tractography-bench tractline/<file> $TRACTOGRAPHY_DATA/ds001226/derived/PAT16/`
+(modal_rapidparc_check.py reads PAT16_a10_tf32off.npz, saved so by an earlier version).
 
 Per GPU, one container runs the pipeline twice: the first run pays for torch's and Triton's warm-up
 (the kernel's compile is cached on the tractography-bench Volume, per GPU architecture), the second is

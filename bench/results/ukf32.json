@@ -6,7 +6,7 @@
   "mps"
  ],
  "fixture": {
-  "file": "/Users/halazar/tmp/data/tractography/ukf32/steps.npz",
+  "file": "$TRACTOGRAPHY_DATA/ukf32/steps.npz",
   "rows": 3335,
   "seed_every": 197,
   "steps_covered": [

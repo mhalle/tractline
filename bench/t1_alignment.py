@@ -21,13 +21,14 @@ Writes results/t1_alignment.json and results/t1_alignment.png.
 """
 import json, time
 from pathlib import Path
+from tractline.data import DATA as _DATA                          # $TRACTOGRAPHY_DATA
 import numpy as np, nibabel as nib, nrrd
 from scipy.ndimage import binary_dilation
 import torch
 from tractline.t1check import T1Check, tumor_regions, stats
 
 HERE = Path(__file__).resolve().parent
-TD = Path.home() / "tmp/data/tractography/ds001226"
+TD = _DATA / "ds001226"
 SUB = TD / "sub-PAT16/ses-preop"
 DER = TD / "derived"
 ARMS = {"uncorrected": SUB / "dwi/sub-PAT16_ses-preop_acq-AP_dwi.nii.gz",

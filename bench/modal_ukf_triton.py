@@ -1,9 +1,10 @@
-"""The Triton UKF step (ukf_triton.py) on an A10G, tested as the Metal kernel was (ukf_metal_check.py).
+"""The Triton UKF kernels on an A10G, tested as the Metal kernel was (ukf_metal_check.py): by default the
+block kernel the pipeline uses (ukf_triton_block.py); --kind unrolled the first attempt (ukf_triton.py).
 
     modal run bench/modal_ukf_triton.py --stage smoke    # compile, one step on the fixtures
     modal run bench/modal_ukf_triton.py --stage tune     # one-step throughput by launch config
     modal run bench/modal_ukf_triton.py --stage full     # the whole brain, against float64
-    ... --kind block                                                   # the compact kernel (ukf_triton_block.py)
+    ... --kind unrolled                                                # the unrolled first attempt (ukf_triton.py)
     ... --gpu L40S                                                     # another GPU (results file tagged)
 
 smoke: every fixture of DATA/ukf32/steps.npz (ukf32_compare.py) stepped by the kernel, against float64
@@ -16,7 +17,8 @@ full:  the whole brain (98,491 seeds) with the kernel, timed once (--repeat: twi
 Costs: GPUs bill per second (an A10G about $1.10/h, an L40S $1.95/h); sweeps compile one kernel per
 configuration and are worth running once per GPU type. Timeouts are short on purpose.
 
-Inputs on the tractography-bench Volume (ukf/hardi/). Writes results/ukf_triton_<stage>.json.
+Inputs on the tractography-bench Volume (ukf/hardi/). Writes results/ukf_triton_block_<stage>.json
+(--kind unrolled: ukf_triton_<stage>.json; another GPU adds its name, e.g. ukf_triton_block_l40s_full.json).
 """
 import os
 import json
