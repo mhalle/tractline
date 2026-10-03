@@ -1,0 +1,186 @@
+{
+ "cleanup": true,
+ "seconds": 288.3,
+ "snapshots": [
+  {
+   "stage": "start",
+   "mps_live_gb": 0.0,
+   "mps_driver_gb": 0.0,
+   "footprint_gb": 0.17
+  },
+  {
+   "stage": "labelers loaded",
+   "mps_live_gb": 0.03,
+   "mps_driver_gb": 0.05,
+   "footprint_gb": 0.22
+  },
+  {
+   "stage": "PAT05 correct",
+   "mps_live_gb": 0.03,
+   "mps_driver_gb": 1.06,
+   "footprint_gb": 1.61
+  },
+  {
+   "stage": "PAT05 track",
+   "mps_live_gb": 0.03,
+   "mps_driver_gb": 1.06,
+   "footprint_gb": 1.67
+  },
+  {
+   "stage": "PAT05 tractcloud_80",
+   "mps_live_gb": 0.03,
+   "mps_driver_gb": 2.07,
+   "footprint_gb": 2.69
+  },
+  {
+   "stage": "PAT05 tractcloud_500",
+   "mps_live_gb": 0.03,
+   "mps_driver_gb": 5.88,
+   "footprint_gb": 6.54
+  },
+  {
+   "stage": "PAT05 rapidparc",
+   "mps_live_gb": 0.03,
+   "mps_driver_gb": 5.93,
+   "footprint_gb": 6.6
+  },
+  {
+   "stage": "PAT05 rapidparc_hemiaug",
+   "mps_live_gb": 0.03,
+   "mps_driver_gb": 5.93,
+   "footprint_gb": 6.62
+  },
+  {
+   "stage": "PAT05 end",
+   "mps_live_gb": 0.03,
+   "mps_driver_gb": 0.1,
+   "footprint_gb": 2.24
+  },
+  {
+   "stage": "PAT07 correct",
+   "mps_live_gb": 0.03,
+   "mps_driver_gb": 1.06,
+   "footprint_gb": 1.65
+  },
+  {
+   "stage": "PAT07 track",
+   "mps_live_gb": 0.03,
+   "mps_driver_gb": 1.06,
+   "footprint_gb": 1.67
+  },
+  {
+   "stage": "PAT07 tractcloud_80",
+   "mps_live_gb": 0.03,
+   "mps_driver_gb": 2.06,
+   "footprint_gb": 2.68
+  },
+  {
+   "stage": "PAT07 tractcloud_500",
+   "mps_live_gb": 0.03,
+   "mps_driver_gb": 5.87,
+   "footprint_gb": 6.53
+  },
+  {
+   "stage": "PAT07 rapidparc",
+   "mps_live_gb": 0.03,
+   "mps_driver_gb": 5.92,
+   "footprint_gb": 6.6
+  },
+  {
+   "stage": "PAT07 rapidparc_hemiaug",
+   "mps_live_gb": 0.03,
+   "mps_driver_gb": 5.92,
+   "footprint_gb": 6.6
+  },
+  {
+   "stage": "PAT07 end",
+   "mps_live_gb": 0.03,
+   "mps_driver_gb": 0.1,
+   "footprint_gb": 1.34
+  },
+  {
+   "stage": "PAT08 correct",
+   "mps_live_gb": 0.03,
+   "mps_driver_gb": 1.06,
+   "footprint_gb": 1.65
+  },
+  {
+   "stage": "PAT08 track",
+   "mps_live_gb": 0.03,
+   "mps_driver_gb": 1.06,
+   "footprint_gb": 1.67
+  },
+  {
+   "stage": "PAT08 tractcloud_80",
+   "mps_live_gb": 0.03,
+   "mps_driver_gb": 2.07,
+   "footprint_gb": 2.68
+  },
+  {
+   "stage": "PAT08 tractcloud_500",
+   "mps_live_gb": 0.03,
+   "mps_driver_gb": 5.88,
+   "footprint_gb": 6.5
+  },
+  {
+   "stage": "PAT08 rapidparc",
+   "mps_live_gb": 0.03,
+   "mps_driver_gb": 5.94,
+   "footprint_gb": 6.62
+  },
+  {
+   "stage": "PAT08 rapidparc_hemiaug",
+   "mps_live_gb": 0.03,
+   "mps_driver_gb": 5.94,
+   "footprint_gb": 6.62
+  },
+  {
+   "stage": "PAT08 end",
+   "mps_live_gb": 0.03,
+   "mps_driver_gb": 0.11,
+   "footprint_gb": 2.26
+  },
+  {
+   "stage": "PAT13 correct",
+   "mps_live_gb": 0.03,
+   "mps_driver_gb": 1.06,
+   "footprint_gb": 1.55
+  },
+  {
+   "stage": "PAT13 track",
+   "mps_live_gb": 0.03,
+   "mps_driver_gb": 1.06,
+   "footprint_gb": 1.56
+  },
+  {
+   "stage": "PAT13 tractcloud_80",
+   "mps_live_gb": 0.03,
+   "mps_driver_gb": 2.07,
+   "footprint_gb": 2.57
+  },
+  {
+   "stage": "PAT13 tractcloud_500",
+   "mps_live_gb": 0.03,
+   "mps_driver_gb": 5.88,
+   "footprint_gb": 6.54
+  },
+  {
+   "stage": "PAT13 rapidparc",
+   "mps_live_gb": 0.03,
+   "mps_driver_gb": 5.92,
+   "footprint_gb": 6.61
+  },
+  {
+   "stage": "PAT13 rapidparc_hemiaug",
+   "mps_live_gb": 0.03,
+   "mps_driver_gb": 5.92,
+   "footprint_gb": 6.62
+  },
+  {
+   "stage": "PAT13 end",
+   "mps_live_gb": 0.03,
+   "mps_driver_gb": 0.09,
+   "footprint_gb": 0.34
+  }
+ ]
+}

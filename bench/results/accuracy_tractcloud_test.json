@@ -1,0 +1,71 @@
+{
+ "streamlines": 200000,
+ "subjects": 20,
+ "labelers": {
+  "tractcloud_80": {
+   "seconds_per_subject_draw": 1.26,
+   "seed 0": {
+    "tract_accuracy": 86.55,
+    "tract_macro_f1": 82.74,
+    "cluster_accuracy": 60.21,
+    "other_fraction": 0.4824
+   },
+   "seed 1": {
+    "tract_accuracy": 86.55,
+    "tract_macro_f1": 82.37,
+    "cluster_accuracy": 59.64,
+    "other_fraction": 0.4795
+   },
+   "seed_agreement_tract": 0.8738
+  },
+  "tractcloud_500": {
+   "seconds_per_subject_draw": 3.2,
+   "seed 0": {
+    "tract_accuracy": 92.01,
+    "tract_macro_f1": 89.92,
+    "cluster_accuracy": 76.66,
+    "other_fraction": 0.4513
+   },
+   "seed 1": {
+    "tract_accuracy": 91.89,
+    "tract_macro_f1": 89.76,
+    "cluster_accuracy": 76.13,
+    "other_fraction": 0.4516
+   },
+   "seed_agreement_tract": 0.9547
+  },
+  "rapidparc": {
+   "seconds_per_subject_draw": 0.13,
+   "seed 0": {
+    "tract_accuracy": 94.48,
+    "tract_macro_f1": 93.23,
+    "cluster_accuracy": 84.64,
+    "other_fraction": 0.4556
+   },
+   "seed 1": {
+    "tract_accuracy": 94.5,
+    "tract_macro_f1": 93.3,
+    "cluster_accuracy": 84.63,
+    "other_fraction": 0.4562
+   },
+   "seed_agreement_tract": 0.9837
+  },
+  "rapidparc_hemiaug": {
+   "seconds_per_subject_draw": 0.12,
+   "seed 0": {
+    "tract_accuracy": 94.45,
+    "tract_macro_f1": 93.29,
+    "cluster_accuracy": 84.54,
+    "other_fraction": 0.4553
+   },
+   "seed 1": {
+    "tract_accuracy": 94.44,
+    "tract_macro_f1": 93.26,
+    "cluster_accuracy": 84.45,
+    "other_fraction": 0.4558
+   },
+   "seed_agreement_tract": 0.9823
+  }
+ },
+ "truth_other_fraction": 0.4759
+}

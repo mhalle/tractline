@@ -13,29 +13,16 @@ restores upstream's inference settings, for comparison.
 from __future__ import annotations
 
 import sys, types
-from dataclasses import dataclass
 import numpy as np, torch
 import torch.nn.functional as F
 from ..resample import resample
+from .base import Labels, MIN_LENGTH_MM, OTHER, lengths      # shared by the labelers; re-exported here
 from ..data import DATA, MODEL, MASS_CENTER
 
 sys.path.insert(0, str(DATA / "TractCloud/src")); sys.modules.setdefault("vtk", types.ModuleType("vtk"))
 from tractcloud import inference as inf
 from tractcloud.tract_mapping import TRACT_NAMES, _CLUSTER_TO_TRACT_LUT as LUT
 
-OTHER = 42
-MIN_LENGTH_MM = 40.0
-
-
-@dataclass
-class Labels:
-    keep: np.ndarray             # (n_fibers,) bool: the streamlines >= 40 mm, the ones labeled
-    length_mm: np.ndarray        # (n_kept,)
-    tract: np.ndarray            # (n_kept,) the vote over draws: 0-41 a tract, 42 Other
-    logp: torch.Tensor | None    # (n_kept, 1600) float16, the first draw's cluster log-probabilities (CPU)
-
-    def kept(self, fibers):
-        return [f for f, k in zip(fibers, self.keep) if k]
 
 
 def _fold(conv, bn):
@@ -91,10 +78,12 @@ K_GLOBAL, LOCAL_CANDIDATES = 500, 10_000            # as trained (TrainedModel/c
 
 
 class Labeler:
-    def __init__(self, device="mps", exact=None, upstream=False):
+    def __init__(self, device="mps", exact=None, upstream=False, batch=256):
         """exact: upstream's forward (default on the GPU); otherwise MatmulDGCNN (default on the CPU).
-        upstream: upstream's inference context (k_global 80, 10 % local subsample) instead of the trained one."""
-        self.device = torch.device(device)
+        upstream: upstream's inference context (k_global 80, 10 % local subsample) instead of the trained one.
+        batch: streamlines per forward pass - the same labels at any size (checked at 256 and 1,024); at the
+        trained context 1,024 peaked at 5.9 GB on the M2's GPU, 256 at 2.1 GB, as fast."""
+        self.device, self.batch = torch.device(device), batch
         self.k_global = 80 if upstream else K_GLOBAL
         self.upstream = upstream
         self.model, _ = inf.load_model(str(MODEL / "best_tract_f1_model.pth"), str(MODEL / "cli_args.txt"), self.device,
@@ -108,11 +97,7 @@ class Labeler:
     def __call__(self, fibers, draws=(0,), logp=False) -> Labels:
         """fibers: (n, 3) RAS mm arrays. draws: the context seeds whose cluster probabilities are
         averaged. logp: keep the log of the averaged probabilities (one draw: the network's output)."""
-        lens = np.array([len(f) for f in fibers])
-        P = np.concatenate(fibers).astype(np.float32).astype(np.float64)    # as a VTK file would hold them
-        o = np.r_[0, np.cumsum(lens)]
-        seg = np.r_[0, np.cumsum(np.linalg.norm(np.diff(P, axis=0), axis=1))]
-        length = seg[o[1:] - 1] - seg[o[:-1]]
+        P, o, length = lengths(fibers)                                     # points as a float32 file would hold them
         keep = length >= MIN_LENGTH_MM
         feat = resample(torch.from_numpy(P), torch.from_numpy(o)).numpy()[keep]
         ds_rate = 0.1 if self.upstream else min(1.0, LOCAL_CANDIDATES / max(len(feat), 1))
@@ -127,8 +112,8 @@ class Labeler:
             G = torch.from_numpy(ds.global_feat).float().to(self.device).transpose(2, 1).contiguous()
             parts = []
             with torch.no_grad():
-                for a in range(0, len(ds), 1024):
-                    b = min(len(ds), a + 1024)
+                for a in range(0, len(ds), self.batch):
+                    b = min(len(ds), a + self.batch)
                     out = self.model(Pf[a:b], torch.cat((L[a:b], G.expand(b - a, -1, -1, -1)), 3)).view(-1, 1600)
                     # one draw: its argmax and (if asked) its log-probabilities as float16; several: probabilities summed
                     parts.append((out.argmax(1).cpu(), out.half().cpu() if logp else None) if one else out.float().exp().cpu())

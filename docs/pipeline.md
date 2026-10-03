@@ -28,6 +28,10 @@ pipeline takes 16.5 s on an A10 and 12.2 s on an L40S, steady state.
 
 ## Open
 
+- **Which labeler.** On TractCloud's own test split RapidParc is the most accurate (94.5 % against
+  TractCloud's 92.0 % at its trained context, 86.6 % at upstream's inference context), the steadiest and
+  ~25x faster; on the 12 patients the two agree on 83.5 % of streamlines. The pipeline's default is still
+  TractCloud at 500; RapidParc is `tractline.labelers.rapidparc` (NOTES 2026-10-02, "The labelers compared").
 - **One TractCloud draw is not a stable label.** On PAT16 a single draw's Other fraction ranges
   55.5-66.2 % over context draws with the fibers fixed; the scan's noise moves it ~3 points; cards and
   kernels (58-63 %) sit inside both, no tracker bias. The pipeline labels with one draw; averaging

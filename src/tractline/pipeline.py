@@ -38,6 +38,20 @@ ESTIMATE_THREADS = 16            # the field estimate on the CPU: its problem is
                                  # 8 threads 43 s, 16 36.5 s, 32 41 s, 48 72.5 s (modal_cpu_field_timing.json)
 
 
+def release_memory(device):
+    """Return the GPU allocator's cached blocks to the system (and collect Python's garbage). PyTorch keeps
+    freed GPU memory cached for reuse; across patients in one process the M2's GPU driver memory grew to
+    7.8 GB with 0.03 GB live (bench/memory_batch.py), 0.1 GB after this, at ~4 % more time. run() calls it;
+    a batch that calls the stages or the labelers itself should call it between patients."""
+    import gc
+    gc.collect()
+    kind = torch.device(device).type
+    if kind == "mps":
+        torch.mps.empty_cache()
+    elif kind == "cuda":
+        torch.cuda.empty_cache()
+
+
 @contextmanager
 def exact_float32(device):
     """On CUDA, float32 as float32 for the pipeline's stages: no TF32 in cuDNN's convolutions or in
@@ -152,10 +166,11 @@ def label(tg: Tractogram, labeler: Labeler, timer: Timer, prefix="") -> Labels:
 STAGES = ("field_estimate", "field_apply", "prep", "load", "ukf", "tractcloud")
 
 
-def run(s, labeler: Labeler, timer: Timer, prefix="", trx=None, device="mps", workers=None, **trx_options):
+def run(s, labeler: Labeler, timer: Timer, prefix="", trx=None, device="mps", workers=None, release=True, **trx_options):
     """The whole pipeline on a subject: (Correction, Tractogram, Labels). Its time is
     timer.total(*pipeline_stages(prefix)). trx: also write the tractogram there as TRX (trx.write;
-    trx_options: positions="float16", labeled_only=True), timed apart as "write_trx". device: where
+    trx_options: positions="float16", labeled_only=True), timed apart as "write_trx". release: return
+    the GPU allocator's cache after the run (release_memory: batches stay flat). device: where
     the estimate and the tracking run ("mps" or "cpu"; the labeler has its own); workers: the CPU
     tracker's processes (default one per core as os.cpu_count() sees them - in a container, pass the
     container's own)."""
@@ -167,6 +182,8 @@ def run(s, labeler: Labeler, timer: Timer, prefix="", trx=None, device="mps", wo
         from . import trx as _trx
         with timer("write_trx"):
             _trx.write(trx, s, tg, labels, **trx_options)
+    if release:
+        release_memory(device)
     return corr, tg, labels
 
 

@@ -1,0 +1,814 @@
+{
+ "labelers": [
+  "tractcloud_80",
+  "tractcloud_500",
+  "rapidparc",
+  "rapidparc_hemiaug"
+ ],
+ "patients": {
+  "PAT05": {
+   "fibers": 41186,
+   "labelers": {
+    "tractcloud_80": {
+     "labeled": 31139,
+     "other": [
+      0.5669,
+      0.5986
+     ],
+     "seed_agreement": 0.831,
+     "seconds": 4.0
+    },
+    "tractcloud_500": {
+     "labeled": 31139,
+     "other": [
+      0.5082,
+      0.5142
+     ],
+     "seed_agreement": 0.9558,
+     "seconds": 9.2
+    },
+    "rapidparc": {
+     "labeled": 31139,
+     "other": [
+      0.5104,
+      0.5108
+     ],
+     "seed_agreement": 0.9741,
+     "seconds": 0.6
+    },
+    "rapidparc_hemiaug": {
+     "labeled": 31139,
+     "other": [
+      0.5077,
+      0.5066
+     ],
+     "seed_agreement": 0.9728,
+     "seconds": 0.6
+    }
+   },
+   "between": {
+    "tractcloud_80 | tractcloud_500": {
+     "agreement": 0.8462,
+     "tract_mix_r": 0.9903
+    },
+    "tractcloud_80 | rapidparc": {
+     "agreement": 0.8024,
+     "tract_mix_r": 0.9799
+    },
+    "tractcloud_80 | rapidparc_hemiaug": {
+     "agreement": 0.8011,
+     "tract_mix_r": 0.982
+    },
+    "tractcloud_500 | rapidparc": {
+     "agreement": 0.8468,
+     "tract_mix_r": 0.9931
+    },
+    "tractcloud_500 | rapidparc_hemiaug": {
+     "agreement": 0.8412,
+     "tract_mix_r": 0.9932
+    },
+    "rapidparc | rapidparc_hemiaug": {
+     "agreement": 0.9399,
+     "tract_mix_r": 0.9991
+    }
+   }
+  },
+  "PAT07": {
+   "fibers": 46637,
+   "labelers": {
+    "tractcloud_80": {
+     "labeled": 35888,
+     "other": [
+      0.6393,
+      0.6306
+     ],
+     "seed_agreement": 0.8435,
+     "seconds": 5.6
+    },
+    "tractcloud_500": {
+     "labeled": 35888,
+     "other": [
+      0.5641,
+      0.5654
+     ],
+     "seed_agreement": 0.9091,
+     "seconds": 10.9
+    },
+    "rapidparc": {
+     "labeled": 35888,
+     "other": [
+      0.5525,
+      0.5522
+     ],
+     "seed_agreement": 0.9727,
+     "seconds": 1.1
+    },
+    "rapidparc_hemiaug": {
+     "labeled": 35888,
+     "other": [
+      0.5524,
+      0.5526
+     ],
+     "seed_agreement": 0.9726,
+     "seconds": 1.3
+    }
+   },
+   "between": {
+    "tractcloud_80 | tractcloud_500": {
+     "agreement": 0.8289,
+     "tract_mix_r": 0.9932
+    },
+    "tractcloud_80 | rapidparc": {
+     "agreement": 0.7658,
+     "tract_mix_r": 0.9791
+    },
+    "tractcloud_80 | rapidparc_hemiaug": {
+     "agreement": 0.7634,
+     "tract_mix_r": 0.9811
+    },
+    "tractcloud_500 | rapidparc": {
+     "agreement": 0.835,
+     "tract_mix_r": 0.9893
+    },
+    "tractcloud_500 | rapidparc_hemiaug": {
+     "agreement": 0.8312,
+     "tract_mix_r": 0.9901
+    },
+    "rapidparc | rapidparc_hemiaug": {
+     "agreement": 0.942,
+     "tract_mix_r": 0.9994
+    }
+   }
+  },
+  "PAT08": {
+   "fibers": 50041,
+   "labelers": {
+    "tractcloud_80": {
+     "labeled": 38131,
+     "other": [
+      0.5861,
+      0.5894
+     ],
+     "seed_agreement": 0.8363,
+     "seconds": 5.6
+    },
+    "tractcloud_500": {
+     "labeled": 38131,
+     "other": [
+      0.5299,
+      0.5205
+     ],
+     "seed_agreement": 0.937,
+     "seconds": 12.5
+    },
+    "rapidparc": {
+     "labeled": 38131,
+     "other": [
+      0.5215,
+      0.5223
+     ],
+     "seed_agreement": 0.9709,
+     "seconds": 0.8
+    },
+    "rapidparc_hemiaug": {
+     "labeled": 38131,
+     "other": [
+      0.526,
+      0.5273
+     ],
+     "seed_agreement": 0.9697,
+     "seconds": 0.9
+    }
+   },
+   "between": {
+    "tractcloud_80 | tractcloud_500": {
+     "agreement": 0.8374,
+     "tract_mix_r": 0.9912
+    },
+    "tractcloud_80 | rapidparc": {
+     "agreement": 0.7886,
+     "tract_mix_r": 0.9736
+    },
+    "tractcloud_80 | rapidparc_hemiaug": {
+     "agreement": 0.7878,
+     "tract_mix_r": 0.9725
+    },
+    "tractcloud_500 | rapidparc": {
+     "agreement": 0.8171,
+     "tract_mix_r": 0.988
+    },
+    "tractcloud_500 | rapidparc_hemiaug": {
+     "agreement": 0.8176,
+     "tract_mix_r": 0.9873
+    },
+    "rapidparc | rapidparc_hemiaug": {
+     "agreement": 0.9406,
+     "tract_mix_r": 0.9995
+    }
+   }
+  },
+  "PAT13": {
+   "fibers": 38275,
+   "labelers": {
+    "tractcloud_80": {
+     "labeled": 29841,
+     "other": [
+      0.5829,
+      0.5697
+     ],
+     "seed_agreement": 0.8184,
+     "seconds": 7.8
+    },
+    "tractcloud_500": {
+     "labeled": 29841,
+     "other": [
+      0.4912,
+      0.4946
+     ],
+     "seed_agreement": 0.9467,
+     "seconds": 13.4
+    },
+    "rapidparc": {
+     "labeled": 29841,
+     "other": [
+      0.4994,
+      0.4995
+     ],
+     "seed_agreement": 0.9712,
+     "seconds": 1.0
+    },
+    "rapidparc_hemiaug": {
+     "labeled": 29841,
+     "other": [
+      0.505,
+      0.5039
+     ],
+     "seed_agreement": 0.9692,
+     "seconds": 0.6
+    }
+   },
+   "between": {
+    "tractcloud_80 | tractcloud_500": {
+     "agreement": 0.8123,
+     "tract_mix_r": 0.9889
+    },
+    "tractcloud_80 | rapidparc": {
+     "agreement": 0.7876,
+     "tract_mix_r": 0.9846
+    },
+    "tractcloud_80 | rapidparc_hemiaug": {
+     "agreement": 0.7849,
+     "tract_mix_r": 0.9858
+    },
+    "tractcloud_500 | rapidparc": {
+     "agreement": 0.8341,
+     "tract_mix_r": 0.993
+    },
+    "tractcloud_500 | rapidparc_hemiaug": {
+     "agreement": 0.8212,
+     "tract_mix_r": 0.993
+    },
+    "rapidparc | rapidparc_hemiaug": {
+     "agreement": 0.9285,
+     "tract_mix_r": 0.9987
+    }
+   }
+  },
+  "PAT14": {
+   "fibers": 31621,
+   "labelers": {
+    "tractcloud_80": {
+     "labeled": 21420,
+     "other": [
+      0.6221,
+      0.5731
+     ],
+     "seed_agreement": 0.8429,
+     "seconds": 3.2
+    },
+    "tractcloud_500": {
+     "labeled": 21420,
+     "other": [
+      0.5388,
+      0.5387
+     ],
+     "seed_agreement": 0.9338,
+     "seconds": 6.1
+    },
+    "rapidparc": {
+     "labeled": 21420,
+     "other": [
+      0.5197,
+      0.5196
+     ],
+     "seed_agreement": 0.9754,
+     "seconds": 1.0
+    },
+    "rapidparc_hemiaug": {
+     "labeled": 21420,
+     "other": [
+      0.5229,
+      0.5238
+     ],
+     "seed_agreement": 0.9739,
+     "seconds": 0.6
+    }
+   },
+   "between": {
+    "tractcloud_80 | tractcloud_500": {
+     "agreement": 0.8281,
+     "tract_mix_r": 0.9908
+    },
+    "tractcloud_80 | rapidparc": {
+     "agreement": 0.769,
+     "tract_mix_r": 0.9699
+    },
+    "tractcloud_80 | rapidparc_hemiaug": {
+     "agreement": 0.764,
+     "tract_mix_r": 0.9696
+    },
+    "tractcloud_500 | rapidparc": {
+     "agreement": 0.838,
+     "tract_mix_r": 0.991
+    },
+    "tractcloud_500 | rapidparc_hemiaug": {
+     "agreement": 0.8323,
+     "tract_mix_r": 0.9895
+    },
+    "rapidparc | rapidparc_hemiaug": {
+     "agreement": 0.9299,
+     "tract_mix_r": 0.9986
+    }
+   }
+  },
+  "PAT16": {
+   "fibers": 42170,
+   "labelers": {
+    "tractcloud_80": {
+     "labeled": 32264,
+     "other": [
+      0.5809,
+      0.5916
+     ],
+     "seed_agreement": 0.8648,
+     "seconds": 4.0
+    },
+    "tractcloud_500": {
+     "labeled": 32264,
+     "other": [
+      0.5059,
+      0.5136
+     ],
+     "seed_agreement": 0.9261,
+     "seconds": 9.2
+    },
+    "rapidparc": {
+     "labeled": 32264,
+     "other": [
+      0.4988,
+      0.4981
+     ],
+     "seed_agreement": 0.9707,
+     "seconds": 0.7
+    },
+    "rapidparc_hemiaug": {
+     "labeled": 32264,
+     "other": [
+      0.4987,
+      0.4984
+     ],
+     "seed_agreement": 0.9733,
+     "seconds": 0.7
+    }
+   },
+   "between": {
+    "tractcloud_80 | tractcloud_500": {
+     "agreement": 0.8249,
+     "tract_mix_r": 0.991
+    },
+    "tractcloud_80 | rapidparc": {
+     "agreement": 0.7767,
+     "tract_mix_r": 0.9785
+    },
+    "tractcloud_80 | rapidparc_hemiaug": {
+     "agreement": 0.7737,
+     "tract_mix_r": 0.978
+    },
+    "tractcloud_500 | rapidparc": {
+     "agreement": 0.8655,
+     "tract_mix_r": 0.9919
+    },
+    "tractcloud_500 | rapidparc_hemiaug": {
+     "agreement": 0.858,
+     "tract_mix_r": 0.9915
+    },
+    "rapidparc | rapidparc_hemiaug": {
+     "agreement": 0.9391,
+     "tract_mix_r": 0.9993
+    }
+   }
+  },
+  "PAT19": {
+   "fibers": 39537,
+   "labelers": {
+    "tractcloud_80": {
+     "labeled": 31503,
+     "other": [
+      0.592,
+      0.5548
+     ],
+     "seed_agreement": 0.878,
+     "seconds": 4.0
+    },
+    "tractcloud_500": {
+     "labeled": 31503,
+     "other": [
+      0.5276,
+      0.5286
+     ],
+     "seed_agreement": 0.9391,
+     "seconds": 9.0
+    },
+    "rapidparc": {
+     "labeled": 31503,
+     "other": [
+      0.5108,
+      0.5112
+     ],
+     "seed_agreement": 0.9753,
+     "seconds": 0.7
+    },
+    "rapidparc_hemiaug": {
+     "labeled": 31503,
+     "other": [
+      0.5084,
+      0.5093
+     ],
+     "seed_agreement": 0.9769,
+     "seconds": 1.0
+    }
+   },
+   "between": {
+    "tractcloud_80 | tractcloud_500": {
+     "agreement": 0.8467,
+     "tract_mix_r": 0.9882
+    },
+    "tractcloud_80 | rapidparc": {
+     "agreement": 0.7821,
+     "tract_mix_r": 0.9705
+    },
+    "tractcloud_80 | rapidparc_hemiaug": {
+     "agreement": 0.7822,
+     "tract_mix_r": 0.9676
+    },
+    "tractcloud_500 | rapidparc": {
+     "agreement": 0.8564,
+     "tract_mix_r": 0.9912
+    },
+    "tractcloud_500 | rapidparc_hemiaug": {
+     "agreement": 0.856,
+     "tract_mix_r": 0.989
+    },
+    "rapidparc | rapidparc_hemiaug": {
+     "agreement": 0.945,
+     "tract_mix_r": 0.999
+    }
+   }
+  },
+  "PAT20": {
+   "fibers": 35547,
+   "labelers": {
+    "tractcloud_80": {
+     "labeled": 25236,
+     "other": [
+      0.6202,
+      0.6183
+     ],
+     "seed_agreement": 0.8415,
+     "seconds": 3.2
+    },
+    "tractcloud_500": {
+     "labeled": 25236,
+     "other": [
+      0.541,
+      0.5378
+     ],
+     "seed_agreement": 0.9386,
+     "seconds": 7.2
+    },
+    "rapidparc": {
+     "labeled": 25236,
+     "other": [
+      0.5167,
+      0.5167
+     ],
+     "seed_agreement": 0.9726,
+     "seconds": 0.7
+    },
+    "rapidparc_hemiaug": {
+     "labeled": 25236,
+     "other": [
+      0.5195,
+      0.519
+     ],
+     "seed_agreement": 0.9752,
+     "seconds": 0.5
+    }
+   },
+   "between": {
+    "tractcloud_80 | tractcloud_500": {
+     "agreement": 0.806,
+     "tract_mix_r": 0.9912
+    },
+    "tractcloud_80 | rapidparc": {
+     "agreement": 0.7491,
+     "tract_mix_r": 0.9673
+    },
+    "tractcloud_80 | rapidparc_hemiaug": {
+     "agreement": 0.7491,
+     "tract_mix_r": 0.9669
+    },
+    "tractcloud_500 | rapidparc": {
+     "agreement": 0.816,
+     "tract_mix_r": 0.9882
+    },
+    "tractcloud_500 | rapidparc_hemiaug": {
+     "agreement": 0.8054,
+     "tract_mix_r": 0.986
+    },
+    "rapidparc | rapidparc_hemiaug": {
+     "agreement": 0.9251,
+     "tract_mix_r": 0.9985
+    }
+   }
+  },
+  "PAT23": {
+   "fibers": 49174,
+   "labelers": {
+    "tractcloud_80": {
+     "labeled": 36031,
+     "other": [
+      0.7025,
+      0.7077
+     ],
+     "seed_agreement": 0.8138,
+     "seconds": 4.6
+    },
+    "tractcloud_500": {
+     "labeled": 36031,
+     "other": [
+      0.6153,
+      0.632
+     ],
+     "seed_agreement": 0.9241,
+     "seconds": 10.0
+    },
+    "rapidparc": {
+     "labeled": 36031,
+     "other": [
+      0.6179,
+      0.6198
+     ],
+     "seed_agreement": 0.9606,
+     "seconds": 0.8
+    },
+    "rapidparc_hemiaug": {
+     "labeled": 36031,
+     "other": [
+      0.6198,
+      0.6201
+     ],
+     "seed_agreement": 0.9619,
+     "seconds": 0.7
+    }
+   },
+   "between": {
+    "tractcloud_80 | tractcloud_500": {
+     "agreement": 0.825,
+     "tract_mix_r": 0.97
+    },
+    "tractcloud_80 | rapidparc": {
+     "agreement": 0.7229,
+     "tract_mix_r": 0.9536
+    },
+    "tractcloud_80 | rapidparc_hemiaug": {
+     "agreement": 0.722,
+     "tract_mix_r": 0.9461
+    },
+    "tractcloud_500 | rapidparc": {
+     "agreement": 0.7617,
+     "tract_mix_r": 0.9683
+    },
+    "tractcloud_500 | rapidparc_hemiaug": {
+     "agreement": 0.763,
+     "tract_mix_r": 0.9636
+    },
+    "rapidparc | rapidparc_hemiaug": {
+     "agreement": 0.8993,
+     "tract_mix_r": 0.9963
+    }
+   }
+  },
+  "PAT25": {
+   "fibers": 42381,
+   "labelers": {
+    "tractcloud_80": {
+     "labeled": 32060,
+     "other": [
+      0.603,
+      0.5627
+     ],
+     "seed_agreement": 0.841,
+     "seconds": 4.0
+    },
+    "tractcloud_500": {
+     "labeled": 32060,
+     "other": [
+      0.5214,
+      0.5204
+     ],
+     "seed_agreement": 0.9154,
+     "seconds": 9.1
+    },
+    "rapidparc": {
+     "labeled": 32060,
+     "other": [
+      0.5173,
+      0.5181
+     ],
+     "seed_agreement": 0.9751,
+     "seconds": 0.7
+    },
+    "rapidparc_hemiaug": {
+     "labeled": 32060,
+     "other": [
+      0.52,
+      0.5217
+     ],
+     "seed_agreement": 0.9716,
+     "seconds": 0.7
+    }
+   },
+   "between": {
+    "tractcloud_80 | tractcloud_500": {
+     "agreement": 0.8473,
+     "tract_mix_r": 0.9901
+    },
+    "tractcloud_80 | rapidparc": {
+     "agreement": 0.7863,
+     "tract_mix_r": 0.9792
+    },
+    "tractcloud_80 | rapidparc_hemiaug": {
+     "agreement": 0.7903,
+     "tract_mix_r": 0.9803
+    },
+    "tractcloud_500 | rapidparc": {
+     "agreement": 0.8672,
+     "tract_mix_r": 0.9931
+    },
+    "tractcloud_500 | rapidparc_hemiaug": {
+     "agreement": 0.8689,
+     "tract_mix_r": 0.9926
+    },
+    "rapidparc | rapidparc_hemiaug": {
+     "agreement": 0.941,
+     "tract_mix_r": 0.9995
+    }
+   }
+  },
+  "PAT26": {
+   "fibers": 47326,
+   "labelers": {
+    "tractcloud_80": {
+     "labeled": 35914,
+     "other": [
+      0.6768,
+      0.6319
+     ],
+     "seed_agreement": 0.8437,
+     "seconds": 4.5
+    },
+    "tractcloud_500": {
+     "labeled": 35914,
+     "other": [
+      0.5761,
+      0.5648
+     ],
+     "seed_agreement": 0.9273,
+     "seconds": 9.9
+    },
+    "rapidparc": {
+     "labeled": 35914,
+     "other": [
+      0.5586,
+      0.5589
+     ],
+     "seed_agreement": 0.9698,
+     "seconds": 0.8
+    },
+    "rapidparc_hemiaug": {
+     "labeled": 35914,
+     "other": [
+      0.5584,
+      0.5575
+     ],
+     "seed_agreement": 0.97,
+     "seconds": 0.7
+    }
+   },
+   "between": {
+    "tractcloud_80 | tractcloud_500": {
+     "agreement": 0.8101,
+     "tract_mix_r": 0.9896
+    },
+    "tractcloud_80 | rapidparc": {
+     "agreement": 0.7057,
+     "tract_mix_r": 0.974
+    },
+    "tractcloud_80 | rapidparc_hemiaug": {
+     "agreement": 0.7042,
+     "tract_mix_r": 0.9725
+    },
+    "tractcloud_500 | rapidparc": {
+     "agreement": 0.7801,
+     "tract_mix_r": 0.9883
+    },
+    "tractcloud_500 | rapidparc_hemiaug": {
+     "agreement": 0.7774,
+     "tract_mix_r": 0.9858
+    },
+    "rapidparc | rapidparc_hemiaug": {
+     "agreement": 0.9334,
+     "tract_mix_r": 0.9991
+    }
+   }
+  },
+  "PAT29": {
+   "fibers": 44704,
+   "labelers": {
+    "tractcloud_80": {
+     "labeled": 35376,
+     "other": [
+      0.6227,
+      0.6545
+     ],
+     "seed_agreement": 0.8286,
+     "seconds": 4.4
+    },
+    "tractcloud_500": {
+     "labeled": 35376,
+     "other": [
+      0.5712,
+      0.5661
+     ],
+     "seed_agreement": 0.9393,
+     "seconds": 10.2
+    },
+    "rapidparc": {
+     "labeled": 35376,
+     "other": [
+      0.5559,
+      0.5533
+     ],
+     "seed_agreement": 0.9678,
+     "seconds": 0.8
+    },
+    "rapidparc_hemiaug": {
+     "labeled": 35376,
+     "other": [
+      0.5484,
+      0.5494
+     ],
+     "seed_agreement": 0.9651,
+     "seconds": 1.3
+    }
+   },
+   "between": {
+    "tractcloud_80 | tractcloud_500": {
+     "agreement": 0.8746,
+     "tract_mix_r": 0.9944
+    },
+    "tractcloud_80 | rapidparc": {
+     "agreement": 0.7531,
+     "tract_mix_r": 0.9824
+    },
+    "tractcloud_80 | rapidparc_hemiaug": {
+     "agreement": 0.7533,
+     "tract_mix_r": 0.9827
+    },
+    "tractcloud_500 | rapidparc": {
+     "agreement": 0.7882,
+     "tract_mix_r": 0.9829
+    },
+    "tractcloud_500 | rapidparc_hemiaug": {
+     "agreement": 0.7886,
+     "tract_mix_r": 0.9851
+    },
+    "rapidparc | rapidparc_hemiaug": {
+     "agreement": 0.9146,
+     "tract_mix_r": 0.9966
+    }
+   }
+  }
+ }
+}

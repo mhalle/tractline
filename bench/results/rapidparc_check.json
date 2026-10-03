@@ -1,0 +1,67 @@
+{
+ "subject": "PAT16",
+ "streamlines": 32264,
+ "reference_seconds": 12.0,
+ "runs": {
+  "rapidparc, seed 0": {
+   "cpu": {
+    "clusters_identical": true,
+    "cluster_agreement": 1.0,
+    "tract_agreement": 1.0,
+    "seconds": 1.1
+   },
+   "mps": {
+    "clusters_identical": true,
+    "cluster_agreement": 1.0,
+    "tract_agreement": 1.0,
+    "seconds": 0.9
+   },
+   "other_fraction": 0.4988
+  },
+  "rapidparc, seed 42": {
+   "cpu": {
+    "clusters_identical": true,
+    "cluster_agreement": 1.0,
+    "tract_agreement": 1.0,
+    "seconds": 1.1
+   },
+   "mps": {
+    "clusters_identical": true,
+    "cluster_agreement": 1.0,
+    "tract_agreement": 1.0,
+    "seconds": 0.4
+   },
+   "other_fraction": 0.4991
+  },
+  "hemiaug, seed 0": {
+   "cpu": {
+    "clusters_identical": true,
+    "cluster_agreement": 1.0,
+    "tract_agreement": 1.0,
+    "seconds": 1.1
+   },
+   "mps": {
+    "clusters_identical": false,
+    "cluster_agreement": 0.99997,
+    "tract_agreement": 1.0,
+    "seconds": 0.4
+   },
+   "other_fraction": 0.4987
+  },
+  "hemiaug, seed 42": {
+   "cpu": {
+    "clusters_identical": true,
+    "cluster_agreement": 1.0,
+    "tract_agreement": 1.0,
+    "seconds": 1.1
+   },
+   "mps": {
+    "clusters_identical": true,
+    "cluster_agreement": 1.0,
+    "tract_agreement": 1.0,
+    "seconds": 0.5
+   },
+   "other_fraction": 0.4993
+  }
+ }
+}

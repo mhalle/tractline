@@ -1573,3 +1573,36 @@ training (no training/inference mismatch). `labelers/base.py` holds what labeler
 - PAT16's Other fraction with RapidParc: 49.7-49.8 % across seeds and models (TractCloud at 500: 50.6 %).
 - A slip on the way: reading an .npz array inside a loop (`z["points"][a:b]` per streamline) re-reads the
   whole array each time - the first Modal run spent 8 minutes there before it was stopped.
+
+## 2026-10-02 The labelers compared: 12 patients, and accuracy on TractCloud's own test split
+
+**On the 12 patients** (`labeler_compare.py` → `labeler_compare.json`; each tracked once, the same
+tractogram labeled four ways, seeds 0 and 1; medians): agreement between seeds - TractCloud at 80 84.1 %,
+at 500 93.5 %, RapidParc 97.2 %, hemiaug 97.2 % (worst patient 81.4 / 90.9 / 96.1 / 96.2); Other's change
+between seeds 2.3 / 0.4 / 0.04 / 0.09 points; Other 61.2 / 53.4 / 51.8 / 52.1 %; seconds a draw on the M2
+4.2 / 9.6 / 0.8 / 0.7. Between labelers: TractCloud 500 and RapidParc agree on 83.5 % of streamlines
+(min 76.2 %), tract mix r 0.990; RapidParc and hemiaug 93.6 %, r 0.999. (The cohort rerun with TractCloud
+at 500 was stopped after 5 patients for this; its results were restored to the committed ones.)
+
+**On TractCloud's test split** (`accuracy_tractcloud_test.py` → `accuracy_tractcloud_test.json`; its
+release's TrainData_800clu800ol/test.pickle: 20 HCP subjects x 10,000 streamlines, ORG-atlas cluster
+labels; each subject labeled as one tractogram; tract accuracy / macro F1 over 43 classes, seed 0):
+- TractCloud at upstream's inference context (80, 10 %): **86.55 % / 82.74 %** (cluster accuracy 60.2 %).
+- TractCloud at the trained context (500, all 10,000): **92.01 / 89.92** (seed 1 91.89 / 89.76; cluster
+  76.7 %) - the TractCloud paper's numbers as RapidParc's paper tabulates them, 92.12 / 90.22.
+- RapidParc **94.48 / 93.23** (seed 1 94.50 / 93.30; cluster 84.6 %) - its paper: 94.44 / 93.2.
+  hemiaug 94.45 / 93.29 - its paper: 94.43 / 93.18.
+- Seeds agree (tract): 87.4 / 95.5 / 98.4 / 98.2 %. Seconds a subject a draw: 1.3 / 3.2 / 0.13 / 0.12.
+So both implementations reproduce their papers; upstream's packaged inference context costs TractCloud
+5.5 points of accuracy and 7.2 of macro F1 on its own test data - not only noisier, more often wrong. On
+healthy in-domain data RapidParc is 2.5 points more accurate than TractCloud at its best, steadier, ~25x
+faster. RapidParc's paper on lesioned brains (hemispherotomy): both methods far lower (72-77 %), hemiaug
+ahead of TractCloud by 7.5 points of accuracy post-surgery.
+
+**Memory in a batch** (`memory_batch.py` → `memory_batch_{as_is,cleanup}.json`; four patients in one
+process, the labelers loaded once): live GPU tensors stay at 0.03 GB - no leak - but PyTorch's MPS
+allocator keeps freed blocks cached: the driver's memory 5.9 → 7.8 GB, the footprint 8.2 GB (and 13 GB
+in labeler_compare's first run, 4 labelers x 2 seeds, which then swapped). gc + torch.mps.empty_cache
+after each patient: 0.1 GB, footprint 0.3-2.3 GB, 4 % more time. `pipeline.release_memory(device)` does
+it; `run()` calls it by default. TractCloud at 500 was the peak (batches of 1,024 streamlines: 5.9 GB);
+its Labeler now takes batches of 256 - identical labels, as fast, 2.1 GB.
