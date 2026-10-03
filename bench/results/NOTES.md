@@ -1810,3 +1810,27 @@ axis with no extent now divides by 1; with every extent positive the arithmetic 
 `prep.prepare` no longer warns on the b0 rows' 0/0 (it was discarded). Unused imports and variables
 removed from the bench and the package (`ruff --fix`), and upstream's unused TRACT_NAMES no longer
 imported by the TractCloud labeler.
+
+## 2026-10-03 What the correction needs from the acquisition: polarity and readout time
+
+For a DICOM front end, whose phase-encoding polarity and readout time are vendor-private (Philips states
+no polarity at all): `readout_polarity.py` on the 12 patients (`results/readout_polarity/`,
+`readout_polarity_summary.py`), the field estimate's defaults on the M2's GPU, the DWI's displacement
+compared in the brain (99th percentile of |difference|):
+- **Absolute polarity does not matter**: every sign flipped gives the same displacements, 0.0 mm on all
+  12 (topup's model: the field's sign flips with them; the smoothing is quadratic in it).
+- **Readout time barely matters**: scaled by 0.8 or 1.25 (both series), the displacement moves at most
+  0.20 mm on 11 patients, against 6.2-9.8 mm of correction - the field is fitted in Hz and the smoothing
+  weight acts on it (k^2 = 0.64 to 1.56), but the fit hardly responds. PAT26 at 1.25: 0.92 mm, because that
+  run ended at a lower cost (193.6 against the base's 199.8): a different and better solution the scaled
+  problem's path reached, not a readout effect - the default fit on PAT26 stops short of it (open: worth a
+  look at the estimator, e.g. restarts or the coarse levels).
+- **Relative polarity is visible in the images**: labeled opposite, the true pair gives a field whose
+  displacement's 99th percentile is 6.2-9.8 mm; a control - the AP b0s split in two halves, one polarity
+  truly, labeled opposite - gives 0.7-1.7 mm. Pair over control: 4.7-13.7x, median 7.2x (smallest PAT25).
+  The first level's cost ratio separates less well (PAT25 0.08 against 0.11, PAT29 0.11 against 0.12): the
+  displacement is the statistic. The control is the easy case - halves of one series, seconds apart; two
+  same-polarity series minutes apart would show more motion and drift, and are not in ds001226.
+So a front end needs the phase-encoding axis (standard DICOM, 0018,1312), the relative polarity (readable
+from the images, with the caveat above, or from the headers when they state it), and a readout time,
+nominal if need be; the absolute polarity it does not.

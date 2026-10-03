@@ -1,0 +1,131 @@
+{
+ "patients": 12,
+ "rows": [
+  {
+   "subject": "PAT05",
+   "pair_99th_mm": 9.549,
+   "control_99th_mm": 0.919,
+   "pair_level1_cost": 0.0637,
+   "control_level1_cost": 0.4591,
+   "readout_x0.8_vs_base_99th_mm": 0.14,
+   "readout_x1.25_vs_base_99th_mm": 0.146,
+   "flipped_vs_base_99th_mm": 0.0
+  },
+  {
+   "subject": "PAT07",
+   "pair_99th_mm": 7.487,
+   "control_99th_mm": 1.127,
+   "pair_level1_cost": 0.0875,
+   "control_level1_cost": 0.2104,
+   "readout_x0.8_vs_base_99th_mm": 0.2,
+   "readout_x1.25_vs_base_99th_mm": 0.066,
+   "flipped_vs_base_99th_mm": 0.0
+  },
+  {
+   "subject": "PAT08",
+   "pair_99th_mm": 8.113,
+   "control_99th_mm": 0.954,
+   "pair_level1_cost": 0.0786,
+   "control_level1_cost": 0.4323,
+   "readout_x0.8_vs_base_99th_mm": 0.077,
+   "readout_x1.25_vs_base_99th_mm": 0.088,
+   "flipped_vs_base_99th_mm": 0.0
+  },
+  {
+   "subject": "PAT13",
+   "pair_99th_mm": 8.54,
+   "control_99th_mm": 0.676,
+   "pair_level1_cost": 0.0943,
+   "control_level1_cost": 0.3526,
+   "readout_x0.8_vs_base_99th_mm": 0.066,
+   "readout_x1.25_vs_base_99th_mm": 0.049,
+   "flipped_vs_base_99th_mm": 0.0
+  },
+  {
+   "subject": "PAT14",
+   "pair_99th_mm": 8.408,
+   "control_99th_mm": 1.163,
+   "pair_level1_cost": 0.0867,
+   "control_level1_cost": 0.2431,
+   "readout_x0.8_vs_base_99th_mm": 0.103,
+   "readout_x1.25_vs_base_99th_mm": 0.07,
+   "flipped_vs_base_99th_mm": 0.0
+  },
+  {
+   "subject": "PAT16",
+   "pair_99th_mm": 8.352,
+   "control_99th_mm": 1.196,
+   "pair_level1_cost": 0.0845,
+   "control_level1_cost": 0.1828,
+   "readout_x0.8_vs_base_99th_mm": 0.076,
+   "readout_x1.25_vs_base_99th_mm": 0.071,
+   "flipped_vs_base_99th_mm": 0.0
+  },
+  {
+   "subject": "PAT19",
+   "pair_99th_mm": 7.928,
+   "control_99th_mm": 1.439,
+   "pair_level1_cost": 0.084,
+   "control_level1_cost": 0.2335,
+   "readout_x0.8_vs_base_99th_mm": 0.112,
+   "readout_x1.25_vs_base_99th_mm": 0.086,
+   "flipped_vs_base_99th_mm": 0.0
+  },
+  {
+   "subject": "PAT20",
+   "pair_99th_mm": 9.827,
+   "control_99th_mm": 0.766,
+   "pair_level1_cost": 0.0944,
+   "control_level1_cost": 0.3088,
+   "readout_x0.8_vs_base_99th_mm": 0.081,
+   "readout_x1.25_vs_base_99th_mm": 0.145,
+   "flipped_vs_base_99th_mm": 0.0
+  },
+  {
+   "subject": "PAT23",
+   "pair_99th_mm": 8.338,
+   "control_99th_mm": 0.807,
+   "pair_level1_cost": 0.088,
+   "control_level1_cost": 0.3952,
+   "readout_x0.8_vs_base_99th_mm": 0.111,
+   "readout_x1.25_vs_base_99th_mm": 0.087,
+   "flipped_vs_base_99th_mm": 0.0
+  },
+  {
+   "subject": "PAT25",
+   "pair_99th_mm": 8.006,
+   "control_99th_mm": 1.689,
+   "pair_level1_cost": 0.082,
+   "control_level1_cost": 0.1117,
+   "readout_x0.8_vs_base_99th_mm": 0.086,
+   "readout_x1.25_vs_base_99th_mm": 0.06,
+   "flipped_vs_base_99th_mm": 0.0
+  },
+  {
+   "subject": "PAT26",
+   "pair_99th_mm": 6.181,
+   "control_99th_mm": 0.95,
+   "pair_level1_cost": 0.1132,
+   "control_level1_cost": 0.2657,
+   "readout_x0.8_vs_base_99th_mm": 0.064,
+   "readout_x1.25_vs_base_99th_mm": 0.922,
+   "flipped_vs_base_99th_mm": 0.0
+  },
+  {
+   "subject": "PAT29",
+   "pair_99th_mm": 7.921,
+   "control_99th_mm": 1.313,
+   "pair_level1_cost": 0.1098,
+   "control_level1_cost": 0.1232,
+   "readout_x0.8_vs_base_99th_mm": 0.062,
+   "readout_x1.25_vs_base_99th_mm": 0.079,
+   "flipped_vs_base_99th_mm": 0.0
+  }
+ ],
+ "pair_over_control_99th_min_median": [
+  4.74,
+  7.23
+ ],
+ "readout_vs_base_99th_mm_max": 0.922,
+ "flipped_vs_base_99th_mm_max": 0.0
+}

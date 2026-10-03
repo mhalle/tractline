@@ -120,7 +120,8 @@ says which, and what re-running their scripts would now produce.
   `memory_batch.py` (memory across patients in one process).
 - The field estimate: `susc_held_out.py` (+ `susc_held_out_summary.py`: split-half, held-out prediction
   and drift from each scan's own b0s, 12 patients - the test that picks its settings),
-  `susc_stability.py`, `susc_convergence.py`.
+  `susc_stability.py`, `susc_convergence.py`, `readout_polarity.py` (+ `_summary`: what the correction needs to
+  know of the acquisition - absolute polarity, readout time, relative polarity from the images).
 - Speed: `cpu_timing.py`, `modal_cpu_scaling.py` (x86, CPU only), `modal_gpu_pipeline.py` (+
   `gpu_pipeline_compare.py`: the pipeline on CUDA GPUs and CPUs against the M2), `hardi_paths.py` +
   `modal_hardi_paths.py` (the HARDI brain on the M2, an L40S and a Modal CPU container), `ukf_cpu_check.py`.
