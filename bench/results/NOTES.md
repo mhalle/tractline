@@ -1852,3 +1852,16 @@ or the acquisition. Until resolved, relative polarity comes from the headers, no
 
 Correction: the estimate already scales the volumes to a common mean (topup's --scale=1,
 susceptibility.py); scaling the series again in the script changes nothing (`--scale on` / `off` agree).
+
+## 2026-10-03 GE DICOM headers through dcm2niix's sidecar-only mode
+
+`dcm2niix -b o` (v1.0.20260416, Homebrew; sidecars only, no images) on dcm2niix's own GE validation sets,
+cloned into $TRACTOGRAPHY_DATA/dicom (dcm_qa_polar cda2bc7, dcm_qa_ge e92133a, dcm_qa_trt 6d7467a; ~270 MB
+fetched, ~1 GB on disk): 12,357 DICOM files, 35 series, 7 s, no NIfTI written. Every series gets a signed
+`PhaseEncodingDirection` (j / j-), a `TotalReadoutTime` (15-122 ms: acceleration and partial Fourier move it
+eightfold - a nominal value is only safe when both series of a pair share the protocol) and a
+`ShimSetting`; the 28 series with a reference sidecar in the sets match it exactly on all four fields.
+GE's shim is three values, (0043,1002-1004), the linear X/Y/Z shim gradients - plain private values, read
+straight; Siemens records eight (linear and second order), so a GE comparison sees only a linear re-shim.
+dcm_qa_polar's epi_pepolar series alternate polarity volume by volume inside one series: dcm2niix splits
+them, the reversed volumes as series number + 1000 (6 and 1006, 8 and 1008).
