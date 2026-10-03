@@ -1834,3 +1834,21 @@ compared in the brain (99th percentile of |difference|):
 So a front end needs the phase-encoding axis (standard DICOM, 0018,1312), the relative polarity (readable
 from the images, with the caveat above, or from the headers when they state it), and a readout time,
 nominal if need be; the absolute polarity it does not.
+
+## 2026-10-03 Polarity from images across separate series: not shown (preliminary, 2 subjects)
+
+OpenNeuro ds005123 (CC0, Siemens Prisma; `fetch_ds005123.py` reads per subject the diffusion series' two
+leading b0s by streaming, and the acq-dwi spin-echo field maps, 107 MB for 12 subjects), two subjects
+through `polarity_separate_series.py` (displacement 99th percentile in the brain, mm, sub-10317 / sub-10369):
+true pair (diffusion b0s + PA field map) 10.5 / 18.7; **control, separate series (diffusion b0s + the
+same-polarity AP field map, ~7 min later, labeled opposite) 9.5 / 11.6**; control within one series
+1.0 / 1.0; the field maps' own pair (AP + PA) 5.8 / 6.2, and the diffusion+PA pair's field differs from it
+by 9.4 / 13.3. So the earlier result (`readout_polarity.py`: polarity readable from the images) holds
+within a series but is not shown across series; here the diffusion b0s and the same-polarity field map
+differ in more than distortion - their correlation in the brain is 0.64, below the opposite-polarity field
+maps' 0.79-0.82, and no shift along j improves it. Cause open: the sequences' contrast (multiband HYDI
+diffusion against a spin-echo field map, same TE/TR/readout by their sidecars), the streamed extraction,
+or the acquisition. Until resolved, relative polarity comes from the headers, not the images.
+
+Correction: the estimate already scales the volumes to a common mean (topup's --scale=1,
+susceptibility.py); scaling the series again in the script changes nothing (`--scale on` / `off` agree).

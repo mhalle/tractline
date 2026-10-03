@@ -1,0 +1,105 @@
+{
+ "dataset": "OpenNeuro ds005123 v1.1.3 (CC0)",
+ "scale": "off",
+ "subjects": {
+  "sub-10317": {
+   "acquisition_time": {
+    "dwi": "12:45:21.527500",
+    "ap": "12:52:39.517500",
+    "pa": "12:53:25.507500"
+   },
+   "brain_voxels": 169739,
+   "pair (dwi b0s + PA)": {
+    "displacement_abs_mm_median_99th": [
+     1.863,
+     10.453
+    ],
+    "seconds": 21.0
+   },
+   "control, separate series (dwi b0s + AP, labeled opposite)": {
+    "displacement_abs_mm_median_99th": [
+     1.404,
+     9.514
+    ],
+    "seconds": 23.8
+   },
+   "control, one series (dwi b0 0 + 1, labeled opposite)": {
+    "displacement_abs_mm_median_99th": [
+     0.228,
+     0.981
+    ],
+    "seconds": 10.3
+   },
+   "field maps (AP + PA)": {
+    "displacement_abs_mm_median_99th": [
+     0.674,
+     5.81
+    ],
+    "seconds": 17.0
+   },
+   "pair vs field maps, |difference| mm median_99th": [
+    1.474,
+    9.407
+   ]
+  },
+  "sub-10369": {
+   "acquisition_time": {
+    "dwi": "17:09:38.417500",
+    "ap": "17:16:55.410000",
+    "pa": "17:17:40.407500"
+   },
+   "brain_voxels": 170208,
+   "pair (dwi b0s + PA)": {
+    "displacement_abs_mm_median_99th": [
+     2.809,
+     18.438
+    ],
+    "seconds": 28.9
+   },
+   "control, separate series (dwi b0s + AP, labeled opposite)": {
+    "displacement_abs_mm_median_99th": [
+     2.38,
+     11.618
+    ],
+    "seconds": 22.0
+   },
+   "control, one series (dwi b0 0 + 1, labeled opposite)": {
+    "displacement_abs_mm_median_99th": [
+     0.236,
+     0.976
+    ],
+    "seconds": 12.0
+   },
+   "field maps (AP + PA)": {
+    "displacement_abs_mm_median_99th": [
+     0.813,
+     6.225
+    ],
+    "seconds": 20.3
+   },
+   "pair vs field maps, |difference| mm median_99th": [
+    2.599,
+    13.322
+   ]
+  }
+ },
+ "summary": {
+  "pair_99th_mm_min_max": [
+   10.453,
+   18.438
+  ],
+  "separate_control_99th_mm_min_max": [
+   9.514,
+   11.618
+  ],
+  "one_series_control_99th_mm_min_max": [
+   0.976,
+   0.981
+  ],
+  "pair_over_separate_control_min_median_max": [
+   1.1,
+   1.34,
+   1.59
+  ]
+ }
+}
