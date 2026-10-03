@@ -1761,3 +1761,12 @@ tool. Usage lines say `uv run`. Checked: the lock resolves the same versions as 
 results were made in (torch 2.14.1, numpy 2.5.3, scipy 1.18.1, nibabel 5.4.2, dipy 1.12.1, ...), the
 environment synced entirely from uv's cache, and through `uv run` the PAT16 cohort run is identical to
 the committed result (UKF throughput aside) and `rapidparc_check.py` reproduces its committed result.
+
+## 2026-10-03 The bench's dependencies: dev by default, vtk and scikit-learn opt-in
+
+The `bench` group became uv's conventional `dev` group (installed by `uv sync` / `uv run` without
+configuration): pynrrd, dipy, trx-python, matplotlib. vtk (0.5 GB, three scripts that read VTK
+tractography files: `ukf_compare.py`, `ukf_bench.py`, `resample_check.py`) and scikit-learn (one macro F1
+in `accuracy_tractcloud_test.py`) are opt-in groups: `uv run --group vtk ...`, `uv run --group sklearn ...`.
+The default environment went from 1.3 GB to 785 MB (torch is 533 MB of it). Checked: `cohort_summary.py`
+runs; each group installs on request; the optional TractCloud labeler labels with vtk not installed.

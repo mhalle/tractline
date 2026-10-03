@@ -1825,12 +1825,16 @@ triton = [
 ]
 
 [package.dev-dependencies]
-bench = [
+dev = [
     { name = "dipy" },
     { name = "matplotlib" },
     { name = "pynrrd" },
-    { name = "scikit-learn" },
     { name = "trx-python" },
+]
+sklearn = [
+    { name = "scikit-learn" },
+]
+vtk = [
     { name = "vtk" },
 ]
 
@@ -1846,14 +1850,14 @@ requires-dist = [
 provides-extras = ["nrrd", "triton"]
 
 [package.metadata.requires-dev]
-bench = [
+dev = [
     { name = "dipy", specifier = ">=1.12" },
     { name = "matplotlib", specifier = ">=3.11" },
     { name = "pynrrd", specifier = ">=1.1" },
-    { name = "scikit-learn", specifier = ">=1.9" },
     { name = "trx-python", specifier = ">=0.6" },
-    { name = "vtk", specifier = ">=9.7" },
 ]
+sklearn = [{ name = "scikit-learn", specifier = ">=1.9" }]
+vtk = [{ name = "vtk", specifier = ">=9.7" }]
 
 [[package]]
 name = "triton"

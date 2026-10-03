@@ -1,6 +1,6 @@
 """UKF tractography timed on this Mac, from the prebuilt Slicer extension, on a public DWI.
 
-    uv run bench/ukf_bench.py [--seeds-per-voxel 1] [--threads 8]
+    uv run --group vtk bench/ukf_bench.py [--seeds-per-voxel 1] [--threads 8]
 
 The one stage of the pipeline not measured elsewhere when it ran (a record). Nothing is installed into
 /Applications/Slicer.app:

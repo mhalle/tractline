@@ -15,12 +15,12 @@ history.
 With [uv](https://docs.astral.sh/uv/), from a checkout:
 
 ```
-uv sync                       # the package (numpy, scipy, torch, nibabel) and the bench's dependencies
+uv sync                       # the package (numpy, scipy, torch, nibabel) and the bench's (the dev group)
 uv sync --extra triton        # + the tracker's kernel on CUDA (Linux with an NVIDIA GPU)
 uv run bench/run_pipeline.py --sub PAT16
 ```
 
-As a dependency of another project (the bench group stays behind - it is not in the package's metadata):
+As a dependency of another project (the bench's groups stay behind - they are not in the package's metadata):
 
 ```
 uv add "tractline @ git+https://github.com/mhalle/tractline@v0.1.0"
@@ -41,8 +41,10 @@ layout in `src/tractline/data.py`):
   (`TestData/`) from its release. For `topup_ref.py` and `cohort_topup.py`: `fsl-env/`, FSL's topup
   (conda, from FSL's channel - FSL is not a Python package).
 
-The bench needs more than the package: trx-python, dipy, pynrrd, vtk, matplotlib and scikit-learn, the
-`bench` dependency group, which `uv sync` and `uv run` install by default. `rapidparc_check.py` runs RapidParc's
+The bench needs more than the package: pynrrd, dipy, trx-python and matplotlib, the `dev` dependency
+group, which `uv sync` and `uv run` install by default. Two heavy packages are opt-in groups, each for a
+few scripts: `vtk` (0.5 GB; `ukf_compare.py`, `ukf_bench.py`, `resample_check.py`: VTK tractography files)
+and `sklearn` (`accuracy_tractcloud_test.py`) - `uv run --group vtk bench/ukf_compare.py`. `rapidparc_check.py` runs RapidParc's
 own package in an isolated environment uv builds for it (`uv run --with RapidParc==1.0.4`; its pins would not
 fit the project's). The `modal_*.py` scripts run through the modal CLI, a uv tool (`uv tool install modal`;
 `modal run bench/modal_gpu_pipeline.py`); their images install with uv, torch pinned at 2.14.1 (every committed
