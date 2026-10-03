@@ -126,6 +126,10 @@ The compact format work (the rank field, predictive geometry, the viewers, DeepM
 test) stayed in the incubation repository; when it returns it will be wired into an exporter from the
 labeler's in-memory probabilities, not through the TRX.
 
+## Contributors
+
+Ron Kikinis contributed to tractline.
+
 ## Licenses
 
 Apache License 2.0 (`LICENSE`): all of tractline's code. The originals it implements, and the one file it
