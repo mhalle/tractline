@@ -34,8 +34,8 @@ OTHER, KS = 42, (1, 2, 3, 5, 10)
 
 class Draws:
     """One tractogram's features, and the network's log-probabilities for a (local seed, global seed)."""
-    def __init__(self, lab, fibers, k_global=80, k_ds_rate=0.1):
-        self.lab, self.k_global, self.k_ds_rate = lab, k_global, k_ds_rate
+    def __init__(self, lab, fibers, k_global=80, k_ds_rate=0.1, batch=1024):
+        self.lab, self.k_global, self.k_ds_rate, self.batch = lab, k_global, k_ds_rate, batch
         lens = np.array([len(f) for f in fibers])
         Pts = np.concatenate(fibers).astype(np.float32).astype(np.float64)
         o = np.r_[0, np.cumsum(lens)]
@@ -61,8 +61,8 @@ class Draws:
         G = torch.from_numpy(dg.global_feat).float().to(dev).transpose(2, 1).contiguous()
         out = []
         with torch.no_grad():
-            for a in range(0, len(dl), 1024):
-                b = min(len(dl), a + 1024)
+            for a in range(0, len(dl), self.batch):
+                b = min(len(dl), a + self.batch)
                 out.append(self.lab.model(Pf[a:b], torch.cat((L[a:b], G.expand(b - a, -1, -1, -1)), 3)).view(-1, 1600).float().cpu())
         return torch.cat(out)
 

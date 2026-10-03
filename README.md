@@ -15,8 +15,8 @@ pip install -e .            # numpy, scipy, torch, nibabel
 pip install -e ".[nrrd]"    # NRRD input/output for the tracker
 ```
 
-TractCloud's code and trained weights are read from the data directory for now (`tractline.data`:
-`$TRACTOGRAPHY_DATA`, default `~/tmp/data/tractography`); `docs/labelers.md` plans the labeler as a
+TractCloud's code and trained weights, and RapidParc's weights (`RapidParc/`), are read from the data
+directory for now (`tractline.data`: `$TRACTOGRAPHY_DATA`, default `~/tmp/data/tractography`); `docs/labelers.md` plans the labeler as a
 swappable component with our own TractCloud as the default.
 
 ## The package (`src/tractline`)
@@ -31,7 +31,9 @@ scipy, torch, nibabel and TractCloud's code and weights, nothing more (`bench/de
 | `susceptibility.py` | `estimate` (FSL topup's model by Gauss-Newton, with HySCO's anti-folding penalty; GPU or CPU), `apply`, `displacement_mm` |
 | `prep.py`, `mask.py` | the tracker's input: one shell, gradients in RAS, DIPY's `median_otsu` mask (exactly, in torch) |
 | `ukf.py`, `ukf_metal.py`, `ukf_triton_block.py` | UKF two-tensor tractography as the Slicer binary does it; the Metal (Apple) and Triton (CUDA) kernels for the steps (`ukf_triton.py`, the unrolled first attempt, compiles too slowly to use) |
-| `labelers/tractcloud.py`, `resample.py` | TractCloud labels and log-probabilities |
+| `labelers/tractcloud.py`, `resample.py` | TractCloud labels and log-probabilities (at the context the model was trained with) |
+| `labelers/rapidparc.py` | RapidParc labels (its released weights; the same 43-class scheme) |
+| `labelers/base.py` | what labelers share: `Labels`, the 40 mm cut |
 | `trx.py` | optional output: the tractogram as TRX, with tract labels and probabilities |
 | `t1check.py` | measurement, not pipeline: the distortion left against the T1 |
 | `data.py` | where data and weights live |

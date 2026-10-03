@@ -1553,3 +1553,23 @@ with the GPU on every streamline. Time per draw on the M2 9.1 s (was 3.9); CPU 1
   fixed seed) after measuring the same instability (79 % kept their tract between draws on PAT16), and
   keeps upstream's 80 / 10 % (`model/make-model.py`): repeatable, but one arbitrary draw of an unstable
   setting; any change in the streamlines is a new draw.
+
+## 2026-10-02 RapidParc as a second labeler: identical to its package
+
+`labelers/rapidparc.py`: RapidParc's inference (github.com/MedVisBonn/RapidParc v1.0.4, BSD-3) written
+here, ~100 lines of torch, no new dependencies (its safetensors read directly); the weights its release
+v1.0.0 publishes (DATA/RapidParc: `rapidparc`, `hemiaug`; 6.6 MB each, sha256 as its package checks).
+Its package pins pandas, scikit-learn, matplotlib, seaborn, openpyxl and an obsolete `pathlib` backport,
+and its `__init__` imports its training and test code; labeling needs torch and the weights. Its
+1,600 -> 43 mapping and tract names are TractCloud's (checked identical), so it returns the same Labels.
+The context: shuffled groups of 2,000 streamlines, each re-scaled to [-1, 1] inside the network, as in
+training (no training/inference mismatch). `labelers/base.py` holds what labelers share (Labels, the
+40 mm cut).
+- **Against its package** (`modal_rapidparc_check.py` → `rapidparc_check_modal.json`; both in one Modal
+  container, torch 2.14.1; PAT16's A10 tractogram, 32,268 streamlines of 40 mm or more): for both
+  models and seeds 0 and 42, the 1,600-cluster argmax identical on 32 x86 cores and on an A10G, every
+  streamline. Ours 0.7-0.8 s a draw on the CPU, 0.3 s on the A10G (its package 1.2-3.2 / 0.6-2.4 s,
+  reloading the model each call).
+- PAT16's Other fraction with RapidParc: 49.7-49.8 % across seeds and models (TractCloud at 500: 50.6 %).
+- A slip on the way: reading an .npz array inside a loop (`z["points"][a:b]` per streamline) re-reads the
+  whole array each time - the first Modal run spent 8 minutes there before it was stopped.

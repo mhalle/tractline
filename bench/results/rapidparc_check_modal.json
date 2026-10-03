@@ -1,0 +1,122 @@
+{
+ "cpu": {
+  "device": "cpu",
+  "gpu": null,
+  "torch": "2.14.1+cu130",
+  "streamlines": 32268,
+  "runs": {
+   "rapidparc, seed 0": {
+    "clusters_identical": true,
+    "cluster_agreement": 1.0,
+    "tract_agreement": 1.0,
+    "other_fraction": [
+     0.4977,
+     0.4977
+    ],
+    "seconds_reference_ours": [
+     3.2,
+     0.7
+    ]
+   },
+   "rapidparc, seed 42": {
+    "clusters_identical": true,
+    "cluster_agreement": 1.0,
+    "tract_agreement": 1.0,
+    "other_fraction": [
+     0.4966,
+     0.4966
+    ],
+    "seconds_reference_ours": [
+     1.2,
+     0.8
+    ]
+   },
+   "hemiaug, seed 0": {
+    "clusters_identical": true,
+    "cluster_agreement": 1.0,
+    "tract_agreement": 1.0,
+    "other_fraction": [
+     0.4966,
+     0.4966
+    ],
+    "seconds_reference_ours": [
+     2.1,
+     0.8
+    ]
+   },
+   "hemiaug, seed 42": {
+    "clusters_identical": true,
+    "cluster_agreement": 1.0,
+    "tract_agreement": 1.0,
+    "other_fraction": [
+     0.4974,
+     0.4974
+    ],
+    "seconds_reference_ours": [
+     1.2,
+     0.7
+    ]
+   }
+  }
+ },
+ "gpu": {
+  "device": "cuda",
+  "gpu": "NVIDIA A10G",
+  "torch": "2.14.1+cu130",
+  "streamlines": 32268,
+  "runs": {
+   "rapidparc, seed 0": {
+    "clusters_identical": true,
+    "cluster_agreement": 1.0,
+    "tract_agreement": 1.0,
+    "other_fraction": [
+     0.4978,
+     0.4978
+    ],
+    "seconds_reference_ours": [
+     2.4,
+     0.3
+    ]
+   },
+   "rapidparc, seed 42": {
+    "clusters_identical": true,
+    "cluster_agreement": 1.0,
+    "tract_agreement": 1.0,
+    "other_fraction": [
+     0.4967,
+     0.4967
+    ],
+    "seconds_reference_ours": [
+     0.6,
+     0.3
+    ]
+   },
+   "hemiaug, seed 0": {
+    "clusters_identical": true,
+    "cluster_agreement": 1.0,
+    "tract_agreement": 1.0,
+    "other_fraction": [
+     0.4965,
+     0.4965
+    ],
+    "seconds_reference_ours": [
+     1.3,
+     0.3
+    ]
+   },
+   "hemiaug, seed 42": {
+    "clusters_identical": true,
+    "cluster_agreement": 1.0,
+    "tract_agreement": 1.0,
+    "other_fraction": [
+     0.4973,
+     0.4973
+    ],
+    "seconds_reference_ours": [
+     0.6,
+     0.3
+    ]
+   }
+  }
+ }
+}

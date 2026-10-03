@@ -98,6 +98,18 @@ reported (rounding can move near-ties); then switch the default and rerun the co
 A thin adapter over the pip package (optional extra: brings `vtk`). Built first, so the interface
 lands with no change in results: the cohort must reproduce exactly through it.
 
+### 2b. RapidParc (`rapidparc`, built: `tractline.labelers.rapidparc`)
+
+RapidParc (von Bornhaupt, Bisten, ..., Schultz; Imaging Neuroscience 2026; github.com/MedVisBonn/RapidParc,
+BSD-3) - a transformer over groups of 2,000 shuffled streamlines, each group its own context, trained
+and run at the same size, on TractCloud's training data, in the same 43-class scheme (its 1,600 -> 43
+mapping and tract names are TractCloud's, checked identical). Its inference is ~100 lines of torch;
+its package pins pandas, scikit-learn, matplotlib and more and returns only the argmax, so the
+inference is written here (`rapidparc.py`), the weights its release publishes (`rapidparc`, and
+`hemiaug` for one-sided lesions; 6.6 MB each, sha256-checked) loaded under its parameter names. Draws
+are shuffle seeds; several average their probabilities. Checked against its package in its own
+environment (`bench/rapidparc_check.py`).
+
 ### 3. DeepMultiConnectome (`deepmulticonnectome`, planned, not now)
 
 What we know from the format work (medseg's `dmc_field.py`, NOTES 2026-10-01 "The field at connectome
