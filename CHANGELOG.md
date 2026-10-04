@@ -5,6 +5,8 @@ behind each change, with their numbers and later corrections, are in `bench/resu
 
 ## Unreleased
 
+- **Documentation**: this changelog; the README warns that 0.1.0's CPU path fails.
+
 ## 0.2.0 - 2026-10-03
 
 - **BIDS input, with the series that correct it found and checked** (`tractline.bids.load`, the `bids`
