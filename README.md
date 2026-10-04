@@ -29,6 +29,8 @@ uv add "tractline[bids] @ git+https://github.com/mhalle/tractline@v0.2.0"       
 ```
 
 `pip install` works too, from the same URL. On Linux, PyPI's torch is the CUDA build (Triton included).
+Use 0.2.0 or later: in 0.1.0, `pipeline.run(device="cpu")` fails with UnboundLocalError. Changes by
+release: `CHANGELOG.md`.
 
 Data and weights live outside the repository, in `$TRACTOGRAPHY_DATA` (default `~/tmp/data/tractography`;
 layout in `src/tractline/data.py`):
