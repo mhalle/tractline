@@ -5,4 +5,4 @@ UKF two-tensor tractography (the Slicer UKFTractography algorithm, with Metal an
 and tract labeling (RapidParc by default, or TractCloud), in torch; one pipeline from the scan to labeled streamlines
 (`tractline.pipeline`). Each stage is checked against its original in `bench/`.
 """
-__version__ = "0.1.0"
+__version__ = "0.2.0"

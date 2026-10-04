@@ -1917,3 +1917,52 @@ above `RESIDUAL_WARN` 0.5, never a refusal: on the 24 good pairs 0.27-0.64 and 1
 - ds005123: all 12 refused - the IntendedFor field maps were acquired under another shim.
 - `run_pipeline.py --bids PATH [--shell B]` (default shell: the one with the most volumes); 11 tests on
   synthetic BIDS sessions (`tests/test_bids.py`).
+
+## 2026-10-03 Release review (0.2.0): four reviewers, and what changed
+
+Four read-only reviewers attacked the BIDS reader, the pipeline's new paths, release readiness and the tests.
+Fixed:
+- **The residual** (`pipeline.residual_left`): it judged noise against noise - on the undistorted phantom
+  0.98, with the motion/re-shim warning. It now returns None ("not judged", said in the note) when the
+  two groups differ by less than twice what their within-group variation predicts; each volume is
+  corrected with its own polarity and readout before the group means (each group's first readout was
+  used for all); a failure or a non-finite value no longer fails the run (None, with a warning).
+  Recalibrated (`pair_residual_check.json`): judged good pairs 0.27-0.64 (3 above 0.5: PAT19, PAT25, PAT29),
+  judged bad ones 0.53-0.96, all above; not judged 7 - sub-10581 twice (its series moved 2.5-3.8 mm within
+  themselves; the bad one of the two is still refused by the shim check) and 5 AP-halves controls (their
+  fields ~1 mm, harmless).
+- **`can_correct`** requires both polarities; an uncorrected Correction's note always says "not corrected";
+  `Timer.total` is strict again (a misspelled stage raises) and a stage that did not run is recorded by
+  `Timer.skip` as 0 s.
+- **`bids.load`**: a partner covering less than 99 % of the diffusion series' brain is refused (a half slab
+  gave a 484 Hz field on the undistorted phantom); a diffusion series without b0s is refused, a partner
+  without them dropped; GRE field maps (phasediff, magnitude, fieldmap) named by B0FieldIdentifier are
+  refused as unsupported (a phasediff map had been used as a b0); BIDS inheritance inside a BIDS dataset
+  (sidecars, .bval/.bvec), only same-named files outside one; voxel sizes compared per world axis (sorted
+  sizes hid a 2.5 mm against 2 mm voxel along phase encoding); a readout assumed only when the matrix along
+  phase encoding and the acceleration also match; EstimatedTotalReadoutTime used and said as estimated; the
+  diffusion series' own run preferred; a failing partner dropped (and said) when the rest still cover both
+  polarities; same-folder partners found by world axis; unusable PhaseEncodingDirection values, missing
+  .bval, a ".nii" in a folder name, IntendedFor without an extension - clean refusals or matches, not crashes;
+  a missing nibabel/scipy names `tractline[bids]`. Still identical to the bench loader on all 12 ds001226
+  patients; all 12 ds005123 subjects still refused.
+- **Tests**: the review's mutation run found the suite caught 8 of 33 deliberate breaks - the phantom is
+  undistorted, so sign, Jacobian, readout and gradient-flip breaks gave the same answers. Added
+  `tests/test_correctness.py` (a pair distorted by a known 40 Hz field with two readout times: the field
+  recovered, the residual, the displacement's sign; prepare's gradients in RAS for three storage
+  orientations; the tracked shell; a TRX round trip; RapidParc's rows back to their fibers without weights;
+  reversed and cross-protocol BIDS partners; exact_float32; the Timer) - 23 of the 25 missed breaks fail it -
+  and 16 BIDS tests for the findings above. 70 tests, none skipped locally; CI now syncs the dipy group (the
+  mask's DIPY check runs), lists skips, and fails when the weights fetch fails.
+- **Release**: version 0.2.0, single-sourced from `__version__`; the README's install lines at v0.2.0; the
+  sdist holds the package, tests and user documents only; THIRD_PARTY_NOTICES credits ds005123, dcm2niix and
+  its validation sets, FSL, and says what the HCP-derived results are (four files of aggregate numbers).
+- **The repository was public**, not private as planned, since its creation on 2026-10-02 (0 forks, stars or
+  watchers); kept public by the owner's decision; the README's "private" line replaced by a research-use
+  statement.
+
+Corrections to earlier entries: "A residual check before correcting" (its 0.61, "6 of 24", "24 of 24")
+and the BIDS-reader entry's ranges are superseded by the numbers above; "Polarity from images across
+separate series" left the cause open - it is the re-shim (ShimSetting differs on all 12 subjects); the
+"10 mm field" was the same-polarity field map labeled opposite (7-16 mm on 12 subjects), while the
+re-shimmed reversed pair gave 9-22 mm against the field maps' own 5-7 mm - the documents now say so.

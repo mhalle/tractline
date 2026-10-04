@@ -85,7 +85,20 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   acknowledgment: Data were provided [in part] by the Human Connectome Project, WU-Minn Consortium
   (Principal Investigators: David Van Essen and Kamil Ugurbil; 1U54MH091657) funded by the 16 NIH
   Institutes and Centers that support the NIH Blueprint for Neuroscience Research; and by the McDonnell
-  Center for Systems Neuroscience at Washington University. *To review before going public: which
-  committed results are HCP-derived, and whether any could identify a subject.*
+  Center for Systems Neuroscience at Washington University. The committed results computed from them are
+  aggregate numbers only (accuracies, label counts, differences, timings: `accuracy_tractcloud_test.json`,
+  `infer_opt*.json`, `resample.json`, under 2 kB each) - no images, streamlines or per-subject values.
 - **Stanford HARDI** (via DIPY's `stanford_hardi` fetcher): used in `bench/` for timing; not in the
   repository.
+- **OpenNeuro ds005123** (Smith, Sharp, Dachs et al.; CC0; doi:10.18112/openneuro.ds005123.v1.1.3): a slice of
+  12 subjects (each diffusion series' two leading b0s and its spin-echo field maps, `fetch_ds005123.py`) for
+  the phase-encoding and pairing tests; not in the repository; aggregate results are.
+- **dcm2niix's validation sets** (dcm_qa_polar, dcm_qa_ge, dcm_qa_trt; github.com/neurolabusc): GE DICOM for
+  the header tests; not in the repository.
+
+## Tools used by the bench, not distributed
+
+- **dcm2niix** (Chris Rorden; BSD 2-Clause, "for research purposes only and is not a clinical tool"): run as
+  a program on DICOM; its source, read for `docs/dcm2niix-dmri-map.md`, which cites its rules by line.
+- **FSL** (topup, applytopup; FMRIB, University of Oxford; FSL license, non-commercial): the reference the
+  correction is checked against.

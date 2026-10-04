@@ -57,7 +57,7 @@ def check(A, B, pe_a, pe_b, vox, ro, brain):
     raw = img.numpy()
     e0 = (raw[:na].mean(0) - raw[na:].mean(0))[brain]; e1 = (u[:na].mean(0) - u[na:].mean(0))[brain]
     P.release_memory("mps")
-    return {"left": round(left, 3),
+    return {"left": None if left is None else round(left, 3),                # None: not judged (noise only)
             "left_with_motion": round(float(np.linalg.norm(e1) / np.linalg.norm(e0)), 3),
             "motion_max_mm": round(float(np.abs(motion[:, :3]).max()), 2),
             "displacement_99th_mm": round(float(np.quantile(disp, 0.99)), 2)}
@@ -114,5 +114,8 @@ if __name__ == "__main__":
     for ds, subs in res.items():
         for c in [k for k, v in next(iter(subs.values())).items() if isinstance(v, dict)]:
             for key in ("left", "left_with_motion"):
-                xs = sorted(v[c][key] for v in subs.values())
-                print(ds, c, key, f"{xs[0]:.2f}-{xs[-1]:.2f} median {xs[len(xs) // 2]:.2f}")
+                vals = [v[c][key] for v in subs.values()]
+                xs = sorted(x for x in vals if x is not None)
+                nj = sum(x is None for x in vals)
+                print(ds, c, key, (f"{xs[0]:.2f}-{xs[-1]:.2f} median {xs[len(xs) // 2]:.2f}" if xs else "-")
+                      + (f"; not judged {nj}" if nj else ""))

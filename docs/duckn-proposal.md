@@ -1,6 +1,6 @@
 # Proposal to duckn 2.0: the field a series is corrected by, the conditions it holds under, and phase encoding carried from 1.x
 
-**From:** tractline (its reader of duckn stores), 2026-10-03.
+**From:** tractline (a prospective reader of duckn stores), 2026-10-03.
 **For:** duckn convention 2.0 (draft, `docs/proposals/duckn-2.0.md`, revision 17) and dwmri 2.0
 (`docs/proposals/dwi-extension-2.0.md`).
 **Status:** a proposal; nothing here is adopted.
@@ -133,9 +133,10 @@ What these come from: tractline's tests of what correction needs to know (its `b
 flipped gives the same correction, to 0.0 mm - and the readout time barely does when both series share
 it (scaled by 0.8 or 1.25: at most 0.2 mm, against 6-10 mm of correction). What does matter is that the
 series of a pair differ in polarity and in nothing else that moves the image. On OpenNeuro ds005123 they
-did: the diffusion series and the field maps acquired for it were shimmed differently, and a
-same-polarity field map paired with the diffusion b0s gave a 10 mm "field" - a correction that would have
-been applied with confidence and was wrong.
+did: the diffusion series and the field maps acquired for it were shimmed differently. Paired with the
+reversed field map, the diffusion b0s gave a field of 9-22 mm (99th percentile) where the field maps' own pair
+gave 5-7 mm - a correction that would have been applied with confidence and was wrong; paired with the
+same-polarity field map labeled opposite, 7-16 mm out of nothing.
 
 ### 3.1 The shim
 

@@ -23,7 +23,7 @@ from tractline.labelers import base, rapidparc
 from test_pipeline_cpu import stand_in
 from phantom import subject
 corr, tg, labels = P.run(subject(), stand_in, P.Timer(), device="cpu", workers=1)
-assert len(tg.fibers) > 500, len(tg.fibers)
+assert len(tg.fibers) > 700, len(tg.fibers)                                  # the phantom gives ~790
 loaded = sorted(m for m in sys.modules if m.split(".")[0] in {OPTIONAL!r})
 assert not loaded, loaded
 print("ok", len(tg.fibers))

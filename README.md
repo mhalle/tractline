@@ -7,8 +7,8 @@ the tracker (the Slicer UKFTractography algorithm, with Metal and Triton kernels
 implementations, each checked against its original; labeling uses RapidParc (its inference written here,
 its released weights; the default) or TractCloud (its model code and weights, the context built here).
 
-Private while it is being tested. It was incubated in another (private) repository; this one keeps that
-history.
+Research software, under active development: not reviewed or approved by any regulatory agency, and not for
+clinical use. It was incubated in another repository; this one keeps that history.
 
 ## Install
 
@@ -23,9 +23,9 @@ uv run bench/run_pipeline.py --sub PAT16
 As a dependency of another project (the bench's groups stay behind - they are not in the package's metadata):
 
 ```
-uv add "tractline @ git+https://github.com/mhalle/tractline@v0.1.0"
-uv add "tractline[nrrd,triton] @ git+https://github.com/mhalle/tractline@v0.1.0"   # NRRD input/output, CUDA kernel
-uv add "tractline[bids] @ git+https://github.com/mhalle/tractline@v0.1.0"          # + reading BIDS (nibabel, scipy)
+uv add "tractline @ git+https://github.com/mhalle/tractline@v0.2.0"
+uv add "tractline[nrrd,triton] @ git+https://github.com/mhalle/tractline@v0.2.0"   # NRRD input/output, CUDA kernel
+uv add "tractline[bids] @ git+https://github.com/mhalle/tractline@v0.2.0"          # + reading BIDS (nibabel, scipy)
 ```
 
 `pip install` works too, from the same URL. On Linux, PyPI's torch is the CUDA build (Triton included).
@@ -59,12 +59,17 @@ names them; `modal_gpu_pipeline.py --save-fibers` writes to its `tractline/`.
 
 ## Your own data
 
-A diffusion series in BIDS form - NIfTI with `.bval`, `.bvec` and the JSON sidecar - is read by `tractline.bids`;
-from DICOM, dcm2niix writes that form (`dcm2niix -b y -z y -o out/ dicom_folder/`):
+A diffusion series in BIDS form - NIfTI with `.bval`, `.bvec` and the JSON sidecar, in a BIDS folder tree - is
+read by `tractline.bids`. From DICOM, dcm2niix converts (`dcm2niix -b y -z y -f %p_%s -o out/ dicom_folder/`);
+dcm2bids or heudiconv arrange its output as BIDS, so the correcting series are found from the sidecars. With
+dcm2niix's flat output instead, name them:
 
 ```
-uv run bench/run_pipeline.py --bids out/sub-01_dwi.nii.gz [--shell 1000]
+uv run bench/run_pipeline.py --bids bids/sub-01/dwi/sub-01_dwi.nii.gz [--shell 1000] [--device cuda|cpu]
+uv run bench/run_pipeline.py --bids out/DWI_AP_5.nii.gz --partners out/DWI_PA_6.nii.gz --device cpu
 ```
+
+(`--device` defaults to `mps`, the Apple GPU.)
 
 The series that correct its distortion are found from the sidecars (`B0FieldIdentifier`/`B0FieldSource`,
 `IntendedFor`, or a diffusion series in the same folder phase-encoded the other way) and checked first: the
@@ -103,7 +108,7 @@ which re-import the script (the tracker checks, and refuses without one).
 
 ```
 uv run ruff check src bench tests    # pyflakes: undefined, shadowed and unused names
-uv run pytest                        # ~40 s
+uv run pytest                        # about a minute
 ```
 
 The whole pipeline on the CPU path, on a synthetic phantom (`tests/phantom.py`: a band of fibers in a

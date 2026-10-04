@@ -30,7 +30,9 @@ its trained context (500) briefly, RapidParc since ("RapidParc is the default").
 **Current** (RapidParc, Gauss-Newton): `cohort/PATnn.json` and `cohort_summary.*` (2026-10-03; the
 `_topup` files are above),
 `dependency_check.json`, `gpu_pipeline_compare.json`, `modal_gpu_pipeline_{a10,l40s,cpu}.json`,
-`trx_check.json`, `rapidparc_check*.json`.
+`trx_check.json`, `rapidparc_check*.json`; the acquisition tests of 2026-10-03, labeler-free (the field estimate
+alone): `readout_polarity/` (ds001226), `polarity_separate_series_scale{on,off}.json` (ds005123, two subjects),
+`pair_residual_check.json` (both; its `left` is `pipeline.residual_left`'s).
 
 **Labeler-independent** (the tracker, the mask, the kernels): `ukf*.json` except `ukf_labels.json`,
 `median_check.json`, `resample.json`.

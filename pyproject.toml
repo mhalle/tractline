@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "tractline"
-version = "0.1.0"
+dynamic = ["version"]                          # from src/tractline/__init__.py (tool.hatch.version)
 description = "Diffusion MRI to named white-matter tracts: susceptibility correction, UKF tractography and tract labeling in torch"
 readme = "README.md"
 license = "Apache-2.0"
@@ -41,6 +41,14 @@ dipy = ["dipy>=1.12"]          # the reference median_otsu (median_check.py); th
                                # (_bootstrap.py: label_noise_floor.py, ukf_noise_floor.py)
 vtk = ["vtk>=9.7"]             # 0.5 GB: VTK tractography files (ukf_compare.py, ukf_bench.py, resample_check.py)
 sklearn = ["scikit-learn>=1.9"]   # accuracy_tractcloud_test.py's macro F1
+
+[tool.hatch.version]
+path = "src/tractline/__init__.py"
+
+# The sdist: the package, its tests and the documents a user reads - not the bench, its results or journal.
+[tool.hatch.build.targets.sdist]
+include = ["/src", "/tests", "/README.md", "/LICENSE", "/THIRD_PARTY_NOTICES.md", "/pyproject.toml", "/uv.lock",
+           "/.python-version", "/docs/pipeline.md", "/docs/labelers.md"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/tractline"]

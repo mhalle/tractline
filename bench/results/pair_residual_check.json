@@ -225,7 +225,7 @@
     "displacement_99th_mm": 9.22
    },
    "bad: dwi b0s + AP field map labeled opposite": {
-    "left": 0.806,
+    "left": 0.805,
     "left_with_motion": 0.54,
     "motion_max_mm": 0.84,
     "displacement_99th_mm": 6.97
@@ -234,7 +234,7 @@
   "sub-10581": {
    "shim_dwi_equals_fieldmaps": false,
    "pair (AP + PA field maps)": {
-    "left": 1.185,
+    "left": null,
     "left_with_motion": 0.447,
     "motion_max_mm": 2.46,
     "displacement_99th_mm": 6.72
@@ -246,7 +246,7 @@
     "displacement_99th_mm": 11.49
    },
    "bad: dwi b0s + AP field map labeled opposite": {
-    "left": 0.926,
+    "left": null,
     "left_with_motion": 0.481,
     "motion_max_mm": 3.84,
     "displacement_99th_mm": 11.17
@@ -262,7 +262,7 @@
     "displacement_99th_mm": 9.55
    },
    "bad: AP halves labeled opposite": {
-    "left": 0.874,
+    "left": null,
     "left_with_motion": 0.453,
     "motion_max_mm": 0.36,
     "displacement_99th_mm": 0.92
@@ -290,7 +290,7 @@
     "displacement_99th_mm": 8.11
    },
    "bad: AP halves labeled opposite": {
-    "left": 1.253,
+    "left": null,
     "left_with_motion": 0.527,
     "motion_max_mm": 0.89,
     "displacement_99th_mm": 0.95
@@ -332,7 +332,7 @@
     "displacement_99th_mm": 8.35
    },
    "bad: AP halves labeled opposite": {
-    "left": 0.849,
+    "left": null,
     "left_with_motion": 0.418,
     "motion_max_mm": 1.19,
     "displacement_99th_mm": 1.2
@@ -360,7 +360,7 @@
     "displacement_99th_mm": 9.86
    },
    "bad: AP halves labeled opposite": {
-    "left": 0.851,
+    "left": null,
     "left_with_motion": 0.503,
     "motion_max_mm": 0.37,
     "displacement_99th_mm": 0.77
@@ -374,7 +374,7 @@
     "displacement_99th_mm": 8.34
    },
    "bad: AP halves labeled opposite": {
-    "left": 0.961,
+    "left": null,
     "left_with_motion": 0.417,
     "motion_max_mm": 0.65,
     "displacement_99th_mm": 0.81

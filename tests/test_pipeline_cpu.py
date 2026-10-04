@@ -23,7 +23,7 @@ def runs():
 
 def test_runs_and_repeats(runs):
     _, ((c0, t0, l0), (c1, t1, l1)) = runs
-    assert len(t0.fibers) > 500
+    assert len(t0.fibers) > 700                                              # the phantom gives ~790
     assert len(t0.fibers) == len(t1.fibers)
     assert all(np.array_equal(a, b) for a, b in zip(t0.fibers, t1.fibers))
     assert np.array_equal(c0.field_hz, c1.field_hz)
@@ -41,7 +41,7 @@ def test_fibers_follow_the_band(runs):
     ijk = (np.c_[P_, np.ones(len(P_))] @ np.linalg.inv(s.affine).T)[:, :3]
     X, _, Z = s.dwi.shape[:3]
     off = np.abs(ijk[:, 0] - (X / 2 - 0.5)), np.abs(ijk[:, 2] - (Z / 2 - 0.5))
-    assert np.mean((off[0] < 3) & (off[1] < 3)) > 0.95                     # within a voxel of the band
+    assert np.mean((off[0] < 3) & (off[1] < 3)) > 0.95                     # the band is 2 voxels each side: within a voxel of its edge
     _, _, length = lengths(tg.fibers)
     assert length.max() > 50                                               # along it: the band is ~70 mm
 

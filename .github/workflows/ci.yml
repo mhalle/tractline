@@ -5,6 +5,7 @@ name: ci
 
 on:
   push:
+    branches: [main]
   pull_request:
 
 jobs:
@@ -20,7 +21,7 @@ jobs:
           enable-cache: true
 
       - name: Environment (uv.lock; Python from .python-version)
-        run: uv sync --locked
+        run: uv sync --locked --group dipy          # dipy: the mask checked against DIPY's Otsu
 
       - name: Lint
         run: uv run ruff check src bench tests
@@ -32,4 +33,4 @@ jobs:
             https://github.com/MedVisBonn/RapidParc/releases/download/v1.0.0/rapidparc.safetensors
 
       - name: Tests
-        run: uv run pytest -q
+        run: uv run --group dipy pytest -q -rs      # -rs: a skipped test is listed, not hidden

@@ -1864,7 +1864,6 @@ wheels = [
 
 [[package]]
 name = "tractline"
-version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
@@ -1920,7 +1919,7 @@ requires-dist = [
     { name = "torch", specifier = ">=2.7" },
     { name = "triton", marker = "sys_platform == 'linux' and extra == 'triton'" },
 ]
-provides-extras = ["nrrd", "triton", "t1check", "bids"]
+provides-extras = ["bids", "nrrd", "t1check", "triton"]
 
 [package.metadata.requires-dev]
 dev = [

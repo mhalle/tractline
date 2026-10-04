@@ -9,7 +9,8 @@ The subject s: any object with these fields (bids.Subject and the bench's _ds001
   affine      4x4 voxel -> RAS mm; vox (3,) voxel sizes mm
   bval (G,), bvec (3, G)    FSL convention
   b0s         (X, Y, Z, V) float64 on the DWI's grid: the DWI's own b0s first (volume 0 is the
-              estimate's fixed reference), then the reversed-phase-encoding b0s
+              estimate's fixed reference), then the other series' b0s (the reversed ones, and any of the
+              same polarity that measure the field with them)
   pe_vectors  (V, 3) each b0's phase-encoding vector; pe_axis (0-2) and pe_sign (+1/-1): the DWI's
               (they must agree with pe_vectors[0]); readout_s: total readout time, s
   optional    b0_readout_s (V,): each b0's own readout time (else readout_s for all); pairing
@@ -119,15 +120,21 @@ class Timer:
         if self.echo is not None:
             print(f"{self.echo} {name} {self.seconds[name]} s", flush=True)
 
+    def skip(self, name):
+        """A stage that did not run: recorded as 0 s, so totals over it stay exact and a misspelled name still fails."""
+        self.seconds[name] = 0.0
+        if self.echo is not None:
+            print(f"{self.echo} {name} skipped", flush=True)
+
     def total(self, *names):
-        return round(sum(self.seconds.get(n, 0.0) for n in names), 1)          # a stage that did not run: 0
+        return round(sum(self.seconds[n] for n in names), 1)
 
 
 @dataclass
 class Correction:
     dwi: np.ndarray              # (X, Y, Z, G) float32, corrected (as acquired when not applied)
     field_hz: np.ndarray | None  # (X, Y, Z); None when not applied
-    motion: np.ndarray | None    # (V, 6) per b0: translations mm, rotations rad
+    motion: np.ndarray | None    # (V, 6) per b0: translations mm, rotations rad; None when not applied
     displacement_mm: np.ndarray | None   # (X, Y, Z): what the field did to the DWI as acquired
     applied: bool = True
     note: str = ""               # what corrected it, or why nothing did (bids.Pairing.message)
@@ -135,35 +142,52 @@ class Correction:
     warnings: list = field(default_factory=list)
 
 
-RESIDUAL_WARN = 0.5              # residual_left above this: a warning, never a refusal. On 24 good pairs (ds001226,
-                                 # ds005123) 0.27-0.64 and 1.19 once, 4 above 0.5 - the ones that moved; on 36 bad
-                                 # ones (one polarity labeled two, a re-shimmed pair) 0.53-1.25, all above
-                                 # (bench/pair_residual_check.py; NOTES 2026-10-03, "The BIDS reader")
+RESIDUAL_WARN = 0.5              # residual_left above this: a warning, never a refusal. On 23 judged good pairs
+                                 # (ds001226, ds005123) 0.27-0.64, 3 above 0.5 - ones that moved; on 30 judged bad
+                                 # ones (one polarity labeled two, a re-shimmed pair) 0.53-0.96, all above; not
+                                 # judged: 7, all where a series' own volumes moved or the field was ~0
+                                 # (bench/pair_residual_check.py; NOTES 2026-10-03, "Release review")
 
 
 def can_correct(s) -> bool:
-    """A subject with b0s from both polarities, and (a bids.Subject) a pairing that passed its checks."""
+    """b0s from both polarities along the diffusion series' phase-encoding axis, and (a bids.Subject) a
+    pairing that passed its checks."""
     pairing = getattr(s, "pairing", None)
-    return getattr(s, "b0s", None) is not None and (pairing is None or pairing.ok)
+    if getattr(s, "b0s", None) is None or (pairing is not None and not pairing.ok):
+        return False
+    signs = set(np.sign(np.asarray(s.pe_vectors, float)[:, s.pe_axis]).tolist()) - {0.0}
+    return signs == {-1.0, 1.0}
 
 
-def residual_left(s, h) -> float:
-    """||corrected mean A - corrected mean B|| / ||mean A - mean B|| over the brain's bright voxels (above
-    the mean b0's Otsu threshold): A the b0s phase-encoded as the diffusion series is, B the others, each
-    volume scaled to the common mean (as the estimate does), the field applied with each group's own
-    polarity and readout time; motion not applied, so what motion moved counts as left."""
+def residual_left(s, h):
+    """How much of the pair's difference the field leaves: ||mean corrected A - mean corrected B|| /
+    ||mean A - mean B|| over the bright voxels (above the Otsu threshold of the two groups' mean), A the b0s
+    phase-encoded as the diffusion series is, B the others. Every volume is scaled to the common mean (as
+    the estimate does) and corrected on its own, with its own polarity and readout time, before the group
+    means are taken. Motion is not applied, so what motion moved counts as left. None when the groups
+    differ by less than twice what their noise alone would give (estimated from each group's volumes about
+    its own mean; with one volume a group, not estimated): a ratio of noise to noise judges nothing."""
     from .mask import otsu
     b0s = np.asarray(s.b0s, np.float64)
     b0s = b0s * (b0s.mean() / b0s.mean(axis=(0, 1, 2), keepdims=True))
-    ro = np.broadcast_to(np.asarray(getattr(s, "b0_readout_s", None) if getattr(s, "b0_readout_s", None) is not None
-                                    else s.readout_s, float), (b0s.shape[-1],))
-    sign = np.sign(np.asarray(s.pe_vectors)[:, s.pe_axis])
-    a, b = sign == np.sign(s.pe_sign), sign != np.sign(s.pe_sign)
+    ro = getattr(s, "b0_readout_s", None)
+    ro = np.broadcast_to(np.asarray(s.readout_s if ro is None else ro, float), (b0s.shape[-1],))
+    sign = np.sign(np.asarray(s.pe_vectors, float)[:, s.pe_axis])
+    a = sign == np.sign(s.pe_sign)
+    b = ~a
     ma, mb = b0s[..., a].mean(-1), b0s[..., b].mean(-1)
-    ca = S.apply(ma[..., None], h, s.pe_axis, float(np.sign(s.pe_sign)), float(ro[a][0]))[..., 0]
-    cb = S.apply(mb[..., None], h, s.pe_axis, -float(np.sign(s.pe_sign)), float(ro[b][0]))[..., 0]
-    bright = (ma + mb) / 2 > otsu((ma + mb) / 2)
-    return float(np.linalg.norm((ca - cb)[bright]) / np.linalg.norm((ma - mb)[bright]))
+    mean = (ma + mb) / 2
+    bright = mean > otsu(mean)
+    d0 = np.linalg.norm((ma - mb)[bright])
+    dof = int(a.sum() + b.sum()) - 2
+    if dof > 0:
+        within = sum(((b0s[..., g] - m[..., None])[bright] ** 2).sum() for g, m in ((a, ma), (b, mb)))
+        if d0 ** 2 < 4 * within / dof * (1 / a.sum() + 1 / b.sum()):
+            return None
+    corrected = np.stack([S.apply(b0s[..., v:v + 1], h, s.pe_axis, float(sign[v]), float(ro[v]))[..., 0]
+                          for v in range(b0s.shape[-1])], -1)
+    left = np.linalg.norm((corrected[..., a].mean(-1) - corrected[..., b].mean(-1))[bright]) / d0
+    return float(left)
 
 
 @dataclass
@@ -183,8 +207,10 @@ def correct(s, timer: Timer, device="mps") -> Correction:
     Without a pair to correct with (can_correct), the DWI as acquired, applied=False and the reason in note."""
     pairing = getattr(s, "pairing", None)
     if not can_correct(s):
-        return Correction(np.asarray(s.dwi, np.float32), None, None, None, applied=False,
-                          note=pairing.message if pairing is not None else "not corrected: no reversed-phase-encoding b0s")
+        timer.skip("field_estimate"); timer.skip("field_apply")
+        note = (pairing.message if pairing is not None and not pairing.ok
+                else "not corrected: no b0s from both phase-encoding polarities")
+        return Correction(np.array(s.dwi, np.float32), None, None, None, applied=False, note=note)
     f32 = torch.device(device).type in ("cpu", "cuda")
     ro = getattr(s, "b0_readout_s", None)
     with timer("field_estimate"), threads(min(ESTIMATE_THREADS, os.cpu_count() or 1)):
@@ -192,13 +218,22 @@ def correct(s, timer: Timer, device="mps") -> Correction:
                                   **(dict(dtype=torch.float32) if f32 else {}))
     with timer("field_apply"):
         dwi = S.apply(s.dwi, h, s.pe_axis, s.pe_sign, s.readout_s)
-    left = residual_left(s, h)
-    warnings = [] if left <= RESIDUAL_WARN else [
-        f"the pair's difference left after correction is {left:.2f} (above {RESIDUAL_WARN}): head motion between the "
-        "series, or series that do not share one field (a re-shim, another protocol) - check before relying on it"]
+    note, warnings = (pairing.message if pairing is not None else "corrected"), []
+    try:                                                                     # a diagnostic: it never fails the run
+        left = residual_left(s, h)
+    except Exception as e:                                                   # noqa: BLE001
+        left, warnings = None, [f"the residual could not be computed ({type(e).__name__}: {e})"]
+    if left is None and not warnings:
+        note += ("; residual not judged: the series differ by little more than their volumes vary within each "
+                 "(noise, or motion within a series)")
+    elif left is not None and not np.isfinite(left):
+        left, warnings = None, ["the residual could not be computed (not finite)"]
+    elif left is not None and left > RESIDUAL_WARN:
+        warnings = [f"the pair's difference left after correction is {left:.2f} (above {RESIDUAL_WARN}): head motion "
+                    "between the series, or series that do not share one field (a re-shim, another protocol) - check "
+                    "before relying on it"]
     return Correction(dwi, h, motion, S.displacement_mm(h, s.readout_s, s.pe_sign, s.vox[s.pe_axis]), applied=True,
-                      note=pairing.message if pairing is not None else "corrected", residual_left=round(left, 3),
-                      warnings=warnings)
+                      note=note, residual_left=None if left is None else round(left, 3), warnings=warnings)
 
 
 CPU_BATCH = 1024                 # half-fibers per batch on the CPU: cache-sized (ukf_cpu_check.py)

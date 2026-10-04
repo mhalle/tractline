@@ -41,7 +41,8 @@ phase-encoded left-right, is refused with that reason); on ds005123 it refuses a
 acquired under another shim. After a correction the pipeline reports how much of the pair's difference the
 field leaves (`residual_left`), a warning above 0.5 - motion between the series, or series that do not share
 one field - never a refusal. The evidence for each check: NOTES 2026-10-03 (absolute polarity irrelevant,
-readout time nearly so within a protocol; a re-shimmed pair gave a confident, wrong 10 mm field; the residual
+readout time nearly so within a protocol; a pair acquired under different shims gave a confident, wrong field,
+9-22 mm at the 99th percentile where the field maps' own pair gave 5-7 mm; the residual
 flags every bad pair tested and some moving good ones).
 
 ## The labeler
@@ -64,5 +65,14 @@ averages several draws' probabilities (`labeler(fibers, draws=range(5))`).
   there; stronger regularization trades held-out accuracy for it (NOTES 2026-10-02).
 - **PAT23's frontal base.** Under a 104 cm³ meningioma, topup and our correction agree with each
   other and both disagree with the T1 by 4-8 mm in 4 % of the margin; which is wrong is open.
+- **Motion between diffusion volumes, and eddy currents.** Not corrected: the correction moves the whole
+  series by one static field; FSL's eddy also registers every volume (rotating its gradient) and models
+  eddy currents. The b0s' own motion reaches 2.7 mm (PAT25); the effect on tracts is not measured.
+- **PAT26's estimate stops short.** With the readout scaled by 1.25 the fit reaches a lower cost (193.6
+  against 199.8) and a field 0.9 mm away: the default path leaves a better solution (NOTES 2026-10-03).
+- **A residual check that allows for motion.** With the estimate's motion applied, good pairs all pass
+  but re-shimmed ones pass too; header checks decide, the residual only warns (NOTES 2026-10-03).
+- **Relative polarity from the images across series.** Readable within a series; across separately
+  acquired series not shown - the one dataset tried had re-shimmed between them (NOTES 2026-10-03).
 - **Upstream.** Enabling cudnn in TractCloud's own pipeline is a one-line change worth proposing
   to its authors: 3.4×, 2 labels in 440 k.

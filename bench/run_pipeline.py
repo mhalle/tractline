@@ -1,7 +1,7 @@
 """The pipeline on one ds001226 subject, or any BIDS diffusion series, scan to labels, optionally written as TRX.
 
     uv run bench/run_pipeline.py --sub PAT16 [--trx PATH] [--float16] [--labeled-only] [--device cpu] [--labeler rapidparc|hemiaug|tractcloud]
-    uv run bench/run_pipeline.py --bids path/to/sub-01_dwi.nii.gz [--shell 1000] [...]
+    uv run bench/run_pipeline.py --bids path/to/sub-01_dwi.nii.gz [--partners PA.nii.gz ...] [--shell 1000] [...]
 
 --bids: tractline.bids.load - the series that correct it found and checked; corrected only when they pass
 (the reason is printed either way). --shell: the b-value tracked (default: ds001226's 2800 for --sub; for
@@ -21,6 +21,7 @@ if __name__ == "__main__":
     src = ap.add_mutually_exclusive_group(required=True)
     src.add_argument("--sub", help="a ds001226 patient (bench/_ds001226.py)")
     src.add_argument("--bids", help="a BIDS *_dwi.nii[.gz] (tractline.bids)")
+    ap.add_argument("--partners", nargs="+", default=None, help="with --bids: the series that correct it, named (else found)")
     ap.add_argument("--shell", type=float, default=None)
     ap.add_argument("--trx", nargs="?", const="", default=None, help="write TRX (a .trx zip, or a directory)")
     ap.add_argument("--float16", action="store_true", help="TRX positions in float16 (up to 0.03 mm off)")
@@ -33,7 +34,7 @@ if __name__ == "__main__":
     if args.bids:
         import numpy as np
         from tractline import bids
-        s = bids.load(args.bids)
+        s = bids.load(args.bids, partners=args.partners)
         name = s.name
         b = np.round(s.bval[s.bval >= 50] / 100) * 100
         shells, counts = np.unique(b, return_counts=True)
