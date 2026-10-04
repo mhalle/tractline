@@ -1894,3 +1894,26 @@ would meet the same false refusals, and its field would carry the motion in thos
   Conclusion: header checks decide (the sidecar's ShimSetting caught all 12 re-shims exactly; polarity and
   protocol likewise); the residual without motion is a warning that flags every dangerous pair here and
   the moving good ones, for review, not a refusal.
+
+## 2026-10-03 The BIDS reader: the correcting series found, checked, or refused with the reason
+
+`tractline.bids.load(dwi)` (the `bids` extra: nibabel, scipy) reads a BIDS diffusion series - DICOM through
+dcm2niix's output - and the series that measure its field: B0FieldIdentifier/B0FieldSource, else IntendedFor
+field maps, else a diffusion series in the same folder phase-encoded the other way (or given). The diffusion
+series' own b0s come first, so the field is in its frame; a partner on another grid is resampled by the
+scanner's coordinates (cubic), as the bench's loader does. Checked before use, from today's measurements: the
+same phase-encoding axis (within 10 degrees in the world) and both polarities; ShimSetting identical when both
+state it (else "not verified", said); echo time within 1 ms and voxels within 0.01 mm; a readout time stated,
+or the diffusion series' assumed only when the protocols match (said). A failed check, or no partner: the
+pipeline tracks the series as acquired (`Correction.applied` False, the reason in `note`); `pipeline.run`
+skips the field stages and the timer counts them as 0. After a correction it reports `residual_left` (the
+pair's difference left, as `pair_residual_check.py` measures it, now through this one function), a warning
+above `RESIDUAL_WARN` 0.5, never a refusal: on the 24 good pairs 0.27-0.64 and 1.19 once (sub-10581), four above
+0.5, all from motion (PAT19, PAT25, PAT29, sub-10581); on the 36 bad pairs 0.53-1.25, all above.
+- ds001226: on all 12 patients `bids.load` hands the pipeline exactly the bench loader's arrays (dwi, bval,
+  bvec, affine, b0s - including the four resampled - pe_vectors, readout); PAT16 through `run_pipeline.py
+  --bids`: 42,170 streamlines, 32,264 labeled (the cohort's), residual 0.33, no warning; PAT03 refused (its
+  second series is phase-encoded along i) and tracked as acquired, the reason naming that series.
+- ds005123: all 12 refused - the IntendedFor field maps were acquired under another shim.
+- `run_pipeline.py --bids PATH [--shell B]` (default shell: the one with the most volumes); 11 tests on
+  synthetic BIDS sessions (`tests/test_bids.py`).

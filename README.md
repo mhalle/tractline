@@ -25,7 +25,7 @@ As a dependency of another project (the bench's groups stay behind - they are no
 ```
 uv add "tractline @ git+https://github.com/mhalle/tractline@v0.1.0"
 uv add "tractline[nrrd,triton] @ git+https://github.com/mhalle/tractline@v0.1.0"   # NRRD input/output, CUDA kernel
-uv add nibabel                # to read NIfTI scans: the pipeline takes arrays
+uv add "tractline[bids] @ git+https://github.com/mhalle/tractline@v0.1.0"          # + reading BIDS (nibabel, scipy)
 ```
 
 `pip install` works too, from the same URL. On Linux, PyPI's torch is the CUDA build (Triton included).
@@ -57,6 +57,23 @@ the rest: `triton-cache/`, `ukf/hardi/` (`dwi.nhdr`, `mask.nrrd`), `TrainedModel
 `TrainData_800clu800ol/HCP_mass_center.npy`, `hcp/feat.npy`, `variants/f64.npz`, as each script's docstring
 names them; `modal_gpu_pipeline.py --save-fibers` writes to its `tractline/`.
 
+## Your own data
+
+A diffusion series in BIDS form - NIfTI with `.bval`, `.bvec` and the JSON sidecar - is read by `tractline.bids`;
+from DICOM, dcm2niix writes that form (`dcm2niix -b y -z y -o out/ dicom_folder/`):
+
+```
+uv run bench/run_pipeline.py --bids out/sub-01_dwi.nii.gz [--shell 1000]
+```
+
+The series that correct its distortion are found from the sidecars (`B0FieldIdentifier`/`B0FieldSource`,
+`IntendedFor`, or a diffusion series in the same folder phase-encoded the other way) and checked first: the
+same phase-encoding axis, both polarities, an identical `ShimSetting`, a matching protocol, a readout time
+stated or safely assumed. When a check fails, or nothing is found, the series is tracked as acquired and the
+reason printed; after a correction, how much of the pair's difference the field leaves is reported, with a
+warning above 0.5 (motion between the series, or series that do not share one field). Why these checks:
+`bench/results/NOTES.md`, 2026-10-03.
+
 ## The package (`src/tractline`)
 
 `pipeline.py` runs it in memory: correct → track → label, then optionally TRX. Its docstring states the
@@ -65,7 +82,7 @@ layouts, units, devices). Two defaults to know: `device="mps"` (pass `"cuda"` or
 `shell=2800.0` (ds001226's b-value; pass the scan's own). On the CPU the tracker's workers share their
 input through shared memory; `TRACTOGRAPHY_SHARE=0` sends copies instead, for systems without it. The default path needs numpy,
 torch and RapidParc's weights, nothing more - no scipy, no nibabel, no TractCloud code
-(`bench/dependency_check.py`); reading the scan is the caller's (nibabel for NIfTI). A
+(`bench/dependency_check.py`); reading the scan is the caller's, or `tractline.bids`'s (the `bids` extra). A
 script using the CPU path needs an `if __name__ == "__main__":` guard: the tracker spawns worker processes,
 which re-import the script (the tracker checks, and refuses without one).
 
@@ -78,6 +95,7 @@ which re-import the script (the tracker checks, and refuses without one).
 | `labelers/tractcloud.py`, `resample.py` | TractCloud labels, at the context its model was trained with (optional) |
 | `labelers/base.py`, `labelers/scheme_43.json` | what labelers share: `Labels`, the 40 mm cut, the 43-class scheme |
 | `trx.py` | optional output: the tractogram as TRX, with tract labels and probabilities |
+| `bids.py` | a BIDS diffusion series as the pipeline's subject: the series that correct it found (B0FieldIdentifier, IntendedFor, or the folder's reversed series) and checked - same axis, both polarities, identical shim, matching protocol, readout stated or safely assumed - or refused with the reason (the `bids` extra). DICOM through dcm2niix's output. |
 | `t1check.py` | measurement, not pipeline: the distortion left against the T1 (needs scipy: the `t1check` extra) |
 | `data.py` | where data and weights live |
 

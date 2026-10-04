@@ -1873,6 +1873,11 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
+bids = [
+    { name = "nibabel" },
+    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "scipy", version = "1.18.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+]
 nrrd = [
     { name = "pynrrd" },
 ]
@@ -1907,13 +1912,15 @@ vtk = [
 
 [package.metadata]
 requires-dist = [
+    { name = "nibabel", marker = "extra == 'bids'" },
     { name = "numpy", specifier = ">=2" },
     { name = "pynrrd", marker = "extra == 'nrrd'" },
+    { name = "scipy", marker = "extra == 'bids'" },
     { name = "scipy", marker = "extra == 't1check'" },
     { name = "torch", specifier = ">=2.7" },
     { name = "triton", marker = "sys_platform == 'linux' and extra == 'triton'" },
 ]
-provides-extras = ["nrrd", "triton", "t1check"]
+provides-extras = ["nrrd", "triton", "t1check", "bids"]
 
 [package.metadata.requires-dev]
 dev = [

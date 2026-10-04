@@ -3,7 +3,9 @@ the field to a supposed reversed pair, correct each series' mean b0 with it, and
 series' difference is left; refuse the pair when too much is. Does it tell good pairs from bad ones?
 Our estimate (the pipeline's defaults, "mps"); in the brain (median_otsu of the first series' mean b0):
     left = ||corrected mean A - corrected mean B|| / ||mean A - mean B||
-(the field applied with each series' own polarity, as labeled; motion is not applied, so it counts as left),
+(pipeline.residual_left, as the pipeline reports it: the field applied with each series' own polarity, as
+labeled, the volumes scaled to a common mean, over the mean b0's bright voxels; motion is not applied, so
+it counts as left),
 and the same with motion: every b0 unwarped as the estimate's model does it - its own fitted rigid motion,
 the field, the Jacobian (susceptibility.unwarp, trilinear, full resolution, the volumes scaled to a common
 mean as the estimate scales them) - the series' means compared:
@@ -36,10 +38,9 @@ def check(A, B, pe_a, pe_b, vox, ro, brain):
     pev = np.array([pe_a] * A.shape[-1] + [pe_b] * B.shape[-1], float)
     h, motion, _ = S.estimate(b0s, vox, pev, ro, device="mps")
     ax = int(np.argmax(np.abs(pe_a)))
-    sa, sb = float(np.sign(pe_a[ax])), float(np.sign(pe_b[ax]))
-    ca = S.apply(A.mean(-1, keepdims=True), h, ax, sa, ro)[..., 0]
-    cb = S.apply(B.mean(-1, keepdims=True), h, ax, sb, ro)[..., 0]
-    d0 = (A.mean(-1) - B.mean(-1))[brain]; d1 = (ca - cb)[brain]
+    sa = float(np.sign(pe_a[ax]))
+    from types import SimpleNamespace
+    left = P.residual_left(SimpleNamespace(b0s=b0s, pe_vectors=pev, pe_axis=ax, pe_sign=sa, readout_s=ro, b0_readout_s=None), h)
     disp = np.abs(S.displacement_mm(h, ro, sa, vox[ax]))[brain]
     # with motion: the estimate's model at full resolution
     dt = torch.float64
@@ -56,7 +57,7 @@ def check(A, B, pe_a, pe_b, vox, ro, brain):
     raw = img.numpy()
     e0 = (raw[:na].mean(0) - raw[na:].mean(0))[brain]; e1 = (u[:na].mean(0) - u[na:].mean(0))[brain]
     P.release_memory("mps")
-    return {"left": round(float(np.linalg.norm(d1) / np.linalg.norm(d0)), 3),
+    return {"left": round(left, 3),
             "left_with_motion": round(float(np.linalg.norm(e1) / np.linalg.norm(e0)), 3),
             "motion_max_mm": round(float(np.abs(motion[:, :3]).max()), 2),
             "displacement_99th_mm": round(float(np.quantile(disp, 0.99)), 2)}

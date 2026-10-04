@@ -20,6 +20,7 @@ dependencies = [
 nrrd = ["pynrrd"]                              # tracker input/output as NRRD files (prep.prep, ukf.load)
 triton = ["triton; sys_platform == 'linux'"]   # the UKF kernel on CUDA (Linux; torch's CUDA wheels bring it too)
 t1check = ["scipy"]                            # t1check: the distortion left against the T1 (a measurement)
+bids = ["nibabel", "scipy"]                    # tractline.bids: BIDS (and dcm2niix) input, the correcting series found and checked
 
 # What the bench's scripts need beyond the package, as dependency groups: they never reach the published
 # metadata. `dev` is uv's default group - `uv sync` / `uv run` install it - and holds what most scripts

@@ -29,6 +29,21 @@ on a Modal CPU container (`cpu=32`; 48 CPUs visible to the process) 95 s, the fi
 (Steady state, `hardi_paths_*.json`; labeled with TractCloud at k_global 80, 1-7 s of the total -
 RapidParc takes about 1 s on the M2.)
 
+## Input, and when the correction runs
+
+`tractline.bids` reads a BIDS diffusion series (DICOM through dcm2niix) and finds the series that measure its field:
+B0FieldIdentifier/B0FieldSource, else IntendedFor field maps, else a diffusion series in the same folder
+phase-encoded the other way. It corrects only when they share the diffusion series' phase-encoding axis, cover
+both polarities, were acquired under the same shim (ShimSetting, when stated), with a matching protocol and a
+readout time stated or safely assumed; otherwise it tracks the series as acquired and says why. On ds001226 it
+hands the pipeline exactly the bench loader's arrays (all 12 patients; PAT03, whose second series is
+phase-encoded left-right, is refused with that reason); on ds005123 it refuses all 12 subjects' field maps,
+acquired under another shim. After a correction the pipeline reports how much of the pair's difference the
+field leaves (`residual_left`), a warning above 0.5 - motion between the series, or series that do not share
+one field - never a refusal. The evidence for each check: NOTES 2026-10-03 (absolute polarity irrelevant,
+readout time nearly so within a protocol; a re-shimmed pair gave a confident, wrong 10 mm field; the residual
+flags every bad pair tested and some moving good ones).
+
 ## The labeler
 
 On TractCloud's own test split RapidParc is the most accurate (94.5 % against

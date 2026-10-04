@@ -1,9 +1,10 @@
 """The pipeline, scan to labeled streamlines, in memory: correct -> track -> label [-> TRX].
 
-    s = _ds001226.load("PAT16"); timer = Timer()      # the bench's loader (bench/_ds001226.py)
+    s = bids.load("sub-01/dwi/sub-01_dwi.nii.gz"); timer = Timer()   # any BIDS series (tractline.bids)
     corr, tg, labels = run(s, None, timer, device="mps")   # None: the default labeler (RapidParc)
+    print(corr.note, corr.warnings)                         # what corrected it, or why nothing did
 
-The subject s: any object with these fields (the bench's _ds001226.Subject is one):
+The subject s: any object with these fields (bids.Subject and the bench's _ds001226.Subject are two):
   dwi         (X, Y, Z, G) the diffusion series as acquired (one phase-encoding direction)
   affine      4x4 voxel -> RAS mm; vox (3,) voxel sizes mm
   bval (G,), bvec (3, G)    FSL convention
@@ -11,12 +12,17 @@ The subject s: any object with these fields (the bench's _ds001226.Subject is on
               estimate's fixed reference), then the reversed-phase-encoding b0s
   pe_vectors  (V, 3) each b0's phase-encoding vector; pe_axis (0-2) and pe_sign (+1/-1): the DWI's
               (they must agree with pe_vectors[0]); readout_s: total readout time, s
+  optional    b0_readout_s (V,): each b0's own readout time (else readout_s for all); pairing
+              (bids.Pairing): correct only when pairing.ok. b0s None, or a failed pairing: the DWI is
+              tracked as acquired, Correction.applied False and the reason in Correction.note.
 Defaults to know: device="mps" (pass "cuda" or "cpu" elsewhere); shell=2800.0 (ds001226's b-value -
 prepare refuses a scan without that shell; pass the scan's own).
 
 Stages, and where they run:
   correct   the susceptibility field from the b0s and their reversed pair (susceptibility.estimate: GPU,
-            float32, ~18 s on the M2), then applied to the DWI (susceptibility.apply: CPU, float64, ~1 s)
+            float32, ~18 s on the M2), then applied to the DWI (susceptibility.apply: CPU, float64, ~1 s);
+            residual_left: how much of the pair's difference the field leaves - above RESIDUAL_WARN a
+            warning (Correction.warnings), never a refusal. Skipped when there is no pair (can_correct).
   track     the tracker's input (prep.prepare: b0s + the b = 2800 shell, gradients in RAS, the
             median_otsu mask, exact in torch on the pipeline's device; ~3 s), UKF two-tensor with the
             ORG settings and the binary's seeds (ukf.track: on "mps" the Metal kernel, float32 steps
@@ -40,7 +46,7 @@ from __future__ import annotations
 
 import os, time
 from contextlib import contextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import numpy as np, torch
 from . import susceptibility as S
 from . import ukf as U
@@ -114,15 +120,50 @@ class Timer:
             print(f"{self.echo} {name} {self.seconds[name]} s", flush=True)
 
     def total(self, *names):
-        return round(sum(self.seconds[n] for n in names), 1)
+        return round(sum(self.seconds.get(n, 0.0) for n in names), 1)          # a stage that did not run: 0
 
 
 @dataclass
 class Correction:
-    dwi: np.ndarray              # (X, Y, Z, G) float32, corrected
-    field_hz: np.ndarray         # (X, Y, Z)
-    motion: np.ndarray           # (V, 6) per b0: translations mm, rotations rad
-    displacement_mm: np.ndarray  # (X, Y, Z): what the field did to the DWI as acquired
+    dwi: np.ndarray              # (X, Y, Z, G) float32, corrected (as acquired when not applied)
+    field_hz: np.ndarray | None  # (X, Y, Z); None when not applied
+    motion: np.ndarray | None    # (V, 6) per b0: translations mm, rotations rad
+    displacement_mm: np.ndarray | None   # (X, Y, Z): what the field did to the DWI as acquired
+    applied: bool = True
+    note: str = ""               # what corrected it, or why nothing did (bids.Pairing.message)
+    residual_left: float | None = None   # the pair's mean-b0 difference left after correction (residual_left)
+    warnings: list = field(default_factory=list)
+
+
+RESIDUAL_WARN = 0.5              # residual_left above this: a warning, never a refusal. On 24 good pairs (ds001226,
+                                 # ds005123) 0.27-0.64 and 1.19 once, 4 above 0.5 - the ones that moved; on 36 bad
+                                 # ones (one polarity labeled two, a re-shimmed pair) 0.53-1.25, all above
+                                 # (bench/pair_residual_check.py; NOTES 2026-10-03, "The BIDS reader")
+
+
+def can_correct(s) -> bool:
+    """A subject with b0s from both polarities, and (a bids.Subject) a pairing that passed its checks."""
+    pairing = getattr(s, "pairing", None)
+    return getattr(s, "b0s", None) is not None and (pairing is None or pairing.ok)
+
+
+def residual_left(s, h) -> float:
+    """||corrected mean A - corrected mean B|| / ||mean A - mean B|| over the brain's bright voxels (above
+    the mean b0's Otsu threshold): A the b0s phase-encoded as the diffusion series is, B the others, each
+    volume scaled to the common mean (as the estimate does), the field applied with each group's own
+    polarity and readout time; motion not applied, so what motion moved counts as left."""
+    from .mask import otsu
+    b0s = np.asarray(s.b0s, np.float64)
+    b0s = b0s * (b0s.mean() / b0s.mean(axis=(0, 1, 2), keepdims=True))
+    ro = np.broadcast_to(np.asarray(getattr(s, "b0_readout_s", None) if getattr(s, "b0_readout_s", None) is not None
+                                    else s.readout_s, float), (b0s.shape[-1],))
+    sign = np.sign(np.asarray(s.pe_vectors)[:, s.pe_axis])
+    a, b = sign == np.sign(s.pe_sign), sign != np.sign(s.pe_sign)
+    ma, mb = b0s[..., a].mean(-1), b0s[..., b].mean(-1)
+    ca = S.apply(ma[..., None], h, s.pe_axis, float(np.sign(s.pe_sign)), float(ro[a][0]))[..., 0]
+    cb = S.apply(mb[..., None], h, s.pe_axis, -float(np.sign(s.pe_sign)), float(ro[b][0]))[..., 0]
+    bright = (ma + mb) / 2 > otsu((ma + mb) / 2)
+    return float(np.linalg.norm((ca - cb)[bright]) / np.linalg.norm((ma - mb)[bright]))
 
 
 @dataclass
@@ -137,13 +178,27 @@ class Tractogram:
 def correct(s, timer: Timer, device="mps") -> Correction:
     """The field estimate is susceptibility.estimate's defaults (Gauss-Newton, NOTES 2026-10-02): on "mps" its
     subsampled levels on the CPU, on the CPU and on "cuda" in float32 (all levels on the GPU there) -
-    the same model on each, 18 s / 22.6 s on the M2. The CPU's levels get ESTIMATE_THREADS."""
+    the same model on each, 18 s / 22.6 s on the M2. The CPU's levels get ESTIMATE_THREADS. Each b0's readout
+    time is s.b0_readout_s's when the subject has one (bids.load), else s.readout_s for all.
+    Without a pair to correct with (can_correct), the DWI as acquired, applied=False and the reason in note."""
+    pairing = getattr(s, "pairing", None)
+    if not can_correct(s):
+        return Correction(np.asarray(s.dwi, np.float32), None, None, None, applied=False,
+                          note=pairing.message if pairing is not None else "not corrected: no reversed-phase-encoding b0s")
     f32 = torch.device(device).type in ("cpu", "cuda")
+    ro = getattr(s, "b0_readout_s", None)
     with timer("field_estimate"), threads(min(ESTIMATE_THREADS, os.cpu_count() or 1)):
-        h, motion, _ = S.estimate(s.b0s, s.vox, s.pe_vectors, s.readout_s, device=device, **(dict(dtype=torch.float32) if f32 else {}))
+        h, motion, _ = S.estimate(s.b0s, s.vox, s.pe_vectors, s.readout_s if ro is None else ro, device=device,
+                                  **(dict(dtype=torch.float32) if f32 else {}))
     with timer("field_apply"):
         dwi = S.apply(s.dwi, h, s.pe_axis, s.pe_sign, s.readout_s)
-    return Correction(dwi, h, motion, S.displacement_mm(h, s.readout_s, s.pe_sign, s.vox[s.pe_axis]))
+    left = residual_left(s, h)
+    warnings = [] if left <= RESIDUAL_WARN else [
+        f"the pair's difference left after correction is {left:.2f} (above {RESIDUAL_WARN}): head motion between the "
+        "series, or series that do not share one field (a re-shim, another protocol) - check before relying on it"]
+    return Correction(dwi, h, motion, S.displacement_mm(h, s.readout_s, s.pe_sign, s.vox[s.pe_axis]), applied=True,
+                      note=pairing.message if pairing is not None else "corrected", residual_left=round(left, 3),
+                      warnings=warnings)
 
 
 CPU_BATCH = 1024                 # half-fibers per batch on the CPU: cache-sized (ukf_cpu_check.py)

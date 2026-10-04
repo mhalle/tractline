@@ -3,19 +3,19 @@
   "sub-10317": {
    "shim_dwi_equals_fieldmaps": false,
    "pair (AP + PA field maps)": {
-    "left": 0.451,
+    "left": 0.373,
     "left_with_motion": 0.32,
     "motion_max_mm": 0.24,
     "displacement_99th_mm": 5.81
    },
    "re-shimmed pair (dwi b0s + PA field map)": {
-    "left": 0.725,
+    "left": 0.67,
     "left_with_motion": 0.449,
     "motion_max_mm": 1.45,
     "displacement_99th_mm": 10.45
    },
    "bad: dwi b0s + AP field map labeled opposite": {
-    "left": 0.855,
+    "left": 0.837,
     "left_with_motion": 0.532,
     "motion_max_mm": 1.36,
     "displacement_99th_mm": 9.51
@@ -24,19 +24,19 @@
   "sub-10369": {
    "shim_dwi_equals_fieldmaps": false,
    "pair (AP + PA field maps)": {
-    "left": 0.444,
+    "left": 0.361,
     "left_with_motion": 0.328,
     "motion_max_mm": 0.33,
     "displacement_99th_mm": 6.23
    },
    "re-shimmed pair (dwi b0s + PA field map)": {
-    "left": 0.78,
+    "left": 0.711,
     "left_with_motion": 0.446,
     "motion_max_mm": 2.3,
     "displacement_99th_mm": 18.44
    },
    "bad: dwi b0s + AP field map labeled opposite": {
-    "left": 0.887,
+    "left": 0.906,
     "left_with_motion": 0.546,
     "motion_max_mm": 2.25,
     "displacement_99th_mm": 11.62
@@ -45,19 +45,19 @@
   "sub-10402": {
    "shim_dwi_equals_fieldmaps": false,
    "pair (AP + PA field maps)": {
-    "left": 0.467,
+    "left": 0.429,
     "left_with_motion": 0.298,
     "motion_max_mm": 0.65,
     "displacement_99th_mm": 4.99
    },
    "re-shimmed pair (dwi b0s + PA field map)": {
-    "left": 0.679,
+    "left": 0.641,
     "left_with_motion": 0.404,
     "motion_max_mm": 1.93,
     "displacement_99th_mm": 15.89
    },
    "bad: dwi b0s + AP field map labeled opposite": {
-    "left": 0.702,
+    "left": 0.692,
     "left_with_motion": 0.449,
     "motion_max_mm": 1.47,
     "displacement_99th_mm": 12.9
@@ -66,19 +66,19 @@
   "sub-10418": {
    "shim_dwi_equals_fieldmaps": false,
    "pair (AP + PA field maps)": {
-    "left": 0.422,
+    "left": 0.322,
     "left_with_motion": 0.312,
     "motion_max_mm": 0.12,
     "displacement_99th_mm": 6.19
    },
    "re-shimmed pair (dwi b0s + PA field map)": {
-    "left": 0.729,
+    "left": 0.584,
     "left_with_motion": 0.451,
     "motion_max_mm": 1.09,
     "displacement_99th_mm": 10.96
    },
    "bad: dwi b0s + AP field map labeled opposite": {
-    "left": 0.88,
+    "left": 0.796,
     "left_with_motion": 0.594,
     "motion_max_mm": 1.11,
     "displacement_99th_mm": 9.61
@@ -87,19 +87,19 @@
   "sub-10462": {
    "shim_dwi_equals_fieldmaps": false,
    "pair (AP + PA field maps)": {
-    "left": 0.344,
+    "left": 0.277,
     "left_with_motion": 0.255,
     "motion_max_mm": 0.21,
     "displacement_99th_mm": 6.78
    },
    "re-shimmed pair (dwi b0s + PA field map)": {
-    "left": 0.662,
+    "left": 0.573,
     "left_with_motion": 0.463,
     "motion_max_mm": 1.71,
     "displacement_99th_mm": 14.65
    },
    "bad: dwi b0s + AP field map labeled opposite": {
-    "left": 0.757,
+    "left": 0.804,
     "left_with_motion": 0.55,
     "motion_max_mm": 1.72,
     "displacement_99th_mm": 13.51
@@ -108,19 +108,19 @@
   "sub-10478": {
    "shim_dwi_equals_fieldmaps": false,
    "pair (AP + PA field maps)": {
-    "left": 0.544,
+    "left": 0.471,
     "left_with_motion": 0.298,
     "motion_max_mm": 0.78,
     "displacement_99th_mm": 6.31
    },
    "re-shimmed pair (dwi b0s + PA field map)": {
-    "left": 0.641,
+    "left": 0.614,
     "left_with_motion": 0.452,
     "motion_max_mm": 1.2,
     "displacement_99th_mm": 11.44
    },
    "bad: dwi b0s + AP field map labeled opposite": {
-    "left": 0.728,
+    "left": 0.738,
     "left_with_motion": 0.512,
     "motion_max_mm": 1.11,
     "displacement_99th_mm": 11.17
@@ -129,19 +129,19 @@
   "sub-10486": {
    "shim_dwi_equals_fieldmaps": false,
    "pair (AP + PA field maps)": {
-    "left": 0.395,
+    "left": 0.316,
     "left_with_motion": 0.285,
     "motion_max_mm": 0.24,
     "displacement_99th_mm": 6.46
    },
    "re-shimmed pair (dwi b0s + PA field map)": {
-    "left": 0.783,
+    "left": 0.633,
     "left_with_motion": 0.445,
     "motion_max_mm": 1.93,
     "displacement_99th_mm": 10.76
    },
    "bad: dwi b0s + AP field map labeled opposite": {
-    "left": 0.939,
+    "left": 0.896,
     "left_with_motion": 0.581,
     "motion_max_mm": 1.8,
     "displacement_99th_mm": 11.0
@@ -150,19 +150,19 @@
   "sub-10529": {
    "shim_dwi_equals_fieldmaps": false,
    "pair (AP + PA field maps)": {
-    "left": 0.378,
+    "left": 0.302,
     "left_with_motion": 0.277,
     "motion_max_mm": 0.23,
     "displacement_99th_mm": 6.3
    },
    "re-shimmed pair (dwi b0s + PA field map)": {
-    "left": 0.608,
+    "left": 0.532,
     "left_with_motion": 0.455,
     "motion_max_mm": 1.11,
     "displacement_99th_mm": 12.67
    },
    "bad: dwi b0s + AP field map labeled opposite": {
-    "left": 0.751,
+    "left": 0.764,
     "left_with_motion": 0.556,
     "motion_max_mm": 1.02,
     "displacement_99th_mm": 10.81
@@ -171,19 +171,19 @@
   "sub-10541": {
    "shim_dwi_equals_fieldmaps": false,
    "pair (AP + PA field maps)": {
-    "left": 0.444,
+    "left": 0.38,
     "left_with_motion": 0.294,
     "motion_max_mm": 0.45,
     "displacement_99th_mm": 5.33
    },
    "re-shimmed pair (dwi b0s + PA field map)": {
-    "left": 0.727,
+    "left": 0.684,
     "left_with_motion": 0.383,
     "motion_max_mm": 1.11,
     "displacement_99th_mm": 21.55
    },
    "bad: dwi b0s + AP field map labeled opposite": {
-    "left": 0.792,
+    "left": 0.75,
     "left_with_motion": 0.437,
     "motion_max_mm": 1.17,
     "displacement_99th_mm": 16.02
@@ -192,19 +192,19 @@
   "sub-10559": {
    "shim_dwi_equals_fieldmaps": false,
    "pair (AP + PA field maps)": {
-    "left": 0.428,
+    "left": 0.324,
     "left_with_motion": 0.319,
     "motion_max_mm": 0.32,
     "displacement_99th_mm": 7.04
    },
    "re-shimmed pair (dwi b0s + PA field map)": {
-    "left": 0.642,
+    "left": 0.566,
     "left_with_motion": 0.381,
     "motion_max_mm": 0.68,
     "displacement_99th_mm": 11.65
    },
    "bad: dwi b0s + AP field map labeled opposite": {
-    "left": 0.763,
+    "left": 0.72,
     "left_with_motion": 0.461,
     "motion_max_mm": 0.54,
     "displacement_99th_mm": 10.7
@@ -213,19 +213,19 @@
   "sub-10572": {
    "shim_dwi_equals_fieldmaps": false,
    "pair (AP + PA field maps)": {
-    "left": 0.386,
+    "left": 0.324,
     "left_with_motion": 0.282,
     "motion_max_mm": 0.22,
     "displacement_99th_mm": 6.03
    },
    "re-shimmed pair (dwi b0s + PA field map)": {
-    "left": 0.677,
+    "left": 0.538,
     "left_with_motion": 0.403,
     "motion_max_mm": 0.39,
     "displacement_99th_mm": 9.22
    },
    "bad: dwi b0s + AP field map labeled opposite": {
-    "left": 0.892,
+    "left": 0.806,
     "left_with_motion": 0.54,
     "motion_max_mm": 0.84,
     "displacement_99th_mm": 6.97
@@ -234,19 +234,19 @@
   "sub-10581": {
    "shim_dwi_equals_fieldmaps": false,
    "pair (AP + PA field maps)": {
-    "left": 1.235,
+    "left": 1.185,
     "left_with_motion": 0.447,
     "motion_max_mm": 2.46,
     "displacement_99th_mm": 6.72
    },
    "re-shimmed pair (dwi b0s + PA field map)": {
-    "left": 0.722,
+    "left": 0.683,
     "left_with_motion": 0.468,
     "motion_max_mm": 0.9,
     "displacement_99th_mm": 11.49
    },
    "bad: dwi b0s + AP field map labeled opposite": {
-    "left": 0.842,
+    "left": 0.926,
     "left_with_motion": 0.481,
     "motion_max_mm": 3.84,
     "displacement_99th_mm": 11.17
@@ -256,13 +256,13 @@
  "ds001226": {
   "PAT05": {
    "pair (AP + PA)": {
-    "left": 0.434,
+    "left": 0.321,
     "left_with_motion": 0.193,
     "motion_max_mm": 0.67,
     "displacement_99th_mm": 9.55
    },
    "bad: AP halves labeled opposite": {
-    "left": 0.897,
+    "left": 0.874,
     "left_with_motion": 0.453,
     "motion_max_mm": 0.36,
     "displacement_99th_mm": 0.92
@@ -270,13 +270,13 @@
   },
   "PAT07": {
    "pair (AP + PA)": {
-    "left": 0.433,
+    "left": 0.351,
     "left_with_motion": 0.2,
     "motion_max_mm": 1.48,
     "displacement_99th_mm": 7.49
    },
    "bad: AP halves labeled opposite": {
-    "left": 1.001,
+    "left": 0.954,
     "left_with_motion": 0.328,
     "motion_max_mm": 1.4,
     "displacement_99th_mm": 1.13
@@ -284,13 +284,13 @@
   },
   "PAT08": {
    "pair (AP + PA)": {
-    "left": 0.51,
+    "left": 0.394,
     "left_with_motion": 0.192,
     "motion_max_mm": 0.79,
     "displacement_99th_mm": 8.11
    },
    "bad: AP halves labeled opposite": {
-    "left": 1.326,
+    "left": 1.253,
     "left_with_motion": 0.527,
     "motion_max_mm": 0.89,
     "displacement_99th_mm": 0.95
@@ -298,13 +298,13 @@
   },
   "PAT13": {
    "pair (AP + PA)": {
-    "left": 0.32,
+    "left": 0.268,
     "left_with_motion": 0.206,
     "motion_max_mm": 0.4,
     "displacement_99th_mm": 8.54
    },
    "bad: AP halves labeled opposite": {
-    "left": 0.74,
+    "left": 0.722,
     "left_with_motion": 0.453,
     "motion_max_mm": 0.21,
     "displacement_99th_mm": 0.68
@@ -312,13 +312,13 @@
   },
   "PAT14": {
    "pair (AP + PA)": {
-    "left": 0.468,
+    "left": 0.364,
     "left_with_motion": 0.203,
     "motion_max_mm": 0.62,
     "displacement_99th_mm": 8.41
    },
    "bad: AP halves labeled opposite": {
-    "left": 0.887,
+    "left": 0.868,
     "left_with_motion": 0.412,
     "motion_max_mm": 0.74,
     "displacement_99th_mm": 1.16
@@ -326,13 +326,13 @@
   },
   "PAT16": {
    "pair (AP + PA)": {
-    "left": 0.422,
+    "left": 0.331,
     "left_with_motion": 0.196,
     "motion_max_mm": 1.24,
     "displacement_99th_mm": 8.35
    },
    "bad: AP halves labeled opposite": {
-    "left": 0.852,
+    "left": 0.849,
     "left_with_motion": 0.418,
     "motion_max_mm": 1.19,
     "displacement_99th_mm": 1.2
@@ -340,13 +340,13 @@
   },
   "PAT19": {
    "pair (AP + PA)": {
-    "left": 0.614,
+    "left": 0.509,
     "left_with_motion": 0.163,
     "motion_max_mm": 0.67,
     "displacement_99th_mm": 7.94
    },
    "bad: AP halves labeled opposite": {
-    "left": 0.87,
+    "left": 0.827,
     "left_with_motion": 0.342,
     "motion_max_mm": 0.54,
     "displacement_99th_mm": 1.44
@@ -354,13 +354,13 @@
   },
   "PAT20": {
    "pair (AP + PA)": {
-    "left": 0.32,
+    "left": 0.281,
     "left_with_motion": 0.196,
     "motion_max_mm": 0.35,
     "displacement_99th_mm": 9.86
    },
    "bad: AP halves labeled opposite": {
-    "left": 0.884,
+    "left": 0.851,
     "left_with_motion": 0.503,
     "motion_max_mm": 0.37,
     "displacement_99th_mm": 0.77
@@ -368,13 +368,13 @@
   },
   "PAT23": {
    "pair (AP + PA)": {
-    "left": 0.457,
+    "left": 0.365,
     "left_with_motion": 0.264,
     "motion_max_mm": 0.68,
     "displacement_99th_mm": 8.34
    },
    "bad: AP halves labeled opposite": {
-    "left": 0.966,
+    "left": 0.961,
     "left_with_motion": 0.417,
     "motion_max_mm": 0.65,
     "displacement_99th_mm": 0.81
@@ -382,13 +382,13 @@
   },
   "PAT25": {
    "pair (AP + PA)": {
-    "left": 0.772,
+    "left": 0.642,
     "left_with_motion": 0.186,
     "motion_max_mm": 2.68,
     "displacement_99th_mm": 8.01
    },
    "bad: AP halves labeled opposite": {
-    "left": 0.936,
+    "left": 0.921,
     "left_with_motion": 0.183,
     "motion_max_mm": 2.68,
     "displacement_99th_mm": 1.69
@@ -396,13 +396,13 @@
   },
   "PAT26": {
    "pair (AP + PA)": {
-    "left": 0.358,
+    "left": 0.282,
     "left_with_motion": 0.206,
     "motion_max_mm": 0.63,
     "displacement_99th_mm": 6.18
    },
    "bad: AP halves labeled opposite": {
-    "left": 0.819,
+    "left": 0.813,
     "left_with_motion": 0.325,
     "motion_max_mm": 0.66,
     "displacement_99th_mm": 0.95
@@ -410,13 +410,13 @@
   },
   "PAT29": {
    "pair (AP + PA)": {
-    "left": 0.651,
+    "left": 0.501,
     "left_with_motion": 0.181,
     "motion_max_mm": 2.07,
     "displacement_99th_mm": 7.92
    },
    "bad: AP halves labeled opposite": {
-    "left": 0.962,
+    "left": 0.961,
     "left_with_motion": 0.174,
     "motion_max_mm": 2.18,
     "displacement_99th_mm": 1.31
