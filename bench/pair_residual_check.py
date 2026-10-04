@@ -3,7 +3,11 @@ the field to a supposed reversed pair, correct each series' mean b0 with it, and
 series' difference is left; refuse the pair when too much is. Does it tell good pairs from bad ones?
 Our estimate (the pipeline's defaults, "mps"); in the brain (median_otsu of the first series' mean b0):
     left = ||corrected mean A - corrected mean B|| / ||mean A - mean B||
-(the field applied with each series' own polarity, as labeled; motion is not applied, so it counts as left).
+(the field applied with each series' own polarity, as labeled; motion is not applied, so it counts as left),
+and the same with motion: every b0 unwarped as the estimate's model does it - its own fitted rigid motion,
+the field, the Jacobian (susceptibility.unwarp, trilinear, full resolution, the volumes scaled to a common
+mean as the estimate scales them) - the series' means compared:
+    left_with_motion = ||mean unwarped A - mean unwarped B|| / ||mean A - mean B||
 
 ds001226 (12 patients): the AP/PA pair (good); the AP b0s in two halves labeled opposite (bad: one polarity).
 ds005123 (the subjects fetch_ds005123.py fetched): the AP and PA field maps (good: one shim); the diffusion
@@ -16,7 +20,7 @@ Writes results/pair_residual_check.json.
 """
 import argparse, json
 from pathlib import Path
-import numpy as np, nibabel as nib
+import numpy as np, nibabel as nib, torch
 from tractline import susceptibility as S, pipeline as P
 from tractline.data import DATA
 from tractline.mask import median_otsu
@@ -30,15 +34,32 @@ def check(A, B, pe_a, pe_b, vox, ro, brain):
     difference left after correction, and the displacement's 99th percentile (mm) for A."""
     b0s = np.concatenate([A, B], -1)
     pev = np.array([pe_a] * A.shape[-1] + [pe_b] * B.shape[-1], float)
-    h, _, _ = S.estimate(b0s, vox, pev, ro, device="mps")
+    h, motion, _ = S.estimate(b0s, vox, pev, ro, device="mps")
     ax = int(np.argmax(np.abs(pe_a)))
     sa, sb = float(np.sign(pe_a[ax])), float(np.sign(pe_b[ax]))
     ca = S.apply(A.mean(-1, keepdims=True), h, ax, sa, ro)[..., 0]
     cb = S.apply(B.mean(-1, keepdims=True), h, ax, sb, ro)[..., 0]
     d0 = (A.mean(-1) - B.mean(-1))[brain]; d1 = (ca - cb)[brain]
     disp = np.abs(S.displacement_mm(h, ro, sa, vox[ax]))[brain]
+    # with motion: the estimate's model at full resolution
+    dt = torch.float64
+    img = torch.as_tensor(np.moveaxis(b0s, -1, 0), dtype=dt)
+    img = img * (img.mean() / img.mean(dim=(1, 2, 3), keepdim=True))
+    vox_t = torch.as_tensor(np.asarray(vox, float), dtype=dt)
+    center = (torch.tensor(b0s.shape[:3], dtype=dt) - 1) / 2 * vox_t
+    Rt = [S.rigid(torch.as_tensor(m, dtype=dt), center) for m in motion]
+    ht = torch.as_tensor(h, dtype=dt)
+    dh = torch.as_tensor(np.gradient(h, axis=ax), dtype=dt)
+    scale = torch.as_tensor(pev[:, ax] * ro, dtype=dt)
+    u = S.unwarp(img, ht, dh, ax, scale, torch.stack([R for R, _ in Rt]), torch.stack([t_ for _, t_ in Rt]), vox_t).numpy()
+    na = A.shape[-1]
+    raw = img.numpy()
+    e0 = (raw[:na].mean(0) - raw[na:].mean(0))[brain]; e1 = (u[:na].mean(0) - u[na:].mean(0))[brain]
     P.release_memory("mps")
-    return {"left": round(float(np.linalg.norm(d1) / np.linalg.norm(d0)), 3), "displacement_99th_mm": round(float(np.quantile(disp, 0.99)), 2)}
+    return {"left": round(float(np.linalg.norm(d1) / np.linalg.norm(d0)), 3),
+            "left_with_motion": round(float(np.linalg.norm(e1) / np.linalg.norm(e0)), 3),
+            "motion_max_mm": round(float(np.abs(motion[:, :3]).max()), 2),
+            "displacement_99th_mm": round(float(np.quantile(disp, 0.99)), 2)}
 
 
 def ds001226():
@@ -89,3 +110,8 @@ if __name__ == "__main__":
     if args.dataset in ("ds001226", "both"):
         res["ds001226"] = ds001226()
     (HERE / "results/pair_residual_check.json").write_text(json.dumps(res, indent=1))
+    for ds, subs in res.items():
+        for c in [k for k, v in next(iter(subs.values())).items() if isinstance(v, dict)]:
+            for key in ("left", "left_with_motion"):
+                xs = sorted(v[c][key] for v in subs.values())
+                print(ds, c, key, f"{xs[0]:.2f}-{xs[-1]:.2f} median {xs[len(xs) // 2]:.2f}")

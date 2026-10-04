@@ -1884,3 +1884,13 @@ check counts what motion moved as difference left, and our estimate fits motion 
 apply it. A motion-aware residual (the estimate's own rigid motion applied before comparing) is the
 next step; the refusal threshold to be set from it. albula-diffusion does not model motion, so its check
 would meet the same false refusals, and its field would carry the motion in those patients.
+- **With motion applied** (every b0 unwarped by the estimate's own model - fitted rigid motion, field,
+  Jacobian - the series' means compared): good pairs 0.16-0.26 (ds001226) and 0.26-0.45 (ds005123), all
+  under 0.5; but the re-shimmed pairs drop to 0.38-0.47 and the mislabeled ones to 0.44-0.59, inside or
+  beside the good range - the fitted motion explains part of a wrong pair's mismatch (bad fits needed more
+  motion, median 1.1 mm against 0.6, overlapping). The AP-halves control drops to 0.17-0.53, but its field
+  is 0.7-1.7 mm (harmless if applied); the dangerous bad pairs are the ones with large fields (7-22 mm).
+  The good range also differs by dataset (noise, number of b0s), so no fixed threshold is principled.
+  Conclusion: header checks decide (the sidecar's ShimSetting caught all 12 re-shims exactly; polarity and
+  protocol likewise); the residual without motion is a warning that flags every dangerous pair here and
+  the moving good ones, for review, not a refusal.
