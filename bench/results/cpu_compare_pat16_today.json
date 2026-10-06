@@ -1,0 +1,136 @@
+{
+ "old": {
+  "device": "cpu",
+  "torch": "2.14.1+cu130",
+  "cpu_count": 48,
+  "platform": "Linux-4.19.0-gvisor-x86_64-with-glibc2.36",
+  "cpu": "unknown",
+  "workers": 32,
+  "scans": {
+   "pat16": {
+    "runs": [
+     {
+      "read_s": 1.56,
+      "seconds": {
+       "field_estimate": 34.28,
+       "field_apply": 0.38,
+       "prep": 0.79,
+       "load": 0.17,
+       "ukf": 39.11,
+       "label": 1.29
+      },
+      "scan_to_labels_s": 76.0,
+      "corrected": true,
+      "grid": [
+       96,
+       96,
+       60,
+       102
+      ],
+      "seeds": 47733,
+      "fibers": 42165,
+      "fiber_steps": 11560439,
+      "labeled": 32250,
+      "other_fraction": 0.4969,
+      "compile_s": null,
+      "fibers_sha": "178b18dfc2e5f407"
+     },
+     {
+      "read_s": 0.46,
+      "seconds": {
+       "field_estimate": 29.38,
+       "field_apply": 0.39,
+       "prep": 0.81,
+       "load": 0.15,
+       "ukf": 37.41,
+       "label": 1.14
+      },
+      "scan_to_labels_s": 69.3,
+      "corrected": true,
+      "grid": [
+       96,
+       96,
+       60,
+       102
+      ],
+      "seeds": 47733,
+      "fibers": 42165,
+      "fiber_steps": 11560439,
+      "labeled": 32250,
+      "other_fraction": 0.4969,
+      "compile_s": null,
+      "fibers_sha": "178b18dfc2e5f407"
+     }
+    ],
+    "note": "corrected"
+   }
+  }
+ },
+ "tuned": {
+  "device": "cpu",
+  "torch": "2.14.1+cu130",
+  "cpu_count": 48,
+  "platform": "Linux-4.19.0-gvisor-x86_64-with-glibc2.36",
+  "cpu": "unknown",
+  "workers": 32,
+  "scans": {
+   "pat16": {
+    "runs": [
+     {
+      "read_s": 1.12,
+      "seconds": {
+       "field_estimate": 18.75,
+       "field_apply": 0.42,
+       "prep": 0.81,
+       "load": 0.2,
+       "ukf": 33.7,
+       "label": 1.06
+      },
+      "scan_to_labels_s": 54.9,
+      "corrected": true,
+      "grid": [
+       96,
+       96,
+       60,
+       102
+      ],
+      "seeds": 47744,
+      "fibers": 42165,
+      "fiber_steps": 11552882,
+      "labeled": 32249,
+      "other_fraction": 0.4982,
+      "compile_s": 0.0,
+      "fibers_sha": "5f6ca689eb4f7e15"
+     },
+     {
+      "read_s": 0.45,
+      "seconds": {
+       "field_estimate": 18.8,
+       "field_apply": 0.41,
+       "prep": 0.84,
+       "load": 0.18,
+       "ukf": 33.68,
+       "label": 1.17
+      },
+      "scan_to_labels_s": 55.1,
+      "corrected": true,
+      "grid": [
+       96,
+       96,
+       60,
+       102
+      ],
+      "seeds": 47744,
+      "fibers": 42165,
+      "fiber_steps": 11552882,
+      "labeled": 32249,
+      "other_fraction": 0.4982,
+      "compile_s": 0.0,
+      "fibers_sha": "5f6ca689eb4f7e15"
+     }
+    ],
+    "note": "corrected"
+   }
+  }
+ }
+}

@@ -154,6 +154,33 @@ def interp(D: dict, pos: torch.Tensor) -> torch.Tensor:
     return torch.cat([out, out], 1)
 
 
+def _neighbors(D: dict) -> dict:
+    """What _interp_half needs beside D, made once per track() (not cached in a module global: under
+    torch.compile a global filled on first use is a guard that fails, and every worker recompiled twice):
+    the 27 offsets in interp's loop order, the grid's dims and strides."""
+    nk, nj, ni = D["dim"]
+    dev = D["A"].device
+    o = torch.tensor([(a, b, c) for a in (-1, 0, 1) for b in (-1, 0, 1) for c in (-1, 0, 1)], device=dev)
+    return {"nbr_off": o, "nbr_dims": torch.tensor([nk, nj, ni], device=dev), "nbr_strides": torch.tensor([nj * ni, ni, 1], device=dev)}
+
+
+def _interp_half(D: dict, pos: torch.Tensor) -> torch.Tensor:
+    """interp for the fast step: the N gradients once (interp's other N columns repeat them), the 27 voxels
+    read in one gather and summed as one weighted product (B, 27) x (B, 27, N) - ~10 operations instead of 27
+    rounds of ~15. The same weights; the sums in another order. D carries _neighbors(D)."""
+    A, vox = D["A"], D["voxel"]
+    N = D["N"]
+    o, dims, strides = D["nbr_off"], D["nbr_dims"], D["nbr_strides"]
+    idx = cround(pos).long()[:, None, :] + o[None]                       # (B, 27, 3), interp's loop order
+    ok = ((idx >= 0) & (idx < dims)).all(-1)
+    d = (idx - pos[:, None, :]) * vox
+    w = torch.exp(-(d[..., 0] * d[..., 0] + d[..., 1] * d[..., 1] + d[..., 2] * d[..., 2]) / vox.min())
+    w = torch.where(ok, w, torch.zeros_like(w))
+    lin = (torch.minimum(idx.clamp_min(0), dims - 1) * strides).sum(-1)
+    vals = A.reshape(-1, N)[lin].to(pos.dtype)                           # (B, 27, N)
+    return (w[:, None, :] @ vals)[:, 0] / (w.sum(1) + 1e-16)[:, None]
+
+
 def mask_at(D: dict, pos: torch.Tensor) -> torch.Tensor:
     nk, nj, ni = D["dim"]
     r = cround(pos).long()
@@ -168,10 +195,10 @@ def _normalize(v):
     return v / torch.sqrt((v * v).sum(-1, keepdim=True))
 
 
-def _H_gemm(D: dict, X: torch.Tensor) -> torch.Tensor:
-    """H with u'Du as one matrix product: the tensor's six components against the gradients' six
-    products (u0^2, u1^2, u2^2, 2 u0 u1, 2 u0 u2, 2 u1 u2), -b folded in. Another rounding than the
-    binary's order (track(fast=True)); measured against float64 in ukf_cpu_check.py."""
+def _H_half(D: dict, X: torch.Tensor) -> torch.Tensor:
+    """H for the fast step, (..., N): the N gradients once (H's other N columns repeat them), u'Du as one
+    matrix product of the tensor's six components and the gradients' six products (u0^2, u1^2, u2^2,
+    2 u0 u1, 2 u0 u2, 2 u1 u2), -b folded in. Another rounding than the binary's order."""
     N = D["N"]
     g, b = D["g"][:N], D["b"][:N]
     G = -b[None] * torch.stack([g[:, 0] * g[:, 0], g[:, 1] * g[:, 1], g[:, 2] * g[:, 2],
@@ -190,15 +217,13 @@ def _H_gemm(D: dict, X: torch.Tensor) -> torch.Tensor:
         Dm = (R * L[..., None, :]) @ R.transpose(-1, -2) * 1e-6
         d6 = torch.stack([Dm[..., 0, 0], Dm[..., 1, 1], Dm[..., 2, 2], Dm[..., 0, 1], Dm[..., 0, 2], Dm[..., 1, 2]], -1)
         out = out + torch.exp(d6 @ G) * 0.5
-    return torch.cat([out, out], -1)
+    return out
 
 
 def H(D: dict, X: torch.Tensor) -> torch.Tensor:
     """filter_Simple2T::H: X (..., 10) -> (..., 2N). Computed for the N gradients and repeated: the
     other N are the same gradients negated (load), and u'Du is unchanged by u -> -u, bit for bit
     (every product of two negated factors is the product of the factors, exactly)."""
-    if D.get("fast"):
-        return _H_gemm(D, X)
     N = D["N"]
     g, b = D["g"][:N], D["b"][:N]
     out = 0
@@ -244,10 +269,7 @@ def ukf_step(D: dict, x, P, z, Q, Rs):
     xh = torch.einsum("s,bsk->bk", W, X)
     Xt = X - xh[:, None]
     Pm = torch.einsum("bsi,s,bsj->bij", Xt, W, Xt) + Q
-    if D.get("fast"):                                                # both SPD: inverses from their Cholesky factors
-        Yk = torch.cholesky_inverse(torch.linalg.cholesky_ex(Pm)[0])
-    else:
-        Yk = torch.linalg.inv(Pm)
+    Yk = torch.linalg.inv(Pm)
     yh = torch.einsum("bij,bj->bi", Yk, xh)
     Z = H(D, X)
     zh = torch.einsum("s,bsn->bn", W, Z)
@@ -256,8 +278,40 @@ def ukf_step(D: dict, x, P, z, Q, Rs):
     r = 1.0 / Rs
     I = (Ht * r) @ Ht.transpose(1, 2)
     i = torch.einsum("bin,bn->bi", Ht * r, (z - zh) + torch.einsum("bin,bi->bn", Pxz, yh))
-    Pn = torch.cholesky_inverse(torch.linalg.cholesky_ex(Yk + I)[0]) if D.get("fast") else torch.linalg.inv(Yk + I)
+    Pn = torch.linalg.inv(Yk + I)
     return torch.einsum("bij,bj->bi", Pn, i + yh), Pn
+
+
+def _spd_inv(A):
+    return torch.cholesky_inverse(torch.linalg.cholesky_ex(A)[0])
+
+
+def _ukf_step_fast(D: dict, x, P, z, Q, Rs):
+    """ukf_step for track(fast=True), z (B, N): the N measurements once with every sum over the 2N doubled (the
+    other N repeat them; the Metal and Triton kernels do the same), the weights applied first and each
+    contraction one batched product, both inverses from Cholesky factors (both matrices SPD), H as _H_half.
+    The same filter in another rounding: ukf_cpu_tune.py measures it against float64."""
+    n = 10
+    W = torch.full((2 * n + 1,), 0.5 / (n + KAPPA), dtype=x.dtype, device=x.device)
+    W[0] = KAPPA / (n + KAPPA)
+    L, _ = torch.linalg.cholesky_ex(P)
+    dX = math.sqrt(n + KAPPA) * L.transpose(1, 2)
+    X = F(torch.cat([x[:, None], x[:, None] + dX, x[:, None] - dX], 1))
+    Wc = W[None, :, None]
+    xh = (Wc * X).sum(1)
+    Xt = X - xh[:, None]
+    XwT = (Xt * Wc).transpose(1, 2)                                      # (B, 10, 21)
+    Yk = _spd_inv(XwT @ Xt + Q)
+    yh = (Yk @ xh[..., None])[..., 0]
+    Z = _H_half(D, X)                                                    # (B, 21, N)
+    zh = (Wc * Z).sum(1)
+    Pxz = XwT @ (Z - zh[:, None])                                        # (B, 10, N)
+    Ht = Yk @ Pxz
+    Htr = Ht * (1.0 / Rs)
+    I = 2 * (Htr @ Ht.transpose(1, 2))
+    i = 2 * (Htr @ ((z - zh) + (Pxz.transpose(1, 2) @ yh[..., None])[..., 0])[..., None])[..., 0]
+    Pn = _spd_inv(Yk + I)
+    return (Pn @ (i + yh)[..., None])[..., 0], Pn
 
 
 def l2fa(l1, l2, l3):
@@ -346,8 +400,9 @@ def advance(D: dict, xa, sa, Pa, oa, Q, Rs, step, max_steps, step_length=0.3, st
     tensor in `dtype` of the state. Returns (x, state, P, direction, stop, info), info holding the
     intermediate decisions the one-step fixtures compare: both swaps, fa, mean signal, in-mask."""
     vox = D["voxel"]
-    z = interp(D, xa)
-    sa, Pa = ukf_step(D, sa, Pa, z, Q, Rs)
+    fast = D.get("fast", False)
+    z = _interp_half(D, xa) if fast else interp(D, xa)
+    sa, Pa = (_ukf_step_fast if fast else ukf_step)(D, sa, Pa, z, Q, Rs)
     # State2Tensor2T
     m1, m2 = _normalize(sa[:, 0:3]), _normalize(sa[:, 5:8])
     L1 = torch.stack([sa[:, 3].clamp_min(LMIN), sa[:, 4].clamp_min(LMIN)], 1)
@@ -368,7 +423,7 @@ def advance(D: dict, xa, sa, Pa, oa, Q, Rs, step, max_steps, step_length=0.3, st
     fa = torch.where(L1[:, 0] < L1[:, 1], torch.zeros_like(fat1), l2fa(L1[:, 0], L1[:, 1], L1[:, 1]))
     xa = xa + torch.stack([m1[:, 2] / vox[0], m1[:, 1] / vox[1], m1[:, 0] / vox[2]], 1) * step_length
     # the checks, at the new position
-    mean_sig = H(D, sa[:, None])[:, 0].mean(1)
+    mean_sig = (_H_half if fast else H)(D, sa[:, None])[:, 0].mean(1)
     inside = mask_at(D, xa) > 0
     stop = ~inside | (mean_sig < stopping_threshold) | (fa < stopping_fa) | (step > max_steps)
     return xa, sa, Pa, m1, stop, {"swap": sw, "swap2": sw2, "fa": fa, "mean_signal": mean_sig, "inside": inside}
@@ -408,6 +463,67 @@ def _track_block(D: dict, x, state, old, step_fn, params, s0=0, capture=None, pr
     return [r[k, :nr[k]] for k in range(nb)], steps
 
 
+_COMPILED = None
+
+
+def _compiled_advance():
+    """advance through torch.compile (Inductor's C++ backend), dynamic batch size - one per process; its code
+    is cached on disk (TORCHINDUCTOR_CACHE_DIR), so a second process, or run, loads it instead of compiling.
+    Single-threaded kernels (cpp.threads 1): Inductor otherwise bakes the compiling process's thread count into
+    each kernel's OpenMP region - compiled in a parent at 4 threads, 8 workers ran 32 threads on 8 cores (load
+    35) and gained nothing; the CPU tracker's parallelism is its processes, one thread each.
+    One graph for every step: the step limit (step > max_steps stops every half-fiber, the same rule) is applied
+    outside it, and a lone last half-fiber is tracked as a pair with itself (sizes 1 and 0 are specialized),
+    so no guard fails mid-run - each failure was a recompile, 2-4 s with the disk cache, 10-20 s without.
+    The padded pair's arithmetic is a batch of two's, the same in every process."""
+    global _COMPILED
+    if _COMPILED is None:
+        core = torch.compile(lambda D, xa, sa, Pa, oa, Q, Rs, sl, sfa, sth: advance(D, xa, sa, Pa, oa, Q, Rs, 0, 1, sl, sfa, sth),
+                             dynamic=True, options={"cpp.threads": 1})
+
+        def step_fn(D, xa, sa, Pa, oa, Q, Rs, step, max_steps, step_length=0.3, stopping_fa=0.08, stopping_threshold=0.06):
+            one = len(xa) == 1
+            if one:
+                xa, sa, Pa, oa = (torch.cat([t, t]) for t in (xa, sa, Pa, oa))
+            xa, sa, Pa, m1, stop, info = core(D, xa, sa, Pa, oa, Q, Rs, step_length, stopping_fa, stopping_threshold)
+            if one:
+                xa, sa, Pa, m1, stop = xa[:1], sa[:1], Pa[:1], m1[:1], stop[:1]
+                info = {k: v[:1] for k, v in info.items()}
+            if step > max_steps:
+                stop = torch.ones_like(stop)
+            return xa, sa, Pa, m1, stop, info
+
+        _COMPILED = step_fn
+    return _COMPILED
+
+
+def can_compile() -> bool:
+    """Whether the pipeline compiles the CPU tracker's step (track(compile=True)): only when TRACTLINE_COMPILE=1
+    and a C++ compiler is on the PATH (CXX, c++, g++ or clang++; Inductor's CPU backend needs one). Off by
+    default: one process gains 1.7-2.9x, but every spawned worker pays torch.compile's start (tracing, loading
+    the cached code: ~8 s on the M2, ~100 s on 32 x86 cores), and with 8 or more workers the compiled tracker
+    was slower than the uncompiled one (NOTES 2026-10-06)."""
+    import os, shutil
+    if os.environ.get("TRACTLINE_COMPILE") != "1":
+        return False
+    return any(shutil.which(c) for c in (os.environ.get("CXX"), "c++", "g++", "clang++") if c)
+
+
+def _warm_compiled(D, blocks, params):
+    """Compile the fast step here, on 16 half-fibers of the first block tracked to their ends (every batch size
+    down to 1, so no later recompile), before workers load it from the disk cache. Returns (step function,
+    seconds, None) or, when compiling fails, (advance, seconds, the error) - the caller falls back."""
+    import time
+    t0 = time.perf_counter()
+    try:
+        f = _compiled_advance()
+        _, x, st, d = blocks[0]
+        _track_block(D, x[:16], st[:16], d[:16], f, params)
+        return f, time.perf_counter() - t0, None
+    except Exception as e:                                               # noqa: BLE001 - no compiler, an Inductor failure
+        return advance, time.perf_counter() - t0, e
+
+
 _WORKER_D = None
 
 
@@ -422,7 +538,7 @@ _SHARED_KEYS = ("A", "g", "b", "voxel", "mask")
 
 def _worker_block(args):
     x, st, d, params = (torch.from_numpy(a) if isinstance(a, np.ndarray) else a for a in args)
-    return _track_block(_WORKER_D, x, st, d, advance, params)
+    return _track_block(_WORKER_D, x, st, d, _compiled_advance() if params.get("compile") else advance, params)
 
 
 def require_main_guard():
@@ -480,7 +596,7 @@ def _parallel(D, blocks, params, workers, threads_per_worker):
 def track(D: dict, offset_kji=SRAND0_OFFSET, seeding_threshold=0.1, stopping_fa=0.08, stopping_threshold=0.06,
           step_length=0.3, record_length=1.8, max_half_length=250.0, Qm=0.001, Ql=50.0, Rs=0.02,
           batch=50_000, progress=None, select=None, dtype=torch.float64, device=None, capture=None,
-          seed_points=None, backend="torch", workers=1, threads_per_worker=1, fast=False):
+          seed_points=None, backend="torch", workers=1, threads_per_worker=1, fast=False, compile=False):
     """All fibers. Returns (points list of (n, 3) RAS arrays in seed order, stats). With `select`
     (indices into the seed list), only those seeds are tracked; stats["seed_index"] then says which
     seed each returned fiber came from, stats["seed_voxel"] its mask voxel (k, j, i) - the key to
@@ -497,8 +613,11 @@ def track(D: dict, offset_kji=SRAND0_OFFSET, seeding_threshold=0.1, stopping_fa=
     (float32, device "mps"), "triton" with ukf_triton's and "triton_block" with ukf_triton_block's
     (float32, "cuda"); the loop, the recording and the joining stay these. `workers` > 1 (the CPU
     torch tracker) tracks the batches on that many processes of `threads_per_worker` threads each;
-    the result is the serial one at the same `batch`, bit for bit. `fast` (the torch tracker): H as a
-    matrix product and the two inverses from Cholesky factors - another rounding, not the binary's."""
+    the result is the serial one at the same `batch`, bit for bit. `fast` (the torch tracker): the N gradients
+    once with the filter's sums doubled, H as a matrix product, the 27 voxels in one gather, both inverses from
+    Cholesky factors - another rounding, not the binary's (_ukf_step_fast). `compile` (with fast, the CPU torch
+    tracker): that step through torch.compile, compiled here first and loaded by the workers from Inductor's
+    disk cache; when compiling fails, a warning and the uncompiled step. stats["compile_s"]: that time."""
     step_fn = advance
     if backend == "metal":
         from . import ukf_metal as ukf_metal
@@ -519,6 +638,7 @@ def track(D: dict, offset_kji=SRAND0_OFFSET, seeding_threshold=0.1, stopping_fa=
     D = at_dtype(D, dtype, device)
     if fast:
         D = {**D, "fast": True}
+        D.update(_neighbors(D))
     dev = D["A"].device
     pts, fwd, inv, e1, fa0 = (t[sel].to(dtype).to(dev) for t in (pts, fwd, inv, e1, fa0))
     sel = sel.cpu()
@@ -532,6 +652,15 @@ def track(D: dict, offset_kji=SRAND0_OFFSET, seeding_threshold=0.1, stopping_fa=
     params = dict(Q=Q, Rs=Rs, max_steps=max_steps, spr=spr, step_length=step_length, stopping_fa=stopping_fa,
                   stopping_threshold=stopping_threshold)
     blocks = [(s0, x0[s0:s0 + batch], st0[s0:s0 + batch], dir0[s0:s0 + batch]) for s0 in range(0, len(x0), batch)]
+    compile_s = 0.0
+    if compile and blocks:
+        assert backend == "torch" and fast and dev.type == "cpu" and capture is None, "compile: the CPU torch tracker with fast"
+        step_fn, compile_s, err = _warm_compiled(D, blocks, params)
+        if err is not None:
+            import warnings
+            warnings.warn(f"ukf.track(compile=True): compiling failed ({type(err).__name__}: {str(err)[:200]}); "
+                          "tracking with the uncompiled fast step")
+        params = {**params, "compile": err is None}
     if workers > 1:
         assert backend == "torch" and dev.type == "cpu" and capture is None, "workers: the CPU torch tracker only"
         done = _parallel(D, blocks, params, workers, threads_per_worker)
@@ -553,4 +682,4 @@ def track(D: dict, offset_kji=SRAND0_OFFSET, seeding_threshold=0.1, stopping_fa=
     row = {int(k): r for r, k in enumerate(sel.tolist())}                 # seed index -> its row here
     seed_voxel = vox_kji[[row[k] for k in kept]] if kept else np.zeros((0, 3), np.int64)
     return fibers, {"seeds": S, "half_fibers": 2 * S, "fiber_steps": steps_total, "fibers": len(fibers), "seed_index": kept,
-                    "seed_voxel": seed_voxel}
+                    "seed_voxel": seed_voxel, "compile_s": round(compile_s, 1)}

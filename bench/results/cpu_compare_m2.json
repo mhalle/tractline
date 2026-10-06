@@ -1,0 +1,177 @@
+{
+ "what": "PAT16 through pipeline.run on the M2's CPU, 8 workers (timing_matrix.py --device cpu --workers 8), in the order run on 2026-10-06; the earlier compiled runs (OpenMP threads baked, recompiles) are not kept. The M2 is a fanless MacBook Air: its CPU numbers vary 15-30 % with heat and load.",
+ "runs": {
+  "old (committed 2026-10-06 f2b17c4)": [
+   {
+    "seconds": {
+     "field_estimate": 23.91,
+     "field_apply": 0.73,
+     "prep": 3.37,
+     "load": 0.25,
+     "ukf": 124.68,
+     "label": 1.38
+    },
+    "scan_to_labels_s": 154.3,
+    "fibers": 42176,
+    "fibers_sha": "a18a1be04d136efe",
+    "compile_s": null
+   },
+   {
+    "seconds": {
+     "field_estimate": 23.99,
+     "field_apply": 0.72,
+     "prep": 3.36,
+     "load": 0.25,
+     "ukf": 123.95,
+     "label": 1.33
+    },
+    "scan_to_labels_s": 153.6,
+    "fibers": 42176,
+    "fibers_sha": "a18a1be04d136efe",
+    "compile_s": null
+   }
+  ],
+  "tuned step, compiled off": [
+   {
+    "seconds": {
+     "field_estimate": 22.84,
+     "field_apply": 0.72,
+     "prep": 3.38,
+     "load": 0.24,
+     "ukf": 88.76,
+     "label": 1.32
+    },
+    "scan_to_labels_s": 117.3,
+    "fibers": 42178,
+    "fibers_sha": "1217efe56b4e6991",
+    "compile_s": 0.0
+   },
+   {
+    "seconds": {
+     "field_estimate": 22.93,
+     "field_apply": 0.72,
+     "prep": 3.61,
+     "load": 0.25,
+     "ukf": 96.51,
+     "label": 1.42
+    },
+    "scan_to_labels_s": 125.4,
+    "fibers": 42178,
+    "fibers_sha": "1217efe56b4e6991",
+    "compile_s": 0.0
+   }
+  ],
+  "tuned step, compiled off (rerun)": [
+   {
+    "seconds": {
+     "field_estimate": 22.78,
+     "field_apply": 0.92,
+     "prep": 3.31,
+     "load": 0.24,
+     "ukf": 91.01,
+     "label": 1.32
+    },
+    "scan_to_labels_s": 119.6,
+    "fibers": 42178,
+    "fibers_sha": "1217efe56b4e6991",
+    "compile_s": 0.0
+   },
+   {
+    "seconds": {
+     "field_estimate": 24.34,
+     "field_apply": 0.82,
+     "prep": 3.4,
+     "load": 0.25,
+     "ukf": 94.45,
+     "label": 1.35
+    },
+    "scan_to_labels_s": 124.6,
+    "fibers": 42178,
+    "fibers_sha": "1217efe56b4e6991",
+    "compile_s": 0.0
+   }
+  ],
+  "compiled, cold cache (single graph, cpp.threads 1)": [
+   {
+    "seconds": {
+     "field_estimate": 25.32,
+     "field_apply": 0.9,
+     "prep": 3.99,
+     "load": 0.26,
+     "ukf": 97.66,
+     "label": 1.32
+    },
+    "scan_to_labels_s": 129.4,
+    "fibers": 42175,
+    "fibers_sha": "62157c9a2aa3b10e",
+    "compile_s": 17.6
+   },
+   {
+    "seconds": {
+     "field_estimate": 23.76,
+     "field_apply": 0.68,
+     "prep": 3.92,
+     "load": 0.25,
+     "ukf": 87.96,
+     "label": 1.27
+    },
+    "scan_to_labels_s": 117.8,
+    "fibers": 42175,
+    "fibers_sha": "62157c9a2aa3b10e",
+    "compile_s": 0.0
+   }
+  ],
+  "compiled, warm cache": [
+   {
+    "seconds": {
+     "field_estimate": 24.35,
+     "field_apply": 0.7,
+     "prep": 4.15,
+     "load": 0.26,
+     "ukf": 89.26,
+     "label": 1.25
+    },
+    "scan_to_labels_s": 120.0,
+    "fibers": 42175,
+    "fibers_sha": "62157c9a2aa3b10e",
+    "compile_s": 8.1
+   },
+   {
+    "seconds": {
+     "field_estimate": 23.67,
+     "field_apply": 0.76,
+     "prep": 3.93,
+     "load": 0.25,
+     "ukf": 82.66,
+     "label": 1.27
+    },
+    "scan_to_labels_s": 112.5,
+    "fibers": 42175,
+    "fibers_sha": "62157c9a2aa3b10e",
+    "compile_s": 0.0
+   }
+  ],
+  "today: tuned step + faster field estimate, one run": [
+   {
+    "seconds": {
+     "field_estimate": 17.15,
+     "field_apply": 1.54,
+     "prep": 4.15,
+     "load": 0.3,
+     "ukf": 125.95,
+     "label": 1.47
+    },
+    "scan_to_labels_s": 150.6,
+    "fibers": 42164,
+    "fibers_sha": "bb3be73056f88321",
+    "compile_s": 0.0
+   }
+  ]
+ },
+ "machine": {
+  "cpu": "Apple M2",
+  "cpu_count": 8,
+  "torch": "2.14.1",
+  "platform": "macOS-15.7.3-arm64-arm-64bit"
+ }
+}

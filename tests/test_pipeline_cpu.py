@@ -50,3 +50,20 @@ def test_one_worker_same_fibers(runs):
     s, ((_, t0, _), _) = runs
     _, t1, _ = P.run(s, stand_in, P.Timer(), device="cpu", workers=1)
     assert len(t0.fibers) == len(t1.fibers) and all(np.array_equal(a, b) for a, b in zip(t0.fibers, t1.fibers))
+
+
+def test_compiled_step(runs, monkeypatch):
+    """The fast step through torch.compile: the same fibers on one worker and two (the workers load what the
+    parent compiled), and the uncompiled step's tractogram to rounding (another rounding: fused arithmetic)."""
+    from tractline import ukf as U
+    monkeypatch.setenv("TRACTLINE_COMPILE", "1")
+    if not U.can_compile():
+        pytest.skip("no C++ compiler for torch.compile")
+    s, ((_, t0, _), _) = runs
+    tgs = [P.run(s, stand_in, P.Timer(), device="cpu", workers=w)[1] for w in (1, 2)]
+    a, b = tgs
+    assert len(a.fibers) == len(b.fibers) and all(np.array_equal(x, y) for x, y in zip(a.fibers, b.fibers))
+    assert abs(len(a.fibers) - len(t0.fibers)) <= 0.02 * len(t0.fibers)
+    ref = dict(zip(t0.stats["seed_index"], t0.fibers))                     # paired by seed
+    same = [k for k, x in zip(a.stats["seed_index"], a.fibers) if k in ref and len(x) == len(ref[k]) and np.abs(x - ref[k]).max() < 0.1]
+    assert len(same) > 0.8 * len(t0.fibers)

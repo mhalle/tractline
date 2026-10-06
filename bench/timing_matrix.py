@@ -94,6 +94,7 @@ def matrix(device="mps", runs=2, workers=None, only=SCANS):
                                     "corrected": corr.applied, "grid": list(s.dwi.shape), "seeds": int(tg.stats["seeds"]),
                                     "fibers": len(tg.fibers), "fiber_steps": int(tg.stats["fiber_steps"]),
                                     "labeled": int(labels.keep.sum()), "other_fraction": round(float((labels.tract == 42).mean()), 4),
+                                    "compile_s": tg.stats.get("compile_s"),
                                     "fibers_sha": hashlib.sha256(np.concatenate(tg.fibers).astype(np.float32).tobytes()).hexdigest()[:16]})
             print(json.dumps({"scan": name, "run": r, **res["runs"][-1]}), flush=True)
     return out
@@ -103,6 +104,7 @@ if __name__ == "__main__":                                                  # th
     ap = argparse.ArgumentParser()
     ap.add_argument("--device", default="mps"); ap.add_argument("--runs", type=int, default=2)
     ap.add_argument("--workers", type=int, default=None); ap.add_argument("--only", default=",".join(SCANS))
+    ap.add_argument("--out", default=None)
     args = ap.parse_args()
     res = matrix(args.device, args.runs, args.workers, tuple(args.only.split(",")))
-    (HERE / f"results/timing_matrix_{args.device}.json").write_text(json.dumps(res, indent=1))
+    Path(args.out or HERE / f"results/timing_matrix_{args.device}.json").write_text(json.dumps(res, indent=1))

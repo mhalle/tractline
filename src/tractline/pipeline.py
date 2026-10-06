@@ -28,7 +28,8 @@ Stages, and where they run:
             median_otsu mask, exact in torch on the pipeline's device; ~3 s), UKF two-tensor with the
             ORG settings and the binary's seeds (ukf.track: on "mps" the Metal kernel, float32 steps
             from float64 seeds, ~27 s; on "cuda" the Triton block kernel; on the CPU one process per
-            core, fast algebra)
+            core, the fast step; compiled by torch.compile only on request, TRACTLINE_COMPILE=1 (ukf.can_compile:
+            each worker pays its start, and with many workers it was slower))
   label     RapidParc, one draw (labelers.rapidparc: shuffled groups of 2,000 streamlines; GPU or CPU,
             float32, ~1 s); TractCloud (labelers.tractcloud, at its trained context) on request
   TRX       optional: the tractogram with labels and tract probabilities (trx.write)
@@ -241,8 +242,9 @@ CPU_BATCH = 1024                 # half-fibers per batch on the CPU: cache-sized
 
 def track(s, dwi, timer: Timer, prefix="", device="mps", workers=None, shell=2800.0) -> Tractogram:
     """device "mps": the Metal kernel; "cuda": the Triton block kernel (ukf_triton_block); "cpu": ukf's
-    steps in float32 with the fast algebra (closer to float64 than the binary's operation order in
-    float32: ukf_cpu_check.json), batches of
+    steps in float32 with the fast step (ukf._ukf_step_fast: as close to float64 as the binary's operation
+    order in float32, ukf_cpu_tune.py), through torch.compile only when TRACTLINE_COMPILE=1 (ukf.can_compile; the
+    parent compiles, ~10-80 s, in stats["compile_s"], and each worker then loads it), batches of
     CPU_BATCH on `workers` processes of one thread (default: one per core). Workers are spawned, so a
     script running the CPU path needs an `if __name__ == "__main__":` guard. shell: the b-value tracked
     (prep.prepare; ds001226's 2800, the nearest to TractCloud's training b = 3000)."""
@@ -260,7 +262,7 @@ def track(s, dwi, timer: Timer, prefix="", device="mps", workers=None, shell=280
             fibers, stats = U.track(D, backend="triton_block")
         else:
             fibers, stats = U.track(D, dtype=torch.float32, device=device, fast=True, batch=CPU_BATCH,
-                                    workers=workers or os.cpu_count() or 1)
+                                    workers=workers or os.cpu_count() or 1, compile=U.can_compile())
     return Tractogram(fibers, stats, t.mask, t.info)
 
 

@@ -369,15 +369,32 @@ def gauss_newton(c, m, *, sample, Bs, dBs, d2Bs, vox, pe_ax, pe_scale, lam, mmas
         free = torch.cat([torch.ones(nc, dtype=c.dtype, device=c.device)] + ([mm_] if est else []))
         D = torch.where(free > 0, D.clamp_min(float(D[:nc].max()) * 1e-8), torch.ones_like(D))
 
+        k2 = 2 / Mtot                                                        # J'PJ through the volume sums (below)
+        G11, G12, G22 = k2 * W1, k2 * W2 / 2, k2 * W3
+        if est:
+            Ac, Bc = (A - A.mean(0))[1:], (Bj - Bj.mean(0))[1:]                # (V-1, X, Y, Z): centred over the volumes
+            Mf = Mv.reshape(V - 1, -1, 6)                                    # (V-1, XYZ, 6)
+
         def H(v, mu):
             dc = v[:nc].reshape(kshape)
-            du = A * field(dc, Bs)[None] + Bj * sep(*dmats, dc)[None]
+            f, gq = field(dc, Bs), sep(*dmats, dc)
+            # J'PJ: du_v = A_v f + Bj_v g (+ e_v = M_v dm_v, v >= 1, with motion), f and g the field and its derivative
+            # along pe for dc; P removes the mean over volumes. Its field part is Bs'(W1 f + W12 g + sum Ac e) +
+            # dmats'(W12 f + W3 g + sum Bc e), W the sums over volumes of A^2, A Bj and Bj^2 less V times their means'
+            # products (the diagonal's W1, W2 / 2, W3) and Ac, Bc the volumes' A, Bj centred; its motion part is
+            # M_v'(Ac_v f + Bc_v g + e_v - mean e). (X, Y, Z) arrays and batched products instead of the (V, X, Y, Z)
+            # residual and (V-1, X, Y, Z, 6) temporaries: the same matrix to rounding. The fold term joins dmats' side.
+            a = G11 * f + G12 * gq
+            b = G12 * f + G22 * gq + (ff2 * gq if fold else 0)
             if est:
                 dm = v[nc:].reshape(-1, 6) * mmask
-                du = torch.cat([du[:1], du[1:] + (Mv * dm[:, None, None, None, :]).sum(-1)])
-            hc, hm = JtP(du - du.mean(0, keepdim=True))
-            hcc = 2 / Mtot * hc + reg_grad(dc, s) + (sep_t(dmats, ff2 * sep(*dmats, dc)) if fold else 0)
-            out = [hcc.reshape(-1)] + ([(2 / Mtot * hm).reshape(-1)] if est else [])
+                e = (Mf @ dm[:, :, None]).reshape(Ac.shape)                  # (V-1, X, Y, Z)
+                a = a + k2 * (Ac * e).sum(0)
+                b = b + k2 * (Bc * e).sum(0)
+                w = Ac * f[None] + Bc * gq[None] + e - e.sum(0) / V
+                hm = k2 * (Mf.transpose(1, 2) @ w.reshape(V - 1, -1, 1))[..., 0]
+            hcc = sep_t(Bs, a) + sep_t(dmats, b) + reg_grad(dc, s)
+            out = [hcc.reshape(-1)] + ([hm.reshape(-1)] if est else [])
             return torch.cat(out) * free + mu * D * v + (1 - free) * v
 
         ks = []
@@ -529,8 +546,9 @@ def estimate(b0s: np.ndarray, vox, pe_vectors: np.ndarray, readout_s, *, device=
             ssd = ((u - u.mean(0, keepdim=True)) ** 2).mean()
             return ssd + lam * ssd.detach() * bending(c, Bs, dBs, d2Bs, vl), ssd
 
-        with torch.no_grad():
-            before = float(cost()[1])
+        if optimizer != "gn":
+            with torch.no_grad():
+                before = float(cost()[1])
         if optimizer == "gn":
             gmm = torch.stack(torch.meshgrid(*[torch.arange(n, dtype=dt, device=dev) for n in (X, Y, Z)], indexing="ij"), -1) * vl
             sizes = torch.tensor([X, Y, Z], dtype=dt, device=dev)
@@ -538,9 +556,29 @@ def estimate(b0s: np.ndarray, vox, pe_vectors: np.ndarray, readout_s, *, device=
             pshape = [1, 1, 1, 1]; pshape[1 + pe_ax] = (X, Y, Z)[pe_ax]
             base = torch.arange((X, Y, Z)[pe_ax], dtype=dt, device=dev).view(pshape)
 
+            if not (cubic or linear or est):
+                # motion held: the moved grid, in grid_sample's normalized (z, y, x) order, is the level's constant;
+                # each call adds only the field's shift to the phase-encoding channel, and its derivative is
+                # taken by that shift alone - the only component gauss_newton reads without motion
+                with torch.no_grad():
+                    P0 = [gmm / vl] + [(gmm @ R.T + t) / vl for R, t in (rigid(mm_[v], center) for v, mm_ in
+                                                                           ((v, ms.detach() * MS * mmask) for v in range(V - 1)))]
+                    grid0 = (2 * torch.stack(P0) / (sizes - 1) - 1)[..., [2, 1, 0]].contiguous()
+                ch, kpe = 2 - pe_ax, 2 / (sizes[pe_ax] - 1)
+
             def sample(h, m, grad):
                 """The volumes at the moved grid plus pe_scale h along pe (V, X, Y, Z); with grad, their
-                derivative by the position (V, X, Y, Z, 3) and the position's by the motion (V-1, X, Y, Z, 3, 6)."""
+                derivative by the position (V, X, Y, Z, 3) and the position's by the motion (V-1, X, Y, Z, 3, 6).
+                Motion held: the derivative's phase-encoding component only, the others zero-strided."""
+                if not (cubic or linear or est):
+                    q = (pe_scale.view(V, 1, 1, 1) * h[None]).detach().requires_grad_(grad)
+                    with torch.set_grad_enabled(grad):
+                        grid = torch.cat([grid0[..., :ch], (grid0[..., ch] + kpe * q)[..., None], grid0[..., ch + 1:]], -1)
+                        Sv = Fnn.grid_sample(im[:, None], grid, mode="bilinear", padding_mode="zeros", align_corners=True)[:, 0]
+                    if not grad:
+                        return Sv, None, None
+                    Gpe = torch.autograd.grad(Sv.sum(), q)[0]
+                    return Sv.detach(), Gpe[..., None].expand(*Gpe.shape, 3), None
                 if cubic or linear:
                     pos = (base + pe_scale.view(V, 1, 1, 1) * h[None]).detach().requires_grad_(grad)
                     with torch.set_grad_enabled(grad):
@@ -568,6 +606,14 @@ def estimate(b0s: np.ndarray, vox, pe_vectors: np.ndarray, readout_s, *, device=
                     dpdm = torch.stack(dpdm)
                 return Sv.detach(), G, dpdm
 
+            def ssd_now():                                                       # cost()[1] through sample(): no grid rebuilt
+                with torch.no_grad():
+                    c = cs * CS
+                    dh = sep(*[(dBs[a] if a == pe_ax else Bs[a]) for a in range(3)], c)
+                    u = sample(field(c, Bs), ms * MS * mmask, False)[0] * (1 + pe_scale.view(V, 1, 1, 1) * dh[None])
+                    return float(((u - u.mean(0, keepdim=True)) ** 2).mean())
+
+            before = ssd_now()
             c_gn, m_gn, info = gauss_newton((cs * CS).detach(), (ms * MS * mmask).detach(), sample=sample, Bs=Bs, dBs=dBs,
                                             d2Bs=d2Bs, vox=vl, pe_ax=pe_ax, pe_scale=pe_scale, lam=lam, mmask=mmask, est=est,
                                             center=center, max_iter=schedule["miter"][lev] * iter_scale, fold=fold, membrane=membrane, **(gn or {}))
@@ -586,8 +632,8 @@ def estimate(b0s: np.ndarray, vox, pe_vectors: np.ndarray, readout_s, *, device=
             opt.step(closure)
             st = opt.state[opt._params[0]]
             info = {"n_iter": int(st.get("n_iter", 0)), "func_evals": int(st.get("func_evals", 0))}
+        after = ssd_now() if optimizer == "gn" else float(cost()[1])
         with torch.no_grad():
-            after = float(cost()[1])
             h_prev = field(cs * CS, Bs).detach()
             mov = (ms * MS * mmask).detach()
         log.append({"level": lev + 1, "grid": [X, Y, Z], "knots": [B.shape[1] for B in Bs], "ssd_before": before, "ssd_after": after,

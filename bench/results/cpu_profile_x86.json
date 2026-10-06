@@ -1,0 +1,539 @@
+{
+ "machine": {
+  "cpu": "unknown",
+  "cpu_count": 48,
+  "torch": "2.14.1+cu130",
+  "platform": "Linux-4.19.0-gvisor-x86_64-with-glibc2.36",
+  "torch_config_parallel": [
+   "ATen/Parallel:",
+   "\tat::get_num_threads() : 32",
+   "\tat::get_num_interop_threads() : 48",
+   "OpenMP 201511 (a.k.a. OpenMP 4.5)",
+   "\tomp_get_max_threads() : 32",
+   "Intel(R) oneAPI Math Kernel Library Version 2024.2-Product Build 20240605 for Intel(R) 64 architecture applications"
+  ]
+ },
+ "tracker": {
+  "seeds": 1994,
+  "fiber_steps": 474603,
+  "wall_s": 32.81,
+  "steps_per_s": 14466,
+  "block_steps": 2938,
+  "parts_s": {
+   "interp": 11.13,
+   "H (filter)": 6.41,
+   "ukf_step": 15.04,
+   "H (stop check)": 1.91,
+   "mask_at": 0.41,
+   "advance rest": 2.25,
+   "outside the step (loop, compaction, recording, seeds, joining)": 2.07
+  },
+  "by_live_half_fibers": [
+   {
+    "live": "1-15",
+    "steps": 1020,
+    "seconds": 6.05,
+    "ms_per_step": 5.93,
+    "us_per_half_fiber_step": 1456.4
+   },
+   {
+    "live": "16-63",
+    "steps": 561,
+    "seconds": 3.92,
+    "ms_per_step": 6.98,
+    "us_per_half_fiber_step": 192.8
+   },
+   {
+    "live": "64-255",
+    "steps": 680,
+    "seconds": 6.7,
+    "ms_per_step": 9.85,
+    "us_per_half_fiber_step": 72.3
+   },
+   {
+    "live": "256-511",
+    "steps": 387,
+    "seconds": 6.35,
+    "ms_per_step": 16.4,
+    "us_per_half_fiber_step": 43.9
+   },
+   {
+    "live": "512-1024",
+    "steps": 290,
+    "seconds": 7.72,
+    "ms_per_step": 26.64,
+    "us_per_half_fiber_step": 36.3
+   }
+  ],
+  "ops_per_block_step": 4033,
+  "top_ops_one_block": [
+   {
+    "op": "aten::bmm",
+    "calls": 9576,
+    "self_ms": 921.6,
+    "share": 0.1001
+   },
+   {
+    "op": "aten::mul",
+    "calls": 165845,
+    "self_ms": 910.2,
+    "share": 0.0989
+   },
+   {
+    "op": "aten::linalg_lstsq",
+    "calls": 2,
+    "self_ms": 819.2,
+    "share": 0.089
+   },
+   {
+    "op": "aten::index",
+    "calls": 23779,
+    "self_ms": 674.4,
+    "share": 0.0733
+   },
+   {
+    "op": "aten::copy_",
+    "calls": 100714,
+    "self_ms": 485.2,
+    "share": 0.0527
+   },
+   {
+    "op": "aten::cat",
+    "calls": 28058,
+    "self_ms": 440.2,
+    "share": 0.0478
+   },
+   {
+    "op": "aten::sub",
+    "calls": 43174,
+    "self_ms": 376.7,
+    "share": 0.0409
+   },
+   {
+    "op": "aten::exp",
+    "calls": 21258,
+    "self_ms": 346.2,
+    "share": 0.0376
+   },
+   {
+    "op": "aten::select",
+    "calls": 290948,
+    "self_ms": 322.7,
+    "share": 0.0351
+   },
+   {
+    "op": "aten::add",
+    "calls": 93219,
+    "self_ms": 292.5,
+    "share": 0.0318
+   },
+   {
+    "op": "aten::where",
+    "calls": 35625,
+    "self_ms": 237.6,
+    "share": 0.0258
+   },
+   {
+    "op": "aten::as_strided",
+    "calls": 520293,
+    "self_ms": 208.0,
+    "share": 0.0226
+   },
+   {
+    "op": "aten::cholesky_inverse",
+    "calls": 2736,
+    "self_ms": 181.6,
+    "share": 0.0197
+   },
+   {
+    "op": "aten::_linalg_svd",
+    "calls": 1,
+    "self_ms": 176.7,
+    "share": 0.0192
+   },
+   {
+    "op": "aten::_to_copy",
+    "calls": 95232,
+    "self_ms": 172.2,
+    "share": 0.0187
+   },
+   {
+    "op": "aten::add_",
+    "calls": 37159,
+    "self_ms": 149.1,
+    "share": 0.0162
+   },
+   {
+    "op": "aten::mm",
+    "calls": 2736,
+    "self_ms": 147.0,
+    "share": 0.016
+   },
+   {
+    "op": "aten::clamp",
+    "calls": 57618,
+    "self_ms": 141.1,
+    "share": 0.0153
+   },
+   {
+    "op": "aten::unsqueeze",
+    "calls": 104729,
+    "self_ms": 138.9,
+    "share": 0.0151
+   },
+   {
+    "op": "aten::bitwise_and",
+    "calls": 68588,
+    "self_ms": 138.5,
+    "share": 0.015
+   },
+   {
+    "op": "aten::div",
+    "calls": 40415,
+    "self_ms": 128.6,
+    "share": 0.014
+   },
+   {
+    "op": "aten::sum",
+    "calls": 9579,
+    "self_ms": 110.5,
+    "share": 0.012
+   },
+   {
+    "op": "aten::empty_strided",
+    "calls": 116496,
+    "self_ms": 106.1,
+    "share": 0.0115
+   },
+   {
+    "op": "aten::lt",
+    "calls": 35647,
+    "self_ms": 95.2,
+    "share": 0.0103
+   },
+   {
+    "op": "aten::einsum",
+    "calls": 5472,
+    "self_ms": 93.0,
+    "share": 0.0101
+   }
+  ]
+ },
+ "scaling": [
+  {
+   "workers": 8,
+   "wall_s": 68.77,
+   "steps_per_s": 81860,
+   "fiber_steps": 5629708,
+   "blocks": 46
+  },
+  {
+   "workers": 16,
+   "wall_s": 44.36,
+   "steps_per_s": 126910,
+   "fiber_steps": 5629708,
+   "blocks": 46
+  },
+  {
+   "workers": 24,
+   "wall_s": 38.52,
+   "steps_per_s": 146142,
+   "fiber_steps": 5629708,
+   "blocks": 46
+  },
+  {
+   "workers": 32,
+   "wall_s": 38.69,
+   "steps_per_s": 145502,
+   "fiber_steps": 5629708,
+   "blocks": 46
+  },
+  {
+   "workers": 48,
+   "wall_s": 36.42,
+   "steps_per_s": 154571,
+   "fiber_steps": 5629708,
+   "blocks": 46
+  }
+ ],
+ "field": [
+  {
+   "threads": 8,
+   "seconds": 48.61,
+   "levels": [
+    {
+     "level": 1,
+     "seconds": 2.05
+    },
+    {
+     "level": 2,
+     "seconds": 2.79
+    },
+    {
+     "level": 3,
+     "seconds": 2.55
+    },
+    {
+     "level": 4,
+     "seconds": 3.31
+    },
+    {
+     "level": 5,
+     "seconds": 2.57
+    },
+    {
+     "level": 6,
+     "seconds": 11.21
+    },
+    {
+     "level": 7,
+     "seconds": 14.1
+    },
+    {
+     "level": 8,
+     "seconds": 8.13
+    },
+    {
+     "level": 9,
+     "seconds": 1.92
+    }
+   ],
+   "top_ops_profiled_run": [
+    {
+     "op": "aten::mm",
+     "calls": 64865,
+     "self_ms": 15242.6,
+     "share": 0.2898
+    },
+    {
+     "op": "aten::mul",
+     "calls": 66599,
+     "self_ms": 14390.1,
+     "share": 0.2736
+    },
+    {
+     "op": "aten::add",
+     "calls": 24313,
+     "self_ms": 3875.2,
+     "share": 0.0737
+    },
+    {
+     "op": "aten::sum",
+     "calls": 9143,
+     "self_ms": 2661.9,
+     "share": 0.0506
+    },
+    {
+     "op": "aten::grid_sampler_3d",
+     "calls": 261,
+     "self_ms": 2546.3,
+     "share": 0.0484
+    },
+    {
+     "op": "aten::copy_",
+     "calls": 48807,
+     "self_ms": 2314.4,
+     "share": 0.044
+    },
+    {
+     "op": "aten::index",
+     "calls": 261,
+     "self_ms": 1483.0,
+     "share": 0.0282
+    },
+    {
+     "op": "aten::sub",
+     "calls": 7052,
+     "self_ms": 1410.9,
+     "share": 0.0268
+    },
+    {
+     "op": "aten::div",
+     "calls": 5328,
+     "self_ms": 1360.3,
+     "share": 0.0259
+    },
+    {
+     "op": "aten::cat",
+     "calls": 19346,
+     "self_ms": 999.3,
+     "share": 0.019
+    },
+    {
+     "op": "aten::fill_",
+     "calls": 12950,
+     "self_ms": 936.0,
+     "share": 0.0178
+    },
+    {
+     "op": "aten::grid_sampler_3d_backward",
+     "calls": 52,
+     "self_ms": 721.8,
+     "share": 0.0137
+    },
+    {
+     "op": "aten::_index_put_impl_",
+     "calls": 52,
+     "self_ms": 545.1,
+     "share": 0.0104
+    },
+    {
+     "op": "aten::tensordot",
+     "calls": 52995,
+     "self_ms": 389.8,
+     "share": 0.0074
+    },
+    {
+     "op": "aten::mkldnn_convolution",
+     "calls": 21,
+     "self_ms": 340.8,
+     "share": 0.0065
+    },
+    {
+     "op": "aten::bmm",
+     "calls": 200,
+     "self_ms": 321.2,
+     "share": 0.0061
+    },
+    {
+     "op": "aten::permute",
+     "calls": 138995,
+     "self_ms": 293.4,
+     "share": 0.0056
+    },
+    {
+     "op": "aten::reshape",
+     "calls": 169682,
+     "self_ms": 277.5,
+     "share": 0.0053
+    },
+    {
+     "op": "aten::pow",
+     "calls": 1862,
+     "self_ms": 272.7,
+     "share": 0.0052
+    },
+    {
+     "op": "aten::quantile",
+     "calls": 52,
+     "self_ms": 198.9,
+     "share": 0.0038
+    },
+    {
+     "op": "aten::view",
+     "calls": 96239,
+     "self_ms": 192.0,
+     "share": 0.0037
+    },
+    {
+     "op": "aten::as_strided",
+     "calls": 296689,
+     "self_ms": 182.5,
+     "share": 0.0035
+    },
+    {
+     "op": "aten::div_",
+     "calls": 1727,
+     "self_ms": 174.0,
+     "share": 0.0033
+    },
+    {
+     "op": "aten::empty",
+     "calls": 33183,
+     "self_ms": 125.0,
+     "share": 0.0024
+    },
+    {
+     "op": "aten::select",
+     "calls": 73714,
+     "self_ms": 95.3,
+     "share": 0.0018
+    }
+   ]
+  },
+  {
+   "threads": 16,
+   "seconds": 35.69,
+   "levels": [
+    {
+     "level": 1,
+     "seconds": 1.48
+    },
+    {
+     "level": 2,
+     "seconds": 2.02
+    },
+    {
+     "level": 3,
+     "seconds": 1.86
+    },
+    {
+     "level": 4,
+     "seconds": 2.45
+    },
+    {
+     "level": 5,
+     "seconds": 1.44
+    },
+    {
+     "level": 6,
+     "seconds": 8.43
+    },
+    {
+     "level": 7,
+     "seconds": 10.45
+    },
+    {
+     "level": 8,
+     "seconds": 6.05
+    },
+    {
+     "level": 9,
+     "seconds": 1.51
+    }
+   ]
+  },
+  {
+   "threads": 32,
+   "seconds": 33.69,
+   "levels": [
+    {
+     "level": 1,
+     "seconds": 1.3
+    },
+    {
+     "level": 2,
+     "seconds": 1.85
+    },
+    {
+     "level": 3,
+     "seconds": 1.72
+    },
+    {
+     "level": 4,
+     "seconds": 2.39
+    },
+    {
+     "level": 5,
+     "seconds": 1.9
+    },
+    {
+     "level": 6,
+     "seconds": 7.5
+    },
+    {
+     "level": 7,
+     "seconds": 9.69
+    },
+    {
+     "level": 8,
+     "seconds": 5.9
+    },
+    {
+     "level": 9,
+     "seconds": 1.43
+    }
+   ]
+  }
+ ]
+}

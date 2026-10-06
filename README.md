@@ -153,7 +153,9 @@ says which, and what re-running their scripts would now produce.
   `gpu_pipeline_compare.py`: the pipeline on CUDA GPUs and CPUs against the M2), `hardi_paths.py` +
   `modal_hardi_paths.py` (the HARDI brain on the M2, an L40S and a Modal CPU container), `ukf_cpu_check.py`,
   `timing_matrix.py` + `modal_timing_matrix.py` (stage times on HARDI, PAT16 and ds005123: the M2, an L4, an A10,
-  an L40S and a 32-worker CPU container).
+  an L40S and a 32-worker CPU container), `cpu_profile.py` + `modal_cpu_profile.py` (where the CPU tracker's and
+  the field estimate's time goes), `ukf_cpu_tune.py` (tracker-step variants: speed and agreement with float64),
+  `modal_cpu_compare.py` (the CPU pipeline, committed against working copy, in one x86 container; worker scaling).
 - Helpers: `_ds001226.py` (the patients' loader), `_fibercmp.py` (fibers compared by seed), `_bootstrap.py`
   (bootstrap replicates of a scan).
 

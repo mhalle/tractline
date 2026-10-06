@@ -5,6 +5,19 @@ behind each change, with their numbers and later corrections, are in `bench/resu
 
 ## Unreleased
 
+- **The field estimate ~1.8x faster** on every device (PAT16, the M2's CPU: 22.6 → 12.3 s; 32 x86 cores 29-34 → 19 s):
+  the Gauss-Newton matrix applied through sums over the volumes, the sampling grid built once a level where motion is
+  held. The same mathematics; the field moves by the estimator's own rounding noise (as much as changing the thread
+  count moved it before). The 12-patient check against the T1 is still to run.
+- **The CPU tracker's fast step changed** (`ukf.track(fast=True)`, the CPU pipeline's): the N gradients once with the
+  filter's sums doubled, batched products, interp's 27 voxels in one gather - 1.3-1.4x in one process, as close to
+  float64 as before; the CPU pipeline's tracking 1.1-1.4x (PAT16 on 32 x86 cores 39 → 34 s).
+- **`ukf.track(compile=True)`**: the fast step through torch.compile (needs a C++ compiler). 2-3x in one process, but
+  each worker pays torch.compile's start, and with 8 or more workers it was slower: the pipeline uses it only with
+  `TRACTLINE_COMPILE=1`. `stats["compile_s"]`: its time.
+- **The Triton tracker compiles one copy per gradient-count size** instead of 6-8 (its integer arguments no longer
+  specialized): a new protocol's first CUDA run pays 27-56 s instead of up to 7 min. `ukf_triton_block.warm()`
+  compiles all six sizes ahead (75 s on an L4, in parallel).
 - **Documentation**: this changelog; the README warns that 0.1.0's CPU path fails.
 
 ## 0.2.0 - 2026-10-03

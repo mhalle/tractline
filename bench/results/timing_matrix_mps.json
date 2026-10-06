@@ -9,16 +9,16 @@
   "hardi": {
    "runs": [
     {
-     "read_s": 0.57,
+     "read_s": 0.47,
      "seconds": {
       "field_estimate": 0.0,
       "field_apply": 0.0,
-      "prep": 4.48,
-      "load": 1.16,
-      "ukf": 113.71,
-      "label": 1.14
+      "prep": 4.12,
+      "load": 1.06,
+      "ukf": 110.56,
+      "label": 1.06
      },
-     "scan_to_labels_s": 120.5,
+     "scan_to_labels_s": 116.8,
      "corrected": false,
      "grid": [
       81,
@@ -31,19 +31,20 @@
      "fiber_steps": 17909995,
      "labeled": 49650,
      "other_fraction": 0.738,
+     "compile_s": 0.0,
      "fibers_sha": "0f506cb9e2b2b422"
     },
     {
-     "read_s": 0.43,
+     "read_s": 0.36,
      "seconds": {
       "field_estimate": 0.0,
       "field_apply": 0.0,
-      "prep": 3.99,
-      "load": 1.33,
-      "ukf": 110.89,
-      "label": 1.05
+      "prep": 3.67,
+      "load": 1.08,
+      "ukf": 94.49,
+      "label": 1.01
      },
-     "scan_to_labels_s": 117.3,
+     "scan_to_labels_s": 100.2,
      "corrected": false,
      "grid": [
       81,
@@ -56,6 +57,7 @@
      "fiber_steps": 17909995,
      "labeled": 49650,
      "other_fraction": 0.738,
+     "compile_s": 0.0,
      "fibers_sha": "0f506cb9e2b2b422"
     }
    ],
@@ -64,16 +66,16 @@
   "pat16": {
    "runs": [
     {
-     "read_s": 0.56,
+     "read_s": 0.62,
      "seconds": {
-      "field_estimate": 18.68,
-      "field_apply": 1.1,
-      "prep": 3.26,
-      "load": 0.28,
-      "ukf": 30.86,
-      "label": 0.7
+      "field_estimate": 16.97,
+      "field_apply": 0.8,
+      "prep": 3.03,
+      "load": 0.23,
+      "ukf": 27.11,
+      "label": 0.67
      },
-     "scan_to_labels_s": 54.9,
+     "scan_to_labels_s": 48.8,
      "corrected": true,
      "grid": [
       96,
@@ -86,19 +88,20 @@
      "fiber_steps": 11558024,
      "labeled": 32264,
      "other_fraction": 0.4988,
+     "compile_s": 0.0,
      "fibers_sha": "18895f7e8fece9a3"
     },
     {
-     "read_s": 0.22,
+     "read_s": 0.21,
      "seconds": {
-      "field_estimate": 26.08,
-      "field_apply": 1.61,
-      "prep": 3.2,
-      "load": 0.26,
-      "ukf": 28.8,
-      "label": 0.72
+      "field_estimate": 17.44,
+      "field_apply": 0.76,
+      "prep": 3.03,
+      "load": 0.23,
+      "ukf": 27.07,
+      "label": 0.67
      },
-     "scan_to_labels_s": 60.7,
+     "scan_to_labels_s": 49.2,
      "corrected": true,
      "grid": [
       96,
@@ -111,6 +114,7 @@
      "fiber_steps": 11558024,
      "labeled": 32264,
      "other_fraction": 0.4988,
+     "compile_s": 0.0,
      "fibers_sha": "18895f7e8fece9a3"
     }
    ],
@@ -119,41 +123,16 @@
   "ds005123": {
    "runs": [
     {
-     "read_s": 0.72,
-     "seconds": {
-      "field_estimate": 0.0,
-      "field_apply": 0.0,
-      "prep": 5.68,
-      "load": 0.27,
-      "ukf": 47.84,
-      "label": 1.08
-     },
-     "scan_to_labels_s": 54.9,
-     "corrected": false,
-     "grid": [
-      120,
-      120,
-      69,
-      145
-     ],
-     "seeds": 108383,
-     "fibers": 86100,
-     "fiber_steps": 19507994,
-     "labeled": 50906,
-     "other_fraction": 0.5837,
-     "fibers_sha": "4774f237ff6eac5d"
-    },
-    {
      "read_s": 0.71,
      "seconds": {
       "field_estimate": 0.0,
       "field_apply": 0.0,
       "prep": 5.52,
-      "load": 0.28,
-      "ukf": 39.53,
-      "label": 1.14
+      "load": 0.25,
+      "ukf": 41.94,
+      "label": 1.1
      },
-     "scan_to_labels_s": 46.5,
+     "scan_to_labels_s": 48.8,
      "corrected": false,
      "grid": [
       120,
@@ -166,6 +145,33 @@
      "fiber_steps": 19507994,
      "labeled": 50906,
      "other_fraction": 0.5837,
+     "compile_s": 0.0,
+     "fibers_sha": "4774f237ff6eac5d"
+    },
+    {
+     "read_s": 0.74,
+     "seconds": {
+      "field_estimate": 0.0,
+      "field_apply": 0.0,
+      "prep": 5.7,
+      "load": 0.29,
+      "ukf": 43.09,
+      "label": 1.07
+     },
+     "scan_to_labels_s": 50.2,
+     "corrected": false,
+     "grid": [
+      120,
+      120,
+      69,
+      145
+     ],
+     "seeds": 108383,
+     "fibers": 86100,
+     "fiber_steps": 19507994,
+     "labeled": 50906,
+     "other_fraction": 0.5837,
+     "compile_s": 0.0,
      "fibers_sha": "4774f237ff6eac5d"
     }
    ],
@@ -174,26 +180,26 @@
   "ds005123_forced": {
    "runs": [
     {
-     "read_s": 0.77,
+     "read_s": 0.79,
      "seconds": {
-      "field_estimate": 29.11,
-      "field_apply": 5.71
+      "field_estimate": 30.32,
+      "field_apply": 4.83
      },
      "applied": true,
      "residual_left": 0.664,
      "b0s": 7,
-     "correct_s": 34.8
+     "correct_s": 35.1
     },
     {
-     "read_s": 0.83,
+     "read_s": 0.86,
      "seconds": {
-      "field_estimate": 32.43,
-      "field_apply": 5.35
+      "field_estimate": 31.81,
+      "field_apply": 4.21
      },
      "applied": true,
      "residual_left": 0.664,
      "b0s": 7,
-     "correct_s": 37.8
+     "correct_s": 36.0
     }
    ],
    "note": "corrected with sub-10317_acq-dwi_dir-AP_epi.nii.gz, sub-10317_acq-dwi_dir-PA_epi.nii.gz (IntendedFor); not verified: sub-10317_acq-dwi_dir-AP_epi.nii.gz: shim, sub-10317_acq-dwi_dir-PA_epi.nii.gz: shim"

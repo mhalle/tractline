@@ -1,0 +1,222 @@
+{
+ "machine": {
+  "cpu": "Apple M2",
+  "cpu_count": 8,
+  "torch": "2.14.1",
+  "platform": "macOS-15.7.3-arm64-arm-64bit",
+  "torch_config_parallel": [
+   "ATen/Parallel:",
+   "\tat::get_num_threads() : 4",
+   "\tat::get_num_interop_threads() : 8",
+   "OpenMP 202011",
+   "\tomp_get_max_threads() : 4",
+   "MKLDNN not found"
+  ]
+ },
+ "tracker": {
+  "seeds": 1994,
+  "fiber_steps": 474301,
+  "wall_s": 20.03,
+  "steps_per_s": 23682,
+  "block_steps": 2750,
+  "parts_s": {
+   "interp": 4.11,
+   "H (filter)": 4.35,
+   "ukf_step": 13.04,
+   "H (stop check)": 0.75,
+   "mask_at": 0.14,
+   "advance rest": 0.72,
+   "outside the step (loop, compaction, recording, seeds, joining)": 1.27
+  },
+  "by_live_half_fibers": [
+   {
+    "live": "1-15",
+    "steps": 836,
+    "seconds": 1.85,
+    "ms_per_step": 2.21,
+    "us_per_half_fiber_step": 474.2
+   },
+   {
+    "live": "16-63",
+    "steps": 551,
+    "seconds": 1.67,
+    "ms_per_step": 3.04,
+    "us_per_half_fiber_step": 84.6
+   },
+   {
+    "live": "64-255",
+    "steps": 689,
+    "seconds": 3.88,
+    "ms_per_step": 5.63,
+    "us_per_half_fiber_step": 41.2
+   },
+   {
+    "live": "256-511",
+    "steps": 384,
+    "seconds": 4.66,
+    "ms_per_step": 12.14,
+    "us_per_half_fiber_step": 32.5
+   },
+   {
+    "live": "512-1024",
+    "steps": 290,
+    "seconds": 6.69,
+    "ms_per_step": 23.07,
+    "us_per_half_fiber_step": 31.4
+   }
+  ],
+  "ops_per_block_step": 9550,
+  "top_ops_one_block": [
+   {
+    "op": "aten::bmm",
+    "calls": 9786,
+    "self_ms": 992.5,
+    "share": 0.2008
+   },
+   {
+    "op": "aten::linalg_lstsq",
+    "calls": 2,
+    "self_ms": 600.0,
+    "share": 0.1214
+   },
+   {
+    "op": "aten::mul",
+    "calls": 169475,
+    "self_ms": 387.4,
+    "share": 0.0784
+   },
+   {
+    "op": "aten::select",
+    "calls": 1787072,
+    "self_ms": 386.5,
+    "share": 0.0782
+   },
+   {
+    "op": "aten::index",
+    "calls": 24297,
+    "self_ms": 268.1,
+    "share": 0.0542
+   },
+   {
+    "op": "aten::as_strided",
+    "calls": 2021124,
+    "self_ms": 235.4,
+    "share": 0.0476
+   },
+   {
+    "op": "aten::cat",
+    "calls": 28673,
+    "self_ms": 201.8,
+    "share": 0.0408
+   },
+   {
+    "op": "aten::exp",
+    "calls": 21723,
+    "self_ms": 193.9,
+    "share": 0.0392
+   },
+   {
+    "op": "aten::copy_",
+    "calls": 102919,
+    "self_ms": 183.4,
+    "share": 0.0371
+   },
+   {
+    "op": "aten::cholesky_inverse",
+    "calls": 2796,
+    "self_ms": 135.9,
+    "share": 0.0275
+   },
+   {
+    "op": "aten::add",
+    "calls": 95259,
+    "self_ms": 101.4,
+    "share": 0.0205
+   },
+   {
+    "op": "aten::sub",
+    "calls": 44119,
+    "self_ms": 98.3,
+    "share": 0.0199
+   },
+   {
+    "op": "aten::_linalg_svd",
+    "calls": 1,
+    "self_ms": 96.0,
+    "share": 0.0194
+   },
+   {
+    "op": "aten::add_",
+    "calls": 37971,
+    "self_ms": 68.4,
+    "share": 0.0138
+   },
+   {
+    "op": "aten::bitwise_and",
+    "calls": 70088,
+    "self_ms": 67.0,
+    "share": 0.0136
+   },
+   {
+    "op": "aten::where",
+    "calls": 36405,
+    "self_ms": 66.9,
+    "share": 0.0135
+   },
+   {
+    "op": "aten::mm",
+    "calls": 2796,
+    "self_ms": 63.7,
+    "share": 0.0129
+   },
+   {
+    "op": "aten::clamp",
+    "calls": 58878,
+    "self_ms": 44.9,
+    "share": 0.0091
+   },
+   {
+    "op": "aten::sum",
+    "calls": 9789,
+    "self_ms": 42.3,
+    "share": 0.0086
+   },
+   {
+    "op": "aten::div",
+    "calls": 41300,
+    "self_ms": 39.8,
+    "share": 0.008
+   },
+   {
+    "op": "aten::lt",
+    "calls": 36427,
+    "self_ms": 39.6,
+    "share": 0.008
+   },
+   {
+    "op": "aten::linalg_cholesky_ex",
+    "calls": 2097,
+    "self_ms": 39.5,
+    "share": 0.008
+   },
+   {
+    "op": "aten::_to_copy",
+    "calls": 97317,
+    "self_ms": 36.6,
+    "share": 0.0074
+   },
+   {
+    "op": "aten::einsum",
+    "calls": 5592,
+    "self_ms": 34.5,
+    "share": 0.007
+   },
+   {
+    "op": "aten::ge",
+    "calls": 29438,
+    "self_ms": 34.3,
+    "share": 0.0069
+   }
+  ]
+ }
+}

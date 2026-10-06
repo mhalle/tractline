@@ -1,0 +1,68 @@
+{
+ "machine": {
+  "cpu": "Apple M2",
+  "cpu_count": 8,
+  "torch": "2.14.1",
+  "platform": "macOS-15.7.3-arm64-arm-64bit",
+  "torch_config_parallel": [
+   "ATen/Parallel:",
+   "\tat::get_num_threads() : 4",
+   "\tat::get_num_interop_threads() : 8",
+   "OpenMP 202011",
+   "\tomp_get_max_threads() : 4",
+   "MKLDNN not found"
+  ]
+ },
+ "speed": {
+  "fast": {
+   "wall_s": 19.67,
+   "fiber_steps": 474301,
+   "steps_per_s": 24113
+  },
+  "half_bmm": {
+   "wall_s": 17.07,
+   "fiber_steps": 474096,
+   "steps_per_s": 27779
+  },
+  "half_bmm_gather": {
+   "wall_s": 15.04,
+   "fiber_steps": 474773,
+   "steps_per_s": 31562
+  }
+ },
+ "against_float64": {
+  "fast": {
+   "fibers": [
+    2101,
+    2101
+   ],
+   "matched": 2101,
+   "same_point_count": 0.9548,
+   "all_points_within_0.1mm": 0.9015,
+   "ends_within_0.06mm": 0.9341,
+   "density_r": 0.99388
+  },
+  "half_bmm": {
+   "fibers": [
+    2101,
+    2101
+   ],
+   "matched": 2101,
+   "same_point_count": 0.9515,
+   "all_points_within_0.1mm": 0.9,
+   "ends_within_0.06mm": 0.9355,
+   "density_r": 0.99453
+  },
+  "half_bmm_gather": {
+   "fibers": [
+    2101,
+    2101
+   ],
+   "matched": 2101,
+   "same_point_count": 0.9538,
+   "all_points_within_0.1mm": 0.9024,
+   "ends_within_0.06mm": 0.9367,
+   "density_r": 0.99411
+  }
+ }
+}

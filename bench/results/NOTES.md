@@ -2051,3 +2051,70 @@ UKF seconds, first run / second:
 
 Correction to 2026-10-05: "compiles once per gradient count" - it compiled 6-8 copies per (NPAD, grid
 divisibility), so a new grid recompiled even at a cached NPAD; now one per NPAD.
+
+## 2026-10-06 The CPU path: a faster tracker step, a compiled one opt-in, the field estimate 1.8x
+
+**Where the time went** (`cpu_profile.py`, `modal_cpu_profile.py` → `cpu_profile_{m2_before,m2_after,x86}.json`; PAT16, the
+tracker in one process and one thread - a worker's setting - on every 24th seed). The M2: 23.7 k half-fiber steps/s, the
+filter's algebra 43 %, H inside it 22 %, interp 21 %, ~9,500 operator calls a step; a step's fixed cost 2.2 ms, so steps with
+fewer than 64 half-fibers live (half of a block's steps: each runs to its longest fiber) took 17 %. x86 (Modal, 48 vCPUs
+visible): 14.5 k, interp 34 %, the fixed cost ~6 ms, those steps 30 %. The filter carried every measurement twice (Z 21 x
+2N: the N gradients and their negatives, identical) through zh, Pxz, Ht, I and i, ~47 % of it. A vectorized 10x10 Cholesky
+and inverse lost to torch's batched LAPACK at every batch size (2-14x): not the lever.
+
+**The fast step (`ukf._ukf_step_fast`, `_interp_half`, `_H_half`; `track(fast=True)` - the CPU pipeline's - is now this).** The
+N measurements once with the filter's sums doubled (as the Metal and Triton kernels), the weights applied first and each
+contraction one batched product, interp's 27 voxels in one gather and one weighted product. `ukf_cpu_tune.py` →
+`ukf_cpu_tune_{m2,x86,x86_compile}.json` (its "fast" there is the step before this one), one thread, same container each:
+M2 24.1 → 31.6 k (1.31x), x86 21.6 → 30.8 k (1.43x). Against float64 (every 20th seed, `ukf_cpu_check.py`'s measures) as
+before within noise: M2 all points within 0.1 mm 0.902 → 0.902, ends within 0.06 mm 0.934 → 0.937, density r 0.9939 → 0.9941
+(x86 0.885 / 0.927 / 0.9936 → 0.888 / 0.929 / 0.9928). Bit for bit the prototype it came from. The whole pipeline, PAT16
+tracking: M2 8 workers 124 s → 89-96 s (`cpu_compare_m2.json`); x86 32 workers, one container, 39.4-40.2 → 34.5-35.4 s,
+ds005123 49.8-51.9 → 41.2-43.2 s (`cpu_compare.json`). Fewer gains with many workers than in one process (below).
+
+**The compiled step: 2-3x in one process, slower with workers - opt-in (`TRACTLINE_COMPILE=1`), off by default.** The fast
+step through torch.compile (Inductor's C++): one process M2 46-48 k (2.0x), x86 62.2 k (2.9x), as close to float64 (0.897 /
+0.931 / 0.9941; x86 0.903 / 0.934 / 0.9941); the compile 11-31 s on the M2, 60-84 s on x86. With workers, three faults found
+and fixed: Inductor bakes the compiling process's thread count into each kernel (`#pragma omp parallel num_threads(4)`:
+8 workers ran 32 threads, load 35) - now `cpp.threads` 1; a module-level cache in `_interp_half` was a guard that failed on
+first use, and sizes 0/1 and the step limit were specialized - every worker recompiled 2-3 times (2-4 s each warm, 10-20 s
+cold) - now one graph (neighbors in D, the step limit outside, a lone half-fiber padded to two). What stays: each spawned
+worker pays torch.compile's start - tracing, loading the cached code - ~8 s on the M2, ~100 s on 32 x86 cores at once.
+`cpu_scaling.json` (x86, half of PAT16's seeds): uncompiled 109 / 168 / 184 k steps/s at 8 / 16 / 32 workers, compiled
+52 / 50 / 39 k; the whole pipeline's PAT16 tracking compiled 104-167 s against the tuned step's 35 s (`cpu_compare.json`).
+Rescuing it would take workers that do not trace: AOTInductor, or fork on Linux. Not done.
+
+**The M2's CPU at 4+ workers is limited by the machine, not the step.** On a quarter of PAT16's seeds, total steps/s at 1 / 2 /
+4 / 8 workers: uncompiled 35 / 55 / 89 / 110 k, compiled 50 / 62 / 91 / 86 k - equal at 4 workers; batches of 256, 512 and
+1,024 all 75-95 k. Memory bandwidth or the fanless Air's power and heat; not separated. Its CPU numbers move 15-30 % with
+both (PAT16 tracking with today's code 126 s once against 89-96 s three hours earlier).
+
+**Refilling blocks as fibers stop** (instead of each block running to its longest fiber): simulated on PAT16's half-fiber step
+counts with the fast step's costs (1.0 ms a step + 24 us a half-fiber), 16 workers on half the seeds: today 11.9 s, the best
+refill (16 streams of interleaved seeds, up to 1,024 live) 9.7 s, the bound 8.6 s - ~1.2x, and results would depend on the
+stream count. Deferred.
+
+**The field estimate, 1.8x** (`susceptibility.py`). Profiled on the M2's CPU (float32, 8 threads, PAT16: 22.2 s): H 11.9 s,
+6.7 s of it element-wise on (V, X, Y, Z) arrays; sample 6.1 s; levels 6-7 13.5 s. Changed:
+- J'PJ through the sums over volumes: the field part is Bs'(W1 f + W12 g + sum Ac e) + dmats'(W12 f + W3 g + sum Bc e), the
+  motion part M_v'(Ac_v f + Bc_v g + e_v - mean e) - W the diagonal's W1, W2 / 2, W3, Ac and Bc the volumes' A and Bj
+  centred, e_v = M_v dm_v; (X, Y, Z) arrays and batched products instead of the (V, X, Y, Z) residual and (V-1, X, Y, Z, 6)
+  temporaries. Exact (random inputs, float64: 2e-16 to 7e-16 of the old's);
+- with motion held (levels 6-9), the moved grid in grid_sample's coordinates built once a level, and the derivative taken by
+  the phase-encoding shift alone (the only component read there);
+- each level's logged ssd before and after through sample() instead of unwarp() (10 % of the time; the field bit for bit).
+PAT16: M2 CPU float32 22.6 → 12.3 s, float64 38.6 → 21.1 s; x86 32 cores, one container, 29.4-34.3 → 18.8 s
+(`cpu_compare_pat16_today.json`); the M2's GPU path 17.4 → 13.5 s after the first change (its levels 1-5 run on the CPU).
+**The field moves by the estimator's own rounding noise.** Displacement differences, mm, median / 99th / max, deep brain |
+edge: the old code float32 at 4 against 8 threads (summation order only) 0.002 / 0.057 / 0.86 | 0.002 / 0.206 / 1.09; new
+against old, float32 0.002 / 0.064 / 0.87 | 0.002 / 0.206 / 1.08, float64 0.003 / 0.078 / 1.03 | 0.003 / 0.126 / 0.59; and
+against old float64, the new float32 0.002 / 0.055 / 0.30 | 0.002 / 0.107 / 0.57 where the old float32 was 0.002 / 0.066 /
+0.88 | 0.002 / 0.217 / 1.24. The motion-held changes alone moved it less (0.017 / 0.042 at the 99th). **Not yet run: the
+12-patient cohort (`cohort.py`) against the T1** - started and stopped (the laptop was needed); to run before relying on it.
+
+**The CPU pipeline end to end, PAT16**: x86 32 cores, one container, 69.3-76.0 s → 55.0 s (estimate 18.8, tracking 33.7);
+the M2's CPU 154 s → 151 s once (estimate 24.0 → 17.2 s, tracking 126 s that run - see above).
+
+Correction to 2026-10-05: the M2 column, provisional there, rerun idle (`timing_matrix_mps.json`): HARDI 100.2 s (UKF 94.5),
+PAT16 49.2 s (48.8 first run), ds005123 50.2 s (48.8), ds005123's forced correction 36.0 s - the committed numbers again;
+the slower ones were the machine's load (Photos' mediaanalysisd, Spotlight). These predate the field-estimate change.

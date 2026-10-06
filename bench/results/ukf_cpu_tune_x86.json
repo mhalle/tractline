@@ -1,0 +1,68 @@
+{
+ "machine": {
+  "cpu": "unknown",
+  "cpu_count": 48,
+  "torch": "2.14.1+cu130",
+  "platform": "Linux-4.19.0-gvisor-x86_64-with-glibc2.36",
+  "torch_config_parallel": [
+   "ATen/Parallel:",
+   "\tat::get_num_threads() : 32",
+   "\tat::get_num_interop_threads() : 48",
+   "OpenMP 201511 (a.k.a. OpenMP 4.5)",
+   "\tomp_get_max_threads() : 32",
+   "Intel(R) oneAPI Math Kernel Library Version 2024.2-Product Build 20240605 for Intel(R) 64 architecture applications"
+  ]
+ },
+ "speed": {
+  "fast": {
+   "wall_s": 32.62,
+   "fiber_steps": 474603,
+   "steps_per_s": 14551
+  },
+  "half_bmm": {
+   "wall_s": 30.5,
+   "fiber_steps": 475560,
+   "steps_per_s": 15592
+  },
+  "half_bmm_gather": {
+   "wall_s": 21.5,
+   "fiber_steps": 473945,
+   "steps_per_s": 22047
+  }
+ },
+ "against_float64": {
+  "fast": {
+   "fibers": [
+    2101,
+    2101
+   ],
+   "matched": 2101,
+   "same_point_count": 0.95,
+   "all_points_within_0.1mm": 0.8853,
+   "ends_within_0.06mm": 0.9265,
+   "density_r": 0.99363
+  },
+  "half_bmm": {
+   "fibers": [
+    2101,
+    2101
+   ],
+   "matched": 2101,
+   "same_point_count": 0.9548,
+   "all_points_within_0.1mm": 0.9029,
+   "ends_within_0.06mm": 0.9362,
+   "density_r": 0.99433
+  },
+  "half_bmm_gather": {
+   "fibers": [
+    2101,
+    2101
+   ],
+   "matched": 2101,
+   "same_point_count": 0.9472,
+   "all_points_within_0.1mm": 0.8881,
+   "ends_within_0.06mm": 0.9291,
+   "density_r": 0.99282
+  }
+ }
+}
