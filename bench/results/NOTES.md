@@ -2038,7 +2038,10 @@ UKF seconds, first run / second:
   version, into TRITON_CACHE_DIR. **In parallel** (`warm()` now spawns one process per NPAD, up to the CPUs:
   compiling is single-threaded CPU work), `timing_matrix_l4_prewarm_parallel.json`: **75 s wall** on the L4
   (8 CPUs), each NPAD 49.8-69.0 s as alone - the slowest, 512, sets it; then ds005123's first run 20.7 s
-  against its second 18.6 s (the process's first launch; a compile would be 46 s or more).
+  against its second 18.6 s (the process's first launch; a compile would be 46 s or more). Into the full
+  cache again (`_rewarm_{parallel,serial}.json`): nothing recompiled - one after another 3.0 s (2.3 s the
+  first, then 0.0-0.4 s), in parallel 11.6 s (3.7-5.7 s a process to start torch and the GPU). warm() belongs
+  once per machine or image, not at every start: a run loads its kernel from the cache by itself.
 - **Steady state unchanged** (within 0.3 s, but the L40S's ds005123 8.5 against 7.3 s; the A10 and L4 show
   no such cost on it, so likely container variation).
 - **The tractograms are bit-identical** to the specialized kernel's on every GPU and scan, but PAT16 on the

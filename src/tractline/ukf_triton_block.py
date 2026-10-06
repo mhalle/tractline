@@ -296,8 +296,10 @@ def warm(npads=NPADS, F=None, num_warps=None, workers=None) -> dict:
     """Compile the kernel for each NPAD on this GPU without running it (into Triton's cache, TRITON_CACHE_DIR):
     after this no scan compiles, whatever its gradient count or grid. Compiling is single-threaded CPU work,
     so the NPADs compile in parallel, `workers` spawned processes (default one per NPAD, up to the CPUs; 1:
-    in this process, one after another). Returns the seconds per NPAD as each compile took (a cached one
-    returns in well under a second). A script calling it with workers needs an `if __name__ == "__main__":` guard."""
+    in this process, one after another). A cached NPAD is loaded, not compiled: with all six cached, 3.0 s one
+    after another, 11.6 s in parallel (each process starts torch and the GPU) on an L4 - so call it once per
+    machine or image, not at every start (a run loads its kernel from the cache by itself). Returns the seconds
+    per NPAD. A script calling it with workers needs an `if __name__ == "__main__":` guard."""
     import os, time
     npads = tuple(int(n) for n in npads)
     workers = min(len(npads), os.cpu_count() or 1) if workers is None else int(workers)
