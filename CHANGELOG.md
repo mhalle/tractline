@@ -5,6 +5,11 @@ behind each change, with their numbers and later corrections, are in `bench/resu
 
 ## Unreleased
 
+- **GPU tracking faster, the fibers bit for bit the same**: the seed tensors fitted through one pseudo-inverse instead
+  of a least squares per seed on the host (HARDI's tracking on an L40S 35.9 → 16.8 s, an L4 72.7 → 42.4 s); one stream
+  of up to 200,000 half-fibers topped up as they stop instead of blocks of 50,000 run down to their longest fiber
+  (`ukf.track(stream=True)`, the GPU default; the M2's HARDI 96 → 81 s, ds005123 41 → 32 s; ~0.4 GB of device memory);
+  the kernels' launchers no longer read constants back from the device every step.
 - **The field estimate ~1.8x faster** on every device (PAT16, the M2's CPU: 22.6 → 12.3 s; 32 x86 cores 29-34 → 19 s):
   the Gauss-Newton matrix applied through sums over the volumes, the sampling grid built once a level where motion is
   held. The same mathematics; the field moves by the estimator's own rounding noise (as much as changing the thread

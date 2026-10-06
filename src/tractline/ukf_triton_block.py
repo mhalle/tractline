@@ -339,18 +339,25 @@ def advance(D: dict, xa, sa, Pa, oa, Q, Rs, step, max_steps, step_length=0.3, st
     d = torch.empty((B, 3), dtype=torch.float32, device=dev)
     flags = torch.empty(B, dtype=torch.int32, device=dev)
     fa = torch.empty(B, dtype=torch.float32, device=dev); ms = torch.empty(B, dtype=torch.float32, device=dev)
-    q = torch.diagonal(Q).cpu()
-    vox = D["voxel"].cpu()
-    f32 = np.float32
-    c = float(np.sqrt(f32(10) + f32(0.01), dtype=f32))
-    W0 = float(f32(0.01) / (f32(10) + f32(0.01))); Wi = float(f32(0.5) / (f32(10) + f32(0.01)))
-    rr = float(f32(1.0) / f32(Rs))
-    g = D["g"][:N].contiguous(); b = D["b"][:N].contiguous()
+    # the step's constants, read back from the device once per tractography (cached on D) - not every step:
+    # each .cpu() of a device tensor waits for the device
+    key = (id(Q), float(Rs), N)
+    cache = D.get("_triton_consts")
+    if cache is None or cache[0] != key:
+        q = torch.diagonal(Q).cpu()
+        vox = D["voxel"].cpu()
+        f32 = np.float32
+        c = float(np.sqrt(f32(10) + f32(0.01), dtype=f32))
+        W0 = float(f32(0.01) / (f32(10) + f32(0.01))); Wi = float(f32(0.5) / (f32(10) + f32(0.01)))
+        rr = float(f32(1.0) / f32(Rs))
+        cache = D["_triton_consts"] = (key, (float(vox[0]), float(vox[1]), float(vox[2]), float(vox.min())), rr,
+                                       (float(q[0]), float(q[3])), (c, W0, Wi), D["g"][:N].contiguous(), D["b"][:N].contiguous())
+    _, (v0, v1, v2, vmin), rr, (q0, q3), (c, W0, Wi), g, b = cache
     NPAD = npad(N)
     grid = ((B + F - 1) // F,)
     ukf_step_block[grid](D["A"], D["mask"], g, b, x, s, P, o, d, flags, fa, ms, B, N, nk, nj, ni, int(step), int(max_steps),
-                         float(vox[0]), float(vox[1]), float(vox[2]), float(vox.min()), float(step_length),
-                         float(stopping_fa), float(stopping_threshold), rr, float(q[0]), float(q[3]), c, W0, Wi,
+                         v0, v1, v2, vmin, float(step_length),
+                         float(stopping_fa), float(stopping_threshold), rr, q0, q3, c, W0, Wi,
                          F=F, NPAD=NPAD, num_warps=num_warps, enable_fp_fusion=False)
     stop = (flags & 1).bool()
     info = {"swap": (flags & 2).bool(), "swap2": (flags & 4).bool(), "fa": fa, "mean_signal": ms, "inside": (flags & 8).bool()}

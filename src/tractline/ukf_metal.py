@@ -543,12 +543,18 @@ def advance(D: dict, xa, sa, Pa, oa, Q, Rs, step, max_steps, step_length=0.3, st
     d = torch.empty((B, 3), dtype=torch.float32, device=dev)
     flags = torch.empty(B, dtype=torch.int32, device=dev)
     fa = torch.empty(B, dtype=torch.float32, device=dev); ms = torch.empty(B, dtype=torch.float32, device=dev)
-    q = torch.diagonal(Q).cpu()
-    vox = D["voxel"].cpu()
     ip = torch.tensor([B, N, nk, nj, ni, int(step), int(max_steps)], dtype=torch.int32, device=dev)
-    fp = torch.tensor([float(vox[0]), float(vox[1]), float(vox[2]), float(vox.min()), step_length, stopping_fa,
-                       stopping_threshold, float(Rs), float(q[0]), float(q[3])], dtype=torch.float32, device=dev)
-    g = D["g"][:N].contiguous(); b = D["b"][:N].contiguous()
+    # the step's constants, read back from the device once per tractography (cached on D) - not every step:
+    # each .cpu() of a device tensor waits for the device
+    key = (id(Q), float(Rs), float(step_length), float(stopping_fa), float(stopping_threshold), N)
+    cache = D.get("_metal_consts")
+    if cache is None or cache[0] != key:
+        q = torch.diagonal(Q).cpu()
+        vox = D["voxel"].cpu()
+        fp = torch.tensor([float(vox[0]), float(vox[1]), float(vox[2]), float(vox.min()), step_length, stopping_fa,
+                           stopping_threshold, float(Rs), float(q[0]), float(q[3])], dtype=torch.float32, device=dev)
+        cache = D["_metal_consts"] = (key, fp, D["g"][:N].contiguous(), D["b"][:N].contiguous())
+    _, fp, g, b = cache
     A = D["A"]
     if "SIGHALF" in defs:
         A = D.get("A_half")

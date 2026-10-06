@@ -2198,3 +2198,52 @@ tract mix r 0.9968 → 0.9967; per patient the 99th percentiles move by -0.05 to
   109.3 / 109.8 → 81.2 / 82.9 s. The M2's CPU, 8 workers, one run each (`cpu_compare_m2_hardi.json`): tracking 344.2 → 242.7 s
   (1.42x), total 350.7 → 249.0 s. Tracking is 93-97 % of HARDI's time on every platform, 81-94 % of ds005123's, 47-83 % of
   PAT16's (the field estimate 12-35 %).
+
+## 2026-10-06 GPU tracking: the time outside the kernel was the seed fit; larger blocks; fibers bit for bit
+
+`gpu_track_profile.py` (the M2, Metal) and `modal_gpu_track_profile.py` (an L4, an A10, an L40S; Triton) →
+`gpu_track_profile_{mps,l4,a10,l40s}.json`: every kernel step timed with the device synchronized, against the half-fibers
+it carried, on the three scans as acquired, at blocks of 50,000 (the pipeline's) and 200,000 half-fibers. The kernels
+themselves were last tuned on 2026-10-01; this is the loop around them. The CUDA files hold the runs after the seed fit's
+change below (with "seeds_s"; the runs before it are quoted here, their files overwritten); the M2's, the run before it.
+
+- **A fiber's result does not depend on its batch**: every scan, every GPU, the fibers bit for bit the same at both block
+  sizes (each fiber's arithmetic in its own lanes, reductions in a fixed order). Block size and refilling are speed only.
+- **The M2 kernel at full load** (16 k+ half-fibers live): 1.52 / 1.95 / 4.33 us a half-fiber step for 30 / 50 / 150
+  gradients (~0.9 us + 23 ns a gradient; HARDI's 231 k steps/s is 2026-10-01's one-step figure). The whole runs lose 18-27 %
+  to it: a step with under 1,024 live costs 1.7-2.7 ms whatever it carries (1.7-8.6 s a scan), 1k-16k live 10-40 % more per
+  half-fiber, and the loop around the kernel.
+- **On CUDA the loop around the kernel was mostly the seed fit.** "loop" (wall less kernel steps) for HARDI: L40S 23.5 s
+  against a 12.4 s kernel, L4 34.9 / 37.7, A10 21.9 / 50.3, the M2 8.6 / 87.5. ukf.seeds() fitted each seed's tensor by a
+  batched SVD least squares (gelsd) on the host - one per mask voxel, the same 2N x 6 design matrix every time; on Modal's
+  container CPUs that was ~20-30 s for HARDI's 156 k voxels. Now the design's pseudo-inverse once, one product
+  (`ukf._seed_tensor`): the same seeds on all three scans, initial states within 2.3e-15 (float64), the GPU fibers bit for
+  bit (PAT16 on the M2; HARDI and ds005123 on the CUDA GPUs against their earlier hashes). seeds() on the M2's CPU: PAT16
+  0.94 → 0.36 s, HARDI 4.18 → 1.65, ds005123 1.82 → 0.55. HARDI's tracking, blocks of 50,000: L40S 35.9 → 16.8 s, L4 72.7
+  → 42.4, A10 72.2 → 53.8 (the seed fit now 1.8-2.8 s there).
+- **Blocks of 200,000** (`pipeline.GPU_BATCH`, the pipeline's GPU paths now): 2-17 % on top (L40S PAT16 4.33 → 3.52 s,
+  HARDI 16.8 → 15.2; the M2 HARDI 96.1 → 88.6) for ~0.4 GB of device memory. PAT16 through the M2's pipeline:
+  tracking 26.7 → 24.7 s, scan to labels 40.8 → 38.8 s, its fibers bit for bit this morning's.
+- **What is left**: on the M2 18-27 % to tails, an under-filled middle and per-step loop costs - a refilled block (one
+  stream kept full) would recover most and could not change a fiber; on the L40S the kernel's full-load estimate for PAT16
+  is 2.2 s of 3.5. Inside the kernel, HARDI's per-gradient work (2026-10-01: no single hotspot).
+- **Refilled, not blocked** (`ukf._track_stream`; `track(stream=True)`, the GPU kernels' default; capacity `batch`, the
+  pipeline's `GPU_BATCH` 200,000): one stream topped up in seed order when a quarter of its places are free, on steps that
+  are multiples of the recording interval - every age then has the same remainder, so the survivors record together and
+  the step limit (the kernels get step 0) is checked only on the step a cohort reaches it: the per-step work is the
+  block's. Fibers bit for bit the blocks' (every scan, the M2 and three CUDA GPUs). PAT16's tenth of the seeds on the M2:
+  blocks of 2,000 16.9 s, a stream of 2,000 8.7 s; one block of 50,000 and a stream of 50,000 both 7.04 s (a first
+  version that tracked each half-fiber's age and recording slot every step was 21 % slower there: ten more launches a
+  step on MPS). Whole scans, the M2, tracking (`gpu_track_profile_mps.json`; blocks: `_mps_blocks.json`): PAT16 27.5 (blocks
+  of 50,000) / 25.5 (200,000) → 24.3 s, HARDI 96.1 / 88.6 → 81.4, ds005123 40.7 / 35.6 → 32.1 - within 4-8 % of the kernel's
+  full-load time; capacity 100,000 the same. CUDA (`gpu_track_profile_{l4,a10,l40s}.json`; blocks: `_blocks.json`, another
+  container each): ds005123 L40S 5.98 → 4.72 s, A10 10.91 → 10.47, L4 13.38 → 12.96; PAT16 fits one block (95 k half-fibers)
+  and HARDI (203 k) had only a small second block to lose - within the containers' 5-10 %.
+- **The launchers' constants cached per tractography** (Q's diagonal and the voxel sizes were read back with .cpu() every
+  step - each a wait for the device). Part of the above; not measured apart.
+- **Seeding on the CUDA device, tried and left out**: the fit in float64 there (0.1-0.8 s instead of 0.4-2.4 s) moved
+  ±2 fibers and 0.03 % of the steps on every scan and GPU (`_gpuseeds.json`) - the device's float64 rounding in the
+  signal's interpolation - and the seeds would no longer be every platform's. The fit stays on the host.
+- **Not quick**: the M2's mask (`prep`: 3.0 s of PAT16, 5.4 s of ds005123 on MPS; four exact 9^3 medians, DIPY's
+  median_otsu voxel for voxel - the CPU no faster); the field estimate's coarse levels on CUDA (3.5 of the L40S's 4.8 s;
+  launch-bound, the host CPUs there too slow to take them as the M2's does).

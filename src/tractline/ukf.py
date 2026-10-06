@@ -369,7 +369,9 @@ def _seed_tensor(D: dict, S: torch.Tensor):
     B = -b[:, None] * torch.stack([g[:, 0] ** 2, 2 * g[:, 0] * g[:, 1], 2 * g[:, 0] * g[:, 2], g[:, 1] ** 2,
                                    2 * g[:, 1] * g[:, 2], g[:, 2] ** 2], 1)
     logS = torch.log(torch.where(S <= 0, torch.full_like(S, 10e-8), S))
-    d = torch.linalg.lstsq(B.expand(len(S), -1, -1).cpu(), logS[..., None].cpu(), driver="gelsd").solution[..., 0].to(dev)
+    # every seed's least squares has the same design matrix: its pseudo-inverse once (SVD, as gelsd), applied to all -
+    # a batched per-seed gelsd took 1-4 s on the M2 and far more on a slow host CPU, ahead of every GPU tracking
+    d = (logS.double() @ torch.linalg.pinv(B.cpu().double()).T.to(dev)).to(S.dtype)
     Dt = torch.stack([torch.stack([d[:, 0], d[:, 1], d[:, 2]], -1), torch.stack([d[:, 1], d[:, 3], d[:, 4]], -1),
                       torch.stack([d[:, 2], d[:, 4], d[:, 5]], -1)], -2)
     U, sv, _ = torch.linalg.svd(Dt)
@@ -461,6 +463,56 @@ def _track_block(D: dict, x, state, old, step_fn, params, s0=0, capture=None, pr
             progress(s0, step, len(alive))
     r = rec.cpu().numpy(); nr = nrec.cpu().numpy()
     return [r[k, :nr[k]] for k in range(nb)], steps
+
+
+def _track_stream(D: dict, x0, st0, dir0, step_fn, params, capacity, progress=None):
+    """All half-fibers through one stream of at most `capacity` live, topped up in seed order as they stop - the GPU
+    kernels only: a fiber's arithmetic there does not depend on its batch (gpu_track_profile.py: blocks of 50,000 and
+    200,000 bit for bit), so this tracks every fiber exactly as _track_block does, but keeps the device full until the
+    last fibers instead of letting every block run down to its longest one. Topped up only on steps that are multiples
+    of the recording interval, when a quarter of the places are free: every half-fiber's age then has the same
+    remainder, so the survivors record together on the block's steps, and the step limit (the kernels get step 0)
+    is checked only on the step a cohort reaches it, known on the host - the per-step work stays the block's.
+    Returns _track_block's (halves in seed order, steps)."""
+    dtype, dev = x0.dtype, x0.device
+    Q, Rs, max_steps, spr = params["Q"], params["Rs"], params["max_steps"], params["spr"]
+    sl, sfa, sth = params["step_length"], params["stopping_fa"], params["stopping_threshold"]
+    n = len(x0)
+    rec = torch.full((n, max_steps // spr + 2, 3), float("nan"), dtype=dtype, device=dev)
+    rec[:, 0] = x0
+    nrec = torch.ones(n, dtype=torch.long, device=dev)
+    P0m = P0 * torch.eye(10, dtype=dtype, device=dev)
+    empty = lambda *shape: torch.empty(0, *shape, dtype=dtype, device=dev)
+    alive, born = torch.empty(0, dtype=torch.long, device=dev), torch.empty(0, dtype=torch.long, device=dev)
+    xa, sa, Pa, oa = empty(3), empty(10), empty(10, 10), empty(3)
+    births = set()
+    nxt, steps, it = 0, 0, 0
+    while True:
+        if nxt < n and it % spr == 0 and len(alive) <= capacity * 3 // 4:      # top up, in seed order
+            k = min(capacity - len(alive), n - nxt)
+            alive = torch.cat([alive, torch.arange(nxt, nxt + k, device=dev)])
+            born = torch.cat([born, torch.full((k,), it, dtype=torch.long, device=dev)])
+            xa, sa, oa = torch.cat([xa, x0[nxt:nxt + k]]), torch.cat([sa, st0[nxt:nxt + k]]), torch.cat([oa, dir0[nxt:nxt + k]])
+            Pa = torch.cat([Pa, P0m.expand(k, 10, 10)])
+            births.add(it)
+            nxt += k
+        if not len(alive):
+            break
+        it += 1
+        steps += len(alive)
+        xa, sa, Pa, m1, stop, _ = step_fn(D, xa, sa, Pa, oa, Q, Rs, 0, max_steps, sl, sfa, sth)
+        if it - max_steps - 1 in births:                                    # a cohort reaches the limit (age > max_steps)
+            stop = stop | (it - born > max_steps)
+        go = torch.nonzero(~stop).squeeze(1)                                  # the one synchronization a step
+        if (it + 1) % spr == 0:                                               # every age's remainder is it's: all record
+            ia = alive[go]
+            rec[ia, nrec[ia]] = xa[go]
+            nrec[ia] += 1
+        alive, born, xa, sa, Pa, oa = alive[go], born[go], xa[go], sa[go], Pa[go], m1[go]
+        if progress and it % 50 == 0:
+            progress(nxt, it, len(alive))
+    r = rec.cpu().numpy(); nr = nrec.cpu().numpy()
+    return [r[k, :nr[k]] for k in range(n)], steps
 
 
 _COMPILED = None
@@ -596,7 +648,7 @@ def _parallel(D, blocks, params, workers, threads_per_worker):
 def track(D: dict, offset_kji=SRAND0_OFFSET, seeding_threshold=0.1, stopping_fa=0.08, stopping_threshold=0.06,
           step_length=0.3, record_length=1.8, max_half_length=250.0, Qm=0.001, Ql=50.0, Rs=0.02,
           batch=50_000, progress=None, select=None, dtype=torch.float64, device=None, capture=None,
-          seed_points=None, backend="torch", workers=1, threads_per_worker=1, fast=False, compile=False):
+          seed_points=None, backend="torch", workers=1, threads_per_worker=1, fast=False, compile=False, stream=True):
     """All fibers. Returns (points list of (n, 3) RAS arrays in seed order, stats). With `select`
     (indices into the seed list), only those seeds are tracked; stats["seed_index"] then says which
     seed each returned fiber came from, stats["seed_voxel"] its mask voxel (k, j, i) - the key to
@@ -617,7 +669,9 @@ def track(D: dict, offset_kji=SRAND0_OFFSET, seeding_threshold=0.1, stopping_fa=
     once with the filter's sums doubled, H as a matrix product, the 27 voxels in one gather, both inverses from
     Cholesky factors - another rounding, not the binary's (_ukf_step_fast). `compile` (with fast, the CPU torch
     tracker): that step through torch.compile, compiled here first and loaded by the workers from Inductor's
-    disk cache; when compiling fails, a warning and the uncompiled step. stats["compile_s"]: that time."""
+    disk cache; when compiling fails, a warning and the uncompiled step. stats["compile_s"]: that time. `stream` (the
+    GPU kernels, "metal" and "triton_block"; on by default): one stream of at most `batch` live half-fibers, topped up
+    as they stop, instead of blocks of `batch` (_track_stream: the same fibers, bit for bit)."""
     step_fn = advance
     if backend == "metal":
         from . import ukf_metal as ukf_metal
@@ -664,6 +718,8 @@ def track(D: dict, offset_kji=SRAND0_OFFSET, seeding_threshold=0.1, stopping_fa=
     if workers > 1:
         assert backend == "torch" and dev.type == "cpu" and capture is None, "workers: the CPU torch tracker only"
         done = _parallel(D, blocks, params, workers, threads_per_worker)
+    elif stream and backend in ("metal", "triton_block") and capture is None:
+        done = [_track_stream(D, x0, st0, dir0, step_fn, params, batch, progress)]
     else:
         done = [_track_block(D, x, st, d, step_fn, params, s0, capture, progress) for s0, x, st, d in blocks]
     halves = [h for hs, _ in done for h in hs]                       # per half-fiber: (n_rec, 3) in (k, j, i)

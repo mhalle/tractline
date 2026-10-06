@@ -238,6 +238,9 @@ def correct(s, timer: Timer, device="mps") -> Correction:
 
 
 CPU_BATCH = 1024                 # half-fibers per batch on the CPU: cache-sized (ukf_cpu_check.py)
+GPU_BATCH = 200_000              # on a GPU: each block steps until its longest fiber stops, so fewer, larger blocks keep it
+                                 # fuller - 2-17 % faster than 50,000, the fibers bit for bit the same (a fiber's arithmetic
+                                 # does not depend on its batch; gpu_track_profile.py); ~0.4 GB of device memory
 
 
 def track(s, dwi, timer: Timer, prefix="", device="mps", workers=None, shell=2800.0) -> Tractogram:
@@ -252,14 +255,14 @@ def track(s, dwi, timer: Timer, prefix="", device="mps", workers=None, shell=280
         U.require_main_guard()                                             # before any work, not after it
     with timer(prefix + "prep"):
         t = prepare(dwi, s.affine, s.bval, s.bvec, shell=shell, device=device)
-    with timer(prefix + "load"):
-        D = U.from_arrays(t.dwi, t.header, t.mask)
+    with timer(prefix + "load"):                                          # on the host: the seeds' fit in float64 there, the same
+        D = U.from_arrays(t.dwi, t.header, t.mask)                         # seeds on every device (on CUDA's float64: +-2 fibers)
     with timer(prefix + "ukf"):
         kind = torch.device(device).type
         if kind == "mps":
-            fibers, stats = U.track(D, backend="metal")
+            fibers, stats = U.track(D, backend="metal", batch=GPU_BATCH)
         elif kind == "cuda":
-            fibers, stats = U.track(D, backend="triton_block")
+            fibers, stats = U.track(D, backend="triton_block", batch=GPU_BATCH)
         else:
             fibers, stats = U.track(D, dtype=torch.float32, device=device, fast=True, batch=CPU_BATCH,
                                     workers=workers or os.cpu_count() or 1, compile=U.can_compile())

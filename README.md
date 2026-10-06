@@ -157,7 +157,8 @@ says which, and what re-running their scripts would now produce.
   the field estimate's time goes), `ukf_cpu_tune.py` (tracker-step variants: speed and agreement with float64),
   `modal_cpu_compare.py` (the CPU pipeline, committed against working copy, in one x86 container; worker scaling),
   `modal_estimate_compare.py` (the field estimate, committed against working copy, per GPU), `timing_table.py` (the
-  cross-platform table from timing_matrix's results).
+  cross-platform table from timing_matrix's results), `gpu_track_profile.py` + `modal_gpu_track_profile.py` (the GPU
+  tracker's steps against the fibers they carry; block sizes compared bit for bit).
 - Helpers: `_ds001226.py` (the patients' loader), `_fibercmp.py` (fibers compared by seed), `_bootstrap.py`
   (bootstrap replicates of a scan).
 
