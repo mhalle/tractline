@@ -2247,3 +2247,65 @@ change below (with "seeds_s"; the runs before it are quoted here, their files ov
 - **Not quick**: the M2's mask (`prep`: 3.0 s of PAT16, 5.4 s of ds005123 on MPS; four exact 9^3 medians, DIPY's
   median_otsu voxel for voxel - the CPU no faster); the field estimate's coarse levels on CUDA (3.5 of the L40S's 4.8 s;
   launch-bound, the host CPUs there too slow to take them as the M2's does).
+
+
+## 2026-10-06 The timing table: every step, every scan, every processor (today's code)
+
+`timing_matrix.py` (the M2: MPS, then the CPU at 8 workers) and `modal_timing_matrix.py` (an L4, an A10, an L40S, a
+32-worker x86 container; the Triton cache warm) → `timing_matrix_<platform>_1006b.json`; `timing_table.py --tag 1006b`.
+The second run of each (the first within a few percent: nothing compiles). The M2 is the 15-inch MacBook Air (10-core GPU,
+8 CPU cores, 16 GB); the x86 container showed 48 vCPUs, its model not; Modal's containers vary 5-10 % run to run (the
+L40S's PAT16 estimate 3.2-4.9 s today). In the M2 GPU column the estimate's subsampled levels run on its CPU, by design.
+
+**Stanford HARDI (no correction; 150 dirs, b 2000)**
+
+| step, seconds | M2 GPU (MPS) | M2 CPU, 8 workers | L4 | A10 | L40S | x86 CPU, 32 workers |
+|---|---:|---:|---:|---:|---:|---:|
+| field estimate | n/a | n/a | n/a | n/a | n/a | n/a |
+| field apply | n/a | n/a | n/a | n/a | n/a | n/a |
+| prep (shell, gradients, mask) | 3.68 | 3.46 | 0.77 | 0.61 | 0.25 | 1.06 |
+| load (tracker input) | 1.02 | 1.01 | 2.06 | 2.22 | 1.02 | 1.40 |
+| tracking (UKF) | 81.05 | 243.92 | 40.40 | 51.93 | 15.31 | 75.99 |
+| labeling (RapidParc) | 1.03 | 1.88 | 1.58 | 1.21 | 1.10 | 1.90 |
+| total | **86.8** | **250.3** | **44.8** | **56.0** | **17.7** | **80.3** |
+
+**ds001226 PAT16 (corrected; 50 dirs, b 2800)**
+
+| step, seconds | M2 GPU (MPS) | M2 CPU, 8 workers | L4 | A10 | L40S | x86 CPU, 32 workers |
+|---|---:|---:|---:|---:|---:|---:|
+| field estimate | 9.36 | 12.25 | 6.91 | 4.32 | 4.93 | 20.79 |
+| field apply | 0.88 | 0.72 | 1.01 | 0.81 | 0.59 | 0.45 |
+| prep (shell, gradients, mask) | 3.06 | 3.38 | 0.44 | 0.36 | 0.14 | 1.78 |
+| load (tracker input) | 0.25 | 0.24 | 0.55 | 0.52 | 0.22 | 0.23 |
+| tracking (UKF) | 24.30 | 87.82 | 8.85 | 7.74 | 3.44 | 42.33 |
+| labeling (RapidParc) | 0.67 | 1.30 | 0.94 | 0.76 | 0.64 | 1.32 |
+| total | **38.5** | **105.7** | **18.7** | **14.5** | **10.0** | **66.9** |
+
+**ds005123 sub-10317 (field maps refused; 30 dirs, b 3250)**
+
+| step, seconds | M2 GPU (MPS) | M2 CPU, 8 workers | L4 | A10 | L40S | x86 CPU, 32 workers |
+|---|---:|---:|---:|---:|---:|---:|
+| field estimate | n/a | n/a | n/a | n/a | n/a | n/a |
+| field apply | n/a | n/a | n/a | n/a | n/a | n/a |
+| prep (shell, gradients, mask) | 5.48 | 5.86 | 0.78 | 0.64 | 0.24 | 1.63 |
+| load (tracker input) | 0.26 | 0.24 | 0.61 | 0.51 | 0.37 | 0.44 |
+| tracking (UKF) | 32.09 | 126.64 | 12.75 | 10.51 | 4.84 | 52.80 |
+| labeling (RapidParc) | 1.05 | 2.07 | 1.58 | 1.26 | 1.34 | 1.84 |
+| total | **38.9** | **134.8** | **15.7** | **12.9** | **6.8** | **56.7** |
+
+**ds005123: the correction alone, forced past the shim check (timing only: this field is not the series')**
+
+| step, seconds | M2 GPU (MPS) | M2 CPU, 8 workers | L4 | A10 | L40S | x86 CPU, 32 workers |
+|---|---:|---:|---:|---:|---:|---:|
+| field estimate | 13.33 | 19.55 | 7.21 | 4.35 | 4.80 | 31.22 |
+| field apply | 4.76 | 4.18 | 2.50 | 1.99 | 1.47 | 0.94 |
+
+
+
+- **Tracking is most of every uncorrected scan** (HARDI 76-97 %, ds005123 71-94 %) and 40-84 % of PAT16, whose field
+  estimate is the rest's largest part (17-49 %); the M2's mask (prep) is 3-6 s on either of its paths.
+- **Refill's own share** (`gpu_track_profile.py --blocks`, the same process: one refilled stream of 200,000 against blocks of
+  200,000, fibers bit for bit; `gpu_track_profile_<gpu>_stream_vs_blocks.json`), the time saved: the M2 HARDI 2.7 %, PAT16 0,
+  ds005123 3.4 %; L40S 7.6 / 1.8 / 4.2 %; A10 0.9 / 0.3 / 2.5 %; L4 -0.3 / -0.3 / 3.6 % (PAT16's 95 k half-fibers fit one
+  block). Correction to the entry above: its M2 figures (HARDI 88.6 → 81.4 s, ds005123 35.6 → 32.1 s against blocks of
+  200,000) also carry the seed fit's change; refill alone is the 0-3.4 % here.

@@ -3,6 +3,7 @@ block sizes compared bit for bit; an L4, an A10 and an L40S in parallel. The sca
 modal_timing_matrix.py's; the Triton cache is the Volume's (pre-warmed: no compile in the timings).
 
     modal run bench/modal_gpu_track_profile.py [--gpus L4,A10,L40S] [--scans pat16,hardi,ds005123] [--batches 50000,200000]
+        [--blocks] [--tag T]     # --blocks: the first batch also as fixed blocks, in the same container
 
 Writes results/gpu_track_profile_<gpu>.json.
 """
@@ -33,18 +34,19 @@ vol = modal.Volume.from_name("tractography-bench")
 
 
 @app.function(gpu="L40S", volumes={"/vol": vol}, timeout=3600, memory=32768, cpu=8)
-def run(scans: str, batches: str) -> str:
+def run(scans: str, batches: str, blocks: bool = False) -> str:
     from gpu_track_profile import profile
-    return json.dumps(profile(tuple(scans.split(",")), "cuda", tuple(int(b) for b in batches.split(","))))
+    return json.dumps(profile(tuple(scans.split(",")), "cuda", tuple(int(b) for b in batches.split(",")), blocks))
 
 
 @app.local_entrypoint()
-def main(gpus: str = "L4,A10,L40S", scans: str = "pat16,hardi,ds005123", batches: str = "50000,200000"):
-    calls = {g: run.with_options(gpu=g).spawn(scans, batches) for g in gpus.split(",")}
+def main(gpus: str = "L4,A10,L40S", scans: str = "pat16,hardi,ds005123", batches: str = "50000,200000", blocks: bool = False,
+         tag: str = ""):
+    calls = {g: run.with_options(gpu=g).spawn(scans, batches, blocks) for g in gpus.split(",")}
     for g, c in calls.items():
         try:
             res = json.loads(c.get())
         except Exception as e:                                             # noqa: BLE001
             print(g, "FAILED", type(e).__name__, e); continue
-        (HERE / f"results/gpu_track_profile_{g.lower()}.json").write_text(json.dumps(res, indent=1))
+        (HERE / f"results/gpu_track_profile_{g.lower()}{'_' + tag if tag else ''}.json").write_text(json.dumps(res, indent=1))
         print(g, "written")

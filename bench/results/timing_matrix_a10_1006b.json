@@ -1,0 +1,214 @@
+{
+ "device": "cuda",
+ "torch": "2.14.1+cu130",
+ "cpu_count": 24,
+ "platform": "Linux-4.19.0-gvisor-x86_64-with-glibc2.36",
+ "gpu": "NVIDIA A10",
+ "nvidia_smi": "NVIDIA A10, 580.95.05, 23028 MiB",
+ "cpu": "unknown",
+ "workers": null,
+ "scans": {
+  "hardi": {
+   "runs": [
+    {
+     "read_s": 1.2,
+     "seconds": {
+      "field_estimate": 0.0,
+      "field_apply": 0.0,
+      "prep": 0.7,
+      "load": 1.72,
+      "ukf": 53.41,
+      "label": 1.43
+     },
+     "scan_to_labels_s": 57.3,
+     "corrected": false,
+     "grid": [
+      81,
+      106,
+      76,
+      160
+     ],
+     "seeds": 101747,
+     "fibers": 78404,
+     "fiber_steps": 17908562,
+     "labeled": 49647,
+     "other_fraction": 0.7394,
+     "compile_s": 0.0,
+     "fibers_sha": "8cf323683b8b5623"
+    },
+    {
+     "read_s": 0.95,
+     "seconds": {
+      "field_estimate": 0.0,
+      "field_apply": 0.0,
+      "prep": 0.61,
+      "load": 2.22,
+      "ukf": 51.93,
+      "label": 1.21
+     },
+     "scan_to_labels_s": 56.0,
+     "corrected": false,
+     "grid": [
+      81,
+      106,
+      76,
+      160
+     ],
+     "seeds": 101747,
+     "fibers": 78404,
+     "fiber_steps": 17908562,
+     "labeled": 49647,
+     "other_fraction": 0.7394,
+     "compile_s": 0.0,
+     "fibers_sha": "8cf323683b8b5623"
+    }
+   ],
+   "note": "not corrected: no b0s from both phase-encoding polarities"
+  },
+  "pat16": {
+   "runs": [
+    {
+     "read_s": 0.88,
+     "seconds": {
+      "field_estimate": 4.83,
+      "field_apply": 0.85,
+      "prep": 0.37,
+      "load": 0.51,
+      "ukf": 7.83,
+      "label": 0.77
+     },
+     "scan_to_labels_s": 15.2,
+     "corrected": true,
+     "grid": [
+      96,
+      96,
+      60,
+      102
+     ],
+     "seeds": 47742,
+     "fibers": 42172,
+     "fiber_steps": 11573383,
+     "labeled": 32261,
+     "other_fraction": 0.4991,
+     "compile_s": 0.0,
+     "fibers_sha": "50204bb56f24eaae"
+    },
+    {
+     "read_s": 0.6,
+     "seconds": {
+      "field_estimate": 4.32,
+      "field_apply": 0.81,
+      "prep": 0.36,
+      "load": 0.52,
+      "ukf": 7.74,
+      "label": 0.76
+     },
+     "scan_to_labels_s": 14.5,
+     "corrected": true,
+     "grid": [
+      96,
+      96,
+      60,
+      102
+     ],
+     "seeds": 47742,
+     "fibers": 42172,
+     "fiber_steps": 11573383,
+     "labeled": 32261,
+     "other_fraction": 0.4991,
+     "compile_s": 0.0,
+     "fibers_sha": "50204bb56f24eaae"
+    }
+   ],
+   "note": "corrected"
+  },
+  "ds005123": {
+   "runs": [
+    {
+     "read_s": 1.85,
+     "seconds": {
+      "field_estimate": 0.0,
+      "field_apply": 0.0,
+      "prep": 0.64,
+      "load": 0.51,
+      "ukf": 10.63,
+      "label": 1.25
+     },
+     "scan_to_labels_s": 13.0,
+     "corrected": false,
+     "grid": [
+      120,
+      120,
+      69,
+      145
+     ],
+     "seeds": 108383,
+     "fibers": 86098,
+     "fiber_steps": 19507874,
+     "labeled": 50907,
+     "other_fraction": 0.5834,
+     "compile_s": 0.0,
+     "fibers_sha": "5dbddc3c1a83dd87"
+    },
+    {
+     "read_s": 1.84,
+     "seconds": {
+      "field_estimate": 0.0,
+      "field_apply": 0.0,
+      "prep": 0.64,
+      "load": 0.51,
+      "ukf": 10.51,
+      "label": 1.26
+     },
+     "scan_to_labels_s": 12.9,
+     "corrected": false,
+     "grid": [
+      120,
+      120,
+      69,
+      145
+     ],
+     "seeds": 108383,
+     "fibers": 86098,
+     "fiber_steps": 19507874,
+     "labeled": 50907,
+     "other_fraction": 0.5834,
+     "compile_s": 0.0,
+     "fibers_sha": "5dbddc3c1a83dd87"
+    }
+   ],
+   "note": "not corrected: sub-10317_acq-dwi_dir-AP_epi.nii.gz: acquired under another shim (the field it measures is not the diffusion series'); sub-10317_acq-dwi_dir-PA_epi.nii.gz: acquired under another shim (the field it measures is not the diffusion series')"
+  },
+  "ds005123_forced": {
+   "runs": [
+    {
+     "read_s": 1.94,
+     "seconds": {
+      "field_estimate": 4.43,
+      "field_apply": 2.02
+     },
+     "applied": true,
+     "residual_left": 0.664,
+     "b0s": 7,
+     "correct_s": 6.4
+    },
+    {
+     "read_s": 2.0,
+     "seconds": {
+      "field_estimate": 4.35,
+      "field_apply": 1.99
+     },
+     "applied": true,
+     "residual_left": 0.664,
+     "b0s": 7,
+     "correct_s": 6.3
+    }
+   ],
+   "note": "corrected with sub-10317_acq-dwi_dir-AP_epi.nii.gz, sub-10317_acq-dwi_dir-PA_epi.nii.gz (IntendedFor); not verified: sub-10317_acq-dwi_dir-AP_epi.nii.gz: shim, sub-10317_acq-dwi_dir-PA_epi.nii.gz: shim"
+  }
+ },
+ "triton_cache": "/vol/triton-cache",
+ "warm_s": null,
+ "warm_wall_s": null,
+ "warm_workers": 0
+}

@@ -1,0 +1,208 @@
+{
+ "device": "mps",
+ "torch": "2.14.1",
+ "cpu_count": 8,
+ "platform": "macOS-15.7.3-arm64-arm-64bit",
+ "cpu": "Apple M2",
+ "workers": null,
+ "scans": {
+  "hardi": {
+   "runs": [
+    {
+     "read_s": 0.5,
+     "seconds": {
+      "field_estimate": 0.0,
+      "field_apply": 0.0,
+      "prep": 4.26,
+      "load": 1.09,
+      "ukf": 80.76,
+      "label": 1.16
+     },
+     "scan_to_labels_s": 87.3,
+     "corrected": false,
+     "grid": [
+      81,
+      106,
+      76,
+      160
+     ],
+     "seeds": 101747,
+     "fibers": 78409,
+     "fiber_steps": 17909995,
+     "labeled": 49650,
+     "other_fraction": 0.738,
+     "compile_s": 0.0,
+     "fibers_sha": "0f506cb9e2b2b422"
+    },
+    {
+     "read_s": 0.36,
+     "seconds": {
+      "field_estimate": 0.0,
+      "field_apply": 0.0,
+      "prep": 3.68,
+      "load": 1.02,
+      "ukf": 81.05,
+      "label": 1.03
+     },
+     "scan_to_labels_s": 86.8,
+     "corrected": false,
+     "grid": [
+      81,
+      106,
+      76,
+      160
+     ],
+     "seeds": 101747,
+     "fibers": 78409,
+     "fiber_steps": 17909995,
+     "labeled": 49650,
+     "other_fraction": 0.738,
+     "compile_s": 0.0,
+     "fibers_sha": "0f506cb9e2b2b422"
+    }
+   ],
+   "note": "not corrected: no b0s from both phase-encoding polarities"
+  },
+  "pat16": {
+   "runs": [
+    {
+     "read_s": 0.52,
+     "seconds": {
+      "field_estimate": 9.53,
+      "field_apply": 0.87,
+      "prep": 3.06,
+      "load": 0.24,
+      "ukf": 24.28,
+      "label": 0.69
+     },
+     "scan_to_labels_s": 38.7,
+     "corrected": true,
+     "grid": [
+      96,
+      96,
+      60,
+      102
+     ],
+     "seeds": 47733,
+     "fibers": 42168,
+     "fiber_steps": 11561821,
+     "labeled": 32242,
+     "other_fraction": 0.498,
+     "compile_s": 0.0,
+     "fibers_sha": "1951284ffcfb31e2"
+    },
+    {
+     "read_s": 0.21,
+     "seconds": {
+      "field_estimate": 9.36,
+      "field_apply": 0.88,
+      "prep": 3.06,
+      "load": 0.25,
+      "ukf": 24.3,
+      "label": 0.67
+     },
+     "scan_to_labels_s": 38.5,
+     "corrected": true,
+     "grid": [
+      96,
+      96,
+      60,
+      102
+     ],
+     "seeds": 47733,
+     "fibers": 42168,
+     "fiber_steps": 11561821,
+     "labeled": 32242,
+     "other_fraction": 0.498,
+     "compile_s": 0.0,
+     "fibers_sha": "1951284ffcfb31e2"
+    }
+   ],
+   "note": "corrected"
+  },
+  "ds005123": {
+   "runs": [
+    {
+     "read_s": 0.68,
+     "seconds": {
+      "field_estimate": 0.0,
+      "field_apply": 0.0,
+      "prep": 5.47,
+      "load": 0.24,
+      "ukf": 32.1,
+      "label": 1.06
+     },
+     "scan_to_labels_s": 38.9,
+     "corrected": false,
+     "grid": [
+      120,
+      120,
+      69,
+      145
+     ],
+     "seeds": 108383,
+     "fibers": 86100,
+     "fiber_steps": 19507994,
+     "labeled": 50906,
+     "other_fraction": 0.5837,
+     "compile_s": 0.0,
+     "fibers_sha": "4774f237ff6eac5d"
+    },
+    {
+     "read_s": 0.66,
+     "seconds": {
+      "field_estimate": 0.0,
+      "field_apply": 0.0,
+      "prep": 5.48,
+      "load": 0.26,
+      "ukf": 32.09,
+      "label": 1.05
+     },
+     "scan_to_labels_s": 38.9,
+     "corrected": false,
+     "grid": [
+      120,
+      120,
+      69,
+      145
+     ],
+     "seeds": 108383,
+     "fibers": 86100,
+     "fiber_steps": 19507994,
+     "labeled": 50906,
+     "other_fraction": 0.5837,
+     "compile_s": 0.0,
+     "fibers_sha": "4774f237ff6eac5d"
+    }
+   ],
+   "note": "not corrected: sub-10317_acq-dwi_dir-AP_epi.nii.gz: acquired under another shim (the field it measures is not the diffusion series'); sub-10317_acq-dwi_dir-PA_epi.nii.gz: acquired under another shim (the field it measures is not the diffusion series')"
+  },
+  "ds005123_forced": {
+   "runs": [
+    {
+     "read_s": 0.72,
+     "seconds": {
+      "field_estimate": 13.08,
+      "field_apply": 4.57
+     },
+     "applied": true,
+     "residual_left": 0.664,
+     "b0s": 7,
+     "correct_s": 17.6
+    },
+    {
+     "read_s": 0.76,
+     "seconds": {
+      "field_estimate": 13.33,
+      "field_apply": 4.76
+     },
+     "applied": true,
+     "residual_left": 0.664,
+     "b0s": 7,
+     "correct_s": 18.1
+    }
+   ],
+   "note": "corrected with sub-10317_acq-dwi_dir-AP_epi.nii.gz, sub-10317_acq-dwi_dir-PA_epi.nii.gz (IntendedFor); not verified: sub-10317_acq-dwi_dir-AP_epi.nii.gz: shim, sub-10317_acq-dwi_dir-PA_epi.nii.gz: shim"
+  }
+ }
+}
