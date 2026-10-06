@@ -2118,3 +2118,83 @@ the M2's CPU 154 s → 151 s once (estimate 24.0 → 17.2 s, tracking 126 s that
 Correction to 2026-10-05: the M2 column, provisional there, rerun idle (`timing_matrix_mps.json`): HARDI 100.2 s (UKF 94.5),
 PAT16 49.2 s (48.8 first run), ds005123 50.2 s (48.8), ds005123's forced correction 36.0 s - the committed numbers again;
 the slower ones were the machine's load (Photos' mediaanalysisd, Spotlight). These predate the field-estimate change.
+
+
+## 2026-10-06 The full timing table after the CPU changes; the cohort against the T1 again
+
+`timing_matrix.py` (the M2: MPS, then the CPU path at 8 workers, right after the cohort - the laptop warm, load ~4) and
+`modal_timing_matrix.py --prewarm` (an L4, an A10, an L40S, a 32-worker x86 container) → `timing_matrix_<platform>_1006.json`;
+`timing_table.py --tag 1006 --before ""` made the tables ("before": 2026-10-05's runs, the M2's MPS rerun of this morning).
+Second runs, seconds; "first run" its total.
+
+**Stanford HARDI (no correction; 150 dirs, b 2000)**
+
+| stage, s | M2 GPU (MPS) | M2 CPU, 8 workers | L4 | A10 | L40S | x86 CPU, 32 workers |
+|---|---|---|---|---|---|---|
+| field estimate | - | - | - | - | - | - |
+| field apply | - | - | - | - | - | - |
+| prep | 3.66 | 3.38 | 1.04 | 0.59 | 0.26 | 1.88 |
+| load | 1.2 | 0.98 | 3.53 | 1.72 | 1.05 | 1.33 |
+| ukf | 93.12 | 243.37 | 75.67 | 70.12 | 34.49 | 91.36 |
+| label | 1.0 | 1.99 | 1.6 | 1.13 | 1.07 | 2.4 |
+| total | **99.0** | **249.7** | **81.8** | **73.6** | **36.9** | **97.0** |
+| first run | 98.7 | 248.5 | 82.5 | 75.3 | 40.0 | 114.6 |
+| before (second run) | 100.2 | - | 72.1 | 75.3 | 38.8 | 107.9 |
+
+**ds001226 PAT16 (corrected; 50 dirs, b 2800)**
+
+| stage, s | M2 GPU (MPS) | M2 CPU, 8 workers | L4 | A10 | L40S | x86 CPU, 32 workers |
+|---|---|---|---|---|---|---|
+| field estimate | 9.34 | 12.4 | 7.47 | 4.21 | 10.42 | 24.93 |
+| field apply | 0.84 | 0.71 | 1.03 | 0.8 | 1.5 | 0.58 |
+| prep | 3.05 | 3.38 | 0.46 | 0.37 | 0.14 | 1.02 |
+| load | 0.24 | 0.24 | 0.64 | 0.5 | 0.23 | 0.23 |
+| ukf | 26.65 | 87.67 | 11.29 | 9.11 | 4.59 | 42.18 |
+| label | 0.66 | 1.28 | 1.02 | 0.7 | 0.66 | 1.57 |
+| total | **40.8** | **105.7** | **21.9** | **15.7** | **17.5** | **70.5** |
+| first run | 40.6 | 109.1 | 23.7 | 16.4 | 18.2 | 79.7 |
+| before (second run) | 49.2 | - | 22.2 | 16.4 | 9.6 | 91.1 |
+
+**ds005123 sub-10317 (field maps refused; 30 dirs, b 3250)**
+
+| stage, s | M2 GPU (MPS) | M2 CPU, 8 workers | L4 | A10 | L40S | x86 CPU, 32 workers |
+|---|---|---|---|---|---|---|
+| field estimate | - | - | - | - | - | - |
+| field apply | - | - | - | - | - | - |
+| prep | 5.44 | 5.84 | 0.82 | 0.64 | 0.23 | 1.8 |
+| load | 0.24 | 0.24 | 0.72 | 0.47 | 0.33 | 0.36 |
+| ukf | 39.01 | 127.23 | 18.57 | 13.82 | 8.39 | 57.72 |
+| label | 1.04 | 2.09 | 1.64 | 1.14 | 1.35 | 2.28 |
+| total | **45.7** | **135.4** | **21.8** | **16.1** | **10.3** | **62.2** |
+| first run | 46.5 | 134.0 | 23.1 | 16.2 | 9.7 | 62.1 |
+| before (second run) | 50.2 | - | 21.7 | 16.1 | 9.0 | 74.7 |
+
+ds005123's correction forced past the shim check (timing only; estimate + apply): M2 GPU (MPS) 13.49 + 3.82 s; M2 CPU, 8 workers 19.23 + 4.25 s; L4 7.65 + 5.54 s; A10 4.29 + 1.96 s; L40S 5.83 + 2.1 s; x86 CPU, 32 workers 39.09 + 1.25 s.
+
+
+- **The field estimate**: PAT16 M2 GPU 17.4 → 9.3 s, A10 5.0 → 4.2, L4 8.0 → 7.5, L40S 3.4 → 3.2 (a second container,
+  `timing_matrix_l40s_1006_repeat.json`: PAT16 9.7 s in all; the first container's 10.4 s came with NVIDIA driver 610.57.04
+  against 580.95.05 - the old code there 5.7 s, `estimate_compare_l40s.json` - a host, not the code), x86 32 cores 37.2 → 18.8-24.9
+  (two containers), the M2's CPU 23.4 → 12.4. ds005123's forced estimate M2 GPU 31.8 → 13.5 s.
+- **No first run compiles**: ds005123's first runs 266-402 s on 2026-10-05 → 9.7-23.1 s (one copy per gradient size, the shared
+  Volume cache pre-warmed: `warm()` 44.9 s wall on the L40S, 49.0 the A10, 77.7 the L4 - sm_89 and sm_86 now hold all six sizes).
+- **GPU tracking unchanged** (the kernels did not change): HARDI's L4 75.7 against 67.6 s is the container (the same kernel ran
+  68.5-72.2 s in two others this morning).
+- **The CPU path**: the x86 container PAT16 91.1 → 70.5 s, ds005123 74.7 → 62.2 s, HARDI 107.9 → 97.0 s (different containers;
+  the same container's comparison: `cpu_compare*.json`); the M2's CPU PAT16 105.7 s (cool, alternating with the committed code,
+  this morning: 105.5 / 120.3 against 148.8 / 152.3 s).
+- **The field on the GPU, new against old** (`modal_estimate_compare.py` → `estimate_compare_{l40s,a10}.json`, PAT16's brain,
+  mm, median / 99th / max): L40S deep 0.003 / 0.062 / 1.06, edge 0.003 / 0.12 / 0.59; A10 0.002 / 0.063 / 1.07, 0.003 / 0.16 / 1.08 -
+  the CPU's rounding-noise scale (above); all voxels' 1.2-1.5 / 8-10 mm are outside the brain, where nothing holds the field.
+  Each version is bit for bit across processes on a GPU.
+
+**The 12-patient cohort against the T1** (`cohort.py` on the M2, the pipeline's default path; `cohort/*.json`,
+`cohort_summary.md`): unchanged. Medians over 12, committed → now: the tumor margin's residual against the T1 at the 99th
+1.58 → 1.59 mm, the brain's 1.62 → 1.60, half-split precision 0.39 → 0.38, validation r / slope 0.85 / 0.74 → 0.86 / 0.74,
+tract mix r 0.9968 → 0.9967; per patient the 99th percentiles move by -0.05 to +0.09 mm either way. Scan to labels 54 → 42 s
+(the estimate 18 → 9 s, UKF 29 → 28 s).
+- **HARDI on the CPU, committed against today's code** (no correction: the tracker alone). x86 32 workers, one container
+  (`modal_cpu_compare.py --only hardi` → `cpu_compare_hardi.json`): tracking 104.6 / 105.1 → 76.8 / 78.4 s (1.35x), total
+  109.3 / 109.8 → 81.2 / 82.9 s. The M2's CPU, 8 workers, one run each (`cpu_compare_m2_hardi.json`): tracking 344.2 → 242.7 s
+  (1.42x), total 350.7 → 249.0 s. Tracking is 93-97 % of HARDI's time on every platform, 81-94 % of ds005123's, 47-83 % of
+  PAT16's (the field estimate 12-35 %).

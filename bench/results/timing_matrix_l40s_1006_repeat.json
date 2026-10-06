@@ -1,0 +1,100 @@
+{
+ "device": "cuda",
+ "torch": "2.14.1+cu130",
+ "cpu_count": 24,
+ "platform": "Linux-4.19.0-gvisor-x86_64-with-glibc2.36",
+ "gpu": "NVIDIA L40S",
+ "nvidia_smi": "NVIDIA L40S, 580.95.05, 46068 MiB",
+ "cpu": "unknown",
+ "workers": null,
+ "scans": {
+  "pat16": {
+   "runs": [
+    {
+     "read_s": 1.22,
+     "seconds": {
+      "field_estimate": 4.39,
+      "field_apply": 0.81,
+      "prep": 0.19,
+      "load": 0.56,
+      "ukf": 7.03,
+      "label": 0.67
+     },
+     "scan_to_labels_s": 13.7,
+     "corrected": true,
+     "grid": [
+      96,
+      96,
+      60,
+      102
+     ],
+     "seeds": 47740,
+     "fibers": 42174,
+     "fiber_steps": 11557587,
+     "labeled": 32249,
+     "other_fraction": 0.4991,
+     "compile_s": 0.0,
+     "fibers_sha": "dfac019675231aa2"
+    },
+    {
+     "read_s": 0.67,
+     "seconds": {
+      "field_estimate": 3.19,
+      "field_apply": 0.79,
+      "prep": 0.19,
+      "load": 0.62,
+      "ukf": 4.31,
+      "label": 0.62
+     },
+     "scan_to_labels_s": 9.7,
+     "corrected": true,
+     "grid": [
+      96,
+      96,
+      60,
+      102
+     ],
+     "seeds": 47740,
+     "fibers": 42174,
+     "fiber_steps": 11557587,
+     "labeled": 32249,
+     "other_fraction": 0.4991,
+     "compile_s": 0.0,
+     "fibers_sha": "dfac019675231aa2"
+    }
+   ],
+   "note": "corrected"
+  },
+  "ds005123_forced": {
+   "runs": [
+    {
+     "read_s": 2.41,
+     "seconds": {
+      "field_estimate": 3.24,
+      "field_apply": 1.9
+     },
+     "applied": true,
+     "residual_left": 0.664,
+     "b0s": 7,
+     "correct_s": 5.1
+    },
+    {
+     "read_s": 2.38,
+     "seconds": {
+      "field_estimate": 3.15,
+      "field_apply": 1.94
+     },
+     "applied": true,
+     "residual_left": 0.664,
+     "b0s": 7,
+     "correct_s": 5.1
+    }
+   ],
+   "note": "corrected with sub-10317_acq-dwi_dir-AP_epi.nii.gz, sub-10317_acq-dwi_dir-PA_epi.nii.gz (IntendedFor); not verified: sub-10317_acq-dwi_dir-AP_epi.nii.gz: shim, sub-10317_acq-dwi_dir-PA_epi.nii.gz: shim"
+  }
+ },
+ "triton_cache": "/vol/triton-cache",
+ "warm_s": null,
+ "warm_wall_s": null,
+ "warm_workers": 0
+}

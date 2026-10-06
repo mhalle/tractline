@@ -1,0 +1,43 @@
+{
+ "what": "HARDI through pipeline.run on the M2's CPU, 8 workers (timing_matrix.py --device cpu --workers 8 --runs 1), the committed code (f2b17c4) then today's, one run each, 2026-10-06 12:28 (load ~3.9 before: desktop use)",
+ "runs": {
+  "old (f2b17c4)": [
+   {
+    "seconds": {
+     "field_estimate": 0.0,
+     "field_apply": 0.0,
+     "prep": 3.47,
+     "load": 1.05,
+     "ukf": 344.24,
+     "label": 1.91
+    },
+    "scan_to_labels_s": 350.7,
+    "fibers": 78417,
+    "fiber_steps": 17902702,
+    "fibers_sha": "6f177f9e0c26e14f"
+   }
+  ],
+  "new": [
+   {
+    "seconds": {
+     "field_estimate": 0.0,
+     "field_apply": 0.0,
+     "prep": 3.44,
+     "load": 0.97,
+     "ukf": 242.69,
+     "label": 1.93
+    },
+    "scan_to_labels_s": 249.0,
+    "fibers": 78422,
+    "fiber_steps": 17903379,
+    "fibers_sha": "625e74b1ee11b2ab"
+   }
+  ]
+ },
+ "machine": {
+  "cpu": "Apple M2",
+  "cpu_count": 8,
+  "torch": "2.14.1",
+  "platform": "macOS-15.7.3-arm64-arm-64bit"
+ }
+}

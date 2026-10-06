@@ -8,7 +8,8 @@ behind each change, with their numbers and later corrections, are in `bench/resu
 - **The field estimate ~1.8x faster** on every device (PAT16, the M2's CPU: 22.6 → 12.3 s; 32 x86 cores 29-34 → 19 s):
   the Gauss-Newton matrix applied through sums over the volumes, the sampling grid built once a level where motion is
   held. The same mathematics; the field moves by the estimator's own rounding noise (as much as changing the thread
-  count moved it before). The 12-patient check against the T1 is still to run.
+  count moved it before), and the 12 patients' agreement with the T1 is unchanged (margin 99th 1.58 → 1.59 mm). The
+  M2's default path, scan to labels: 54 → 42 s (median of 12).
 - **The CPU tracker's fast step changed** (`ukf.track(fast=True)`, the CPU pipeline's): the N gradients once with the
   filter's sums doubled, batched products, interp's 27 voxels in one gather - 1.3-1.4x in one process, as close to
   float64 as before; the CPU pipeline's tracking 1.1-1.4x (PAT16 on 32 x86 cores 39 → 34 s).

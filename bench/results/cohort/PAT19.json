@@ -18,27 +18,27 @@
   "rotation_deg": 0.8
  },
  "seconds": {
-  "field_estimate": 19.69,
-  "field_apply": 1.14,
+  "field_estimate": 9.4,
+  "field_apply": 1.01,
   "ours_prep": 3.06,
-  "ours_load": 0.23,
-  "ours_ukf": 25.99,
-  "ours_label": 0.64,
-  "field_estimate_perturbed": 18.28,
+  "ours_load": 0.25,
+  "ours_ukf": 26.33,
+  "ours_label": 0.63,
+  "field_estimate_perturbed": 8.8,
   "uncorrected_prep": 3.03,
-  "uncorrected_load": 0.27,
-  "uncorrected_ukf": 25.72,
-  "uncorrected_label": 0.67,
-  "uncorrected_label_five_draws": 2.28,
-  "ours_label_five_draws": 2.25,
-  "t1_check": 162.55
+  "uncorrected_load": 0.28,
+  "uncorrected_ukf": 25.69,
+  "uncorrected_label": 0.62,
+  "uncorrected_label_five_draws": 2.3,
+  "ours_label_five_draws": 2.3,
+  "t1_check": 162.05
  },
- "pipeline_seconds": 50.8,
- "scan_to_labels_seconds": 50.8,
+ "pipeline_seconds": 40.7,
+ "scan_to_labels_seconds": 40.7,
  "field_hz_1_50_99": [
   -69.7,
-  -2.2,
-  123.6
+  -2.1,
+  123.4
  ],
  "motion_translation_mm_max": 0.67,
  "arms": {
@@ -46,134 +46,134 @@
    "seeds": 44083,
    "fibers": 39384,
    "fiber_steps": 11195282,
-   "ukf_steps_per_s": 435275,
+   "ukf_steps_per_s": 435784,
    "mask_voxels": 72746,
    "streamlines_ge_40mm": 31328,
    "median_length_mm": 89.4,
    "other_fraction": 0.4977
   },
   "ours": {
-   "seeds": 44102,
-   "fibers": 39537,
-   "fiber_steps": 11282859,
-   "ukf_steps_per_s": 434123,
-   "mask_voxels": 73932,
-   "streamlines_ge_40mm": 31503,
+   "seeds": 44085,
+   "fibers": 39519,
+   "fiber_steps": 11276124,
+   "ukf_steps_per_s": 428261,
+   "mask_voxels": 73927,
+   "streamlines_ge_40mm": 31494,
    "median_length_mm": 91.1,
-   "other_fraction": 0.5113
+   "other_fraction": 0.511
   }
  },
  "correction_changes": {
-  "tract_mix_r": 0.9955,
+  "tract_mix_r": 0.9956,
   "per_tract_abs_rel_change_median_90th": [
-   0.047,
-   0.22
+   0.044,
+   0.186
   ],
   "tract_center_moved_mm_median_90th_max": [
-   1.4,
-   2.9,
-   7.1
+   1.7,
+   2.8,
+   6.3
   ],
   "tract_center_moved_mm": {
-   "Sup-O": 7.1,
-   "Sup-T": 3.7,
-   "Sup-FP": 3.5,
-   "PLIC": 3.0,
-   "SLF-III": 2.9,
-   "ICP": 2.9,
-   "CST": 2.6,
-   "CPC": 2.6,
+   "Sup-O": 6.3,
+   "Sup-T": 4.5,
+   "EmC": 3.1,
+   "Sup-FP": 2.9,
+   "PLIC": 2.8,
+   "CST": 2.7,
+   "ICP": 2.7,
+   "CB": 2.5,
+   "CPC": 2.4,
    "ILF": 2.3,
    "CC1": 2.3,
-   "MCP": 2.3,
-   "TO": 2.2,
+   "SLF-III": 2.2,
    "TT": 2.2,
-   "CB": 2.1,
-   "AF": 1.9,
+   "MCP": 2.2,
+   "TO": 1.9,
    "SLF-II": 1.8,
+   "CR-P": 1.8,
+   "SP": 1.8,
+   "TF": 1.8,
    "UF": 1.7,
-   "CR-P": 1.7,
-   "TF": 1.7,
-   "Sup-PT": 1.7,
-   "EC": 1.4,
-   "Intra-CBLM-PaT": 1.4,
-   "Sup-PO": 1.3,
-   "CR-F": 1.2,
+   "CR-F": 1.7,
+   "Sup-PT": 1.6,
+   "AF": 1.5,
+   "Sup-F": 1.4,
+   "EC": 1.2,
    "CC2": 1.2,
-   "Sup-F": 1.2,
-   "IOFF": 1.0,
-   "TP": 1.0,
-   "Sup-OT": 1.0,
-   "SP": 0.9,
-   "CC6": 0.8,
+   "Intra-CBLM-PaT": 1.0,
+   "Sup-PO": 1.0,
+   "IOFF": 0.9,
+   "MdLF": 0.9,
+   "TP": 0.9,
+   "CC6": 0.9,
    "Intra-CBLM-I-P": 0.8,
-   "Sup-P": 0.8,
-   "EmC": 0.7,
-   "MdLF": 0.7,
-   "CC4": 0.7,
+   "CC7": 0.7,
+   "Sup-OT": 0.7,
+   "SLF-I": 0.6,
    "CC3": 0.6,
-   "CC5": 0.6,
-   "CC7": 0.6,
-   "SLF-I": 0.5,
-   "SF": 0.3
+   "CC4": 0.6,
+   "CC5": 0.5,
+   "SF": 0.4,
+   "Sup-P": 0.4
   }
  },
  "t1": {
   "uncorrected": {
    "residual_brain": [
-    1.02,
-    2.7,
-    6.04
+    1.0,
+    2.69,
+    6.06
    ],
    "residual_where_ours_displaces_gt_3mm": [
-    3.65,
+    3.63,
     6.31,
-    8.43
+    8.47
    ],
    "residual_tumor": [
-    2.38,
-    4.95,
-    6.03
+    2.45,
+    5.01,
+    6.11
    ],
    "residual_tumor_margin_10mm": [
-    3.4,
-    7.0,
-    8.5
+    3.41,
+    7.07,
+    8.58
    ],
-   "tumor_voxels": 176,
-   "margin_voxels": 984,
-   "ngf_after": 0.41631,
+   "tumor_voxels": 175,
+   "margin_voxels": 985,
+   "ngf_after": 0.41608,
    "rigid_start_translation_mm": [
     -0.01,
-    0.68,
+    0.67,
     0.71
    ],
    "rigid_start_rotation_deg": 0.84
   },
   "ours": {
    "residual_brain": [
-    0.31,
-    0.74,
-    1.37
+    0.3,
+    0.73,
+    1.28
    ],
    "residual_where_ours_displaces_gt_3mm": [
-    0.45,
-    1.02,
-    1.96
+    0.44,
+    1.04,
+    1.97
    ],
    "residual_tumor": [
-    1.08,
-    2.15,
-    3.04
+    1.18,
+    2.24,
+    3.1
    ],
    "residual_tumor_margin_10mm": [
-    0.51,
-    1.71,
-    2.47
+    0.5,
+    1.77,
+    2.45
    ],
    "tumor_voxels": 174,
-   "margin_voxels": 1002,
-   "ngf_after": 0.40471,
+   "margin_voxels": 1001,
+   "ngf_after": 0.40513,
    "rigid_start_translation_mm": [
     -0.07,
     1.22,
@@ -183,44 +183,44 @@
    "half_split_error_brain": [
     0.08,
     0.2,
-    0.35
+    0.34
    ],
    "half_split_error_tumor_margin": [
-    0.07,
+    0.05,
     0.13,
-    0.19
+    0.21
    ]
   },
   "validation": {
    "our_displacement_brain": [
     0.97,
     2.76,
-    8.4
+    8.39
    ],
    "our_displacement_tumor": [
-    4.18,
-    8.01,
-    10.23
+    4.17,
+    8.02,
+    10.24
    ],
    "our_displacement_tumor_margin_10mm": [
     4.14,
     11.41,
     16.67
    ],
-   "uncorrected_residual_r_vs_our_displacement": 0.88,
-   "uncorrected_residual_slope_vs_our_displacement": 0.741,
-   "ours_residual_r_vs_our_displacement": -0.028
+   "uncorrected_residual_r_vs_our_displacement": 0.881,
+   "uncorrected_residual_slope_vs_our_displacement": 0.74,
+   "ours_residual_r_vs_our_displacement": -0.065
   },
   "estimate_sensitivity_mm": {
    "brain": [
     0.0,
-    0.02,
-    0.1
+    0.01,
+    0.06
    ],
    "tumor_margin_10mm": [
-    0.0,
+    0.01,
     0.02,
-    0.1
+    0.05
    ]
   }
  },

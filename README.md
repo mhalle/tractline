@@ -155,7 +155,9 @@ says which, and what re-running their scripts would now produce.
   `timing_matrix.py` + `modal_timing_matrix.py` (stage times on HARDI, PAT16 and ds005123: the M2, an L4, an A10,
   an L40S and a 32-worker CPU container), `cpu_profile.py` + `modal_cpu_profile.py` (where the CPU tracker's and
   the field estimate's time goes), `ukf_cpu_tune.py` (tracker-step variants: speed and agreement with float64),
-  `modal_cpu_compare.py` (the CPU pipeline, committed against working copy, in one x86 container; worker scaling).
+  `modal_cpu_compare.py` (the CPU pipeline, committed against working copy, in one x86 container; worker scaling),
+  `modal_estimate_compare.py` (the field estimate, committed against working copy, per GPU), `timing_table.py` (the
+  cross-platform table from timing_matrix's results).
 - Helpers: `_ds001226.py` (the patients' loader), `_fibercmp.py` (fibers compared by seed), `_bootstrap.py`
   (bootstrap replicates of a scan).
 
