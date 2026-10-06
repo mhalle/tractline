@@ -149,7 +149,9 @@ says which, and what re-running their scripts would now produce.
   know of the acquisition - absolute polarity, readout time, relative polarity from the images).
 - Speed: `cpu_timing.py`, `modal_cpu_scaling.py` (x86, CPU only), `modal_gpu_pipeline.py` (+
   `gpu_pipeline_compare.py`: the pipeline on CUDA GPUs and CPUs against the M2), `hardi_paths.py` +
-  `modal_hardi_paths.py` (the HARDI brain on the M2, an L40S and a Modal CPU container), `ukf_cpu_check.py`.
+  `modal_hardi_paths.py` (the HARDI brain on the M2, an L40S and a Modal CPU container), `ukf_cpu_check.py`,
+  `timing_matrix.py` + `modal_timing_matrix.py` (stage times on HARDI, PAT16 and ds005123: the M2, an L4, an A10,
+  an L40S and a 32-worker CPU container).
 - Helpers: `_ds001226.py` (the patients' loader), `_fibercmp.py` (fibers compared by seed), `_bootstrap.py`
   (bootstrap replicates of a scan).
 

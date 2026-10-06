@@ -1966,3 +1966,47 @@ and the BIDS-reader entry's ranges are superseded by the numbers above; "Polarit
 separate series" left the cause open - it is the re-shim (ShimSetting differs on all 12 subjects); the
 "10 mm field" was the same-polarity field map labeled opposite (7-16 mm on 12 subjects), while the
 re-shimmed reversed pair gave 9-22 mm against the field maps' own 5-7 mm - the documents now say so.
+
+## 2026-10-05 Stage times on three scans, five platforms
+
+`timing_matrix.py` (here) + `modal_timing_matrix.py` (an L4, an A10, an L40S, a 32-worker CPU container) →
+`timing_matrix_{mps,l4,a10,l40s,cpu}.json`. The pipeline as it runs (`pipeline.run`, RapidParc one draw), two
+runs a scan in one process; below the second (steady state), seconds. "read" is the scan into memory, outside
+the total. Scans: Stanford HARDI (no pair, b = 2000, 150 directions); ds001226 PAT16 (corrected, b = 2800, 50
+directions); ds005123 sub-10317 (Prisma, 120x120x69 at 2 mm, 145 volumes; the full series fetched into
+`ds005123_full/`, 191 MB; its field maps refused - another shim - so tracked as acquired, b = 3250, 30
+directions). And the correction alone on ds005123 with the shim check off (`ds005123_forced`): TIMING ONLY,
+the field is not the series' (residual_left 0.664, above the 0.5 warning).
+
+| HARDI | M2 | L4 | A10 | L40S | CPU 32 |
+|---|---|---|---|---|---|
+| read / prep / load | 0.4 / 4.0 / 1.3 | 1.2 / 0.8 / 2.1 | 1.0 / 0.6 / 1.7 | 1.1 / 0.4 / 1.5 | 1.1 / 1.2 / 0.9 |
+| UKF / label | 110.9 / 1.1 | 67.6 / 1.6 | 71.8 / 1.2 | 36.0 / 1.0 | 103.6 / 2.2 |
+| **total** (first run) | **117.3** (120.5) | **72.1** (81.1) | **75.3** (90.2) | **38.8** (52.5) | **107.9** (110.2) |
+
+| PAT16 | M2 | L4 | A10 | L40S | CPU 32 |
+|---|---|---|---|---|---|
+| field estimate / apply | 26.1 / 1.6 | 8.0 / 1.0 | 5.0 / 0.8 | 3.4 / 0.8 | 37.2 / 0.6 |
+| prep / load | 3.2 / 0.3 | 0.5 / 0.6 | 0.4 / 0.5 | 0.2 / 0.4 | 1.0 / 0.2 |
+| UKF / label | 28.8 / 0.7 | 11.2 / 0.9 | 9.1 / 0.7 | 4.3 / 0.6 | 50.4 / 1.8 |
+| **total** (first run) | **60.7** (54.9) | **22.2** (27.8) | **16.4** (30.6) | **9.6** (21.9) | **91.1** (91.2) |
+
+| ds005123 | M2 | L4 | A10 | L40S | CPU 32 |
+|---|---|---|---|---|---|
+| prep / load | 5.5 / 0.3 | 0.8 / 0.6 | 0.6 / 0.5 | 0.3 / 0.5 | 1.7 / 0.3 |
+| UKF / label | 39.5 / 1.1 | 18.7 / 1.6 | 13.7 / 1.3 | 7.3 / 1.0 | 70.4 / 2.3 |
+| **total** (first run) | **46.5** (54.9) | **21.7** (402.4) | **16.1** (275.2) | **9.0** (266.3) | **74.7** (73.8) |
+| forced correction: estimate / apply | 32.4 / 5.4 | 8.5 / 2.5 | 5.7 / 2.0 | 3.8 / 1.9 | 65.8 / 1.2 |
+
+- **The Triton kernel compiles once per gradient count.** ds005123's first run took 4.4-6.7 min on each GPU,
+  nearly all of it compiling for its 33 volumes; cached on the Volume after, per architecture. A deployment
+  meets this once per new protocol: worth pre-warming or a kernel not specialized on the count.
+- **The M2 numbers are provisional.** The same HARDI work as `hardi_paths_mps.json` (17,909,995 steps) took
+  111 s against 94 s, and PAT16's estimate 18.7 then 26.1 s between runs. The machine (Mac14,15, fanless) was
+  not idle - Photos' mediaanalysisd ~80 % and Spotlight ~40 % of a core, seen just after; to rerun idle.
+- **Tracking time follows the gradient count**: on the L40S ds005123 (33 volumes) and HARDI (160) take about
+  the same steps, 7.3 s against 36.0 s.
+- **The CPU path's slow stage is the field estimate** (37 s PAT16, 66 s ds005123): more than any GPU's whole run.
+- **The answers agree**: fiber counts within 0.03 % across platforms; the three CUDA GPUs give bit-identical
+  tractograms on the uncorrected scans (HARDI, ds005123), slightly different on PAT16 (the float32 field differs
+  per GPU). The CPU container showed 48 CPUs to the process; 32 worker processes; its CPU model unreported.
