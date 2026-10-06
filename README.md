@@ -28,7 +28,9 @@ uv add "tractline[nrrd,triton] @ git+https://github.com/mhalle/tractline@v0.2.0"
 uv add "tractline[bids] @ git+https://github.com/mhalle/tractline@v0.2.0"          # + reading BIDS (nibabel, scipy)
 ```
 
-`pip install` works too, from the same URL. On Linux, PyPI's torch is the CUDA build (Triton included).
+`pip install` works too, from the same URL. On CUDA the tracker's Triton kernel compiles on first use, once per
+power of two of the gradient count (27-56 s); `python -c "from tractline import ukf_triton_block as K; print(K.warm())"`
+compiles all six sizes ahead, in parallel (75 s on an L4), into Triton's cache (`TRITON_CACHE_DIR`). On Linux, PyPI's torch is the CUDA build (Triton included).
 Use 0.2.0 or later: in 0.1.0, `pipeline.run(device="cpu")` fails with UnboundLocalError. Changes by
 release: `CHANGELOG.md`.
 

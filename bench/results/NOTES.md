@@ -2010,3 +2010,41 @@ the field is not the series' (residual_left 0.664, above the 0.5 warning).
 - **The answers agree**: fiber counts within 0.03 % across platforms; the three CUDA GPUs give bit-identical
   tractograms on the uncorrected scans (HARDI, ds005123), slightly different on PAT16 (the float32 field differs
   per GPU). The CPU container showed 48 CPUs to the process; 32 worker processes; its CPU model unreported.
+
+## 2026-10-06 The Triton kernel compiled 6-8 copies a scan: one now, and warm() for none
+
+The 61 copies of `ukf_step_block` in the Volume's Triton cache differed, within one NPAD (the gradient count's
+power of two: ds005123's 30 directions 32, PAT16's 50 64, HARDI's 150 256), only in Triton's default
+specialization of integer arguments - a copy for each that equals 1 or is divisible by 16. B (the active fibers)
+and step pass through all three cases, and the grid (nk, nj, ni) adds its own: 6-8 copies a scan, 33-50 s each.
+`ukf_step_block` now takes `do_not_specialize` for its seven integers (one copy per NPAD and GPU architecture),
+and `ukf_triton_block.warm()` compiles every NPAD (16-512) without running. `modal_timing_matrix.py --cache cold`
+(a new, empty cache per GPU) → `timing_matrix_{l4,a10,l40s}_nospec.json`; `--prewarm` → `timing_matrix_l4_prewarm.json`.
+UKF seconds, first run / second:
+
+| | L4 before | L4 cold | L4 warmed | A10 before | A10 cold | L40S before | L40S cold |
+|---|---|---|---|---|---|---|---|
+| HARDI (NPAD 256) | 76.2 / 67.6 | 124.8 / 68.5 | 72.9 / 72.2 | 86.3 / 71.8 | 108.5 / 70.6 | 49.1 / 36.0 | 67.6 / 34.1 |
+| PAT16 (64) | 15.8 / 11.2 | 57.9 / 11.3 | 11.0 / 11.1 | 22.5 / 9.1 | 41.7 / 9.2 | 16.0 / 4.3 | 31.9 / 4.6 |
+| ds005123 (32) | **399.3** / 18.7 | **65.3** / 18.6 | **18.6** / 18.5 | **272.7** / 13.7 | **46.2** / 14.0 | **264.4** / 7.3 | **35.9** / 8.5 |
+
+("before": yesterday's runs, the shared cache already holding HARDI's and PAT16's copies, not ds005123's.)
+- **A cold compile is now one copy: 27-56 s** (first run minus second: L40S 27-34, A10 32-38, L4 47-56 s, growing
+  with NPAD), against 4.4-6.7 min for ds005123's 8. warm()'s per-NPAD times on the L4 are 1.5-7 s above the
+  in-run ones: another container (5 % slower on HARDI's steady state; compiling is CPU work), and the first
+  compile in an empty cache also builds Triton's launcher.
+- **warm() on the L4: 351 s for all six** (16: 48.6, 32: 48.2, 64: 53.4, 128: 58.2, 256: 63.2, 512: 79.5 s);
+  after it no first run compiles (each within 1 s of its second). Once per GPU architecture and Triton
+  version, into TRITON_CACHE_DIR. **In parallel** (`warm()` now spawns one process per NPAD, up to the CPUs:
+  compiling is single-threaded CPU work), `timing_matrix_l4_prewarm_parallel.json`: **75 s wall** on the L4
+  (8 CPUs), each NPAD 49.8-69.0 s as alone - the slowest, 512, sets it; then ds005123's first run 20.7 s
+  against its second 18.6 s (the process's first launch; a compile would be 46 s or more).
+- **Steady state unchanged** (within 0.3 s, but the L40S's ds005123 8.5 against 7.3 s; the A10 and L4 show
+  no such cost on it, so likely container variation).
+- **The tractograms are bit-identical** to the specialized kernel's on every GPU and scan, but PAT16 on the
+  L40S: 42,161 fibers against 42,169 - the field estimate (torch, not this kernel) differs between L40S
+  containers of the same card type (46 GB, driver 580.95.05), as the 2026-10-02 entry saw (42,169 / 42,161);
+  HARDI and ds005123, which have no estimate, are identical there too.
+
+Correction to 2026-10-05: "compiles once per gradient count" - it compiled 6-8 copies per (NPAD, grid
+divisibility), so a new grid recompiled even at a cached NPAD; now one per NPAD.

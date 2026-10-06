@@ -1,0 +1,179 @@
+{
+ "device": "cuda",
+ "torch": "2.14.1+cu130",
+ "cpu_count": 21,
+ "platform": "Linux-4.19.0-gvisor-x86_64-with-glibc2.36",
+ "gpu": "NVIDIA L4",
+ "nvidia_smi": "NVIDIA L4, 580.95.05, 23034 MiB",
+ "cpu": "unknown",
+ "workers": null,
+ "scans": {
+  "hardi": {
+   "runs": [
+    {
+     "read_s": 1.99,
+     "seconds": {
+      "field_estimate": 0.0,
+      "field_apply": 0.0,
+      "prep": 0.92,
+      "load": 2.29,
+      "ukf": 124.76,
+      "label": 1.93
+     },
+     "scan_to_labels_s": 129.9,
+     "corrected": false,
+     "grid": [
+      81,
+      106,
+      76,
+      160
+     ],
+     "seeds": 101747,
+     "fibers": 78404,
+     "fiber_steps": 17908562,
+     "labeled": 49647,
+     "other_fraction": 0.7394,
+     "fibers_sha": "8cf323683b8b5623"
+    },
+    {
+     "read_s": 1.2,
+     "seconds": {
+      "field_estimate": 0.0,
+      "field_apply": 0.0,
+      "prep": 0.78,
+      "load": 2.15,
+      "ukf": 68.49,
+      "label": 1.64
+     },
+     "scan_to_labels_s": 73.1,
+     "corrected": false,
+     "grid": [
+      81,
+      106,
+      76,
+      160
+     ],
+     "seeds": 101747,
+     "fibers": 78404,
+     "fiber_steps": 17908562,
+     "labeled": 49647,
+     "other_fraction": 0.7394,
+     "fibers_sha": "8cf323683b8b5623"
+    }
+   ],
+   "note": "not corrected: no b0s from both phase-encoding polarities"
+  },
+  "pat16": {
+   "runs": [
+    {
+     "read_s": 1.42,
+     "seconds": {
+      "field_estimate": 8.83,
+      "field_apply": 1.01,
+      "prep": 0.45,
+      "load": 0.55,
+      "ukf": 57.87,
+      "label": 0.98
+     },
+     "scan_to_labels_s": 69.7,
+     "corrected": true,
+     "grid": [
+      96,
+      96,
+      60,
+      102
+     ],
+     "seeds": 47744,
+     "fibers": 42166,
+     "fiber_steps": 11564476,
+     "labeled": 32248,
+     "other_fraction": 0.4981,
+     "fibers_sha": "557366f4c6457f53"
+    },
+    {
+     "read_s": 0.74,
+     "seconds": {
+      "field_estimate": 8.09,
+      "field_apply": 1.05,
+      "prep": 0.46,
+      "load": 0.56,
+      "ukf": 11.26,
+      "label": 0.98
+     },
+     "scan_to_labels_s": 22.4,
+     "corrected": true,
+     "grid": [
+      96,
+      96,
+      60,
+      102
+     ],
+     "seeds": 47744,
+     "fibers": 42166,
+     "fiber_steps": 11564476,
+     "labeled": 32248,
+     "other_fraction": 0.4981,
+     "fibers_sha": "557366f4c6457f53"
+    }
+   ],
+   "note": "corrected"
+  },
+  "ds005123": {
+   "runs": [
+    {
+     "read_s": 2.44,
+     "seconds": {
+      "field_estimate": 0.0,
+      "field_apply": 0.0,
+      "prep": 0.8,
+      "load": 0.62,
+      "ukf": 65.29,
+      "label": 1.62
+     },
+     "scan_to_labels_s": 68.3,
+     "corrected": false,
+     "grid": [
+      120,
+      120,
+      69,
+      145
+     ],
+     "seeds": 108383,
+     "fibers": 86098,
+     "fiber_steps": 19507874,
+     "labeled": 50907,
+     "other_fraction": 0.5834,
+     "fibers_sha": "5dbddc3c1a83dd87"
+    },
+    {
+     "read_s": 2.38,
+     "seconds": {
+      "field_estimate": 0.0,
+      "field_apply": 0.0,
+      "prep": 0.8,
+      "load": 0.64,
+      "ukf": 18.6,
+      "label": 1.66
+     },
+     "scan_to_labels_s": 21.7,
+     "corrected": false,
+     "grid": [
+      120,
+      120,
+      69,
+      145
+     ],
+     "seeds": 108383,
+     "fibers": 86098,
+     "fiber_steps": 19507874,
+     "labeled": 50907,
+     "other_fraction": 0.5834,
+     "fibers_sha": "5dbddc3c1a83dd87"
+    }
+   ],
+   "note": "not corrected: sub-10317_acq-dwi_dir-AP_epi.nii.gz: acquired under another shim (the field it measures is not the diffusion series'); sub-10317_acq-dwi_dir-PA_epi.nii.gz: acquired under another shim (the field it measures is not the diffusion series')"
+  }
+ },
+ "triton_cache": "/vol/triton-cache-test/20261006-023838-l4",
+ "warm_s": null
+}

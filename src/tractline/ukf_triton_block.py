@@ -97,7 +97,10 @@ def _cround(x):
     return tl.where(x < 0.0, -tl.floor(-x + 0.5), tl.floor(x + 0.5)).to(tl.int32)
 
 
-@triton.jit
+#: the integer arguments are not specialized: by default Triton compiles a copy for each that equals 1 or is
+#: divisible by 16, and B (active fibers) and step pass through all three, the grid adds its own - 6-8 copies
+#: per scan, 33-50 s each (ds005123: 4.4-6.7 min on its first run; NOTES 2026-10-06). One copy per NPAD now.
+@triton.jit(do_not_specialize=["B", "N", "nk", "nj", "ni", "step", "max_steps"])
 def ukf_step_block(A, MASK, G, BV, X, ST, P, OLD, DIR, FLAGS, FAO, MSIG, B, N, nk, nj, ni, step, max_steps,
                    vox0, vox1, vox2, sigma, step_length, stop_fa, stop_thr, rr, Qm, Ql, c, W0, Wi,
                    F: tl.constexpr, NPAD: tl.constexpr):
@@ -276,6 +279,49 @@ def ukf_step_block(A, MASK, G, BV, X, ST, P, OLD, DIR, FLAGS, FAO, MSIG, B, N, n
 F_DEFAULT, WARPS_DEFAULT = 2, 4
 
 
+def npad(n: int) -> int:
+    """The per-gradient tiles' width for n gradients: the next power of two, at least 16 - the kernel's one
+    compile-time size, so one compiled copy per value (16-512 covers up to 512 gradients)."""
+    return max(16, 1 << max(0, (int(n) - 1).bit_length()))
+
+
+NPADS = (16, 32, 64, 128, 256, 512)
+
+
+def _warm_one(n, F, num_warps):
+    return warm((n,), F, num_warps, workers=1)[int(n)]
+
+
+def warm(npads=NPADS, F=None, num_warps=None, workers=None) -> dict:
+    """Compile the kernel for each NPAD on this GPU without running it (into Triton's cache, TRITON_CACHE_DIR):
+    after this no scan compiles, whatever its gradient count or grid. Compiling is single-threaded CPU work,
+    so the NPADs compile in parallel, `workers` spawned processes (default one per NPAD, up to the CPUs; 1:
+    in this process, one after another). Returns the seconds per NPAD as each compile took (a cached one
+    returns in well under a second). A script calling it with workers needs an `if __name__ == "__main__":` guard."""
+    import os, time
+    npads = tuple(int(n) for n in npads)
+    workers = min(len(npads), os.cpu_count() or 1) if workers is None else int(workers)
+    if workers > 1 and len(npads) > 1:
+        import multiprocessing as mp
+        from concurrent.futures import ProcessPoolExecutor
+        from .ukf import require_main_guard
+        require_main_guard()
+        with ProcessPoolExecutor(workers, mp_context=mp.get_context("spawn")) as ex:
+            return dict(zip(npads, ex.map(_warm_one, npads, [F] * len(npads), [num_warps] * len(npads))))
+    F, num_warps = F or F_DEFAULT, num_warps or WARPS_DEFAULT
+    dev = torch.device("cuda")
+    f32 = lambda *n: torch.empty(n, dtype=torch.float32, device=dev)
+    out = {}
+    for n in npads:
+        t0 = time.time()
+        ukf_step_block.warmup(f32(1), torch.empty(1, dtype=torch.int8, device=dev), f32(1), f32(1), f32(1), f32(1),
+                              f32(1), f32(1), f32(1), torch.empty(1, dtype=torch.int32, device=dev), f32(1), f32(1),
+                              1, 1, 1, 1, 1, 1, 1, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+                              F=F, NPAD=n, num_warps=num_warps, enable_fp_fusion=False, grid=(1,))
+        out[n] = round(time.time() - t0, 1)
+    return out
+
+
 @torch.no_grad()
 def advance(D: dict, xa, sa, Pa, oa, Q, Rs, step, max_steps, step_length=0.3, stopping_fa=0.08,
             stopping_threshold=0.06, F=None, num_warps=None):
@@ -298,7 +344,7 @@ def advance(D: dict, xa, sa, Pa, oa, Q, Rs, step, max_steps, step_length=0.3, st
     W0 = float(f32(0.01) / (f32(10) + f32(0.01))); Wi = float(f32(0.5) / (f32(10) + f32(0.01)))
     rr = float(f32(1.0) / f32(Rs))
     g = D["g"][:N].contiguous(); b = D["b"][:N].contiguous()
-    NPAD = max(16, 1 << max(0, (N - 1).bit_length()))
+    NPAD = npad(N)
     grid = ((B + F - 1) // F,)
     ukf_step_block[grid](D["A"], D["mask"], g, b, x, s, P, o, d, flags, fa, ms, B, N, nk, nj, ni, int(step), int(max_steps),
                          float(vox[0]), float(vox[1]), float(vox[2]), float(vox.min()), float(step_length),

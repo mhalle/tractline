@@ -1,7 +1,14 @@
 """timing_matrix.py on Modal: an L4, an A10 and an L40S (the Triton tracker, the field and RapidParc on
 CUDA) and 32 x86 cores (the CPU path: the tracker on 32 worker processes), all in parallel.
 
-    modal run bench/modal_timing_matrix.py [--targets L4,A10,L40S,CPU] [--runs 2]
+    modal run bench/modal_timing_matrix.py [--targets L4,A10,L40S,CPU] [--runs 2] [--only hardi,pat16]
+    modal run bench/modal_timing_matrix.py --targets L4,A10,L40S --cache cold --tag nospec      # a cold compile
+    modal run bench/modal_timing_matrix.py --targets L4 --cache cold --prewarm --tag prewarm   # warm() first
+
+--cache cold: each GPU target gets a new, empty Triton cache on the Volume (triton-cache-test/<time>-<target>),
+so run 0 of each scan pays its cold compile; by default the shared triton-cache. --prewarm: ukf_triton_block.warm()
+first (every NPAD compiled, timed; --warm-workers N its processes, default one per NPAD, 1 serial) - run 0 then
+should compile nothing. --only none: warm() alone, no scans. --tag: the results' suffix.
 
 The scans travel in the image (HARDI 91 MB, PAT16's two series 46 MB, ds005123 sub-10317 191 MB) with
 RapidParc's weights; the Triton compile cache is on the tractography-bench Volume. Costs: an L4 about
@@ -37,9 +44,22 @@ CORES = 32
 
 
 @app.function(gpu="L40S", volumes={"/vol": vol}, timeout=3600, memory=32768, cpu=8)
-def on_gpu(runs: int = 2) -> str:
-    from timing_matrix import matrix
-    out = matrix("cuda", runs)
+def on_gpu(runs: int = 2, only: str = "", cache: str = "", prewarm: bool = False, warm_workers: int = 0) -> str:
+    import os
+    if cache:                                                              # before anything compiles
+        os.environ["TRITON_CACHE_DIR"] = f"/vol/{cache}"
+        os.makedirs(os.environ["TRITON_CACHE_DIR"], exist_ok=True)
+    from timing_matrix import matrix, SCANS
+    warm = wall = None
+    if prewarm:
+        import time
+        from tractline import ukf_triton_block as K
+        t0 = time.time()
+        warm = K.warm(workers=warm_workers or None)
+        wall = round(time.time() - t0, 1)
+        print("warm", warm, "wall", wall, flush=True)
+    out = matrix("cuda", runs, only=tuple(only.split(",")) if only else SCANS) if only != "none" else {}
+    out["triton_cache"], out["warm_s"], out["warm_wall_s"], out["warm_workers"] = os.environ["TRITON_CACHE_DIR"], warm, wall, warm_workers
     vol.commit()                                                           # the Triton cache, per architecture
     return json.dumps(out)
 
@@ -54,13 +74,19 @@ def on_cpu(runs: int = 2) -> str:
 
 
 @app.local_entrypoint()
-def main(targets: str = "L4,A10,L40S,CPU", runs: int = 2):
-    calls = {t: (on_cpu.spawn(runs) if t == "CPU" else on_gpu.with_options(gpu=t).spawn(runs)) for t in targets.split(",")}
+def main(targets: str = "L4,A10,L40S,CPU", runs: int = 2, only: str = "", cache: str = "", prewarm: bool = False, tag: str = "",
+         warm_workers: int = 0):
+    import time
+    stamp = time.strftime("%Y%m%d-%H%M%S")
+    calls = {t: (on_cpu.spawn(runs) if t == "CPU" else
+                 on_gpu.with_options(gpu=t).spawn(runs, only, f"triton-cache-test/{stamp}-{t.lower()}" if cache == "cold" else cache,
+                                                  prewarm, warm_workers))
+             for t in targets.split(",")}
     for t, c in calls.items():
         try:
             res = json.loads(c.get())
         except Exception as e:                                             # noqa: BLE001 - one target's failure keeps the others
             print(t, "FAILED", type(e).__name__, e)
             continue
-        (HERE / f"results/timing_matrix_{t.lower()}.json").write_text(json.dumps(res, indent=1))
+        (HERE / f"results/timing_matrix_{t.lower()}{'_' + tag if tag else ''}.json").write_text(json.dumps(res, indent=1))
         print(t, "written")
