@@ -2309,3 +2309,95 @@ L40S's PAT16 estimate 3.2-4.9 s today). In the M2 GPU column the estimate's subs
   ds005123 3.4 %; L40S 7.6 / 1.8 / 4.2 %; A10 0.9 / 0.3 / 2.5 %; L4 -0.3 / -0.3 / 3.6 % (PAT16's 95 k half-fibers fit one
   block). Correction to the entry above: its M2 figures (HARDI 88.6 → 81.4 s, ds005123 35.6 → 32.1 s against blocks of
   200,000) also carry the seed fit's change; refill alone is the 0-3.4 % here.
+
+## 2026-10-07 The pipeline's ensemble: uncertainty from every stage, and a rank field to hold it
+
+`ensemble_pilot.py` → `ensemble_pilot_thermal.json`, `ensemble_pilot_residual.json`; `src/tractline/ensemble.py`;
+`docs/uncertainty-ensemble.md`. PAT16 on the M2 (MPS), RapidParc. The reference is the pipeline as it runs today: the
+scan as acquired, labelled with draw 0. Each of 16 replicates resamples every stage:
+
+1. a wild bootstrap of the scan as acquired, both series' b0s included (`ShellWildBootstrap`: SH order 2/4/6 for the
+   700/1200/2800 shells' 16/30/50 directions);
+2. the field re-estimated from the replicate and applied;
+3. the replicate tracked with Metal;
+4. the result labelled with draw r.
+
+The ensemble is the reference plus replicates 1-10 (R = 11); replicates 11-16 are held out as fresh runs. Streamlines
+are matched by seed voxel. About 40 s per run.
+
+Two b0 noise settings:
+- **thermal:** b0 residuals scaled by 0.122, to the DW residual RMS of 8.46;
+- **residual:** the b0s' own residuals, SD 69.5, which carry motion and pulsation.
+
+Eight draw-only runs label the reference tractogram with other draws.
+
+**Per streamline (thermal; residual in brackets)**
+
+| | |
+|---|---|
+| reference streamlines whose tract a held-out run changes | 34.0 % (36.5 %) |
+| the same, labeller draw alone | 2.9 % |
+| replicate against replicate | 38.1 % (39.0 %) |
+
+The scan's noise, carried through the field and the tracker, moves about ten times more labels than the labeller's
+draw does.
+
+AUROC for predicting that change:
+
+| predictor | AUROC |
+|---|---|
+| single run: TRX tract probability | 0.646 (0.646) |
+| single run: TRX tract margin | 0.646 (0.646) |
+| ensemble: mixture tract probability | **0.802** (0.814) |
+| ensemble: vote fraction | 0.796 (0.808) |
+| ensemble mixture decoded from its rank field (depth 6, keep clip) | 0.792 (0.803) |
+
+Calibration against P(a held-out run keeps the reference's tract):
+
+| predictor | Brier | ECE |
+|---|---|---|
+| single run | 0.295 (0.317) | 0.278 (0.303) |
+| ensemble mixture | **0.169** (0.168) | **0.030** (0.025) |
+| ensemble vote fraction | 0.172 (0.170) | 0.042 (0.036) |
+
+- **One run's probabilities are badly overconfident against the pipeline's own variability.** Streamlines stated at
+  ≥ 0.99 kept their tract in 73.5 % of held-out runs; the ensemble mixture's ≥ 0.99 kept it in 96 %.
+- **Consensus.** The ensemble's consensus differs from the reference's label for 19.6 % (23.1 %) of streamlines. A
+  held-out run agrees with the consensus 69.6 % of the time, against 66.0 % for the reference.
+- **Paths are the larger part.** Matched paths are a median MDF of 7.8 mm apart (90th percentile 33.9 mm). Most of
+  that is fibres ending at different points: where the two lengths are within 5 %, the median is 2.4 mm, as in
+  `ukf_noise_floor`. A run's own MDF from the reference predicts its label change at 0.785.
+
+**Votes in a rank field: the depth cut leaves them out**
+
+At depth 6 with keep clip, the kept clusters hold every run's winner for only 74.8 % of streamlines; vote tails reach 6
+of 11. Regrouped votes (SLF I-III, CC 1-7 merged) are exact for that same 74.8 % and short elsewhere. Winning clusters
+are many: across 11 runs a streamline won in a median of about 5 distinct clusters, 1 in only 4.8 %, all within 6 in
+77.9 %.
+
+So vote planes aligned to the field's ranks are not enough for streamlines. Storing each run's winning cluster outright
+(R × uint16, 22 B at R = 11, beside the field's 19 B) gives exact votes for any grouping.
+
+**Per voxel (DWI grid 96 × 96 × 60, tau = 1 streamline per run)**
+
+- 92,166 voxels have a tract.
+- A held-out run's winner (a tract, or NONE) agrees with the ensemble's density field winner in 67.1 % of them, against
+  60.4 % for the reference run's own map.
+- The consensus's vote fraction is calibrated: Brier 0.170, ECE 0.039, and stated 1.0 is observed 0.966.
+- The field encoded with rankfield (44 classes, depth 6, keep shell) is 13 B/voxel with exact winners. Its
+  rank-aligned vote planes hold every run's winner in 91.6 % of tract voxels.
+- Other wins most voxels (it is half the streamlines).
+
+**Open: the replicates' fields are not the reference's**
+
+- In thermal mode, every replicate's field has a 99th-percentile |field| of 183-186 Hz against the reference's 154 Hz,
+  and residual_left of 0.30 against 0.33.
+- In residual mode the field sits at 143-148 Hz and residual_left at 0.36.
+- Labels show no matching excess: the reference against a replicate changes 34 %, replicate against replicate 38 %.
+- But the b0s are not exchangeable. A replicate's b0 is the six b0s' mean plus noise, so the motion between them is gone
+  (thermal) or scrambled voxel by voxel (residual), and the field estimate responds to that.
+- **Next:** add noise to each b0 as acquired (keeping its motion; b0 noise variance doubled), and check the replicates'
+  field distribution against the reference's before trusting the voxel field's positions.
+
+Not measured: accuracy (no reference tract labels for PAT16). One patient. The bootstrap's sign flips are symmetric
+around a smooth fit and do not reproduce magnitude noise at low signal.

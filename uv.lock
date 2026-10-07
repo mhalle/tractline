@@ -752,6 +752,14 @@ wheels = [
 ]
 
 [[package]]
+name = "labelfield"
+version = "0.1.5"
+source = { git = "https://github.com/mhalle/labelfield.git?rev=v0.1.5#8727e5916b81eea621400b095e01509b8727946a" }
+dependencies = [
+    { name = "numpy", version = "2.5.3", source = { registry = "https://pypi.org/simple" } },
+]
+
+[[package]]
 name = "markdown-it-py"
 version = "4.2.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1514,6 +1522,20 @@ wheels = [
 ]
 
 [[package]]
+name = "rankfield"
+version = "0.3.11"
+source = { git = "https://github.com/mhalle/rankfield.git?rev=v0.3.11#c1c1f4e56900d454242d30ca6222af7341875954" }
+dependencies = [
+    { name = "labelfield" },
+    { name = "numpy", version = "2.5.3", source = { registry = "https://pypi.org/simple" } },
+]
+
+[package.optional-dependencies]
+torch = [
+    { name = "torch" },
+]
+
+[[package]]
 name = "rich"
 version = "15.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1902,6 +1924,9 @@ dev = [
 dipy = [
     { name = "dipy" },
 ]
+rankfield = [
+    { name = "rankfield", extra = ["torch"], marker = "python_full_version >= '3.12'" },
+]
 sklearn = [
     { name = "scikit-learn" },
 ]
@@ -1932,6 +1957,7 @@ dev = [
     { name = "trx-python", specifier = ">=0.6" },
 ]
 dipy = [{ name = "dipy", specifier = ">=1.12" }]
+rankfield = [{ name = "rankfield", extras = ["torch"], marker = "python_full_version >= '3.12'", git = "https://github.com/mhalle/rankfield.git?rev=v0.3.11" }]
 sklearn = [{ name = "scikit-learn", specifier = ">=1.9" }]
 vtk = [{ name = "vtk", specifier = ">=9.7" }]
 
