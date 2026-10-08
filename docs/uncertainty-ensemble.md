@@ -129,7 +129,27 @@ bootstrap's centring. A least-squares residual is orthogonal to the fit's space,
 much as it sees the fit alone. The fit, the scan and the fit minus its residual (every sign flipped) differ by
 only 10 % of labels and under 1 mm, against 28 % and 4.7 mm to any replicate (NOTES 2026-10-08).
 
-So held-out replicates measure the spread around this scan's estimate, not that estimate's own error. A fresh
-scan's change is better estimated replicate against replicate (38 %), and the pilot's calibration is somewhat
-optimistic for real rescans. Scoring held-out runs against a replicate's labels, not the reference's, would
-remove the centring.
+So held-out replicates measure the spread around this scan's estimate, not that estimate's own error.
+
+**Calibrated for rescans: a double bootstrap.** Some replicates are made pseudo-scans and bootstrapped again to
+build their own ensembles. The other first-level replicates serve as their rescans: they spread about the same
+centre, as real rescans spread about the truth.
+
+Scored this way, the pilot's numbers come back for the centred scoring. Against rescans:
+
+- **Change rate:** 38 %.
+- **AUROC:** 0.78 for the ensemble against 0.64 for one run.
+- **ECE:** the mixture's rises from 0.03 to 0.07, against 0.32 for one run. Its ≥ 0.99 streamlines keep their
+  tract on 93 % of rescans.
+
+A map fitted on the other pseudo-scans brings held-out ECE to 0.0025. It is either isotonic on the mixture's
+log-odds or a table per vote count, and the same table works for voxels. Applied to the real scan, it gives a mean
+P(rescan keeps the tract) of 0.62, the replicate-vs-replicate rate. Under it no streamline reaches 0.99: eleven
+unanimous runs still mean a 1-in-12 chance that a rescan changes the label (NOTES 2026-10-08).
+
+What a shipped confidence should be, then:
+
+- the ensemble's mixture or votes, mapped for rescans by a double bootstrap;
+- the map fitted per protocol, since it depends on the pipeline and R;
+- checked against test-retest scans, which this repository does not have, before the bootstrap's noise model is
+  trusted.

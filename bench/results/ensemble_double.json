@@ -1,0 +1,1594 @@
+{
+ "subject": "PAT16",
+ "pseudo_scans": [
+  "r011",
+  "r012",
+  "r013",
+  "r014"
+ ],
+ "build": 10,
+ "runs_logs": {
+  "r011": {
+   "s000": {
+    "draw": 11,
+    "labeled": 32392,
+    "other": 0.4933,
+    "residual_left": 0.332,
+    "field_hz_p99_abs": 153.44,
+    "total_s": 40.5,
+    "same_as_first_level": true
+   },
+   "bootstrap": {
+    "shells": {
+     "700": {
+      "directions": 16,
+      "sh_order": 2,
+      "coefficients": 6,
+      "leverage": 0.375
+     },
+     "1200": {
+      "directions": 30,
+      "sh_order": 4,
+      "coefficients": 15,
+      "leverage": 0.5
+     },
+     "2800": {
+      "directions": 50,
+      "sh_order": 6,
+      "coefficients": 28,
+      "leverage": 0.56
+     }
+    },
+    "b0_volumes": 6,
+    "b0_noise": "added",
+    "b0_scale": 0.1204,
+    "leverage_scaled": true,
+    "flip": "voxel",
+    "b0_residual_sd": 8.42,
+    "dw_residual_rms": 8.42,
+    "dw_residual_over_b0_sd": 1.0
+   },
+   "s001": {
+    "draw": 11001,
+    "labeled": 32507,
+    "other": 0.4981,
+    "residual_left": 0.334,
+    "field_hz_p99_abs": 153.65,
+    "total_s": 40.0
+   },
+   "s002": {
+    "draw": 11002,
+    "labeled": 32564,
+    "other": 0.5013,
+    "residual_left": 0.332,
+    "field_hz_p99_abs": 153.66,
+    "total_s": 40.5
+   },
+   "s003": {
+    "draw": 11003,
+    "labeled": 32461,
+    "other": 0.5035,
+    "residual_left": 0.333,
+    "field_hz_p99_abs": 153.72,
+    "total_s": 41.0
+   },
+   "s004": {
+    "draw": 11004,
+    "labeled": 32495,
+    "other": 0.4935,
+    "residual_left": 0.333,
+    "field_hz_p99_abs": 153.79,
+    "total_s": 41.7
+   },
+   "s005": {
+    "draw": 11005,
+    "labeled": 32457,
+    "other": 0.5023,
+    "residual_left": 0.333,
+    "field_hz_p99_abs": 153.26,
+    "total_s": 41.6
+   },
+   "s006": {
+    "draw": 11006,
+    "labeled": 32576,
+    "other": 0.5045,
+    "residual_left": 0.333,
+    "field_hz_p99_abs": 152.17,
+    "total_s": 40.7
+   },
+   "s007": {
+    "draw": 11007,
+    "labeled": 32396,
+    "other": 0.5002,
+    "residual_left": 0.333,
+    "field_hz_p99_abs": 153.48,
+    "total_s": 40.2
+   },
+   "s008": {
+    "draw": 11008,
+    "labeled": 32465,
+    "other": 0.5011,
+    "residual_left": 0.333,
+    "field_hz_p99_abs": 152.46,
+    "total_s": 41.3
+   },
+   "s009": {
+    "draw": 11009,
+    "labeled": 32427,
+    "other": 0.4956,
+    "residual_left": 0.332,
+    "field_hz_p99_abs": 153.27,
+    "total_s": 40.7
+   },
+   "s010": {
+    "draw": 11010,
+    "labeled": 32486,
+    "other": 0.5033,
+    "residual_left": 0.332,
+    "field_hz_p99_abs": 152.0,
+    "total_s": 40.5
+   },
+   "s011": {
+    "draw": 11011,
+    "labeled": 32445,
+    "other": 0.5009,
+    "residual_left": 0.333,
+    "field_hz_p99_abs": 152.42,
+    "total_s": 41.2
+   },
+   "s012": {
+    "draw": 11012,
+    "labeled": 32514,
+    "other": 0.5007,
+    "residual_left": 0.332,
+    "field_hz_p99_abs": 153.37,
+    "total_s": 40.8
+   }
+  },
+  "r012": {
+   "s000": {
+    "draw": 12,
+    "labeled": 32261,
+    "other": 0.5009,
+    "residual_left": 0.332,
+    "field_hz_p99_abs": 154.29,
+    "total_s": 40.7,
+    "same_as_first_level": true
+   },
+   "bootstrap": {
+    "shells": {
+     "700": {
+      "directions": 16,
+      "sh_order": 2,
+      "coefficients": 6,
+      "leverage": 0.375
+     },
+     "1200": {
+      "directions": 30,
+      "sh_order": 4,
+      "coefficients": 15,
+      "leverage": 0.5
+     },
+     "2800": {
+      "directions": 50,
+      "sh_order": 6,
+      "coefficients": 28,
+      "leverage": 0.56
+     }
+    },
+    "b0_volumes": 6,
+    "b0_noise": "added",
+    "b0_scale": 0.1202,
+    "leverage_scaled": true,
+    "flip": "voxel",
+    "b0_residual_sd": 8.41,
+    "dw_residual_rms": 8.41,
+    "dw_residual_over_b0_sd": 1.0
+   },
+   "s001": {
+    "draw": 12001,
+    "labeled": 32383,
+    "other": 0.5037,
+    "residual_left": 0.331,
+    "field_hz_p99_abs": 153.94,
+    "total_s": 42.9
+   },
+   "s002": {
+    "draw": 12002,
+    "labeled": 32435,
+    "other": 0.5033,
+    "residual_left": 0.333,
+    "field_hz_p99_abs": 154.05,
+    "total_s": 43.7
+   },
+   "s003": {
+    "draw": 12003,
+    "labeled": 32270,
+    "other": 0.506,
+    "residual_left": 0.331,
+    "field_hz_p99_abs": 153.11,
+    "total_s": 44.5
+   },
+   "s004": {
+    "draw": 12004,
+    "labeled": 32368,
+    "other": 0.5064,
+    "residual_left": 0.333,
+    "field_hz_p99_abs": 154.05,
+    "total_s": 46.3
+   },
+   "s005": {
+    "draw": 12005,
+    "labeled": 32195,
+    "other": 0.5037,
+    "residual_left": 0.331,
+    "field_hz_p99_abs": 154.1,
+    "total_s": 43.3
+   },
+   "s006": {
+    "draw": 12006,
+    "labeled": 32311,
+    "other": 0.5002,
+    "residual_left": 0.332,
+    "field_hz_p99_abs": 153.36,
+    "total_s": 44.9
+   },
+   "s007": {
+    "draw": 12007,
+    "labeled": 32420,
+    "other": 0.5063,
+    "residual_left": 0.332,
+    "field_hz_p99_abs": 153.02,
+    "total_s": 43.0
+   },
+   "s008": {
+    "draw": 12008,
+    "labeled": 32325,
+    "other": 0.5059,
+    "residual_left": 0.332,
+    "field_hz_p99_abs": 154.2,
+    "total_s": 43.7
+   },
+   "s009": {
+    "draw": 12009,
+    "labeled": 32432,
+    "other": 0.5064,
+    "residual_left": 0.332,
+    "field_hz_p99_abs": 153.87,
+    "total_s": 42.1
+   },
+   "s010": {
+    "draw": 12010,
+    "labeled": 32252,
+    "other": 0.5066,
+    "residual_left": 0.332,
+    "field_hz_p99_abs": 154.41,
+    "total_s": 42.0
+   },
+   "s011": {
+    "draw": 12011,
+    "labeled": 32467,
+    "other": 0.5078,
+    "residual_left": 0.331,
+    "field_hz_p99_abs": 153.62,
+    "total_s": 41.7
+   },
+   "s012": {
+    "draw": 12012,
+    "labeled": 32442,
+    "other": 0.5071,
+    "residual_left": 0.331,
+    "field_hz_p99_abs": 154.55,
+    "total_s": 41.8
+   }
+  },
+  "r013": {
+   "s000": {
+    "draw": 13,
+    "labeled": 32227,
+    "other": 0.4994,
+    "residual_left": 0.331,
+    "field_hz_p99_abs": 154.49,
+    "total_s": 41.5,
+    "same_as_first_level": true
+   },
+   "bootstrap": {
+    "shells": {
+     "700": {
+      "directions": 16,
+      "sh_order": 2,
+      "coefficients": 6,
+      "leverage": 0.375
+     },
+     "1200": {
+      "directions": 30,
+      "sh_order": 4,
+      "coefficients": 15,
+      "leverage": 0.5
+     },
+     "2800": {
+      "directions": 50,
+      "sh_order": 6,
+      "coefficients": 28,
+      "leverage": 0.56
+     }
+    },
+    "b0_volumes": 6,
+    "b0_noise": "added",
+    "b0_scale": 0.1202,
+    "leverage_scaled": true,
+    "flip": "voxel",
+    "b0_residual_sd": 8.41,
+    "dw_residual_rms": 8.41,
+    "dw_residual_over_b0_sd": 1.0
+   },
+   "s001": {
+    "draw": 13001,
+    "labeled": 32365,
+    "other": 0.5112,
+    "residual_left": 0.332,
+    "field_hz_p99_abs": 154.37,
+    "total_s": 41.9
+   },
+   "s002": {
+    "draw": 13002,
+    "labeled": 32380,
+    "other": 0.5034,
+    "residual_left": 0.332,
+    "field_hz_p99_abs": 153.56,
+    "total_s": 41.6
+   },
+   "s003": {
+    "draw": 13003,
+    "labeled": 32329,
+    "other": 0.509,
+    "residual_left": 0.333,
+    "field_hz_p99_abs": 153.74,
+    "total_s": 40.9
+   },
+   "s004": {
+    "draw": 13004,
+    "labeled": 32431,
+    "other": 0.5046,
+    "residual_left": 0.332,
+    "field_hz_p99_abs": 154.83,
+    "total_s": 41.2
+   },
+   "s005": {
+    "draw": 13005,
+    "labeled": 32356,
+    "other": 0.5028,
+    "residual_left": 0.332,
+    "field_hz_p99_abs": 154.03,
+    "total_s": 42.6
+   },
+   "s006": {
+    "draw": 13006,
+    "labeled": 32479,
+    "other": 0.5052,
+    "residual_left": 0.333,
+    "field_hz_p99_abs": 153.19,
+    "total_s": 42.6
+   },
+   "s007": {
+    "draw": 13007,
+    "labeled": 32392,
+    "other": 0.5012,
+    "residual_left": 0.332,
+    "field_hz_p99_abs": 154.44,
+    "total_s": 41.0
+   },
+   "s008": {
+    "draw": 13008,
+    "labeled": 32589,
+    "other": 0.5028,
+    "residual_left": 0.333,
+    "field_hz_p99_abs": 154.17,
+    "total_s": 41.7
+   },
+   "s009": {
+    "draw": 13009,
+    "labeled": 32391,
+    "other": 0.5055,
+    "residual_left": 0.333,
+    "field_hz_p99_abs": 153.61,
+    "total_s": 40.8
+   },
+   "s010": {
+    "draw": 13010,
+    "labeled": 32340,
+    "other": 0.5075,
+    "residual_left": 0.333,
+    "field_hz_p99_abs": 155.65,
+    "total_s": 41.7
+   },
+   "s011": {
+    "draw": 13011,
+    "labeled": 32485,
+    "other": 0.5074,
+    "residual_left": 0.333,
+    "field_hz_p99_abs": 154.83,
+    "total_s": 42.2
+   },
+   "s012": {
+    "draw": 13012,
+    "labeled": 32426,
+    "other": 0.5117,
+    "residual_left": 0.333,
+    "field_hz_p99_abs": 154.37,
+    "total_s": 43.2
+   }
+  },
+  "r014": {
+   "s000": {
+    "draw": 14,
+    "labeled": 32322,
+    "other": 0.5003,
+    "residual_left": 0.332,
+    "field_hz_p99_abs": 154.86,
+    "total_s": 42.2,
+    "same_as_first_level": true
+   },
+   "bootstrap": {
+    "shells": {
+     "700": {
+      "directions": 16,
+      "sh_order": 2,
+      "coefficients": 6,
+      "leverage": 0.375
+     },
+     "1200": {
+      "directions": 30,
+      "sh_order": 4,
+      "coefficients": 15,
+      "leverage": 0.5
+     },
+     "2800": {
+      "directions": 50,
+      "sh_order": 6,
+      "coefficients": 28,
+      "leverage": 0.56
+     }
+    },
+    "b0_volumes": 6,
+    "b0_noise": "added",
+    "b0_scale": 0.1204,
+    "leverage_scaled": true,
+    "flip": "voxel",
+    "b0_residual_sd": 8.42,
+    "dw_residual_rms": 8.42,
+    "dw_residual_over_b0_sd": 1.0
+   },
+   "s001": {
+    "draw": 14001,
+    "labeled": 32354,
+    "other": 0.5021,
+    "residual_left": 0.332,
+    "field_hz_p99_abs": 152.91,
+    "total_s": 42.3
+   },
+   "s002": {
+    "draw": 14002,
+    "labeled": 32441,
+    "other": 0.4997,
+    "residual_left": 0.332,
+    "field_hz_p99_abs": 153.25,
+    "total_s": 41.7
+   },
+   "s003": {
+    "draw": 14003,
+    "labeled": 32540,
+    "other": 0.4997,
+    "residual_left": 0.332,
+    "field_hz_p99_abs": 153.37,
+    "total_s": 41.3
+   },
+   "s004": {
+    "draw": 14004,
+    "labeled": 32563,
+    "other": 0.503,
+    "residual_left": 0.333,
+    "field_hz_p99_abs": 154.27,
+    "total_s": 44.0
+   },
+   "s005": {
+    "draw": 14005,
+    "labeled": 32527,
+    "other": 0.5045,
+    "residual_left": 0.332,
+    "field_hz_p99_abs": 153.11,
+    "total_s": 40.8
+   },
+   "s006": {
+    "draw": 14006,
+    "labeled": 32335,
+    "other": 0.5006,
+    "residual_left": 0.332,
+    "field_hz_p99_abs": 153.61,
+    "total_s": 40.8
+   },
+   "s007": {
+    "draw": 14007,
+    "labeled": 32481,
+    "other": 0.5003,
+    "residual_left": 0.333,
+    "field_hz_p99_abs": 154.84,
+    "total_s": 41.7
+   },
+   "s008": {
+    "draw": 14008,
+    "labeled": 32416,
+    "other": 0.5048,
+    "residual_left": 0.333,
+    "field_hz_p99_abs": 153.67,
+    "total_s": 40.6
+   },
+   "s009": {
+    "draw": 14009,
+    "labeled": 32533,
+    "other": 0.5016,
+    "residual_left": 0.331,
+    "field_hz_p99_abs": 152.09,
+    "total_s": 40.7
+   },
+   "s010": {
+    "draw": 14010,
+    "labeled": 32353,
+    "other": 0.5057,
+    "residual_left": 0.333,
+    "field_hz_p99_abs": 154.49,
+    "total_s": 41.1
+   },
+   "s011": {
+    "draw": 14011,
+    "labeled": 32361,
+    "other": 0.503,
+    "residual_left": 0.332,
+    "field_hz_p99_abs": 153.63,
+    "total_s": 40.1
+   },
+   "s012": {
+    "draw": 14012,
+    "labeled": 32305,
+    "other": 0.5069,
+    "residual_left": 0.333,
+    "field_hz_p99_abs": 153.5,
+    "total_s": 41.2
+   }
+  }
+ },
+ "scoring": {
+  "centred (held-out second-level runs)": {
+   "pairs": 236050,
+   "change_rate": 0.3337,
+   "change_rate per pseudo-scan": {
+    "r011": 0.3337,
+    "r012": 0.3336,
+    "r013": 0.3354,
+    "r014": 0.3323
+   },
+   "auroc predicting change": {
+    "single": 0.6475,
+    "mixture": 0.7985,
+    "vfrac": 0.7917
+   },
+   "calibration: P(keeps the pseudo-scan's tract)": {
+    "single": {
+     "brier": 0.2884,
+     "ece": 0.2712,
+     "bins": [
+      {
+       "bin": [
+        0,
+        0.5
+       ],
+       "n": 2606,
+       "stated": 0.438,
+       "observed": 0.33
+      },
+      {
+       "bin": [
+        0.5,
+        0.7
+       ],
+       "n": 14739,
+       "stated": 0.6079,
+       "observed": 0.4314
+      },
+      {
+       "bin": [
+        0.7,
+        0.8
+       ],
+       "n": 10344,
+       "stated": 0.7523,
+       "observed": 0.4958
+      },
+      {
+       "bin": [
+        0.8,
+        0.9
+       ],
+       "n": 15355,
+       "stated": 0.855,
+       "observed": 0.5366
+      },
+      {
+       "bin": [
+        0.9,
+        0.95
+       ],
+       "n": 14366,
+       "stated": 0.9273,
+       "observed": 0.5631
+      },
+      {
+       "bin": [
+        0.95,
+        0.99
+       ],
+       "n": 31839,
+       "stated": 0.9752,
+       "observed": 0.6153
+      },
+      {
+       "bin": [
+        0.99,
+        1.0
+       ],
+       "n": 143273,
+       "stated": 0.9987,
+       "observed": 0.7411
+      }
+     ]
+    },
+    "mixture": {
+     "brier": 0.1689,
+     "ece": 0.0294,
+     "bins": [
+      {
+       "bin": [
+        0,
+        0.5
+       ],
+       "n": 59755,
+       "stated": 0.3232,
+       "observed": 0.3419
+      },
+      {
+       "bin": [
+        0.5,
+        0.7
+       ],
+       "n": 49126,
+       "stated": 0.602,
+       "observed": 0.5879
+      },
+      {
+       "bin": [
+        0.7,
+        0.8
+       ],
+       "n": 29111,
+       "stated": 0.7475,
+       "observed": 0.7112
+      },
+      {
+       "bin": [
+        0.8,
+        0.9
+       ],
+       "n": 31408,
+       "stated": 0.847,
+       "observed": 0.8018
+      },
+      {
+       "bin": [
+        0.9,
+        0.95
+       ],
+       "n": 18728,
+       "stated": 0.9176,
+       "observed": 0.8815
+      },
+      {
+       "bin": [
+        0.95,
+        0.99
+       ],
+       "n": 12513,
+       "stated": 0.9734,
+       "observed": 0.9192
+      },
+      {
+       "bin": [
+        0.99,
+        1.0
+       ],
+       "n": 35407,
+       "stated": 0.9985,
+       "observed": 0.9619
+      }
+     ]
+    },
+    "vfrac": {
+     "brier": 0.1718,
+     "ece": 0.0411,
+     "bins": [
+      {
+       "bin": [
+        0,
+        0.5
+       ],
+       "n": 55349,
+       "stated": 0.3168,
+       "observed": 0.3349
+      },
+      {
+       "bin": [
+        0.5,
+        0.7
+       ],
+       "n": 45509,
+       "stated": 0.5885,
+       "observed": 0.5659
+      },
+      {
+       "bin": [
+        0.7,
+        0.8
+       ],
+       "n": 25815,
+       "stated": 0.7287,
+       "observed": 0.6832
+      },
+      {
+       "bin": [
+        0.8,
+        0.9
+       ],
+       "n": 29028,
+       "stated": 0.8249,
+       "observed": 0.7629
+      },
+      {
+       "bin": [
+        0.9,
+        0.95
+       ],
+       "n": 26802,
+       "stated": 0.9081,
+       "observed": 0.8483
+      },
+      {
+       "bin": [
+        0.99,
+        1.0
+       ],
+       "n": 53547,
+       "stated": 1.0,
+       "observed": 0.9424
+      }
+     ]
+    }
+   },
+   "voxels": {
+    "agreement with consensus": 0.6752,
+    "agreement with the pseudo-scan's own map": 0.6105,
+    "calibration: P(winner = consensus)": {
+     "brier": 0.1687,
+     "ece": 0.038,
+     "bins": [
+      {
+       "bin": [
+        0,
+        0.5
+       ],
+       "n": 179788,
+       "stated": 0.3296,
+       "observed": 0.3691
+      },
+      {
+       "bin": [
+        0.5,
+        0.7
+       ],
+       "n": 154020,
+       "stated": 0.592,
+       "observed": 0.5676
+      },
+      {
+       "bin": [
+        0.7,
+        0.8
+       ],
+       "n": 77972,
+       "stated": 0.7273,
+       "observed": 0.6796
+      },
+      {
+       "bin": [
+        0.8,
+        0.9
+       ],
+       "n": 76658,
+       "stated": 0.8182,
+       "observed": 0.768
+      },
+      {
+       "bin": [
+        0.9,
+        0.95
+       ],
+       "n": 82822,
+       "stated": 0.9091,
+       "observed": 0.8582
+      },
+      {
+       "bin": [
+        0.99,
+        1.0
+       ],
+       "n": 167496,
+       "stated": 1.0,
+       "observed": 0.9676
+      }
+     ]
+    }
+   }
+  },
+  "rescans (other first-level replicates)": {
+   "pairs": 1728785,
+   "change_rate": 0.381,
+   "change_rate per pseudo-scan": {
+    "r011": 0.3834,
+    "r012": 0.3823,
+    "r013": 0.3811,
+    "r014": 0.3772
+   },
+   "auroc predicting change": {
+    "single": 0.6409,
+    "mixture": 0.7802,
+    "vfrac": 0.7726
+   },
+   "calibration: P(keeps the pseudo-scan's tract)": {
+    "single": {
+     "brier": 0.3314,
+     "ece": 0.318,
+     "bins": [
+      {
+       "bin": [
+        0,
+        0.5
+       ],
+       "n": 19018,
+       "stated": 0.4374,
+       "observed": 0.2962
+      },
+      {
+       "bin": [
+        0.5,
+        0.7
+       ],
+       "n": 107970,
+       "stated": 0.6079,
+       "observed": 0.4046
+      },
+      {
+       "bin": [
+        0.7,
+        0.8
+       ],
+       "n": 75523,
+       "stated": 0.7524,
+       "observed": 0.4494
+      },
+      {
+       "bin": [
+        0.8,
+        0.9
+       ],
+       "n": 112004,
+       "stated": 0.855,
+       "observed": 0.4916
+      },
+      {
+       "bin": [
+        0.9,
+        0.95
+       ],
+       "n": 104947,
+       "stated": 0.9273,
+       "observed": 0.5182
+      },
+      {
+       "bin": [
+        0.95,
+        0.99
+       ],
+       "n": 232879,
+       "stated": 0.9752,
+       "observed": 0.5585
+      },
+      {
+       "bin": [
+        0.99,
+        1.0
+       ],
+       "n": 1050406,
+       "stated": 0.9987,
+       "observed": 0.6926
+      }
+     ]
+    },
+    "mixture": {
+     "brier": 0.1881,
+     "ece": 0.0673,
+     "bins": [
+      {
+       "bin": [
+        0,
+        0.5
+       ],
+       "n": 437057,
+       "stated": 0.3229,
+       "observed": 0.3056
+      },
+      {
+       "bin": [
+        0.5,
+        0.7
+       ],
+       "n": 359578,
+       "stated": 0.6021,
+       "observed": 0.5317
+      },
+      {
+       "bin": [
+        0.7,
+        0.8
+       ],
+       "n": 213044,
+       "stated": 0.7474,
+       "observed": 0.6542
+      },
+      {
+       "bin": [
+        0.8,
+        0.9
+       ],
+       "n": 230097,
+       "stated": 0.8469,
+       "observed": 0.7422
+      },
+      {
+       "bin": [
+        0.9,
+        0.95
+       ],
+       "n": 138119,
+       "stated": 0.9176,
+       "observed": 0.8238
+      },
+      {
+       "bin": [
+        0.95,
+        0.99
+       ],
+       "n": 90965,
+       "stated": 0.9734,
+       "observed": 0.8783
+      },
+      {
+       "bin": [
+        0.99,
+        1.0
+       ],
+       "n": 259907,
+       "stated": 0.9985,
+       "observed": 0.9295
+      }
+     ]
+    },
+    "vfrac": {
+     "brier": 0.1927,
+     "ece": 0.0799,
+     "bins": [
+      {
+       "bin": [
+        0,
+        0.5
+       ],
+       "n": 405343,
+       "stated": 0.3168,
+       "observed": 0.3018
+      },
+      {
+       "bin": [
+        0.5,
+        0.7
+       ],
+       "n": 332891,
+       "stated": 0.5887,
+       "observed": 0.511
+      },
+      {
+       "bin": [
+        0.7,
+        0.8
+       ],
+       "n": 189027,
+       "stated": 0.7286,
+       "observed": 0.6222
+      },
+      {
+       "bin": [
+        0.8,
+        0.9
+       ],
+       "n": 211818,
+       "stated": 0.8247,
+       "observed": 0.7021
+      },
+      {
+       "bin": [
+        0.9,
+        0.95
+       ],
+       "n": 197958,
+       "stated": 0.9082,
+       "observed": 0.7909
+      },
+      {
+       "bin": [
+        0.99,
+        1.0
+       ],
+       "n": 391748,
+       "stated": 1.0,
+       "observed": 0.9058
+      }
+     ]
+    }
+   },
+   "voxels": {
+    "agreement with consensus": 0.658,
+    "agreement with the pseudo-scan's own map": 0.5882,
+    "calibration: P(winner = consensus)": {
+     "brier": 0.1794,
+     "ece": 0.0542,
+     "bins": [
+      {
+       "bin": [
+        0,
+        0.5
+       ],
+       "n": 1348410,
+       "stated": 0.3296,
+       "observed": 0.367
+      },
+      {
+       "bin": [
+        0.5,
+        0.7
+       ],
+       "n": 1155150,
+       "stated": 0.592,
+       "observed": 0.547
+      },
+      {
+       "bin": [
+        0.7,
+        0.8
+       ],
+       "n": 584790,
+       "stated": 0.7273,
+       "observed": 0.6537
+      },
+      {
+       "bin": [
+        0.8,
+        0.9
+       ],
+       "n": 574935,
+       "stated": 0.8182,
+       "observed": 0.738
+      },
+      {
+       "bin": [
+        0.9,
+        0.95
+       ],
+       "n": 621165,
+       "stated": 0.9091,
+       "observed": 0.8294
+      },
+      {
+       "bin": [
+        0.99,
+        1.0
+       ],
+       "n": 1256220,
+       "stated": 1.0,
+       "observed": 0.9529
+      }
+     ]
+    }
+   }
+  }
+ },
+ "recalibration for rescans": {
+  "held-out pseudo-scan (Brier, ECE), as stated": {
+   "mixture": {
+    "r011": {
+     "brier": 0.1881,
+     "ece": 0.0685
+    },
+    "r012": {
+     "brier": 0.188,
+     "ece": 0.0675
+    },
+    "r013": {
+     "brier": 0.1886,
+     "ece": 0.068
+    },
+    "r014": {
+     "brier": 0.1879,
+     "ece": 0.0652
+    },
+    "mean": {
+     "brier": 0.1881,
+     "ece": 0.0673
+    }
+   },
+   "vote fraction": {
+    "r011": {
+     "brier": 0.1928,
+     "ece": 0.0812
+    },
+    "r012": {
+     "brier": 0.1925,
+     "ece": 0.0798
+    },
+    "r013": {
+     "brier": 0.193,
+     "ece": 0.0805
+    },
+    "r014": {
+     "brier": 0.1924,
+     "ece": 0.0781
+    },
+    "mean": {
+     "brier": 0.1927,
+     "ece": 0.0799
+    }
+   },
+   "voxel vote fraction": {
+    "r011": {
+     "brier": 0.1787,
+     "ece": 0.0513
+    },
+    "r012": {
+     "brier": 0.1794,
+     "ece": 0.0549
+    },
+    "r013": {
+     "brier": 0.18,
+     "ece": 0.0562
+    },
+    "r014": {
+     "brier": 0.1794,
+     "ece": 0.0543
+    },
+    "mean": {
+     "brier": 0.1794,
+     "ece": 0.0542
+    }
+   }
+  },
+  "mixture, Platt: P = sigmoid(a + b logit(p))": {
+   "a": -0.1185,
+   "b": 0.5032,
+   "held-out": {
+    "r011": {
+     "brier": 0.1854,
+     "ece": 0.0485
+    },
+    "r012": {
+     "brier": 0.1854,
+     "ece": 0.0484
+    },
+    "r013": {
+     "brier": 0.1857,
+     "ece": 0.0486
+    },
+    "r014": {
+     "brier": 0.1857,
+     "ece": 0.05
+    },
+    "mean": {
+     "brier": 0.1855,
+     "ece": 0.0489
+    }
+   }
+  },
+  "mixture, isotonic on logit(p)": {
+   "knots: logit p": [
+    -2.754,
+    -2.368,
+    -2.266,
+    -2.095,
+    -1.905,
+    -1.694,
+    -1.547,
+    -1.503,
+    -1.365,
+    -1.209,
+    -1.137,
+    -1.082,
+    -1.01,
+    -0.925,
+    -0.788,
+    -0.702,
+    -0.667,
+    -0.6,
+    -0.559,
+    -0.538,
+    -0.509,
+    -0.444,
+    -0.366,
+    -0.303,
+    -0.228,
+    -0.185,
+    -0.173,
+    -0.086,
+    0.012,
+    0.049,
+    0.074,
+    0.097,
+    0.148,
+    0.181,
+    0.201,
+    0.228,
+    0.261,
+    0.33,
+    0.443,
+    0.516,
+    0.541,
+    0.558,
+    0.574,
+    0.6,
+    0.657,
+    0.737,
+    0.787,
+    0.824,
+    0.853,
+    0.874,
+    0.941,
+    1.019,
+    1.113,
+    1.276,
+    1.425,
+    1.471,
+    1.493,
+    1.505,
+    1.522,
+    1.604,
+    1.736,
+    1.815,
+    1.858,
+    1.941,
+    2.022,
+    2.081,
+    2.137,
+    2.185,
+    2.227,
+    2.266,
+    2.292,
+    2.3,
+    2.304,
+    2.31,
+    2.396,
+    2.593,
+    2.73,
+    2.894,
+    3.08,
+    3.351,
+    3.807,
+    4.238,
+    4.71,
+    5.429,
+    6.197,
+    6.688,
+    7.273,
+    7.94,
+    8.675,
+    9.762,
+    10.745,
+    11.886,
+    13.727
+   ],
+   "knots: P": [
+    0.0671,
+    0.0857,
+    0.1187,
+    0.1281,
+    0.133,
+    0.1594,
+    0.161,
+    0.1972,
+    0.2108,
+    0.2248,
+    0.2367,
+    0.2382,
+    0.2584,
+    0.2778,
+    0.3053,
+    0.3056,
+    0.3354,
+    0.3368,
+    0.3484,
+    0.3503,
+    0.3586,
+    0.3673,
+    0.3845,
+    0.3875,
+    0.3922,
+    0.4009,
+    0.4376,
+    0.4386,
+    0.4513,
+    0.4543,
+    0.4624,
+    0.4644,
+    0.4674,
+    0.4796,
+    0.4987,
+    0.4995,
+    0.5108,
+    0.5213,
+    0.534,
+    0.5351,
+    0.5352,
+    0.5503,
+    0.5802,
+    0.5852,
+    0.5875,
+    0.5907,
+    0.601,
+    0.604,
+    0.6101,
+    0.6119,
+    0.6144,
+    0.6584,
+    0.6712,
+    0.6819,
+    0.6988,
+    0.7048,
+    0.7058,
+    0.7195,
+    0.7319,
+    0.7397,
+    0.7468,
+    0.7603,
+    0.7606,
+    0.7632,
+    0.766,
+    0.7673,
+    0.786,
+    0.7891,
+    0.792,
+    0.7939,
+    0.8035,
+    0.8122,
+    0.8157,
+    0.8277,
+    0.8359,
+    0.8377,
+    0.8479,
+    0.8557,
+    0.8581,
+    0.871,
+    0.8822,
+    0.8951,
+    0.8974,
+    0.9073,
+    0.9121,
+    0.9165,
+    0.9173,
+    0.9269,
+    0.936,
+    0.9395,
+    0.9448,
+    0.9469,
+    0.9526
+   ],
+   "held-out": {
+    "r011": {
+     "brier": 0.1823,
+     "ece": 0.0024
+    },
+    "r012": {
+     "brier": 0.1823,
+     "ece": 0.0026
+    },
+    "r013": {
+     "brier": 0.1827,
+     "ece": 0.0016
+    },
+    "r014": {
+     "brier": 0.1824,
+     "ece": 0.0036
+    },
+    "mean": {
+     "brier": 0.1824,
+     "ece": 0.0025
+    }
+   },
+   "in-sample calibration": {
+    "brier": 0.1824,
+    "ece": 0.0003,
+    "bins": [
+     {
+      "bin": [
+       0,
+       0.5
+      ],
+      "n": 541081,
+      "stated": 0.3378,
+      "observed": 0.3375
+     },
+     {
+      "bin": [
+       0.5,
+       0.7
+      ],
+      "n": 486346,
+      "stated": 0.6044,
+      "observed": 0.6044
+     },
+     {
+      "bin": [
+       0.7,
+       0.8
+      ],
+      "n": 241483,
+      "stated": 0.7518,
+      "observed": 0.751
+     },
+     {
+      "bin": [
+       0.8,
+       0.9
+      ],
+      "n": 213221,
+      "stated": 0.8556,
+      "observed": 0.8563
+     },
+     {
+      "bin": [
+       0.9,
+       0.95
+      ],
+      "n": 196814,
+      "stated": 0.9257,
+      "observed": 0.9258
+     },
+     {
+      "bin": [
+       0.95,
+       0.99
+      ],
+      "n": 49840,
+      "stated": 0.9525,
+      "observed": 0.9521
+     }
+    ]
+   }
+  },
+  "votes: P(keep | votes of R)": {
+   "R": 11,
+   "table": [
+    0.619,
+    0.1331,
+    0.227,
+    0.3125,
+    0.3922,
+    0.4559,
+    0.5243,
+    0.5907,
+    0.6554,
+    0.7275,
+    0.8082,
+    0.9152
+   ],
+   "held-out": {
+    "r011": {
+     "brier": 0.189,
+     "ece": 0.0035
+    },
+    "r012": {
+     "brier": 0.1894,
+     "ece": 0.0014
+    },
+    "r013": {
+     "brier": 0.1891,
+     "ece": 0.0021
+    },
+    "r014": {
+     "brier": 0.189,
+     "ece": 0.0033
+    },
+    "mean": {
+     "brier": 0.1891,
+     "ece": 0.0026
+    }
+   }
+  },
+  "voxels: P(winner = consensus | consensus votes of R)": {
+   "table": [
+    0.1094,
+    0.1916,
+    0.2633,
+    0.3307,
+    0.395,
+    0.4542,
+    0.5141,
+    0.5783,
+    0.6537,
+    0.738,
+    0.8294,
+    0.9529
+   ],
+   "held-out": {
+    "r011": {
+     "brier": 0.1755,
+     "ece": 0.0038
+    },
+    "r012": {
+     "brier": 0.1758,
+     "ece": 0.0015
+    },
+    "r013": {
+     "brier": 0.1762,
+     "ece": 0.003
+    },
+    "r014": {
+     "brier": 0.1758,
+     "ece": 0.0011
+    },
+    "mean": {
+     "brier": 0.1758,
+     "ece": 0.0024
+    }
+   }
+  }
+ },
+ "the real scan's ensemble": {
+  "streamlines": 32242,
+  "mean stated P(rescan keeps the tract)": {
+   "mixture as is": 0.688,
+   "mixture recalibrated (isotonic)": 0.6206,
+   "mixture recalibrated (Platt)": 0.6203,
+   "votes recalibrated": 0.6062
+  },
+  "replicate vs replicate keep rate (NOTES 2026-10-08)": 0.62,
+  "share of streamlines stated at": {
+   "mixture as is": {
+    ">= 0.5": 0.7463,
+    ">= 0.9": 0.2834,
+    ">= 0.99": 0.1507
+   },
+   "mixture recalibrated (isotonic)": {
+    ">= 0.5": 0.6909,
+    ">= 0.9": 0.1422,
+    ">= 0.99": 0.0
+   },
+   "votes recalibrated": {
+    ">= 0.5": 0.6895,
+    ">= 0.9": 0.1613,
+    ">= 0.99": 0.0
+   }
+  }
+ }
+}

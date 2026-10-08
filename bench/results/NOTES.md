@@ -2580,3 +2580,74 @@ Side results:
 - **Per-volume signs move more** than per-voxel signs: 30 % against 28 % labels, and the field spreads to 161 Hz.
   Spatially coherent perturbations matter more to the field and the tracker. The scan's real noise is likely
   spatially correlated (parallel imaging, interpolation), so per-voxel flips may understate it. Not resolved here.
+
+## 2026-10-08 The ensemble's confidence against rescans: a double bootstrap, and a recalibration
+
+`ensemble_double.py` → `ensemble_double.json`. PAT16, M2 (MPS), 52 runs. Follows the entry above: the pilot scored
+its confidence against held-out replicates, which spread around the scan's own estimate, not against rescans.
+
+**Set-up.** The double bootstrap gives the ensemble a scan whose rescans we have.
+
+- **Pseudo-scans:** four first-level replicates (`added/r011`-`r014`). Each was rebuilt from its seed and rerun; all
+  four reproduce the stored record exactly.
+- **Second level:** each pseudo-scan is bootstrapped again ("added", the reference's mask), 12 runs. Runs 1-10 plus
+  the pseudo-scan make its ensemble (R = 11, as the pilot). Runs 11-12 are held out for the pilot's centred scoring.
+- **Rescans:** the other 15 first-level replicates. They are draws about the same centre (the real scan's estimate)
+  as the pseudo-scan, as real rescans are draws about the truth.
+
+**The double bootstrap reproduces the pilot, then shows what it missed** (scored against centred held-out runs /
+against rescans):
+
+| | centred | rescans |
+|---|---|---|
+| labels changed | 33.4 % | 38.1 % (replicate vs replicate: 38.0 %) |
+| AUROC: TRX probability / mixture / vote fraction | 0.648 / 0.799 / 0.792 | 0.641 / 0.780 / 0.773 |
+| ECE: TRX probability / mixture / vote fraction | 0.271 / 0.029 / 0.041 | 0.318 / 0.067 / 0.080 |
+| stated ≥ 0.99, kept: TRX / mixture | 74.1 % / 96.2 % | 69.3 % / 93.0 % |
+| voxels: consensus / own map agree with the other run | 67.5 / 61.1 % | 65.8 / 58.8 % |
+| voxels: ECE of the consensus vote fraction | 0.038 | 0.054 |
+
+The centred column matches the pilot's numbers (33.2 %, 0.80, ECE 0.03 / 0.27), so the set-up is sound. Against
+rescans the change rate is the replicate-vs-replicate rate, as the centring argument predicts. The ensemble is still
+far better than one run: AUROC 0.78 against 0.64, and ECE 0.07 against 0.32. But its ECE more than doubles, and it is
+overconfident at the top. Per pseudo-scan, the change rates (37.7-38.3 %) and ECEs (0.065-0.069) barely vary.
+
+**Recalibration for rescans.** Fitted on three pseudo-scans, scored on the fourth (Brier, ECE averaged over the four
+held-out pseudo-scans):
+
+| | Brier | ECE |
+|---|---|---|
+| mixture as stated | 0.188 | 0.067 |
+| mixture, Platt on log-odds (a = −0.12, b = 0.50) | 0.186 | 0.049 |
+| **mixture, isotonic on log-odds** | **0.182** | **0.0025** |
+| vote fraction as stated | 0.193 | 0.080 |
+| **votes, a table per count** | 0.189 | **0.0026** |
+| voxel consensus vote fraction as stated | 0.179 | 0.054 |
+| **voxel votes, a table per count** | **0.176** | **0.0024** |
+
+- One temperature is not enough. The mixture is underconfident in the middle (stated 0.74, kept 0.81) and
+  overconfident at the top (stated 0.997, kept 0.948). An isotonic map fixes both.
+- A first attempt pooled the held-out predictions and got an ECE of exactly 0. With equal-sized groups, a table
+  fitted on the other groups averages back to the pooled rate, which hides the error. Scores are now per held-out
+  group.
+- **Votes table (R = 11):** P(rescan keeps the tract | the pseudo-scan's tract won v of 11) is 0.13, 0.23, 0.31, 0.39,
+  0.46, 0.52, 0.59, 0.66, 0.73, 0.81 and 0.92 for v = 1-11. Unanimity leaves a 1-in-12 chance that a rescan changes
+  the label.
+- **Voxel table:** P(rescan's winner = consensus | v of 11) runs from 0.11 at v = 0 to 0.95 at v = 11.
+
+**Applied to the real scan's ensemble** (`added/r000` + r001-r010; the maps were fitted on pseudo-scans only):
+
+- Mean stated P(a rescan keeps the tract): 0.688 as is, 0.621 isotonic, 0.606 by votes. Replicate against replicate
+  keeps 0.620, so the recalibrated mean matches a rate it was not fitted to.
+- Streamlines stated ≥ 0.9: 28 % as is, 14 % recalibrated. Stated ≥ 0.99: 15 % as is, none recalibrated. The isotonic
+  map tops out at 0.945.
+
+Caveats:
+
+- One patient, one protocol. The maps belong to this pipeline at R = 11, and other protocols or sites would need their
+  own fit. A double bootstrap per scan costs about 4 × 12 extra runs.
+- The pseudo-scans' b0s carry the first level's added noise as well as their own. That should not matter: b0 noise did
+  not move labels (entry above).
+- Everything rests on the bootstrap's noise being the scan's. Per-voxel sign flips may understate spatially
+  correlated noise (entry above). Only test-retest scans can check that, and the repository has none.
+

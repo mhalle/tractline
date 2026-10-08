@@ -58,3 +58,22 @@ def test_volume_flips_share_one_sign_across_voxels():
     big = np.abs(wb.res) > 2                                                    # signs readable past rounding
     sign = np.where(big, np.sign((x - wb.fit) * wb.res), 0)
     assert all(len(set(sign[big[:, g], g].tolist())) == 1 for g in range(36) if big[:, g].any())
+
+
+def test_double_bootstrap_recalibration_helpers():
+    pytest.importorskip("torch")
+    from ensemble_double import isotonic, platt, held_out, vote_table
+    rng = np.random.default_rng(0)
+    z = rng.normal(size=50000)
+    y = (rng.random(z.size) < 1 / (1 + np.exp(-2 * z))).astype(float)
+    a, b = platt(z, y)
+    assert abs(a) < 0.05 and abs(b - 2) < 0.1
+    x, p = isotonic(z, y)
+    assert np.all(np.diff(x) > 0) and np.all(np.diff(p) >= 0)
+    assert np.abs(np.interp(z, x, p) - 1 / (1 + np.exp(-2 * z))).mean() < 0.02
+    # held-out scoring per group: a table fitted on the other groups, scored on the left-out one
+    v = rng.integers(0, 4, z.size)
+    yv = (rng.random(z.size) < v / 3).astype(float)
+    g = np.repeat(np.arange(4), z.size // 4)
+    out = held_out(lambda v, y: vote_table(v, y, 3), lambda t, v: t[v], g, v, yv)
+    assert set(out) == {"r000", "r001", "r002", "r003", "mean"} and out["mean"]["ece"] < 0.02
