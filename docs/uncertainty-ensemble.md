@@ -53,44 +53,40 @@ densest and denser than tau, so:
 This is the field that carries *position* uncertainty (scan, field, tracker), which the per-streamline
 field cannot. It restores onto any grid (the T1, a navigation volume) through rankfield's restore.
 
-## The plane rankfield lacks: votes
+## Votes: tested, and not needed here
 
-Margins and probabilities read from a depth-cut field do not survive regrouping after the fact; this is
-rankfield's group-blind depth cut (NOTES 2026-10-01, M2). Votes do survive it. Each run's label is the
-group of its winning class, so a group's votes are its members' votes summed, exactly.
+Votes are each run's winning class, counted. The case for them was:
 
-The prototype tried two ways to store them beside `ranks`, `support` and `tail`.
+- **Regrouping.** A group's votes are its members' votes summed, exactly, when a run's label is the group of its
+  winning class (a streamline here). Margins read from a depth-cut field are not exact under regrouping.
+- **Disagreement.** Votes separate runs that confidently disagree from runs that are all unsure, where the mixture
+  shows the same number for both.
 
-**Votes aligned to the ranks**
+`bench/ensemble_votes_test.py` tested this on the pilot's records (NOTES 2026-10-07, "Are votes needed"). For a
+labeler that gives probabilities, the answer is no:
 
-| array | shape | dtype | meaning |
-|---|---|---|---|
-| `votes` | (N, Z, Y, X) | uint8 | runs in which the class at rank j won; 0 where the rank is absent |
-| `vote_tail` | (Z, Y, X) | uint8 | runs whose winner is not among the kept classes |
-| `runs` | (Z, Y, X) or scalar | uint8 | runs that labeled this element |
+- **The mixture predicts better.** It beats votes at predicting a fresh run's change in every grouping tried: tracts,
+  merged tracts, outliers folded, clusters. The margin is 0.005-0.006 AUROC, intervals excluding zero, and the mixture
+  is better calibrated too.
+- **Where the rank field loses, depth fixes it.** Encoded at depth 6 the mixture loses 0.011 AUROC to the depth cut at
+  tract level. Depth 8 (25 B per streamline) recovers most of that and depth 12 all of it; votes (22 B) recover less.
+- **Votes add little beyond the mixture.** Conditional AUROC within deciles of the mixture is 0.51-0.53, and log-loss
+  improves by about 2 %.
+- **Voxel votes do not regroup exactly.** A voxel's winner is a density argmax, so merging tracts can change it: 11-23 %
+  of a merge's voxels differ. Calibration barely moves.
 
-These satisfy `sum(votes) + vote_tail == runs`. They are 7 B per element, and regrouping from them is exact where
-`vote_tail == 0`.
+**For rankfield**
 
-- **Voxels (44 classes, keep shell):** enough. The tail is zero in 92 % of tract voxels.
-- **Streamlines (1,600 clusters, depth 6, keep clip):** not enough. The tail is zero for only 75 % of streamlines,
-  because winning clusters scatter: across 11 runs, a median of about 5 distinct clusters won the same seed.
+- Store the ensemble's mixture as an ordinary field; nothing in the format changes.
+- Spend more depth on it (8 or more), or use a keep rule that keeps mass.
+- Read confidence as group mass (`probabilities`), not `decode_groups`' margin, which predicted 0.02 worse here.
 
-**Each run's winner outright**
-
-| array | shape | dtype | meaning |
-|---|---|---|---|
-| `winners` | (R, Z, Y, X) | uint16 (uint8 at <= 255 classes) | class + 1 that run r chose; 0 = the run did not label this element |
-
-These are 2R B per streamline (22 B at R = 11, beside the field's 19 B) or R B per voxel. Votes for any grouping are
-exact, and the order of the runs is kept, so the runs can be resampled again later. This is the recommendation for
-streamlines.
-
-**Recording the ensemble.** Either way, the block records how the ensemble was made: R, which stages were resampled,
-the bootstrap's settings, and the draws.
-
-**Keep rule.** A keep rule that stores every class that won any run, before filling the remaining depth by gap, would
-make the rank-aligned votes exact. At the streamline level it would need depth of order R.
+**Where votes do belong** is where runs give hard labels and no probabilities: several raters, multi-atlas fusion,
+other software run repeatedly. There the vote counts are the only uncertainty there is. Rank-aligned planes (`votes`
+(N, ...) uint8, `vote_tail`, `runs`, with `sum(votes) + vote_tail == runs`) or per-run winners (`winners` (R, ...)) are
+the two layouts the prototype tried. Rank-aligned planes held every winner in 75 % of streamlines and 92 % of tract
+voxels at R = 11, falling as R grows. Per-run winners are exact at 2R B. A rule for resampling votes onto another grid
+is still to be designed.
 
 ## What is measured, and what is not
 
@@ -108,11 +104,13 @@ The pilot asked four questions:
 
 1. Does ensemble confidence predict a fresh run's change better than one run's probability does?
 2. Is it calibrated where one run's probability is not?
-3. Do vote planes regroup exactly at depth 6?
+3. Are votes needed beside the mixture? (Not for this labeler: above.)
 4. How much does the voxel field's consensus beat a single run's map at predicting a fresh run?
 
 It does not measure accuracy: there are no reference tract labels for these scans. Bootstrap replicates
-cover only the variability that is modeled, and model bias is untouched. One patient.
+cover only the variability that is modeled, and model bias is untouched. One patient. The ensemble's own
+calibration is close to guaranteed, since its held-out runs come from the same bootstrap; the single run's
+miscalibration is the finding.
 
 **The b0s.** A replicate's b0s must keep the scan's motion. An earlier version replaced each b0 with the b0s'
 mean plus noise. That removed the motion between b0s (thermal-scaled residuals) or scrambled it voxel by voxel

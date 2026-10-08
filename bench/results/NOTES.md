@@ -2432,3 +2432,91 @@ Residual mode, with the noisiest b0s, had the most label change and consensus di
 
 Not measured: accuracy (no reference tract labels for PAT16). One patient. The bootstrap's sign flips are symmetric
 around a smooth fit and do not reproduce magnitude noise at low signal.
+
+## 2026-10-07 Are votes needed beside the mixture? No, not for a labeler with probabilities
+
+`ensemble_votes_test.py` → `ensemble_votes_test_added.json`, `ensemble_votes_test_thermal.json`. These use the
+ensemble pilot's records with no new runs: the ensemble is r000-r010 (R = 11), r011-r016 are held out, and there are
+about 177,000 (streamline, held-out run) pairs. Intervals are 95 % from a block bootstrap: 200 resamples over 148
+blocks of 10-voxel cubes of seed voxels. The pass mark was fixed before running: votes are needed when votes minus
+field6 exceeds 0.01 AUROC with its interval above 0. Numbers are for **added**; thermal agrees to within 0.007 everywhere.
+
+**1. Regrouping after labeling**
+
+AUROC for a held-out run changing the reference's group. The predictors:
+- single: one run's group probability;
+- field6: the mixture as the web export encodes it (depth 6, keep clip), group mass decoded;
+- margin6: the same field's group margin;
+- full: the mixture with nothing cut;
+- votes: exact vote fraction;
+- votes6: vote fraction from rank-aligned planes.
+
+| grouping | change | single | field6 | margin6 | full | votes | votes6 | votes - field6 |
+|---|---|---|---|---|---|---|---|---|
+| tracts | 33.2 % | 0.648 | 0.785 | 0.758 | **0.796** | 0.790 | 0.782 | +0.005 (0.003-0.006) |
+| SLF, CC merged | 32.7 % | 0.644 | 0.784 | 0.757 | **0.794** | 0.788 | 0.780 | +0.005 (0.003-0.006) |
+| tracts, outliers folded | 37.7 % | 0.630 | 0.792 | 0.770 | **0.796** | 0.791 | 0.788 | -0.001 (-0.002-0.000) |
+| clusters, outliers folded | 61.2 % | 0.606 | 0.783 | 0.761 | **0.783** | 0.777 | 0.777 | -0.006 (-0.006 - -0.005) |
+
+- **The mixture beats votes in every grouping**: full minus votes is -0.005 to -0.006, with intervals excluding 0.
+- **Votes beat the depth-6 field only where the depth cut loses mass** (tracts: field6 is 0.011 below full), and by
+  less than the pass mark.
+- **Calibration (ECE):** full 0.032-0.037, field6 0.034-0.040, votes 0.043-0.060, single 0.27-0.50.
+- **rankfield's group margin (decode_groups) predicts worse than the group mass decoded from the same bytes**, by 0.02
+  in every grouping. For confidence, read mass, not margin.
+
+**Deeper ranks close the gap that votes only narrow.** The mixture encoded deeper, at tract level (outliers folded):
+
+| | AUROC | bytes per streamline |
+|---|---|---|
+| depth 6 clip | 0.785 (0.792) | 19 |
+| depth 8 clip | 0.792 (0.795) | 25 |
+| depth 12 clip | 0.796 (0.796) | 37 |
+| full | 0.796 | |
+| depth 6 shell | 0.774 | 19 |
+| depth 12 shell | 0.795 | 37 |
+
+Votes at 22 B (per-run winners, R = 11) reach 0.790, below depth 8 at 25 B.
+
+**2. Beyond the mixture.** Within deciles of the full mixture, votes barely separate change: conditional AUROC is
+0.516-0.519 for vote fraction and 0.509-0.535 for vote entropy, where 0.5 is nothing. A logistic model (5-fold by
+block) given logit(full) plus vote fraction and entropy lowers log-loss from 0.516 to 0.507 at tract level, 0.540 to
+0.527 outliers folded, and 0.544 to 0.543 at clusters, against 0.636-0.668 with the intercept alone. This is a small,
+real gain: two confidently disagreeing runs and two unsure ones do differ, slightly.
+
+**3. Runs.** AUROC of full / field6 / votes, tract level:
+
+| R | full | field6 | votes |
+|---|---|---|---|
+| 2 | 0.705 | 0.702 | 0.639 |
+| 4 | 0.753 | 0.750 | 0.727 |
+| 6 | 0.774 | 0.770 | 0.759 |
+| 8 | 0.786 | 0.779 | 0.776 |
+| 11 | 0.796 | 0.785 | 0.790 |
+
+ECE of full falls from 0.150 at R = 2 to 0.032 at R = 11. Votes trail most at small R, where their 1/R steps are
+coarse. Nothing has levelled off by 11; more runs still pay.
+
+**4. Voxels: summed votes are not merged votes, and it hardly matters**
+
+| merge | voxels | votes differ | Brier, ECE: summed | Brier, ECE: merged first |
+|---|---|---|---|---|
+| CC 1-7 | 24,240 | 3,228 (13 %) | 0.138, 0.054 | 0.136, 0.058 |
+| SLF I-III | 12,474 | 1,370 (11 %) | 0.135, 0.053 | 0.134, 0.056 |
+| superficial (Sup-*) | 38,565 | 9,031 (23 %) | 0.176, 0.055 | 0.168, 0.047 |
+
+The second column counts voxels where the merged group's summed tract votes differ from votes recomputed after
+merging the densities. Against held-out runs' merged-first winners, calibration differs little, by most for the
+superficial merge, the largest one. The rank-aligned vote planes regroup voxels only approximately, as expected:
+a voxel's winner is a density argmax, not the group of one class's win.
+
+**Reading.** For a labeler that gives probabilities, the mixture is the uncertainty to store. It fits rankfield's
+format as it is; it needs depth 8 or more rather than 6, or a keep rule that spends depth on mass. Votes add a sliver
+of information (log-loss, 2 %) and exact regrouping for streamline labels, but at equal bytes they predict worse than
+a deeper mixture. Votes remain the only representation where runs give hard labels without probabilities: raters,
+atlases, other software. Their place in rankfield is that case, not this one.
+
+Caveats:
+- The ensemble's calibration is close to guaranteed here: its held-out runs come from the same bootstrap. The single
+  run's miscalibration is the finding.
+- One patient, RapidParc, stability not accuracy.

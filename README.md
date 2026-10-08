@@ -51,7 +51,7 @@ which `uv sync` and `uv run` install by default. Four packages are opt-in groups
 scripts: `dipy` (DIPY as the mask's reference, `median_check.py`; the bootstrap's spherical harmonics,
 `label_noise_floor.py`, `ukf_noise_floor.py`, `ensemble_pilot.py`), `vtk` (0.5 GB; VTK tractography files: `ukf_compare.py`,
 `ukf_bench.py`, `resample_check.py`), `sklearn` (`accuracy_tractcloud_test.py`) and `rankfield` (Python 3.12+;
-`ensemble_pilot.py`) -
+`ensemble_pilot.py`, `ensemble_votes_test.py`) -
 `uv run --group vtk bench/ukf_compare.py`. `rapidparc_check.py` runs RapidParc's
 own package in an isolated environment uv builds for it (`uv run --with RapidParc==1.0.4`; its pins would not
 fit the project's). The `modal_*.py` scripts run through the modal CLI, a uv tool (`uv tool install modal`;
@@ -148,7 +148,8 @@ says which, and what re-running their scripts would now produce.
   `memory_batch.py` (memory across patients in one process).
 - Uncertainty: `ensemble_pilot.py` (the pipeline run with every stage resampled - the scan bootstrapped, its field,
   tracking, the draw - summarized per streamline and per voxel by `tractline.ensemble` and encoded with rankfield;
-  `docs/uncertainty-ensemble.md`).
+  `docs/uncertainty-ensemble.md`); `ensemble_votes_test.py` (whether votes are needed beside the mixture: regrouping,
+  information beyond it, runs, voxel merges, with block-bootstrap intervals).
 - The field estimate: `susc_held_out.py` (+ `susc_held_out_summary.py`: split-half, held-out prediction
   and drift from each scan's own b0s, 12 patients - the test that picks its settings),
   `susc_stability.py`, `susc_convergence.py`, `readout_polarity.py` (+ `_summary`: what the correction needs to

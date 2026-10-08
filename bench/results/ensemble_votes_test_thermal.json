@@ -1,0 +1,496 @@
+{
+ "subject": "PAT16",
+ "b0_noise": "thermal",
+ "ensemble": [
+  "r000",
+  "r001",
+  "r002",
+  "r003",
+  "r004",
+  "r005",
+  "r006",
+  "r007",
+  "r008",
+  "r009",
+  "r010"
+ ],
+ "held_out": [
+  "r011",
+  "r012",
+  "r013",
+  "r014",
+  "r015",
+  "r016"
+ ],
+ "pairs": 176211,
+ "bootstrap": {
+  "resamples": 200,
+  "block_voxels": 10,
+  "blocks": 148
+ },
+ "vote_tail_zero": 0.7478,
+ "1_regrouping": {
+  "tract": {
+   "groups": 43,
+   "change_rate": 0.3404,
+   "auroc": {
+    "single": [
+     0.6464,
+     0.6364,
+     0.6574
+    ],
+    "field6": [
+     0.7915,
+     0.786,
+     0.7972
+    ],
+    "margin6": [
+     0.7656,
+     0.7592,
+     0.7726
+    ],
+    "full": [
+     0.8022,
+     0.7958,
+     0.8089
+    ],
+    "votes": [
+     0.796,
+     0.7901,
+     0.8023
+    ],
+    "votes6": [
+     0.7881,
+     0.7823,
+     0.7938
+    ]
+   },
+   "votes - field6": [
+    0.0044,
+    0.0025,
+    0.0062
+   ],
+   "votes - full": [
+    -0.0062,
+    -0.0069,
+    -0.0055
+   ],
+   "full - field6": [
+    0.0107,
+    0.0086,
+    0.0127
+   ],
+   "ece": {
+    "single": 0.2812,
+    "field6": 0.0381,
+    "full": 0.0297,
+    "votes": 0.042
+   },
+   "verdict": "votes not needed"
+  },
+  "merged (SLF, CC)": {
+   "groups": 35,
+   "change_rate": 0.3353,
+   "auroc": {
+    "single": [
+     0.6429,
+     0.6333,
+     0.6543
+    ],
+    "field6": [
+     0.7895,
+     0.7834,
+     0.7954
+    ],
+    "margin6": [
+     0.7645,
+     0.7584,
+     0.7714
+    ],
+    "full": [
+     0.8001,
+     0.7932,
+     0.8066
+    ],
+    "votes": [
+     0.7939,
+     0.7876,
+     0.8003
+    ],
+    "votes6": [
+     0.7861,
+     0.7801,
+     0.7921
+    ]
+   },
+   "votes - field6": [
+    0.0044,
+    0.0024,
+    0.0062
+   ],
+   "votes - full": [
+    -0.0062,
+    -0.0069,
+    -0.0055
+   ],
+   "full - field6": [
+    0.0106,
+    0.0086,
+    0.0127
+   ],
+   "ece": {
+    "single": 0.2777,
+    "field6": 0.0393,
+    "full": 0.0305,
+    "votes": 0.0427
+   },
+   "verdict": "votes not needed"
+  },
+  "tract, outliers folded": {
+   "groups": 43,
+   "change_rate": 0.3875,
+   "auroc": {
+    "single": [
+     0.6285,
+     0.6205,
+     0.6366
+    ],
+    "field6": [
+     0.7989,
+     0.7923,
+     0.8071
+    ],
+    "margin6": [
+     0.7777,
+     0.7716,
+     0.7862
+    ],
+    "full": [
+     0.8032,
+     0.7969,
+     0.8113
+    ],
+    "votes": [
+     0.7981,
+     0.7917,
+     0.8063
+    ],
+    "votes6": [
+     0.7953,
+     0.789,
+     0.8034
+    ]
+   },
+   "votes - field6": [
+    -0.0008,
+    -0.0019,
+    0.0004
+   ],
+   "votes - full": [
+    -0.0051,
+    -0.0055,
+    -0.0046
+   ],
+   "full - field6": [
+    0.0044,
+    0.0033,
+    0.0053
+   ],
+   "ece": {
+    "single": 0.3403,
+    "field6": 0.0341,
+    "full": 0.034,
+    "votes": 0.0433
+   },
+   "verdict": "votes not needed"
+  },
+  "cluster, outliers folded": {
+   "groups": 800,
+   "change_rate": 0.6237,
+   "auroc": {
+    "single": [
+     0.6043,
+     0.5981,
+     0.6106
+    ],
+    "field6": [
+     0.7903,
+     0.7857,
+     0.7958
+    ],
+    "margin6": [
+     0.7687,
+     0.7642,
+     0.7745
+    ],
+    "full": [
+     0.7905,
+     0.786,
+     0.796
+    ],
+    "votes": [
+     0.7847,
+     0.78,
+     0.7902
+    ],
+    "votes6": [
+     0.7849,
+     0.7801,
+     0.7904
+    ]
+   },
+   "votes - field6": [
+    -0.0055,
+    -0.0061,
+    -0.0051
+   ],
+   "votes - full": [
+    -0.0058,
+    -0.0063,
+    -0.0053
+   ],
+   "full - field6": [
+    0.0003,
+    0.0001,
+    0.0004
+   ],
+   "ece": {
+    "single": 0.5093,
+    "field6": 0.036,
+    "full": 0.0407,
+    "votes": 0.0627
+   },
+   "verdict": "votes not needed"
+  }
+ },
+ "2_beyond_the_mixture": {
+  "tract": {
+   "conditional auroc within deciles of full (0.5 = nothing beyond the mixture)": {
+    "vote fraction": 0.5212,
+    "vote entropy": 0.5137
+   },
+   "logloss (5-fold by block)": {
+    "logit(full)": 0.51423,
+    "logit(full) + vote fraction + vote entropy": 0.50531,
+    "intercept only": 0.64146
+   }
+  },
+  "merged (SLF, CC)": {
+   "conditional auroc within deciles of full (0.5 = nothing beyond the mixture)": {
+    "vote fraction": 0.5219,
+    "vote entropy": 0.5139
+   },
+   "logloss (5-fold by block)": {
+    "logit(full)": 0.51357,
+    "logit(full) + vote fraction + vote entropy": 0.50474,
+    "intercept only": 0.63799
+   }
+  },
+  "tract, outliers folded": {
+   "conditional auroc within deciles of full (0.5 = nothing beyond the mixture)": {
+    "vote fraction": 0.5176,
+    "vote entropy": 0.5092
+   },
+   "logloss (5-fold by block)": {
+    "logit(full)": 0.53606,
+    "logit(full) + vote fraction + vote entropy": 0.5227,
+    "intercept only": 0.6679
+   }
+  },
+  "cluster, outliers folded": {
+   "conditional auroc within deciles of full (0.5 = nothing beyond the mixture)": {
+    "vote fraction": 0.5166,
+    "vote entropy": 0.5304
+   },
+   "logloss (5-fold by block)": {
+    "logit(full)": 0.53216,
+    "logit(full) + vote fraction + vote entropy": 0.53116,
+    "intercept only": 0.66224
+   }
+  }
+ },
+ "3_runs": {
+  "tract": {
+   "2": {
+    "full": {
+     "auroc": 0.7086,
+     "ece": 0.1542
+    },
+    "field6": {
+     "auroc": 0.7045,
+     "ece": 0.1504
+    },
+    "votes": {
+     "auroc": 0.643,
+     "ece": 0.1822
+    }
+   },
+   "4": {
+    "full": {
+     "auroc": 0.7601,
+     "ece": 0.0828
+    },
+    "field6": {
+     "auroc": 0.7567,
+     "ece": 0.0749
+    },
+    "votes": {
+     "auroc": 0.734,
+     "ece": 0.102
+    }
+   },
+   "6": {
+    "full": {
+     "auroc": 0.7808,
+     "ece": 0.0549
+    },
+    "field6": {
+     "auroc": 0.7763,
+     "ece": 0.0456
+    },
+    "votes": {
+     "auroc": 0.7659,
+     "ece": 0.0718
+    }
+   },
+   "8": {
+    "full": {
+     "auroc": 0.7927,
+     "ece": 0.0401
+    },
+    "field6": {
+     "auroc": 0.7858,
+     "ece": 0.0346
+    },
+    "votes": {
+     "auroc": 0.783,
+     "ece": 0.0557
+    }
+   },
+   "11": {
+    "full": {
+     "auroc": 0.8022,
+     "ece": 0.0297
+    },
+    "field6": {
+     "auroc": 0.7915,
+     "ece": 0.0381
+    },
+    "votes": {
+     "auroc": 0.796,
+     "ece": 0.042
+    }
+   }
+  },
+  "tract, outliers folded": {
+   "2": {
+    "full": {
+     "auroc": 0.7054,
+     "ece": 0.1798
+    },
+    "field6": {
+     "auroc": 0.6979,
+     "ece": 0.1781
+    },
+    "votes": {
+     "auroc": 0.6486,
+     "ece": 0.2069
+    }
+   },
+   "4": {
+    "full": {
+     "auroc": 0.7602,
+     "ece": 0.0953
+    },
+    "field6": {
+     "auroc": 0.7571,
+     "ece": 0.0906
+    },
+    "votes": {
+     "auroc": 0.7383,
+     "ece": 0.1111
+    }
+   },
+   "6": {
+    "full": {
+     "auroc": 0.7819,
+     "ece": 0.0645
+    },
+    "field6": {
+     "auroc": 0.7794,
+     "ece": 0.058
+    },
+    "votes": {
+     "auroc": 0.7695,
+     "ece": 0.077
+    }
+   },
+   "8": {
+    "full": {
+     "auroc": 0.7936,
+     "ece": 0.0471
+    },
+    "field6": {
+     "auroc": 0.7905,
+     "ece": 0.0415
+    },
+    "votes": {
+     "auroc": 0.7855,
+     "ece": 0.0577
+    }
+   },
+   "11": {
+    "full": {
+     "auroc": 0.8032,
+     "ece": 0.034
+    },
+    "field6": {
+     "auroc": 0.7989,
+     "ece": 0.0341
+    },
+    "votes": {
+     "auroc": 0.7981,
+     "ece": 0.0433
+    }
+   }
+  }
+ },
+ "4_voxels": {
+  "CC 1-7": {
+   "voxels (any vote or held-out win)": 24355,
+   "voxels where summed votes differ": 3150,
+   "summed votes: brier, ece": [
+    0.1342,
+    0.0518
+   ],
+   "merged-first votes: brier, ece": [
+    0.1335,
+    0.057
+   ]
+  },
+  "SLF I-III": {
+   "voxels (any vote or held-out win)": 12440,
+   "voxels where summed votes differ": 1476,
+   "summed votes: brier, ece": [
+    0.133,
+    0.053
+   ],
+   "merged-first votes: brier, ece": [
+    0.1319,
+    0.0559
+   ]
+  },
+  "superficial (Sup-*)": {
+   "voxels (any vote or held-out win)": 38824,
+   "voxels where summed votes differ": 8968,
+   "summed votes: brier, ece": [
+    0.1753,
+    0.0532
+   ],
+   "merged-first votes: brier, ece": [
+    0.1673,
+    0.0472
+   ]
+  }
+ }
+}

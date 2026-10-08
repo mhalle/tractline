@@ -28,7 +28,9 @@ far each trails the winner) plus one plane rankfield does not have yet - votes:
                        VOTES are how many runs each class won the voxel in.
 
 vote_planes() turns votes into per-rank planes aligned with an encoded field's ranks: votes[j] for the
-class at rank j, and a vote tail - the runs whose winner the field did not keep.
+class at rank j, and a vote tail - the runs whose winner the field did not keep. Measured on PAT16, the mixture
+alone predicts a fresh run's change better than votes in every grouping tried, and a deeper field closes what the
+depth cut loses; votes are kept here for labels without probabilities (NOTES 2026-10-07, "Are votes needed").
 
 numpy and torch only; rankfield is the caller's (bench/ensemble_pilot.py).
 """
@@ -255,7 +257,9 @@ def vote_planes(ranks: np.ndarray, votes: np.ndarray, runs) -> tuple[np.ndarray,
 
 def group_votes(ranks: np.ndarray, vplanes: np.ndarray, lut, groups) -> np.ndarray:
     """Votes per group from the per-rank planes alone: (groups, ...) - each kept class's votes added to its
-    group's. Exact when the vote tail is 0; otherwise short of the truth by at most the tail."""
+    group's. For labels that are the group of one winning class (streamlines), exact when the vote tail is 0 and
+    otherwise short by at most the tail. Not for the voxel field: a voxel's winner is a density argmax, and merging
+    tracts can change it (11-23 % of a merge's voxels on PAT16)."""
     cls = ranks.astype(np.int64) - 1
     g = np.where(cls >= 0, np.asarray(lut)[np.maximum(cls, 0)], groups)
     out = np.zeros((groups + 1, *ranks.shape[1:]), np.int32)
