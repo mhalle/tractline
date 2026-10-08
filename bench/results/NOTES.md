@@ -2651,3 +2651,123 @@ Caveats:
 - Everything rests on the bootstrap's noise being the scan's. Per-voxel sign flips may understate spatially
   correlated noise (entry above). Only test-retest scans can check that, and the repository has none.
 
+
+## 2026-10-08 The bootstrap against real rescans: it understates them, and correlated signs close part of the gap
+
+`ensemble_retest.py` → `ensemble_retest_<pair>.json`. New: `fetch_ds003416.py`, `_masivar.py`, `_register.py`;
+`_bootstrap.py` gains `flip="smooth"` and handles a single reversed b0. M2 (MPS), 136 pipeline runs.
+
+**Data.** MASiVar (OpenNeuro ds003416, CC0, Cai et al. MRM 2021): healthy adults scanned repeatedly on Philips Achieva
+3T. 261 MB was fetched. Three pairs:
+
+| pair | protocol | reference A | rescans |
+|---|---|---|---|
+| cIIIs01-2.5 | 2.5 mm, b1000 ×40 + b2000 ×56, 16 b0s | s1Bx1 scan 2 | same session (scan 4) |
+| cIIIs01-2.1 | 2.1 × 2.1 × 2.2 mm, same shells | s1Bx3 scan 1 | same session (scan 2); another session (s1Bx1 scan 1) |
+| cIs1 | 2.5 mm, 38 slices, b1000/2000/3000 ×96 (of 5 shells), 3 b0s | s1Ax1 scan 1 | same session (scan 2); next day (s1Ax2) |
+
+Each scan is one series per shell, phase-encoded "j", plus a short "j-" series: three b1000s and one b0. The
+pipeline gets the shells joined, and the field is estimated from the forward b0s plus that one reversed b0. Three
+quirks, handled in `_masivar.py`:
+
+- The sidecars state no readout time, so a nominal 0.05 s is used throughout.
+- Each series' trailing b = 0 volume is a real b0 (0.99–1.0 of the others), not a Philips trace image.
+- Philips stores a different scale per series. All series are put on one series' units.
+
+The cIIIs01 scans track b = 2000 and cIs1 tracks b = 3000. Every run is labelled with draw 0, so only the data's
+share of label change is counted.
+
+**Matching across scans.** A rescan's seeds are not A's voxels.
+
+- Nearest-path matching (MDF) cannot tell rescans from replicates. On cIIIs01-2.5, among matches within 5 mm, a run
+  against itself (each streamline to its nearest other one) changes 9.8 % of labels. Replicate against replicate
+  changes 9.7 %, and the rescan 10.8 %. The nearest path is mostly a neighbour, so the measure sits at its floor.
+- What is used: the rescan's corrected mean b0 is registered rigidly to A's (dipy, mutual information). Its corrected
+  DWI is then resampled onto A's grid (cubic, b-vectors turned by the rotation) and tracked there, so seed keys match.
+  Head motion between scans: 0.2–1.0 mm and 0.2–0.5° within a session (NCC 0.96–0.97); 2.7 mm / 3.2° and 5.6 mm /
+  10.5° between sessions (NCC 0.92, 0.85).
+- Resampling smooths the noise. As a control, A is sent onto the rescan's grid and back, and so are four replicates.
+  A against itself resampled changes 12–18 % of labels. Replicate pairs both resampled change up to 1 point fewer than
+  native pairs with per-voxel signs, and the rescan against resampled A matches the rescan against A. Interpolation does not inflate the
+  rescans.
+- Voxel winners need no matching. Their rescan figures below are interpolation-free: the rescan is tracked on its own
+  grid and its streamlines are moved into A's space.
+
+**Labels changed (seed keys), replicate against replicate (8 replicates, 7 pairs, "added" b0s), against real rescans:**
+
+| pair | per-voxel signs | smooth (in-plane, FWHM 4 voxels) | per-volume signs | rescan, same session | rescan, other session |
+|---|---|---|---|---|---|
+| cIIIs01-2.5 | 31.5 % (31.3–31.7) | 35.0 % (34.5–35.4) | 36.5 % (33.3–38.4) | 36.3 % | — |
+| cIIIs01-2.1 | 32.2 % (32.0–32.4) | 34.9 % (34.7–35.1) | 35.8 % (33.5–37.7) | 36.9 % | 39.1 % |
+| cIs1 | 39.6 % (39.2–40.2) | 40.7 % (40.2–41.0) | 41.6 % (40.0–42.2) | 49.9 % | 47.5 % |
+
+Median path distance between matched streamlines (mm), in the same column order:
+
+- cIIIs01-2.5: 9.7 / 12.7 / 13.7 against 13.1.
+- cIIIs01-2.1: 10.5 / 12.9 / 13.9 against 14.0 and 15.9.
+- cIs1: 13.2 / 14.3 / 15.0 against 21.5 and 19.3.
+
+**Voxel winners agree** (where either run has a tract):
+
+| pair | per-voxel / smooth / per-volume | rescan, same session | rescan, other session |
+|---|---|---|---|
+| cIIIs01-2.5 | 71.0 / 69.7 / 69.0 % | 64.8 % (67.7 % on A's grid) | — |
+| cIIIs01-2.1 | 73.3 / 72.8 / 72.6 % | 69.7 % (70.8 %) | 65.1 % (70.1 %) |
+| cIs1 | 62.1 / 62.0 / 61.7 % | 56.9 % (57.6 %) | 53.0 % (55.2 %) |
+
+**Field p99 |Hz|** (nominal readout):
+
+| pair | A | per-voxel | smooth | per-volume | rescans |
+|---|---|---|---|---|---|
+| cIIIs01-2.5 | 155 | 146–156 | 138–151 | 123–145 | 125 |
+| cIIIs01-2.1 | 182 | 161–189 | 156–200 | 155–177 | 199 (same session), 170 (other) |
+| cIs1 | 114 | 105–114 | 105–114 | 105–114 | 95, 159 |
+
+**What it shows:**
+
+- **The per-voxel bootstrap understates a real rescan on every pair.**
+  - Labels: by 5 points within a session on cIIIs01 and 7 between sessions; by 8–10 on cIs1.
+  - Paths: 3–8 mm shorter median distance than a rescan's.
+  - Voxel agreement: 4–9 points higher than a rescan's.
+- **The scan's noise is spatially correlated in-plane, not across slices.** Lag-1 correlation of the residuals, along
+  x, y and z:
+  - cIIIs01-2.5: 0.53, 0.40, 0.09.
+  - cIIIs01-2.1: 0.47, 0.31, 0.08.
+  - cIs1: 0.30, 0.11, 0.05.
+
+  This is the reconstruction's correlation within a 2D EPI slice. Per-voxel signs remove it.
+- **Keeping that correlation closes the within-session gap on cIIIs01.**
+  - Smooth signs: 35.0 % against the rescan's 36.3 % (2.5 mm), and 34.9 % against 36.9 % (2.1 mm).
+  - Per-volume signs: 36.5 % and 35.8 %. They keep all of the correlation but spread widely between pairs
+    (33–38 %), with only one sign per volume.
+  - Path distances match the rescans too (12.7–13.9 mm against 13.1–14.0).
+  - On cIIIs01-2.5, per-volume signs also spread the field to 123–145 Hz, bracketing the rescan's 125. Per-voxel signs
+    never left 146–156.
+- **Neither closes the between-session gap, nor the voxel gap.** Another session moves 39.1 % of labels, 3–4 points
+  above any variant. Voxel agreement moves at most 2 points toward the rescans'. A new session brings what no noise
+  bootstrap holds: another shim and field (199 and 170 Hz against A's 182), another head position and slice placement,
+  and registration error.
+- **cIs1 stays 8 points short with every variant.** Its residuals are less correlated (0.30 / 0.11), so the signs
+  matter less there. Its rescans move 19–21 mm against 13–15. It has 38 slices (95 mm: cortex cut at the top) and three
+  forward b0s, and its 2.5 mm fields barely vary across replicates (105–114 Hz) while rescans give 95 and 159. The
+  field estimate from one reversed b0 is the likely difference there, not the noise.
+
+**For the ensemble:**
+
+- **Use spatially correlated signs.** `flip="smooth"` (in-plane, FWHM 4) matches a same-session rescan on cIIIs01
+  within 1–2 points, with a steady spread. `flip="volume"` matches on average, but each pair is noisier.
+- **Even so, the ensemble's confidence is optimistic for a rescan in another session.**
+  - By about 3–4 points of label change on cIIIs01, and more on a protocol like cIs1.
+  - The double bootstrap's recalibration (entry above) was fitted on per-voxel replicates at 38 % change. It should be
+    refitted with smooth signs and treated as a same-session map.
+
+Caveats:
+
+- Two subjects, one Philips scanner.
+- The labeller's draw is held at 0, so these rates are the data's share only. The pilot's 38 % included draws.
+- The pairs share their reference with the replicates, so replicate-against-replicate is the comparison, not
+  A-against-replicate, which is centred (27.7–37.4 %).
+- FWHM 4 was chosen from the residual correlation, not fitted.
+- The sibling session's sub-cIIIs04 run read 33.0 % for replicate against replicate and 37.8 % for a rescan. That run
+  had no registration and gave the rescan another labeller draw, but it points the same way. Its data stays in
+  DATA/ds003416/sub-cIIIs04 and `_masivar.py` loads it.

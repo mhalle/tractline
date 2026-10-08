@@ -147,9 +147,32 @@ log-odds or a table per vote count, and the same table works for voxels. Applied
 P(rescan keeps the tract) of 0.62, the replicate-vs-replicate rate. Under it no streamline reaches 0.99: eleven
 unanimous runs still mean a 1-in-12 chance that a rescan changes the label (NOTES 2026-10-08).
 
+**Checked against real rescans.** MASiVar (OpenNeuro ds003416) scans healthy adults repeatedly on one Philips
+scanner. Three pairs were used: two from one subject (2.5 mm and 2.1 mm) and one from another (five shells, 38 slices).
+
+A rescan's corrected DWI is registered to the reference and resampled onto its grid, so seed keys match. Resampling
+the reference there and back, and doing the same to the replicates, shows interpolation does not inflate the rescans.
+With the labeller's draw held fixed, labels changed:
+
+| | per-voxel signs | smooth signs | per-volume signs | rescan, same session | rescan, other session |
+|---|---|---|---|---|---|
+| subject 1, 2.5 mm | 31.5 % | 35.0 % | 36.5 % | 36.3 % | |
+| subject 1, 2.1 mm | 32.2 % | 34.9 % | 35.8 % | 36.9 % | 39.1 % |
+| subject 2 | 39.6 % | 40.7 % | 41.6 % | 49.9 % | 47.5 % |
+
+- **Per-voxel sign flips understate a rescan.** The scan's noise is correlated between in-plane neighbours (lag-1
+  0.3–0.5; the reconstruction's, within a 2D EPI slice). Per-voxel signs remove that correlation.
+- **Signs drawn as smooth in-plane patches close the same-session gap on subject 1** to 1–2 points (`flip="smooth"`,
+  FWHM 4 voxels). Per-volume signs do as well on average, but each pair is noisier.
+- **A rescan in another session moves 3–4 more points than any variant**, and voxel agreement stays 3–9 points below.
+  Another session brings what a noise bootstrap cannot: a new shim and field, head position and registration error.
+- **Subject 2's protocol stays 8 points short with every variant.** It has one reversed b0 and three forward b0s, and
+  its replicates' fields barely vary while its rescans' do.
+
 What a shipped confidence should be, then:
 
 - the ensemble's mixture or votes, mapped for rescans by a double bootstrap;
+- the bootstrap's signs spatially correlated (smooth, in-plane), and the map refitted with them;
 - the map fitted per protocol, since it depends on the pipeline and R;
-- checked against test-retest scans, which this repository does not have, before the bootstrap's noise model is
-  trusted.
+- read as a same-session confidence. Against a scan from another session it is still optimistic by a few points, more
+  on protocols whose field rests on few b0s (NOTES 2026-10-08, "The bootstrap against real rescans").

@@ -1,0 +1,1334 @@
+{
+ "pair": "cIs1",
+ "subject": "cIs1",
+ "reference": "cIs1_s1Ax1_scan1",
+ "rescans": {
+  "within": {
+   "name": "cIs1_s1Ax1_scan2",
+   "rotation_deg": 0.16,
+   "translation_mm": 1.04,
+   "ncc_after": 0.9661
+  },
+  "between": {
+   "name": "cIs1_s1Ax2_scan1",
+   "rotation_deg": 10.54,
+   "translation_mm": 5.57,
+   "ncc_after": 0.8457
+  }
+ },
+ "runs_log": {
+  "A": {
+   "fibers": 35458,
+   "labeled": 27104,
+   "residual_left": null,
+   "field_hz_p99_abs": 114.05,
+   "seconds": {
+    "field_estimate": 9.21,
+    "field_apply": 5.04,
+    "prep": 3.49,
+    "load": 0.33,
+    "ukf": 61.33,
+    "label": 1.88
+   },
+   "total_s": 82.4
+  },
+  "within": {
+   "fibers": 37163,
+   "labeled": 28451,
+   "residual_left": 0.659,
+   "field_hz_p99_abs": 95.0,
+   "seconds": {
+    "field_estimate": 4.55,
+    "field_apply": 2.25,
+    "prep": 2.0,
+    "load": 0.29,
+    "ukf": 30.69,
+    "label": 0.6
+   },
+   "total_s": 41.6
+  },
+  "between": {
+   "fibers": 36875,
+   "labeled": 28231,
+   "residual_left": null,
+   "field_hz_p99_abs": 158.99,
+   "seconds": {
+    "field_estimate": 4.37,
+    "field_apply": 2.2,
+    "prep": 2.0,
+    "load": 0.29,
+    "ukf": 29.84,
+    "label": 0.6
+   },
+   "total_s": 40.4
+  },
+  "within_onA": {
+   "fibers": 36725,
+   "labeled": 28169,
+   "residual_left": null,
+   "field_hz_p99_abs": null,
+   "seconds": {
+    "prep": 2.11,
+    "load": 0.29,
+    "ukf": 29.72,
+    "label": 0.59
+   },
+   "total_s": 33.7
+  },
+  "between_onA": {
+   "fibers": 35534,
+   "labeled": 27178,
+   "residual_left": null,
+   "field_hz_p99_abs": null,
+   "seconds": {
+    "prep": 2.11,
+    "load": 0.3,
+    "ukf": 28.65,
+    "label": 0.56
+   },
+   "total_s": 32.6
+  },
+  "A_fb": {
+   "fibers": 35121,
+   "labeled": 26916,
+   "residual_left": null,
+   "field_hz_p99_abs": null,
+   "seconds": {
+    "prep": 2.11,
+    "load": 0.3,
+    "ukf": 28.26,
+    "label": 0.56
+   },
+   "total_s": 32.2,
+   "through": "within"
+  },
+  "bootstrap_voxel": {
+   "shells": {
+    "1000": {
+     "directions": 96,
+     "sh_order": 8,
+     "coefficients": 45,
+     "leverage": 0.469
+    },
+    "2000": {
+     "directions": 96,
+     "sh_order": 8,
+     "coefficients": 45,
+     "leverage": 0.469
+    },
+    "3000": {
+     "directions": 96,
+     "sh_order": 8,
+     "coefficients": 45,
+     "leverage": 0.469
+    }
+   },
+   "b0_volumes": 3,
+   "b0_noise": "added",
+   "b0_scale": 0.2101,
+   "leverage_scaled": true,
+   "flip": "voxel",
+   "b0_residual_sd": 6.64,
+   "dw_residual_rms": 6.64,
+   "dw_residual_over_b0_sd": 1.0
+  },
+  "voxel/r001": {
+   "fibers": 35996,
+   "labeled": 27130,
+   "residual_left": null,
+   "field_hz_p99_abs": 108.36,
+   "seconds": {
+    "field_estimate": 4.48,
+    "field_apply": 3.22,
+    "prep": 2.03,
+    "load": 0.29,
+    "ukf": 28.84,
+    "label": 0.56
+   },
+   "total_s": 40.4
+  },
+  "voxel/r002": {
+   "fibers": 36061,
+   "labeled": 27132,
+   "residual_left": null,
+   "field_hz_p99_abs": 110.23,
+   "seconds": {
+    "field_estimate": 4.14,
+    "field_apply": 3.22,
+    "prep": 2.05,
+    "load": 0.31,
+    "ukf": 28.79,
+    "label": 0.56
+   },
+   "total_s": 40.0
+  },
+  "voxel/r003": {
+   "fibers": 36160,
+   "labeled": 27245,
+   "residual_left": null,
+   "field_hz_p99_abs": 107.48,
+   "seconds": {
+    "field_estimate": 4.61,
+    "field_apply": 2.94,
+    "prep": 2.03,
+    "load": 0.28,
+    "ukf": 28.87,
+    "label": 0.56
+   },
+   "total_s": 40.2
+  },
+  "voxel/r004": {
+   "fibers": 36182,
+   "labeled": 27300,
+   "residual_left": null,
+   "field_hz_p99_abs": 105.79,
+   "seconds": {
+    "field_estimate": 4.44,
+    "field_apply": 3.04,
+    "prep": 2.02,
+    "load": 0.29,
+    "ukf": 28.99,
+    "label": 0.56
+   },
+   "total_s": 40.3
+  },
+  "voxel/r005": {
+   "fibers": 36003,
+   "labeled": 27200,
+   "residual_left": null,
+   "field_hz_p99_abs": 110.43,
+   "seconds": {
+    "field_estimate": 4.85,
+    "field_apply": 2.97,
+    "prep": 2.03,
+    "load": 0.29,
+    "ukf": 28.81,
+    "label": 0.55
+   },
+   "total_s": 40.6
+  },
+  "voxel/r006": {
+   "fibers": 36082,
+   "labeled": 27188,
+   "residual_left": null,
+   "field_hz_p99_abs": 107.05,
+   "seconds": {
+    "field_estimate": 4.37,
+    "field_apply": 3.19,
+    "prep": 2.06,
+    "load": 0.28,
+    "ukf": 28.88,
+    "label": 0.57
+   },
+   "total_s": 40.3
+  },
+  "voxel/r007": {
+   "fibers": 36076,
+   "labeled": 27088,
+   "residual_left": null,
+   "field_hz_p99_abs": 112.11,
+   "seconds": {
+    "field_estimate": 4.71,
+    "field_apply": 2.92,
+    "prep": 2.03,
+    "load": 0.28,
+    "ukf": 28.66,
+    "label": 0.55
+   },
+   "total_s": 40.1
+  },
+  "voxel/r008": {
+   "fibers": 36205,
+   "labeled": 27263,
+   "residual_left": null,
+   "field_hz_p99_abs": 107.59,
+   "seconds": {
+    "field_estimate": 5.07,
+    "field_apply": 2.84,
+    "prep": 2.03,
+    "load": 0.28,
+    "ukf": 28.73,
+    "label": 0.55
+   },
+   "total_s": 40.5
+  },
+  "voxel/r001_fb": {
+   "fibers": 35575,
+   "labeled": 26857,
+   "residual_left": null,
+   "field_hz_p99_abs": null,
+   "seconds": {
+    "prep": 2.41,
+    "load": 0.38,
+    "ukf": 28.84,
+    "label": 0.57
+   },
+   "total_s": 33.3,
+   "through": "within"
+  },
+  "voxel/r002_fb": {
+   "fibers": 35560,
+   "labeled": 26924,
+   "residual_left": null,
+   "field_hz_p99_abs": null,
+   "seconds": {
+    "prep": 2.24,
+    "load": 0.34,
+    "ukf": 28.76,
+    "label": 0.57
+   },
+   "total_s": 33.0,
+   "through": "within"
+  },
+  "voxel/r003_fb": {
+   "fibers": 35645,
+   "labeled": 26992,
+   "residual_left": null,
+   "field_hz_p99_abs": null,
+   "seconds": {
+    "prep": 2.31,
+    "load": 0.34,
+    "ukf": 29.55,
+    "label": 0.58
+   },
+   "total_s": 33.8,
+   "through": "within"
+  },
+  "voxel/r004_fb": {
+   "fibers": 35689,
+   "labeled": 27060,
+   "residual_left": null,
+   "field_hz_p99_abs": null,
+   "seconds": {
+    "prep": 2.41,
+    "load": 0.4,
+    "ukf": 30.19,
+    "label": 0.58
+   },
+   "total_s": 34.5,
+   "through": "within"
+  },
+  "bootstrap_volume": {
+   "shells": {
+    "1000": {
+     "directions": 96,
+     "sh_order": 8,
+     "coefficients": 45,
+     "leverage": 0.469
+    },
+    "2000": {
+     "directions": 96,
+     "sh_order": 8,
+     "coefficients": 45,
+     "leverage": 0.469
+    },
+    "3000": {
+     "directions": 96,
+     "sh_order": 8,
+     "coefficients": 45,
+     "leverage": 0.469
+    }
+   },
+   "b0_volumes": 3,
+   "b0_noise": "added",
+   "b0_scale": 0.2101,
+   "leverage_scaled": true,
+   "flip": "volume",
+   "b0_residual_sd": 6.64,
+   "dw_residual_rms": 6.64,
+   "dw_residual_over_b0_sd": 1.0
+  },
+  "volume/r001": {
+   "fibers": 36319,
+   "labeled": 27125,
+   "residual_left": 0.704,
+   "field_hz_p99_abs": 114.15,
+   "seconds": {
+    "field_estimate": 5.36,
+    "field_apply": 3.9,
+    "prep": 2.63,
+    "load": 0.33,
+    "ukf": 35.17,
+    "label": 0.63
+   },
+   "total_s": 49.7
+  },
+  "volume/r002": {
+   "fibers": 36199,
+   "labeled": 27323,
+   "residual_left": null,
+   "field_hz_p99_abs": 109.22,
+   "seconds": {
+    "field_estimate": 5.12,
+    "field_apply": 4.35,
+    "prep": 2.57,
+    "load": 0.34,
+    "ukf": 41.91,
+    "label": 0.62
+   },
+   "total_s": 56.0
+  },
+  "volume/r003": {
+   "fibers": 36045,
+   "labeled": 27128,
+   "residual_left": null,
+   "field_hz_p99_abs": 108.29,
+   "seconds": {
+    "field_estimate": 4.67,
+    "field_apply": 4.51,
+    "prep": 2.48,
+    "load": 0.33,
+    "ukf": 35.75,
+    "label": 0.61
+   },
+   "total_s": 49.5
+  },
+  "volume/r004": {
+   "fibers": 36301,
+   "labeled": 27393,
+   "residual_left": null,
+   "field_hz_p99_abs": 109.72,
+   "seconds": {
+    "field_estimate": 5.03,
+    "field_apply": 4.38,
+    "prep": 2.51,
+    "load": 0.33,
+    "ukf": 36.15,
+    "label": 0.59
+   },
+   "total_s": 50.6
+  },
+  "volume/r005": {
+   "fibers": 36514,
+   "labeled": 27468,
+   "residual_left": null,
+   "field_hz_p99_abs": 110.5,
+   "seconds": {
+    "field_estimate": 4.52,
+    "field_apply": 3.18,
+    "prep": 2.29,
+    "load": 0.29,
+    "ukf": 34.77,
+    "label": 0.81
+   },
+   "total_s": 47.5
+  },
+  "volume/r006": {
+   "fibers": 36070,
+   "labeled": 27129,
+   "residual_left": 0.709,
+   "field_hz_p99_abs": 112.89,
+   "seconds": {
+    "field_estimate": 6.12,
+    "field_apply": 5.12,
+    "prep": 2.66,
+    "load": 0.44,
+    "ukf": 41.8,
+    "label": 0.73
+   },
+   "total_s": 58.5
+  },
+  "volume/r007": {
+   "fibers": 36206,
+   "labeled": 27254,
+   "residual_left": null,
+   "field_hz_p99_abs": 104.56,
+   "seconds": {
+    "field_estimate": 5.84,
+    "field_apply": 4.19,
+    "prep": 2.59,
+    "load": 0.38,
+    "ukf": 38.02,
+    "label": 0.6
+   },
+   "total_s": 52.7
+  },
+  "volume/r008": {
+   "fibers": 36024,
+   "labeled": 27150,
+   "residual_left": null,
+   "field_hz_p99_abs": 106.73,
+   "seconds": {
+    "field_estimate": 4.36,
+    "field_apply": 3.29,
+    "prep": 2.22,
+    "load": 0.28,
+    "ukf": 29.24,
+    "label": 0.57
+   },
+   "total_s": 41.0
+  },
+  "volume/r001_fb": {
+   "fibers": 35840,
+   "labeled": 26901,
+   "residual_left": null,
+   "field_hz_p99_abs": null,
+   "seconds": {
+    "prep": 2.14,
+    "load": 0.32,
+    "ukf": 28.61,
+    "label": 0.57
+   },
+   "total_s": 32.7,
+   "through": "within"
+  },
+  "volume/r002_fb": {
+   "fibers": 35754,
+   "labeled": 27028,
+   "residual_left": null,
+   "field_hz_p99_abs": null,
+   "seconds": {
+    "prep": 2.15,
+    "load": 0.31,
+    "ukf": 29.15,
+    "label": 0.58
+   },
+   "total_s": 33.2,
+   "through": "within"
+  },
+  "volume/r003_fb": {
+   "fibers": 35589,
+   "labeled": 26922,
+   "residual_left": null,
+   "field_hz_p99_abs": null,
+   "seconds": {
+    "prep": 2.48,
+    "load": 0.38,
+    "ukf": 29.54,
+    "label": 0.58
+   },
+   "total_s": 34.0,
+   "through": "within"
+  },
+  "volume/r004_fb": {
+   "fibers": 35883,
+   "labeled": 27137,
+   "residual_left": null,
+   "field_hz_p99_abs": null,
+   "seconds": {
+    "prep": 2.17,
+    "load": 0.32,
+    "ukf": 29.23,
+    "label": 0.62
+   },
+   "total_s": 33.4,
+   "through": "within"
+  },
+  "bootstrap_smooth": {
+   "shells": {
+    "1000": {
+     "directions": 96,
+     "sh_order": 8,
+     "coefficients": 45,
+     "leverage": 0.469
+    },
+    "2000": {
+     "directions": 96,
+     "sh_order": 8,
+     "coefficients": 45,
+     "leverage": 0.469
+    },
+    "3000": {
+     "directions": 96,
+     "sh_order": 8,
+     "coefficients": 45,
+     "leverage": 0.469
+    }
+   },
+   "b0_volumes": 3,
+   "b0_noise": "added",
+   "b0_scale": 0.2101,
+   "leverage_scaled": true,
+   "flip": "smooth",
+   "fwhm_voxels": 4.0,
+   "b0_residual_sd": 6.64,
+   "dw_residual_rms": 6.64,
+   "dw_residual_over_b0_sd": 1.0
+  },
+  "smooth/r001": {
+   "fibers": 36217,
+   "labeled": 27219,
+   "residual_left": null,
+   "field_hz_p99_abs": 106.49,
+   "seconds": {
+    "field_estimate": 5.16,
+    "field_apply": 4.12,
+    "prep": 2.11,
+    "load": 0.35,
+    "ukf": 30.08,
+    "label": 0.58
+   },
+   "total_s": 43.4
+  },
+  "smooth/r002": {
+   "fibers": 36140,
+   "labeled": 27196,
+   "residual_left": null,
+   "field_hz_p99_abs": 105.11,
+   "seconds": {
+    "field_estimate": 4.34,
+    "field_apply": 3.17,
+    "prep": 2.04,
+    "load": 0.33,
+    "ukf": 31.18,
+    "label": 0.58
+   },
+   "total_s": 42.7
+  },
+  "smooth/r003": {
+   "fibers": 36197,
+   "labeled": 27274,
+   "residual_left": null,
+   "field_hz_p99_abs": 107.07,
+   "seconds": {
+    "field_estimate": 4.27,
+    "field_apply": 3.06,
+    "prep": 2.11,
+    "load": 0.3,
+    "ukf": 30.6,
+    "label": 0.57
+   },
+   "total_s": 41.9
+  },
+  "smooth/r004": {
+   "fibers": 36174,
+   "labeled": 27207,
+   "residual_left": null,
+   "field_hz_p99_abs": 109.05,
+   "seconds": {
+    "field_estimate": 4.31,
+    "field_apply": 3.31,
+    "prep": 2.04,
+    "load": 0.28,
+    "ukf": 29.19,
+    "label": 0.57
+   },
+   "total_s": 40.7
+  },
+  "smooth/r005": {
+   "fibers": 36253,
+   "labeled": 27226,
+   "residual_left": null,
+   "field_hz_p99_abs": 107.91,
+   "seconds": {
+    "field_estimate": 4.19,
+    "field_apply": 3.0,
+    "prep": 2.04,
+    "load": 0.28,
+    "ukf": 30.65,
+    "label": 0.57
+   },
+   "total_s": 41.7
+  },
+  "smooth/r006": {
+   "fibers": 36282,
+   "labeled": 27178,
+   "residual_left": null,
+   "field_hz_p99_abs": 109.57,
+   "seconds": {
+    "field_estimate": 4.48,
+    "field_apply": 3.25,
+    "prep": 2.11,
+    "load": 0.3,
+    "ukf": 32.75,
+    "label": 0.63
+   },
+   "total_s": 44.6
+  },
+  "smooth/r007": {
+   "fibers": 36159,
+   "labeled": 27289,
+   "residual_left": null,
+   "field_hz_p99_abs": 113.96,
+   "seconds": {
+    "field_estimate": 4.44,
+    "field_apply": 3.53,
+    "prep": 2.14,
+    "load": 0.32,
+    "ukf": 30.91,
+    "label": 0.61
+   },
+   "total_s": 43.0
+  },
+  "smooth/r008": {
+   "fibers": 36240,
+   "labeled": 27216,
+   "residual_left": null,
+   "field_hz_p99_abs": 106.02,
+   "seconds": {
+    "field_estimate": 4.16,
+    "field_apply": 3.08,
+    "prep": 2.06,
+    "load": 0.32,
+    "ukf": 29.22,
+    "label": 0.56
+   },
+   "total_s": 40.4
+  },
+  "smooth/r001_fb": {
+   "fibers": 35763,
+   "labeled": 26970,
+   "residual_left": null,
+   "field_hz_p99_abs": null,
+   "seconds": {
+    "prep": 2.46,
+    "load": 0.37,
+    "ukf": 31.16,
+    "label": 0.6
+   },
+   "total_s": 36.0,
+   "through": "within"
+  },
+  "smooth/r002_fb": {
+   "fibers": 35735,
+   "labeled": 26921,
+   "residual_left": null,
+   "field_hz_p99_abs": null,
+   "seconds": {
+    "prep": 2.39,
+    "load": 0.39,
+    "ukf": 31.32,
+    "label": 0.61
+   },
+   "total_s": 36.2,
+   "through": "within"
+  },
+  "smooth/r003_fb": {
+   "fibers": 35686,
+   "labeled": 26943,
+   "residual_left": null,
+   "field_hz_p99_abs": null,
+   "seconds": {
+    "prep": 2.5,
+    "load": 0.41,
+    "ukf": 30.72,
+    "label": 0.58
+   },
+   "total_s": 35.2,
+   "through": "within"
+  },
+  "smooth/r004_fb": {
+   "fibers": 35769,
+   "labeled": 26959,
+   "residual_left": null,
+   "field_hz_p99_abs": null,
+   "seconds": {
+    "prep": 2.43,
+    "load": 0.36,
+    "ukf": 30.27,
+    "label": 0.67
+   },
+   "total_s": 34.8,
+   "through": "within"
+  }
+ },
+ "rescan": {
+  "within": {
+   "own grid, moved": {
+    "voxels": {
+     "agree (either has a tract)": 0.5693,
+     "agree (both have a tract)": 0.6734,
+     "voxels": 70692
+    },
+    "tract_share_L1": 0.0546
+   },
+   "on A's grid": {
+    "voxels": {
+     "agree (either has a tract)": 0.5757,
+     "agree (both have a tract)": 0.6727,
+     "voxels": 69023
+    },
+    "tract_share_L1": 0.0541,
+    "seed_keys": {
+     "changed": 0.4995,
+     "matched": 0.7654,
+     "median_mdf_mm": 21.48
+    }
+   },
+   "on A's grid, against A there and back": {
+    "voxels": {
+     "agree (either has a tract)": 0.5715,
+     "agree (both have a tract)": 0.6729,
+     "voxels": 68687
+    },
+    "tract_share_L1": 0.056,
+    "seed_keys": {
+     "changed": 0.4973,
+     "matched": 0.7692,
+     "median_mdf_mm": 21.31
+    }
+   }
+  },
+  "between": {
+   "own grid, moved": {
+    "voxels": {
+     "agree (either has a tract)": 0.5296,
+     "agree (both have a tract)": 0.6499,
+     "voxels": 71907
+    },
+    "tract_share_L1": 0.0917
+   },
+   "on A's grid": {
+    "voxels": {
+     "agree (either has a tract)": 0.5515,
+     "agree (both have a tract)": 0.6662,
+     "voxels": 69812
+    },
+    "tract_share_L1": 0.0624,
+    "seed_keys": {
+     "changed": 0.4754,
+     "matched": 0.7604,
+     "median_mdf_mm": 19.29
+    }
+   },
+   "on A's grid, against A there and back": {
+    "voxels": {
+     "agree (either has a tract)": 0.5492,
+     "agree (both have a tract)": 0.6674,
+     "voxels": 69412
+    },
+    "tract_share_L1": 0.0653,
+    "seed_keys": {
+     "changed": 0.4747,
+     "matched": 0.7668,
+     "median_mdf_mm": 19.08
+    }
+   }
+  }
+ },
+ "control: A resampled there and back": {
+  "through": "within",
+  "voxels": {
+   "agree (either has a tract)": 0.6978,
+   "agree (both have a tract)": 0.7798,
+   "voxels": 66883
+  },
+  "tract_share_L1": 0.0157,
+  "seed_keys": {
+   "changed": 0.1833,
+   "matched": 0.9406,
+   "median_mdf_mm": 1.98
+  }
+ },
+ "bootstrap": {
+  "smooth": {
+   "runs": [
+    "r001",
+    "r002",
+    "r003",
+    "r004",
+    "r005",
+    "r006",
+    "r007",
+    "r008"
+   ],
+   "replicate vs replicate": {
+    "seed keys changed": {
+     "mean": 0.4072,
+     "min": 0.4016,
+     "max": 0.4101,
+     "n": 7
+    },
+    "seed keys median mdf": {
+     "mean": 14.2629,
+     "min": 14.0,
+     "max": 14.54,
+     "n": 7
+    },
+    "seed keys matched": {
+     "mean": 0.8363,
+     "min": 0.8341,
+     "max": 0.8378,
+     "n": 7
+    },
+    "voxels agree (either)": {
+     "mean": 0.6204,
+     "min": 0.6158,
+     "max": 0.6253,
+     "n": 7
+    },
+    "voxels agree (both)": {
+     "mean": 0.7043,
+     "min": 0.7001,
+     "max": 0.709,
+     "n": 7
+    },
+    "tract share L1": {
+     "mean": 0.0326,
+     "min": 0.0216,
+     "max": 0.0396,
+     "n": 7
+    }
+   },
+   "A vs replicate": {
+    "seed keys changed": {
+     "mean": 0.3615,
+     "min": 0.3582,
+     "max": 0.3661,
+     "n": 8
+    },
+    "seed keys median mdf": {
+     "mean": 11.0162,
+     "min": 10.78,
+     "max": 11.24,
+     "n": 8
+    },
+    "seed keys matched": {
+     "mean": 0.8679,
+     "min": 0.8646,
+     "max": 0.872,
+     "n": 8
+    },
+    "voxels agree (either)": {
+     "mean": 0.6309,
+     "min": 0.6273,
+     "max": 0.636,
+     "n": 8
+    },
+    "voxels agree (both)": {
+     "mean": 0.7147,
+     "min": 0.7113,
+     "max": 0.7196,
+     "n": 8
+    },
+    "tract share L1": {
+     "mean": 0.0364,
+     "min": 0.028,
+     "max": 0.0479,
+     "n": 8
+    }
+   },
+   "field_hz_p99_abs": [
+    105.11,
+    113.96
+   ],
+   "noise_check": {
+    "shells": {
+     "1000": {
+      "directions": 96,
+      "sh_order": 8,
+      "coefficients": 45,
+      "leverage": 0.469
+     },
+     "2000": {
+      "directions": 96,
+      "sh_order": 8,
+      "coefficients": 45,
+      "leverage": 0.469
+     },
+     "3000": {
+      "directions": 96,
+      "sh_order": 8,
+      "coefficients": 45,
+      "leverage": 0.469
+     }
+    },
+    "b0_volumes": 3,
+    "b0_noise": "added",
+    "b0_scale": 0.2101,
+    "leverage_scaled": true,
+    "flip": "smooth",
+    "fwhm_voxels": 4.0,
+    "b0_residual_sd": 6.64,
+    "dw_residual_rms": 6.64,
+    "dw_residual_over_b0_sd": 1.0
+   }
+  },
+  "volume": {
+   "runs": [
+    "r001",
+    "r002",
+    "r003",
+    "r004",
+    "r005",
+    "r006",
+    "r007",
+    "r008"
+   ],
+   "replicate vs replicate": {
+    "seed keys changed": {
+     "mean": 0.4157,
+     "min": 0.4002,
+     "max": 0.4217,
+     "n": 7
+    },
+    "seed keys median mdf": {
+     "mean": 15.0314,
+     "min": 13.88,
+     "max": 15.52,
+     "n": 7
+    },
+    "seed keys matched": {
+     "mean": 0.8286,
+     "min": 0.8212,
+     "max": 0.8391,
+     "n": 7
+    },
+    "voxels agree (either)": {
+     "mean": 0.6168,
+     "min": 0.6145,
+     "max": 0.622,
+     "n": 7
+    },
+    "voxels agree (both)": {
+     "mean": 0.7048,
+     "min": 0.7028,
+     "max": 0.7061,
+     "n": 7
+    },
+    "tract share L1": {
+     "mean": 0.0374,
+     "min": 0.0298,
+     "max": 0.0424,
+     "n": 7
+    }
+   },
+   "A vs replicate": {
+    "seed keys changed": {
+     "mean": 0.3739,
+     "min": 0.3683,
+     "max": 0.3807,
+     "n": 8
+    },
+    "seed keys median mdf": {
+     "mean": 11.7888,
+     "min": 11.47,
+     "max": 12.32,
+     "n": 8
+    },
+    "seed keys matched": {
+     "mean": 0.8612,
+     "min": 0.8585,
+     "max": 0.8673,
+     "n": 8
+    },
+    "voxels agree (either)": {
+     "mean": 0.6256,
+     "min": 0.6221,
+     "max": 0.6289,
+     "n": 8
+    },
+    "voxels agree (both)": {
+     "mean": 0.712,
+     "min": 0.7083,
+     "max": 0.7156,
+     "n": 8
+    },
+    "tract share L1": {
+     "mean": 0.0411,
+     "min": 0.0329,
+     "max": 0.0494,
+     "n": 8
+    }
+   },
+   "field_hz_p99_abs": [
+    104.56,
+    114.15
+   ],
+   "noise_check": {
+    "shells": {
+     "1000": {
+      "directions": 96,
+      "sh_order": 8,
+      "coefficients": 45,
+      "leverage": 0.469
+     },
+     "2000": {
+      "directions": 96,
+      "sh_order": 8,
+      "coefficients": 45,
+      "leverage": 0.469
+     },
+     "3000": {
+      "directions": 96,
+      "sh_order": 8,
+      "coefficients": 45,
+      "leverage": 0.469
+     }
+    },
+    "b0_volumes": 3,
+    "b0_noise": "added",
+    "b0_scale": 0.2101,
+    "leverage_scaled": true,
+    "flip": "volume",
+    "b0_residual_sd": 6.64,
+    "dw_residual_rms": 6.64,
+    "dw_residual_over_b0_sd": 1.0
+   }
+  },
+  "voxel": {
+   "runs": [
+    "r001",
+    "r002",
+    "r003",
+    "r004",
+    "r005",
+    "r006",
+    "r007",
+    "r008"
+   ],
+   "replicate vs replicate": {
+    "seed keys changed": {
+     "mean": 0.3959,
+     "min": 0.3918,
+     "max": 0.4022,
+     "n": 7
+    },
+    "seed keys median mdf": {
+     "mean": 13.2086,
+     "min": 12.96,
+     "max": 13.55,
+     "n": 7
+    },
+    "seed keys matched": {
+     "mean": 0.8453,
+     "min": 0.8415,
+     "max": 0.8489,
+     "n": 7
+    },
+    "voxels agree (either)": {
+     "mean": 0.6206,
+     "min": 0.6178,
+     "max": 0.6238,
+     "n": 7
+    },
+    "voxels agree (both)": {
+     "mean": 0.7042,
+     "min": 0.7011,
+     "max": 0.7066,
+     "n": 7
+    },
+    "tract share L1": {
+     "mean": 0.0341,
+     "min": 0.0272,
+     "max": 0.0431,
+     "n": 7
+    }
+   },
+   "A vs replicate": {
+    "seed keys changed": {
+     "mean": 0.3498,
+     "min": 0.3446,
+     "max": 0.3573,
+     "n": 8
+    },
+    "seed keys median mdf": {
+     "mean": 9.9525,
+     "min": 9.72,
+     "max": 10.3,
+     "n": 8
+    },
+    "seed keys matched": {
+     "mean": 0.8751,
+     "min": 0.8726,
+     "max": 0.8781,
+     "n": 8
+    },
+    "voxels agree (either)": {
+     "mean": 0.6346,
+     "min": 0.6322,
+     "max": 0.6368,
+     "n": 8
+    },
+    "voxels agree (both)": {
+     "mean": 0.718,
+     "min": 0.7154,
+     "max": 0.7208,
+     "n": 8
+    },
+    "tract share L1": {
+     "mean": 0.0283,
+     "min": 0.0228,
+     "max": 0.0386,
+     "n": 8
+    }
+   },
+   "field_hz_p99_abs": [
+    105.79,
+    112.11
+   ],
+   "noise_check": {
+    "shells": {
+     "1000": {
+      "directions": 96,
+      "sh_order": 8,
+      "coefficients": 45,
+      "leverage": 0.469
+     },
+     "2000": {
+      "directions": 96,
+      "sh_order": 8,
+      "coefficients": 45,
+      "leverage": 0.469
+     },
+     "3000": {
+      "directions": 96,
+      "sh_order": 8,
+      "coefficients": 45,
+      "leverage": 0.469
+     }
+    },
+    "b0_volumes": 3,
+    "b0_noise": "added",
+    "b0_scale": 0.2101,
+    "leverage_scaled": true,
+    "flip": "voxel",
+    "b0_residual_sd": 6.64,
+    "dw_residual_rms": 6.64,
+    "dw_residual_over_b0_sd": 1.0
+   }
+  }
+ },
+ "bootstrap there and back": {
+  "smooth": {
+   "runs": [
+    "r001_fb",
+    "r002_fb",
+    "r003_fb",
+    "r004_fb"
+   ],
+   "replicate vs replicate": {
+    "seed keys changed": {
+     "mean": 0.3969,
+     "min": 0.3955,
+     "max": 0.3983,
+     "n": 3
+    },
+    "seed keys median mdf": {
+     "mean": 13.2667,
+     "min": 13.14,
+     "max": 13.37,
+     "n": 3
+    },
+    "seed keys matched": {
+     "mean": 0.8446,
+     "min": 0.8435,
+     "max": 0.8464,
+     "n": 3
+    },
+    "voxels agree (either)": {
+     "mean": 0.6164,
+     "min": 0.6137,
+     "max": 0.6192,
+     "n": 3
+    },
+    "voxels agree (both)": {
+     "mean": 0.7012,
+     "min": 0.6994,
+     "max": 0.7039,
+     "n": 3
+    },
+    "tract share L1": {
+     "mean": 0.0312,
+     "min": 0.031,
+     "max": 0.0313,
+     "n": 3
+    }
+   }
+  },
+  "volume": {
+   "runs": [
+    "r001_fb",
+    "r002_fb",
+    "r003_fb",
+    "r004_fb"
+   ],
+   "replicate vs replicate": {
+    "seed keys changed": {
+     "mean": 0.4148,
+     "min": 0.409,
+     "max": 0.4197,
+     "n": 3
+    },
+    "seed keys median mdf": {
+     "mean": 14.5367,
+     "min": 14.42,
+     "max": 14.72,
+     "n": 3
+    },
+    "seed keys matched": {
+     "mean": 0.8333,
+     "min": 0.8284,
+     "max": 0.8371,
+     "n": 3
+    },
+    "voxels agree (either)": {
+     "mean": 0.6073,
+     "min": 0.6044,
+     "max": 0.6123,
+     "n": 3
+    },
+    "voxels agree (both)": {
+     "mean": 0.6962,
+     "min": 0.6911,
+     "max": 0.704,
+     "n": 3
+    },
+    "tract share L1": {
+     "mean": 0.0444,
+     "min": 0.0351,
+     "max": 0.0527,
+     "n": 3
+    }
+   }
+  },
+  "voxel": {
+   "runs": [
+    "r001_fb",
+    "r002_fb",
+    "r003_fb",
+    "r004_fb"
+   ],
+   "replicate vs replicate": {
+    "seed keys changed": {
+     "mean": 0.3866,
+     "min": 0.3827,
+     "max": 0.3901,
+     "n": 3
+    },
+    "seed keys median mdf": {
+     "mean": 12.2467,
+     "min": 12.09,
+     "max": 12.36,
+     "n": 3
+    },
+    "seed keys matched": {
+     "mean": 0.8557,
+     "min": 0.8543,
+     "max": 0.8581,
+     "n": 3
+    },
+    "voxels agree (either)": {
+     "mean": 0.6153,
+     "min": 0.6135,
+     "max": 0.6178,
+     "n": 3
+    },
+    "voxels agree (both)": {
+     "mean": 0.6989,
+     "min": 0.6976,
+     "max": 0.7016,
+     "n": 3
+    },
+    "tract share L1": {
+     "mean": 0.0312,
+     "min": 0.0299,
+     "max": 0.0331,
+     "n": 3
+    }
+   }
+  }
+ },
+ "residual lag-1 correlation (x, y, z)": {
+  "dw": [
+   0.304,
+   0.106,
+   0.051
+  ],
+  "b0": [
+   0.55,
+   0.169,
+   0.42
+  ]
+ }
+}

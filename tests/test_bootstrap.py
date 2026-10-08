@@ -77,3 +77,16 @@ def test_double_bootstrap_recalibration_helpers():
     g = np.repeat(np.arange(4), z.size // 4)
     out = held_out(lambda v, y: vote_table(v, y, 3), lambda t, v: t[v], g, v, yv)
     assert set(out) == {"r000", "r001", "r002", "r003", "mean"} and out["mean"]["ece"] < 0.02
+
+
+def test_one_extra_b0_borrows_a_noise_pattern():
+    dwi, bval, bvec, extra, mask = scan()
+    one = extra[..., :1]
+    for mode in ("thermal", "added", "flipped"):
+        wb = ShellWildBootstrap(dwi, bval, bvec, extra_b0s=one, b0_noise=mode, mask=mask)
+        e = np.stack([wb.replicate(s)[1] for s in range(200)])
+        assert np.isfinite(e).all()
+        sd = float(np.sqrt(((e - e.mean(0)) ** 2).mean()))
+        assert sd == pytest.approx(wb.noise_check(mask)["dw_residual_rms"], rel=0.15)
+    with pytest.raises(AssertionError):
+        ShellWildBootstrap(dwi, bval, bvec, extra_b0s=one, b0_noise="residual")

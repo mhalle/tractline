@@ -1,0 +1,1298 @@
+{
+ "pair": "cIIIs01-2.1",
+ "subject": "cIIIs01",
+ "reference": "cIIIs01_s1Bx3_scan1",
+ "rescans": {
+  "within": {
+   "name": "cIIIs01_s1Bx3_scan2",
+   "rotation_deg": 0.43,
+   "translation_mm": 0.2,
+   "ncc_after": 0.9697
+  },
+  "between": {
+   "name": "cIIIs01_s1Bx1_scan1",
+   "rotation_deg": 3.23,
+   "translation_mm": 2.66,
+   "ncc_after": 0.9182
+  }
+ },
+ "runs_log": {
+  "A": {
+   "fibers": 76962,
+   "labeled": 64909,
+   "residual_left": 0.518,
+   "field_hz_p99_abs": 182.27,
+   "seconds": {
+    "field_estimate": 47.01,
+    "field_apply": 4.31,
+    "prep": 7.62,
+    "load": 1.27,
+    "ukf": 112.35,
+    "label": 4.02
+   },
+   "total_s": 184.5
+  },
+  "within": {
+   "fibers": 77177,
+   "labeled": 65022,
+   "residual_left": 0.504,
+   "field_hz_p99_abs": 199.04,
+   "seconds": {
+    "field_estimate": 44.71,
+    "field_apply": 4.44,
+    "prep": 5.98,
+    "load": 1.84,
+    "ukf": 77.63,
+    "label": 2.48
+   },
+   "total_s": 144.9
+  },
+  "between": {
+   "fibers": 78678,
+   "labeled": 65594,
+   "residual_left": 0.508,
+   "field_hz_p99_abs": 169.77,
+   "seconds": {
+    "field_estimate": 45.38,
+    "field_apply": 3.66,
+    "prep": 5.1,
+    "load": 0.89,
+    "ukf": 70.48,
+    "label": 2.08
+   },
+   "total_s": 133.3
+  },
+  "bootstrap_voxel": {
+   "shells": {
+    "1000": {
+     "directions": 40,
+     "sh_order": 4,
+     "coefficients": 15,
+     "leverage": 0.375
+    },
+    "2000": {
+     "directions": 56,
+     "sh_order": 6,
+     "coefficients": 28,
+     "leverage": 0.5
+    }
+   },
+   "b0_volumes": 16,
+   "b0_noise": "added",
+   "b0_scale": 0.6467,
+   "leverage_scaled": true,
+   "flip": "voxel",
+   "b0_residual_sd": 5.89,
+   "dw_residual_rms": 5.89,
+   "dw_residual_over_b0_sd": 1.0
+  },
+  "voxel/r001": {
+   "fibers": 78217,
+   "labeled": 65397,
+   "residual_left": 0.529,
+   "field_hz_p99_abs": 177.32,
+   "seconds": {
+    "field_estimate": 22.97,
+    "field_apply": 1.93,
+    "prep": 4.16,
+    "load": 0.36,
+    "ukf": 52.02,
+    "label": 1.46
+   },
+   "total_s": 86.8
+  },
+  "voxel/r002": {
+   "fibers": 78206,
+   "labeled": 65483,
+   "residual_left": 0.529,
+   "field_hz_p99_abs": 167.6,
+   "seconds": {
+    "field_estimate": 22.67,
+    "field_apply": 2.33,
+    "prep": 4.53,
+    "load": 0.38,
+    "ukf": 54.16,
+    "label": 1.33
+   },
+   "total_s": 89.2
+  },
+  "voxel/r003": {
+   "fibers": 77991,
+   "labeled": 65260,
+   "residual_left": 0.53,
+   "field_hz_p99_abs": 180.87,
+   "seconds": {
+    "field_estimate": 22.84,
+    "field_apply": 2.4,
+    "prep": 4.23,
+    "load": 0.36,
+    "ukf": 50.86,
+    "label": 1.41
+   },
+   "total_s": 85.7
+  },
+  "voxel/r004": {
+   "fibers": 77912,
+   "labeled": 65179,
+   "residual_left": 0.529,
+   "field_hz_p99_abs": 161.14,
+   "seconds": {
+    "field_estimate": 20.08,
+    "field_apply": 2.61,
+    "prep": 4.36,
+    "load": 0.38,
+    "ukf": 50.27,
+    "label": 1.38
+   },
+   "total_s": 83.0
+  },
+  "voxel/r005": {
+   "fibers": 78208,
+   "labeled": 65317,
+   "residual_left": 0.53,
+   "field_hz_p99_abs": 173.08,
+   "seconds": {
+    "field_estimate": 21.17,
+    "field_apply": 2.13,
+    "prep": 4.32,
+    "load": 0.36,
+    "ukf": 50.0,
+    "label": 1.31
+   },
+   "total_s": 82.8
+  },
+  "voxel/r006": {
+   "fibers": 78276,
+   "labeled": 65300,
+   "residual_left": 0.529,
+   "field_hz_p99_abs": 168.06,
+   "seconds": {
+    "field_estimate": 21.85,
+    "field_apply": 2.17,
+    "prep": 4.11,
+    "load": 0.39,
+    "ukf": 52.45,
+    "label": 1.41
+   },
+   "total_s": 86.1
+  },
+  "voxel/r007": {
+   "fibers": 78236,
+   "labeled": 65385,
+   "residual_left": 0.53,
+   "field_hz_p99_abs": 179.0,
+   "seconds": {
+    "field_estimate": 22.64,
+    "field_apply": 2.37,
+    "prep": 4.41,
+    "load": 0.36,
+    "ukf": 50.55,
+    "label": 1.37
+   },
+   "total_s": 85.2
+  },
+  "voxel/r008": {
+   "fibers": 78197,
+   "labeled": 65263,
+   "residual_left": 0.53,
+   "field_hz_p99_abs": 189.19,
+   "seconds": {
+    "field_estimate": 20.65,
+    "field_apply": 2.19,
+    "prep": 3.91,
+    "load": 0.35,
+    "ukf": 50.54,
+    "label": 1.31
+   },
+   "total_s": 82.4
+  },
+  "within_onA": {
+   "fibers": 76489,
+   "labeled": 64404,
+   "residual_left": null,
+   "field_hz_p99_abs": null,
+   "seconds": {
+    "prep": 4.01,
+    "load": 0.39,
+    "ukf": 48.94,
+    "label": 1.29
+   },
+   "total_s": 57.4
+  },
+  "between_onA": {
+   "fibers": 76761,
+   "labeled": 64595,
+   "residual_left": null,
+   "field_hz_p99_abs": null,
+   "seconds": {
+    "prep": 3.99,
+    "load": 0.36,
+    "ukf": 48.52,
+    "label": 1.77
+   },
+   "total_s": 57.8
+  },
+  "A_fb": {
+   "fibers": 76218,
+   "labeled": 64308,
+   "residual_left": null,
+   "field_hz_p99_abs": null,
+   "seconds": {
+    "prep": 4.19,
+    "load": 0.46,
+    "ukf": 52.16,
+    "label": 1.37
+   },
+   "total_s": 61.3,
+   "through": "within"
+  },
+  "voxel/r001_fb": {
+   "fibers": 77470,
+   "labeled": 64793,
+   "residual_left": null,
+   "field_hz_p99_abs": null,
+   "seconds": {
+    "prep": 4.07,
+    "load": 0.41,
+    "ukf": 53.13,
+    "label": 1.42
+   },
+   "total_s": 62.3,
+   "through": "within"
+  },
+  "voxel/r002_fb": {
+   "fibers": 77382,
+   "labeled": 64739,
+   "residual_left": null,
+   "field_hz_p99_abs": null,
+   "seconds": {
+    "prep": 4.14,
+    "load": 0.41,
+    "ukf": 52.23,
+    "label": 1.36
+   },
+   "total_s": 61.2,
+   "through": "within"
+  },
+  "voxel/r003_fb": {
+   "fibers": 77206,
+   "labeled": 64562,
+   "residual_left": null,
+   "field_hz_p99_abs": null,
+   "seconds": {
+    "prep": 4.0,
+    "load": 0.37,
+    "ukf": 49.21,
+    "label": 1.3
+   },
+   "total_s": 58.0,
+   "through": "within"
+  },
+  "voxel/r004_fb": {
+   "fibers": 77160,
+   "labeled": 64474,
+   "residual_left": null,
+   "field_hz_p99_abs": null,
+   "seconds": {
+    "prep": 4.0,
+    "load": 0.37,
+    "ukf": 49.2,
+    "label": 1.3
+   },
+   "total_s": 58.1,
+   "through": "within"
+  },
+  "bootstrap_volume": {
+   "shells": {
+    "1000": {
+     "directions": 40,
+     "sh_order": 4,
+     "coefficients": 15,
+     "leverage": 0.375
+    },
+    "2000": {
+     "directions": 56,
+     "sh_order": 6,
+     "coefficients": 28,
+     "leverage": 0.5
+    }
+   },
+   "b0_volumes": 16,
+   "b0_noise": "added",
+   "b0_scale": 0.6467,
+   "leverage_scaled": true,
+   "flip": "volume",
+   "b0_residual_sd": 5.89,
+   "dw_residual_rms": 5.89,
+   "dw_residual_over_b0_sd": 1.0
+  },
+  "volume/r001": {
+   "fibers": 78738,
+   "labeled": 65339,
+   "residual_left": 0.551,
+   "field_hz_p99_abs": 156.82,
+   "seconds": {
+    "field_estimate": 20.48,
+    "field_apply": 2.32,
+    "prep": 4.13,
+    "load": 0.44,
+    "ukf": 53.9,
+    "label": 1.55
+   },
+   "total_s": 86.7
+  },
+  "volume/r002": {
+   "fibers": 78861,
+   "labeled": 65416,
+   "residual_left": 0.544,
+   "field_hz_p99_abs": 154.5,
+   "seconds": {
+    "field_estimate": 22.3,
+    "field_apply": 2.33,
+    "prep": 3.94,
+    "load": 0.4,
+    "ukf": 53.41,
+    "label": 1.47
+   },
+   "total_s": 87.5
+  },
+  "volume/r003": {
+   "fibers": 78592,
+   "labeled": 65784,
+   "residual_left": 0.547,
+   "field_hz_p99_abs": 176.94,
+   "seconds": {
+    "field_estimate": 23.23,
+    "field_apply": 2.6,
+    "prep": 4.11,
+    "load": 0.4,
+    "ukf": 54.19,
+    "label": 1.44
+   },
+   "total_s": 89.8
+  },
+  "volume/r004": {
+   "fibers": 79211,
+   "labeled": 65870,
+   "residual_left": 0.521,
+   "field_hz_p99_abs": 170.17,
+   "seconds": {
+    "field_estimate": 22.26,
+    "field_apply": 2.28,
+    "prep": 4.08,
+    "load": 0.4,
+    "ukf": 53.29,
+    "label": 1.55
+   },
+   "total_s": 88.0
+  },
+  "volume/r005": {
+   "fibers": 78603,
+   "labeled": 66030,
+   "residual_left": 0.55,
+   "field_hz_p99_abs": 168.16,
+   "seconds": {
+    "field_estimate": 23.44,
+    "field_apply": 2.29,
+    "prep": 3.97,
+    "load": 0.44,
+    "ukf": 63.55,
+    "label": 2.06
+   },
+   "total_s": 101.4
+  },
+  "volume/r006": {
+   "fibers": 79393,
+   "labeled": 65772,
+   "residual_left": 0.552,
+   "field_hz_p99_abs": 175.63,
+   "seconds": {
+    "field_estimate": 29.4,
+    "field_apply": 3.4,
+    "prep": 5.71,
+    "load": 0.42,
+    "ukf": 61.0,
+    "label": 1.48
+   },
+   "total_s": 105.4
+  },
+  "volume/r007": {
+   "fibers": 78490,
+   "labeled": 65306,
+   "residual_left": 0.542,
+   "field_hz_p99_abs": 156.84,
+   "seconds": {
+    "field_estimate": 23.84,
+    "field_apply": 2.35,
+    "prep": 4.57,
+    "load": 0.4,
+    "ukf": 57.46,
+    "label": 1.53
+   },
+   "total_s": 94.2
+  },
+  "volume/r008": {
+   "fibers": 79437,
+   "labeled": 66156,
+   "residual_left": 0.538,
+   "field_hz_p99_abs": 162.7,
+   "seconds": {
+    "field_estimate": 25.15,
+    "field_apply": 2.76,
+    "prep": 4.36,
+    "load": 0.4,
+    "ukf": 51.6,
+    "label": 1.38
+   },
+   "total_s": 89.4
+  },
+  "volume/r001_fb": {
+   "fibers": 77874,
+   "labeled": 64739,
+   "residual_left": null,
+   "field_hz_p99_abs": null,
+   "seconds": {
+    "prep": 4.26,
+    "load": 0.43,
+    "ukf": 53.0,
+    "label": 1.42
+   },
+   "total_s": 62.0,
+   "through": "within"
+  },
+  "volume/r002_fb": {
+   "fibers": 78106,
+   "labeled": 64878,
+   "residual_left": null,
+   "field_hz_p99_abs": null,
+   "seconds": {
+    "prep": 4.41,
+    "load": 0.52,
+    "ukf": 50.17,
+    "label": 1.36
+   },
+   "total_s": 59.3,
+   "through": "within"
+  },
+  "volume/r003_fb": {
+   "fibers": 77852,
+   "labeled": 65106,
+   "residual_left": null,
+   "field_hz_p99_abs": null,
+   "seconds": {
+    "prep": 4.14,
+    "load": 0.43,
+    "ukf": 50.87,
+    "label": 1.45
+   },
+   "total_s": 60.0,
+   "through": "within"
+  },
+  "volume/r004_fb": {
+   "fibers": 78288,
+   "labeled": 65159,
+   "residual_left": null,
+   "field_hz_p99_abs": null,
+   "seconds": {
+    "prep": 4.22,
+    "load": 0.4,
+    "ukf": 58.42,
+    "label": 1.4
+   },
+   "total_s": 67.6,
+   "through": "within"
+  },
+  "bootstrap_smooth": {
+   "shells": {
+    "1000": {
+     "directions": 40,
+     "sh_order": 4,
+     "coefficients": 15,
+     "leverage": 0.375
+    },
+    "2000": {
+     "directions": 56,
+     "sh_order": 6,
+     "coefficients": 28,
+     "leverage": 0.5
+    }
+   },
+   "b0_volumes": 16,
+   "b0_noise": "added",
+   "b0_scale": 0.6467,
+   "leverage_scaled": true,
+   "flip": "smooth",
+   "fwhm_voxels": 4.0,
+   "b0_residual_sd": 5.89,
+   "dw_residual_rms": 5.89,
+   "dw_residual_over_b0_sd": 1.0
+  },
+  "smooth/r001": {
+   "fibers": 78593,
+   "labeled": 65439,
+   "residual_left": 0.53,
+   "field_hz_p99_abs": 166.42,
+   "seconds": {
+    "field_estimate": 21.37,
+    "field_apply": 2.32,
+    "prep": 4.48,
+    "load": 0.38,
+    "ukf": 51.6,
+    "label": 1.44
+   },
+   "total_s": 85.2
+  },
+  "smooth/r002": {
+   "fibers": 78932,
+   "labeled": 65772,
+   "residual_left": 0.531,
+   "field_hz_p99_abs": 164.11,
+   "seconds": {
+    "field_estimate": 22.9,
+    "field_apply": 2.32,
+    "prep": 4.78,
+    "load": 0.39,
+    "ukf": 56.66,
+    "label": 1.4
+   },
+   "total_s": 92.1
+  },
+  "smooth/r003": {
+   "fibers": 78706,
+   "labeled": 65722,
+   "residual_left": 0.531,
+   "field_hz_p99_abs": 199.87,
+   "seconds": {
+    "field_estimate": 23.37,
+    "field_apply": 2.32,
+    "prep": 4.69,
+    "load": 0.39,
+    "ukf": 51.65,
+    "label": 1.37
+   },
+   "total_s": 87.2
+  },
+  "smooth/r004": {
+   "fibers": 78764,
+   "labeled": 65539,
+   "residual_left": 0.53,
+   "field_hz_p99_abs": 191.37,
+   "seconds": {
+    "field_estimate": 23.69,
+    "field_apply": 2.18,
+    "prep": 4.63,
+    "load": 0.38,
+    "ukf": 53.44,
+    "label": 1.37
+   },
+   "total_s": 89.3
+  },
+  "smooth/r005": {
+   "fibers": 78740,
+   "labeled": 65457,
+   "residual_left": 0.532,
+   "field_hz_p99_abs": 156.48,
+   "seconds": {
+    "field_estimate": 22.18,
+    "field_apply": 2.28,
+    "prep": 4.43,
+    "load": 0.35,
+    "ukf": 50.29,
+    "label": 1.35
+   },
+   "total_s": 84.4
+  },
+  "smooth/r006": {
+   "fibers": 78642,
+   "labeled": 65580,
+   "residual_left": 0.531,
+   "field_hz_p99_abs": 165.23,
+   "seconds": {
+    "field_estimate": 20.98,
+    "field_apply": 2.49,
+    "prep": 4.63,
+    "load": 0.41,
+    "ukf": 51.1,
+    "label": 1.36
+   },
+   "total_s": 84.4
+  },
+  "smooth/r007": {
+   "fibers": 78779,
+   "labeled": 65715,
+   "residual_left": 0.53,
+   "field_hz_p99_abs": 189.65,
+   "seconds": {
+    "field_estimate": 22.49,
+    "field_apply": 2.27,
+    "prep": 4.39,
+    "load": 0.35,
+    "ukf": 53.27,
+    "label": 1.38
+   },
+   "total_s": 87.7
+  },
+  "smooth/r008": {
+   "fibers": 78901,
+   "labeled": 65520,
+   "residual_left": 0.532,
+   "field_hz_p99_abs": 174.36,
+   "seconds": {
+    "field_estimate": 22.16,
+    "field_apply": 2.32,
+    "prep": 4.55,
+    "load": 0.37,
+    "ukf": 51.9,
+    "label": 1.39
+   },
+   "total_s": 86.3
+  },
+  "smooth/r001_fb": {
+   "fibers": 77758,
+   "labeled": 64714,
+   "residual_left": null,
+   "field_hz_p99_abs": null,
+   "seconds": {
+    "prep": 4.0,
+    "load": 0.37,
+    "ukf": 49.54,
+    "label": 1.46
+   },
+   "total_s": 58.3,
+   "through": "within"
+  },
+  "smooth/r002_fb": {
+   "fibers": 78157,
+   "labeled": 65311,
+   "residual_left": null,
+   "field_hz_p99_abs": null,
+   "seconds": {
+    "prep": 4.0,
+    "load": 0.37,
+    "ukf": 50.2,
+    "label": 1.35
+   },
+   "total_s": 59.0,
+   "through": "within"
+  },
+  "smooth/r003_fb": {
+   "fibers": 77931,
+   "labeled": 65067,
+   "residual_left": null,
+   "field_hz_p99_abs": null,
+   "seconds": {
+    "prep": 4.0,
+    "load": 0.37,
+    "ukf": 50.14,
+    "label": 1.34
+   },
+   "total_s": 58.7,
+   "through": "within"
+  },
+  "smooth/r004_fb": {
+   "fibers": 77972,
+   "labeled": 64987,
+   "residual_left": null,
+   "field_hz_p99_abs": null,
+   "seconds": {
+    "prep": 4.0,
+    "load": 0.4,
+    "ukf": 49.84,
+    "label": 1.35
+   },
+   "total_s": 58.6,
+   "through": "within"
+  }
+ },
+ "rescan": {
+  "within": {
+   "own grid, moved": {
+    "voxels": {
+     "agree (either has a tract)": 0.6965,
+     "agree (both have a tract)": 0.7583,
+     "voxels": 133071
+    },
+    "tract_share_L1": 0.0381
+   },
+   "on A's grid": {
+    "voxels": {
+     "agree (either has a tract)": 0.7082,
+     "agree (both have a tract)": 0.7605,
+     "voxels": 130585
+    },
+    "tract_share_L1": 0.035,
+    "seed_keys": {
+     "changed": 0.3689,
+     "matched": 0.8881,
+     "median_mdf_mm": 14.04
+    }
+   },
+   "on A's grid, against A there and back": {
+    "voxels": {
+     "agree (either has a tract)": 0.707,
+     "agree (both have a tract)": 0.7598,
+     "voxels": 130235
+    },
+    "tract_share_L1": 0.0355,
+    "seed_keys": {
+     "changed": 0.3656,
+     "matched": 0.8947,
+     "median_mdf_mm": 13.94
+    }
+   }
+  },
+  "between": {
+   "own grid, moved": {
+    "voxels": {
+     "agree (either has a tract)": 0.6505,
+     "agree (both have a tract)": 0.7365,
+     "voxels": 137326
+    },
+    "tract_share_L1": 0.0503
+   },
+   "on A's grid": {
+    "voxels": {
+     "agree (either has a tract)": 0.7014,
+     "agree (both have a tract)": 0.7533,
+     "voxels": 131059
+    },
+    "tract_share_L1": 0.0387,
+    "seed_keys": {
+     "changed": 0.3908,
+     "matched": 0.8853,
+     "median_mdf_mm": 15.85
+    }
+   },
+   "on A's grid, against A there and back": {
+    "voxels": {
+     "agree (either has a tract)": 0.6956,
+     "agree (both have a tract)": 0.7508,
+     "voxels": 130976
+    },
+    "tract_share_L1": 0.0422,
+    "seed_keys": {
+     "changed": 0.3909,
+     "matched": 0.887,
+     "median_mdf_mm": 15.72
+    }
+   }
+  }
+ },
+ "control: A resampled there and back": {
+  "through": "within",
+  "voxels": {
+   "agree (either has a tract)": 0.8098,
+   "agree (both have a tract)": 0.8504,
+   "voxels": 129215
+  },
+  "tract_share_L1": 0.0137,
+  "seed_keys": {
+   "changed": 0.119,
+   "matched": 0.9745,
+   "median_mdf_mm": 0.96
+  }
+ },
+ "bootstrap": {
+  "smooth": {
+   "runs": [
+    "r001",
+    "r002",
+    "r003",
+    "r004",
+    "r005",
+    "r006",
+    "r007",
+    "r008"
+   ],
+   "replicate vs replicate": {
+    "seed keys changed": {
+     "mean": 0.3492,
+     "min": 0.3474,
+     "max": 0.3511,
+     "n": 7
+    },
+    "seed keys median mdf": {
+     "mean": 12.8571,
+     "min": 12.71,
+     "max": 13.09,
+     "n": 7
+    },
+    "seed keys matched": {
+     "mean": 0.9051,
+     "min": 0.9022,
+     "max": 0.9073,
+     "n": 7
+    },
+    "voxels agree (either)": {
+     "mean": 0.728,
+     "min": 0.7256,
+     "max": 0.731,
+     "n": 7
+    },
+    "voxels agree (both)": {
+     "mean": 0.7711,
+     "min": 0.7683,
+     "max": 0.7745,
+     "n": 7
+    },
+    "tract share L1": {
+     "mean": 0.023,
+     "min": 0.0194,
+     "max": 0.025,
+     "n": 7
+    }
+   },
+   "A vs replicate": {
+    "seed keys changed": {
+     "mean": 0.3095,
+     "min": 0.3064,
+     "max": 0.3119,
+     "n": 8
+    },
+    "seed keys median mdf": {
+     "mean": 9.5375,
+     "min": 9.35,
+     "max": 9.69,
+     "n": 8
+    },
+    "seed keys matched": {
+     "mean": 0.9299,
+     "min": 0.9281,
+     "max": 0.932,
+     "n": 8
+    },
+    "voxels agree (either)": {
+     "mean": 0.7362,
+     "min": 0.7337,
+     "max": 0.7381,
+     "n": 8
+    },
+    "voxels agree (both)": {
+     "mean": 0.7798,
+     "min": 0.7773,
+     "max": 0.7823,
+     "n": 8
+    },
+    "tract share L1": {
+     "mean": 0.0284,
+     "min": 0.0251,
+     "max": 0.0314,
+     "n": 8
+    }
+   },
+   "field_hz_p99_abs": [
+    156.48,
+    199.87
+   ],
+   "noise_check": {
+    "shells": {
+     "1000": {
+      "directions": 40,
+      "sh_order": 4,
+      "coefficients": 15,
+      "leverage": 0.375
+     },
+     "2000": {
+      "directions": 56,
+      "sh_order": 6,
+      "coefficients": 28,
+      "leverage": 0.5
+     }
+    },
+    "b0_volumes": 16,
+    "b0_noise": "added",
+    "b0_scale": 0.6467,
+    "leverage_scaled": true,
+    "flip": "smooth",
+    "fwhm_voxels": 4.0,
+    "b0_residual_sd": 5.89,
+    "dw_residual_rms": 5.89,
+    "dw_residual_over_b0_sd": 1.0
+   }
+  },
+  "volume": {
+   "runs": [
+    "r001",
+    "r002",
+    "r003",
+    "r004",
+    "r005",
+    "r006",
+    "r007",
+    "r008"
+   ],
+   "replicate vs replicate": {
+    "seed keys changed": {
+     "mean": 0.3576,
+     "min": 0.3354,
+     "max": 0.3773,
+     "n": 7
+    },
+    "seed keys median mdf": {
+     "mean": 13.94,
+     "min": 11.85,
+     "max": 15.15,
+     "n": 7
+    },
+    "seed keys matched": {
+     "mean": 0.9001,
+     "min": 0.8889,
+     "max": 0.918,
+     "n": 7
+    },
+    "voxels agree (either)": {
+     "mean": 0.7264,
+     "min": 0.7158,
+     "max": 0.7368,
+     "n": 7
+    },
+    "voxels agree (both)": {
+     "mean": 0.7706,
+     "min": 0.7609,
+     "max": 0.7784,
+     "n": 7
+    },
+    "tract share L1": {
+     "mean": 0.0292,
+     "min": 0.0187,
+     "max": 0.0385,
+     "n": 7
+    }
+   },
+   "A vs replicate": {
+    "seed keys changed": {
+     "mean": 0.3328,
+     "min": 0.3221,
+     "max": 0.3424,
+     "n": 8
+    },
+    "seed keys median mdf": {
+     "mean": 11.4825,
+     "min": 10.67,
+     "max": 12.26,
+     "n": 8
+    },
+    "seed keys matched": {
+     "mean": 0.9184,
+     "min": 0.9128,
+     "max": 0.9258,
+     "n": 8
+    },
+    "voxels agree (either)": {
+     "mean": 0.7274,
+     "min": 0.7226,
+     "max": 0.731,
+     "n": 8
+    },
+    "voxels agree (both)": {
+     "mean": 0.7731,
+     "min": 0.7689,
+     "max": 0.7764,
+     "n": 8
+    },
+    "tract share L1": {
+     "mean": 0.0361,
+     "min": 0.0313,
+     "max": 0.0414,
+     "n": 8
+    }
+   },
+   "field_hz_p99_abs": [
+    154.5,
+    176.94
+   ],
+   "noise_check": {
+    "shells": {
+     "1000": {
+      "directions": 40,
+      "sh_order": 4,
+      "coefficients": 15,
+      "leverage": 0.375
+     },
+     "2000": {
+      "directions": 56,
+      "sh_order": 6,
+      "coefficients": 28,
+      "leverage": 0.5
+     }
+    },
+    "b0_volumes": 16,
+    "b0_noise": "added",
+    "b0_scale": 0.6467,
+    "leverage_scaled": true,
+    "flip": "volume",
+    "b0_residual_sd": 5.89,
+    "dw_residual_rms": 5.89,
+    "dw_residual_over_b0_sd": 1.0
+   }
+  },
+  "voxel": {
+   "runs": [
+    "r001",
+    "r002",
+    "r003",
+    "r004",
+    "r005",
+    "r006",
+    "r007",
+    "r008"
+   ],
+   "replicate vs replicate": {
+    "seed keys changed": {
+     "mean": 0.3217,
+     "min": 0.3195,
+     "max": 0.3238,
+     "n": 7
+    },
+    "seed keys median mdf": {
+     "mean": 10.5014,
+     "min": 10.37,
+     "max": 10.71,
+     "n": 7
+    },
+    "seed keys matched": {
+     "mean": 0.917,
+     "min": 0.916,
+     "max": 0.9186,
+     "n": 7
+    },
+    "voxels agree (either)": {
+     "mean": 0.7333,
+     "min": 0.7312,
+     "max": 0.7348,
+     "n": 7
+    },
+    "voxels agree (both)": {
+     "mean": 0.7765,
+     "min": 0.7746,
+     "max": 0.7782,
+     "n": 7
+    },
+    "tract share L1": {
+     "mean": 0.0208,
+     "min": 0.0161,
+     "max": 0.0251,
+     "n": 7
+    }
+   },
+   "A vs replicate": {
+    "seed keys changed": {
+     "mean": 0.2843,
+     "min": 0.2794,
+     "max": 0.288,
+     "n": 8
+    },
+    "seed keys median mdf": {
+     "mean": 7.645,
+     "min": 7.49,
+     "max": 7.79,
+     "n": 8
+    },
+    "seed keys matched": {
+     "mean": 0.9378,
+     "min": 0.9366,
+     "max": 0.9387,
+     "n": 8
+    },
+    "voxels agree (either)": {
+     "mean": 0.7432,
+     "min": 0.7418,
+     "max": 0.7451,
+     "n": 8
+    },
+    "voxels agree (both)": {
+     "mean": 0.7865,
+     "min": 0.7851,
+     "max": 0.7881,
+     "n": 8
+    },
+    "tract share L1": {
+     "mean": 0.0203,
+     "min": 0.0164,
+     "max": 0.0263,
+     "n": 8
+    }
+   },
+   "field_hz_p99_abs": [
+    161.14,
+    189.19
+   ],
+   "noise_check": {
+    "shells": {
+     "1000": {
+      "directions": 40,
+      "sh_order": 4,
+      "coefficients": 15,
+      "leverage": 0.375
+     },
+     "2000": {
+      "directions": 56,
+      "sh_order": 6,
+      "coefficients": 28,
+      "leverage": 0.5
+     }
+    },
+    "b0_volumes": 16,
+    "b0_noise": "added",
+    "b0_scale": 0.6467,
+    "leverage_scaled": true,
+    "flip": "voxel",
+    "b0_residual_sd": 5.89,
+    "dw_residual_rms": 5.89,
+    "dw_residual_over_b0_sd": 1.0
+   }
+  }
+ },
+ "bootstrap there and back": {
+  "smooth": {
+   "runs": [
+    "r001_fb",
+    "r002_fb",
+    "r003_fb",
+    "r004_fb"
+   ],
+   "replicate vs replicate": {
+    "seed keys changed": {
+     "mean": 0.3445,
+     "min": 0.3409,
+     "max": 0.3478,
+     "n": 3
+    },
+    "seed keys median mdf": {
+     "mean": 12.46,
+     "min": 12.32,
+     "max": 12.61,
+     "n": 3
+    },
+    "seed keys matched": {
+     "mean": 0.909,
+     "min": 0.9062,
+     "max": 0.9112,
+     "n": 3
+    },
+    "voxels agree (either)": {
+     "mean": 0.7276,
+     "min": 0.7256,
+     "max": 0.7303,
+     "n": 3
+    },
+    "voxels agree (both)": {
+     "mean": 0.7714,
+     "min": 0.7698,
+     "max": 0.774,
+     "n": 3
+    },
+    "tract share L1": {
+     "mean": 0.0232,
+     "min": 0.0194,
+     "max": 0.0256,
+     "n": 3
+    }
+   }
+  },
+  "volume": {
+   "runs": [
+    "r001_fb",
+    "r002_fb",
+    "r003_fb",
+    "r004_fb"
+   ],
+   "replicate vs replicate": {
+    "seed keys changed": {
+     "mean": 0.3633,
+     "min": 0.3533,
+     "max": 0.3733,
+     "n": 3
+    },
+    "seed keys median mdf": {
+     "mean": 14.2933,
+     "min": 13.64,
+     "max": 14.78,
+     "n": 3
+    },
+    "seed keys matched": {
+     "mean": 0.8974,
+     "min": 0.8927,
+     "max": 0.8999,
+     "n": 3
+    },
+    "voxels agree (either)": {
+     "mean": 0.7216,
+     "min": 0.7163,
+     "max": 0.7263,
+     "n": 3
+    },
+    "voxels agree (both)": {
+     "mean": 0.7678,
+     "min": 0.7616,
+     "max": 0.7733,
+     "n": 3
+    },
+    "tract share L1": {
+     "mean": 0.0321,
+     "min": 0.0256,
+     "max": 0.0358,
+     "n": 3
+    }
+   }
+  },
+  "voxel": {
+   "runs": [
+    "r001_fb",
+    "r002_fb",
+    "r003_fb",
+    "r004_fb"
+   ],
+   "replicate vs replicate": {
+    "seed keys changed": {
+     "mean": 0.3179,
+     "min": 0.3152,
+     "max": 0.3201,
+     "n": 3
+    },
+    "seed keys median mdf": {
+     "mean": 10.08,
+     "min": 9.96,
+     "max": 10.21,
+     "n": 3
+    },
+    "seed keys matched": {
+     "mean": 0.9184,
+     "min": 0.9173,
+     "max": 0.9204,
+     "n": 3
+    },
+    "voxels agree (either)": {
+     "mean": 0.7348,
+     "min": 0.7339,
+     "max": 0.7364,
+     "n": 3
+    },
+    "voxels agree (both)": {
+     "mean": 0.7789,
+     "min": 0.7779,
+     "max": 0.7806,
+     "n": 3
+    },
+    "tract share L1": {
+     "mean": 0.0203,
+     "min": 0.0183,
+     "max": 0.0214,
+     "n": 3
+    }
+   }
+  }
+ },
+ "residual lag-1 correlation (x, y, z)": {
+  "dw": [
+   0.466,
+   0.313,
+   0.079
+  ],
+  "b0": [
+   0.585,
+   0.381,
+   0.184
+  ]
+ }
+}
