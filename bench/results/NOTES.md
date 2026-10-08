@@ -2312,7 +2312,8 @@ L40S's PAT16 estimate 3.2-4.9 s today). In the M2 GPU column the estimate's subs
 
 ## 2026-10-07 The pipeline's ensemble: uncertainty from every stage, and a rank field to hold it
 
-`ensemble_pilot.py` → `ensemble_pilot_thermal.json`, `ensemble_pilot_residual.json`; `src/tractline/ensemble.py`;
+`ensemble_pilot.py` → `ensemble_pilot_thermal.json`, `ensemble_pilot_residual.json`, `ensemble_pilot_added.json`;
+`src/tractline/ensemble.py`;
 `docs/uncertainty-ensemble.md`. PAT16 on the M2 (MPS), RapidParc. The reference is the pipeline as it runs today: the
 scan as acquired, labelled with draw 0. Each of 16 replicates resamples every stage:
 
@@ -2325,9 +2326,10 @@ scan as acquired, labelled with draw 0. Each of 16 replicates resamples every st
 The ensemble is the reference plus replicates 1-10 (R = 11); replicates 11-16 are held out as fresh runs. Streamlines
 are matched by seed voxel. About 40 s per run.
 
-Two b0 noise settings:
+Three b0 noise settings:
 - **thermal:** b0 residuals scaled by 0.122, to the DW residual RMS of 8.46;
-- **residual:** the b0s' own residuals, SD 69.5, which carry motion and pulsation.
+- **residual:** the b0s' own residuals, SD 69.5, which carry motion and pulsation;
+- **added** (run after the two, see "Open" below): each b0 as acquired plus the thermal residuals, sign-flipped.
 
 Eight draw-only runs label the reference tractogram with other draws.
 
@@ -2388,16 +2390,45 @@ So vote planes aligned to the field's ranks are not enough for streamlines. Stor
   rank-aligned vote planes hold every run's winner in 91.6 % of tract voxels.
 - Other wins most voxels (it is half the streamlines).
 
-**Open: the replicates' fields are not the reference's**
+**Was open: the replicates' fields were not the reference's. Fixed with the b0s kept as acquired**
 
-- In thermal mode, every replicate's field has a 99th-percentile |field| of 183-186 Hz against the reference's 154 Hz,
+- In thermal mode, every replicate's field had a 99th-percentile |field| of 183-186 Hz against the reference's 154 Hz,
   and residual_left of 0.30 against 0.33.
-- In residual mode the field sits at 143-148 Hz and residual_left at 0.36.
-- Labels show no matching excess: the reference against a replicate changes 34 %, replicate against replicate 38 %.
-- But the b0s are not exchangeable. A replicate's b0 is the six b0s' mean plus noise, so the motion between them is gone
-  (thermal) or scrambled voxel by voxel (residual), and the field estimate responds to that.
-- **Next:** add noise to each b0 as acquired (keeping its motion; b0 noise variance doubled), and check the replicates'
-  field distribution against the reference's before trusting the voxel field's positions.
+- In residual mode the field sat at 143-148 Hz and residual_left at 0.36.
+- The cause: the b0s were not exchangeable. A replicate's b0 was the six b0s' mean plus noise, so the motion between
+  them was gone (thermal) or scrambled voxel by voxel (residual), and the field estimate responds to that.
+- **added** (`--b0-noise added`, records in `ensemble/PAT16/added/`, no draw-only runs) keeps each b0 as acquired, the
+  reversed pair's too, and adds the thermal residuals (scale 0.122, RMS 8.46) with flipped signs. A replicate's b0 thus
+  carries twice the noise variance of the scan's.
+- The 16 replicates' fields now bracket the reference's: p99 |field| 153.4-155.3 Hz (mean 154.3, 4 of 16 below
+  154.0), residual_left 0.331-0.333 against 0.331. The doubled b0 noise shows only as that +0.3 Hz and +0.001.
+  The voxel field's positions now rest on fields drawn about the scan's own.
+
+Every metric moves within run-to-run spread (thermal / residual / added):
+
+| | thermal | residual | added |
+|---|---|---|---|
+| held-out change of the reference's tract | 34.0 % | 36.5 % | 33.2 % |
+| replicate against replicate (all 120 pairs) | 37.9 % | 38.7 % | 37.8 % |
+| AUROC: TRX probability / ensemble mixture / vote fraction | 0.646 / 0.802 / 0.796 | 0.646 / 0.814 / 0.808 | 0.648 / 0.796 / 0.790 |
+| AUROC: mixture decoded from the rank field | 0.792 | 0.803 | 0.785 |
+| ECE: single run / mixture / vote fraction | 0.278 / 0.030 / 0.042 | 0.303 / 0.025 / 0.036 | 0.270 / 0.032 / 0.043 |
+| single run stated ≥ 0.99, kept | 73.5 % | 71.0 % | 74.4 % |
+| consensus differs from the reference | 19.6 % | 23.1 % | 18.3 % |
+| MDF median / 90th (mm) | 7.8 / 33.9 | 9.3 / 35.1 | 7.4 / 33.4 |
+| regrouped votes exact at depth 6 | 74.8 % | 73.5 % | 75.2 % |
+| voxels: consensus / reference map agree with a held-out winner | 67.1 / 60.4 % | 66.8 / 59.7 % | 67.1 / 60.8 % |
+| voxels: ECE of the consensus vote fraction | 0.039 | 0.039 | 0.039 |
+
+Labels barely registered the field mismatch. Thermal's 30 Hz excess moved no metric beyond the spread between modes.
+Residual mode, with the noisiest b0s, had the most label change and consensus disagreement; added has the least.
+
+- **Still open: the reference is closer to a replicate (33 %) than two replicates are to each other (38 %).** This was
+  the case in all three modes, so the field is not the cause. One candidate (untested) is the sign flips per voxel and
+  volume. They whiten the DW residuals, which in the scan as acquired are spatially structured (motion, dropouts), so
+  a replicate's noise is a different kind from the reference's. Another is the doubled b0 variance, which separates
+  replicates from each other twice as much as from the reference in the b0s alone, though the fields show no sign of
+  it. A block (per-slice or per-volume) sign flip would test the first.
 
 Not measured: accuracy (no reference tract labels for PAT16). One patient. The bootstrap's sign flips are symmetric
 around a smooth fit and do not reproduce magnitude noise at low signal.

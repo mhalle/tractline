@@ -22,8 +22,9 @@ called confident.
 
 Run the pipeline R times with every stage resampled:
 
-1. a wild-bootstrap replicate of the scan as acquired, the reversed pair's b0s included, with each shell
-   fitted at the SH order its directions allow;
+1. a wild-bootstrap replicate of the scan as acquired, with each shell fitted at the SH order its
+   directions allow, and each b0 (the reversed pair's too) kept as acquired with thermal-level noise added,
+   so the motion between b0s that the field estimate sees is the scan's own;
 2. the field re-estimated from that replicate and applied;
 3. the replicate tracked;
 4. the result labeled with its own draw.
@@ -113,9 +114,16 @@ The pilot asked four questions:
 It does not measure accuracy: there are no reference tract labels for these scans. Bootstrap replicates
 cover only the variability that is modeled, and model bias is untouched. One patient.
 
-**Open.** The replicates' fields are not exchangeable with the reference's. A replicate's b0 is the b0s' mean
-plus noise, so the motion between b0s is lost (thermal residuals) or scrambled voxel by voxel (the b0s'
-own residuals). Its field's 99th-percentile |field| is 184 Hz (thermal) or 145 Hz against the
-reference's 154. Labels show no excess from it: reference against replicate 34 %, replicate against
-replicate 38 %. But the voxel field's positions should not be trusted until the b0s are bootstrapped as
-acquired, with noise added to each.
+**The b0s.** A replicate's b0s must keep the scan's motion. An earlier version replaced each b0 with the b0s'
+mean plus noise. That removed the motion between b0s (thermal-scaled residuals) or scrambled it voxel by voxel
+(the b0s' own residuals). The replicates' fields then sat at a 99th-percentile |field| of 184 Hz or 145 Hz,
+against the reference's 154.
+
+Keeping each b0 as acquired and adding thermal-level noise (`--b0-noise added`) doubles the b0 noise variance.
+It puts the replicates at 153.4-155.3 Hz, around the reference's 154.0, with residual_left 0.331-0.333
+against 0.331. Every streamline and voxel metric above stays within run-to-run spread: AUROC 0.80, ECE 0.03
+against 0.27, voxel agreement 67 % against 61 %.
+
+**Open.** The reference is still closer to a replicate (33 % labels changed) than two replicates are to each
+other (38 %), in every b0 mode. A candidate is the per-voxel sign flips, which whiten DW residuals that are
+structured in the scan as acquired. A block bootstrap would test it.

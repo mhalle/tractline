@@ -314,7 +314,9 @@ if __name__ == "__main__":
     ap.add_argument("--draws", type=int, default=8)
     ap.add_argument("--build", type=int, default=10)
     ap.add_argument("--tau", type=float, default=1.0)
-    ap.add_argument("--b0-noise", default="thermal", choices=("thermal", "residual"),
-                    help="the b0s' bootstrap residuals: scaled to the DW volumes' noise (default), or as they are (motion included)")
+    ap.add_argument("--b0-noise", default="added", choices=("added", "thermal", "residual"),
+                    help="the b0s' bootstrap residuals: scaled to the DW volumes' noise and added to each b0 as acquired, its "
+                         "motion kept (default; the replicates' fields match the reference's, NOTES 2026-10-07); scaled about "
+                         "the b0s' mean; or as they are about the mean (motion scrambled)")
     args = ap.parse_args()
     run(args) if args.what == "run" else analyze(args)

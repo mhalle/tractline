@@ -86,9 +86,11 @@ class ShellWildBootstrap:
     def __init__(self, dwi, bval, bvec, extra_b0s=None, b0_max=50.0, shell_round=100.0, b0_noise="residual", mask=None):
         """b0_noise: "residual" - the b0s' own residuals (motion and pulsation in them); "thermal" - every b0
         residual (the extra b0s' too) scaled by one factor so their RMS in `mask` (required) is the DW
-        volumes' residual RMS there: the spatial pattern kept, at the noise level the DW fit leaves."""
+        volumes' residual RMS there: the spatial pattern kept, at the noise level the DW fit leaves;
+        "added" - each b0 kept as acquired (its motion with it), plus the thermal-scaled residuals sign-flipped:
+        a b0 replicate carries its own noise and the added, twice the noise variance."""
         from dipy.reconst.shm import real_sh_descoteaux
-        assert b0_noise in ("residual", "thermal") and (b0_noise == "residual" or mask is not None)
+        assert b0_noise in ("residual", "thermal", "added") and (b0_noise == "residual" or mask is not None)
         self.shape, self.dtype = dwi.shape, dwi.dtype
         S = np.asarray(dwi, np.float32).reshape(-1, dwi.shape[-1])
         self.fit, self.res = np.empty_like(S), np.empty_like(S)
@@ -116,13 +118,17 @@ class ShellWildBootstrap:
             m = E.mean(1, keepdims=True)
             self.extra = (np.repeat(m, E.shape[1], 1), (E - m) / np.float32(np.sqrt(1 - 1 / E.shape[1])), extra_b0s.shape)
         self.b0_noise, self.b0_scale = b0_noise, 1.0
-        if b0_noise == "thermal":
+        if b0_noise in ("thermal", "added"):
             mk = np.asarray(mask).reshape(-1) > 0
             dw = np.setdiff1d(np.arange(self.res.shape[1]), self.b0)
             self.b0_scale = float(np.sqrt((self.res[mk][:, dw] ** 2).mean()) / np.sqrt((self.res[mk][:, self.b0] ** 2).mean()))
             self.res[:, self.b0] *= np.float32(self.b0_scale)
             if self.extra is not None:
                 self.extra = (self.extra[0], self.extra[1] * np.float32(self.b0_scale), self.extra[2])
+        if b0_noise == "added":
+            self.fit[:, self.b0] = S[:, self.b0]
+            if self.extra is not None:
+                self.extra = (E, self.extra[1], self.extra[2])
 
     def _mean_fit(self, S, idx):
         y = S[:, idx]
