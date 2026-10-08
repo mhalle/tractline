@@ -40,3 +40,21 @@ def test_b0_modes_centre_and_noise(mode):
     else:
         assert sd == pytest.approx(rms_dw, rel=0.1)
         assert wb.b0_scale < 1
+
+
+def test_raw_residuals_and_flipped_b0s_make_the_scan_a_replicate():
+    # leverage off, b0s flipped in place: every sign +1 gives the scan back
+    dwi, bval, bvec, extra, mask = scan()
+    wb = ShellWildBootstrap(dwi, bval, bvec, extra_b0s=extra, b0_noise="flipped", mask=mask, leverage=False)
+    assert np.allclose(wb.fit + wb.res, dwi.reshape(-1, 36), atol=1e-3)
+    fit, res, _ = wb.extra
+    assert np.allclose(fit + res, extra.reshape(-1, 3))
+
+
+def test_volume_flips_share_one_sign_across_voxels():
+    dwi, bval, bvec, extra, mask = scan()
+    wb = ShellWildBootstrap(dwi, bval, bvec, b0_noise="added", mask=mask, flip="volume")
+    x = wb.replicate(3)[0].reshape(-1, 36).astype(np.float64)
+    big = np.abs(wb.res) > 2                                                    # signs readable past rounding
+    sign = np.where(big, np.sign((x - wb.fit) * wb.res), 0)
+    assert all(len(set(sign[big[:, g], g].tolist())) == 1 for g in range(36) if big[:, g].any())

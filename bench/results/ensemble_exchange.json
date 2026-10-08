@@ -1,0 +1,156 @@
+{
+ "subject": "PAT16",
+ "runs": 8,
+ "variants": {
+  "added": {
+   "b0_noise": "added"
+  },
+  "member": {
+   "b0_noise": "flipped",
+   "leverage": false
+  },
+  "lev0": {
+   "b0_noise": "added",
+   "leverage": false
+  },
+  "member-block": {
+   "b0_noise": "flipped",
+   "leverage": false,
+   "flip": "volume"
+  }
+ },
+ "results": {
+  "added": {
+   "labels changed: reference vs replicate": 0.3319,
+   "labels changed: replicate vs replicate": 0.3799,
+   "median mdf mm: reference vs replicate": 7.36,
+   "median mdf mm: replicate vs replicate": 10.31,
+   "field p99 |Hz| (min, mean, max)": [
+    153.6,
+    154.19,
+    155.29
+   ],
+   "residual_left (min, max)": [
+    0.331,
+    0.333
+   ],
+   "signal squared difference in the mask": {
+    "dw": {
+     "scan-replicate": 107.9,
+     "replicate-replicate": 141.4
+    },
+    "b0": {
+     "scan-replicate": 55.6,
+     "replicate-replicate": 111.7
+    }
+   }
+  },
+  "member": {
+   "labels changed: reference vs replicate": 0.279,
+   "labels changed: replicate vs replicate": 0.3228,
+   "median mdf mm: reference vs replicate": 4.74,
+   "median mdf mm: replicate vs replicate": 6.87,
+   "field p99 |Hz| (min, mean, max)": [
+    155.43,
+    156.4,
+    157.25
+   ],
+   "residual_left (min, max)": [
+    0.326,
+    0.328
+   ],
+   "signal squared difference in the mask": {
+    "dw": {
+     "scan-replicate": 74.9,
+     "replicate-replicate": 75.0
+    },
+    "b0": {
+     "scan-replicate": 58.4,
+     "replicate-replicate": 58.7
+    }
+   }
+  },
+  "lev0": {
+   "labels changed: reference vs replicate": 0.2774,
+   "labels changed: replicate vs replicate": 0.3213,
+   "median mdf mm: reference vs replicate": 4.71,
+   "median mdf mm: replicate vs replicate": 6.85,
+   "field p99 |Hz| (min, mean, max)": [
+    153.93,
+    154.37,
+    154.73
+   ],
+   "residual_left (min, max)": [
+    0.331,
+    0.332
+   ],
+   "signal squared difference in the mask": {
+    "dw": {
+     "scan-replicate": 74.9,
+     "replicate-replicate": 75.0
+    },
+    "b0": {
+     "scan-replicate": 29.3,
+     "replicate-replicate": 58.8
+    }
+   }
+  },
+  "member-block": {
+   "labels changed: reference vs replicate": 0.3003,
+   "labels changed: replicate vs replicate": 0.3442,
+   "median mdf mm: reference vs replicate": 5.8,
+   "median mdf mm: replicate vs replicate": 8.18,
+   "field p99 |Hz| (min, mean, max)": [
+    154.4,
+    156.18,
+    161.2
+   ],
+   "residual_left (min, max)": [
+    0.31,
+    0.338
+   ],
+   "signal squared difference in the mask": {
+    "dw": {
+     "scan-replicate": 74.3,
+     "replicate-replicate": 91.3
+    },
+    "b0": {
+     "scan-replicate": 49.3,
+     "replicate-replicate": 98.6
+    }
+   }
+  }
+ },
+ "centre": {
+  "(labels changed, median mdf mm); replicates are lev0's": {
+   "reference vs fit": [
+    0.1013,
+    0.54
+   ],
+   "reference vs anti": [
+    0.1082,
+    0.9
+   ],
+   "fit vs anti": [
+    0.1113,
+    0.91
+   ],
+   "fit vs replicate": [
+    0.2776,
+    4.73
+   ],
+   "anti vs replicate": [
+    0.2764,
+    4.69
+   ],
+   "reference vs replicate": [
+    0.2774,
+    4.71
+   ]
+  }
+ },
+ "reference": {
+  "field p99 |Hz|": 154.03,
+  "residual_left": 0.331
+ }
+}

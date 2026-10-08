@@ -122,6 +122,14 @@ It puts the replicates at 153.4-155.3 Hz, around the reference's 154.0, with res
 against 0.331. Every streamline and voxel metric above stays within run-to-run spread: AUROC 0.80, ECE 0.03
 against 0.27, voxel agreement 67 % against 61 %.
 
-**Open.** The reference is still closer to a replicate (33 % labels changed) than two replicates are to each
-other (38 %), in every b0 mode. A candidate is the per-voxel sign flips, which whiten DW residuals that are
-structured in the scan as acquired. A block bootstrap would test it.
+**The reference sits at the centre of the replicates.** A replicate changes 33 % of the reference's labels,
+but 38 % of another replicate's. This is not the noise level: it persists when the scan is made one of the
+replicates' own sign patterns. Nor is it the per-voxel sign flips: it persists with per-volume signs. It is the
+bootstrap's centring. A least-squares residual is orthogonal to the fit's space, so the tracker sees the scan
+much as it sees the fit alone. The fit, the scan and the fit minus its residual (every sign flipped) differ by
+only 10 % of labels and under 1 mm, against 28 % and 4.7 mm to any replicate (NOTES 2026-10-08).
+
+So held-out replicates measure the spread around this scan's estimate, not that estimate's own error. A fresh
+scan's change is better estimated replicate against replicate (38 %), and the pilot's calibration is somewhat
+optimistic for real rescans. Scoring held-out runs against a replicate's labels, not the reference's, would
+remove the centring.

@@ -52,6 +52,10 @@ class WildBootstrap:
         x = np.clip(x, max(info.min, 0), info.max) if info is not None else np.clip(x, 0, None)   # a float input (a corrected DWI): no negative signal either
         return x.astype(self.dtype).reshape(self.raw.shape)
 
+    def _signs(self, rng, shape):
+        n = shape if self.flip == "voxel" else (1, shape[1])
+        return rng.integers(0, 2, n, dtype=np.int8) * 2 - 1
+
     def noise_check(self, mask) -> dict:
         """In the mask: the residual RMS of the DW fit, against the b0s' own spread (the noise SD, from
         repeats), both after the leverage correction; and the b0 SNR."""
@@ -83,14 +87,23 @@ class ShellWildBootstrap:
     between the b0s (motion, CSF pulsation) as well as noise: on PAT16 a b0 SD of 67 against 6.2 in the
     diffusion-weighted volumes (NOTES 2026-10-02), so the replicates perturb the field estimate by the
     scan's variability, not thermal noise alone."""
-    def __init__(self, dwi, bval, bvec, extra_b0s=None, b0_max=50.0, shell_round=100.0, b0_noise="residual", mask=None):
+    def __init__(self, dwi, bval, bvec, extra_b0s=None, b0_max=50.0, shell_round=100.0, b0_noise="residual", mask=None,
+                 leverage=True, flip="voxel"):
         """b0_noise: "residual" - the b0s' own residuals (motion and pulsation in them); "thermal" - every b0
         residual (the extra b0s' too) scaled by one factor so their RMS in `mask` (required) is the DW
         volumes' residual RMS there: the spatial pattern kept, at the noise level the DW fit leaves;
         "added" - each b0 kept as acquired (its motion with it), plus the thermal-scaled residuals sign-flipped:
-        a b0 replicate carries its own noise and the added, twice the noise variance."""
+        a b0 replicate carries its own noise and the added, twice the noise variance; "flipped" - each b0 as acquired
+        with its thermal-scaled residual sign-flipped in place (b0 - n + n s), so the scan's b0s are one of the
+        replicates' sign patterns (all +1).
+        leverage: the DW residuals scaled by 1/sqrt(1 - leverage) (the wild bootstrap's correction: a replicate's
+        noise about the fit is the scan's, but its distance from the scan less than from another replicate), or raw
+        (the scan as acquired is then one of the replicates). flip: "voxel" - a sign per voxel and volume; "volume" -
+        one per volume, every voxel's residual flipped together (its spatial structure kept)."""
         from dipy.reconst.shm import real_sh_descoteaux
-        assert b0_noise in ("residual", "thermal", "added") and (b0_noise == "residual" or mask is not None)
+        assert b0_noise in ("residual", "thermal", "added", "flipped") and (b0_noise == "residual" or mask is not None)
+        assert flip in ("voxel", "volume")
+        self.flip = flip
         self.shape, self.dtype = dwi.shape, dwi.dtype
         S = np.asarray(dwi, np.float32).reshape(-1, dwi.shape[-1])
         self.fit, self.res = np.empty_like(S), np.empty_like(S)
@@ -109,8 +122,9 @@ class ShellWildBootstrap:
             lev = np.einsum("ij,ji->i", B, pinv)
             y = S[:, idx]
             f = (y @ pinv.T.astype(np.float32)) @ B.T.astype(np.float32)
-            self.fit[:, idx], self.res[:, idx] = f, (y - f) / np.sqrt(1 - lev).astype(np.float32)
-            self.shells[int(b)] = {"directions": len(idx), "sh_order": L, "coefficients": B.shape[1]}
+            self.fit[:, idx], self.res[:, idx] = f, (y - f) / (np.sqrt(1 - lev).astype(np.float32) if leverage else np.float32(1))
+            self.shells[int(b)] = {"directions": len(idx), "sh_order": L, "coefficients": B.shape[1],
+                                   "leverage": round(float(lev.mean()), 3)}
         self.b0 = b0
         self.extra = None
         if extra_b0s is not None:
@@ -118,7 +132,7 @@ class ShellWildBootstrap:
             m = E.mean(1, keepdims=True)
             self.extra = (np.repeat(m, E.shape[1], 1), (E - m) / np.float32(np.sqrt(1 - 1 / E.shape[1])), extra_b0s.shape)
         self.b0_noise, self.b0_scale = b0_noise, 1.0
-        if b0_noise in ("thermal", "added"):
+        if b0_noise in ("thermal", "added", "flipped"):
             mk = np.asarray(mask).reshape(-1) > 0
             dw = np.setdiff1d(np.arange(self.res.shape[1]), self.b0)
             self.b0_scale = float(np.sqrt((self.res[mk][:, dw] ** 2).mean()) / np.sqrt((self.res[mk][:, self.b0] ** 2).mean()))
@@ -129,6 +143,11 @@ class ShellWildBootstrap:
             self.fit[:, self.b0] = S[:, self.b0]
             if self.extra is not None:
                 self.extra = (E, self.extra[1], self.extra[2])
+        if b0_noise == "flipped":
+            self.fit[:, self.b0] = S[:, self.b0] - self.res[:, self.b0]
+            if self.extra is not None:
+                self.extra = (E - self.extra[1], self.extra[1], self.extra[2])
+        self.leverage = leverage
 
     def _mean_fit(self, S, idx):
         y = S[:, idx]
@@ -138,7 +157,7 @@ class ShellWildBootstrap:
     def replicate(self, seed: int):
         """(dwi replicate (X, Y, Z, G) as the input's type, extra b0s replicate (X, Y, Z, V) float64 or None)."""
         rng = np.random.default_rng(seed)
-        x = np.rint(self.fit + self.res * (rng.integers(0, 2, self.res.shape, dtype=np.int8) * 2 - 1))
+        x = np.rint(self.fit + self.res * self._signs(rng, self.res.shape))
         if np.issubdtype(self.dtype, np.integer):
             info = np.iinfo(self.dtype)
             x = np.clip(x, max(info.min, 0), info.max)
@@ -148,8 +167,12 @@ class ShellWildBootstrap:
         if self.extra is None:
             return dwi, None
         fit, res, shape = self.extra
-        e = np.clip(fit + res * (rng.integers(0, 2, res.shape, dtype=np.int8) * 2 - 1), 0, None)
+        e = np.clip(fit + res * self._signs(rng, res.shape), 0, None)
         return dwi, e.astype(np.float64).reshape(shape)
+
+    def _signs(self, rng, shape):
+        n = shape if self.flip == "voxel" else (1, shape[1])
+        return rng.integers(0, 2, n, dtype=np.int8) * 2 - 1
 
     def noise_check(self, mask) -> dict:
         m = np.asarray(mask).reshape(-1) > 0
@@ -157,5 +180,6 @@ class ShellWildBootstrap:
         sd_b0 = float(np.sqrt((self.res[m][:, self.b0] ** 2).mean()))
         rms_dw = float(np.sqrt((self.res[m][:, dw] ** 2).mean()))
         return {"shells": self.shells, "b0_volumes": len(self.b0), "b0_noise": self.b0_noise, "b0_scale": round(self.b0_scale, 4),
+                "leverage_scaled": self.leverage, "flip": self.flip,
                 "b0_residual_sd": round(sd_b0, 2),
                 "dw_residual_rms": round(rms_dw, 2), "dw_residual_over_b0_sd": round(rms_dw / sd_b0, 3)}

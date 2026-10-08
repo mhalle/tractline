@@ -2423,12 +2423,9 @@ Every metric moves within run-to-run spread (thermal / residual / added):
 Labels barely registered the field mismatch. Thermal's 30 Hz excess moved no metric beyond the spread between modes.
 Residual mode, with the noisiest b0s, had the most label change and consensus disagreement; added has the least.
 
-- **Still open: the reference is closer to a replicate (33 %) than two replicates are to each other (38 %).** This was
-  the case in all three modes, so the field is not the cause. One candidate (untested) is the sign flips per voxel and
-  volume. They whiten the DW residuals, which in the scan as acquired are spatially structured (motion, dropouts), so
-  a replicate's noise is a different kind from the reference's. Another is the doubled b0 variance, which separates
-  replicates from each other twice as much as from the reference in the b0s alone, though the fields show no sign of
-  it. A block (per-slice or per-volume) sign flip would test the first.
+- **The reference is closer to a replicate (33 %) than two replicates are to each other (38 %)** in all three modes, so
+  the field is not the cause. Explained the next day (2026-10-08): the bootstrap is centred on the scan's own model
+  estimate.
 
 Not measured: accuracy (no reference tract labels for PAT16). One patient. The bootstrap's sign flips are symmetric
 around a smooth fit and do not reproduce magnitude noise at low signal.
@@ -2520,3 +2517,66 @@ Caveats:
 - The ensemble's calibration is close to guaranteed here: its held-out runs come from the same bootstrap. The single
   run's miscalibration is the finding.
 - One patient, RapidParc, stability not accuracy.
+
+## 2026-10-08 Why the scan is closer to a replicate than replicates are to each other: the bootstrap is centred on it
+
+`ensemble_exchange.py` → `ensemble_exchange.json`; `_bootstrap.py` gains `leverage`, `flip` and b0 mode "flipped".
+PAT16, M2 (MPS), 8 replicates per variant, the reference `ensemble/PAT16/added/r000`.
+
+In the 2026-10-07 ensemble, a replicate changes 33 % of the reference's labels and another replicate's 38 %. Two
+candidates, both built into the bootstrap:
+
+- **Noise level.** In squared signal distance, two replicates are 1.31× farther apart than either is from the scan in
+  the DW volumes, and 2× in the b0s. In the DW volumes this comes from the leverage correction (h = 0.38 / 0.50 / 0.56
+  for SH order 2 / 4 / 6 on 16 / 30 / 50 directions: σ²(2 − h) against 2σ²). In the b0s it is the "added" noise.
+- **Whitening.** Per-voxel sign flips break up residuals that are spatially structured in the scan.
+
+Variants (labels changed and median MDF: reference vs replicate / replicate vs replicate):
+
+| variant | DW residuals | b0s | signs | labels | MDF mm | field p99 Hz | residual_left |
+|---|---|---|---|---|---|---|---|
+| added (r001-r008) | leverage-scaled | as acquired + noise | per voxel | 33.2 / 38.0 % | 7.4 / 10.3 | 153.6-155.3 | 0.331-0.333 |
+| lev0 | raw | as acquired + noise | per voxel | 27.7 / 32.1 % | 4.7 / 6.9 | 153.9-154.7 | 0.331-0.332 |
+| member | raw | residual flipped in place | per voxel | 27.9 / 32.3 % | 4.7 / 6.9 | 155.4-157.3 | 0.326-0.328 |
+| member-block | raw | residual flipped in place | per volume | 30.0 / 34.4 % | 5.8 / 8.2 | 154.4-161.2 | 0.310-0.338 |
+
+The reference's field: 154.0 Hz, residual_left 0.331.
+
+In `member` the scan is itself one of the replicates' sign patterns (all +1): in signal it is exactly as far from a
+replicate as two replicates are from each other (squared distance 74.9 / 75.0 DW, 58.4 / 58.7 b0). The gap stays
+(ratio 0.86, against 0.87 in `added`), so the noise level is not the cause. Keeping the spatial structure
+(`member-block`) keeps it too (0.87), so whitening is not the cause either. The gap shows in paths as much as in
+labels, so it is the tracker, not the labeller.
+
+**The cause: the scan is the centre of the replicate cloud.** A least-squares residual is orthogonal to the fit's
+space in every voxel. A pipeline that reads the signal through a similar model (UKF's per-voxel tensor fit) sees
+fit + r about as it sees the fit alone. Sign-flipped residuals, per voxel or per volume, are no longer orthogonal,
+and that moves the model estimate. Two more runs from `lev0`'s fit, b0s as acquired:
+
+| pair | labels changed | median MDF mm |
+|---|---|---|
+| reference vs fit (no residual) | 10.1 % | 0.54 |
+| reference vs anti (fit − r: every sign flipped, 4× a replicate's squared distance from the scan) | 10.8 % | 0.90 |
+| fit vs anti | 11.1 % | 0.91 |
+| reference / fit / anti vs a replicate | 27.7 / 27.8 / 27.6 % | 4.7 |
+
+The farthest sign pattern in signal tracks like the scan. The scan, its fit and its reversed residual sit at one
+point, the same distance from every replicate. The ~10 % among them is mostly the labeller's draw (0 / 101 / 102)
+plus 0.5-0.9 mm of path change.
+
+**What this means for the ensemble.** As with any bootstrap, the replicates spread around the scan's own estimate and
+cannot see that estimate's own error. A held-out replicate's change of the reference's label (33 %) is therefore
+not what a fresh scan of the patient would do. A fresh scan carries its own noise, like a second replicate, so
+replicate against replicate (38 %) is the better estimate. Calibration against held-out replicates, measured from the
+reference, is somewhat optimistic for real rescans. Scoring held-out replicates against a replicate's labels instead
+of the reference's would measure it without that centring.
+
+Side results:
+
+- **Keep the leverage correction.** Raw residuals give two replicates 2σ²(1 − h) apart, under the 2σ² between two
+  scans, and change about 5 points fewer labels. `added` stays the default.
+- **The b0 noise does not move labels.** `lev0` and `member` match.
+- **Don't flip the b0s in place.** "flipped" pushes every field above the reference's (155.4-157.3 Hz). Keep "added".
+- **Per-volume signs move more** than per-voxel signs: 30 % against 28 % labels, and the field spreads to 161 Hz.
+  Spatially coherent perturbations matter more to the field and the tracker. The scan's real noise is likely
+  spatially correlated (parallel imaging, interpolation), so per-voxel flips may understate it. Not resolved here.
