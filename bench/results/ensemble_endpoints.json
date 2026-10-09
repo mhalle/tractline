@@ -1,0 +1,856 @@
+{
+ "near_mm": 4.0,
+ "rules": {
+  "CST": "two region sets",
+  "AF": "two region sets",
+  "SLF-I": "two region sets",
+  "SLF-II": "two region sets",
+  "SLF-III": "two region sets",
+  "ILF": "two region sets",
+  "IOFF": "two region sets",
+  "UF": "two region sets",
+  "CB": "two region sets",
+  "TF": "two region sets",
+  "TO": "two region sets",
+  "TP": "two region sets",
+  "TT": "two region sets",
+  "SF": "two region sets",
+  "SO": "two region sets",
+  "SP": "two region sets",
+  "Sup-F": "two region sets",
+  "Sup-P": "two region sets",
+  "Sup-O": "two region sets",
+  "Sup-T": "two region sets",
+  "Sup-FP": "two region sets",
+  "Sup-PO": "two region sets",
+  "Sup-PT": "two region sets",
+  "Sup-OT": "two region sets",
+  "CC1": "callosal",
+  "CC2": "callosal",
+  "CC3": "callosal",
+  "CC4": "callosal",
+  "CC5": "callosal",
+  "CC6": "callosal",
+  "CC7": "callosal"
+ },
+ "cIIIs04": {
+  "registration NCC (T1 to mean b0; negative: the contrasts run opposite)": -0.398,
+  "A's run: per bundle [streamlines, plausible share]": {
+   "AF": [
+    787,
+    0.764
+   ],
+   "CB": [
+    767,
+    0.46
+   ],
+   "ILF": [
+    1002,
+    0.726
+   ],
+   "IOFF": [
+    444,
+    0.892
+   ],
+   "SLF-I": [
+    640,
+    0.445
+   ],
+   "SLF-II": [
+    540,
+    0.557
+   ],
+   "SLF-III": [
+    339,
+    0.755
+   ],
+   "UF": [
+    728,
+    0.621
+   ],
+   "CST": [
+    523,
+    0.686
+   ],
+   "SF": [
+    1137,
+    0.697
+   ],
+   "SO": [
+    28,
+    0.0
+   ],
+   "SP": [
+    65,
+    0.385
+   ],
+   "TF": [
+    1325,
+    0.303
+   ],
+   "TO": [
+    90,
+    0.389
+   ],
+   "TT": [
+    450,
+    0.233
+   ],
+   "TP": [
+    409,
+    0.156
+   ],
+   "CC1": [
+    240,
+    0.933
+   ],
+   "CC2": [
+    1057,
+    0.868
+   ],
+   "CC3": [
+    531,
+    0.699
+   ],
+   "CC4": [
+    648,
+    0.733
+   ],
+   "CC5": [
+    540,
+    0.815
+   ],
+   "CC6": [
+    1564,
+    0.714
+   ],
+   "CC7": [
+    419,
+    0.723
+   ],
+   "Sup-F": [
+    4779,
+    0.859
+   ],
+   "Sup-FP": [
+    376,
+    0.878
+   ],
+   "Sup-O": [
+    220,
+    0.75
+   ],
+   "Sup-OT": [
+    703,
+    0.595
+   ],
+   "Sup-P": [
+    2168,
+    0.763
+   ],
+   "Sup-PO": [
+    428,
+    0.416
+   ],
+   "Sup-PT": [
+    1543,
+    0.762
+   ],
+   "Sup-T": [
+    698,
+    0.523
+   ]
+  },
+  "17 runs pooled: plausible share of scored named streamlines": 0.692,
+  "17 runs pooled: per bundle": {
+   "AF": [
+    13823,
+    0.758
+   ],
+   "CB": [
+    12864,
+    0.456
+   ],
+   "ILF": [
+    16637,
+    0.74
+   ],
+   "IOFF": [
+    7282,
+    0.88
+   ],
+   "SLF-I": [
+    10856,
+    0.46
+   ],
+   "SLF-II": [
+    9071,
+    0.556
+   ],
+   "SLF-III": [
+    5647,
+    0.713
+   ],
+   "UF": [
+    12327,
+    0.601
+   ],
+   "CST": [
+    9663,
+    0.663
+   ],
+   "SF": [
+    18923,
+    0.707
+   ],
+   "SO": [
+    444,
+    0.045
+   ],
+   "SP": [
+    1256,
+    0.376
+   ],
+   "TF": [
+    20595,
+    0.292
+   ],
+   "TO": [
+    1332,
+    0.294
+   ],
+   "TT": [
+    7425,
+    0.235
+   ],
+   "TP": [
+    7011,
+    0.126
+   ],
+   "CC1": [
+    3502,
+    0.926
+   ],
+   "CC2": [
+    18828,
+    0.866
+   ],
+   "CC3": [
+    9902,
+    0.688
+   ],
+   "CC4": [
+    11248,
+    0.747
+   ],
+   "CC5": [
+    8939,
+    0.837
+   ],
+   "CC6": [
+    25832,
+    0.722
+   ],
+   "CC7": [
+    6778,
+    0.74
+   ],
+   "Sup-F": [
+    82114,
+    0.861
+   ],
+   "Sup-FP": [
+    6604,
+    0.867
+   ],
+   "Sup-O": [
+    3906,
+    0.692
+   ],
+   "Sup-OT": [
+    12261,
+    0.605
+   ],
+   "Sup-P": [
+    37602,
+    0.758
+   ],
+   "Sup-PO": [
+    7394,
+    0.424
+   ],
+   "Sup-PT": [
+    26495,
+    0.768
+   ],
+   "Sup-T": [
+    13119,
+    0.522
+   ]
+  },
+  "rescans": {
+   "within": {
+    "per bundle": {
+     "AF": [
+      759,
+      0.768
+     ],
+     "CB": [
+      792,
+      0.475
+     ],
+     "ILF": [
+      990,
+      0.738
+     ],
+     "IOFF": [
+      486,
+      0.899
+     ],
+     "SLF-I": [
+      648,
+      0.48
+     ],
+     "SLF-II": [
+      489,
+      0.575
+     ],
+     "SLF-III": [
+      337,
+      0.709
+     ],
+     "UF": [
+      684,
+      0.592
+     ],
+     "CST": [
+      597,
+      0.648
+     ],
+     "SF": [
+      1095,
+      0.718
+     ],
+     "SO": [
+      19,
+      0.0
+     ],
+     "SP": [
+      66,
+      0.439
+     ],
+     "TF": [
+      1193,
+      0.311
+     ],
+     "TO": [
+      95,
+      0.274
+     ],
+     "TT": [
+      418,
+      0.258
+     ],
+     "TP": [
+      444,
+      0.153
+     ],
+     "CC1": [
+      215,
+      0.916
+     ],
+     "CC2": [
+      1066,
+      0.877
+     ],
+     "CC3": [
+      594,
+      0.719
+     ],
+     "CC4": [
+      635,
+      0.754
+     ],
+     "CC5": [
+      472,
+      0.824
+     ],
+     "CC6": [
+      1422,
+      0.698
+     ],
+     "CC7": [
+      335,
+      0.725
+     ],
+     "Sup-F": [
+      4769,
+      0.869
+     ],
+     "Sup-FP": [
+      363,
+      0.857
+     ],
+     "Sup-O": [
+      228,
+      0.689
+     ],
+     "Sup-OT": [
+      680,
+      0.621
+     ],
+     "Sup-P": [
+      2154,
+      0.747
+     ],
+     "Sup-PO": [
+      434,
+      0.454
+     ],
+     "Sup-PT": [
+      1510,
+      0.764
+     ],
+     "Sup-T": [
+      823,
+      0.518
+     ]
+    },
+    "plausible share (scored)": 0.694,
+    "A's streamline scored: keeps its name on the rescan, plausible / implausible ends": [
+     0.608,
+     0.431,
+     12027,
+     5343
+    ],
+    "where the plausible runs' mode differs from all runs' mode: rescan gives plausible mode / all mode / n": [
+     0.196,
+     0.637,
+     15834
+    ],
+    "rescan gives the mode, all seeds: plausible-runs mode / all-runs mode": [
+     0.544,
+     0.703
+    ]
+   },
+   "session3": {
+    "per bundle": {
+     "AF": [
+      817,
+      0.75
+     ],
+     "CB": [
+      768,
+      0.493
+     ],
+     "ILF": [
+      1018,
+      0.728
+     ],
+     "IOFF": [
+      462,
+      0.866
+     ],
+     "SLF-I": [
+      629,
+      0.541
+     ],
+     "SLF-II": [
+      519,
+      0.592
+     ],
+     "SLF-III": [
+      323,
+      0.709
+     ],
+     "UF": [
+      673,
+      0.618
+     ],
+     "CST": [
+      673,
+      0.6
+     ],
+     "SF": [
+      1044,
+      0.723
+     ],
+     "SO": [
+      15,
+      0.0
+     ],
+     "SP": [
+      84,
+      0.274
+     ],
+     "TF": [
+      1470,
+      0.303
+     ],
+     "TO": [
+      98,
+      0.306
+     ],
+     "TT": [
+      486,
+      0.235
+     ],
+     "TP": [
+      410,
+      0.117
+     ],
+     "CC1": [
+      210,
+      0.871
+     ],
+     "CC2": [
+      1067,
+      0.906
+     ],
+     "CC3": [
+      621,
+      0.652
+     ],
+     "CC4": [
+      665,
+      0.767
+     ],
+     "CC5": [
+      565,
+      0.823
+     ],
+     "CC6": [
+      1468,
+      0.753
+     ],
+     "CC7": [
+      444,
+      0.75
+     ],
+     "Sup-F": [
+      4746,
+      0.854
+     ],
+     "Sup-FP": [
+      384,
+      0.901
+     ],
+     "Sup-O": [
+      203,
+      0.626
+     ],
+     "Sup-OT": [
+      757,
+      0.581
+     ],
+     "Sup-P": [
+      2073,
+      0.774
+     ],
+     "Sup-PO": [
+      368,
+      0.44
+     ],
+     "Sup-PT": [
+      1547,
+      0.756
+     ],
+     "Sup-T": [
+      694,
+      0.506
+     ]
+    },
+    "plausible share (scored)": 0.69,
+    "A's streamline scored: keeps its name on the rescan, plausible / implausible ends": [
+     0.575,
+     0.398,
+     11939,
+     5324
+    ],
+    "where the plausible runs' mode differs from all runs' mode: rescan gives plausible mode / all mode / n": [
+     0.201,
+     0.616,
+     15731
+    ],
+    "rescan gives the mode, all seeds: plausible-runs mode / all-runs mode": [
+     0.525,
+     0.674
+    ]
+   },
+   "session5": {
+    "per bundle": {
+     "AF": [
+      818,
+      0.769
+     ],
+     "CB": [
+      733,
+      0.472
+     ],
+     "ILF": [
+      1071,
+      0.734
+     ],
+     "IOFF": [
+      346,
+      0.89
+     ],
+     "SLF-I": [
+      612,
+      0.475
+     ],
+     "SLF-II": [
+      538,
+      0.552
+     ],
+     "SLF-III": [
+      338,
+      0.734
+     ],
+     "UF": [
+      588,
+      0.56
+     ],
+     "CST": [
+      638,
+      0.597
+     ],
+     "SF": [
+      1078,
+      0.705
+     ],
+     "SO": [
+      25,
+      0.0
+     ],
+     "SP": [
+      79,
+      0.291
+     ],
+     "TF": [
+      1289,
+      0.345
+     ],
+     "TO": [
+      87,
+      0.356
+     ],
+     "TT": [
+      458,
+      0.275
+     ],
+     "TP": [
+      455,
+      0.163
+     ],
+     "CC1": [
+      228,
+      0.93
+     ],
+     "CC2": [
+      1056,
+      0.879
+     ],
+     "CC3": [
+      553,
+      0.716
+     ],
+     "CC4": [
+      575,
+      0.743
+     ],
+     "CC5": [
+      487,
+      0.838
+     ],
+     "CC6": [
+      1418,
+      0.74
+     ],
+     "CC7": [
+      464,
+      0.776
+     ],
+     "Sup-F": [
+      5110,
+      0.873
+     ],
+     "Sup-FP": [
+      318,
+      0.855
+     ],
+     "Sup-O": [
+      227,
+      0.687
+     ],
+     "Sup-OT": [
+      691,
+      0.628
+     ],
+     "Sup-P": [
+      2149,
+      0.782
+     ],
+     "Sup-PO": [
+      447,
+      0.389
+     ],
+     "Sup-PT": [
+      1627,
+      0.789
+     ],
+     "Sup-T": [
+      738,
+      0.575
+     ]
+    },
+    "plausible share (scored)": 0.703,
+    "A's streamline scored: keeps its name on the rescan, plausible / implausible ends": [
+     0.563,
+     0.366,
+     11774,
+     5218
+    ],
+    "where the plausible runs' mode differs from all runs' mode: rescan gives plausible mode / all mode / n": [
+     0.197,
+     0.607,
+     15493
+    ],
+    "rescan gives the mode, all seeds: plausible-runs mode / all-runs mode": [
+     0.513,
+     0.661
+    ]
+   }
+  }
+ },
+ "PAT16": {
+  "17 runs pooled: plausible share of scored named streamlines": 0.566,
+  "17 runs pooled: per bundle": {
+   "AF": [
+    8284,
+    0.501
+   ],
+   "CB": [
+    7131,
+    0.548
+   ],
+   "ILF": [
+    14753,
+    0.578
+   ],
+   "IOFF": [
+    3650,
+    0.794
+   ],
+   "SLF-I": [
+    6023,
+    0.483
+   ],
+   "SLF-II": [
+    6492,
+    0.42
+   ],
+   "SLF-III": [
+    3108,
+    0.614
+   ],
+   "UF": [
+    2666,
+    0.349
+   ],
+   "CST": [
+    7469,
+    0.651
+   ],
+   "SF": [
+    11500,
+    0.371
+   ],
+   "SO": [
+    1358,
+    0.121
+   ],
+   "SP": [
+    1794,
+    0.295
+   ],
+   "TF": [
+    18769,
+    0.373
+   ],
+   "TO": [
+    1523,
+    0.228
+   ],
+   "TT": [
+    4628,
+    0.405
+   ],
+   "TP": [
+    7555,
+    0.156
+   ],
+   "CC1": [
+    850,
+    0.781
+   ],
+   "CC2": [
+    7549,
+    0.76
+   ],
+   "CC3": [
+    4833,
+    0.528
+   ],
+   "CC4": [
+    4853,
+    0.541
+   ],
+   "CC5": [
+    3403,
+    0.495
+   ],
+   "CC6": [
+    12445,
+    0.638
+   ],
+   "CC7": [
+    3129,
+    0.671
+   ],
+   "Sup-F": [
+    37175,
+    0.651
+   ],
+   "Sup-FP": [
+    2983,
+    0.714
+   ],
+   "Sup-O": [
+    2636,
+    0.628
+   ],
+   "Sup-OT": [
+    6845,
+    0.642
+   ],
+   "Sup-P": [
+    18526,
+    0.66
+   ],
+   "Sup-PO": [
+    3163,
+    0.321
+   ],
+   "Sup-PT": [
+    15558,
+    0.807
+   ],
+   "Sup-T": [
+    8583,
+    0.671
+   ]
+  },
+  "note": "FastSurfer is trained on healthy brains; its labels near the tumor are unchecked"
+ }
+}
