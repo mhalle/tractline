@@ -169,6 +169,13 @@ With the labeller's draw held fixed, labels changed:
 - **Subject 2's protocol stays 8 points short with every variant.** It has one reversed b0 and three forward b0s, and
   its replicates' fields barely vary while its rescans' do.
 
+Refitted with smooth signs on PAT16, the double bootstrap's ranking and recalibration are unchanged: AUROC 0.77,
+held-out ECE 0.002-0.003. The confidence drops by 2-3 points, with a mean P(rescan keeps the tract) of 0.60 against
+0.62. Carrying one run's labeller probabilities forward instead of its winner does not steady the output. The
+labeller is confident (0.94 on average), and labels change because a seed's path changes by 13-21 mm on a rescan, not
+because names were near ties. The uncertainty is in the tracking, so the ensemble, which pools over paths, is what
+can carry it (NOTES 2026-10-08, "Smooth signs on PAT16, and soft labels").
+
 What a shipped confidence should be, then:
 
 - the ensemble's mixture or votes, mapped for rescans by a double bootstrap;

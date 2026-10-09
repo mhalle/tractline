@@ -2771,3 +2771,60 @@ Caveats:
 - The sibling session's sub-cIIIs04 run read 33.0 % for replicate against replicate and 37.8 % for a rescan. That run
   had no registration and gave the rescan another labeller draw, but it points the same way. Its data stays in
   DATA/ds003416/sub-cIIIs04 and `_masivar.py` loads it.
+
+## 2026-10-08 Smooth signs on PAT16, and soft labels: the doubt is in the tracking, not the naming
+
+`ensemble_pilot.py` and `ensemble_double.py` gain `--flip` and `--fwhm` (records in `added-smooth/`, `double-smooth/`;
+`ensemble_pilot_added-smooth.json`, `ensemble_double_smooth.json`); `ensemble_double.py` now computes the
+replicate-vs-replicate keep rate (was a constant) and the scan's residual correlation. New: `ensemble_soft.py` →
+`ensemble_soft.json`. PAT16, M2 (MPS), 69 runs.
+
+**The double bootstrap refitted with smooth in-plane signs (FWHM 4 voxels).** The entry above showed per-voxel signs
+understate a same-session rescan on MASiVar, and smooth signs match it.
+
+PAT16's residuals are spatially correlated too, but in the other in-plane direction. Lag-1 correlation along x, y, z:
+0.28, 0.43, 0.03 in the DW volumes (MASiVar: 0.53, 0.40, 0.09).
+
+| PAT16 | per-voxel signs | smooth signs |
+|---|---|---|
+| pilot: held-out run changes the reference's label | 33.2 % | 35.1 % |
+| pilot: AUROC mixture / one run | 0.796 / 0.648 | 0.788 / 0.644 |
+| replicate against replicate keeps the tract | 62.0 % | 59.9 % |
+| double: change against rescans | 38.1 % | 40.3 % |
+| double: ECE as stated, mixture / one run | 0.067 / 0.318 | 0.076 / 0.339 |
+| double: held-out ECE, isotonic / votes table / voxel table | 0.0025 / 0.0026 / 0.0024 | 0.0031 / 0.0027 / 0.0019 |
+| votes table: P(keep \| 11 of 11) | 0.915 | 0.901 |
+| real scan: mean P(rescan keeps), isotonic / votes | 0.621 / 0.606 | 0.595 / 0.580 |
+| real scan: share stated ≥ 0.9, isotonic | 14.2 % | 10.4 % |
+| replicates' field p99 (reference 154.0 Hz) | 153.4–155.3 | 153.0–154.6 |
+
+- **Smooth signs add 2 points of change on PAT16, less than on MASiVar's 3.5.** The recalibrated confidence drops by
+  2–3 points, and fewer streamlines reach 0.9.
+- **The method itself is unchanged.** AUROC, and recalibrated ECE (0.002–0.003), are the same as with per-voxel signs.
+- **PAT16's fields do not spread with smooth signs**, unlike MASiVar cIIIs01-2.5's (123–151 against 146–156). PAT16
+  has 8 b0s from both polarities against MASiVar's one reversed b0, so its field is better pinned.
+- **From here the bootstrap's signs are smooth.** The maps above are the ones to use. `added/` and `double/` stay for
+  comparison.
+
+**Soft labels do not steady the output.** `ensemble_soft.py` reads the MASiVar retest records two ways: each
+streamline as its winning tract (hard), or as its tract probabilities carried forward (soft).
+
+| | hard → soft: seed-matched streamlines | voxel tract composition | named-tract map overlap |
+|---|---|---|---|
+| cIIIs01-2.5, rescan | 36.3 → 35.3 % | 0.188 → 0.176 | 0.513 → 0.522 |
+| cIIIs01-2.1, rescan same / other session | 36.9 / 39.1 → 35.8 / 38.0 % | 0.17–0.19 → 0.16–0.17 | 0.50–0.52 → 0.51–0.53 |
+| cIs1, rescans | 47.5–49.9 → 46.2–48.6 % | 0.24 → 0.23 | 0.39–0.40 → 0.40–0.41 |
+
+The streamline column is hard: winner changed; soft: total variation between the probability vectors. The middle
+column is total variation, density-weighted. The last is histogram intersection.
+
+- **The labeller is not unsure.** The top tract averages 0.93–0.94, and 0.4 % of streamlines have it below 0.5.
+- **Labels move because paths move.** One seed's streamline runs 13–21 mm apart (median MDF) on a rescan, reaches other
+  anatomy, and is named again with the same confidence. Carrying one run's probabilities forward cannot carry that.
+- **The ensemble's mixture can**, because it pools over runs whose paths differ. That is the next entry's test.
+- **Tract maps are as unstable as names:** a named tract's map overlaps its rescan's by about half.
+
+**Where this leaves the noise model:**
+- the bootstrap with smooth signs matches a same-session rescan's spread;
+- what it cannot hold (another session's field, position and registration) is measured on real rescans from here,
+  not modelled.

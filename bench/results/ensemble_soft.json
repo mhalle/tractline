@@ -1,0 +1,203 @@
+{
+ "cIIIs01-2.5": {
+  "sharpness (A)": {
+   "streamline: mean top-tract probability": 0.9432,
+   "streamline: share with top probability < 0.5": 0.0039,
+   "voxel: mean top-tract share (soft), density-weighted": 0.6102,
+   "voxel: mean top-tract share (hard), density-weighted": 0.6047
+  },
+  "rescan": {
+   "within": {
+    "matched": 0.9029,
+    "hard": {
+     "streamline: changed (hard) / total variation (soft)": 0.3627,
+     "voxel composition: total variation, density-weighted": 0.1877,
+     "tract maps: histogram intersection, mass-weighted": 0.6317,
+     "tract maps: histogram intersection, named tracts only": 0.513
+    },
+    "soft": {
+     "streamline: changed (hard) / total variation (soft)": 0.3534,
+     "voxel composition: total variation, density-weighted": 0.1759,
+     "tract maps: histogram intersection, mass-weighted": 0.6415,
+     "tract maps: histogram intersection, named tracts only": 0.5217
+    }
+   }
+  },
+  "replicate vs replicate (voxel signs)": {
+   "pairs": 4,
+   "matched": 0.9153,
+   "hard": {
+    "streamline: changed (hard) / total variation (soft)": 0.3152,
+    "voxel composition: total variation, density-weighted": 0.1648,
+    "tract maps: histogram intersection, mass-weighted": 0.6745,
+    "tract maps: histogram intersection, named tracts only": 0.5602
+   },
+   "soft": {
+    "streamline: changed (hard) / total variation (soft)": 0.3072,
+    "voxel composition: total variation, density-weighted": 0.1531,
+    "tract maps: histogram intersection, mass-weighted": 0.685,
+    "tract maps: histogram intersection, named tracts only": 0.5701
+   }
+  },
+  "replicate vs replicate (smooth signs)": {
+   "pairs": 4,
+   "matched": 0.8988,
+   "hard": {
+    "streamline: changed (hard) / total variation (soft)": 0.3498,
+    "voxel composition: total variation, density-weighted": 0.1777,
+    "tract maps: histogram intersection, mass-weighted": 0.6471,
+    "tract maps: histogram intersection, named tracts only": 0.5293
+   },
+   "soft": {
+    "streamline: changed (hard) / total variation (soft)": 0.341,
+    "voxel composition: total variation, density-weighted": 0.1659,
+    "tract maps: histogram intersection, mass-weighted": 0.657,
+    "tract maps: histogram intersection, named tracts only": 0.5381
+   }
+  }
+ },
+ "cIIIs01-2.1": {
+  "sharpness (A)": {
+   "streamline: mean top-tract probability": 0.9395,
+   "streamline: share with top probability < 0.5": 0.0039,
+   "voxel: mean top-tract share (soft), density-weighted": 0.6173,
+   "voxel: mean top-tract share (hard), density-weighted": 0.6126
+  },
+  "rescan": {
+   "within": {
+    "matched": 0.8881,
+    "hard": {
+     "streamline: changed (hard) / total variation (soft)": 0.3689,
+     "voxel composition: total variation, density-weighted": 0.1739,
+     "tract maps: histogram intersection, mass-weighted": 0.645,
+     "tract maps: histogram intersection, named tracts only": 0.5243
+    },
+    "soft": {
+     "streamline: changed (hard) / total variation (soft)": 0.3584,
+     "voxel composition: total variation, density-weighted": 0.1622,
+     "tract maps: histogram intersection, mass-weighted": 0.6549,
+     "tract maps: histogram intersection, named tracts only": 0.5332
+    }
+   },
+   "between": {
+    "matched": 0.8853,
+    "hard": {
+     "streamline: changed (hard) / total variation (soft)": 0.3908,
+     "voxel composition: total variation, density-weighted": 0.1847,
+     "tract maps: histogram intersection, mass-weighted": 0.6291,
+     "tract maps: histogram intersection, named tracts only": 0.5007
+    },
+    "soft": {
+     "streamline: changed (hard) / total variation (soft)": 0.3799,
+     "voxel composition: total variation, density-weighted": 0.1732,
+     "tract maps: histogram intersection, mass-weighted": 0.6385,
+     "tract maps: histogram intersection, named tracts only": 0.5087
+    }
+   }
+  },
+  "replicate vs replicate (voxel signs)": {
+   "pairs": 4,
+   "matched": 0.9172,
+   "hard": {
+    "streamline: changed (hard) / total variation (soft)": 0.321,
+    "voxel composition: total variation, density-weighted": 0.1552,
+    "tract maps: histogram intersection, mass-weighted": 0.684,
+    "tract maps: histogram intersection, named tracts only": 0.5695
+   },
+   "soft": {
+    "streamline: changed (hard) / total variation (soft)": 0.3113,
+    "voxel composition: total variation, density-weighted": 0.1435,
+    "tract maps: histogram intersection, mass-weighted": 0.6945,
+    "tract maps: histogram intersection, named tracts only": 0.5797
+   }
+  },
+  "replicate vs replicate (smooth signs)": {
+   "pairs": 4,
+   "matched": 0.9049,
+   "hard": {
+    "streamline: changed (hard) / total variation (soft)": 0.3488,
+    "voxel composition: total variation, density-weighted": 0.1645,
+    "tract maps: histogram intersection, mass-weighted": 0.6641,
+    "tract maps: histogram intersection, named tracts only": 0.5442
+   },
+   "soft": {
+    "streamline: changed (hard) / total variation (soft)": 0.3393,
+    "voxel composition: total variation, density-weighted": 0.1527,
+    "tract maps: histogram intersection, mass-weighted": 0.6743,
+    "tract maps: histogram intersection, named tracts only": 0.5539
+   }
+  }
+ },
+ "cIs1": {
+  "sharpness (A)": {
+   "streamline: mean top-tract probability": 0.9298,
+   "streamline: share with top probability < 0.5": 0.0049,
+   "voxel: mean top-tract share (soft), density-weighted": 0.6027,
+   "voxel: mean top-tract share (hard), density-weighted": 0.5987
+  },
+  "rescan": {
+   "within": {
+    "matched": 0.7654,
+    "hard": {
+     "streamline: changed (hard) / total variation (soft)": 0.4995,
+     "voxel composition: total variation, density-weighted": 0.2427,
+     "tract maps: histogram intersection, mass-weighted": 0.5183,
+     "tract maps: histogram intersection, named tracts only": 0.393
+    },
+    "soft": {
+     "streamline: changed (hard) / total variation (soft)": 0.4856,
+     "voxel composition: total variation, density-weighted": 0.2276,
+     "tract maps: histogram intersection, mass-weighted": 0.527,
+     "tract maps: histogram intersection, named tracts only": 0.4009
+    }
+   },
+   "between": {
+    "matched": 0.7604,
+    "hard": {
+     "streamline: changed (hard) / total variation (soft)": 0.4754,
+     "voxel composition: total variation, density-weighted": 0.2453,
+     "tract maps: histogram intersection, mass-weighted": 0.5258,
+     "tract maps: histogram intersection, named tracts only": 0.4008
+    },
+    "soft": {
+     "streamline: changed (hard) / total variation (soft)": 0.4621,
+     "voxel composition: total variation, density-weighted": 0.2302,
+     "tract maps: histogram intersection, mass-weighted": 0.5355,
+     "tract maps: histogram intersection, named tracts only": 0.4093
+    }
+   }
+  },
+  "replicate vs replicate (voxel signs)": {
+   "pairs": 4,
+   "matched": 0.8458,
+   "hard": {
+    "streamline: changed (hard) / total variation (soft)": 0.3969,
+    "voxel composition: total variation, density-weighted": 0.1975,
+    "tract maps: histogram intersection, mass-weighted": 0.6193,
+    "tract maps: histogram intersection, named tracts only": 0.4962
+   },
+   "soft": {
+    "streamline: changed (hard) / total variation (soft)": 0.3843,
+    "voxel composition: total variation, density-weighted": 0.1824,
+    "tract maps: histogram intersection, mass-weighted": 0.6312,
+    "tract maps: histogram intersection, named tracts only": 0.5076
+   }
+  },
+  "replicate vs replicate (smooth signs)": {
+   "pairs": 4,
+   "matched": 0.8355,
+   "hard": {
+    "streamline: changed (hard) / total variation (soft)": 0.4082,
+    "voxel composition: total variation, density-weighted": 0.2011,
+    "tract maps: histogram intersection, mass-weighted": 0.612,
+    "tract maps: histogram intersection, named tracts only": 0.4833
+   },
+   "soft": {
+    "streamline: changed (hard) / total variation (soft)": 0.3953,
+    "voxel composition: total variation, density-weighted": 0.1862,
+    "tract maps: histogram intersection, mass-weighted": 0.6237,
+    "tract maps: histogram intersection, named tracts only": 0.4947
+   }
+  }
+ }
+}

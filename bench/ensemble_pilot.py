@@ -1,8 +1,8 @@
 """The pipeline's ensemble on one patient: does uncertainty kept from every stage say more than one run's
 labeler probabilities, and can a rank field carry it? (tractline.ensemble; NOTES 2026-10-07)
 
-    uv run --group dipy --group rankfield bench/ensemble_pilot.py run [--subject PAT16] [--runs 16] [--draws 8]
-    uv run --group dipy --group rankfield bench/ensemble_pilot.py analyze [--subject PAT16] [--build 10]
+    uv run --group dipy --group rankfield bench/ensemble_pilot.py run [--subject PAT16] [--runs 16] [--draws 8] [--flip smooth]
+    uv run --group dipy --group rankfield bench/ensemble_pilot.py analyze [--subject PAT16] [--build 10] [--flip smooth]
 
 run: the reference - the pipeline as it runs today (the scan as acquired, RapidParc draw 0) - then
 `runs` runs with every stage resampled: a wild-bootstrap replicate of the scan as acquired, both
@@ -33,12 +33,17 @@ from tractline.labelers.base import LUT, TRACT_NAMES, OTHER
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
-OUT = HERE / "results/ensemble_pilot_{}.json"            # .format(b0_noise)
+OUT = HERE / "results/ensemble_pilot_{}.json"            # .format(variant(args))
 DEVICE = "mps"
 
 
-def record_dir(subject, b0_noise):
-    d = DATA / "ensemble" / subject / b0_noise
+def variant(args):
+    """The records' folder name: the b0 noise, and the sign flips when not per voxel ("added", "added-smooth")."""
+    return args.b0_noise if args.flip == "voxel" else f"{args.b0_noise}-{args.flip}"
+
+
+def record_dir(subject, name):
+    d = DATA / "ensemble" / subject / name
     d.mkdir(parents=True, exist_ok=True)
     return d
 
@@ -47,7 +52,7 @@ def run(args):
     from _ds001226 import load
     from _bootstrap import ShellWildBootstrap
     s = load(args.subject)
-    d = record_dir(args.subject, args.b0_noise)
+    d = record_dir(args.subject, variant(args))
     log_path = d / "runs.json"
     log = json.loads(log_path.read_text()) if log_path.exists() else {}
     labeler = P.default_labeler(DEVICE)
@@ -82,7 +87,8 @@ def run(args):
             mask = prepare(P.correct(s, P.Timer(), DEVICE).dwi, s.affine, s.bval, s.bvec, device=DEVICE).mask
     else:
         mask = ref[0].mask
-    wb = ShellWildBootstrap(s.dwi, s.bval, s.bvec, extra_b0s=s.b0s[..., n_ap:], b0_noise=args.b0_noise, mask=mask)
+    wb = ShellWildBootstrap(s.dwi, s.bval, s.bvec, extra_b0s=s.b0s[..., n_ap:], b0_noise=args.b0_noise, mask=mask,
+                            flip=args.flip, fwhm=args.fwhm)
     log["bootstrap"] = wb.noise_check(mask)
     log_path.write_text(json.dumps(log, indent=1))
     for r in range(1, args.runs + 1):
@@ -156,14 +162,14 @@ def _winners_only(rec):
 
 def analyze(args):
     import rankfield as rf
-    d = record_dir(args.subject, args.b0_noise)
+    d = record_dir(args.subject, variant(args))
     names = sorted(p.stem for p in d.glob("r*.npz"))
     ref = E.RunRecord.load(d / "r000.npz")
     build = [n for n in names if n != "r000" and int(n[1:]) <= args.build]
     held = [n for n in names if int(n[1:]) > args.build]
     draws = sorted(p.stem for p in d.glob("d*.npz"))
     assert build and held, f"need runs above and below --build {args.build}: have {names}"
-    res = {"subject": args.subject, "b0_noise": args.b0_noise, "reference": "r000: the scan as acquired, RapidParc draw 0 (the pipeline today)",
+    res = {"subject": args.subject, "b0_noise": args.b0_noise, "flip": args.flip, "reference": "r000: the scan as acquired, RapidParc draw 0 (the pipeline today)",
            "ensemble_runs": ["r000"] + build, "held_out_runs": held, "draw_only_runs": draws,
            "runs_log": json.loads((d / "runs.json").read_text())}
 
@@ -302,7 +308,7 @@ def analyze(args):
              v_votes=vV, v_vote_tail=tV, present=S.present)
     (d / "fields_meta.json").write_text(json.dumps({"streamline": code.meta, "voxel": codeV.meta, "voxel_axes": "(Z, Y, X) of the DWI's (X, Y, Z)",
                                                     "runs": V.runs, "tau": V.tau}, indent=1))
-    Path(str(OUT).format(args.b0_noise)).write_text(json.dumps(res, indent=1))
+    Path(str(OUT).format(variant(args))).write_text(json.dumps(res, indent=1))
     print(json.dumps({k: res[k] for k in ("streamlines", "streamline_rank_field", "voxels")}, indent=1))
 
 
@@ -318,5 +324,9 @@ if __name__ == "__main__":
                     help="the b0s' bootstrap residuals: scaled to the DW volumes' noise and added to each b0 as acquired, its "
                          "motion kept (default; the replicates' fields match the reference's, NOTES 2026-10-07); scaled about "
                          "the b0s' mean; or as they are about the mean (motion scrambled)")
+    ap.add_argument("--flip", default="voxel", choices=("voxel", "smooth", "volume"),
+                    help="the bootstrap's signs: per voxel and volume; smooth in-plane patches (NOTES 2026-10-08, \"The bootstrap "
+                         "against real rescans\"); one per volume. Records in <b0 noise>-<flip>/ unless per voxel")
+    ap.add_argument("--fwhm", type=float, default=4.0, help="--flip smooth: the sign field's in-plane smoothing, voxels FWHM")
     args = ap.parse_args()
     run(args) if args.what == "run" else analyze(args)

@@ -1,7 +1,11 @@
 """The ensemble's confidence against rescans, by a double bootstrap (NOTES 2026-10-08, "the bootstrap is centred on it").
 
-    uv run --group dipy --group rankfield bench/ensemble_double.py run [--subject PAT16]
-    uv run --group dipy --group rankfield bench/ensemble_double.py analyze [--subject PAT16]
+    uv run --group dipy --group rankfield bench/ensemble_double.py run [--subject PAT16] [--flip smooth]
+    uv run --group dipy --group rankfield bench/ensemble_double.py analyze [--subject PAT16] [--flip smooth]
+
+--flip: the bootstrap's signs at both levels (ensemble_pilot's --flip; its first-level replicates must exist, in
+added-<flip>/). Per voxel, the default: records in added/ and double/; otherwise added-<flip>/ and double-<flip>/,
+results/ensemble_double_<flip>.json.
 
 A bootstrap's replicates spread around the scan's own estimate, so the pilot's held-out runs, scored against the scan,
 measure the spread around it and not its error: a held-out run changes 33 % of the scan's labels, a rescan-like draw
@@ -32,16 +36,23 @@ from tractline.labelers.base import LUT, OTHER
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 from ensemble_pilot import DEVICE, _winners_only, auroc, calibration, tract_mass, logodds  # noqa: E402
+from ensemble_retest import residual_correlation  # noqa: E402
 from ensemble_exchange import reference_mask  # noqa: E402
 
-OUT = HERE / "results/ensemble_double.json"
+OUT = HERE / "results/ensemble_double{}.json"           # .format("" or "_<flip>")
 PSEUDO = (11, 12, 13, 14)
 FIRST = range(1, 17)
 
 
-def level1(s, mask):
+def level1(s, mask, args):
     from _bootstrap import ShellWildBootstrap
-    return ShellWildBootstrap(s.dwi, s.bval, s.bvec, extra_b0s=s.b0s[..., len(s.b0_index):], b0_noise="added", mask=mask)
+    return ShellWildBootstrap(s.dwi, s.bval, s.bvec, extra_b0s=s.b0s[..., len(s.b0_index):], b0_noise="added", mask=mask,
+                              flip=args.flip, fwhm=args.fwhm)
+
+
+def folders(args):
+    """(first-level folder name, second-level folder name) for the flip."""
+    return ("added", "double") if args.flip == "voxel" else (f"added-{args.flip}", f"double-{args.flip}")
 
 
 def as_subject(s, dwi, pa):
@@ -55,10 +66,10 @@ def run(args):
     labeler = P.default_labeler(DEVICE)
     grid = (s.affine, s.dwi.shape[:3])
     mask = reference_mask(s)
-    wb1 = level1(s, mask)
-    first = DATA / "ensemble" / args.subject / "added"
+    wb1 = level1(s, mask, args)
+    first = DATA / "ensemble" / args.subject / folders(args)[0]
     for k in PSEUDO:
-        d = DATA / "ensemble" / args.subject / "double" / f"r{k:03d}"
+        d = DATA / "ensemble" / args.subject / folders(args)[1] / f"r{k:03d}"
         d.mkdir(parents=True, exist_ok=True)
         log_path = d / "runs.json"
         log = json.loads(log_path.read_text()) if log_path.exists() else {}
@@ -87,7 +98,8 @@ def run(args):
             P.release_memory(DEVICE)
 
         one("s000", sk, k)                                                  # the pilot's draw for r0k
-        wb2 = ShellWildBootstrap(dwi, s.bval, s.bvec, extra_b0s=pa.reshape(*s.dwi.shape[:3], -1), b0_noise="added", mask=mask)
+        wb2 = ShellWildBootstrap(dwi, s.bval, s.bvec, extra_b0s=pa.reshape(*s.dwi.shape[:3], -1), b0_noise="added", mask=mask,
+                                 flip=args.flip, fwhm=args.fwhm)
         log["bootstrap"] = wb2.noise_check(mask)
         for j in range(1, args.level2 + 1):
             name = f"s{j:03d}"
@@ -154,10 +166,10 @@ def vote_table(v, y, R):
     return np.array([y[v == c].mean() if (v == c).any() else y.mean() for c in range(R + 1)])
 
 
-def per_pseudo(root, k, build):
+def per_pseudo(root, k, build, names=("added", "double")):
     """One pseudo-scan's streamline predictors and its pairs against held-out second-level runs and rescans, and its
-    voxel consensus scored the same way."""
-    d = root / "double" / f"r{k:03d}"
+    voxel consensus scored the same way. names: (first-level folder, second-level folder)."""
+    d = root / names[1] / f"r{k:03d}"
     own = E.RunRecord.load(d / "s000.npz")
     S, V = E.StreamlineEnsemble(own), E.VoxelEnsemble(own.shape)
     for name in ["s000"] + [f"s{j:03d}" for j in range(1, build + 1)]:
@@ -192,14 +204,26 @@ def per_pseudo(root, k, build):
 
     held = [p.stem for p in sorted(d.glob("s*.npz")) if int(p.stem[1:]) > build]
     return pred, S.runs, {"centred (held-out second-level runs)": score(held, d),
-                          "rescans (other first-level replicates)": score([f"r{r:03d}" for r in FIRST if r != k], root / "added")}
+                          "rescans (other first-level replicates)": score([f"r{r:03d}" for r in FIRST if r != k], root / names[0])}
+
+
+def rep_keep(first):
+    """The share of matched seeds whose tract two first-level replicates agree on, over the disjoint pairs."""
+    rates = []
+    for i in range(1, 16, 2):
+        a, b = (E.RunRecord.load(first / f"r{j:03d}.npz", logp=False) for j in (i, i + 1))
+        ri, qi = E.StreamlineEnsemble(a).match(b)
+        rates.append(float((LUT[a.cluster[ri]] == LUT[b.cluster[qi]]).mean()))
+    return round(float(np.mean(rates)), 4)
 
 
 def analyze(args):
     root = DATA / "ensemble" / args.subject
-    res = {"subject": args.subject, "pseudo_scans": [f"r{k:03d}" for k in PSEUDO], "build": args.build,
-           "runs_logs": {f"r{k:03d}": json.loads((root / "double" / f"r{k:03d}" / "runs.json").read_text()) for k in PSEUDO}}
-    data = {k: per_pseudo(root, k, args.build) for k in PSEUDO}
+    names = folders(args)
+    res = {"subject": args.subject, "flip": args.flip, **({"fwhm_voxels": args.fwhm} if args.flip == "smooth" else {}),
+           "pseudo_scans": [f"r{k:03d}" for k in PSEUDO], "build": args.build,
+           "runs_logs": {f"r{k:03d}": json.loads((root / names[1] / f"r{k:03d}" / "runs.json").read_text()) for k in PSEUDO}}
+    data = {k: per_pseudo(root, k, args.build, names) for k in PSEUDO}
     R = data[PSEUDO[0]][1]
     targets = list(data[PSEUDO[0]][2])
     res["scoring"] = {}
@@ -255,7 +279,7 @@ def analyze(args):
                      default=str)[:3000], flush=True)
 
     # applied to the real scan's ensemble (the pilot's: added/r000 + r001..r010)
-    first = root / "added"
+    first = root / names[0]
     ref = E.RunRecord.load(first / "r000.npz")
     S = E.StreamlineEnsemble(ref)
     for n in ["r000"] + [f"r{r:03d}" for r in range(1, args.build + 1)]:
@@ -273,10 +297,15 @@ def analyze(args):
                                                   "mixture recalibrated (isotonic)": round(float(p_cal.mean()), 4),
                                                   "mixture recalibrated (Platt)": round(float(p_platt.mean()), 4),
                                                   "votes recalibrated": round(float(np.nanmean(p_vote)), 4)},
-        "replicate vs replicate keep rate (NOTES 2026-10-08)": 0.62,
+        "replicate vs replicate keep rate (first-level pairs r001-r002 .. r015-r016)": rep_keep(first),
         "share of streamlines stated at": {"mixture as is": q(p_mix), "mixture recalibrated (isotonic)": q(p_cal),
                                    "votes recalibrated": q(p_vote)}}
-    OUT.write_text(json.dumps(res, indent=1))
+    from _ds001226 import load
+    from ensemble_exchange import reference_mask
+    s = load(args.subject)
+    mask = reference_mask(s)
+    res["residual lag-1 correlation (x, y, z)"] = residual_correlation(level1(s, mask, args), mask)
+    Path(str(OUT).format("" if args.flip == "voxel" else f"_{args.flip}")).write_text(json.dumps(res, indent=1))
     print(json.dumps(res["the real scan's ensemble"], indent=1))
 
 
@@ -286,5 +315,7 @@ if __name__ == "__main__":
     ap.add_argument("--subject", default="PAT16")
     ap.add_argument("--level2", type=int, default=12)
     ap.add_argument("--build", type=int, default=10)
+    ap.add_argument("--flip", default="voxel", choices=("voxel", "smooth", "volume"))
+    ap.add_argument("--fwhm", type=float, default=4.0, help="--flip smooth: the sign field's in-plane smoothing, voxels FWHM")
     args = ap.parse_args()
     run(args) if args.what == "run" else analyze(args)

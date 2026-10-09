@@ -1,0 +1,751 @@
+{
+ "subject": "PAT16",
+ "b0_noise": "added",
+ "flip": "smooth",
+ "reference": "r000: the scan as acquired, RapidParc draw 0 (the pipeline today)",
+ "ensemble_runs": [
+  "r000",
+  "r001",
+  "r002",
+  "r003",
+  "r004",
+  "r005",
+  "r006",
+  "r007",
+  "r008",
+  "r009",
+  "r010"
+ ],
+ "held_out_runs": [
+  "r011",
+  "r012",
+  "r013",
+  "r014",
+  "r015",
+  "r016"
+ ],
+ "draw_only_runs": [],
+ "runs_log": {
+  "r000": {
+   "draw": 0,
+   "fibers": 42168,
+   "labeled": 32242,
+   "other": 0.498,
+   "residual_left": 0.331,
+   "field_hz_p99_abs": 154.03,
+   "seconds": {
+    "field_estimate": 10.48,
+    "field_apply": 1.56,
+    "prep": 3.11,
+    "load": 0.26,
+    "ukf": 26.46,
+    "label": 0.72
+   },
+   "total_s": 44.0
+  },
+  "bootstrap": {
+   "shells": {
+    "700": {
+     "directions": 16,
+     "sh_order": 2,
+     "coefficients": 6,
+     "leverage": 0.375
+    },
+    "1200": {
+     "directions": 30,
+     "sh_order": 4,
+     "coefficients": 15,
+     "leverage": 0.5
+    },
+    "2800": {
+     "directions": 50,
+     "sh_order": 6,
+     "coefficients": 28,
+     "leverage": 0.56
+    }
+   },
+   "b0_volumes": 6,
+   "b0_noise": "added",
+   "b0_scale": 0.1218,
+   "leverage_scaled": true,
+   "flip": "smooth",
+   "fwhm_voxels": 4.0,
+   "b0_residual_sd": 8.46,
+   "dw_residual_rms": 8.46,
+   "dw_residual_over_b0_sd": 1.0
+  },
+  "r001": {
+   "draw": 1,
+   "fibers": 43032,
+   "labeled": 32469,
+   "other": 0.5013,
+   "residual_left": 0.332,
+   "field_hz_p99_abs": 154.58,
+   "seconds": {
+    "field_estimate": 9.66,
+    "field_apply": 1.66,
+    "prep": 3.24,
+    "load": 0.28,
+    "ukf": 28.03,
+    "label": 0.71
+   },
+   "total_s": 45.1
+  },
+  "r002": {
+   "draw": 2,
+   "fibers": 42933,
+   "labeled": 32384,
+   "other": 0.505,
+   "residual_left": 0.333,
+   "field_hz_p99_abs": 153.57,
+   "seconds": {
+    "field_estimate": 9.25,
+    "field_apply": 1.74,
+    "prep": 3.31,
+    "load": 0.36,
+    "ukf": 25.58,
+    "label": 0.73
+   },
+   "total_s": 42.5
+  },
+  "r003": {
+   "draw": 3,
+   "fibers": 42946,
+   "labeled": 32439,
+   "other": 0.5061,
+   "residual_left": 0.333,
+   "field_hz_p99_abs": 153.31,
+   "seconds": {
+    "field_estimate": 9.33,
+    "field_apply": 1.6,
+    "prep": 3.06,
+    "load": 0.31,
+    "ukf": 25.04,
+    "label": 0.7
+   },
+   "total_s": 41.5
+  },
+  "r004": {
+   "draw": 4,
+   "fibers": 42810,
+   "labeled": 32377,
+   "other": 0.4978,
+   "residual_left": 0.331,
+   "field_hz_p99_abs": 154.63,
+   "seconds": {
+    "field_estimate": 9.4,
+    "field_apply": 1.33,
+    "prep": 3.06,
+    "load": 0.25,
+    "ukf": 24.48,
+    "label": 0.67
+   },
+   "total_s": 40.6
+  },
+  "r005": {
+   "draw": 5,
+   "fibers": 42972,
+   "labeled": 32364,
+   "other": 0.5013,
+   "residual_left": 0.332,
+   "field_hz_p99_abs": 153.63,
+   "seconds": {
+    "field_estimate": 9.41,
+    "field_apply": 1.74,
+    "prep": 3.14,
+    "load": 0.28,
+    "ukf": 25.47,
+    "label": 0.76
+   },
+   "total_s": 42.5
+  },
+  "r006": {
+   "draw": 6,
+   "fibers": 42893,
+   "labeled": 32394,
+   "other": 0.5052,
+   "residual_left": 0.331,
+   "field_hz_p99_abs": 153.18,
+   "seconds": {
+    "field_estimate": 13.79,
+    "field_apply": 1.76,
+    "prep": 3.24,
+    "load": 0.25,
+    "ukf": 25.53,
+    "label": 0.76
+   },
+   "total_s": 46.8
+  },
+  "r007": {
+   "draw": 7,
+   "fibers": 42982,
+   "labeled": 32411,
+   "other": 0.4971,
+   "residual_left": 0.332,
+   "field_hz_p99_abs": 154.51,
+   "seconds": {
+    "field_estimate": 10.91,
+    "field_apply": 1.38,
+    "prep": 3.06,
+    "load": 0.26,
+    "ukf": 24.61,
+    "label": 0.72
+   },
+   "total_s": 42.3
+  },
+  "r008": {
+   "draw": 8,
+   "fibers": 42984,
+   "labeled": 32502,
+   "other": 0.501,
+   "residual_left": 0.332,
+   "field_hz_p99_abs": 153.91,
+   "seconds": {
+    "field_estimate": 9.64,
+    "field_apply": 1.79,
+    "prep": 3.12,
+    "load": 0.27,
+    "ukf": 25.55,
+    "label": 0.7
+   },
+   "total_s": 42.7
+  },
+  "r009": {
+   "draw": 9,
+   "fibers": 42894,
+   "labeled": 32519,
+   "other": 0.509,
+   "residual_left": 0.332,
+   "field_hz_p99_abs": 154.41,
+   "seconds": {
+    "field_estimate": 10.95,
+    "field_apply": 1.76,
+    "prep": 3.46,
+    "load": 0.29,
+    "ukf": 25.17,
+    "label": 0.68
+   },
+   "total_s": 43.7
+  },
+  "r010": {
+   "draw": 10,
+   "fibers": 43023,
+   "labeled": 32497,
+   "other": 0.5005,
+   "residual_left": 0.332,
+   "field_hz_p99_abs": 152.98,
+   "seconds": {
+    "field_estimate": 8.82,
+    "field_apply": 1.8,
+    "prep": 3.12,
+    "load": 0.26,
+    "ukf": 24.72,
+    "label": 0.68
+   },
+   "total_s": 40.7
+  },
+  "r011": {
+   "draw": 11,
+   "fibers": 42856,
+   "labeled": 32302,
+   "other": 0.5002,
+   "residual_left": 0.332,
+   "field_hz_p99_abs": 154.17,
+   "seconds": {
+    "field_estimate": 9.97,
+    "field_apply": 1.61,
+    "prep": 3.1,
+    "load": 0.25,
+    "ukf": 24.77,
+    "label": 0.68
+   },
+   "total_s": 41.7
+  },
+  "r012": {
+   "draw": 12,
+   "fibers": 42974,
+   "labeled": 32551,
+   "other": 0.4955,
+   "residual_left": 0.332,
+   "field_hz_p99_abs": 154.53,
+   "seconds": {
+    "field_estimate": 9.62,
+    "field_apply": 1.69,
+    "prep": 3.09,
+    "load": 0.26,
+    "ukf": 25.2,
+    "label": 0.67
+   },
+   "total_s": 41.9
+  },
+  "r013": {
+   "draw": 13,
+   "fibers": 42901,
+   "labeled": 32433,
+   "other": 0.5011,
+   "residual_left": 0.332,
+   "field_hz_p99_abs": 154.34,
+   "seconds": {
+    "field_estimate": 10.1,
+    "field_apply": 1.59,
+    "prep": 3.06,
+    "load": 0.25,
+    "ukf": 24.71,
+    "label": 0.69
+   },
+   "total_s": 41.8
+  },
+  "r014": {
+   "draw": 14,
+   "fibers": 43020,
+   "labeled": 32468,
+   "other": 0.4977,
+   "residual_left": 0.333,
+   "field_hz_p99_abs": 153.85,
+   "seconds": {
+    "field_estimate": 9.9,
+    "field_apply": 1.68,
+    "prep": 3.07,
+    "load": 0.26,
+    "ukf": 25.95,
+    "label": 0.76
+   },
+   "total_s": 43.2
+  },
+  "r015": {
+   "draw": 15,
+   "fibers": 43123,
+   "labeled": 32399,
+   "other": 0.5031,
+   "residual_left": 0.332,
+   "field_hz_p99_abs": 153.87,
+   "seconds": {
+    "field_estimate": 9.6,
+    "field_apply": 1.78,
+    "prep": 3.08,
+    "load": 0.31,
+    "ukf": 25.54,
+    "label": 0.68
+   },
+   "total_s": 42.5
+  },
+  "r016": {
+   "draw": 16,
+   "fibers": 42925,
+   "labeled": 32339,
+   "other": 0.5027,
+   "residual_left": 0.333,
+   "field_hz_p99_abs": 154.07,
+   "seconds": {
+    "field_estimate": 8.99,
+    "field_apply": 1.69,
+    "prep": 3.21,
+    "load": 0.27,
+    "ukf": 25.3,
+    "label": 0.68
+   },
+   "total_s": 41.6
+  }
+ },
+ "streamlines": {
+  "reference_labeled": 32242,
+  "ensemble_runs": 11,
+  "present_in_ensemble_runs": {
+   "all": 22096,
+   "median": 11.0
+  },
+  "held_out_pairs": 175847,
+  "held_out_change_rate": 0.3512,
+  "auroc_predicting_change (lower confidence = change)": {
+   "single run: tract probability (TRX)": 0.6438,
+   "single run: tract margin (TRX)": 0.6438,
+   "ensemble: mixture tract probability": 0.788,
+   "ensemble: vote fraction for the reference's tract": 0.7814
+  },
+  "calibration: P(held-out run keeps the reference's tract)": {
+   "single run: tract probability": {
+    "brier": 0.3048,
+    "ece": 0.2888,
+    "bins": [
+     {
+      "bin": [
+       0,
+       0.5
+      ],
+      "n": 1841,
+      "stated": 0.4327,
+      "observed": 0.3172
+     },
+     {
+      "bin": [
+       0.5,
+       0.7
+      ],
+      "n": 10994,
+      "stated": 0.6088,
+      "observed": 0.422
+     },
+     {
+      "bin": [
+       0.7,
+       0.8
+      ],
+      "n": 7576,
+      "stated": 0.7526,
+      "observed": 0.4885
+     },
+     {
+      "bin": [
+       0.8,
+       0.9
+      ],
+      "n": 11689,
+      "stated": 0.855,
+      "observed": 0.5181
+     },
+     {
+      "bin": [
+       0.9,
+       0.95
+      ],
+      "n": 10812,
+      "stated": 0.9279,
+      "observed": 0.5575
+     },
+     {
+      "bin": [
+       0.95,
+       0.99
+      ],
+      "n": 23394,
+      "stated": 0.975,
+      "observed": 0.5879
+     },
+     {
+      "bin": [
+       0.99,
+       1.0
+      ],
+      "n": 107026,
+      "stated": 0.9987,
+      "observed": 0.7228
+     }
+    ]
+   },
+   "ensemble: mixture tract probability": {
+    "brier": 0.1763,
+    "ece": 0.0337,
+    "bins": [
+     {
+      "bin": [
+       0,
+       0.5
+      ],
+      "n": 47239,
+      "stated": 0.3218,
+      "observed": 0.3419
+     },
+     {
+      "bin": [
+       0.5,
+       0.7
+      ],
+      "n": 38254,
+      "stated": 0.6019,
+      "observed": 0.5822
+     },
+     {
+      "bin": [
+       0.7,
+       0.8
+      ],
+      "n": 21810,
+      "stated": 0.7469,
+      "observed": 0.7093
+     },
+     {
+      "bin": [
+       0.8,
+       0.9
+      ],
+      "n": 23450,
+      "stated": 0.8467,
+      "observed": 0.7944
+     },
+     {
+      "bin": [
+       0.9,
+       0.95
+      ],
+      "n": 13425,
+      "stated": 0.918,
+      "observed": 0.8713
+     },
+     {
+      "bin": [
+       0.95,
+       0.99
+      ],
+      "n": 8654,
+      "stated": 0.9738,
+      "observed": 0.9125
+     },
+     {
+      "bin": [
+       0.99,
+       1.0
+      ],
+      "n": 23011,
+      "stated": 0.9985,
+      "observed": 0.9544
+     }
+    ]
+   },
+   "ensemble: vote fraction": {
+    "brier": 0.1794,
+    "ece": 0.0459,
+    "bins": [
+     {
+      "bin": [
+       0,
+       0.5
+      ],
+      "n": 44079,
+      "stated": 0.3159,
+      "observed": 0.3389
+     },
+     {
+      "bin": [
+       0.5,
+       0.7
+      ],
+      "n": 35555,
+      "stated": 0.5891,
+      "observed": 0.5579
+     },
+     {
+      "bin": [
+       0.7,
+       0.8
+      ],
+      "n": 19846,
+      "stated": 0.7287,
+      "observed": 0.6786
+     },
+     {
+      "bin": [
+       0.8,
+       0.9
+      ],
+      "n": 21697,
+      "stated": 0.8249,
+      "observed": 0.7613
+     },
+     {
+      "bin": [
+       0.9,
+       0.95
+      ],
+      "n": 19276,
+      "stated": 0.9081,
+      "observed": 0.8442
+     },
+     {
+      "bin": [
+       0.99,
+       1.0
+      ],
+      "n": 35394,
+      "stated": 1.0,
+      "observed": 0.9337
+     }
+    ]
+   }
+  },
+  "calibration: P(held-out run gives the ensemble's consensus)": {
+   "vote fraction of the consensus": {
+    "brier": 0.1865,
+    "ece": 0.0555,
+    "bins": [
+     {
+      "bin": [
+       0,
+       0.5
+      ],
+      "n": 22067,
+      "stated": 0.4138,
+      "observed": 0.3838
+     },
+     {
+      "bin": [
+       0.5,
+       0.7
+      ],
+      "n": 51441,
+      "stated": 0.5855,
+      "observed": 0.5395
+     },
+     {
+      "bin": [
+       0.7,
+       0.8
+      ],
+      "n": 23580,
+      "stated": 0.7284,
+      "observed": 0.6661
+     },
+     {
+      "bin": [
+       0.8,
+       0.9
+      ],
+      "n": 23593,
+      "stated": 0.8247,
+      "observed": 0.7565
+     },
+     {
+      "bin": [
+       0.9,
+       0.95
+      ],
+      "n": 19772,
+      "stated": 0.9081,
+      "observed": 0.8424
+     },
+     {
+      "bin": [
+       0.99,
+       1.0
+      ],
+      "n": 35394,
+      "stated": 1.0,
+      "observed": 0.9337
+     }
+    ]
+   },
+   "consensus agreement": 0.6794
+  },
+  "consensus differs from the reference": 0.194,
+  "paths": {
+   "mdf_mm_quantiles (0.5, 0.9, 0.99)": [
+    8.52,
+    34.31,
+    52.99
+   ],
+   "auroc: mdf predicting change": 0.7784,
+   "auroc: ensemble median mdf predicting change": 0.6319
+  }
+ },
+ "streamline_rank_field": {
+  "meta": {
+   "depth": 6,
+   "keep": "clip",
+   "clip": 8.0,
+   "classes": 1600
+  },
+  "bytes_per_streamline": {
+   "ranks+support+tail": 19.0,
+   "vote planes + vote tail": 7
+  },
+  "vote_tail_zero": 0.7128,
+  "vote_tail_quantiles (0.99, 1.0)": [
+   4,
+   6
+  ],
+  "regrouped votes from the planes exact (SLF I-III, CC 1-7 merged)": 0.7128,
+  "auroc: decoded mixture tract probability predicting change": 0.7765,
+  "decoded mixture probability vs full: max abs": 0.474
+ },
+ "voxels": {
+  "grid": [
+   96,
+   96,
+   60
+  ],
+  "tau": 1.0,
+  "voxels_any_tract": 92317,
+  "agreement with a held-out run's winner": {
+   "ensemble consensus": 0.6652,
+   "the reference run's map": 0.5986
+  },
+  "calibration: P(held-out winner = consensus)": {
+   "brier": 0.1739,
+   "ece": 0.0415,
+   "bins": [
+    {
+     "bin": [
+      0,
+      0.5
+     ],
+     "n": 137946,
+     "stated": 0.3321,
+     "observed": 0.3685
+    },
+    {
+     "bin": [
+      0.5,
+      0.7
+     ],
+     "n": 118146,
+     "stated": 0.5918,
+     "observed": 0.5623
+    },
+    {
+     "bin": [
+      0.7,
+      0.8
+     ],
+     "n": 58902,
+     "stated": 0.7273,
+     "observed": 0.6713
+    },
+    {
+     "bin": [
+      0.8,
+      0.9
+     ],
+     "n": 57186,
+     "stated": 0.8182,
+     "observed": 0.7619
+    },
+    {
+     "bin": [
+      0.9,
+      0.95
+     ],
+     "n": 63024,
+     "stated": 0.9091,
+     "observed": 0.8533
+    },
+    {
+     "bin": [
+      0.99,
+      1.0
+     ],
+     "n": 118698,
+     "stated": 1.0,
+     "observed": 0.9628
+    }
+   ]
+  },
+  "rank_field": {
+   "meta": {
+    "depth": 6,
+    "keep": "shell",
+    "clip": 8.0,
+    "classes": 44
+   },
+   "bytes_per_voxel": 13.0,
+   "labels exact (winner)": 1.0,
+   "vote_tail_zero (voxels with a tract)": 0.915
+  },
+  "classes_winning (consensus, voxels with a tract)": {
+   "ILF": 1424,
+   "Sup-F": 3732,
+   "Sup-P": 1531,
+   "Sup-PT": 1047,
+   "Other": 57010,
+   "NONE": 20894
+  }
+ }
+}
