@@ -61,7 +61,7 @@ input[type=range] { flex: 1; min-width: 120px; accent-color: var(--accent); }
   <div class="main">
     <section class="panel" aria-label="3D scene">
       <div class="scene" id="scene"><canvas id="cv" aria-label="Rotatable 3D view of the tumor, tract shells and streamline fans"></canvas>
-        <span class="hint">Drag to rotate · scroll or pinch to zoom · right-drag to pan</span></div>
+        <span class="hint">Drag to rotate freely · scroll or pinch to zoom · right-drag to pan · double-click a surface to rotate around it</span></div>
       <div class="controls">
         <div class="row"><span class="label">Shells</span>
           <div class="seg" role="group" aria-label="Which shells to show">
@@ -81,6 +81,13 @@ input[type=range] { flex: 1; min-width: 120px; accent-color: var(--accent); }
           <span id="zout" class="num muted" style="min-width:9ch"></span>
           <button class="plain" id="plane" aria-pressed="true">Hide plane</button>
           <button class="plain" id="brain" aria-pressed="true">Hide outline</button>
+        </div>
+        <div class="row"><span class="label">View</span>
+          <div class="seg" role="group" aria-label="Look at the scene from">
+            <button data-view="right">Right</button><button data-view="left">Left</button><button data-view="front">Front</button>
+            <button data-view="back">Back</button><button data-view="top">Top</button><button data-view="bottom">Bottom</button>
+          </div>
+          <button class="plain" id="center">Center on tumor</button>
           <button class="plain" id="reset">Reset view</button></div>
       </div>
     </section>
@@ -115,7 +122,7 @@ input[type=range] { flex: 1; min-width: 120px; accent-color: var(--accent); }
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/TrackballControls.js"></script>
 <script>
 const D = /*DATA*/null;
 const bytes = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
@@ -201,14 +208,33 @@ const R = 95;
 [["R", [R, 0, 0]], ["L", [-R, 0, 0]], ["A", [0, R, 0]], ["P", [0, -R, 0]], ["S", [0, 0, R]], ["I", [0, 0, -R]]]
   .forEach(([t, d]) => label(t, center.clone().add(new THREE.Vector3(...d))));
 
-const controls = new THREE.OrbitControls(camera, canvas);
-controls.enableDamping = true;
-function home() {
-  camera.up.set(0, 0, 1);
-  camera.position.copy(center.clone().add(new THREE.Vector3(120, -150, 95)));
-  controls.target.copy(center); controls.update();
+// trackball: free rotation about a pivot, no fixed up-axis and no stuck poles; the pivot is shown as a small dot
+const controls = new THREE.TrackballControls(camera, canvas);
+Object.assign(controls, { rotateSpeed: 2.6, zoomSpeed: 1.2, panSpeed: 0.7, staticMoving: false, dynamicDampingFactor: 0.2 });
+const pivot = new THREE.Mesh(new THREE.SphereGeometry(1.4, 16, 12), new THREE.MeshBasicMaterial({ color: 0xffffff, depthTest: false, transparent: true, opacity: 0.85 }));
+pivot.renderOrder = 11; scene.add(pivot);
+const VIEWS = { right: [1, 0, 0, 0, 0, 1], left: [-1, 0, 0, 0, 0, 1], front: [0, 1, 0, 0, 0, 1], back: [0, -1, 0, 0, 0, 1],
+  top: [0, 0, 1, 0, 1, 0], bottom: [0, 0, -1, 0, 1, 0], home: [0.55, -0.68, 0.45, 0, 0, 1] };
+function view(name, at) {
+  const [x, y, z, ux, uy, uz] = VIEWS[name], t = (at || controls.target).clone();
+  const dist = Math.max(camera.position.distanceTo(controls.target), 120);
+  controls.target.copy(t);
+  camera.position.copy(t.clone().add(new THREE.Vector3(x, y, z).normalize().multiplyScalar(name === "home" ? 230 : dist)));
+  camera.up.set(ux, uy, uz); camera.lookAt(t); controls.update();
 }
+function home() { view("home", center); }
 home();
+// double-click a surface (tumor, shell, plane): pan so that point becomes the pivot
+const ray = new THREE.Raycaster();
+canvas.addEventListener("dblclick", e => {
+  const r = canvas.getBoundingClientRect();
+  ray.setFromCamera(new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1), camera);
+  const targets = scene.children.filter(o => o.isMesh && o.visible && o !== pivot && !groups.brain.includes(o));
+  const hit = ray.intersectObjects(targets, false)[0];
+  if (!hit) return;
+  const shift = hit.point.clone().sub(controls.target);
+  controls.target.add(shift); camera.position.add(shift); controls.update();
+});
 
 // state and controls
 const state = { shell: "mid", fan: "disagree", on: Object.fromEntries(D.shown.map(t => [t.name, true])), plane: true, brain: true };
@@ -237,6 +263,9 @@ D.shown.forEach(t => {
 const pl = document.getElementById("plane"); pl.onclick = () => { state.plane = !state.plane; pl.textContent = state.plane ? "Hide plane" : "Show plane"; pl.setAttribute("aria-pressed", String(state.plane)); apply(); };
 const br = document.getElementById("brain"); br.onclick = () => { state.brain = !state.brain; br.textContent = state.brain ? "Hide outline" : "Show outline"; br.setAttribute("aria-pressed", String(state.brain)); apply(); };
 document.getElementById("reset").onclick = home;
+document.getElementById("center").onclick = () => {                 // the tumor becomes the pivot; the viewing direction stays
+  const shift = center.clone().sub(controls.target); controls.target.add(shift); camera.position.add(shift); controls.update(); };
+document.querySelectorAll("[data-view]").forEach(b => b.onclick = () => view(b.dataset.view));
 const zs = document.getElementById("zs"); zs.max = Z - 1; zs.value = D.tumor_z; zs.oninput = () => setPlane(+zs.value); setPlane(D.tumor_z);
 document.getElementById("widest").textContent = `${Math.round(D.levels.widest_held * 100)}%`;
 
@@ -250,10 +279,11 @@ apply();
 function resize() {
   const w = host.clientWidth, h = Math.round(Math.min(Math.max(w * 0.72, 320), 680));
   renderer.setSize(w, h, false); canvas.style.height = h + "px"; camera.aspect = w / h; camera.updateProjectionMatrix();
+  controls.handleResize();
 }
 new ResizeObserver(resize).observe(host); resize();
 const mq = window.matchMedia("(prefers-color-scheme: dark)");
 const sync = () => { scene.background = new THREE.Color(css("--scene") || "#0b1015"); };
 mq.addEventListener ? mq.addEventListener("change", sync) : 0;
-(function loop() { controls.update(); renderer.render(scene, camera); requestAnimationFrame(loop); })();
+(function loop() { controls.update(); pivot.position.copy(controls.target); renderer.render(scene, camera); requestAnimationFrame(loop); })();
 </script>
