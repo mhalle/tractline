@@ -3427,8 +3427,8 @@ class may include them.
 | session 3 | 0.57 / 0.44 | +0.11 (28; SLF-I, TP, CC3, CC5, Sup-T) | 0.53 / 0.67 |
 | session 5 | 0.56 / 0.41 | +0.13 (28; CC2) | 0.52 / 0.66 |
 
-- **A streamline consistent with its bundle's rule keeps its name on a rescan 13–15 points more often pooled, and
-  11–13 points within bundles.** About a fifth of the pooled gap is which bundles are involved. In a few bundles
+- **A streamline consistent with its bundle's rule keeps its name on a rescan 12–15 points more often pooled, and
+  11–13 points within bundles.** A tenth to a sixth of the pooled gap is which bundles are involved. In a few bundles
   (mostly callosal) the gap is negative.
 - **Voting only among consistent runs predicts the rescan worse,** 0.52–0.55 against 0.66–0.70. This is expected by
   construction: it discards votes from a process that a rescan reproduces. It shows that the pipeline reproduces its
