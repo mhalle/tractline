@@ -3348,72 +3348,101 @@ Caveats:
 - dots outside an envelope may come from registration error or real scan-to-scan change as well as from a tight
   envelope.
 
-## 2026-10-09 Endpoints against FastSurfer's anatomy: plausible streamlines keep their name more often
+## 2026-10-09 Endpoints against FastSurfer's anatomy: streamlines consistent with their bundle's rule keep their name more often
 
 **Anatomy.**
 - FastSurfer (VINN, `fastsurfer:asegdkt`, 2.5.4) ran through haversack on Modal: `tools/ranked_emit_modal.py
   --source openneuro`, which fetches the T1 on the worker. It took 84 s of compute per subject.
 - Each subject's 79-class ranked field became a duckn store (about 7 MB) and was restored to aseg + DKT labels
-  (lateralized) on the T1 grid. All of it is in DATA/fastsurfer/.
+  (lateralized) on the T1 grid. All of it is in DATA/fastsurfer/. The stores were built with `uv run --isolated --extra
+  fastsurfer --extra duckn` in haversack, because its .venvs/fastsurfer predates the labelfield pin.
 - Registration to the corrected mean b0, rigid:
   - PAT16: tumor_on_dwi()'s cached transform;
-  - cIIIs04: FastSurfer's conformed T1 to A_meanb0 (`bench/_register.py`).
+  - cIIIs04: FastSurfer's conformed T1 to A_meanb0, with `bench/_register.py`.
   - Both were checked by eye (`bench/endpoints_overlay.py` → `ensemble_endpoints_registration.png`): the ventricles
     and the cortical edge sit on the b0's.
 
 **Method** (`bench/ensemble_endpoints.py` → `ensemble_endpoints.json`).
-- Each streamline's two ends are given the nearest gray-matter label within 4 mm.
-- A named streamline is plausible when its ends fit its bundle's rule: two region sets in one hemisphere, or, for
-  the corpus callosum, both ends cortical in opposite hemispheres. The rules are a first pass written for this. For
-  example, CST runs from precentral/postcentral/paracentral/superior frontal/caudal middle frontal cortex to the
-  brainstem or ventral diencephalon; the arcuate from the inferior frontal gyrus or precentral cortex to lateral
-  temporal cortex or the supramarginal gyrus.
-- The cingulum's hemisphere is not checked. The medial surfaces lie within 4 mm of each other, and with the check
-  it scored 0.27 (cIIIs04) and 0.38 (PAT16), mostly left-right pairs of medial cortex.
-- Not scored: capsules, corona radiata, PLIC, MdLF, the cerebellar classes, and Other.
+- **End regions:** each end's region is the nearest cerebral gray-matter label within 4 mm. The cerebellar cortex is
+  excluded, since basal ends otherwise reached across the tentorium.
+- **Field-of-view edge:** an end within 3 mm of the DWI's inferior face, with no gray nearby, is "fov-edge". The field
+  of view cuts the brainstem: 86 % of CST streamlines end within 3 mm of it.
+- **Side:** an end's side is taken from the midsagittal plane, not from its nearest label's hemisphere.
+- **Deep structures:** the thalamus and striatum count as entered along the path. cIIIs04 uses the full streamlines;
+  PAT16 uses 20-point paths, which can miss a short passage.
+- **Rules** (in the script) by kind:
+  - pair: one end in each set, on one side;
+  - within: both ends in the two sets' union, for the superficial pair classes, whose DKT lobe borders are uncertain;
+  - callosal: both ends in the segment's own cortex, on opposite sides;
+  - via: the thalamic and striatal classes, which the ORG atlas names by the structures they pass. The path enters the
+    structure and one end lies in the lobe, on its side;
+  - cingulum: one end in cingulate, parahippocampal or entorhinal cortex or the hippocampus, the other there or in
+    the adjacent medial cortex, on one side.
+- **Unscored:** an AF, UF or IOFF streamline with an end in the insula. Also the capsules, corona radiata, PLIC, MdLF,
+  SO, the cerebellar classes and Other.
 
-**Plausible share** (17 runs pooled, scored named streamlines):
-- cIIIs04 0.69, and each rescan 0.69–0.70.
-- PAT16 0.57.
+**An independent review revised the first pass** (the agent's report is in this session; the first pass is in
+a7c07a9). The first pass:
+- tested the thalamic and striatal classes on where tracking stops;
+- accepted any left-right cortical pair as callosal, and any medial pair as cingulum;
+- let basal ends take cerebellar labels;
+- failed the CST at the field-of-view edge;
+- missed standard terminations: the AF's rostral middle frontal and ventral postcentral, the UF's superior and
+  rostral middle frontal (DKT has no frontal pole), and the SLF-II's pars opercularis and triangularis;
+- gave the IOFF precentral, paracentral and caudal middle frontal ends, which it should not have.
 
-| | cIIIs04 | PAT16 |
+The first pass's sentence that the thalamic classes are "misnamed" corticopontine courses is withdrawn. The atlas
+class may include them.
+
+**Consistent share** (17 runs pooled, scored named streamlines):
+- **cIIIs04:** 0.66 (0.57 without the superficial classes); each rescan 0.65–0.67.
+- **PAT16:** 0.59 (0.53).
+
+| bundle | cIIIs04 | PAT16 |
 |---|---|---|
-| highest | CC1 0.93, IOFF 0.88, Sup-FP 0.87, CC2 0.87, Sup-F 0.86, CC5 0.84 | Sup-PT 0.81, IOFF 0.79, CC1 0.78, CC2 0.76 |
-| major bundles | AF 0.76, ILF 0.74, SLF-III 0.71, CST 0.66, UF 0.60, SLF-II 0.56, SLF-I 0.46, CB 0.46 | AF 0.50, ILF 0.58, CST 0.65, UF 0.35 |
-| lowest | TP 0.13, TT 0.24, TF 0.29, TO 0.29, SO 0.05 | TP 0.16, SO 0.12, TO 0.23 |
+| AF | 0.94 | 0.72 |
+| IOFF | 0.84 | 0.79 |
+| UF | 0.78 | 0.76 |
+| ILF | 0.77 | 0.69 |
+| CST | 0.76 | 0.68 |
+| SLF-II / SLF-III / SLF-I | 0.73 / 0.71 / 0.47 | 0.49 / 0.61 / 0.61 |
+| TF / TO / TP / TT | 0.68 / 0.58 / 0.50 / 0.48 | 0.66 / 0.48 / 0.50 / 0.59 |
+| SF / SP | 0.77 / 0.46 | 0.47 / 0.52 |
+| CB | 0.22 | 0.37 |
+| CC1–CC7 | 0.51, 0.39, 0.47, 0.31, 0.19, 0.42, 0.39 | 0.34, 0.42, 0.32, 0.30, 0.19, 0.28, 0.43 |
+| superficial (Sup-*) | 0.56–0.94 | 0.51–0.84 |
 
-- **The thalamic classes mostly fail for a reason the ends show.** Many TF and TP streamlines run from frontal or
-  parietal cortex to the brainstem: corticospinal or corticopontine courses that the labeler names thalamo-frontal
-  or thalamo-parietal.
-- **PAT16 is lower than cIIIs04,** most of all for the AF, ILF and UF, the bundles near its temporal tumor. FastSurfer
-  is trained on healthy brains, and its labels near the tumor are unchecked, so this does not yet separate tracking
-  error from labeling error.
+- **The long association bundles are mostly consistent** (AF, IOFF, UF, ILF, CST at 0.76–0.94 on cIIIs04).
+- **The cingulum (0.22) and callosal segments (0.19–0.51) are mostly not consistent with segment- and
+  structure-specific rules.** Whether that reflects the tracking, the labeler's grouping or rules stricter than the
+  atlas's own clusters is not settled.
+- **PAT16 is lower for the AF and SLF-II,** both near its temporal tumor. FastSurfer is trained on healthy brains and
+  its labels near the tumor are unchecked.
 
-**Plausibility and the rescan** (cIIIs04, seeds labeled in all 17 runs, A's streamline scored):
+**Consistency and the rescan** (cIIIs04, seeds labeled in all 17 runs, A's streamline scored):
 
-| rescan | keeps its name: plausible ends / implausible (n) | gives the mode: plausible-run mode / all-run mode |
-|---|---|---|
-| same session | 0.61 / 0.43 (12,027 / 5,343) | 0.54 / 0.70 |
-| session 3 | 0.58 / 0.40 | 0.53 / 0.67 |
-| session 5 | 0.56 / 0.37 | 0.51 / 0.66 |
+| rescan | keeps its name: consistent / inconsistent (n) | within bundles, weighted (bundles; negative) | gives the mode: consistent-run mode / all-run mode |
+|---|---|---|---|
+| same session | 0.60 / 0.47 (11,038 / 6,298) | +0.11 (28; SP, TP, CC2, CC3) | 0.55 / 0.70 |
+| session 3 | 0.57 / 0.44 | +0.11 (28; SLF-I, TP, CC3, CC5, Sup-T) | 0.53 / 0.67 |
+| session 5 | 0.56 / 0.41 | +0.13 (28; CC2) | 0.52 / 0.66 |
 
-- **A streamline whose ends fit its bundle keeps its name on a rescan 18–20 points more often** than one whose ends
-  do not. Endpoint plausibility is a second, independent warning sign beside the ensemble's agreement.
-- **Voting only among runs with plausible ends predicts the rescan worse,** 0.51–0.54 against 0.66–0.70.
-  - Where the two votes differ (about 15,700 seeds), the rescan gives the plausible runs' choice 20 % of the time and
-    the all-runs choice 61–64 %.
-  - A rescan reproduces the pipeline's implausible courses too. Plausibility is about accuracy, not reproducibility,
-    and must not be mixed into the reproducibility statement.
+- **A streamline consistent with its bundle's rule keeps its name on a rescan 13–15 points more often pooled, and
+  11–13 points within bundles.** About a fifth of the pooled gap is which bundles are involved. In a few bundles
+  (mostly callosal) the gap is negative.
+- **Voting only among consistent runs predicts the rescan worse,** 0.52–0.55 against 0.66–0.70. This is expected by
+  construction: it discards votes from a process that a rescan reproduces. It shows that the pipeline reproduces its
+  own inconsistent courses, not that consistency and reproducibility are independent.
+- **Of the inconsistent streamlines, 41–47 % keep the same name on a rescan.**
 
-**What this adds.**
-- Two numbers per streamline or region: how reproducible the name is (the ensemble, corrected), and whether its
-  course is anatomically plausible (the endpoints).
-- They disagree in an informative way. About 31 % of the scored named streamlines end where their bundle should
-  not, and 37–43 % of those still keep the same name on a rescan: reproducible, but implausible.
+**What this adds.** Beside the ensemble's (corrected) agreement, a second number per streamline or region: whether
+its course is consistent with its bundle's endpoint rule. It is a weak anatomical check, not a measure of accuracy.
+The rules are a first pass, revised once, and their permissive or strict errors move the shares by tens of points
+(the CC rule alone moved CC1 from 0.93 to 0.51).
 
 Caveats:
-- The rules are a first pass and have not been reviewed by an anatomist.
+- The rules have not been reviewed by a human anatomist.
 - 4 mm nearest-gray lookup.
 - One healthy subject and one patient.
-- FastSurfer's labels near the tumor are unchecked.
+- PAT16 uses 20-point paths, and its labels near the tumor are unchecked.
 - The runner-up and rank information in FastSurfer's store is not used yet.
