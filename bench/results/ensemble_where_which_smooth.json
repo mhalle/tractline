@@ -210,9 +210,9 @@
   }
  },
  "PAT16": {
-  "tumour_voxels": 2922,
+  "tumor_voxels": 2922,
   "margin spheres": 879,
-  "replicate vs replicate (smooth), tumour margin": {
+  "replicate vs replicate (smooth), tumor margin": {
    "pairs": 4,
    "brain: where: density intersection (all tracts)": 0.7626,
    "brain: where: direction agreement |cos|": 0.9757,

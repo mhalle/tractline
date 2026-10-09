@@ -564,7 +564,7 @@
   }
  },
  "scoring": {
-  "centred (held-out second-level runs)": {
+  "centered (held-out second-level runs)": {
    "pairs": 235418,
    "change_rate": 0.3478,
    "change_rate per pseudo-scan": {

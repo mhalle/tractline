@@ -372,7 +372,7 @@ def gauss_newton(c, m, *, sample, Bs, dBs, d2Bs, vox, pe_ax, pe_scale, lam, mmas
         k2 = 2 / Mtot                                                        # J'PJ through the volume sums (below)
         G11, G12, G22 = k2 * W1, k2 * W2 / 2, k2 * W3
         if est:
-            Ac, Bc = (A - A.mean(0))[1:], (Bj - Bj.mean(0))[1:]                # (V-1, X, Y, Z): centred over the volumes
+            Ac, Bc = (A - A.mean(0))[1:], (Bj - Bj.mean(0))[1:]                # (V-1, X, Y, Z): centered over the volumes
             Mf = Mv.reshape(V - 1, -1, 6)                                    # (V-1, XYZ, 6)
 
         def H(v, mu):
@@ -381,7 +381,7 @@ def gauss_newton(c, m, *, sample, Bs, dBs, d2Bs, vox, pe_ax, pe_scale, lam, mmas
             # J'PJ: du_v = A_v f + Bj_v g (+ e_v = M_v dm_v, v >= 1, with motion), f and g the field and its derivative
             # along pe for dc; P removes the mean over volumes. Its field part is Bs'(W1 f + W12 g + sum Ac e) +
             # dmats'(W12 f + W3 g + sum Bc e), W the sums over volumes of A^2, A Bj and Bj^2 less V times their means'
-            # products (the diagonal's W1, W2 / 2, W3) and Ac, Bc the volumes' A, Bj centred; its motion part is
+            # products (the diagonal's W1, W2 / 2, W3) and Ac, Bc the volumes' A, Bj centered; its motion part is
             # M_v'(Ac_v f + Bc_v g + e_v - mean e). (X, Y, Z) arrays and batched products instead of the (V, X, Y, Z)
             # residual and (V-1, X, Y, Z, 6) temporaries: the same matrix to rounding. The fold term joins dmats' side.
             a = G11 * f + G12 * gq

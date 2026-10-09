@@ -329,8 +329,8 @@ def mean_of(rows, key_path):
 
 
 def residual_correlation(wb, mask):
-    """Lag-1 correlation of the bootstrap's residuals between neighbouring voxels along each axis, in the mask (DW
-    volumes and b0s apart): what the scan's noise shares with its neighbours, which per-voxel flips remove."""
+    """Lag-1 correlation of the bootstrap's residuals between neighboring voxels along each axis, in the mask (DW
+    volumes and b0s apart): what the scan's noise shares with its neighbors, which per-voxel flips remove."""
     X, Y, Z, G = wb.shape
     R = wb.res.reshape(X, Y, Z, G)
     dw = np.setdiff1d(np.arange(G), wb.b0)

@@ -1,4 +1,4 @@
-"""Where do a seed's versions part, and is it at crossing fibres? (NOTES 2026-10-08, "Where the paths part")
+"""Where do a seed's versions part, and is it at crossing fibers? (NOTES 2026-10-08, "Where the paths part")
 
     uv run --group dipy bench/ensemble_crossings.py [--flip smooth] [--seeds 4000]
 
@@ -38,7 +38,7 @@ def peaks_main(src, dst):
 
 
 def crossing_map(s, shell):
-    """(X, Y, Z) number of fibre peaks, from the subject's corrected DWI at the tracked shell (and its b0s)."""
+    """(X, Y, Z) number of fiber peaks, from the subject's corrected DWI at the tracked shell (and its b0s)."""
     from tractline import pipeline as P
     from tractline.prep import prepare
     with P.exact_float32("mps"):

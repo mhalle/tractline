@@ -6,21 +6,21 @@ belongs to? (NOTES 2026-10-08, "Where and which")
 From existing records; no pipeline runs. Pairs of runs on one grid:
   - MASiVar (ensemble_retest.py's pairs): the reference A against each rescan resampled onto its grid (<tag>_onA),
     and replicate against replicate (<flip>/r001-r002, ..), the bootstrap's rescan-like pairs;
-  - PAT16 (ensemble_pilot.py's added-<flip>/): replicate against replicate, its tumour's margin as the regions. There
+  - PAT16 (ensemble_pilot.py's added-<flip>/): replicate against replicate, its tumor's margin as the regions. There
     is no rescan of PAT16; with smooth signs a replicate pair changes about as much as a same-session rescan
     (NOTES 2026-10-08, "The bootstrap against real rescans").
 
-Per pair, over the brain and in spheres (radius 8 mm): MASiVar, 300 centred on dense white matter; PAT16, every
-margin voxel (0-10 mm from the tumour) at least 4 mm apart.
+Per pair, over the brain and in spheres (radius 8 mm): MASiVar, 300 centered on dense white matter; PAT16, every
+margin voxel (0-10 mm from the tumor) at least 4 mm apart.
   where  the streamlines' density, all tracts together (histogram intersection: sum of minima over sum of maxima,
          1 identical), and their local direction (density-weighted |cos| between the two runs' principal directions
          per voxel, from each voxel's orientation tensor of path segments; voxels with >= 5 streamlines in both);
   which  per tract, the same intersection of its density (named tracts, mass-weighted), and the tract composition
          of the streamlines in a region (total variation: 0 the same mix, 1 disjoint) and whether its dominant
          tract is the same.
-Paths are the records' 20 points densified to 100. PAT16's tumour (ds001226's mask, on the T1) is put on the DWI
+Paths are the records' 20 points densified to 100. PAT16's tumor (ds001226's mask, on the T1) is put on the DWI
 grid by a rigid registration of the T1 to the corrected mean b0 (_register.py), kept in
-DATA/ensemble/PAT16/tumour_dwi.npz. Writes results/ensemble_where_which_<flip>.json.
+DATA/ensemble/PAT16/tumor_dwi.npz. Writes results/ensemble_where_which_<flip>.json.
 """
 import argparse, json, subprocess, sys, tempfile
 from pathlib import Path
@@ -104,21 +104,21 @@ def compare(a: Run, b: Run, spheres):
     return out
 
 
-def spheres_at(centres, affine, shape):
+def spheres_at(centers, affine, shape):
     vox = np.sqrt((affine[:3, :3] ** 2).sum(0))
     grid = np.stack(np.meshgrid(*[np.arange(n) for n in shape], indexing="ij"), -1).reshape(-1, 3)
     out = []
-    for c in centres:
+    for c in centers:
         d = np.sqrt((((grid - c) * vox) ** 2).sum(1))
         out.append((d <= RADIUS_MM).reshape(shape))
     return out
 
 
-def tumour_on_dwi():
-    """PAT16's tumour mask (ds001226, on the T1) on the DWI grid: the T1 registered rigidly to the corrected mean b0."""
-    cache = DATA / "ensemble" / "PAT16" / "tumour_dwi.npz"
+def tumor_on_dwi():
+    """PAT16's tumor mask (ds001226, on the T1) on the DWI grid: the T1 registered rigidly to the corrected mean b0."""
+    cache = DATA / "ensemble" / "PAT16" / "tumor_dwi.npz"
     if cache.exists():
-        return np.load(cache)["tumour"]
+        return np.load(cache)["tumor"]
     from tractline import pipeline as P
     from tractline.t1check import tumor_regions
     from _ds001226 import load
@@ -127,7 +127,7 @@ def tumour_on_dwi():
         corr = P.correct(s, P.Timer(), "mps")
     b0 = np.asarray(corr.dwi, np.float32)[..., s.b0_index].mean(-1)
     t1img = nib.load(s.t1)
-    tumour_t1, _ = tumor_regions(t1img, nib.load(s.tumor_mask))
+    tumor_t1, _ = tumor_regions(t1img, nib.load(s.tumor_mask))
     with tempfile.TemporaryDirectory() as tmp:
         a, b = Path(tmp) / "in.npz", Path(tmp) / "out.npz"
         np.savez(a, moving=np.asarray(t1img.dataobj, np.float32), moving_affine=t1img.affine, static=b0, static_affine=s.affine)
@@ -135,10 +135,10 @@ def tumour_on_dwi():
         z = np.load(b)
         to_dwi, ncc = z["to_static"], float(z["ncc"])                   # T1 world -> DWI world
     M = np.linalg.inv(t1img.affine) @ np.linalg.inv(to_dwi) @ s.affine     # DWI voxel -> T1 voxel
-    tumour = affine_transform(tumour_t1.astype(np.float32), M[:3, :3], M[:3, 3], output_shape=s.dwi.shape[:3], order=1) > 0.5
-    np.savez(cache, tumour=tumour, t1_to_dwi=to_dwi, ncc=ncc)
-    print(f"tumour on the DWI grid: {int(tumour.sum())} voxels, registration NCC {ncc:.3f}", flush=True)
-    return tumour
+    tumor = affine_transform(tumor_t1.astype(np.float32), M[:3, :3], M[:3, 3], output_shape=s.dwi.shape[:3], order=1) > 0.5
+    np.savez(cache, tumor=tumor, t1_to_dwi=to_dwi, ncc=ncc)
+    print(f"tumor on the DWI grid: {int(tumor.sum())} voxels, registration NCC {ncc:.3f}", flush=True)
+    return tumor
 
 
 def summarize(rows):
@@ -172,13 +172,13 @@ def main(args):
         row[f"replicate vs replicate ({args.flip})"] = summarize([compare(R[i], R[i + 1], spheres) for i in range(0, 8, 2)])
         res[pair] = row
         print(pair, json.dumps(row), flush=True)
-    # PAT16: the tumour's margin
-    tumour = tumour_on_dwi()
+    # PAT16: the tumor's margin
+    tumor = tumor_on_dwi()
     first = DATA / "ensemble" / "PAT16" / (f"added-{args.flip}" if args.flip != "voxel" else "added")
     img = nib.load(DATA / "ds001226/sub-PAT16/ses-preop/dwi/sub-PAT16_ses-preop_acq-AP_dwi.nii.gz")
     aff, shape = img.affine, img.shape[:3]
     vox = np.sqrt((aff[:3, :3] ** 2).sum(0))
-    dist = distance_transform_edt(~tumour, sampling=vox)
+    dist = distance_transform_edt(~tumor, sampling=vox)
     R = [Run(first / f"r{i:03d}.npz", aff, shape) for i in range(1, 9)]
     margin = (dist > 0) & (dist <= 10) & (R[0].dens.reshape(shape) > 0)
     cand = np.argwhere(margin)
@@ -187,8 +187,8 @@ def main(args):
         if all(np.sqrt((((c - k) * vox) ** 2).sum()) >= 4 for k in keep):
             keep.append(c)
     spheres = spheres_at(np.array(keep), aff, shape)
-    res["PAT16"] = {"tumour_voxels": int(tumour.sum()), "margin spheres": len(spheres),
-                    f"replicate vs replicate ({args.flip}), tumour margin": summarize([compare(R[i], R[i + 1], spheres) for i in range(0, 8, 2)])}
+    res["PAT16"] = {"tumor_voxels": int(tumor.sum()), "margin spheres": len(spheres),
+                    f"replicate vs replicate ({args.flip}), tumor margin": summarize([compare(R[i], R[i + 1], spheres) for i in range(0, 8, 2)])}
     print("PAT16", json.dumps(res["PAT16"]), flush=True)
     Path(str(OUT).format(args.flip)).write_text(json.dumps(res, indent=1))
 

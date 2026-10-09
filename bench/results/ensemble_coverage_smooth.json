@@ -9,17 +9,17 @@
       "matched": 0.9029,
       "change_rate": 0.3627,
       "mean stated P(keep)": {
-       "single run: labeller probability": 0.9426,
+       "single run: labeler probability": 0.9426,
        "ensemble: mixture": 0.719,
        "ensemble: vote fraction": 0.7321
       },
       "auroc predicting change": {
-       "single run: labeller probability": 0.6543,
+       "single run: labeler probability": 0.6543,
        "ensemble: mixture": 0.7797,
        "ensemble: vote fraction": 0.7681
       },
       "calibration": {
-       "single run: labeller probability": {
+       "single run: labeler probability": {
         "brier": 0.3142,
         "ece": 0.3012,
         "bins": [
@@ -275,17 +275,17 @@
       "matched": 0.8903,
       "change_rate": 0.3627,
       "mean stated P(keep)": {
-       "single run: labeller probability": 0.9433,
+       "single run: labeler probability": 0.9433,
        "ensemble: mixture": 0.7234,
        "ensemble: vote fraction": 0.7365
       },
       "auroc predicting change": {
-       "single run: labeller probability": 0.6463,
+       "single run: labeler probability": 0.6463,
        "ensemble: mixture": 0.7821,
        "ensemble: vote fraction": 0.7713
       },
       "calibration": {
-       "single run: labeller probability": {
+       "single run: labeler probability": {
         "brier": 0.3161,
         "ece": 0.3016,
         "bins": [
@@ -545,21 +545,21 @@
      }
     }
    },
-   "A, held-out replicate r008 (centred)": {
+   "A, held-out replicate r008 (centered)": {
     "matched": 0.9264,
     "change_rate": 0.3071,
     "mean stated P(keep)": {
-     "single run: labeller probability": 0.9426,
+     "single run: labeler probability": 0.9426,
      "ensemble: mixture": 0.7212,
      "ensemble: vote fraction": 0.7351
     },
     "auroc predicting change": {
-     "single run: labeller probability": 0.6658,
+     "single run: labeler probability": 0.6658,
      "ensemble: mixture": 0.803,
      "ensemble: vote fraction": 0.7921
     },
     "calibration": {
-     "single run: labeller probability": {
+     "single run: labeler probability": {
       "brier": 0.2637,
       "ece": 0.2462,
       "bins": [
@@ -820,17 +820,17 @@
       "matched": 0.8881,
       "change_rate": 0.3689,
       "mean stated P(keep)": {
-       "single run: labeller probability": 0.9393,
+       "single run: labeler probability": 0.9393,
        "ensemble: mixture": 0.714,
        "ensemble: vote fraction": 0.7282
       },
       "auroc predicting change": {
-       "single run: labeller probability": 0.6583,
+       "single run: labeler probability": 0.6583,
        "ensemble: mixture": 0.7775,
        "ensemble: vote fraction": 0.7644
       },
       "calibration": {
-       "single run: labeller probability": {
+       "single run: labeler probability": {
         "brier": 0.3175,
         "ece": 0.3044,
         "bins": [
@@ -1086,17 +1086,17 @@
       "matched": 0.8951,
       "change_rate": 0.3689,
       "mean stated P(keep)": {
-       "single run: labeller probability": 0.9383,
+       "single run: labeler probability": 0.9383,
        "ensemble: mixture": 0.7123,
        "ensemble: vote fraction": 0.7266
       },
       "auroc predicting change": {
-       "single run: labeller probability": 0.6514,
+       "single run: labeler probability": 0.6514,
        "ensemble: mixture": 0.7767,
        "ensemble: vote fraction": 0.7654
       },
       "calibration": {
-       "single run: labeller probability": {
+       "single run: labeler probability": {
         "brier": 0.3177,
         "ece": 0.303,
         "bins": [
@@ -1360,17 +1360,17 @@
       "matched": 0.8853,
       "change_rate": 0.3908,
       "mean stated P(keep)": {
-       "single run: labeller probability": 0.9395,
+       "single run: labeler probability": 0.9395,
        "ensemble: mixture": 0.7146,
        "ensemble: vote fraction": 0.7288
       },
       "auroc predicting change": {
-       "single run: labeller probability": 0.6563,
+       "single run: labeler probability": 0.6563,
        "ensemble: mixture": 0.7669,
        "ensemble: vote fraction": 0.7531
       },
       "calibration": {
-       "single run: labeller probability": {
+       "single run: labeler probability": {
         "brier": 0.3377,
         "ece": 0.3264,
         "bins": [
@@ -1626,17 +1626,17 @@
       "matched": 0.8896,
       "change_rate": 0.3908,
       "mean stated P(keep)": {
-       "single run: labeller probability": 0.938,
+       "single run: labeler probability": 0.938,
        "ensemble: mixture": 0.7013,
        "ensemble: vote fraction": 0.7148
       },
       "auroc predicting change": {
-       "single run: labeller probability": 0.6498,
+       "single run: labeler probability": 0.6498,
        "ensemble: mixture": 0.7701,
        "ensemble: vote fraction": 0.7594
       },
       "calibration": {
-       "single run: labeller probability": {
+       "single run: labeler probability": {
         "brier": 0.338,
         "ece": 0.3245,
         "bins": [
@@ -1896,21 +1896,21 @@
      }
     }
    },
-   "A, held-out replicate r008 (centred)": {
+   "A, held-out replicate r008 (centered)": {
     "matched": 0.9293,
     "change_rate": 0.31,
     "mean stated P(keep)": {
-     "single run: labeller probability": 0.9389,
+     "single run: labeler probability": 0.9389,
      "ensemble: mixture": 0.7175,
      "ensemble: vote fraction": 0.7326
     },
     "auroc predicting change": {
-     "single run: labeller probability": 0.666,
+     "single run: labeler probability": 0.666,
      "ensemble: mixture": 0.8025,
      "ensemble: vote fraction": 0.7906
     },
     "calibration": {
-     "single run: labeller probability": {
+     "single run: labeler probability": {
       "brier": 0.2641,
       "ece": 0.2457,
       "bins": [
@@ -2171,17 +2171,17 @@
       "matched": 0.7654,
       "change_rate": 0.4995,
       "mean stated P(keep)": {
-       "single run: labeller probability": 0.9297,
+       "single run: labeler probability": 0.9297,
        "ensemble: mixture": 0.67,
        "ensemble: vote fraction": 0.6849
       },
       "auroc predicting change": {
-       "single run: labeller probability": 0.6605,
+       "single run: labeler probability": 0.6605,
        "ensemble: mixture": 0.7343,
        "ensemble: vote fraction": 0.7191
       },
       "calibration": {
-       "single run: labeller probability": {
+       "single run: labeler probability": {
         "brier": 0.4278,
         "ece": 0.4254,
         "bins": [
@@ -2437,17 +2437,17 @@
       "matched": 0.7364,
       "change_rate": 0.4995,
       "mean stated P(keep)": {
-       "single run: labeller probability": 0.9338,
+       "single run: labeler probability": 0.9338,
        "ensemble: mixture": 0.6848,
        "ensemble: vote fraction": 0.6993
       },
       "auroc predicting change": {
-       "single run: labeller probability": 0.6537,
+       "single run: labeler probability": 0.6537,
        "ensemble: mixture": 0.7285,
        "ensemble: vote fraction": 0.7143
       },
       "calibration": {
-       "single run: labeller probability": {
+       "single run: labeler probability": {
         "brier": 0.4318,
         "ece": 0.4276,
         "bins": [
@@ -2711,17 +2711,17 @@
       "matched": 0.7604,
       "change_rate": 0.4754,
       "mean stated P(keep)": {
-       "single run: labeller probability": 0.9291,
+       "single run: labeler probability": 0.9291,
        "ensemble: mixture": 0.6714,
        "ensemble: vote fraction": 0.6867
       },
       "auroc predicting change": {
-       "single run: labeller probability": 0.6591,
+       "single run: labeler probability": 0.6591,
        "ensemble: mixture": 0.7441,
        "ensemble: vote fraction": 0.7301
       },
       "calibration": {
-       "single run: labeller probability": {
+       "single run: labeler probability": {
         "brier": 0.4059,
         "ece": 0.4003,
         "bins": [
@@ -2977,17 +2977,17 @@
       "matched": 0.7583,
       "change_rate": 0.4754,
       "mean stated P(keep)": {
-       "single run: labeller probability": 0.9334,
+       "single run: labeler probability": 0.9334,
        "ensemble: mixture": 0.6929,
        "ensemble: vote fraction": 0.708
       },
       "auroc predicting change": {
-       "single run: labeller probability": 0.6492,
+       "single run: labeler probability": 0.6492,
        "ensemble: mixture": 0.7368,
        "ensemble: vote fraction": 0.7213
       },
       "calibration": {
-       "single run: labeller probability": {
+       "single run: labeler probability": {
         "brier": 0.4105,
         "ece": 0.4039,
         "bins": [
@@ -3247,21 +3247,21 @@
      }
     }
    },
-   "A, held-out replicate r008 (centred)": {
+   "A, held-out replicate r008 (centered)": {
     "matched": 0.8683,
     "change_rate": 0.363,
     "mean stated P(keep)": {
-     "single run: labeller probability": 0.929,
+     "single run: labeler probability": 0.929,
      "ensemble: mixture": 0.6745,
      "ensemble: vote fraction": 0.6907
     },
     "auroc predicting change": {
-     "single run: labeller probability": 0.6569,
+     "single run: labeler probability": 0.6569,
      "ensemble: mixture": 0.7845,
      "ensemble: vote fraction": 0.7721
     },
     "calibration": {
-     "single run: labeller probability": {
+     "single run: labeler probability": {
       "brier": 0.3064,
       "ece": 0.2891,
       "bins": [
@@ -3520,17 +3520,17 @@
    "scorings": 10,
    "change_rate": 0.4195,
    "mean stated P(keep)": {
-    "single run: labeller probability": 0.9367,
+    "single run: labeler probability": 0.9367,
     "ensemble: mixture": 0.7004,
     "ensemble: vote fraction": 0.7146
    },
    "auroc": {
-    "single run: labeller probability": 0.6539,
+    "single run: labeler probability": 0.6539,
     "ensemble: mixture": 0.7597,
     "ensemble: vote fraction": 0.7467
    },
    "ece": {
-    "single run: labeller probability": 0.3518,
+    "single run: labeler probability": 0.3518,
     "ensemble: mixture": 0.1198,
     "ensemble: vote fraction": 0.1341
    },
@@ -3548,17 +3548,17 @@
    "scorings": 3,
    "change_rate": 0.3267,
    "mean stated P(keep)": {
-    "single run: labeller probability": 0.9368,
+    "single run: labeler probability": 0.9368,
     "ensemble: mixture": 0.7044,
     "ensemble: vote fraction": 0.7195
    },
    "auroc": {
-    "single run: labeller probability": 0.6629,
+    "single run: labeler probability": 0.6629,
     "ensemble: mixture": 0.7967,
     "ensemble: vote fraction": 0.7849
    },
    "ece": {
-    "single run: labeller probability": 0.2603,
+    "single run: labeler probability": 0.2603,
     "ensemble: mixture": 0.0354,
     "ensemble: vote fraction": 0.0515
    },

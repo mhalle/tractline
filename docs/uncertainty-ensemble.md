@@ -135,7 +135,7 @@ So held-out replicates measure the spread around this scan's estimate, not that 
 build their own ensembles. The other first-level replicates serve as their rescans: they spread about the same
 centre, as real rescans spread about the truth.
 
-Scored this way, the pilot's numbers come back for the centred scoring. Against rescans:
+Scored this way, the pilot's numbers come back for the centered scoring. Against rescans:
 
 - **Change rate:** 38 %.
 - **AUROC:** 0.78 for the ensemble against 0.64 for one run.
@@ -152,7 +152,7 @@ scanner. Three pairs were used: two from one subject (2.5 mm and 2.1 mm) and one
 
 A rescan's corrected DWI is registered to the reference and resampled onto its grid, so seed keys match. Resampling
 the reference there and back, and doing the same to the replicates, shows interpolation does not inflate the rescans.
-With the labeller's draw held fixed, labels changed:
+With the labeler's draw held fixed, labels changed:
 
 | | per-voxel signs | smooth signs | per-volume signs | rescan, same session | rescan, other session |
 |---|---|---|---|---|---|
@@ -160,7 +160,7 @@ With the labeller's draw held fixed, labels changed:
 | subject 1, 2.1 mm | 32.2 % | 34.9 % | 35.8 % | 36.9 % | 39.1 % |
 | subject 2 | 39.6 % | 40.7 % | 41.6 % | 49.9 % | 47.5 % |
 
-- **Per-voxel sign flips understate a rescan.** The scan's noise is correlated between in-plane neighbours (lag-1
+- **Per-voxel sign flips understate a rescan.** The scan's noise is correlated between in-plane neighbors (lag-1
   0.3–0.5; the reconstruction's, within a 2D EPI slice). Per-voxel signs remove that correlation.
 - **Signs drawn as smooth in-plane patches close the same-session gap on subject 1** to 1–2 points (`flip="smooth"`,
   FWHM 4 voxels). Per-volume signs do as well on average, but each pair is noisier.
@@ -171,8 +171,8 @@ With the labeller's draw held fixed, labels changed:
 
 Refitted with smooth signs on PAT16, the double bootstrap's ranking and recalibration are unchanged: AUROC 0.77,
 held-out ECE 0.002-0.003. The confidence drops by 2-3 points, with a mean P(rescan keeps the tract) of 0.60 against
-0.62. Carrying one run's labeller probabilities forward instead of its winner does not steady the output. The
-labeller is confident (0.94 on average), and labels change because a seed's path changes by 13-21 mm on a rescan, not
+0.62. Carrying one run's labeler probabilities forward instead of its winner does not steady the output. The
+labeler is confident (0.94 on average), and labels change because a seed's path changes by 13-21 mm on a rescan, not
 because names were near ties. The uncertainty is in the tracking, so the ensemble, which pools over paths, is what
 can carry it (NOTES 2026-10-08, "Smooth signs on PAT16, and soft labels").
 
@@ -193,10 +193,10 @@ The regional picture holds where single names do not:
   98–100 % of the time) are stable on a rescan;
 - a streamline's name is not.
 
-Paths part a median 34–40 mm from their seed, only weakly more often at crossing fibres (NOTES 2026-10-08, "The
+Paths part a median 34–40 mm from their seed, only weakly more often at crossing fibers (NOTES 2026-10-08, "The
 ensemble scored on real rescans", "Where and which", "Where the paths part"). For PAT16, 17 runs separate tracts that
-surely enter the tumour from those that do in a third of runs, which a single run cannot tell apart ("PAT16 at the
-tumour"; `bench/ensemble_pat16_viewer.py` draws it).
+surely enter the tumor from those that do in a third of runs, which a single run cannot tell apart ("PAT16 at the
+tumor"; `bench/ensemble_pat16_viewer.py` draws it).
 
 What a shipped confidence should be, then:
 

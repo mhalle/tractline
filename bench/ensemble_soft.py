@@ -1,5 +1,5 @@
 """Labels held as probabilities, not winners: are the pipeline's outputs steadier across real rescans when the
-labeller's tract probabilities are carried forward instead of its argmax? (NOTES 2026-10-08, "Soft labels against
+labeler's tract probabilities are carried forward instead of its argmax? (NOTES 2026-10-08, "Soft labels against
 rescans")
 
     uv run --group dipy bench/ensemble_soft.py [--pairs cIIIs01-2.5 cIIIs01-2.1 cIs1]

@@ -2098,7 +2098,7 @@ stream count. Deferred.
 6.7 s of it element-wise on (V, X, Y, Z) arrays; sample 6.1 s; levels 6-7 13.5 s. Changed:
 - J'PJ through the sums over volumes: the field part is Bs'(W1 f + W12 g + sum Ac e) + dmats'(W12 f + W3 g + sum Bc e), the
   motion part M_v'(Ac_v f + Bc_v g + e_v - mean e) - W the diagonal's W1, W2 / 2, W3, Ac and Bc the volumes' A and Bj
-  centred, e_v = M_v dm_v; (X, Y, Z) arrays and batched products instead of the (V, X, Y, Z) residual and (V-1, X, Y, Z, 6)
+  centered, e_v = M_v dm_v; (X, Y, Z) arrays and batched products instead of the (V, X, Y, Z) residual and (V-1, X, Y, Z, 6)
   temporaries. Exact (random inputs, float64: 2e-16 to 7e-16 of the old's);
 - with motion held (levels 6-9), the moved grid in grid_sample's coordinates built once a level, and the derivative taken by
   the phase-encoding shift alone (the only component read there);
@@ -2315,13 +2315,13 @@ L40S's PAT16 estimate 3.2-4.9 s today). In the M2 GPU column the estimate's subs
 `ensemble_pilot.py` → `ensemble_pilot_thermal.json`, `ensemble_pilot_residual.json`, `ensemble_pilot_added.json`;
 `src/tractline/ensemble.py`;
 `docs/uncertainty-ensemble.md`. PAT16 on the M2 (MPS), RapidParc. The reference is the pipeline as it runs today: the
-scan as acquired, labelled with draw 0. Each of 16 replicates resamples every stage:
+scan as acquired, labeled with draw 0. Each of 16 replicates resamples every stage:
 
 1. a wild bootstrap of the scan as acquired, both series' b0s included (`ShellWildBootstrap`: SH order 2/4/6 for the
    700/1200/2800 shells' 16/30/50 directions);
 2. the field re-estimated from the replicate and applied;
 3. the replicate tracked with Metal;
-4. the result labelled with draw r.
+4. the result labeled with draw r.
 
 The ensemble is the reference plus replicates 1-10 (R = 11); replicates 11-16 are held out as fresh runs. Streamlines
 are matched by seed voxel. About 40 s per run.
@@ -2338,10 +2338,10 @@ Eight draw-only runs label the reference tractogram with other draws.
 | | |
 |---|---|
 | reference streamlines whose tract a held-out run changes | 34.0 % (36.5 %) |
-| the same, labeller draw alone | 2.9 % |
+| the same, labeler draw alone | 2.9 % |
 | replicate against replicate | 38.1 % (39.0 %) |
 
-The scan's noise, carried through the field and the tracker, moves about ten times more labels than the labeller's
+The scan's noise, carried through the field and the tracker, moves about ten times more labels than the labeler's
 draw does.
 
 AUROC for predicting that change:
@@ -2367,7 +2367,7 @@ Calibration against P(a held-out run keeps the reference's tract):
 - **Consensus.** The ensemble's consensus differs from the reference's label for 19.6 % (23.1 %) of streamlines. A
   held-out run agrees with the consensus 69.6 % of the time, against 66.0 % for the reference.
 - **Paths are the larger part.** Matched paths are a median MDF of 7.8 mm apart (90th percentile 33.9 mm). Most of
-  that is fibres ending at different points: where the two lengths are within 5 %, the median is 2.4 mm, as in
+  that is fibers ending at different points: where the two lengths are within 5 %, the median is 2.4 mm, as in
   `ukf_noise_floor`. A run's own MDF from the reference predicts its label change at 0.785.
 
 **Votes in a rank field: the depth cut leaves them out**
@@ -2424,7 +2424,7 @@ Labels barely registered the field mismatch. Thermal's 30 Hz excess moved no met
 Residual mode, with the noisiest b0s, had the most label change and consensus disagreement; added has the least.
 
 - **The reference is closer to a replicate (33 %) than two replicates are to each other (38 %)** in all three modes, so
-  the field is not the cause. Explained the next day (2026-10-08): the bootstrap is centred on the scan's own model
+  the field is not the cause. Explained the next day (2026-10-08): the bootstrap is centered on the scan's own model
   estimate.
 
 Not measured: accuracy (no reference tract labels for PAT16). One patient. The bootstrap's sign flips are symmetric
@@ -2518,7 +2518,7 @@ Caveats:
   run's miscalibration is the finding.
 - One patient, RapidParc, stability not accuracy.
 
-## 2026-10-08 Why the scan is closer to a replicate than replicates are to each other: the bootstrap is centred on it
+## 2026-10-08 Why the scan is closer to a replicate than replicates are to each other: the bootstrap is centered on it
 
 `ensemble_exchange.py` → `ensemble_exchange.json`; `_bootstrap.py` gains `leverage`, `flip` and b0 mode "flipped".
 PAT16, M2 (MPS), 8 replicates per variant, the reference `ensemble/PAT16/added/r000`.
@@ -2546,7 +2546,7 @@ In `member` the scan is itself one of the replicates' sign patterns (all +1): in
 replicate as two replicates are from each other (squared distance 74.9 / 75.0 DW, 58.4 / 58.7 b0). The gap stays
 (ratio 0.86, against 0.87 in `added`), so the noise level is not the cause. Keeping the spatial structure
 (`member-block`) keeps it too (0.87), so whitening is not the cause either. The gap shows in paths as much as in
-labels, so it is the tracker, not the labeller.
+labels, so it is the tracker, not the labeler.
 
 **The cause: the scan is the centre of the replicate cloud.** A least-squares residual is orthogonal to the fit's
 space in every voxel. A pipeline that reads the signal through a similar model (UKF's per-voxel tensor fit) sees
@@ -2561,7 +2561,7 @@ and that moves the model estimate. Two more runs from `lev0`'s fit, b0s as acqui
 | reference / fit / anti vs a replicate | 27.7 / 27.8 / 27.6 % | 4.7 |
 
 The farthest sign pattern in signal tracks like the scan. The scan, its fit and its reversed residual sit at one
-point, the same distance from every replicate. The ~10 % among them is mostly the labeller's draw (0 / 101 / 102)
+point, the same distance from every replicate. The ~10 % among them is mostly the labeler's draw (0 / 101 / 102)
 plus 0.5-0.9 mm of path change.
 
 **What this means for the ensemble.** As with any bootstrap, the replicates spread around the scan's own estimate and
@@ -2591,14 +2591,14 @@ its confidence against held-out replicates, which spread around the scan's own e
 - **Pseudo-scans:** four first-level replicates (`added/r011`-`r014`). Each was rebuilt from its seed and rerun; all
   four reproduce the stored record exactly.
 - **Second level:** each pseudo-scan is bootstrapped again ("added", the reference's mask), 12 runs. Runs 1-10 plus
-  the pseudo-scan make its ensemble (R = 11, as the pilot). Runs 11-12 are held out for the pilot's centred scoring.
+  the pseudo-scan make its ensemble (R = 11, as the pilot). Runs 11-12 are held out for the pilot's centered scoring.
 - **Rescans:** the other 15 first-level replicates. They are draws about the same centre (the real scan's estimate)
   as the pseudo-scan, as real rescans are draws about the truth.
 
-**The double bootstrap reproduces the pilot, then shows what it missed** (scored against centred held-out runs /
+**The double bootstrap reproduces the pilot, then shows what it missed** (scored against centered held-out runs /
 against rescans):
 
-| | centred | rescans |
+| | centered | rescans |
 |---|---|---|
 | labels changed | 33.4 % | 38.1 % (replicate vs replicate: 38.0 %) |
 | AUROC: TRX probability / mixture / vote fraction | 0.648 / 0.799 / 0.792 | 0.641 / 0.780 / 0.773 |
@@ -2607,7 +2607,7 @@ against rescans):
 | voxels: consensus / own map agree with the other run | 67.5 / 61.1 % | 65.8 / 58.8 % |
 | voxels: ECE of the consensus vote fraction | 0.038 | 0.054 |
 
-The centred column matches the pilot's numbers (33.2 %, 0.80, ECE 0.03 / 0.27), so the set-up is sound. Against
+The centered column matches the pilot's numbers (33.2 %, 0.80, ECE 0.03 / 0.27), so the set-up is sound. Against
 rescans the change rate is the replicate-vs-replicate rate, as the centring argument predicts. The ensemble is still
 far better than one run: AUROC 0.78 against 0.64, and ECE 0.07 against 0.32. But its ECE more than doubles, and it is
 overconfident at the top. Per pseudo-scan, the change rates (37.7-38.3 %) and ECEs (0.065-0.069) barely vary.
@@ -2674,14 +2674,14 @@ quirks, handled in `_masivar.py`:
 - Each series' trailing b = 0 volume is a real b0 (0.99–1.0 of the others), not a Philips trace image.
 - Philips stores a different scale per series. All series are put on one series' units.
 
-The cIIIs01 scans track b = 2000 and cIs1 tracks b = 3000. Every run is labelled with draw 0, so only the data's
+The cIIIs01 scans track b = 2000 and cIs1 tracks b = 3000. Every run is labeled with draw 0, so only the data's
 share of label change is counted.
 
 **Matching across scans.** A rescan's seeds are not A's voxels.
 
 - Nearest-path matching (MDF) cannot tell rescans from replicates. On cIIIs01-2.5, among matches within 5 mm, a run
   against itself (each streamline to its nearest other one) changes 9.8 % of labels. Replicate against replicate
-  changes 9.7 %, and the rescan 10.8 %. The nearest path is mostly a neighbour, so the measure sits at its floor.
+  changes 9.7 %, and the rescan 10.8 %. The nearest path is mostly a neighbor, so the measure sits at its floor.
 - What is used: the rescan's corrected mean b0 is registered rigidly to A's (dipy, mutual information). Its corrected
   DWI is then resampled onto A's grid (cubic, b-vectors turned by the rotation) and tracked there, so seed keys match.
   Head motion between scans: 0.2–1.0 mm and 0.2–0.5° within a session (NCC 0.96–0.97); 2.7 mm / 3.2° and 5.6 mm /
@@ -2764,12 +2764,12 @@ Median path distance between matched streamlines (mm), in the same column order:
 Caveats:
 
 - Two subjects, one Philips scanner.
-- The labeller's draw is held at 0, so these rates are the data's share only. The pilot's 38 % included draws.
+- The labeler's draw is held at 0, so these rates are the data's share only. The pilot's 38 % included draws.
 - The pairs share their reference with the replicates, so replicate-against-replicate is the comparison, not
-  A-against-replicate, which is centred (27.7–37.4 %).
+  A-against-replicate, which is centered (27.7–37.4 %).
 - FWHM 4 was chosen from the residual correlation, not fitted.
 - The sibling session's sub-cIIIs04 run read 33.0 % for replicate against replicate and 37.8 % for a rescan. That run
-  had no registration and gave the rescan another labeller draw, but it points the same way. Its data stays in
+  had no registration and gave the rescan another labeler draw, but it points the same way. Its data stays in
   DATA/ds003416/sub-cIIIs04 and `_masivar.py` loads it.
 
 ## 2026-10-08 Smooth signs on PAT16, and soft labels: the doubt is in the tracking, not the naming
@@ -2818,7 +2818,7 @@ streamline as its winning tract (hard), or as its tract probabilities carried fo
 The streamline column is hard: winner changed; soft: total variation between the probability vectors. The middle
 column is total variation, density-weighted. The last is histogram intersection.
 
-- **The labeller is not unsure.** The top tract averages 0.93–0.94, and 0.4 % of streamlines have it below 0.5.
+- **The labeler is not unsure.** The top tract averages 0.93–0.94, and 0.4 % of streamlines have it below 0.5.
 - **Labels move because paths move.** One seed's streamline runs 13–21 mm apart (median MDF) on a rescan, reaches other
   anatomy, and is named again with the same confidence. Carrying one run's probabilities forward cannot carry that.
 - **The ensemble's mixture can**, because it pools over runs whose paths differ. That is the next entry's test.
@@ -2827,7 +2827,7 @@ column is total variation, density-weighted. The last is histogram intersection.
 **Where this leaves the noise model:**
 - the bootstrap with smooth signs matches a same-session rescan's spread;
 - what it cannot hold (another session's field, position and registration) is measured on real rescans from here,
-  not modelled.
+  not modeled.
 
 ## 2026-10-08 The ensemble scored on real rescans: it ranks well, states too much, and a double bootstrap's map fixes it
 
@@ -2836,7 +2836,7 @@ each corrected on the rescan's grid, resampled onto the reference's and tracked 
 `ensemble_coverage.py` → `ensemble_coverage_smooth.json`.
 
 Each scan's ensemble (its run and 8 replicates, R = 9) is scored against the other scan's single run, both ways. That
-makes 10 scorings over the five rescans. The labeller's draw is 0 throughout.
+makes 10 scorings over the five rescans. The labeler's draw is 0 throughout.
 
 **Streamlines** (seed keys; P(the other scan keeps this tract)):
 
@@ -2847,9 +2847,9 @@ makes 10 scorings over the five rescans. The labeller's draw is 0 throughout.
 | cIIIs01-2.1, other session | 39.1 % | 0.65 / 0.77 | 0.32–0.33 / 0.092–0.105 | 0.71 |
 | cIs1, both rescans | 47.5–49.9 % | 0.65–0.66 / 0.73–0.74 | 0.40–0.43 / 0.15–0.18 | 0.67–0.69 |
 | all 10 scorings | 42.0 % | 0.65 / 0.76 | 0.35 / 0.120 | 0.70 |
-| held-out replicate (centred, 3) | 32.7 % | 0.66 / 0.80 | 0.26 / 0.035 | 0.70 |
+| held-out replicate (centered, 3) | 32.7 % | 0.66 / 0.80 | 0.26 / 0.035 | 0.70 |
 
-The centred row is the pilot's scoring and reproduces its numbers (0.80, 0.035).
+The centered row is the pilot's scoring and reproduces its numbers (0.80, 0.035).
 
 - **On real rescans the ensemble still ranks well:** AUROC 0.73–0.78, against 0.65 for one run.
 - **It states too much,** by 8–10 points on cIIIs01 and 16–18 on cIs1. One run's probability is off by 30–43.
@@ -2909,9 +2909,9 @@ What this settles:
 
 `ensemble_where_which.py` → `ensemble_where_which_smooth.json`. Existing records only. Pairs: MASiVar's reference
 against its rescans (on its grid), and replicate pairs with smooth signs, MASiVar's and PAT16's. Spheres of 8 mm:
-300 on dense white matter (MASiVar), or every margin voxel 0–10 mm from PAT16's tumour, at least 4 mm apart (879).
+300 on dense white matter (MASiVar), or every margin voxel 0–10 mm from PAT16's tumor, at least 4 mm apart (879).
 
-PAT16's tumour mask (ds001226, on the T1) is put on the DWI grid by registering the T1 rigidly to the corrected mean
+PAT16's tumor mask (ds001226, on the T1) is put on the DWI grid by registering the T1 rigidly to the corrected mean
 b0 (`_register.py`, mutual information): 2,922 voxels (45.6 mL). Its outline sits on the b0's bright temporal lesion
 in all three planes.
 
@@ -2920,7 +2920,7 @@ in all three planes.
 | cIIIs01-2.5 rescan / replicates | 0.765 / 0.779 | 0.970 / 0.972 | 0.497 / 0.514 | 99.3 / 98.7 % | 0.058 / 0.046 |
 | cIIIs01-2.1 rescan same, other session / replicates | 0.767, 0.755 / 0.787 | 0.971, 0.967 / 0.974 | 0.507, 0.483 / 0.526 | 99.3, 100 / 99.6 % | 0.046, 0.053 / 0.039 |
 | cIs1 rescans / replicates | 0.633–0.647 / 0.748 | 0.937–0.942 / 0.967 | 0.377–0.386 / 0.467 | 98.0–98.7 / 99.5 % | 0.064–0.068 / 0.050 |
-| PAT16 replicates, tumour margin (spheres) | 0.697 | 0.972 | — | 97.1 % | 0.063 |
+| PAT16 replicates, tumor margin (spheres) | 0.697 | 0.972 | — | 97.1 % | 0.063 |
 
 Column definitions:
 - density and density per tract: histogram intersection, brain;
@@ -2938,13 +2938,13 @@ For PAT16 the density and direction are the spheres' medians; over the brain the
 - **The clinical question is regional, and that is the stable part:** which tracts pass here, and in what
   proportion. The name of one streamline is the unstable part.
 - **Rescans are slightly worse than replicates throughout.** On cIs1 they are clearly worse, as in the entries above.
-- **At PAT16's tumour margin, density is less reproducible** (0.70 against 0.80 in white-matter spheres), as the
+- **At PAT16's tumor margin, density is less reproducible** (0.70 against 0.80 in white-matter spheres), as the
   margin is edema and lower anisotropy. The mix and the dominant tract hold there too.
 
-## 2026-10-08 Where the paths part: mostly far from the seed, and only weakly at crossing fibres
+## 2026-10-08 Where the paths part: mostly far from the seed, and only weakly at crossing fibers
 
 `ensemble_crossings.py` → `ensemble_crossings_smooth.json`. Per ensemble (MASiVar's references with 8 smooth replicates,
-PAT16's 17 runs), 4,000 seeds every run labelled.
+PAT16's 17 runs), 4,000 seeds every run labeled.
 
 Method:
 - Each run's path is followed outward from the seed by arc length.
@@ -2960,19 +2960,19 @@ Method:
 | PAT16 | 46 % | 30 / 40 / 52 mm | 77.3 / 62.9 % | 89.2 % |
 
 - **A seed's versions stay together a long way.** They part a median 34–40 mm out, and half the sides not within
-  80 mm. Near a seed the path is reliable, which is why position near the tumour holds (entry above).
+  80 mm. Near a seed the path is reliable, which is why position near the tumor holds (entry above).
 - **Divergence points are crossings 1.1–1.2× as often as the path before them.** That is real but weak.
 - **This crossing map cannot carry a sharper statement.** CSA peaks at this threshold call 83–93 % of the brain
   "crossing". A divergence point is also placed where the spread already exceeds 4 mm, after its cause.
-- **"Identity decided at this crossing" is not grounded well enough to show.** Unless a sharper fibre model (CSD,
+- **"Identity decided at this crossing" is not grounded well enough to show.** Unless a sharper fiber model (CSD,
   multi-shell) and the spread's onset change this, it stays out of the output.
 
-## 2026-10-08 PAT16 at the tumour: what one run says, and what 17 say
+## 2026-10-08 PAT16 at the tumor: what one run says, and what 17 say
 
 `ensemble_pat16_report.py` → `ensemble_pat16_report_smooth.json` and DATA/ensemble/PAT16/report_smooth.npz.
 `ensemble_pat16_viewer.py` (+ `pat16_viewer.html`) builds a one-page viewer from them.
 
-The ensemble is PAT16's 17 runs with smooth signs (r000 is the pipeline as it runs today). The tumour is 45.6 mL,
+The ensemble is PAT16's 17 runs with smooth signs (r000 is the pipeline as it runs today). The tumor is 45.6 mL,
 temporal (entry above). A tract's voxels are those it wins with at least 2 streamlines. Envelope levels are calibrated
 on MASiVar's rescans (entry above):
 - stated 0.5 → 0.575;
@@ -2991,7 +2991,7 @@ on MASiVar's rescans (entry above):
 | AF | 0.00 | 0.00 | 0.00 (0.00–0.03) | 0.71 | 0.94 / 2.28 |
 | CST | 0.02 | 0.00 | 0.00 (0.00–0.03) | 0.47 | 0.19 / 0.70 |
 
-- **Some tracts are certain to enter the tumour mask** (ILF, superficial frontal, striato-frontal). For those, one run
+- **Some tracts are certain to enter the tumor mask** (ILF, superficial frontal, striato-frontal). For those, one run
   gets the amount roughly right, though the runs span about ±30 %.
 - **For others, one run's yes or no is a coin toss.** TF enters in 5 of 17 runs, CB in 6, CC1 in 12. Today's run puts
   TF and CC1 inside and CB outside.

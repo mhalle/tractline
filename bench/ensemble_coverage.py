@@ -6,9 +6,9 @@ From ensemble_retest.py's records (DATA/ensemble/<subject>/retest/<pair>/); no p
 has an ensemble on the reference's grid: the reference A with <flip>/r001..r008, and each rescan <tag>_onA with
 <flip>/<tag>_r001..r008 (`ensemble_retest.py rescans`). Each ensemble is scored against the other scan's single run,
 in both directions (A's ensemble against the rescan, the rescan's against A), and against a held-out replicate of its
-own (the bootstrap's centred scoring, for contrast).
+own (the bootstrap's centered scoring, for contrast).
 
-Streamlines (seed keys): the stated P(the other scan keeps this streamline's tract) - one run's labeller probability,
+Streamlines (seed keys): the stated P(the other scan keeps this streamline's tract) - one run's labeler probability,
 the ensemble's mixture, its vote fraction - against what the other scan did: change rate, AUROC (a low stated P
 predicting change), calibration (ECE, bins). Also how far apart the two scans' ensembles are, per seed, against how
 far apart their single runs are (total variation between tract probability vectors; one run's: its winner, one-hot).
@@ -129,7 +129,7 @@ def score(ens: Ensemble, other_keys, other_tract, other_win):
     keep = other_tract[ib] == ens.tract[ia]
     rows = np.arange(len(ia))
     t = ens.tract[ia]
-    stated = {"single run: labeller probability": ens.p_single[ia][rows, t], "ensemble: mixture": ens.p_mix[ia][rows, t],
+    stated = {"single run: labeler probability": ens.p_single[ia][rows, t], "ensemble: mixture": ens.p_mix[ia][rows, t],
               "ensemble: vote fraction": ens.vfrac[ia]}
     out = {"matched": round(len(ia) / len(ens.keys), 4), "change_rate": round(float(1 - keep.mean()), 4),
            "mean stated P(keep)": {n: round(float(p.mean()), 4) for n, p in stated.items()},
@@ -201,8 +201,8 @@ def main(args):
         A = Ensemble([d / "A.npz"] + reps(""))
         A7 = Ensemble([d / "A.npz"] + reps("", 7))
         row = {"runs per ensemble": A.runs, "rescans": {}}
-        row["A, held-out replicate r008 (centred)"] = score(A7, *winners(d / args.flip / "r008.npz"))
-        pooled["held-out replicate"].append(row["A, held-out replicate r008 (centred)"])
+        row["A, held-out replicate r008 (centered)"] = score(A7, *winners(d / args.flip / "r008.npz"))
+        pooled["held-out replicate"].append(row["A, held-out replicate r008 (centered)"])
         for tag in rescans:
             paths = [d / f"{tag}_onA.npz"] + reps(f"{tag}_")
             if not all(p.exists() for p in paths):

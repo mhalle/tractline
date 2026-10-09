@@ -1,11 +1,11 @@
-"""A one-page viewer of PAT16's tracts at its tumour, with the ensemble's envelopes (NOTES 2026-10-08, "PAT16 at the
-tumour").
+"""A one-page viewer of PAT16's tracts at its tumor, with the ensemble's envelopes (NOTES 2026-10-08, "PAT16 at the
+tumor").
 
     uv run --group dipy bench/ensemble_pat16_viewer.py OUT.html [--flip smooth]
 
 Reads ensemble_pat16_report.py's DATA/ensemble/PAT16/report_<flip>.npz and results/ensemble_pat16_report_<flip>.json,
 ensemble_coverage.py's results/ensemble_coverage_<flip>.json (the envelope levels calibrated on MASiVar's rescans)
-and ensemble_where_which.py's results/ensemble_where_which_<flip>.json. Axial slices through the tumour (radiological:
+and ensemble_where_which.py's results/ensemble_where_which_<flip>.json. Axial slices through the tumor (radiological:
 the patient's right on the left, anterior up) over the corrected mean b0. For each shown tract:
   - today: the voxels r000 (the pipeline as it runs) gives it;
   - envelope: the voxels whose share of runs is at least the threshold that holds the chosen level of its mass over
@@ -24,7 +24,9 @@ NAMES = {"AF": "arcuate fasciculus", "ILF": "inferior longitudinal fasciculus", 
          "Sup-F": "superficial frontal", "Sup-T": "superficial temporal", "Sup-FP": "superficial fronto-parietal",
          "CC1": "corpus callosum 1", "CC6": "corpus callosum 6", "CB": "cingulum bundle", "SLF-III": "superior longitudinal fasciculus III",
          "EC": "external capsule", "EmC": "extreme capsule", "PLIC": "posterior limb of internal capsule", "CR-F": "corona radiata, frontal"}
-COLORS = ["#f2c14e", "#5fd0c5", "#e48ad6", "#8fb8ff", "#b6e36b", "#ff9b54", "#c9a7ff", "#7fe0a0"]
+COLORS = ["#f2c14e", "#5fd0c5", "#e48ad6", "#8fb8ff", "#b6e36b", "#ff9b54", "#c9a7ff", "#7fe0a0", "#ff7a8a"]
+SHOWN = ("ILF", "Sup-F", "SF", "MdLF", "CC1", "TF", "CB", "AF", "CST")   # the tracts that surely enter, those that enter in some
+                                                                       # runs, and the arcuate and corticospinal tracts nearby
 LEVELS = [round(x, 2) for x in np.arange(0.5, 0.951, 0.05)]
 
 
@@ -53,16 +55,14 @@ def main(args):
     from tractline.data import DATA
     from tractline.labelers.base import TRACT_NAMES
     z = np.load(DATA / "ensemble" / "PAT16" / f"report_{args.flip}.npz")
-    P, dist, tumour, today = z["P"].astype(np.float32), z["dist"], z["tumour"], z["today"]
+    P, dist, tumor, today = z["P"].astype(np.float32), z["dist"], z["tumor"], z["today"]
     rep = json.loads((HERE / f"results/ensemble_pat16_report_{args.flip}.json").read_text())
     cov = json.loads((HERE / f"results/ensemble_coverage_{args.flip}.json").read_text())
     ww = json.loads((HERE / f"results/ensemble_where_which_{args.flip}.json").read_text())
     runs = rep["runs"]
-    order = list(rep["tracts"])
-    shown = order[:5] + [t for t in ("AF", "IOFF", "UF", "CST") if t in rep["tracts"] and t not in order[:5]]
-    shown = shown[:8]
-    zs = np.flatnonzero(tumour.any((0, 1)))
-    z0, z1 = max(int(zs.min()) - 3, 0), min(int(zs.max()) + 4, tumour.shape[2])
+    shown = [t for t in SHOWN if t in rep["tracts"]]
+    zs = np.flatnonzero(tumor.any((0, 1)))
+    z0, z1 = max(int(zs.min()) - 3, 0), min(int(zs.max()) + 4, tumor.shape[2])
     curve = cov["recalibration on real rescans (leave one pair out)"]["coverage curve, all rescan scorings (level: coverage)"]
     cl = np.array([float(k) for k in curve]); cc = np.array(list(curve.values()))
     fine = cov["summary"]["rescan"]["envelope coverage"]
@@ -74,7 +74,7 @@ def main(args):
     b0 = mean_b0()[:, :, z0:z1]
     hi = np.quantile(b0[b0 > 0], 0.995)
     img = np.clip(b0 / hi * 255, 0, 255).astype(np.uint8)
-    region = np.where(tumour, 0, np.where(dist <= 5, 1, 2)).astype(np.uint8)[:, :, z0:z1]
+    region = np.where(tumor, 0, np.where(dist <= 5, 1, 2)).astype(np.uint8)[:, :, z0:z1]
     tracts = []
     for i, name in enumerate(shown):
         k = TRACT_NAMES.index(name)
@@ -85,18 +85,19 @@ def main(args):
             thr["calibrated"].append(round(threshold(P[k], use) * runs))
         row = rep["tracts"][name]
         tracts.append({"name": name, "full": NAMES.get(name, name), "color": COLORS[i], "votes": b64(votes[:, :, z0:z1]),
-                       "today": b64((today[:, :, z0:z1] == k).astype(np.uint8)), "thr": thr,
-                       "enter": row["runs: P(enters the tumour)"], "within5": row["runs: P(within 5 mm)"],
-                       "ml_in": row["runs: mL inside the tumour, median [min, max]"], "ml_in_today": row["today (r000): mL inside the tumour"],
+                       "k": k, "thr": thr,
+                       "enter": row["runs: P(enters the tumor)"], "within5": row["runs: P(within 5 mm)"],
+                       "ml_in": row["runs: mL inside the tumor, median [min, max]"], "ml_in_today": row["today (r000): mL inside the tumor"],
                        "ml_near": row["runs: mL within 5 mm, median [min, max]"], "ml_near_today": row["today (r000): mL within 5 mm"]})
     s = cov["summary"]["rescan"]
-    pat = ww["PAT16"][f"replicate vs replicate ({args.flip}), tumour margin"]
+    pat = ww["PAT16"][f"replicate vs replicate ({args.flip}), tumor margin"]
     data = {"shape": [int(v) for v in img.shape], "z0": z0, "runs": runs, "img": b64(img), "region": b64(region), "tracts": tracts,
+            "today": b64(today[:, :, z0:z1].astype(np.uint8)),
             "levels": LEVELS, "calib": [{"target": L, "use": calibrated(L)[0], "reached": calibrated(L)[1]} for L in LEVELS],
             "curve": {"levels": cl.tolist(), "coverage": cc.tolist()},
             "fine": fine,
-            "stats": {"auroc_single": s["auroc"]["single run: labeller probability"], "auroc_mix": s["auroc"]["ensemble: mixture"],
-                      "ece_single": s["ece"]["single run: labeller probability"], "ece_mix": s["ece"]["ensemble: mixture"],
+            "stats": {"auroc_single": s["auroc"]["single run: labeler probability"], "auroc_mix": s["auroc"]["ensemble: mixture"],
+                      "ece_single": s["ece"]["single run: labeler probability"], "ece_mix": s["ece"]["ensemble: mixture"],
                       "change": s["change_rate"], "scorings": s["scorings"]},
             "margin": {"density": pat["spheres: where: density intersection (quartiles)"][1], "direction": pat["spheres: where: direction |cos| (quartiles)"][1],
                        "dominant": pat["spheres: which: same dominant tract"], "mix_tv": pat["spheres: which: composition total variation (quartiles)"][1],

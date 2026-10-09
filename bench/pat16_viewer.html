@@ -5,13 +5,13 @@
 /* layout: a scan viewer on the left, the numbers that qualify it on the right; one column on a phone */
 :root {
   --bg: #f3f5f7; --surface: #ffffff; --ink: #15202b; --muted: #5a6876; --line: #d6dde3;
-  --accent: #2b6a8a; --tumour: #d9572f; --scan: #05080b;
+  --accent: #2b6a8a; --tumor: #d9572f; --scan: #05080b;
   --ui: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
   --data: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --bg: #0e141a; --surface: #151d25; --ink: #e2e8ee; --muted: #93a2b0; --line: #26323d; --accent: #73b4d4; --tumour: #f07a52; color-scheme: dark } }
-:root[data-theme="dark"] { --bg: #0e141a; --surface: #151d25; --ink: #e2e8ee; --muted: #93a2b0; --line: #26323d; --accent: #73b4d4; --tumour: #f07a52; color-scheme: dark }
+  --bg: #0e141a; --surface: #151d25; --ink: #e2e8ee; --muted: #93a2b0; --line: #26323d; --accent: #73b4d4; --tumor: #f07a52; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #0e141a; --surface: #151d25; --ink: #e2e8ee; --muted: #93a2b0; --line: #26323d; --accent: #73b4d4; --tumor: #f07a52; color-scheme: dark }
 body { background: var(--bg); color: var(--ink); font-family: var(--ui); font-size: 15px; line-height: 1.5; padding: 20px 16px 40px; }
 .wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 20px; }
 h1 { font-size: 1.6rem; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
@@ -57,14 +57,14 @@ svg text { fill: var(--muted); font: 11px var(--data); }
 <div class="wrap">
   <header>
     <h1>PAT16 tract envelopes</h1>
-    <p class="lede">White-matter tracts at a temporal tumour from 17 runs of the pipeline, each on a resampled copy of the
+    <p class="lede">White-matter tracts at a temporal tumor from 17 runs of the pipeline, each on a resampled copy of the
       scan. The envelope shows where a tract may lie; its level can be stated or calibrated on real rescans of healthy subjects.</p>
   </header>
 
   <div class="main">
     <section class="panel viewer" aria-label="Scan viewer">
       <div class="scanbox">
-        <canvas id="cv" width="480" height="480" aria-label="Axial slice with tract envelopes and the tumour"></canvas>
+        <canvas id="cv" width="480" height="480" aria-label="Axial slice with tract envelopes and the tumor"></canvas>
         <span class="orient" style="left:8px;top:50%">R</span>
         <span class="orient" style="right:8px;top:50%">L</span>
         <span class="orient" style="left:50%;top:6px">A</span>
@@ -84,14 +84,14 @@ svg text { fill: var(--muted); font: 11px var(--data); }
         <div class="row"><label for="lvl">Envelope level</label><input id="lvl" type="range" min="0" max="9" step="1" value="8"><span id="lvl-out" class="readout"></span></div>
         <div class="row"><label for="sl">Axial slice</label><input id="sl" type="range" min="0" max="0" step="1" value="0"><span id="sl-out" class="readout"></span></div>
         <div class="chips" id="chips"></div>
-        <div class="legend"><span><i class="sw" style="background:var(--tumour)"></i>Tumour</span><span><i class="sw" style="border:1px dashed var(--tumour)"></i>5 mm margin</span><span>Fill: envelope · solid edge: half the runs or more</span></div>
+        <div class="legend"><span><i class="sw" style="background:var(--tumor)"></i>Tumor</span><span><i class="sw" style="border:1px dashed var(--tumor)"></i>5 mm margin</span><span>Fill: envelope · solid edge: half the runs or more</span></div>
       </div>
     </section>
 
     <div class="side">
       <section class="panel">
-        <h2>At the tumour, over 17 runs</h2>
-        <div class="tablebox"><table id="tbl"><thead><tr><th>Tract</th><th class="n">Enters the tumour</th><th class="n">mL inside: runs</th><th class="n">today</th><th class="n">Within 5 mm</th></tr></thead><tbody></tbody></table></div>
+        <h2>At the tumor, over 17 runs</h2>
+        <div class="tablebox"><table id="tbl"><thead><tr><th>Tract</th><th class="n">Enters the tumor</th><th class="n">mL inside: runs</th><th class="n">today</th><th class="n">Within 5 mm</th></tr></thead><tbody></tbody></table></div>
         <p class="note">Enters: the share of runs with at least 3 voxels of the tract inside the mask. mL inside: median and range over runs; today: the pipeline's single run.</p>
       </section>
       <section class="panel">
@@ -117,8 +117,8 @@ svg text { fill: var(--muted); font: 11px var(--data); }
 const D = /*DATA*/null;
 const dec = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
 const [X, Y, Z] = D.shape;
-const img = dec(D.img), region = dec(D.region);
-D.tracts.forEach(t => { t.v = dec(t.votes); t.td = dec(t.today); t.on = true; });
+const img = dec(D.img), region = dec(D.region), today = dec(D.today);
+D.tracts.forEach(t => { t.v = dec(t.votes); t.on = true; });
 const at = (x, y, z) => (x * Y + y) * Z + z;
 const state = { mode: "ens", cal: true, lvl: 8, z: 0 };
 const cv = document.getElementById("cv"), ctx = cv.getContext("2d");
@@ -142,14 +142,14 @@ function edges(test, color, width, dash) {
 
 function draw() {
   const z = state.z, im = ctx.createImageData(X, Y);
-  const tumourCol = getComputedStyle(document.documentElement).getPropertyValue("--tumour").trim() || "#d9572f";
+  const tumorCol = getComputedStyle(document.documentElement).getPropertyValue("--tumor").trim() || "#d9572f";
   for (let x = 0; x < X; x++) for (let y = 0; y < Y; y++) {
     const g = img[at(x, y, z)], o = ((Y - 1 - y) * X + x) * 4;
     let r = g, gg = g, b = g;
     for (const t of D.tracts) {
       if (!t.on) continue;
       const v = t.v[at(x, y, z)];
-      const inside = state.mode === "ens" ? (t.thr[state.cal ? "calibrated" : "stated"][state.lvl] > 0 && v >= t.thr[state.cal ? "calibrated" : "stated"][state.lvl]) : t.td[at(x, y, z)] === 1;
+      const inside = state.mode === "ens" ? (t.thr[state.cal ? "calibrated" : "stated"][state.lvl] > 0 && v >= t.thr[state.cal ? "calibrated" : "stated"][state.lvl]) : today[at(x, y, z)] === t.k;
       if (!inside) continue;
       const a = state.mode === "ens" ? 0.18 + 0.4 * v / D.runs : 0.45, c = t.rgb;
       r = r * (1 - a) + c[0] * a; gg = gg * (1 - a) + c[1] * a; b = b * (1 - a) + c[2] * a;
@@ -161,10 +161,10 @@ function draw() {
   for (const t of D.tracts) {
     if (!t.on) continue;
     if (state.mode === "ens") edges((x, y) => t.v[at(x, y, z)] * 2 >= D.runs, t.color, 1.6);
-    else edges((x, y) => t.td[at(x, y, z)] === 1, t.color, 1.6);
+    else edges((x, y) => today[at(x, y, z)] === t.k, t.color, 1.6);
   }
-  edges((x, y) => region[at(x, y, z)] === 0, tumourCol, 2.2);
-  edges((x, y) => region[at(x, y, z)] <= 1, tumourCol, 1.2, [4, 3]);
+  edges((x, y) => region[at(x, y, z)] === 0, tumorCol, 2.2);
+  edges((x, y) => region[at(x, y, z)] <= 1, tumorCol, 1.2, [4, 3]);
   const L = D.levels[state.lvl], c = D.calib[state.lvl];
   document.getElementById("lvl-out").textContent = state.cal ? `${Math.round(L * 100)}% → ${(c.use * 100).toFixed(1)}%${c.reached ? "" : "*"}` : `${Math.round(L * 100)}%`;
   document.getElementById("sl-out").textContent = `z ${D.z0 + z} (${z - zmid >= 0 ? "+" : ""}${((z - zmid) * 2.5).toFixed(1)} mm)`;
@@ -214,7 +214,7 @@ function drawCoverage() {
   D.curve.levels.forEach((L, i) => { s += `<circle cx="${sx(L)}" cy="${sy(D.curve.coverage[i])}" r="2.6" fill="var(--accent)"/>`; });
   const L = D.levels[state.lvl], use = state.cal ? D.calib[state.lvl].use : L;
   const covAt = v => { const ls = D.curve.levels, cs = D.curve.coverage; let i = ls.findIndex(q => q >= v - 1e-9); if (i < 0) i = ls.length - 1; return cs[i]; };
-  if (state.mode === "ens") s += `<circle cx="${sx(use)}" cy="${sy(covAt(use))}" r="5" fill="none" stroke="var(--tumour)" stroke-width="2"/>`;
+  if (state.mode === "ens") s += `<circle cx="${sx(use)}" cy="${sy(covAt(use))}" r="5" fill="none" stroke="var(--tumor)" stroke-width="2"/>`;
   s += `<text x="${(x0 + x1) / 2}" y="206" text-anchor="middle">level stated</text>`;
   svg.innerHTML = s;
   const st = D.stats;

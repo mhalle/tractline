@@ -101,7 +101,7 @@ class ShellWildBootstrap:
         (the scan as acquired is then one of the replicates). flip: "voxel" - a sign per voxel and volume; "volume" -
         one per volume, every voxel's residual flipped together (its spatial structure kept); "smooth" - per volume,
         the sign of white noise smoothed in-plane (the first two axes) by a Gaussian of `fwhm` voxels, each slice its
-        own: patches of one sign a few voxels across, so in-plane neighbours keep much of their residuals' correlation
+        own: patches of one sign a few voxels across, so in-plane neighbors keep much of their residuals' correlation
         (a 2D EPI's noise is correlated within a slice by its reconstruction, not across slices) and distant voxels are
         still independent."""
         from dipy.reconst.shm import real_sh_descoteaux

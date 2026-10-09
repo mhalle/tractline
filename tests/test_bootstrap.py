@@ -1,5 +1,5 @@
 """bench/_bootstrap.py's ShellWildBootstrap: what each b0 noise mode does to the b0s (the field is estimated from
-them) - centred on their mean (residual, thermal) or on each b0 as acquired (added), at which noise level."""
+them) - centered on their mean (residual, thermal) or on each b0 as acquired (added), at which noise level."""
 import sys
 from pathlib import Path
 import numpy as np

@@ -1,4 +1,4 @@
-"""The ensemble's confidence against rescans, by a double bootstrap (NOTES 2026-10-08, "the bootstrap is centred on it").
+"""The ensemble's confidence against rescans, by a double bootstrap (NOTES 2026-10-08, "the bootstrap is centered on it").
 
     uv run --group dipy --group rankfield bench/ensemble_double.py run [--subject PAT16] [--flip smooth]
     uv run --group dipy --group rankfield bench/ensemble_double.py analyze [--subject PAT16] [--flip smooth]
@@ -19,7 +19,7 @@ measure the spread around it and not its error: a held-out run changes 33 % of t
   as a pseudo-scan is, as real rescans are draws about the truth.
 
 analyze: per streamline of each pseudo-scan, the single run's TRX probability, the ensemble mixture and the vote
-fraction against (a) its held-out second-level runs (centred, as the pilot) and (b) its rescans; per voxel, the
+fraction against (a) its held-out second-level runs (centered, as the pilot) and (b) its rescans; per voxel, the
 consensus against both. Then a recalibration for rescans fitted on (b) - Platt scaling of the mixture's log-odds and a
 table per vote count - scored leaving one pseudo-scan out, and applied to the real scan's ensemble (added/r000 +
 r001..r010). Writes results/ensemble_double.json.
@@ -203,7 +203,7 @@ def per_pseudo(root, k, build, names=("added", "double")):
                 "vox_votes": np.concatenate([v[2] for v in vox])}
 
     held = [p.stem for p in sorted(d.glob("s*.npz")) if int(p.stem[1:]) > build]
-    return pred, S.runs, {"centred (held-out second-level runs)": score(held, d),
+    return pred, S.runs, {"centered (held-out second-level runs)": score(held, d),
                           "rescans (other first-level replicates)": score([f"r{r:03d}" for r in FIRST if r != k], root / names[0])}
 
 
