@@ -196,3 +196,28 @@ Scholar citations of TractCloud; no Google Scholar; some citing papers paywalled
 | | split the tail uniformly over the unstored classes, as a point estimate between the bounds | none; decode only |
 
 The two decode-only rows can be tried in the viewer without changing the format.
+
+## 4. The ensemble against real rescans: what is new (search of 2026-10-09)
+
+The annotated search is in [prior-art-uncertainty.md](prior-art-uncertainty.md): 74 papers, each checked at least to
+its abstract, with the search log. Claims as the project's NOTES make them, from 2026-10-08 on:
+
+| Claim | Closest prior work | Verdict |
+|---|---|---|
+| The bootstrap's spread of *tractography output* against real rescans; per-voxel signs understate it because noise is correlated in-plane; smooth sign patches match a same-session rescan | Campbell et al. 2014 (Front Neurol 5:216): residual-bootstrap 68/95 % intervals of fODF peaks against same-session repeats; good above FA 0.3, under-dispersed below it, put down to overfitting and misregistration. Zhu et al. 2011, tensor level | Partly anticipated, at the orientation level. Output level, the noise-correlation cause and the patch-sign fix not found. Patch signs rest on the wild cluster bootstrap (Cameron et al. 2008) and whole-image sign flips (Winkler et al. 2014) |
+| Resampling the whole pipeline, the susceptibility field re-estimated in every replicate | Kiar et al. 2020/2021 perturb whole pipelines numerically; every dMRI bootstrap found resamples preprocessed data | Not found |
+| Per-streamline label change on a rescan (35–50 %) | Yu et al. 2024 (arXiv 2403.18992): streamlines matched within a 0.5-voxel ball of the seed across scan and rescan, for *geometry*; Zhang et al. 2019 (HBM): UKF + ORG test-retest at tract level | The measurement is not found; seed matching across rescans is Yu et al.'s |
+| Calibration (ECE, AUROC) of tract probabilities against rescans; a double-bootstrap recalibration that transfers across vendors | Lucena et al. 2022: tract-segmentation probabilities calibrated against labels, not rescans; the double bootstrap is Beran 1987, Hall & Martin 1988 | Not found in tractography or tract segmentation |
+| Envelope coverage of rescans; winner-take-all maps prevent honest envelopes, presence maps do not | Brown, Booth & Hamarneh (CDMRI 2013): tract confidence regions, never tested on rescans; Brecheisen et al. 2013, visualization | The rescan coverage test and the winner-map argument not found |
+
+Wording to keep:
+- Comparing a bootstrap with repeated scans is not new (Campbell 2014; the repetition-bootstrap papers).
+- Predictive coding of streamline geometry is not new (TRAKO/Draco). The ranked soft labels beside it are.
+- Seed-matched correspondence across rescans is Yu et al.'s; the label agreement and its link to the ensemble's
+  probabilities are the project's.
+- MASiVar itself reports intrasession < intersession < interscanner variability. The project's
+  same-session / other-session difference agrees with it.
+- "Ensemble tractography" already names something else (Takemura et al. 2016: tractograms combined over tracking
+  parameters). A write-up needs another name for the resampled-pipeline ensemble.
+- The search was not a systematic review. Its suggested follow-ups (the full text of Zhang 2019, Semantic Scholar
+  forward citations of Campbell 2014 and Jones 2008, the IST 2025 proceedings) were not done.
