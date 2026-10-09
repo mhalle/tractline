@@ -5,18 +5,21 @@
 /* layout: a scan viewer on the left, the numbers that qualify it on the right; one column on a phone */
 :root {
   --bg: #f3f5f7; --surface: #ffffff; --ink: #15202b; --muted: #5a6876; --line: #d6dde3;
-  --accent: #2b6a8a; --tumor: #d9572f; --scan: #05080b;
+  --accent: #2b6a8a; --tumor: #d9572f; --warn-bg: #fbf1e3; --warn-ink: #6b4310; --scan: #05080b;
   --ui: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
   --data: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --bg: #0e141a; --surface: #151d25; --ink: #e2e8ee; --muted: #93a2b0; --line: #26323d; --accent: #73b4d4; --tumor: #f07a52; color-scheme: dark } }
-:root[data-theme="dark"] { --bg: #0e141a; --surface: #151d25; --ink: #e2e8ee; --muted: #93a2b0; --line: #26323d; --accent: #73b4d4; --tumor: #f07a52; color-scheme: dark }
+  --bg: #0e141a; --surface: #151d25; --ink: #e2e8ee; --muted: #93a2b0; --line: #26323d; --accent: #73b4d4; --tumor: #f07a52;
+  --warn-bg: #2b2213; --warn-ink: #f0cf9c; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #0e141a; --surface: #151d25; --ink: #e2e8ee; --muted: #93a2b0; --line: #26323d; --accent: #73b4d4;
+  --tumor: #f07a52; --warn-bg: #2b2213; --warn-ink: #f0cf9c; color-scheme: dark }
 body { background: var(--bg); color: var(--ink); font-family: var(--ui); font-size: 15px; line-height: 1.5; padding: 20px 16px 40px; }
 .wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 20px; }
 h1 { font-size: 1.6rem; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
 h2 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 0 0 10px; font-weight: 700; }
-.lede { color: var(--muted); max-width: 70ch; margin: 4px 0 0; }
+.lede { color: var(--muted); max-width: 72ch; margin: 4px 0 0; }
+.notice { background: var(--warn-bg); color: var(--warn-ink); border-radius: 8px; padding: 8px 12px; max-width: 72ch; margin: 10px 0 0; font-size: 0.9rem; }
 .main { display: grid; grid-template-columns: minmax(0, 560px) minmax(0, 1fr); gap: 20px; align-items: start; }
 @media (max-width: 900px) { .main { grid-template-columns: minmax(0, 1fr); } }
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; min-width: 0; }
@@ -25,6 +28,7 @@ h2 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; colo
 .scanbox { position: relative; background: var(--scan); border-radius: 8px; aspect-ratio: 1; max-width: 100%; }
 canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; border-radius: 8px; }
 .orient { position: absolute; font: 500 12px var(--data); color: #c7d2dc; }
+.caption { color: var(--muted); font-size: 0.82rem; margin: 0; }
 .controls { display: grid; gap: 10px; }
 .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
@@ -34,80 +38,97 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 label { color: var(--muted); font-size: 0.9rem; }
 input[type=range] { flex: 1; min-width: 140px; accent-color: var(--accent); }
 .num { font-family: var(--data); font-variant-numeric: tabular-nums; }
-.readout { font-family: var(--data); font-size: 0.85rem; min-width: 11ch; }
+.readout { font-family: var(--data); font-size: 0.85rem; min-width: 12ch; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip { display: inline-flex; gap: 6px; align-items: center; border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px 3px 6px; font-size: 0.85rem; cursor: pointer; color: var(--ink); background: transparent; font-family: inherit; }
 .chip[aria-pressed="false"] { opacity: 0.45; }
-.sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+.sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; vertical-align: -1px; }
 table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
 th, td { text-align: left; padding: 5px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
 th { color: var(--muted); font-weight: 400; font-size: 0.78rem; }
 td.n, th.n { text-align: right; font-family: var(--data); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.tablebox { overflow-x: auto; }
-.note { color: var(--muted); font-size: 0.82rem; margin: 8px 0 0; max-width: 70ch; }
-.bar { display: grid; grid-template-columns: 9ch minmax(0, 1fr) 7ch; gap: 8px; align-items: center; font-size: 0.85rem; margin: 4px 0; }
+td .full { color: var(--muted); }
+.tablebox { overflow-x: auto; max-height: 420px; overflow-y: auto; }
+.note { color: var(--muted); font-size: 0.82rem; margin: 8px 0 0; max-width: 72ch; }
+.bar { display: grid; grid-template-columns: minmax(0, 16ch) minmax(0, 1fr) 7ch; gap: 8px; align-items: center; font-size: 0.85rem; margin: 5px 0; }
 .track { position: relative; height: 10px; background: var(--line); border-radius: 5px; }
 .fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 5px; background: var(--accent); }
 .range { position: absolute; top: -3px; bottom: -3px; border-left: 2px solid var(--ink); border-right: 2px solid var(--ink); }
+.stat { display: flex; justify-content: space-between; gap: 12px; font-size: 0.86rem; padding: 4px 0; }
+.sub { font-size: 0.78rem; color: var(--muted); margin: 12px 0 4px; }
 svg text { fill: var(--muted); font: 11px var(--data); }
-.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 0.8rem; color: var(--muted); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 0.8rem; color: var(--muted); }
 .legend span { display: inline-flex; gap: 6px; align-items: center; }
 </style>
 
 <div class="wrap">
   <header>
     <h1>PAT16 tract envelopes</h1>
-    <p class="lede">White-matter tracts at a temporal tumor from 17 runs of the pipeline, each on a resampled copy of the
-      scan. The envelope shows where a tract may lie; its level can be stated or calibrated on real rescans of healthy subjects.</p>
+    <p class="lede">White-matter tracts near a temporal tumor, from 17 runs of the tractography pipeline: one on the scan as
+      acquired, and 16 on copies of it with the scan's noise drawn again. Where the runs agree, a tract is drawn solidly;
+      where they disagree, it spreads into a wider outline.</p>
+    <p class="notice"><strong>Research prototype.</strong> The outlines show how reproducible the pipeline's output is, not where the
+      fibers truly run. Nothing here was checked against stimulation mapping or histology. Not for surgical planning.</p>
   </header>
 
   <div class="main">
     <section class="panel viewer" aria-label="Scan viewer">
       <div class="scanbox">
-        <canvas id="cv" width="480" height="480" aria-label="Axial slice with tract envelopes and the tumor"></canvas>
+        <canvas id="cv" width="480" height="480" aria-label="Axial slice with tract outlines and the tumor"></canvas>
         <span class="orient" style="left:8px;top:50%">R</span>
         <span class="orient" style="right:8px;top:50%">L</span>
         <span class="orient" style="left:50%;top:6px">A</span>
         <span class="orient" style="left:50%;bottom:6px">P</span>
       </div>
+      <p class="caption">Distortion-corrected mean b0, axial, radiological view (patient's right on the left). Tumor: the dataset's mask,
+        registered from the T1.</p>
       <div class="controls">
         <div class="row">
           <div class="seg" role="group" aria-label="What to show">
-            <button id="m-today" aria-pressed="false">Today: one run</button>
-            <button id="m-ens" aria-pressed="true">Ensemble envelopes</button>
+            <button id="m-single" aria-pressed="false">Single run (current pipeline)</button>
+            <button id="m-ens" aria-pressed="true">All 17 runs</button>
           </div>
-          <div class="seg" role="group" aria-label="Envelope level">
-            <button id="c-stated" aria-pressed="false">Stated</button>
-            <button id="c-cal" aria-pressed="true">Calibrated</button>
+          <div class="seg" role="group" aria-label="How the coverage target is applied">
+            <button id="c-stated" aria-pressed="false">As computed</button>
+            <button id="c-cal" aria-pressed="true">Adjusted on rescans</button>
           </div>
         </div>
-        <div class="row"><label for="lvl">Envelope level</label><input id="lvl" type="range" min="0" max="9" step="1" value="8"><span id="lvl-out" class="readout"></span></div>
-        <div class="row"><label for="sl">Axial slice</label><input id="sl" type="range" min="0" max="0" step="1" value="0"><span id="sl-out" class="readout"></span></div>
+        <div class="row"><label for="lvl">Target coverage</label><input id="lvl" type="range" min="0" max="9" step="1" value="6"><span id="lvl-out" class="readout"></span></div>
+        <div class="row"><label for="sl">Axial slice, from the tumor's largest</label><input id="sl" type="range" min="0" max="0" step="1" value="0"><span id="sl-out" class="readout"></span></div>
         <div class="chips" id="chips"></div>
-        <div class="legend"><span><i class="sw" style="background:var(--tumor)"></i>Tumor</span><span><i class="sw" style="border:1px dashed var(--tumor)"></i>5 mm margin</span><span>Fill: envelope · solid edge: half the runs or more</span></div>
+        <div class="legend">
+          <span>Shading: the outline at the target (darker where more runs agree)</span>
+          <span>Solid line: voxels the tract holds in at least 9 of 17 runs</span>
+          <span><i class="sw" style="border:2px solid var(--tumor)"></i>Tumor</span>
+          <span><i class="sw" style="border:1px dashed var(--tumor)"></i>5 mm outside it</span>
+        </div>
+        <p class="caption" id="lvlnote"></p>
       </div>
     </section>
 
     <div class="side">
       <section class="panel">
-        <h2>At the tumor, over 17 runs</h2>
-        <div class="tablebox"><table id="tbl"><thead><tr><th>Tract</th><th class="n">Enters the tumor</th><th class="n">mL inside: runs</th><th class="n">today</th><th class="n">Within 5 mm</th></tr></thead><tbody></tbody></table></div>
-        <p class="note">Enters: the share of runs with at least 3 voxels of the tract inside the mask. mL inside: median and range over runs; today: the pipeline's single run.</p>
+        <h2>Tracts at the tumor, over 17 runs</h2>
+        <div class="tablebox"><table id="tbl"><thead><tr><th>Tract</th><th class="n">Enters tumor<br>(% of runs)</th><th class="n">mL inside<br>median (range)</th><th class="n">mL inside<br>single run</th><th class="n">Within 5 mm<br>(% of runs)</th></tr></thead><tbody></tbody></table></div>
+        <p class="note">Every tract that enters the tumor mask in at least one run, or comes within 5 mm in at least half. A tract holds a voxel
+          when it has the most streamlines there, at least 2. Enters: at least 3 voxels (0.05 mL) inside the mask; smaller amounts show in mL
+          but do not count. Colored swatches: tracts drawn on the scan.</p>
       </section>
       <section class="panel">
-        <h2>Tract mix in the 0–10 mm margin</h2>
+        <h2>Tract mix 0–10 mm outside the tumor</h2>
         <div id="mix"></div>
-        <p class="note">Share of streamlines crossing the margin; bar the mean, ticks the lowest and highest run.</p>
+        <p class="note">Share of the streamline passes through this zone (each streamline counted once per voxel it crosses), largest
+          classes only. Bar: mean over the 17 runs; ticks: lowest and highest run; full width is 60%.</p>
       </section>
       <section class="panel">
-        <h2>Do the envelopes hold on a rescan?</h2>
-        <svg id="cov" viewBox="0 0 300 210" width="100%" role="img" aria-label="Coverage of envelopes on real rescans against the stated level"></svg>
+        <h2>Do the outlines hold on a real rescan?</h2>
+        <svg id="cov" viewBox="0 0 300 226" width="100%" role="img" aria-label="Coverage of outlines on real rescans against the level they are drawn at"></svg>
         <p class="note" id="covnote"></p>
       </section>
       <section class="panel">
-        <h2>Where against which, at the margin</h2>
+        <h2>What repeats near the tumor</h2>
         <div id="ww"></div>
-        <p class="note">Margin spheres of 8 mm, PAT16's replicate pairs; a streamline keeping its tract: MASiVar's real rescans.</p>
+        <p class="note" id="wwnote"></p>
       </section>
     </div>
   </div>
@@ -117,15 +138,15 @@ svg text { fill: var(--muted); font: 11px var(--data); }
 const D = /*DATA*/null;
 const dec = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
 const [X, Y, Z] = D.shape;
-const img = dec(D.img), region = dec(D.region), today = dec(D.today);
-D.tracts.forEach(t => { t.v = dec(t.votes); t.on = true; });
+const img = dec(D.img), region = dec(D.region), single = dec(D.single);
+D.tracts.forEach(t => { t.v = dec(t.votes); t.on = true; t.rgb = [1, 3, 5].map(i => parseInt(t.color.slice(i, i + 2), 16)); });
 const at = (x, y, z) => (x * Y + y) * Z + z;
-const state = { mode: "ens", cal: true, lvl: 8, z: 0 };
+const state = { mode: "ens", cal: true, lvl: 6, z: 0 };
 const cv = document.getElementById("cv"), ctx = cv.getContext("2d");
-const S = cv.width / X;
-const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+const S = cv.width / X, half = Math.ceil(D.runs / 2);
 const zmid = (() => { let best = 0, z0 = 0; for (let z = 0; z < Z; z++) { let n = 0; for (let x = 0; x < X; x++) for (let y = 0; y < Y; y++) if (region[at(x, y, z)] === 0) n++; if (n > best) { best = n; z0 = z; } } return z0; })();
 state.z = zmid;
+const pct = v => `${Math.round(v * 100)}%`;
 
 function edges(test, color, width, dash) {
   ctx.beginPath();
@@ -140,6 +161,8 @@ function edges(test, color, width, dash) {
   ctx.strokeStyle = color; ctx.lineWidth = width; ctx.setLineDash(dash || []); ctx.stroke(); ctx.setLineDash([]);
 }
 
+function threshold(t) { return t.thr[state.cal ? "calibrated" : "stated"][state.lvl]; }
+
 function draw() {
   const z = state.z, im = ctx.createImageData(X, Y);
   const tumorCol = getComputedStyle(document.documentElement).getPropertyValue("--tumor").trim() || "#d9572f";
@@ -148,84 +171,102 @@ function draw() {
     let r = g, gg = g, b = g;
     for (const t of D.tracts) {
       if (!t.on) continue;
-      const v = t.v[at(x, y, z)];
-      const inside = state.mode === "ens" ? (t.thr[state.cal ? "calibrated" : "stated"][state.lvl] > 0 && v >= t.thr[state.cal ? "calibrated" : "stated"][state.lvl]) : today[at(x, y, z)] === t.k;
+      const v = t.v[at(x, y, z)], th = threshold(t);
+      const inside = state.mode === "ens" ? (th > 0 && v >= th) : single[at(x, y, z)] === t.k;
       if (!inside) continue;
       const a = state.mode === "ens" ? 0.18 + 0.4 * v / D.runs : 0.45, c = t.rgb;
       r = r * (1 - a) + c[0] * a; gg = gg * (1 - a) + c[1] * a; b = b * (1 - a) + c[2] * a;
     }
     im.data.set([r, gg, b, 255], o);
   }
-  const off = new OffscreenCanvas(X, Y); off.getContext("2d").putImageData(im, 0, 0);
+  const off = document.createElement("canvas"); off.width = X; off.height = Y; off.getContext("2d").putImageData(im, 0, 0);
   ctx.imageSmoothingEnabled = false; ctx.clearRect(0, 0, cv.width, cv.height); ctx.drawImage(off, 0, 0, cv.width, cv.height);
   for (const t of D.tracts) {
     if (!t.on) continue;
-    if (state.mode === "ens") edges((x, y) => t.v[at(x, y, z)] * 2 >= D.runs, t.color, 1.6);
-    else edges((x, y) => today[at(x, y, z)] === t.k, t.color, 1.6);
+    if (state.mode === "ens") edges((x, y) => t.v[at(x, y, z)] >= half, t.color, 1.6);
+    else edges((x, y) => single[at(x, y, z)] === t.k, t.color, 1.6);
   }
   edges((x, y) => region[at(x, y, z)] === 0, tumorCol, 2.2);
   edges((x, y) => region[at(x, y, z)] <= 1, tumorCol, 1.2, [4, 3]);
-  const L = D.levels[state.lvl], c = D.calib[state.lvl];
-  document.getElementById("lvl-out").textContent = state.cal ? `${Math.round(L * 100)}% → ${(c.use * 100).toFixed(1)}%${c.reached ? "" : "*"}` : `${Math.round(L * 100)}%`;
-  document.getElementById("sl-out").textContent = `z ${D.z0 + z} (${z - zmid >= 0 ? "+" : ""}${((z - zmid) * 2.5).toFixed(1)} mm)`;
+  const L = D.levels[state.lvl], c = D.calib[state.lvl], widest = D.curve.coverage[D.curve.coverage.length - 1];
+  document.getElementById("lvl-out").textContent = state.cal ? `${pct(L)} (drawn at ${(c.use * 100).toFixed(1)}%${c.reached ? "" : "*"})` : pct(L);
+  document.getElementById("lvlnote").textContent = state.mode !== "ens" ? "The single run has no target: it shows the tracts as the pipeline outputs them today." :
+    state.cal ? (c.reached ? `Adjusted: the outline is drawn at the level that held ${pct(L)} of a healthy rescan's tract voxels.` :
+      `* No measured level held ${pct(L)} on the rescans. The widest (99.5%, which held ${pct(widest)}) is drawn, so the outline stops changing from here up.`) :
+      "As computed: the outline holds this share of the 17 runs' votes for the tract. On rescans it held less (see the chart).";
+  const dz = (z - zmid) * 2.5;
+  document.getElementById("sl-out").textContent = `${dz >= 0 ? "+" : ""}${dz.toFixed(1)} mm`;
+  document.getElementById("sl").setAttribute("aria-valuetext", `${dz.toFixed(1)} mm from the tumor's largest slice`);
   document.getElementById("lvl").disabled = state.mode !== "ens";
   drawCoverage();
 }
 
 function press(on, off) { on.setAttribute("aria-pressed", "true"); off.setAttribute("aria-pressed", "false"); }
-const mt = document.getElementById("m-today"), me = document.getElementById("m-ens"), cs = document.getElementById("c-stated"), cc = document.getElementById("c-cal");
-mt.onclick = () => { state.mode = "today"; press(mt, me); draw(); };
-me.onclick = () => { state.mode = "ens"; press(me, mt); draw(); };
+const ms = document.getElementById("m-single"), me = document.getElementById("m-ens"), cs = document.getElementById("c-stated"), cc = document.getElementById("c-cal");
+ms.onclick = () => { state.mode = "single"; press(ms, me); draw(); };
+me.onclick = () => { state.mode = "ens"; press(me, ms); draw(); };
 cs.onclick = () => { state.cal = false; press(cs, cc); draw(); };
 cc.onclick = () => { state.cal = true; press(cc, cs); draw(); };
 const lvl = document.getElementById("lvl"); lvl.oninput = () => { state.lvl = +lvl.value; draw(); };
 const sl = document.getElementById("sl"); sl.max = Z - 1; sl.value = zmid; sl.oninput = () => { state.z = +sl.value; draw(); };
 
-const chips = document.getElementById("chips"), tb = document.querySelector("#tbl tbody");
-const pct = v => `${Math.round(v * 100)}%`, ml = v => v.toFixed(2);
+const chips = document.getElementById("chips");
 D.tracts.forEach(t => {
-  t.rgb = hex(t.color);
   const b = document.createElement("button");
   b.className = "chip"; b.setAttribute("aria-pressed", "true"); b.title = t.full;
   b.innerHTML = `<i class="sw" style="background:${t.color}"></i>${t.name}`;
   b.onclick = () => { t.on = !t.on; b.setAttribute("aria-pressed", String(t.on)); draw(); };
   chips.appendChild(b);
-  const tr = document.createElement("tr");
-  tr.innerHTML = `<td><i class="sw" style="background:${t.color}"></i> ${t.name} <span style="color:var(--muted)">${t.full}</span></td>` +
-    `<td class="n">${pct(t.enter)}</td><td class="n">${ml(t.ml_in[0])} (${ml(t.ml_in[1])}–${ml(t.ml_in[2])})</td><td class="n">${ml(t.ml_in_today)}</td><td class="n">${pct(t.within5)}</td>`;
-  tb.appendChild(tr);
+});
+const tb = document.querySelector("#tbl tbody"), ml = v => v.toFixed(2);
+D.table.forEach(r => {
+  const sw = r.color ? `<i class="sw" style="background:${r.color}"></i> ` : "";
+  tb.insertAdjacentHTML("beforeend", `<tr><td>${sw}${r.name} <span class="full">${r.full}</span></td><td class="n">${pct(r.enter)}</td>` +
+    `<td class="n">${ml(r.ml_in[0])} (${ml(r.ml_in[1])}–${ml(r.ml_in[2])})</td><td class="n">${ml(r.ml_in_single)}</td><td class="n">${pct(r.within5)}</td></tr>`);
 });
 
-const mix = document.getElementById("mix");
-Object.entries(D.mix).forEach(([name, [m, lo, hi]]) => {
-  const scale = 0.6, w = v => `${Math.min(v / scale, 1) * 100}%`;
-  mix.insertAdjacentHTML("beforeend", `<div class="bar"><span>${name}</span><span class="track"><span class="fill" style="width:${w(m)}"></span><span class="range" style="left:${w(lo)};width:calc(${w(hi)} - ${w(lo)})"></span></span><span class="num">${(m * 100).toFixed(1)}%</span></div>`);
+const mix = document.getElementById("mix"), w = v => `${Math.min(v / 0.6, 1) * 100}%`;
+D.mix.forEach(([name, full, m, lo, hi]) => {
+  mix.insertAdjacentHTML("beforeend", `<div class="bar"><span title="${full}">${name === "Other" ? "Other (no tract)" : name}</span>` +
+    `<span class="track"><span class="fill" style="width:${w(m)}"></span><span class="range" style="left:${w(lo)};width:calc(${w(hi)} - ${w(lo)})"></span></span><span class="num">${(m * 100).toFixed(1)}%</span></div>`);
 });
 
 function drawCoverage() {
-  const svg = document.getElementById("cov"), x0 = 40, x1 = 290, y0 = 180, y1 = 12, lo = 0.4, hi = 1.0;
+  const svg = document.getElementById("cov"), x0 = 40, x1 = 290, y0 = 180, y1 = 18, lo = 0.4, hi = 1.0;
   const sx = v => x0 + (v - lo) / (hi - lo) * (x1 - x0), sy = v => y0 - (v - lo) / (hi - lo) * (y0 - y1);
   let s = "";
   [0.4, 0.6, 0.8, 1.0].forEach(v => { s += `<line x1="${x0}" x2="${x1}" y1="${sy(v)}" y2="${sy(v)}" stroke="var(--line)" stroke-width="1"/><text x="${x0 - 6}" y="${sy(v) + 4}" text-anchor="end">${v.toFixed(1)}</text>`;
     s += `<text x="${sx(v)}" y="${y0 + 16}" text-anchor="middle">${v.toFixed(1)}</text>`; });
   s += `<line x1="${sx(lo)}" y1="${sy(lo)}" x2="${sx(hi)}" y2="${sy(hi)}" stroke="var(--muted)" stroke-dasharray="4 3" stroke-width="1"/>`;
-  const pts = D.curve.levels.map((L, i) => `${sx(L)},${sy(D.curve.coverage[i])}`).join(" ");
-  s += `<polyline points="${pts}" fill="none" stroke="var(--accent)" stroke-width="2"/>`;
-  D.curve.levels.forEach((L, i) => { s += `<circle cx="${sx(L)}" cy="${sy(D.curve.coverage[i])}" r="2.6" fill="var(--accent)"/>`; });
-  const L = D.levels[state.lvl], use = state.cal ? D.calib[state.lvl].use : L;
-  const covAt = v => { const ls = D.curve.levels, cs = D.curve.coverage; let i = ls.findIndex(q => q >= v - 1e-9); if (i < 0) i = ls.length - 1; return cs[i]; };
-  if (state.mode === "ens") s += `<circle cx="${sx(use)}" cy="${sy(covAt(use))}" r="5" fill="none" stroke="var(--tumor)" stroke-width="2"/>`;
-  s += `<text x="${(x0 + x1) / 2}" y="206" text-anchor="middle">level stated</text>`;
+  s += `<polyline points="${D.curve.levels.map((L, i) => `${sx(L)},${sy(D.curve.coverage[i])}`).join(" ")}" fill="none" stroke="var(--accent)" stroke-width="2"/>`;
+  D.curve.levels.forEach((L, i) => { s += `<circle cx="${sx(L)}" cy="${sy(D.curve.coverage[i])}" r="2.4" fill="var(--accent)"/>`; });
+  if (state.mode === "ens") {
+    const use = state.cal ? D.calib[state.lvl].use : D.levels[state.lvl];
+    const ls = D.curve.levels, cs = D.curve.coverage;
+    let cov = cs[cs.length - 1];
+    for (let i = 1; i < ls.length; i++) if (ls[i] >= use) { cov = cs[i - 1] + (cs[i] - cs[i - 1]) * (use - ls[i - 1]) / (ls[i] - ls[i - 1]); break; }
+    s += `<circle cx="${sx(use)}" cy="${sy(cov)}" r="5" fill="none" stroke="var(--tumor)" stroke-width="2"/>`;
+  }
+  s += `<text x="${(x0 + x1) / 2}" y="214" text-anchor="middle">level the outline is drawn at</text><text x="${x0}" y="10">held on the rescan</text>`;
   svg.innerHTML = s;
-  const st = D.stats;
-  document.getElementById("covnote").textContent = `Share of a real rescan's tract inside the envelope (y) against the level it states (x): MASiVar, ${st.scorings} scorings, healthy adults on a Philips scanner. ` +
-    `On those rescans the ensemble ranks which streamlines change with AUROC ${st.auroc_mix.toFixed(2)} (one run ${st.auroc_single.toFixed(2)}) and is off by ECE ${st.ece_mix.toFixed(3)} (one run ${st.ece_single.toFixed(2)}). ` +
-    `PAT16 has no rescan; its calibrated levels borrow this curve.` + (D.calib.some(c => !c.reached) ? " * Beyond what the rescans reached: the widest measured level is used." : "");
+  const r = D.rescans;
+  document.getElementById("covnote").textContent = `Share of a healthy rescan's tract voxels inside the outline (up) against the level the outline is drawn at (across). ` +
+    `Dashed: perfect agreement; circle: the current setting. Five rescans of two healthy adults (MASiVar, one Philips scanner), each scored both ways, ` +
+    `with 9 runs per ensemble; named tracts only. PAT16 has no rescan: its adjusted outlines borrow this curve, and with 17 runs they may be wider than needed. ` +
+    `On the same rescans, the runs' agreement predicts which streamlines get another tract name better than one run's labeler does (AUROC ${r.auroc_mix.toFixed(2)} against ${r.auroc_single.toFixed(2)}). ` +
+    `Before adjustment its stated probabilities are off by ${r.ece_mix.toFixed(2)} on average (one run: ${r.ece_single.toFixed(2)}).`;
 }
 
 const ww = document.getElementById("ww"), M = D.margin;
-[["Position: density shared", M.density], ["Direction agrees (|cos|)", M.direction], ["Same dominant tract", M.dominant], ["Tract mix shared (1 − TV)", 1 - M.mix_tv], ["One streamline keeps its tract", M.streamline_keep]].forEach(([n, v]) => {
-  ww.insertAdjacentHTML("beforeend", `<div class="bar" style="grid-template-columns: minmax(0, 15ch) minmax(0, 1fr) 6ch"><span>${n}</span><span class="track"><span class="fill" style="width:${v * 100}%"></span></span><span class="num">${(v * 100).toFixed(0)}%</span></div>`);
-});
+const bar = (n, v, txt) => ww.insertAdjacentHTML("beforeend", `<div class="bar"><span>${n}</span><span class="track"><span class="fill" style="width:${v * 100}%"></span></span><span class="num">${txt}</span></div>`);
+ww.insertAdjacentHTML("beforeend", `<div class="sub">PAT16: pairs of its runs, spheres of 8 mm radius 0–10 mm outside the tumor</div>`);
+bar("Where white matter is (shared density)", M.density, pct(M.density));
+ww.insertAdjacentHTML("beforeend", `<div class="stat"><span>Fiber direction: typical angle between runs</span><span class="num">${M.angle_deg.toFixed(0)}°</span></div>`);
+bar("Same main named tract", M.dominant, pct(M.dominant));
+bar("Same named-tract mix (1 − total variation)", M.mix_shared, pct(M.mix_shared));
+ww.insertAdjacentHTML("beforeend", `<div class="sub">Healthy rescans (MASiVar), whole brain</div>`);
+bar("A single streamline keeps its tract name", D.rescans.keep, pct(D.rescans.keep));
+document.getElementById("wwnote").textContent = `The PAT16 rows compare pairs of its own runs, which matched a same-session rescan on one healthy subject but understate others. ` +
+  `"Other" (no named tract) is ${pct(M.other_share)} of a sphere's streamlines and is left out of the tract rows. Medians over spheres, ${M.spheres} pairs.`;
 draw();
 </script>

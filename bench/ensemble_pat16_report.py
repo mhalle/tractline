@@ -10,14 +10,14 @@ tumor: ensemble_where_which.py's DATA/ensemble/PAT16/tumor_dwi.npz.
 
 Per named tract within 20 mm of the tumor in any run (ordered by the ensemble's mass within 5 mm); a tract's voxels
 are those it wins with at least TAU_DIST streamlines:
-  today       r000's distance from the tumor (mm, nearest voxel centre; 0 inside it), and its volume inside the
+  today       r000's distance from the tumor (mm, nearest voxel center; 0 inside it), and its volume inside the
               tumor and within 5 mm of it (mL);
   runs        the same in each of the 17 runs: median and range; P(enters the tumor) - the share of runs with
               ENTER_VOXELS or more voxels inside it - and P(within 5 mm);
   envelope    P(v, k) over the runs; the highest-probability voxels holding L of the tract's mass, for the stated L
               and for the level that covered L on real rescans (results/ensemble_coverage_<flip>.json, "rescan":
               interpolated; beyond its largest measured level, flagged): its volume inside the tumor and within 5 mm.
-The margin (0-10 mm): the tract mix of the streamlines crossing it, per run, and its range. Writes
+The margin (0-10 mm): the tract mix of its streamline-voxel visits (each streamline counted once per margin voxel it passes; Other included), per run, and its range. Writes
 results/ensemble_pat16_report_<flip>.json and DATA/ensemble/PAT16/report_<flip>.npz (P maps, distance map, tumor)
 for the viewer.
 """

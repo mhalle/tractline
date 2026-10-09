@@ -668,7 +668,102 @@
    },
    "total_s": 40.0,
    "through": "within"
+  },
+  "bootstrap_smooth_within": {
+   "shells": {
+    "1000": {
+     "directions": 40,
+     "sh_order": 4,
+     "coefficients": 15,
+     "leverage": 0.375
+    },
+    "2000": {
+     "directions": 56,
+     "sh_order": 6,
+     "coefficients": 28,
+     "leverage": 0.5
+    }
+   },
+   "b0_volumes": 16,
+   "b0_noise": "added",
+   "b0_scale": 0.599,
+   "leverage_scaled": true,
+   "flip": "smooth",
+   "fwhm_voxels": 4.0,
+   "b0_residual_sd": 7.82,
+   "dw_residual_rms": 7.82,
+   "dw_residual_over_b0_sd": 1.0
+  },
+  "smooth/within_r001": {
+   "fibers": 51102,
+   "labeled": 42044,
+   "residual_left": 0.544,
+   "field_hz_p99_abs": 126.39,
+   "total_s": 81.3
+  },
+  "smooth/within_r002": {
+   "fibers": 51234,
+   "labeled": 42133,
+   "residual_left": 0.546,
+   "field_hz_p99_abs": 124.82,
+   "total_s": 69.9
+  },
+  "smooth/within_r003": {
+   "fibers": 51148,
+   "labeled": 42012,
+   "residual_left": 0.543,
+   "field_hz_p99_abs": 124.85,
+   "total_s": 77.8
+  },
+  "smooth/within_r004": {
+   "fibers": 51147,
+   "labeled": 42154,
+   "residual_left": 0.544,
+   "field_hz_p99_abs": 126.24,
+   "total_s": 67.4
+  },
+  "smooth/within_r005": {
+   "fibers": 51229,
+   "labeled": 42169,
+   "residual_left": 0.547,
+   "field_hz_p99_abs": 127.24,
+   "total_s": 90.7
+  },
+  "smooth/within_r006": {
+   "fibers": 50979,
+   "labeled": 41868,
+   "residual_left": 0.544,
+   "field_hz_p99_abs": 126.34,
+   "total_s": 77.3
+  },
+  "smooth/within_r007": {
+   "fibers": 51210,
+   "labeled": 42008,
+   "residual_left": 0.543,
+   "field_hz_p99_abs": 127.34,
+   "total_s": 69.5
+  },
+  "smooth/within_r008": {
+   "fibers": 51262,
+   "labeled": 42214,
+   "residual_left": 0.542,
+   "field_hz_p99_abs": 126.08,
+   "total_s": 64.2
   }
+ },
+ "floor: a run against itself (nearest other path)": {
+  "mdf<=2mm": {
+   "changed": 0.0588,
+   "matched": 0.2015
+  },
+  "mdf<=5mm": {
+   "changed": 0.0981,
+   "matched": 0.7189
+  },
+  "mdf_mm_quantiles (0.5, 0.9)": [
+   3.52,
+   7.59
+  ]
  },
  "rescan": {
   "within": {
@@ -678,7 +773,21 @@
      "agree (both have a tract)": 0.7264,
      "voxels": 87765
     },
-    "tract_share_L1": 0.0409
+    "tract_share_L1": 0.0409,
+    "paths": {
+     "mdf<=2mm": {
+      "changed": 0.0578,
+      "matched": 0.129
+     },
+     "mdf<=5mm": {
+      "changed": 0.1081,
+      "matched": 0.6496
+     },
+     "mdf_mm_quantiles (0.5, 0.9)": [
+      4.0,
+      8.29
+     ]
+    }
    },
    "on A's grid": {
     "voxels": {
@@ -691,6 +800,20 @@
      "changed": 0.3627,
      "matched": 0.9029,
      "median_mdf_mm": 13.13
+    },
+    "paths": {
+     "mdf<=2mm": {
+      "changed": 0.0587,
+      "matched": 0.1522
+     },
+     "mdf<=5mm": {
+      "changed": 0.1059,
+      "matched": 0.6618
+     },
+     "mdf_mm_quantiles (0.5, 0.9)": [
+      3.9,
+      8.22
+     ]
     }
    },
    "on A's grid, against A there and back": {
@@ -704,6 +827,20 @@
      "changed": 0.3632,
      "matched": 0.9069,
      "median_mdf_mm": 12.95
+    },
+    "paths": {
+     "mdf<=2mm": {
+      "changed": 0.0611,
+      "matched": 0.1522
+     },
+     "mdf<=5mm": {
+      "changed": 0.1048,
+      "matched": 0.6686
+     },
+     "mdf_mm_quantiles (0.5, 0.9)": [
+      3.86,
+      8.13
+     ]
     }
    }
   }
@@ -720,6 +857,20 @@
    "changed": 0.1538,
    "matched": 0.9663,
    "median_mdf_mm": 1.82
+  },
+  "paths": {
+   "mdf<=2mm": {
+    "changed": 0.0426,
+    "matched": 0.5569
+   },
+   "mdf<=5mm": {
+    "changed": 0.0633,
+    "matched": 0.8338
+   },
+   "mdf_mm_quantiles (0.5, 0.9)": [
+    1.74,
+    6.43
+   ]
   }
  },
  "bootstrap": {
@@ -770,6 +921,18 @@
      "min": 0.0211,
      "max": 0.0363,
      "n": 7
+    },
+    "paths mdf<=5mm changed": {
+     "mean": 0.1027,
+     "min": 0.0996,
+     "max": 0.1054,
+     "n": 7
+    },
+    "paths median mdf": {
+     "mean": 3.8914,
+     "min": 3.86,
+     "max": 3.91,
+     "n": 7
     }
    },
    "A vs replicate": {
@@ -807,6 +970,18 @@
      "mean": 0.0318,
      "min": 0.0265,
      "max": 0.0375,
+     "n": 8
+    },
+    "paths mdf<=5mm changed": {
+     "mean": 0.0964,
+     "min": 0.0937,
+     "max": 0.0998,
+     "n": 8
+    },
+    "paths median mdf": {
+     "mean": 3.495,
+     "min": 3.47,
+     "max": 3.51,
      "n": 8
     }
    },
@@ -887,6 +1062,18 @@
      "min": 0.036,
      "max": 0.0607,
      "n": 7
+    },
+    "paths mdf<=5mm changed": {
+     "mean": 0.1054,
+     "min": 0.0996,
+     "max": 0.1093,
+     "n": 7
+    },
+    "paths median mdf": {
+     "mean": 4.0314,
+     "min": 3.79,
+     "max": 4.2,
+     "n": 7
     }
    },
    "A vs replicate": {
@@ -924,6 +1111,18 @@
      "mean": 0.0457,
      "min": 0.0364,
      "max": 0.0632,
+     "n": 8
+    },
+    "paths mdf<=5mm changed": {
+     "mean": 0.1006,
+     "min": 0.0974,
+     "max": 0.1035,
+     "n": 8
+    },
+    "paths median mdf": {
+     "mean": 3.6937,
+     "min": 3.59,
+     "max": 3.82,
      "n": 8
     }
    },
@@ -1003,6 +1202,18 @@
      "min": 0.0191,
      "max": 0.0259,
      "n": 7
+    },
+    "paths mdf<=5mm changed": {
+     "mean": 0.0973,
+     "min": 0.0957,
+     "max": 0.0985,
+     "n": 7
+    },
+    "paths median mdf": {
+     "mean": 3.5386,
+     "min": 3.52,
+     "max": 3.56,
+     "n": 7
     }
    },
    "A vs replicate": {
@@ -1040,6 +1251,18 @@
      "mean": 0.0249,
      "min": 0.0219,
      "max": 0.0292,
+     "n": 8
+    },
+    "paths mdf<=5mm changed": {
+     "mean": 0.092,
+     "min": 0.0897,
+     "max": 0.0936,
+     "n": 8
+    },
+    "paths median mdf": {
+     "mean": 3.185,
+     "min": 3.16,
+     "max": 3.22,
      "n": 8
     }
    },
@@ -1117,6 +1340,18 @@
      "min": 0.0197,
      "max": 0.028,
      "n": 3
+    },
+    "paths mdf<=5mm changed": {
+     "mean": 0.1015,
+     "min": 0.1007,
+     "max": 0.1029,
+     "n": 3
+    },
+    "paths median mdf": {
+     "mean": 3.77,
+     "min": 3.77,
+     "max": 3.77,
+     "n": 3
     }
    }
   },
@@ -1163,6 +1398,18 @@
      "min": 0.0465,
      "max": 0.0579,
      "n": 3
+    },
+    "paths mdf<=5mm changed": {
+     "mean": 0.1059,
+     "min": 0.1045,
+     "max": 0.1072,
+     "n": 3
+    },
+    "paths median mdf": {
+     "mean": 4.0233,
+     "min": 3.88,
+     "max": 4.12,
+     "n": 3
     }
    }
   },
@@ -1208,6 +1455,18 @@
      "mean": 0.0241,
      "min": 0.0221,
      "max": 0.0261,
+     "n": 3
+    },
+    "paths mdf<=5mm changed": {
+     "mean": 0.0941,
+     "min": 0.0921,
+     "max": 0.0967,
+     "n": 3
+    },
+    "paths median mdf": {
+     "mean": 3.37,
+     "min": 3.37,
+     "max": 3.37,
      "n": 3
     }
    }

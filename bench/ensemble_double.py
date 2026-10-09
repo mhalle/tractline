@@ -15,7 +15,7 @@ measure the spread around it and not its error: a held-out run changes 33 % of t
   s000 - a check that the rebuild is the replicate);
 - each pseudo-scan bootstrapped again (ShellWildBootstrap of the replicate itself, b0s "added", the reference's mask),
   `level2` runs: 1..build make its ensemble (with s000, as the pilot's), the rest are held out (the pilot's scoring);
-- its rescans: the other first-level replicates r001..r016 - draws about the same centre (the real scan's estimate)
+- its rescans: the other first-level replicates r001..r016 - draws about the same center (the real scan's estimate)
   as a pseudo-scan is, as real rescans are draws about the truth.
 
 analyze: per streamline of each pseudo-scan, the single run's TRX probability, the ensemble mixture and the vote

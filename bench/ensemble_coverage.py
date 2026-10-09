@@ -16,7 +16,8 @@ far apart their single runs are (total variation between tract probability vecto
 Voxels (each run's winner per voxel, tau 1): an ensemble's P(v, k) - the share of its runs in which tract k wins
 voxel v - against the other scan's winner: calibration over every (voxel, tract) where either has a tract, and
 envelope coverage. A tract's envelope at level L is its highest-probability voxels holding L of its summed
-probability; were P calibrated, the other scan's voxels of that tract would fall inside it at about rate L. One run's
+probability; were P calibrated, the other scan's voxels of that tract would fall inside it at about rate L (pooled over
+the 42 named tracts, weighted by the other scan's voxels; Other, about half of all streamlines, excluded). One run's
 "envelope" is its own tract (P 0 or 1). Stability: per tract, the histogram intersection of the two scans' P maps
 (sum of minima over sum of maxima), against their single runs'. Writes results/ensemble_coverage_<flip>.json.
 """
@@ -36,6 +37,8 @@ OUT = HERE / "results/ensemble_coverage_{}.json"
 ONEHOT = np.eye(E.N_TRACTS, dtype=np.float32)[LUT]                 # (1600, 43)
 LEVELS = (0.5, 0.7, 0.8, 0.9, 0.95)
 K = E.N_TRACTS + 1                                                  # 43 tracts + NONE
+NAMED = E.N_TRACTS - 1                                              # the 42 named tracts: Other (about half of all streamlines)
+                                                                    # is excluded from voxel calibration and coverage
 
 
 class Ensemble:
@@ -75,7 +78,7 @@ def coverage(P, win_other, level):
     """Per tract (named and Other; NONE excluded): the share of the other run's voxels of tract k inside the highest-
     probability region holding `level` of P[k]'s mass; mass-weighted over tracts (weights: the other run's voxels)."""
     num = den = 0.0
-    for k in range(E.N_TRACTS):
+    for k in range(NAMED):
         w = P[k]
         tot = w.sum()
         theirs = win_other == k
@@ -96,7 +99,7 @@ GRID = np.round(np.arange(0.5, 0.9951, 0.005), 3)
 def coverage_curve(P, win_other, levels=GRID):
     """coverage() at many levels at once: one sort per tract."""
     num, den = np.zeros(len(levels)), 0.0
-    for k in range(E.N_TRACTS):
+    for k in range(NAMED):
         w = P[k]
         theirs = win_other == k
         if w.sum() <= 0 or not theirs.any():
@@ -135,9 +138,9 @@ def score(ens: Ensemble, other_keys, other_tract, other_win):
            "mean stated P(keep)": {n: round(float(p.mean()), 4) for n, p in stated.items()},
            "auroc predicting change": {n: auroc(-p, ~keep) for n, p in stated.items()},
            "calibration": {n: calibration(p, keep) for n, p in stated.items()}}
-    either = (ens.P[:E.N_TRACTS].sum(0) > 0) | (other_win != E.NONE)
-    Pv = ens.P[:E.N_TRACTS, either]
-    hit = (other_win[either][None] == np.arange(E.N_TRACTS)[:, None])
+    either = (ens.P[:NAMED].sum(0) > 0) | (other_win < NAMED)
+    Pv = ens.P[:NAMED, either]
+    hit = (other_win[either][None] == np.arange(NAMED)[:, None])
     keepv = Pv > 0
     out["voxels"] = {"calibration: P(v, k) against the other run's winner (P > 0)": calibration(Pv[keepv], hit[keepv]),
                      "envelope coverage (ensemble)": {f"{L:g}": coverage(ens.P, other_win, L) for L in LEVELS},
@@ -186,12 +189,12 @@ def recalibrate(rows, groups, flip):
                                                                  calibration(np.array([table[float(v)] for v in Pv_te]), h_te)["ece"]],
                   "envelopes": env}
     out["coverage curve, all rescan scorings (level: coverage)"] = {f"{L:g}": round(float(c), 4) for L, c in
-                                                                  zip(GRID, np.mean([r["_arrays"]["curve"] for r in rows], 0)) if round(L * 100) % 5 == 0}
+                                                                  zip(GRID, np.mean([r["_arrays"]["curve"] for r in rows], 0))}
     return out
 
 
 def main(args):
-    res = {"flip": args.flip, "pairs": {}}
+    res = {"flip": args.flip, "classes (voxel calibration, coverage)": "the 42 named tracts; Other excluded", "pairs": {}}
     pooled = {"rescan": [], "held-out replicate": []}
     groups = []
     for pair in args.pairs:

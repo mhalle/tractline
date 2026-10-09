@@ -23,17 +23,17 @@ def scan(seed=0):
 
 
 @pytest.mark.parametrize("mode", ["residual", "thermal", "added"])
-def test_b0_modes_centre_and_noise(mode):
+def test_b0_modes_center_and_noise(mode):
     dwi, bval, bvec, extra, mask = scan()
     wb = ShellWildBootstrap(dwi, bval, bvec, extra_b0s=extra, b0_noise=mode, mask=mask)
     reps = [wb.replicate(s) for s in range(300)]
     d = np.stack([r[0][..., :6] for r in reps]).astype(np.float64)
     e = np.stack([r[1] for r in reps])
     b0, b0_mean = dwi[..., :6].astype(np.float64), dwi[..., :6].mean(-1, keepdims=True)
-    centre, centre_extra = (b0, extra) if mode == "added" else (b0_mean, extra.mean(-1, keepdims=True))
-    assert np.abs(d.mean(0) - centre).mean() < 3 and np.abs(e.mean(0) - centre_extra).mean() < 3
-    # the replicates' spread about that centre: the b0s' own (drift included), or the DW residual level
-    sd = float(np.sqrt(((d - centre) ** 2).mean()))
+    center, center_extra = (b0, extra) if mode == "added" else (b0_mean, extra.mean(-1, keepdims=True))
+    assert np.abs(d.mean(0) - center).mean() < 3 and np.abs(e.mean(0) - center_extra).mean() < 3
+    # the replicates' spread about that center: the b0s' own (drift included), or the DW residual level
+    sd = float(np.sqrt(((d - center) ** 2).mean()))
     rms_dw = wb.noise_check(mask)["dw_residual_rms"]
     if mode == "residual":
         assert sd > 2 * rms_dw

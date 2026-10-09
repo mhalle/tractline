@@ -18,15 +18,20 @@ import numpy as np
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
-NAMES = {"AF": "arcuate fasciculus", "ILF": "inferior longitudinal fasciculus", "IOFF": "inferior occipito-frontal fasciculus",
-         "MdLF": "middle longitudinal fasciculus", "UF": "uncinate fasciculus", "CST": "corticospinal tract",
-         "SF": "striato-frontal", "SO": "striato-occipital", "SP": "striato-parietal", "TF": "thalamo-frontal",
-         "Sup-F": "superficial frontal", "Sup-T": "superficial temporal", "Sup-FP": "superficial fronto-parietal",
-         "CC1": "corpus callosum 1", "CC6": "corpus callosum 6", "CB": "cingulum bundle", "SLF-III": "superior longitudinal fasciculus III",
-         "EC": "external capsule", "EmC": "extreme capsule", "PLIC": "posterior limb of internal capsule", "CR-F": "corona radiata, frontal"}
+NAMES = {"AF": "arcuate fasciculus", "CB": "cingulum bundle", "EC": "external capsule", "EmC": "extreme capsule",
+         "ILF": "inferior longitudinal fasciculus", "IOFF": "inferior occipito-frontal fasciculus", "MdLF": "middle longitudinal fasciculus",
+         "SLF-I": "superior longitudinal fasciculus I", "SLF-II": "superior longitudinal fasciculus II",
+         "SLF-III": "superior longitudinal fasciculus III", "UF": "uncinate fasciculus", "CST": "corticospinal tract",
+         "CR-F": "corona radiata, frontal", "CR-P": "corona radiata, parietal", "SF": "striato-frontal", "SO": "striato-occipital",
+         "SP": "striato-parietal", "TF": "thalamo-frontal", "TO": "thalamo-occipital", "TT": "thalamo-temporal", "TP": "thalamo-parietal",
+         "PLIC": "posterior limb of the internal capsule", **{f"CC{i}": f"corpus callosum, segment {i}" for i in range(1, 8)},
+         "CPC": "cortico-ponto-cerebellar", "ICP": "inferior cerebellar peduncle", "MCP": "middle cerebellar peduncle",
+         "Sup-F": "superficial frontal", "Sup-FP": "superficial fronto-parietal", "Sup-O": "superficial occipital",
+         "Sup-OT": "superficial occipito-temporal", "Sup-P": "superficial parietal", "Sup-PO": "superficial parieto-occipital",
+         "Sup-PT": "superficial parieto-temporal", "Sup-T": "superficial temporal"}
 COLORS = ["#f2c14e", "#5fd0c5", "#e48ad6", "#8fb8ff", "#b6e36b", "#ff9b54", "#c9a7ff", "#7fe0a0", "#ff7a8a"]
-SHOWN = ("ILF", "Sup-F", "SF", "MdLF", "CC1", "TF", "CB", "AF", "CST")   # the tracts that surely enter, those that enter in some
-                                                                       # runs, and the arcuate and corticospinal tracts nearby
+SHOWN = ("ILF", "Sup-F", "SF", "MdLF", "CC1", "TF", "CB", "AF", "CST")   # drawn: tracts that enter in every run, some that enter in
+                                                                       # some runs, and the arcuate and corticospinal tracts nearby
 LEVELS = [round(x, 2) for x in np.arange(0.5, 0.951, 0.05)]
 
 
@@ -65,11 +70,13 @@ def main(args):
     z0, z1 = max(int(zs.min()) - 3, 0), min(int(zs.max()) + 4, tumor.shape[2])
     curve = cov["recalibration on real rescans (leave one pair out)"]["coverage curve, all rescan scorings (level: coverage)"]
     cl = np.array([float(k) for k in curve]); cc = np.array(list(curve.values()))
-    fine = cov["summary"]["rescan"]["envelope coverage"]
 
     def calibrated(L):
-        ok = np.flatnonzero(cc >= L - 1e-9)
-        return (float(cl[ok[0]]), True) if len(ok) else (float(cl[-1]), False)
+        """The stated level whose envelope covered L of the rescans' tracts, interpolated (as ensemble_pat16_report.py);
+        beyond what the widest measured level covered, that level, flagged."""
+        if L > cc.max():
+            return float(cl[-1]), False
+        return float(np.interp(L, cc, cl)), True
 
     b0 = mean_b0()[:, :, z0:z1]
     hi = np.quantile(b0[b0 > 0], 0.995)
@@ -83,26 +90,29 @@ def main(args):
         for L in LEVELS:
             use, _ = calibrated(L)
             thr["calibrated"].append(round(threshold(P[k], use) * runs))
-        row = rep["tracts"][name]
-        tracts.append({"name": name, "full": NAMES.get(name, name), "color": COLORS[i], "votes": b64(votes[:, :, z0:z1]),
-                       "k": k, "thr": thr,
-                       "enter": row["runs: P(enters the tumor)"], "within5": row["runs: P(within 5 mm)"],
-                       "ml_in": row["runs: mL inside the tumor, median [min, max]"], "ml_in_today": row["today (r000): mL inside the tumor"],
-                       "ml_near": row["runs: mL within 5 mm, median [min, max]"], "ml_near_today": row["today (r000): mL within 5 mm"]})
+        tracts.append({"name": name, "full": NAMES.get(name, name), "color": COLORS[i], "votes": b64(votes[:, :, z0:z1]), "k": k, "thr": thr})
     s = cov["summary"]["rescan"]
     pat = ww["PAT16"][f"replicate vs replicate ({args.flip}), tumor margin"]
+    sp = lambda key: pat[f"spheres: {key}"]  # noqa: E731
+    table = [{"name": n, "full": NAMES.get(n, n), "color": COLORS[shown.index(n)] if n in shown else None,
+              "enter": r["runs: P(enters the tumor)"], "within5": r["runs: P(within 5 mm)"],
+              "ml_in": r["runs: mL inside the tumor, median [min, max]"], "ml_in_single": r["today (r000): mL inside the tumor"]}
+             for n, r in rep["tracts"].items() if r["runs: P(enters the tumor)"] > 0 or r["runs: P(within 5 mm)"] >= 0.5]
+    table.sort(key=lambda r: (-r["enter"], -r["within5"]))
     data = {"shape": [int(v) for v in img.shape], "z0": z0, "runs": runs, "img": b64(img), "region": b64(region), "tracts": tracts,
-            "today": b64(today[:, :, z0:z1].astype(np.uint8)),
+            "single": b64(today[:, :, z0:z1].astype(np.uint8)), "table": table,
             "levels": LEVELS, "calib": [{"target": L, "use": calibrated(L)[0], "reached": calibrated(L)[1]} for L in LEVELS],
-            "curve": {"levels": cl.tolist(), "coverage": cc.tolist()},
-            "fine": fine,
-            "stats": {"auroc_single": s["auroc"]["single run: labeler probability"], "auroc_mix": s["auroc"]["ensemble: mixture"],
-                      "ece_single": s["ece"]["single run: labeler probability"], "ece_mix": s["ece"]["ensemble: mixture"],
-                      "change": s["change_rate"], "scorings": s["scorings"]},
-            "margin": {"density": pat["spheres: where: density intersection (quartiles)"][1], "direction": pat["spheres: where: direction |cos| (quartiles)"][1],
-                       "dominant": pat["spheres: which: same dominant tract"], "mix_tv": pat["spheres: which: composition total variation (quartiles)"][1],
-                       "streamline_keep": round(1 - s["change_rate"], 3)},
-            "mix": rep["margin 0-10 mm: tract mix (mean, min-max over runs)"]}
+            "curve": {"levels": cl[::4].tolist() + [float(cl[-1])], "coverage": cc[::4].tolist() + [float(cc[-1])]},
+            "rescans": {"auroc_single": s["auroc"]["single run: labeler probability"], "auroc_mix": s["auroc"]["ensemble: mixture"],
+                        "ece_single": s["ece"]["single run: labeler probability"], "ece_mix": s["ece"]["ensemble: mixture"],
+                        "keep": round(1 - s["change_rate"], 3), "scorings": s["scorings"]},
+            "margin": {"density": sp("where: density intersection (quartiles)")[1],
+                       "angle_deg": round(float(np.degrees(np.arccos(sp("where: direction |cos| (quartiles)")[1]))), 1),
+                       "dominant": sp("which, named tracts (Other excluded): same dominant tract"),
+                       "mix_shared": round(1 - sp("which, named tracts (Other excluded): composition total variation (quartiles)")[1], 4),
+                       "other_share": sp("Other: share of a sphere's streamlines (quartiles)")[1], "spheres": pat["pairs"]},
+            "mix": [[n, NAMES.get(n, "assigned to none of the 42 tracts" if n == "Other" else n), *v]
+                    for n, v in rep["margin 0-10 mm: tract mix (mean, min-max over runs)"].items()]}
     html = (HERE / "pat16_viewer.html").read_text().replace("/*DATA*/null", json.dumps(data))
     Path(args.out).write_text(html)
     print(f"{args.out}: {len(html) / 1e6:.2f} MB, slices {z0}..{z1 - 1}, tracts {shown}")

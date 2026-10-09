@@ -122,10 +122,10 @@ It puts the replicates at 153.4-155.3 Hz, around the reference's 154.0, with res
 against 0.331. Every streamline and voxel metric above stays within run-to-run spread: AUROC 0.80, ECE 0.03
 against 0.27, voxel agreement 67 % against 61 %.
 
-**The reference sits at the centre of the replicates.** A replicate changes 33 % of the reference's labels,
+**The reference sits at the center of the replicates.** A replicate changes 33 % of the reference's labels,
 but 38 % of another replicate's. This is not the noise level: it persists when the scan is made one of the
 replicates' own sign patterns. Nor is it the per-voxel sign flips: it persists with per-volume signs. It is the
-bootstrap's centring. A least-squares residual is orthogonal to the fit's space, so the tracker sees the scan
+bootstrap's centering. A least-squares residual is orthogonal to the fit's space, so the tracker sees the scan
 much as it sees the fit alone. The fit, the scan and the fit minus its residual (every sign flipped) differ by
 only 10 % of labels and under 1 mm, against 28 % and 4.7 mm to any replicate (NOTES 2026-10-08).
 
@@ -133,7 +133,7 @@ So held-out replicates measure the spread around this scan's estimate, not that 
 
 **Calibrated for rescans: a double bootstrap.** Some replicates are made pseudo-scans and bootstrapped again to
 build their own ensembles. The other first-level replicates serve as their rescans: they spread about the same
-centre, as real rescans spread about the truth.
+center, as real rescans spread about the truth.
 
 Scored this way, the pilot's numbers come back for the centered scoring. Against rescans:
 
@@ -148,62 +148,86 @@ P(rescan keeps the tract) of 0.62, the replicate-vs-replicate rate. Under it no 
 unanimous runs still mean a 1-in-12 chance that a rescan changes the label (NOTES 2026-10-08).
 
 **Checked against real rescans.** MASiVar (OpenNeuro ds003416) scans healthy adults repeatedly on one Philips
-scanner. Three pairs were used: two from one subject (2.5 mm and 2.1 mm) and one from another (five shells, 38 slices).
+scanner. Three reference scans with five rescans in all were used:
+- subject 1 (cIIIs01) at 2.5 mm, with one same-session rescan;
+- subject 1 at 2.1 mm, with one same-session and one other-session rescan;
+- subject 2 (cIs1), 38 slices and 3 forward b0s against subject 1's 16, with one same-session and one next-day rescan.
 
-A rescan's corrected DWI is registered to the reference and resampled onto its grid, so seed keys match. Resampling
-the reference there and back, and doing the same to the replicates, shows interpolation does not inflate the rescans.
-With the labeler's draw held fixed, labels changed:
+Each rescan is registered to its reference scan and resampled onto its grid, so a seed voxel means the same place in
+both. Resampling alone changes some labels. Running the same resampling on the reference and on its replicates showed it
+does not inflate the rescan figures. The labeler's random choice of context is held fixed, so only the data differ.
 
-| | per-voxel signs | smooth signs | per-volume signs | rescan, same session | rescan, other session |
+The first three columns compare two simulated replicates of the same scan, made with three ways of re-signing its
+noise. The last two compare the scan with a real rescan. Share of streamlines whose tract changed:
+
+| | replicates, per-voxel signs | replicates, smooth signs | replicates, per-volume signs | rescan, same session | rescan, other session |
 |---|---|---|---|---|---|
-| subject 1, 2.5 mm | 31.5 % | 35.0 % | 36.5 % | 36.3 % | |
+| subject 1, 2.5 mm | 31.5 % | 35.0 % | 36.5 % | 36.3 % | — |
 | subject 1, 2.1 mm | 32.2 % | 34.9 % | 35.8 % | 36.9 % | 39.1 % |
 | subject 2 | 39.6 % | 40.7 % | 41.6 % | 49.9 % | 47.5 % |
 
-- **Per-voxel sign flips understate a rescan.** The scan's noise is correlated between in-plane neighbors (lag-1
-  0.3–0.5; the reconstruction's, within a 2D EPI slice). Per-voxel signs remove that correlation.
-- **Signs drawn as smooth in-plane patches close the same-session gap on subject 1** to 1–2 points (`flip="smooth"`,
-  FWHM 4 voxels). Per-volume signs do as well on average, but each pair is noisier.
-- **A rescan in another session moves 3–4 more points than any variant**, and voxel agreement stays 3–9 points below.
-  Another session brings what a noise bootstrap cannot: a new shim and field, head position and registration error.
-- **Subject 2's protocol stays 8 points short with every variant.** It has one reversed b0 and three forward b0s, and
-  its replicates' fields barely vary while its rescans' do.
+- **Per-voxel sign flips understate a rescan.** Noise in neighboring voxels within a slice is correlated (lag-1
+  correlation 0.1–0.5), likely from the scanner's image reconstruction; across slices it is under 0.1 in the
+  diffusion-weighted volumes. Per-voxel signs remove that correlation.
+- **Signs drawn as smooth patches within each slice close the same-session gap on subject 1** to 1–2 points
+  (`flip="smooth"`, FWHM 4 voxels). Per-volume signs do as well on average, but each pair varies more.
+- **Subject 1's one other-session rescan changes 39.1 %,** 3–4 points more than smooth or per-volume signs. Across all
+  rescans, voxel agreement stays 3–9 points below the simulated pairs. Another session brings a new head position,
+  slice placement and registration error, which re-signing noise cannot produce.
+- **Subject 2 stays 6–10 points short with every variant.** Its field rests on 3 forward b0s, and its 38 slices cut
+  the cortex. Its replicates' fields stay at 105–114 Hz while its rescans give 95 and 159 Hz.
 
-Refitted with smooth signs on PAT16, the double bootstrap's ranking and recalibration are unchanged: AUROC 0.77,
-held-out ECE 0.002-0.003. The confidence drops by 2-3 points, with a mean P(rescan keeps the tract) of 0.60 against
-0.62. Carrying one run's labeler probabilities forward instead of its winner does not steady the output. The
-labeler is confident (0.94 on average), and labels change because a seed's path changes by 13-21 mm on a rescan, not
-because names were near ties. The uncertainty is in the tracking, so the ensemble, which pools over paths, is what
-can carry it (NOTES 2026-10-08, "Smooth signs on PAT16, and soft labels").
+Refitted with smooth signs on PAT16, the double bootstrap's ranking (AUROC 0.77) and recalibration (held-out ECE
+0.002–0.003) are unchanged. Its confidence drops by 2–3 points, to a mean P(rescan keeps the tract) of 0.60 against
+0.62.
 
-**Scored on real rescans.** Every MASiVar scan was given its own ensemble (9 runs), then scored against the other
-scan of its pair.
+Keeping each streamline's full tract probabilities, instead of only its top tract, barely helps: label change on a
+rescan falls by about 1 point. The labeler is rarely unsure (top tract 0.93–0.94 on average; 0.4–0.5 % of
+streamlines below 0.5). Labels change because the path from a seed moves, a median 13–21 mm on average along its
+length, and reaches other anatomy. The ensemble, which pools over runs whose paths differ, is what can carry that
+(NOTES 2026-10-08, "Smooth signs on PAT16, and soft labels").
 
-- **The ranking holds:** AUROC 0.73–0.78, against 0.65 for one run.
-- **The stated probabilities are 8–10 points too high** on cIIIs01, 16–18 on cIs1.
-- **PAT16's double-bootstrap map, carried over unchanged, fixes cIIIs01:** ECE 0.004–0.011, the stated mean within a
-  point of the observed. It was fitted with smooth signs on a Siemens scan, with no rescan.
-- **cIs1 (38 slices, one reversed b0) stays off with any map.**
-- **Ensemble outputs are steadier between scans than one run's.** Tract maps overlap 1.6–1.9 times as much.
-- **Envelopes are narrow.** A tract's highest-probability voxels holding 90 % of its mass cover 79 % of a rescan's
-  tract. Nine runs together reach about 90 %.
+**Scored on real rescans.** Each MASiVar scan was given its own ensemble of 9 runs, then scored against each scan it
+was paired with, both ways (10 scorings). AUROC measures how well a stated confidence ranks the streamlines whose
+tract changes (0.5 chance, 1 perfect). ECE is the average gap between stated and observed probability.
 
-The regional picture holds where single names do not:
-- the white matter's position and direction (|cos| 0.97) and the tract mix of an 8 mm region (the same dominant tract
-  98–100 % of the time) are stable on a rescan;
-- a streamline's name is not.
+- **The ranking held on all five rescans:** AUROC 0.73–0.78, against 0.65 for one run's labeler probability.
+- **The stated probabilities are too high:** 8–11 points on subject 1 and 15–18 on subject 2 (ECE).
+- **PAT16's double-bootstrap map, carried over unchanged, matched subject 1's three rescans:** ECE 0.004–0.011, with
+  the stated mean within about a point of the observed. The map was fitted with smooth signs on PAT16's Siemens scan,
+  which has no rescan. It did not fit subject 2: it states 0.60 where 0.51 is observed.
+- **Ensemble outputs are steadier between scans than one run's.** Tract territories overlap 1.6–1.9 times as much
+  (0.28–0.39 against 0.15–0.24), though still under half.
+- **Envelopes for named tracts are far too small.** A tract's envelope at a level is its highest-agreement voxels
+  holding that share of its votes. As stated, a 90 % envelope holds 60 % of where the rescan put that tract. Every
+  voxel the nine runs gave the tract holds about 68 %. Raising the stated level reaches a real 50 %, but nothing at 80 %
+  or above. This counts each voxel for the one class with the most streamlines; maps that let tracts overlap, and more
+  runs, were not tested.
 
-Paths part a median 34–40 mm from their seed, only weakly more often at crossing fibers (NOTES 2026-10-08, "The
-ensemble scored on real rescans", "Where and which", "Where the paths part"). For PAT16, 17 runs separate tracts that
-surely enter the tumor from those that do in a third of runs, which a single run cannot tell apart ("PAT16 at the
-tumor"; `bench/ensemble_pat16_viewer.py` draws it).
+**What repeats, and what does not.** Where white matter is (0.63–0.79 of the density shared), and its local direction
+(|cos| 0.94–0.97, about 14–20°), hold on a rescan. In a sphere of 8 mm radius, the main named tract is the same on
+81–90 % of rescans. Half of all streamlines fall in the labeler's Other class and are left out of this count. A single
+streamline keeps its tract name on only 50–64 % of rescans ("Where and which").
 
-What a shipped confidence should be, then:
+Across simulated replicates, about half of a seed's paths stay within 4 mm of each other for 80 mm. The rest part at a
+median 34–40 mm from the seed. Parting points fall in "crossing" voxels only 1.1–1.2 times as often as the path before
+them. The crossing detector calls 83–93 % of white matter crossing, though, so this cannot show whether crossings drive
+the change ("Where the paths part").
 
-- the ensemble's mixture or votes, mapped for rescans by a double bootstrap with spatially correlated (smooth,
-  in-plane) signs. That map held on real rescans where the protocol pins the field;
-- the map fitted per protocol, since it depends on the pipeline and R, and checked on test-retest scans for a new
-  protocol;
-- regional answers first: which tracts pass near a point, and in what proportion, with envelopes at calibrated levels;
-- read as a same-session confidence. Against a scan from another session it is still optimistic by a few points, more
-  on protocols whose field rests on few b0s.
+For PAT16, 17 runs separate tracts the pipeline places inside the tumor mask in every run (ILF, superficial frontal,
+striato-frontal, striato-occipital) from those it places there in only about a third of runs (thalamo-frontal,
+cingulum). A single run cannot tell these apart. The corticospinal tract comes within 5 mm in 8 of 17 runs. This
+measures how reproducible the output is, not whether it is anatomically right: nothing here was checked against
+stimulation mapping or histology ("PAT16 at the tumor"; `bench/ensemble_pat16_viewer.py` draws it).
+
+What the reported confidence should be:
+
+- the ensemble's agreement, adjusted to predict a same-session rescan using simulated rescans with correlated noise.
+  That adjustment matched real rescans for one healthy subject whose protocol pins the field well (16 b0s), and failed
+  for the second;
+- fitted per protocol, since it depends on the pipeline and on the number of runs, and checked on test-retest scans
+  for any new protocol;
+- regional answers first: which named tracts pass near a point, and in what proportion. Envelopes cannot yet be stated
+  at 80 or 90 % with 9 runs;
+- read as a same-session confidence, and as untested in edema and tumor tissue. Against a scan from another session
+  it is still optimistic by a few points, more on protocols whose field rests on few b0s.

@@ -15,9 +15,11 @@ margin voxel (0-10 mm from the tumor) at least 4 mm apart.
   where  the streamlines' density, all tracts together (histogram intersection: sum of minima over sum of maxima,
          1 identical), and their local direction (density-weighted |cos| between the two runs' principal directions
          per voxel, from each voxel's orientation tensor of path segments; voxels with >= 5 streamlines in both);
-  which  per tract, the same intersection of its density (named tracts, mass-weighted), and the tract composition
-         of the streamlines in a region (total variation: 0 the same mix, 1 disjoint) and whether its dominant
-         tract is the same.
+  which  per tract, the same intersection of its density (named tracts, mass-weighted; each tract's own sum of
+         minima over sum of maxima, averaged - not a split of the all-tract figure), and the tract composition of the
+         streamlines in a region (total variation: 0 the same mix, 1 disjoint) and whether its dominant tract is the
+         same: over the named tracts (Other, about half of all streamlines and the commonest class in most spheres,
+         excluded), and with Other, beside Other's share.
 Paths are the records' 20 points densified to 100. PAT16's tumor (ds001226's mask, on the T1) is put on the DWI
 grid by a rigid registration of the T1 to the corrected mean b0 (_register.py), kept in
 DATA/ensemble/PAT16/tumor_dwi.npz. Writes results/ensemble_where_which_<flip>.json.
@@ -69,9 +71,11 @@ class Run:
         return np.linalg.eigh(M)[1][:, :, -1]                                # (m, 3) principal direction
 
     def composition(self, mask):
+        """The tract mix of the streamlines visiting `mask`: (with Other, named tracts only (NaN if none), Other's share)."""
         s = np.unique(self.vs[mask[self.vv]])
         h = np.bincount(self.tract[s], minlength=E.N_TRACTS).astype(float)
-        return h / max(h.sum(), 1)
+        named = h[:E.N_TRACTS - 1]
+        return h / max(h.sum(), 1), (named / named.sum() if named.sum() else np.full(len(named), np.nan)), h[-1] / max(h.sum(), 1)
 
 
 def inter(a, b):
@@ -92,15 +96,22 @@ def compare(a: Run, b: Run, spheres):
     rows = []
     for m in spheres:
         i = np.flatnonzero(m.ravel() & both)
-        ca, cb = a.composition(m.ravel()), b.composition(m.ravel())
+        (ca, na, oa), (cb, nb, ob) = a.composition(m.ravel()), b.composition(m.ravel())
         dcos = np.abs((a.direction(i) * b.direction(i)).sum(1)) if len(i) else np.array([np.nan])
-        rows.append((inter(a.dens[m.ravel()], b.dens[m.ravel()]), float(np.nanmean(dcos)), 0.5 * np.abs(ca - cb).sum(), ca.argmax() == cb.argmax()))
+        named_ok = np.isfinite(na).all() and np.isfinite(nb).all()
+        rows.append((inter(a.dens[m.ravel()], b.dens[m.ravel()]), float(np.nanmean(dcos)), 0.5 * np.abs(ca - cb).sum(), ca.argmax() == cb.argmax(),
+                     0.5 * np.abs(na - nb).sum() if named_ok else np.nan, float(na.argmax() == nb.argmax()) if named_ok else np.nan,
+                     0.5 * (oa + ob), float(ca.argmax() == E.N_TRACTS - 1)))
     r = np.array(rows, float)
     q = lambda x: [round(float(v), 4) for v in np.nanquantile(x, [0.25, 0.5, 0.75])]  # noqa: E731
     out["spheres"] = {"n": len(rows), "where: density intersection (quartiles)": q(r[:, 0]),
                       "where: direction |cos| (quartiles)": q(r[:, 1]),
-                      "which: composition total variation (quartiles)": q(r[:, 2]),
-                      "which: same dominant tract": round(float(r[:, 3].mean()), 4)}
+                      "which, named tracts (Other excluded): composition total variation (quartiles)": q(r[:, 4]),
+                      "which, named tracts (Other excluded): same dominant tract": round(float(np.nanmean(r[:, 5])), 4),
+                      "which, with Other: composition total variation (quartiles)": q(r[:, 2]),
+                      "which, with Other: same dominant class": round(float(r[:, 3].mean()), 4),
+                      "Other: share of a sphere's streamlines (quartiles)": q(r[:, 6]),
+                      "Other: dominant in the first run's spheres": round(float(r[:, 7].mean()), 4)}
     return out
 
 

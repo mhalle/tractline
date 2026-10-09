@@ -4,7 +4,7 @@
 
 From existing records; no pipeline runs. Ensembles: MASiVar's references (A with <flip>/r001..r008, ensemble_retest.py)
 and PAT16's (added-<flip>/r000..r016, ensemble_pilot.py). For seeds every run labeled (a random `seeds` of them):
-each run's path, densified, is followed outward from the seed voxel's centre in both directions by arc length, every
+each run's path, densified, is followed outward from the seed voxel's center in both directions by arc length, every
 2 mm to 80 mm. At each distance the spread is the median, over the other runs, of their point's distance to the
 reference's. A side's divergence is the first distance where the spread exceeds DIVERGE_MM; its place is the
 reference's point there.

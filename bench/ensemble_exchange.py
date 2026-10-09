@@ -1,7 +1,7 @@
 """Why is the reference closer to a replicate than two replicates are to each other? (NOTES 2026-10-08)
 
     uv run --group dipy --group rankfield bench/ensemble_exchange.py run [--subject PAT16] [--runs 8]
-    uv run --group dipy --group rankfield bench/ensemble_exchange.py centre [--subject PAT16]
+    uv run --group dipy --group rankfield bench/ensemble_exchange.py center [--subject PAT16]
     uv run --group dipy --group rankfield bench/ensemble_exchange.py analyze [--subject PAT16] [--runs 8]
 
 In ensemble_pilot's "added" bootstrap a held-out replicate changes 33 % of the reference's labels, two replicates
@@ -10,7 +10,7 @@ In ensemble_pilot's "added" bootstrap a held-out replicate changes 33 % of the r
   replicate than from the scan (squared signal distance 1.31x in the DW volumes, 2x in the b0s);
 - whitening: per-voxel sign flips break up residuals that are spatially structured in the scan.
 
-centre: two runs of the scan's DW fit alone (the raw-residual fit, b0s as acquired): "fit" (no residual) and "anti"
+center: two runs of the scan's DW fit alone (the raw-residual fit, b0s as acquired): "fit" (no residual) and "anti"
 (fit - residual: every sign flipped, the replicate farthest from the scan). A least-squares residual is orthogonal to
 the fit's space in every voxel; if the pipeline reads the signal through a similar model, both track like the scan.
 
@@ -88,13 +88,13 @@ def run(args):
             P.release_memory(DEVICE)
 
 
-def centre(args):
+def center(args):
     from _ds001226 import load
     s = load(args.subject)
     labeler = P.default_labeler(DEVICE)
     grid = (s.affine, s.dwi.shape[:3])
     wb = bootstrap(s, reference_mask(s), "lev0")
-    d = DATA / "ensemble" / args.subject / "exchange" / "centre"
+    d = DATA / "ensemble" / args.subject / "exchange" / "center"
     d.mkdir(parents=True, exist_ok=True)
     log_path = d / "runs.json"
     log = json.loads(log_path.read_text()) if log_path.exists() else {}
@@ -168,19 +168,19 @@ def analyze(args):
             "residual_left (min, max)": [min(rl), max(rl)],
             "signal squared difference in the mask": signal(s, mask, v, args.runs)}
         print(v, json.dumps(res["results"][v]), flush=True)
-    c = root / "exchange" / "centre"
+    c = root / "exchange" / "center"
     if (c / "fit.npz").exists():
         fit, anti = (_winners_only(E.RunRecord.load(c / f"{n}.npz", logp=False)) for n in ("fit", "anti"))
         reps = [_winners_only(E.RunRecord.load(root / "exchange" / "lev0" / f"r{r:03d}.npz", logp=False))
                 for r in range(1, args.runs + 1)]
         row = lambda pairs: [round(float(np.mean([x[0] for x in pairs])), 4), round(float(np.mean([x[1] for x in pairs])), 2)]  # noqa: E731
-        res["centre"] = {"(labels changed, median mdf mm); replicates are lev0's": {
+        res["center"] = {"(labels changed, median mdf mm); replicates are lev0's": {
             "reference vs fit": row([compare(ref, fit)]), "reference vs anti": row([compare(ref, anti)]),
             "fit vs anti": row([compare(fit, anti)]),
             "fit vs replicate": row([compare(fit, x) for x in reps]),
             "anti vs replicate": row([compare(anti, x) for x in reps]),
             "reference vs replicate": row([compare(ref, x) for x in reps])}}
-        print("centre", json.dumps(res["centre"]), flush=True)
+        print("center", json.dumps(res["center"]), flush=True)
     ref_log = json.loads((root / "added" / "runs.json").read_text())["r000"]
     res["reference"] = {"field p99 |Hz|": ref_log["field_hz_p99_abs"], "residual_left": ref_log["residual_left"]}
     OUT.write_text(json.dumps(res, indent=1))
@@ -188,8 +188,8 @@ def analyze(args):
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("what", choices=("run", "centre", "analyze"))
+    ap.add_argument("what", choices=("run", "center", "analyze"))
     ap.add_argument("--subject", default="PAT16")
     ap.add_argument("--runs", type=int, default=8)
     args = ap.parse_args()
-    {"run": run, "centre": centre, "analyze": analyze}[args.what](args)
+    {"run": run, "center": center, "analyze": analyze}[args.what](args)
