@@ -109,6 +109,8 @@ class RunRecord:
     paths: np.ndarray            # (n, POINTS, 3) float32 (resample)
     counts: np.ndarray           # (43, X*Y*Z) uint16 (voxel_counts)
     shape: tuple                 # (X, Y, Z) the grid the counts are on
+    fibers: list | None = None   # the streamlines themselves ((m_i, 3) float32 mm), when kept: from `of`, or loaded
+                                 # with fibers=True from a compact record (format 1 files never held them)
 
     @staticmethod
     def of(tg, labels, affine, shape) -> "RunRecord":
@@ -129,22 +131,41 @@ class RunRecord:
             cluster[bad] = tied.argmax(1)
         cluster = cluster.astype(np.int16)
         return RunRecord(keys, cluster, logp, resample(fibers), voxel_counts(fibers, labels.tract, affine, shape),
-                         tuple(int(v) for v in shape))
+                         tuple(int(v) for v in shape), [np.asarray(f, np.float32) for f in fibers])
 
-    def save(self, path):
-        """An .npz; the counts as their nonzero entries (a few percent of the grid has streamlines)."""
+    def save(self, path, compact=False):
+        """An .npz; the counts as their nonzero entries (a few percent of the grid has streamlines).
+
+        compact=True (format 2, tractline.compact; needs the `rankfield` dependency group): the full streamlines
+        predictive-coded at 0.05 mm instead of the 20-point paths, and the log-probabilities as a rank field (depth
+        12) instead of dense float16 - about 0.5 MB for 40,000 streamlines' probabilities against 130 MB, and every
+        vertex of every streamline. The paths are rebuilt from the streamlines on load."""
         nz = np.flatnonzero(self.counts)
-        np.savez(path, keys=self.keys, cluster=self.cluster, logp=self.logp, paths=self.paths, counts_at=nz.astype(np.int64),
-                 counts_n=self.counts.ravel()[nz], counts_shape=np.array(self.counts.shape), shape=np.array(self.shape))
+        common = dict(keys=self.keys, cluster=self.cluster, counts_at=nz.astype(np.int64), counts_n=self.counts.ravel()[nz],
+                      counts_shape=np.array(self.counts.shape), shape=np.array(self.shape))
+        if not compact:
+            np.savez(path, logp=self.logp, paths=self.paths, **common)
+            return
+        from . import compact as C
+        if self.fibers is None:
+            raise ValueError("a compact record stores the streamlines themselves: this record has none (RunRecord.of keeps them)")
+        np.savez_compressed(path, format=np.array(C.FORMAT), **common, **C.encode_geometry(self.fibers), **C.encode_field(self.logp))
 
     @staticmethod
-    def load(path, logp=True) -> "RunRecord":
-        """logp=False leaves the log-probabilities on disk (None): a held-out run needs its winners only."""
+    def load(path, logp=True, fibers=False) -> "RunRecord":
+        """logp=False leaves the log-probabilities on disk (None): a held-out run needs its winners only. fibers=True
+        also returns the streamlines (compact records only; format 1 files kept 20-point paths alone)."""
         z = np.load(path)
         counts = np.zeros(int(np.prod(z["counts_shape"])), np.uint16)
         counts[z["counts_at"]] = z["counts_n"]
-        return RunRecord(z["keys"], z["cluster"], z["logp"] if logp else None, z["paths"], counts.reshape(z["counts_shape"]),
-                         tuple(int(v) for v in z["shape"]))
+        common = dict(keys=z["keys"], cluster=z["cluster"], counts=counts.reshape(z["counts_shape"]), shape=tuple(int(v) for v in z["shape"]))
+        if "format" not in z:
+            if fibers:
+                raise ValueError(f"{path}: a format 1 record holds 20-point paths, not the streamlines")
+            return RunRecord(logp=z["logp"] if logp else None, paths=z["paths"], **common)
+        from . import compact as C
+        f = C.decode_geometry(z)
+        return RunRecord(logp=C.decode_field(z) if logp else None, paths=resample(f), fibers=f if fibers else None, **common)
 
 
 class StreamlineEnsemble:

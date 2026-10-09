@@ -41,8 +41,12 @@ dipy = ["dipy>=1.12"]          # the reference median_otsu (median_check.py); th
                                # (_bootstrap.py: label_noise_floor.py, ukf_noise_floor.py)
 vtk = ["vtk>=9.7"]             # 0.5 GB: VTK tractography files (ukf_compare.py, ukf_bench.py, resample_check.py)
 sklearn = ["scikit-learn>=1.9"]   # accuracy_tractcloud_test.py's macro F1
-rankfield = ["rankfield[torch] @ git+https://github.com/mhalle/rankfield.git@v0.3.11 ; python_version >= '3.12'"]   # ensemble_pilot.py: the ensemble's
-                               # fields encoded (streamline and voxel), and their decoded margins
+# ensemble_pilot.py: the ensemble's fields encoded (streamline and voxel), and their decoded margins; and compact
+# run records (tractline.compact: the labels as a rank field, the geometry predictive-coded through numcodecs' blosc)
+rankfield = [
+    "numcodecs>=0.15",
+    "rankfield[torch] @ git+https://github.com/mhalle/rankfield.git@v0.3.11 ; python_version >= '3.12'",
+]
 
 [tool.hatch.version]
 path = "src/tractline/__init__.py"

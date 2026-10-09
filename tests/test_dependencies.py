@@ -4,7 +4,7 @@ in process, so the block covers the tracker too)."""
 import subprocess, sys
 from pathlib import Path
 
-OPTIONAL = ["scipy", "nibabel", "nrrd", "dipy", "vtk", "sklearn", "matplotlib", "trx", "tractcloud", "numba"]   # not triton: torch's Linux wheel brings it
+OPTIONAL = ["scipy", "nibabel", "nrrd", "dipy", "vtk", "sklearn", "matplotlib", "trx", "tractcloud", "numba", "numcodecs", "rankfield"]   # not triton: torch's Linux wheel brings it
 
 SCRIPT = f"""
 import importlib.abc, importlib.machinery, sys
@@ -18,7 +18,7 @@ class Block(importlib.abc.MetaPathFinder):
             return importlib.machinery.ModuleSpec(name, Refuse())
 sys.meta_path.insert(0, Block())
 import numpy as np
-from tractline import pipeline as P, susceptibility, prep, mask, ukf, trx, data
+from tractline import pipeline as P, susceptibility, prep, mask, ukf, trx, data, ensemble, compact
 from tractline.labelers import base, rapidparc
 from test_pipeline_cpu import stand_in
 from phantom import subject

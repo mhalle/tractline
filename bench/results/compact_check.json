@@ -1,0 +1,50 @@
+{
+ "pair": "cIIIs01-2.5",
+ "rescan": "within",
+ "runs": 18,
+ "recompact_s": 27.0,
+ "bytes per run: dense, compact (MB)": [
+  147.33,
+  3.43
+ ],
+ "dense": {
+  "A scored on the rescan": {
+   "change": 0.3627,
+   "auroc mixture": 0.7797,
+   "auroc one run": 0.6543,
+   "ece mixture": 0.0817,
+   "mean P(keep) mixture": 0.719,
+   "voxel ece": 0.061,
+   "coverage 0.9": 0.6502
+  },
+  "the rescan scored on A": {
+   "change": 0.3627,
+   "auroc mixture": 0.7821,
+   "auroc one run": 0.6463,
+   "ece mixture": 0.0861,
+   "mean P(keep) mixture": 0.7234,
+   "voxel ece": 0.0654,
+   "coverage 0.9": 0.6541
+  }
+ },
+ "compact": {
+  "A scored on the rescan": {
+   "change": 0.3627,
+   "auroc mixture": 0.7798,
+   "auroc one run": 0.6527,
+   "ece mixture": 0.0817,
+   "mean P(keep) mixture": 0.719,
+   "voxel ece": 0.061,
+   "coverage 0.9": 0.6502
+  },
+  "the rescan scored on A": {
+   "change": 0.3627,
+   "auroc mixture": 0.7821,
+   "auroc one run": 0.6454,
+   "ece mixture": 0.0861,
+   "mean P(keep) mixture": 0.7234,
+   "voxel ece": 0.0654,
+   "coverage 0.9": 0.6541
+  }
+ }
+}
