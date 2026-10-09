@@ -1,0 +1,1353 @@
+{
+ "flip": "smooth",
+ "runs": 17,
+ "tumour_voxels": 2922,
+ "tau": 1.0,
+ "tau_distance": 2.0,
+ "envelope levels": {
+  "0.5": {
+   "use": 0.575,
+   "how": "interpolated"
+  },
+  "0.9": {
+   "use": 0.995,
+   "how": "rescans covered at most 0.89: the widest measured envelope used"
+  }
+ },
+ "tracts": {
+  "ILF": {
+   "today (r000): distance mm": 0.0,
+   "today (r000): mL inside the tumour": 1.05,
+   "today (r000): mL within 5 mm": 3.83,
+   "runs: distance mm, median [min, max]": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "runs: P(enters the tumour)": 1.0,
+   "runs: P(within 5 mm)": 1.0,
+   "runs: mL inside the tumour, median [min, max]": [
+    1.12,
+    0.89,
+    1.64
+   ],
+   "runs: mL within 5 mm, median [min, max]": [
+    4.37,
+    3.77,
+    4.97
+   ],
+   "envelope 0.5 (stated): mL inside the tumour / within 5 mm": [
+    1.53,
+    5.12
+   ],
+   "envelope 0.5 (calibrated): mL inside the tumour / within 5 mm": [
+    1.81,
+    5.97
+   ],
+   "envelope 0.9 (stated): mL inside the tumour / within 5 mm": [
+    3.23,
+    8.89
+   ],
+   "envelope 0.9 (calibrated): mL inside the tumour / within 5 mm": [
+    4.5,
+    11.42
+   ]
+  },
+  "Sup-F": {
+   "today (r000): distance mm": 0.0,
+   "today (r000): mL inside the tumour": 0.91,
+   "today (r000): mL within 5 mm": 2.39,
+   "runs: distance mm, median [min, max]": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "runs: P(enters the tumour)": 1.0,
+   "runs: P(within 5 mm)": 1.0,
+   "runs: mL inside the tumour, median [min, max]": [
+    0.91,
+    0.77,
+    1.23
+   ],
+   "runs: mL within 5 mm, median [min, max]": [
+    2.42,
+    2.12,
+    2.84
+   ],
+   "envelope 0.5 (stated): mL inside the tumour / within 5 mm": [
+    1.0,
+    2.23
+   ],
+   "envelope 0.5 (calibrated): mL inside the tumour / within 5 mm": [
+    1.3,
+    2.95
+   ],
+   "envelope 0.9 (stated): mL inside the tumour / within 5 mm": [
+    2.72,
+    6.77
+   ],
+   "envelope 0.9 (calibrated): mL inside the tumour / within 5 mm": [
+    3.83,
+    9.59
+   ]
+  },
+  "SF": {
+   "today (r000): distance mm": 0.0,
+   "today (r000): mL inside the tumour": 0.39,
+   "today (r000): mL within 5 mm": 1.03,
+   "runs: distance mm, median [min, max]": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "runs: P(enters the tumour)": 1.0,
+   "runs: P(within 5 mm)": 1.0,
+   "runs: mL inside the tumour, median [min, max]": [
+    0.47,
+    0.3,
+    0.55
+   ],
+   "runs: mL within 5 mm, median [min, max]": [
+    1.2,
+    0.94,
+    1.44
+   ],
+   "envelope 0.5 (stated): mL inside the tumour / within 5 mm": [
+    1.78,
+    3.83
+   ],
+   "envelope 0.5 (calibrated): mL inside the tumour / within 5 mm": [
+    2.11,
+    4.81
+   ],
+   "envelope 0.9 (stated): mL inside the tumour / within 5 mm": [
+    4.97,
+    12.06
+   ],
+   "envelope 0.9 (calibrated): mL inside the tumour / within 5 mm": [
+    4.97,
+    12.19
+   ]
+  },
+  "MdLF": {
+   "today (r000): distance mm": 0.0,
+   "today (r000): mL inside the tumour": 0.16,
+   "today (r000): mL within 5 mm": 0.8,
+   "runs: distance mm, median [min, max]": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "runs: P(enters the tumour)": 0.941,
+   "runs: P(within 5 mm)": 1.0,
+   "runs: mL inside the tumour, median [min, max]": [
+    0.16,
+    0.03,
+    0.27
+   ],
+   "runs: mL within 5 mm, median [min, max]": [
+    0.73,
+    0.33,
+    1.53
+   ],
+   "envelope 0.5 (stated): mL inside the tumour / within 5 mm": [
+    0.37,
+    1.62
+   ],
+   "envelope 0.5 (calibrated): mL inside the tumour / within 5 mm": [
+    0.53,
+    2.33
+   ],
+   "envelope 0.9 (stated): mL inside the tumour / within 5 mm": [
+    2.78,
+    7.64
+   ],
+   "envelope 0.9 (calibrated): mL inside the tumour / within 5 mm": [
+    2.91,
+    7.81
+   ]
+  },
+  "Sup-T": {
+   "today (r000): distance mm": 0.0,
+   "today (r000): mL inside the tumour": 0.11,
+   "today (r000): mL within 5 mm": 0.25,
+   "runs: distance mm, median [min, max]": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "runs: P(enters the tumour)": 0.765,
+   "runs: P(within 5 mm)": 1.0,
+   "runs: mL inside the tumour, median [min, max]": [
+    0.08,
+    0.02,
+    0.2
+   ],
+   "runs: mL within 5 mm, median [min, max]": [
+    0.3,
+    0.09,
+    0.56
+   ],
+   "envelope 0.5 (stated): mL inside the tumour / within 5 mm": [
+    0.06,
+    0.42
+   ],
+   "envelope 0.5 (calibrated): mL inside the tumour / within 5 mm": [
+    0.16,
+    0.75
+   ],
+   "envelope 0.9 (stated): mL inside the tumour / within 5 mm": [
+    2.06,
+    4.86
+   ],
+   "envelope 0.9 (calibrated): mL inside the tumour / within 5 mm": [
+    2.45,
+    5.47
+   ]
+  },
+  "CC1": {
+   "today (r000): distance mm": 0.0,
+   "today (r000): mL inside the tumour": 0.03,
+   "today (r000): mL within 5 mm": 0.28,
+   "runs: distance mm, median [min, max]": [
+    0.0,
+    0.0,
+    2.5
+   ],
+   "runs: P(enters the tumour)": 0.706,
+   "runs: P(within 5 mm)": 1.0,
+   "runs: mL inside the tumour, median [min, max]": [
+    0.05,
+    0.0,
+    0.17
+   ],
+   "runs: mL within 5 mm, median [min, max]": [
+    0.23,
+    0.09,
+    0.62
+   ],
+   "envelope 0.5 (stated): mL inside the tumour / within 5 mm": [
+    0.36,
+    1.3
+   ],
+   "envelope 0.5 (calibrated): mL inside the tumour / within 5 mm": [
+    0.53,
+    1.89
+   ],
+   "envelope 0.9 (stated): mL inside the tumour / within 5 mm": [
+    0.98,
+    3.64
+   ],
+   "envelope 0.9 (calibrated): mL inside the tumour / within 5 mm": [
+    0.98,
+    3.64
+   ]
+  },
+  "SO": {
+   "today (r000): distance mm": 0.0,
+   "today (r000): mL inside the tumour": 0.2,
+   "today (r000): mL within 5 mm": 0.33,
+   "runs: distance mm, median [min, max]": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "runs: P(enters the tumour)": 1.0,
+   "runs: P(within 5 mm)": 1.0,
+   "runs: mL inside the tumour, median [min, max]": [
+    0.2,
+    0.06,
+    0.34
+   ],
+   "runs: mL within 5 mm, median [min, max]": [
+    0.3,
+    0.11,
+    0.5
+   ],
+   "envelope 0.5 (stated): mL inside the tumour / within 5 mm": [
+    0.8,
+    1.22
+   ],
+   "envelope 0.5 (calibrated): mL inside the tumour / within 5 mm": [
+    0.8,
+    1.22
+   ],
+   "envelope 0.9 (stated): mL inside the tumour / within 5 mm": [
+    1.33,
+    2.11
+   ],
+   "envelope 0.9 (calibrated): mL inside the tumour / within 5 mm": [
+    1.33,
+    2.11
+   ]
+  },
+  "TF": {
+   "today (r000): distance mm": 0.0,
+   "today (r000): mL inside the tumour": 0.05,
+   "today (r000): mL within 5 mm": 0.28,
+   "runs: distance mm, median [min, max]": [
+    0.0,
+    0.0,
+    3.5
+   ],
+   "runs: P(enters the tumour)": 0.294,
+   "runs: P(within 5 mm)": 1.0,
+   "runs: mL inside the tumour, median [min, max]": [
+    0.02,
+    0.0,
+    0.11
+   ],
+   "runs: mL within 5 mm, median [min, max]": [
+    0.22,
+    0.08,
+    0.42
+   ],
+   "envelope 0.5 (stated): mL inside the tumour / within 5 mm": [
+    0.0,
+    0.16
+   ],
+   "envelope 0.5 (calibrated): mL inside the tumour / within 5 mm": [
+    0.0,
+    0.22
+   ],
+   "envelope 0.9 (stated): mL inside the tumour / within 5 mm": [
+    0.69,
+    2.69
+   ],
+   "envelope 0.9 (calibrated): mL inside the tumour / within 5 mm": [
+    0.83,
+    3.3
+   ]
+  },
+  "SP": {
+   "today (r000): distance mm": 0.0,
+   "today (r000): mL inside the tumour": 0.08,
+   "today (r000): mL within 5 mm": 0.14,
+   "runs: distance mm, median [min, max]": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "runs: P(enters the tumour)": 0.941,
+   "runs: P(within 5 mm)": 1.0,
+   "runs: mL inside the tumour, median [min, max]": [
+    0.12,
+    0.03,
+    0.2
+   ],
+   "runs: mL within 5 mm, median [min, max]": [
+    0.19,
+    0.06,
+    0.31
+   ],
+   "envelope 0.5 (stated): mL inside the tumour / within 5 mm": [
+    0.86,
+    1.3
+   ],
+   "envelope 0.5 (calibrated): mL inside the tumour / within 5 mm": [
+    0.94,
+    1.37
+   ],
+   "envelope 0.9 (stated): mL inside the tumour / within 5 mm": [
+    2.02,
+    2.91
+   ],
+   "envelope 0.9 (calibrated): mL inside the tumour / within 5 mm": [
+    2.02,
+    2.91
+   ]
+  },
+  "CC6": {
+   "today (r000): distance mm": 2.5,
+   "today (r000): mL inside the tumour": 0.0,
+   "today (r000): mL within 5 mm": 0.17,
+   "runs: distance mm, median [min, max]": [
+    0.0,
+    0.0,
+    3.5
+   ],
+   "runs: P(enters the tumour)": 0.294,
+   "runs: P(within 5 mm)": 1.0,
+   "runs: mL inside the tumour, median [min, max]": [
+    0.02,
+    0.0,
+    0.09
+   ],
+   "runs: mL within 5 mm, median [min, max]": [
+    0.17,
+    0.03,
+    0.33
+   ],
+   "envelope 0.5 (stated): mL inside the tumour / within 5 mm": [
+    0.02,
+    0.2
+   ],
+   "envelope 0.5 (calibrated): mL inside the tumour / within 5 mm": [
+    0.05,
+    0.45
+   ],
+   "envelope 0.9 (stated): mL inside the tumour / within 5 mm": [
+    1.58,
+    4.16
+   ],
+   "envelope 0.9 (calibrated): mL inside the tumour / within 5 mm": [
+    1.59,
+    4.23
+   ]
+  },
+  "SLF-III": {
+   "today (r000): distance mm": 0.0,
+   "today (r000): mL inside the tumour": 0.03,
+   "today (r000): mL within 5 mm": 0.11,
+   "runs: distance mm, median [min, max]": [
+    0.0,
+    0.0,
+    3.5
+   ],
+   "runs: P(enters the tumour)": 0.824,
+   "runs: P(within 5 mm)": 1.0,
+   "runs: mL inside the tumour, median [min, max]": [
+    0.09,
+    0.0,
+    0.17
+   ],
+   "runs: mL within 5 mm, median [min, max]": [
+    0.16,
+    0.03,
+    0.34
+   ],
+   "envelope 0.5 (stated): mL inside the tumour / within 5 mm": [
+    0.45,
+    0.84
+   ],
+   "envelope 0.5 (calibrated): mL inside the tumour / within 5 mm": [
+    0.45,
+    0.84
+   ],
+   "envelope 0.9 (stated): mL inside the tumour / within 5 mm": [
+    1.52,
+    2.84
+   ],
+   "envelope 0.9 (calibrated): mL inside the tumour / within 5 mm": [
+    1.52,
+    2.84
+   ]
+  },
+  "CB": {
+   "today (r000): distance mm": 5.0,
+   "today (r000): mL inside the tumour": 0.0,
+   "today (r000): mL within 5 mm": 0.02,
+   "runs: distance mm, median [min, max]": [
+    0.0,
+    0.0,
+    5.0
+   ],
+   "runs: P(enters the tumour)": 0.353,
+   "runs: P(within 5 mm)": 1.0,
+   "runs: mL inside the tumour, median [min, max]": [
+    0.03,
+    0.0,
+    0.11
+   ],
+   "runs: mL within 5 mm, median [min, max]": [
+    0.11,
+    0.02,
+    0.28
+   ],
+   "envelope 0.5 (stated): mL inside the tumour / within 5 mm": [
+    0.03,
+    0.2
+   ],
+   "envelope 0.5 (calibrated): mL inside the tumour / within 5 mm": [
+    0.09,
+    0.37
+   ],
+   "envelope 0.9 (stated): mL inside the tumour / within 5 mm": [
+    1.31,
+    2.75
+   ],
+   "envelope 0.9 (calibrated): mL inside the tumour / within 5 mm": [
+    1.36,
+    3.06
+   ]
+  },
+  "SLF-II": {
+   "today (r000): distance mm": 2.5,
+   "today (r000): mL inside the tumour": 0.0,
+   "today (r000): mL within 5 mm": 0.16,
+   "runs: distance mm, median [min, max]": [
+    0.0,
+    0.0,
+    5.0
+   ],
+   "runs: P(enters the tumour)": 0.294,
+   "runs: P(within 5 mm)": 1.0,
+   "runs: mL inside the tumour, median [min, max]": [
+    0.03,
+    0.0,
+    0.08
+   ],
+   "runs: mL within 5 mm, median [min, max]": [
+    0.12,
+    0.02,
+    0.36
+   ],
+   "envelope 0.5 (stated): mL inside the tumour / within 5 mm": [
+    0.16,
+    0.45
+   ],
+   "envelope 0.5 (calibrated): mL inside the tumour / within 5 mm": [
+    0.19,
+    0.67
+   ],
+   "envelope 0.9 (stated): mL inside the tumour / within 5 mm": [
+    0.59,
+    2.3
+   ],
+   "envelope 0.9 (calibrated): mL inside the tumour / within 5 mm": [
+    0.59,
+    2.34
+   ]
+  },
+  "TP": {
+   "today (r000): distance mm": 0.0,
+   "today (r000): mL inside the tumour": 0.19,
+   "today (r000): mL within 5 mm": 0.27,
+   "runs: distance mm, median [min, max]": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "runs: P(enters the tumour)": 0.882,
+   "runs: P(within 5 mm)": 1.0,
+   "runs: mL inside the tumour, median [min, max]": [
+    0.06,
+    0.02,
+    0.19
+   ],
+   "runs: mL within 5 mm, median [min, max]": [
+    0.08,
+    0.02,
+    0.27
+   ],
+   "envelope 0.5 (stated): mL inside the tumour / within 5 mm": [
+    0.78,
+    1.12
+   ],
+   "envelope 0.5 (calibrated): mL inside the tumour / within 5 mm": [
+    0.78,
+    1.12
+   ],
+   "envelope 0.9 (stated): mL inside the tumour / within 5 mm": [
+    1.87,
+    2.92
+   ],
+   "envelope 0.9 (calibrated): mL inside the tumour / within 5 mm": [
+    1.87,
+    2.92
+   ]
+  },
+  "CC2": {
+   "today (r000): distance mm": 0.0,
+   "today (r000): mL inside the tumour": 0.09,
+   "today (r000): mL within 5 mm": 0.3,
+   "runs: distance mm, median [min, max]": [
+    0.0,
+    0.0,
+    2.5
+   ],
+   "runs: P(enters the tumour)": 0.588,
+   "runs: P(within 5 mm)": 1.0,
+   "runs: mL inside the tumour, median [min, max]": [
+    0.05,
+    0.0,
+    0.09
+   ],
+   "runs: mL within 5 mm, median [min, max]": [
+    0.17,
+    0.03,
+    0.3
+   ],
+   "envelope 0.5 (stated): mL inside the tumour / within 5 mm": [
+    0.06,
+    0.16
+   ],
+   "envelope 0.5 (calibrated): mL inside the tumour / within 5 mm": [
+    0.09,
+    0.31
+   ],
+   "envelope 0.9 (stated): mL inside the tumour / within 5 mm": [
+    0.56,
+    1.8
+   ],
+   "envelope 0.9 (calibrated): mL inside the tumour / within 5 mm": [
+    0.58,
+    1.92
+   ]
+  },
+  "Sup-P": {
+   "today (r000): distance mm": 9.4,
+   "today (r000): mL inside the tumour": 0.0,
+   "today (r000): mL within 5 mm": 0.0,
+   "runs: distance mm, median [min, max]": [
+    0.0,
+    0.0,
+    9.4
+   ],
+   "runs: P(enters the tumour)": 0.0,
+   "runs: P(within 5 mm)": 0.824,
+   "runs: mL inside the tumour, median [min, max]": [
+    0.02,
+    0.0,
+    0.03
+   ],
+   "runs: mL within 5 mm, median [min, max]": [
+    0.05,
+    0.0,
+    0.09
+   ],
+   "envelope 0.5 (stated): mL inside the tumour / within 5 mm": [
+    0.03,
+    0.09
+   ],
+   "envelope 0.5 (calibrated): mL inside the tumour / within 5 mm": [
+    0.03,
+    0.19
+   ],
+   "envelope 0.9 (stated): mL inside the tumour / within 5 mm": [
+    0.06,
+    0.5
+   ],
+   "envelope 0.9 (calibrated): mL inside the tumour / within 5 mm": [
+    0.12,
+    0.89
+   ]
+  },
+  "AF": {
+   "today (r000): distance mm": 10.6,
+   "today (r000): mL inside the tumour": 0.0,
+   "today (r000): mL within 5 mm": 0.0,
+   "runs: distance mm, median [min, max]": [
+    2.5,
+    0.0,
+    11.5
+   ],
+   "runs: P(enters the tumour)": 0.0,
+   "runs: P(within 5 mm)": 0.706,
+   "runs: mL inside the tumour, median [min, max]": [
+    0.0,
+    0.0,
+    0.03
+   ],
+   "runs: mL within 5 mm, median [min, max]": [
+    0.02,
+    0.0,
+    0.12
+   ],
+   "envelope 0.5 (stated): mL inside the tumour / within 5 mm": [
+    0.0,
+    0.03
+   ],
+   "envelope 0.5 (calibrated): mL inside the tumour / within 5 mm": [
+    0.0,
+    0.03
+   ],
+   "envelope 0.9 (stated): mL inside the tumour / within 5 mm": [
+    0.61,
+    1.53
+   ],
+   "envelope 0.9 (calibrated): mL inside the tumour / within 5 mm": [
+    0.94,
+    2.28
+   ]
+  },
+  "CC4": {
+   "today (r000): distance mm": 0.0,
+   "today (r000): mL inside the tumour": 0.02,
+   "today (r000): mL within 5 mm": 0.05,
+   "runs: distance mm, median [min, max]": [
+    2.5,
+    0.0,
+    9.0
+   ],
+   "runs: P(enters the tumour)": 0.0,
+   "runs: P(within 5 mm)": 0.941,
+   "runs: mL inside the tumour, median [min, max]": [
+    0.0,
+    0.0,
+    0.03
+   ],
+   "runs: mL within 5 mm, median [min, max]": [
+    0.03,
+    0.0,
+    0.09
+   ],
+   "envelope 0.5 (stated): mL inside the tumour / within 5 mm": [
+    0.0,
+    0.02
+   ],
+   "envelope 0.5 (calibrated): mL inside the tumour / within 5 mm": [
+    0.0,
+    0.14
+   ],
+   "envelope 0.9 (stated): mL inside the tumour / within 5 mm": [
+    0.61,
+    1.47
+   ],
+   "envelope 0.9 (calibrated): mL inside the tumour / within 5 mm": [
+    0.61,
+    1.47
+   ]
+  },
+  "PLIC": {
+   "today (r000): distance mm": 2.5,
+   "today (r000): mL inside the tumour": 0.0,
+   "today (r000): mL within 5 mm": 0.02,
+   "runs: distance mm, median [min, max]": [
+    2.5,
+    0.0,
+    16.0
+   ],
+   "runs: P(enters the tumour)": 0.059,
+   "runs: P(within 5 mm)": 0.706,
+   "runs: mL inside the tumour, median [min, max]": [
+    0.0,
+    0.0,
+    0.05
+   ],
+   "runs: mL within 5 mm, median [min, max]": [
+    0.02,
+    0.0,
+    0.08
+   ],
+   "envelope 0.5 (stated): mL inside the tumour / within 5 mm": [
+    0.41,
+    0.83
+   ],
+   "envelope 0.5 (calibrated): mL inside the tumour / within 5 mm": [
+    0.52,
+    1.11
+   ],
+   "envelope 0.9 (stated): mL inside the tumour / within 5 mm": [
+    0.61,
+    1.45
+   ],
+   "envelope 0.9 (calibrated): mL inside the tumour / within 5 mm": [
+    0.61,
+    1.45
+   ]
+  },
+  "CR-F": {
+   "today (r000): distance mm": 2.5,
+   "today (r000): mL inside the tumour": 0.0,
+   "today (r000): mL within 5 mm": 0.03,
+   "runs: distance mm, median [min, max]": [
+    5.0,
+    0.0,
+    6.1
+   ],
+   "runs: P(enters the tumour)": 0.0,
+   "runs: P(within 5 mm)": 0.529,
+   "runs: mL inside the tumour, median [min, max]": [
+    0.0,
+    0.0,
+    0.03
+   ],
+   "runs: mL within 5 mm, median [min, max]": [
+    0.02,
+    0.0,
+    0.09
+   ],
+   "envelope 0.5 (stated): mL inside the tumour / within 5 mm": [
+    0.0,
+    0.05
+   ],
+   "envelope 0.5 (calibrated): mL inside the tumour / within 5 mm": [
+    0.0,
+    0.08
+   ],
+   "envelope 0.9 (stated): mL inside the tumour / within 5 mm": [
+    0.37,
+    1.41
+   ],
+   "envelope 0.9 (calibrated): mL inside the tumour / within 5 mm": [
+    0.37,
+    1.42
+   ]
+  },
+  "Sup-OT": {
+   "today (r000): distance mm": 0.0,
+   "today (r000): mL inside the tumour": 0.02,
+   "today (r000): mL within 5 mm": 0.02,
+   "runs: distance mm, median [min, max]": [
+    0.0,
+    0.0,
+    15.4
+   ],
+   "runs: P(enters the tumour)": 0.412,
+   "runs: P(within 5 mm)": 0.765,
+   "runs: mL inside the tumour, median [min, max]": [
+    0.03,
+    0.0,
+    0.16
+   ],
+   "runs: mL within 5 mm, median [min, max]": [
+    0.03,
+    0.0,
+    0.17
+   ],
+   "envelope 0.5 (stated): mL inside the tumour / within 5 mm": [
+    0.17,
+    0.17
+   ],
+   "envelope 0.5 (calibrated): mL inside the tumour / within 5 mm": [
+    0.17,
+    0.17
+   ],
+   "envelope 0.9 (stated): mL inside the tumour / within 5 mm": [
+    0.48,
+    0.56
+   ],
+   "envelope 0.9 (calibrated): mL inside the tumour / within 5 mm": [
+    0.48,
+    0.56
+   ]
+  },
+  "CC3": {
+   "today (r000): distance mm": 6.1,
+   "today (r000): mL inside the tumour": 0.0,
+   "today (r000): mL within 5 mm": 0.0,
+   "runs: distance mm, median [min, max]": [
+    3.5,
+    0.0,
+    7.9
+   ],
+   "runs: P(enters the tumour)": 0.059,
+   "runs: P(within 5 mm)": 0.647,
+   "runs: mL inside the tumour, median [min, max]": [
+    0.0,
+    0.0,
+    0.05
+   ],
+   "runs: mL within 5 mm, median [min, max]": [
+    0.02,
+    0.0,
+    0.08
+   ],
+   "envelope 0.5 (stated): mL inside the tumour / within 5 mm": [
+    0.0,
+    0.0
+   ],
+   "envelope 0.5 (calibrated): mL inside the tumour / within 5 mm": [
+    0.0,
+    0.0
+   ],
+   "envelope 0.9 (stated): mL inside the tumour / within 5 mm": [
+    0.39,
+    0.86
+   ],
+   "envelope 0.9 (calibrated): mL inside the tumour / within 5 mm": [
+    0.39,
+    0.86
+   ]
+  },
+  "UF": {
+   "today (r000): distance mm": 14.4,
+   "today (r000): mL inside the tumour": 0.0,
+   "today (r000): mL within 5 mm": 0.0,
+   "runs: distance mm, median [min, max]": [
+    8.3,
+    2.5,
+    16.8
+   ],
+   "runs: P(enters the tumour)": 0.0,
+   "runs: P(within 5 mm)": 0.235,
+   "runs: mL inside the tumour, median [min, max]": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "runs: mL within 5 mm, median [min, max]": [
+    0.0,
+    0.0,
+    0.03
+   ],
+   "envelope 0.5 (stated): mL inside the tumour / within 5 mm": [
+    0.02,
+    0.03
+   ],
+   "envelope 0.5 (calibrated): mL inside the tumour / within 5 mm": [
+    0.05,
+    0.11
+   ],
+   "envelope 0.9 (stated): mL inside the tumour / within 5 mm": [
+    0.2,
+    0.67
+   ],
+   "envelope 0.9 (calibrated): mL inside the tumour / within 5 mm": [
+    0.2,
+    0.67
+   ]
+  },
+  "CC5": {
+   "today (r000): distance mm": 6.1,
+   "today (r000): mL inside the tumour": 0.0,
+   "today (r000): mL within 5 mm": 0.0,
+   "runs: distance mm, median [min, max]": [
+    8.7,
+    0.0,
+    15.4
+   ],
+   "runs: P(enters the tumour)": 0.0,
+   "runs: P(within 5 mm)": 0.176,
+   "runs: mL inside the tumour, median [min, max]": [
+    0.0,
+    0.0,
+    0.02
+   ],
+   "runs: mL within 5 mm, median [min, max]": [
+    0.0,
+    0.0,
+    0.05
+   ],
+   "envelope 0.5 (stated): mL inside the tumour / within 5 mm": [
+    0.0,
+    0.05
+   ],
+   "envelope 0.5 (calibrated): mL inside the tumour / within 5 mm": [
+    0.0,
+    0.06
+   ],
+   "envelope 0.9 (stated): mL inside the tumour / within 5 mm": [
+    0.27,
+    0.69
+   ],
+   "envelope 0.9 (calibrated): mL inside the tumour / within 5 mm": [
+    0.27,
+    0.69
+   ]
+  },
+  "CST": {
+   "today (r000): distance mm": 0.0,
+   "today (r000): mL inside the tumour": 0.02,
+   "today (r000): mL within 5 mm": 0.05,
+   "runs: distance mm, median [min, max]": [
+    5.6,
+    0.0,
+    9.0
+   ],
+   "runs: P(enters the tumour)": 0.0,
+   "runs: P(within 5 mm)": 0.471,
+   "runs: mL inside the tumour, median [min, max]": [
+    0.0,
+    0.0,
+    0.03
+   ],
+   "runs: mL within 5 mm, median [min, max]": [
+    0.0,
+    0.0,
+    0.06
+   ],
+   "envelope 0.5 (stated): mL inside the tumour / within 5 mm": [
+    0.0,
+    0.0
+   ],
+   "envelope 0.5 (calibrated): mL inside the tumour / within 5 mm": [
+    0.0,
+    0.0
+   ],
+   "envelope 0.9 (stated): mL inside the tumour / within 5 mm": [
+    0.19,
+    0.7
+   ],
+   "envelope 0.9 (calibrated): mL inside the tumour / within 5 mm": [
+    0.19,
+    0.7
+   ]
+  },
+  "Sup-PT": {
+   "today (r000): distance mm": 9.0,
+   "today (r000): mL inside the tumour": 0.0,
+   "today (r000): mL within 5 mm": 0.0,
+   "runs: distance mm, median [min, max]": [
+    9.0,
+    0.0,
+    12.7
+   ],
+   "runs: P(enters the tumour)": 0.0,
+   "runs: P(within 5 mm)": 0.176,
+   "runs: mL inside the tumour, median [min, max]": [
+    0.0,
+    0.0,
+    0.02
+   ],
+   "runs: mL within 5 mm, median [min, max]": [
+    0.0,
+    0.0,
+    0.06
+   ],
+   "envelope 0.5 (stated): mL inside the tumour / within 5 mm": [
+    0.0,
+    0.0
+   ],
+   "envelope 0.5 (calibrated): mL inside the tumour / within 5 mm": [
+    0.0,
+    0.0
+   ],
+   "envelope 0.9 (stated): mL inside the tumour / within 5 mm": [
+    0.03,
+    0.2
+   ],
+   "envelope 0.9 (calibrated): mL inside the tumour / within 5 mm": [
+    0.11,
+    0.31
+   ]
+  },
+  "TT": {
+   "today (r000): distance mm": 5.6,
+   "today (r000): mL inside the tumour": 0.0,
+   "today (r000): mL within 5 mm": 0.0,
+   "runs: distance mm, median [min, max]": [
+    5.6,
+    2.5,
+    9.0
+   ],
+   "runs: P(enters the tumour)": 0.0,
+   "runs: P(within 5 mm)": 0.235,
+   "runs: mL inside the tumour, median [min, max]": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "runs: mL within 5 mm, median [min, max]": [
+    0.0,
+    0.0,
+    0.05
+   ],
+   "envelope 0.5 (stated): mL inside the tumour / within 5 mm": [
+    0.0,
+    0.0
+   ],
+   "envelope 0.5 (calibrated): mL inside the tumour / within 5 mm": [
+    0.0,
+    0.02
+   ],
+   "envelope 0.9 (stated): mL inside the tumour / within 5 mm": [
+    0.02,
+    0.22
+   ],
+   "envelope 0.9 (calibrated): mL inside the tumour / within 5 mm": [
+    0.02,
+    0.22
+   ]
+  },
+  "Sup-FP": {
+   "today (r000): distance mm": 16.0,
+   "today (r000): mL inside the tumour": 0.0,
+   "today (r000): mL within 5 mm": 0.0,
+   "runs: distance mm, median [min, max]": [
+    16.4,
+    0.0,
+    20.8
+   ],
+   "runs: P(enters the tumour)": 0.0,
+   "runs: P(within 5 mm)": 0.176,
+   "runs: mL inside the tumour, median [min, max]": [
+    0.0,
+    0.0,
+    0.02
+   ],
+   "runs: mL within 5 mm, median [min, max]": [
+    0.0,
+    0.0,
+    0.02
+   ],
+   "envelope 0.5 (stated): mL inside the tumour / within 5 mm": [
+    0.02,
+    0.02
+   ],
+   "envelope 0.5 (calibrated): mL inside the tumour / within 5 mm": [
+    0.02,
+    0.02
+   ],
+   "envelope 0.9 (stated): mL inside the tumour / within 5 mm": [
+    0.12,
+    0.19
+   ],
+   "envelope 0.9 (calibrated): mL inside the tumour / within 5 mm": [
+    0.12,
+    0.19
+   ]
+  },
+  "TO": {
+   "today (r000): distance mm": 9.0,
+   "today (r000): mL inside the tumour": 0.0,
+   "today (r000): mL within 5 mm": 0.0,
+   "runs: distance mm, median [min, max]": [
+    9.0,
+    0.0,
+    35.5
+   ],
+   "runs: P(enters the tumour)": 0.0,
+   "runs: P(within 5 mm)": 0.118,
+   "runs: mL inside the tumour, median [min, max]": [
+    0.0,
+    0.0,
+    0.02
+   ],
+   "runs: mL within 5 mm, median [min, max]": [
+    0.0,
+    0.0,
+    0.02
+   ],
+   "envelope 0.5 (stated): mL inside the tumour / within 5 mm": [
+    0.11,
+    0.11
+   ],
+   "envelope 0.5 (calibrated): mL inside the tumour / within 5 mm": [
+    0.11,
+    0.11
+   ],
+   "envelope 0.9 (stated): mL inside the tumour / within 5 mm": [
+    0.11,
+    0.11
+   ],
+   "envelope 0.9 (calibrated): mL inside the tumour / within 5 mm": [
+    0.11,
+    0.11
+   ]
+  },
+  "IOFF": {
+   "today (r000): distance mm": 17.7,
+   "today (r000): mL inside the tumour": 0.0,
+   "today (r000): mL within 5 mm": 0.0,
+   "runs: distance mm, median [min, max]": [
+    17.5,
+    13.7,
+    20.0
+   ],
+   "runs: P(enters the tumour)": 0.0,
+   "runs: P(within 5 mm)": 0.0,
+   "runs: mL inside the tumour, median [min, max]": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "runs: mL within 5 mm, median [min, max]": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "envelope 0.5 (stated): mL inside the tumour / within 5 mm": [
+    0.0,
+    0.0
+   ],
+   "envelope 0.5 (calibrated): mL inside the tumour / within 5 mm": [
+    0.0,
+    0.0
+   ],
+   "envelope 0.9 (stated): mL inside the tumour / within 5 mm": [
+    0.03,
+    0.17
+   ],
+   "envelope 0.9 (calibrated): mL inside the tumour / within 5 mm": [
+    0.03,
+    0.17
+   ]
+  },
+  "CR-P": {
+   "today (r000): distance mm": 35.9,
+   "today (r000): mL inside the tumour": 0.0,
+   "today (r000): mL within 5 mm": 0.0,
+   "runs: distance mm, median [min, max]": [
+    23.2,
+    15.4,
+    35.9
+   ],
+   "runs: P(enters the tumour)": 0.0,
+   "runs: P(within 5 mm)": 0.0,
+   "runs: mL inside the tumour, median [min, max]": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "runs: mL within 5 mm, median [min, max]": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "envelope 0.5 (stated): mL inside the tumour / within 5 mm": [
+    0.0,
+    0.02
+   ],
+   "envelope 0.5 (calibrated): mL inside the tumour / within 5 mm": [
+    0.0,
+    0.02
+   ],
+   "envelope 0.9 (stated): mL inside the tumour / within 5 mm": [
+    0.0,
+    0.02
+   ],
+   "envelope 0.9 (calibrated): mL inside the tumour / within 5 mm": [
+    0.0,
+    0.02
+   ]
+  },
+  "EC": {
+   "today (r000): distance mm": 28.9,
+   "today (r000): mL inside the tumour": 0.0,
+   "today (r000): mL within 5 mm": 0.0,
+   "runs: distance mm, median [min, max]": [
+    30.2,
+    15.4,
+    null
+   ],
+   "runs: P(enters the tumour)": 0.0,
+   "runs: P(within 5 mm)": 0.0,
+   "runs: mL inside the tumour, median [min, max]": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "runs: mL within 5 mm, median [min, max]": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "envelope 0.5 (stated): mL inside the tumour / within 5 mm": [
+    0.0,
+    0.0
+   ],
+   "envelope 0.5 (calibrated): mL inside the tumour / within 5 mm": [
+    0.0,
+    0.0
+   ],
+   "envelope 0.9 (stated): mL inside the tumour / within 5 mm": [
+    0.0,
+    0.0
+   ],
+   "envelope 0.9 (calibrated): mL inside the tumour / within 5 mm": [
+    0.0,
+    0.0
+   ]
+  },
+  "SLF-I": {
+   "today (r000): distance mm": 25.1,
+   "today (r000): mL inside the tumour": 0.0,
+   "today (r000): mL within 5 mm": 0.0,
+   "runs: distance mm, median [min, max]": [
+    25.1,
+    17.7,
+    27.0
+   ],
+   "runs: P(enters the tumour)": 0.0,
+   "runs: P(within 5 mm)": 0.0,
+   "runs: mL inside the tumour, median [min, max]": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "runs: mL within 5 mm, median [min, max]": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "envelope 0.5 (stated): mL inside the tumour / within 5 mm": [
+    0.0,
+    0.0
+   ],
+   "envelope 0.5 (calibrated): mL inside the tumour / within 5 mm": [
+    0.0,
+    0.0
+   ],
+   "envelope 0.9 (stated): mL inside the tumour / within 5 mm": [
+    0.0,
+    0.0
+   ],
+   "envelope 0.9 (calibrated): mL inside the tumour / within 5 mm": [
+    0.0,
+    0.0
+   ]
+  },
+  "CPC": {
+   "today (r000): distance mm": 24.1,
+   "today (r000): mL inside the tumour": 0.0,
+   "today (r000): mL within 5 mm": 0.0,
+   "runs: distance mm, median [min, max]": [
+    32.2,
+    11.5,
+    57.9
+   ],
+   "runs: P(enters the tumour)": 0.0,
+   "runs: P(within 5 mm)": 0.0,
+   "runs: mL inside the tumour, median [min, max]": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "runs: mL within 5 mm, median [min, max]": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "envelope 0.5 (stated): mL inside the tumour / within 5 mm": [
+    0.0,
+    0.0
+   ],
+   "envelope 0.5 (calibrated): mL inside the tumour / within 5 mm": [
+    0.0,
+    0.0
+   ],
+   "envelope 0.9 (stated): mL inside the tumour / within 5 mm": [
+    0.0,
+    0.0
+   ],
+   "envelope 0.9 (calibrated): mL inside the tumour / within 5 mm": [
+    0.0,
+    0.0
+   ]
+  }
+ },
+ "margin 0-10 mm: tract mix (mean, min-max over runs)": {
+  "Other": [
+   0.547,
+   0.534,
+   0.563
+  ],
+  "ILF": [
+   0.068,
+   0.062,
+   0.074
+  ],
+  "Sup-F": [
+   0.043,
+   0.037,
+   0.047
+  ],
+  "TF": [
+   0.039,
+   0.033,
+   0.044
+  ],
+  "CST": [
+   0.036,
+   0.03,
+   0.042
+  ],
+  "SF": [
+   0.033,
+   0.029,
+   0.037
+  ],
+  "MdLF": [
+   0.028,
+   0.025,
+   0.032
+  ],
+  "CR-F": [
+   0.028,
+   0.021,
+   0.034
+  ]
+ }
+}

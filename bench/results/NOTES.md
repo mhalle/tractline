@@ -2828,3 +2828,176 @@ column is total variation, density-weighted. The last is histogram intersection.
 - the bootstrap with smooth signs matches a same-session rescan's spread;
 - what it cannot hold (another session's field, position and registration) is measured on real rescans from here,
   not modelled.
+
+## 2026-10-08 The ensemble scored on real rescans: it ranks well, states too much, and a double bootstrap's map fixes it
+
+`ensemble_retest.py rescans` (new) → an ensemble for every MASiVar rescan, 8 replicates with smooth signs (FWHM 4),
+each corrected on the rescan's grid, resampled onto the reference's and tracked there (40 runs, M2).
+`ensemble_coverage.py` → `ensemble_coverage_smooth.json`.
+
+Each scan's ensemble (its run and 8 replicates, R = 9) is scored against the other scan's single run, both ways. That
+makes 10 scorings over the five rescans. The labeller's draw is 0 throughout.
+
+**Streamlines** (seed keys; P(the other scan keeps this tract)):
+
+| | change | AUROC one run / mixture | ECE as stated: one run / mixture | mean stated P(keep), mixture |
+|---|---|---|---|---|
+| cIIIs01-2.5, same session | 36.3 % | 0.65 / 0.78 | 0.30 / 0.082–0.086 | 0.72 |
+| cIIIs01-2.1, same session | 36.9 % | 0.65 / 0.78 | 0.30 / 0.081–0.083 | 0.71 |
+| cIIIs01-2.1, other session | 39.1 % | 0.65 / 0.77 | 0.32–0.33 / 0.092–0.105 | 0.71 |
+| cIs1, both rescans | 47.5–49.9 % | 0.65–0.66 / 0.73–0.74 | 0.40–0.43 / 0.15–0.18 | 0.67–0.69 |
+| all 10 scorings | 42.0 % | 0.65 / 0.76 | 0.35 / 0.120 | 0.70 |
+| held-out replicate (centred, 3) | 32.7 % | 0.66 / 0.80 | 0.26 / 0.035 | 0.70 |
+
+The centred row is the pilot's scoring and reproduces its numbers (0.80, 0.035).
+
+- **On real rescans the ensemble still ranks well:** AUROC 0.73–0.78, against 0.65 for one run.
+- **It states too much,** by 8–10 points on cIIIs01 and 16–18 on cIs1. One run's probability is off by 30–43.
+
+**Recalibrated, leaving one pair out:**
+
+| held-out pair | ECE as stated | isotonic, fitted on the other pairs' rescans | PAT16's double-bootstrap map, carried over | observed keep / PAT16 map's mean |
+|---|---|---|---|---|
+| cIIIs01-2.5 | 0.084 | 0.029 | **0.004** | 0.637 / 0.641 |
+| cIIIs01-2.1 | 0.090 | 0.039 | **0.011** | 0.620 / 0.631 |
+| cIs1 | 0.167 | 0.081 | 0.091 | 0.513 / 0.603 |
+
+- **The double bootstrap's map transfers.** It was fitted on PAT16 (Siemens Trio, smooth signs) with no real rescan
+  in sight. On cIIIs01's real rescans (Philips, another subject, another protocol) it brings ECE to 0.004–0.011, and
+  the mean it states matches the observed keep rate within a point.
+  - It beats an isotonic map fitted on MASiVar's own rescans, because those include cIs1's.
+- **cIs1 is the exception, with every map.** It keeps 51 % of labels where every map states about 60 %. That is the
+  protocol of entries above: 38 slices and one reversed b0. Its field and coverage are what a noise bootstrap does not
+  hold.
+- **Voxels:** the vote fraction's ECE is 0.042–0.061 as stated. A table per vote count fitted on the other pairs
+  brings it to 0.006–0.021.
+
+**Envelopes.** A tract's envelope at level L is its highest-probability voxels holding L of its mass. Coverage is the
+share of the other scan's tract voxels inside it.
+
+| stated level | 0.5 | 0.7 | 0.8 | 0.9 | 0.95 | 0.995 |
+|---|---|---|---|---|---|---|
+| rescans (10 scorings) | 0.44 | 0.61 | 0.69 | 0.79 | 0.84 | 0.89 |
+| held-out replicate (3) | 0.46 | 0.64 | 0.73 | 0.82 | 0.87 | — |
+
+- **Envelopes are narrow, even against the bootstrap's own runs.** With R = 9, a voxel no run reached cannot be inside
+  any envelope. Nine runs together cover about 0.9 of a rescan's tract.
+- **On the levels:**
+  - Recalibrated leaving one pair out, a target of 0.8 uses the stated 0.92–0.94, and the held-out cIIIs01 pairs reach
+    0.83–0.85 (cIs1 0.74).
+  - A target of 0.9 is beyond what nine runs reach. Even the widest measured level covers 0.91 on cIIIs01 and 0.85 on
+    cIs1.
+  - Envelopes for 90 % or more need more runs, or a dilation measured against rescans.
+
+**Ensemble outputs are steadier between scans than single runs.**
+
+| | single runs differ | ensembles differ |
+|---|---|---|
+| per seed (total variation of tract probabilities) | 0.36–0.39 (cIIIs01), 0.48–0.50 (cIs1) | 0.26–0.27, 0.35–0.37 |
+| named tract maps overlap | 0.22–0.24, 0.15–0.16 | 0.36–0.39, 0.28–0.29 |
+
+The ensemble's map overlaps its rescan's 1.6–1.9 times as much as one run's does.
+
+What this settles:
+
+- **The ensemble's ranking holds on real rescans.**
+- **Its recalibration can come from the double bootstrap,** when the protocol pins the field well (cIIIs01, PAT16).
+  It cannot when the field rests on one reversed b0 and the coverage is partial (cIs1).
+- **Envelopes need about R ≥ 9 runs and calibrated levels,** and stop short of 90 % at R = 9.
+
+## 2026-10-08 Where and which: position and the tract mix hold on a rescan, a streamline's name does not
+
+`ensemble_where_which.py` → `ensemble_where_which_smooth.json`. Existing records only. Pairs: MASiVar's reference
+against its rescans (on its grid), and replicate pairs with smooth signs, MASiVar's and PAT16's. Spheres of 8 mm:
+300 on dense white matter (MASiVar), or every margin voxel 0–10 mm from PAT16's tumour, at least 4 mm apart (879).
+
+PAT16's tumour mask (ds001226, on the T1) is put on the DWI grid by registering the T1 rigidly to the corrected mean
+b0 (`_register.py`, mutual information): 2,922 voxels (45.6 mL). Its outline sits on the b0's bright temporal lesion
+in all three planes.
+
+| | density, all tracts | direction \|cos\| | density per tract | spheres: same dominant tract | spheres: mix total variation |
+|---|---|---|---|---|---|
+| cIIIs01-2.5 rescan / replicates | 0.765 / 0.779 | 0.970 / 0.972 | 0.497 / 0.514 | 99.3 / 98.7 % | 0.058 / 0.046 |
+| cIIIs01-2.1 rescan same, other session / replicates | 0.767, 0.755 / 0.787 | 0.971, 0.967 / 0.974 | 0.507, 0.483 / 0.526 | 99.3, 100 / 99.6 % | 0.046, 0.053 / 0.039 |
+| cIs1 rescans / replicates | 0.633–0.647 / 0.748 | 0.937–0.942 / 0.967 | 0.377–0.386 / 0.467 | 98.0–98.7 / 99.5 % | 0.064–0.068 / 0.050 |
+| PAT16 replicates, tumour margin (spheres) | 0.697 | 0.972 | — | 97.1 % | 0.063 |
+
+Column definitions:
+- density and density per tract: histogram intersection, brain;
+- direction: density-weighted, per voxel, ≥ 5 streamlines in both;
+- spheres: median total variation of the mix.
+For PAT16 the density and direction are the spheres' medians; over the brain they are 0.763 and 0.976.
+
+- **Position holds.**
+  - Where white matter is and how much passes: 0.75–0.79 of the density is shared on cIIIs01.
+  - Its local direction: |cos| 0.97, about 14°.
+- **A streamline's name does not.** Split by tract, the shared density falls to 0.48–0.53. Per-tract intersections
+  can only add up to the total's, so the gap is density present in both runs but given another name: about a third.
+- **The tract mix of a region holds.** In an 8 mm sphere, the dominant tract is the same on a rescan 98–100 % of the
+  time, and the mix moves by 0.05. Names swap between streamlines, but the region's mix stays put.
+- **The clinical question is regional, and that is the stable part:** which tracts pass here, and in what
+  proportion. The name of one streamline is the unstable part.
+- **Rescans are slightly worse than replicates throughout.** On cIs1 they are clearly worse, as in the entries above.
+- **At PAT16's tumour margin, density is less reproducible** (0.70 against 0.80 in white-matter spheres), as the
+  margin is edema and lower anisotropy. The mix and the dominant tract hold there too.
+
+## 2026-10-08 Where the paths part: mostly far from the seed, and only weakly at crossing fibres
+
+`ensemble_crossings.py` → `ensemble_crossings_smooth.json`. Per ensemble (MASiVar's references with 8 smooth replicates,
+PAT16's 17 runs), 4,000 seeds every run labelled.
+
+Method:
+- Each run's path is followed outward from the seed by arc length.
+- A side diverges where the median distance of the other runs' points to the reference's exceeds 4 mm.
+- Crossings: dipy's CSA ODF peaks on the tracked shell (relative threshold 0.5, 25° apart). Two or more peaks is a
+  crossing.
+
+| | sides diverging within 80 mm | divergence distance (quartiles) | crossing share at divergence / before it | crossing share, brain |
+|---|---|---|---|---|
+| cIIIs01-2.5 | 47 % | 30 / 40 / 52 mm | 73.1 / 60.7 % | 82.9 % |
+| cIIIs01-2.1 | 48 % | 30 / 40 / 52 mm | 72.6 / 62.3 % | 84.2 % |
+| cIs1 | 53 % | 24 / 34 / 46 mm | 85.7 / 76.3 % | 93.3 % |
+| PAT16 | 46 % | 30 / 40 / 52 mm | 77.3 / 62.9 % | 89.2 % |
+
+- **A seed's versions stay together a long way.** They part a median 34–40 mm out, and half the sides not within
+  80 mm. Near a seed the path is reliable, which is why position near the tumour holds (entry above).
+- **Divergence points are crossings 1.1–1.2× as often as the path before them.** That is real but weak.
+- **This crossing map cannot carry a sharper statement.** CSA peaks at this threshold call 83–93 % of the brain
+  "crossing". A divergence point is also placed where the spread already exceeds 4 mm, after its cause.
+- **"Identity decided at this crossing" is not grounded well enough to show.** Unless a sharper fibre model (CSD,
+  multi-shell) and the spread's onset change this, it stays out of the output.
+
+## 2026-10-08 PAT16 at the tumour: what one run says, and what 17 say
+
+`ensemble_pat16_report.py` → `ensemble_pat16_report_smooth.json` and DATA/ensemble/PAT16/report_smooth.npz.
+`ensemble_pat16_viewer.py` (+ `pat16_viewer.html`) builds a one-page viewer from them.
+
+The ensemble is PAT16's 17 runs with smooth signs (r000 is the pipeline as it runs today). The tumour is 45.6 mL,
+temporal (entry above). A tract's voxels are those it wins with at least 2 streamlines. Envelope levels are calibrated
+on MASiVar's rescans (entry above):
+- stated 0.5 → 0.575;
+- stated 0.9 → beyond reach, so the widest measured (0.995) is used, which covered 0.89.
+
+| tract | today (r000): mL inside | 17 runs: P(enters) | mL inside, median (range) | P(within 5 mm) | calibrated 0.9 envelope: mL inside / within 5 mm |
+|---|---|---|---|---|---|
+| ILF | 1.05 | 1.00 | 1.12 (0.89–1.64) | 1.00 | 4.50 / 11.42 |
+| Sup-F | 0.91 | 1.00 | 0.91 (0.77–1.23) | 1.00 | 2.94 / 7.31 |
+| SF | 0.39 | 1.00 | 0.47 (0.30–0.55) | 1.00 | 4.97 / 12.19 |
+| MdLF | 0.16 | 0.94 | 0.16 (0.03–0.27) | 1.00 | 2.91 / 7.81 |
+| Sup-T | 0.11 | 0.77 | 0.08 (0.02–0.20) | 1.00 | 2.45 / 5.47 |
+| CC1 | 0.03 | 0.71 | 0.05 (0.00–0.17) | 1.00 | 0.98 / 3.64 |
+| TF | 0.05 | 0.29 | 0.02 (0.00–0.11) | 1.00 | 0.83 / 3.30 |
+| CB | 0.00 | 0.35 | 0.03 (0.00–0.11) | 1.00 | 1.36 / 3.06 |
+| AF | 0.00 | 0.00 | 0.00 (0.00–0.03) | 0.71 | 0.94 / 2.28 |
+| CST | 0.02 | 0.00 | 0.00 (0.00–0.03) | 0.47 | 0.19 / 0.70 |
+
+- **Some tracts are certain to enter the tumour mask** (ILF, superficial frontal, striato-frontal). For those, one run
+  gets the amount roughly right, though the runs span about ±30 %.
+- **For others, one run's yes or no is a coin toss.** TF enters in 5 of 17 runs, CB in 6, CC1 in 12. Today's run puts
+  TF and CC1 inside and CB outside.
+- **The CST passes within 5 mm in 47 % of runs, and one run cannot say which.** Today's run puts 0.02 mL inside.
+  - The margin's tract mix is steady: CST 3.6 % (3.0–4.2 %) of streamlines within 10 mm.
+- **Calibrated envelopes are wide** (ILF: 11.4 mL within 5 mm, against 3.8 for today's run). That is the cost of
+  stating 90 % honestly with 17 runs.
+- **Caveat:** PAT16 has no rescan. Its levels are MASiVar's, and on cIIIs01 the double bootstrap's map matched real
+  rescans. No ground truth (stimulation, histology) was checked here.

@@ -1,0 +1,60 @@
+{
+ "flip": "smooth",
+ "diverge_mm": 4.0,
+ "cIIIs01-2.5": {
+  "seeds": 4000,
+  "sides": 8000,
+  "sides diverging within 80 mm": 0.471,
+  "divergence distance mm (quartiles)": [
+   30.0,
+   40.0,
+   52.0
+  ],
+  "crossing share: at divergence": 0.7312,
+  "crossing share: along paths before divergence": 0.6072,
+  "crossing share: brain (tracking mask)": 0.8293,
+  "runs": 9
+ },
+ "cIIIs01-2.1": {
+  "seeds": 4000,
+  "sides": 8000,
+  "sides diverging within 80 mm": 0.4785,
+  "divergence distance mm (quartiles)": [
+   30.0,
+   40.0,
+   52.0
+  ],
+  "crossing share: at divergence": 0.7258,
+  "crossing share: along paths before divergence": 0.6225,
+  "crossing share: brain (tracking mask)": 0.8422,
+  "runs": 9
+ },
+ "cIs1": {
+  "seeds": 4000,
+  "sides": 8000,
+  "sides diverging within 80 mm": 0.5315,
+  "divergence distance mm (quartiles)": [
+   24.0,
+   34.0,
+   46.0
+  ],
+  "crossing share: at divergence": 0.8572,
+  "crossing share: along paths before divergence": 0.7634,
+  "crossing share: brain (tracking mask)": 0.9327,
+  "runs": 9
+ },
+ "PAT16": {
+  "seeds": 4000,
+  "sides": 8000,
+  "sides diverging within 80 mm": 0.4647,
+  "divergence distance mm (quartiles)": [
+   30.0,
+   40.0,
+   52.0
+  ],
+  "crossing share: at divergence": 0.7728,
+  "crossing share: along paths before divergence": 0.6292,
+  "crossing share: brain (tracking mask)": 0.8919,
+  "runs": 17
+ }
+}

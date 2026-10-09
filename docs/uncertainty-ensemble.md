@@ -176,10 +176,34 @@ labeller is confident (0.94 on average), and labels change because a seed's path
 because names were near ties. The uncertainty is in the tracking, so the ensemble, which pools over paths, is what
 can carry it (NOTES 2026-10-08, "Smooth signs on PAT16, and soft labels").
 
+**Scored on real rescans.** Every MASiVar scan was given its own ensemble (9 runs), then scored against the other
+scan of its pair.
+
+- **The ranking holds:** AUROC 0.73–0.78, against 0.65 for one run.
+- **The stated probabilities are 8–10 points too high** on cIIIs01, 16–18 on cIs1.
+- **PAT16's double-bootstrap map, carried over unchanged, fixes cIIIs01:** ECE 0.004–0.011, the stated mean within a
+  point of the observed. It was fitted with smooth signs on a Siemens scan, with no rescan.
+- **cIs1 (38 slices, one reversed b0) stays off with any map.**
+- **Ensemble outputs are steadier between scans than one run's.** Tract maps overlap 1.6–1.9 times as much.
+- **Envelopes are narrow.** A tract's highest-probability voxels holding 90 % of its mass cover 79 % of a rescan's
+  tract. Nine runs together reach about 90 %.
+
+The regional picture holds where single names do not:
+- the white matter's position and direction (|cos| 0.97) and the tract mix of an 8 mm region (the same dominant tract
+  98–100 % of the time) are stable on a rescan;
+- a streamline's name is not.
+
+Paths part a median 34–40 mm from their seed, only weakly more often at crossing fibres (NOTES 2026-10-08, "The
+ensemble scored on real rescans", "Where and which", "Where the paths part"). For PAT16, 17 runs separate tracts that
+surely enter the tumour from those that do in a third of runs, which a single run cannot tell apart ("PAT16 at the
+tumour"; `bench/ensemble_pat16_viewer.py` draws it).
+
 What a shipped confidence should be, then:
 
-- the ensemble's mixture or votes, mapped for rescans by a double bootstrap;
-- the bootstrap's signs spatially correlated (smooth, in-plane), and the map refitted with them;
-- the map fitted per protocol, since it depends on the pipeline and R;
+- the ensemble's mixture or votes, mapped for rescans by a double bootstrap with spatially correlated (smooth,
+  in-plane) signs. That map held on real rescans where the protocol pins the field;
+- the map fitted per protocol, since it depends on the pipeline and R, and checked on test-retest scans for a new
+  protocol;
+- regional answers first: which tracts pass near a point, and in what proportion, with envelopes at calibrated levels;
 - read as a same-session confidence. Against a scan from another session it is still optimistic by a few points, more
-  on protocols whose field rests on few b0s (NOTES 2026-10-08, "The bootstrap against real rescans").
+  on protocols whose field rests on few b0s.

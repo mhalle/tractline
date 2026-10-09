@@ -2,6 +2,7 @@
 as rescanning the subject does? (NOTES 2026-10-08, "The bootstrap against real rescans")
 
     uv run --group dipy --group rankfield bench/ensemble_retest.py run [--pair cIIIs01-2.5] [--runs 8] [--flip voxel]
+    uv run --group dipy --group rankfield bench/ensemble_retest.py rescans [--pair cIIIs01-2.5] [--flip smooth --fwhm 4]
     uv run --group dipy --group rankfield bench/ensemble_retest.py analyze [--pair cIIIs01-2.5]
 
 Data: MASiVar (OpenNeuro ds003416; bench/fetch_ds003416.py, bench/_masivar.py), scans repeated on one Philips scanner.
@@ -210,6 +211,52 @@ def onto_reference(dwi, bvec, affine_b, to_ref, affine_a, shape_a, rotate=True):
     return out, T @ np.asarray(bvec, float)
 
 
+def rescans(args):
+    """An ensemble for each rescan, as A's: `runs` replicates of the rescan as acquired (its own mask; flip as given),
+    each corrected on the rescan's grid, resampled onto A's (onto_reference, as <tag>_onA) and tracked there:
+    <flip>/<tag>_r001.. . With <tag>_onA they are the rescan's ensemble, comparable with A's (A, <flip>/r001..)."""
+    from _masivar import load
+    from _bootstrap import ShellWildBootstrap
+    from tractline.prep import prepare
+    subject, (ses, scan), rescan_scans, shells, shell = PAIRS[args.pair]
+    d = record_dir(args.pair)
+    log_path = d / "runs.json"
+    log = json.loads(log_path.read_text())
+    labeler = P.default_labeler(DEVICE)
+    A = load(subject, ses, scan, shells)
+    rd = d / args.flip
+    rd.mkdir(exist_ok=True)
+    for tag, (ses_b, scan_b) in rescan_scans.items():
+        B = load(subject, ses_b, scan_b, shells)
+        to_ref = np.array(log[f"{tag}_scan"]["to_A"])
+        need = [r for r in range(1, args.runs + 1) if not (rd / f"{tag}_r{r:03d}.npz").exists()]
+        if not need:
+            continue
+        with P.exact_float32(DEVICE):
+            mask = prepare(P.correct(B, P.Timer(), DEVICE).dwi, B.affine, B.bval, B.bvec, shell=shell, device=DEVICE).mask
+        wb = ShellWildBootstrap(B.dwi, B.bval, B.bvec, extra_b0s=B.b0s[..., len(B.b0_index):], b0_noise="added", mask=mask,
+                                flip=args.flip, fwhm=args.fwhm)
+        log[f"bootstrap_{args.flip}_{tag}"] = wb.noise_check(mask)
+        for r in need:
+            dwi, apa = wb.replicate(r)
+            s = replace(B, dwi=dwi, b0s=np.concatenate([dwi[..., B.b0_index].astype(np.float64), apa], -1))
+            timer, t0 = P.Timer(), time.time()
+            with P.exact_float32(DEVICE):
+                corr = P.correct(s, timer, DEVICE)
+                on_a, bvec = onto_reference(corr.dwi, B.bvec, B.affine, to_ref, A.affine, A.dwi.shape[:3])
+                sa = replace(A, dwi=on_a, bval=B.bval, bvec=bvec, b0s=None)
+                tg = P.track(sa, on_a, timer, device=DEVICE, shell=shell)
+                labels = labeler(tg.fibers, draws=(0,), logp=True)
+            E.RunRecord.of(tg, labels, A.affine, A.dwi.shape[:3]).save(rd / f"{tag}_r{r:03d}.npz")
+            name = f"{args.flip}/{tag}_r{r:03d}"
+            log[name] = {"fibers": len(tg.fibers), "labeled": int(labels.keep.sum()), "residual_left": corr.residual_left,
+                         "field_hz_p99_abs": round(float(np.quantile(np.abs(corr.field_hz), 0.99)), 2),
+                         "total_s": round(time.time() - t0, 1)}
+            log_path.write_text(json.dumps(log, indent=1))
+            print(name, json.dumps(log[name]), flush=True)
+            P.release_memory(DEVICE)
+
+
 # ----------------------------------------------------------------------------------------------- analysis
 
 def nearest(X: np.ndarray, Y: np.ndarray, self_match=False, k=8):
@@ -375,12 +422,12 @@ def analyze(args):
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("what", choices=("run", "analyze"))
+    ap.add_argument("what", choices=("run", "rescans", "analyze"))
     ap.add_argument("--pair", default="cIIIs01-2.5", choices=sorted(PAIRS))
     ap.add_argument("--runs", type=int, default=8)
     ap.add_argument("--flip", default="voxel", choices=("voxel", "volume", "smooth"))
-    ap.add_argument("--fwhm", type=float, default=2.0, help="flip smooth: the sign field's smoothing, voxels FWHM")
+    ap.add_argument("--fwhm", type=float, default=4.0, help="flip smooth: the sign field's in-plane smoothing, voxels FWHM (4: as the smooth runs recorded)")
     ap.add_argument("--fb", type=int, default=4, help="run: replicates also sent through the rescan's resampling and back")
     ap.add_argument("--nearest", action="store_true", help="analyze: also nearest-path matching (slow; at its floor, NOTES)")
     args = ap.parse_args()
-    run(args) if args.what == "run" else analyze(args)
+    {"run": run, "rescans": rescans, "analyze": analyze}[args.what](args)

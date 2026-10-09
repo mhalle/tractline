@@ -1,0 +1,231 @@
+<title>PAT16 tract envelopes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* layout: a scan viewer on the left, the numbers that qualify it on the right; one column on a phone */
+:root {
+  --bg: #f3f5f7; --surface: #ffffff; --ink: #15202b; --muted: #5a6876; --line: #d6dde3;
+  --accent: #2b6a8a; --tumour: #d9572f; --scan: #05080b;
+  --ui: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --data: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e141a; --surface: #151d25; --ink: #e2e8ee; --muted: #93a2b0; --line: #26323d; --accent: #73b4d4; --tumour: #f07a52; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #0e141a; --surface: #151d25; --ink: #e2e8ee; --muted: #93a2b0; --line: #26323d; --accent: #73b4d4; --tumour: #f07a52; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font-family: var(--ui); font-size: 15px; line-height: 1.5; padding: 20px 16px 40px; }
+.wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 20px; }
+h1 { font-size: 1.6rem; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 0 0 10px; font-weight: 700; }
+.lede { color: var(--muted); max-width: 70ch; margin: 4px 0 0; }
+.main { display: grid; grid-template-columns: minmax(0, 560px) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 900px) { .main { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; min-width: 0; }
+.side { display: grid; gap: 16px; min-width: 0; }
+.viewer { display: grid; gap: 12px; }
+.scanbox { position: relative; background: var(--scan); border-radius: 8px; aspect-ratio: 1; max-width: 100%; }
+canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; border-radius: 8px; }
+.orient { position: absolute; font: 500 12px var(--data); color: #c7d2dc; }
+.controls { display: grid; gap: 10px; }
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { font: inherit; padding: 6px 12px; border: 0; background: transparent; color: var(--ink); cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--surface); }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+label { color: var(--muted); font-size: 0.9rem; }
+input[type=range] { flex: 1; min-width: 140px; accent-color: var(--accent); }
+.num { font-family: var(--data); font-variant-numeric: tabular-nums; }
+.readout { font-family: var(--data); font-size: 0.85rem; min-width: 11ch; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { display: inline-flex; gap: 6px; align-items: center; border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px 3px 6px; font-size: 0.85rem; cursor: pointer; color: var(--ink); background: transparent; font-family: inherit; }
+.chip[aria-pressed="false"] { opacity: 0.45; }
+.sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+th, td { text-align: left; padding: 5px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--muted); font-weight: 400; font-size: 0.78rem; }
+td.n, th.n { text-align: right; font-family: var(--data); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tablebox { overflow-x: auto; }
+.note { color: var(--muted); font-size: 0.82rem; margin: 8px 0 0; max-width: 70ch; }
+.bar { display: grid; grid-template-columns: 9ch minmax(0, 1fr) 7ch; gap: 8px; align-items: center; font-size: 0.85rem; margin: 4px 0; }
+.track { position: relative; height: 10px; background: var(--line); border-radius: 5px; }
+.fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 5px; background: var(--accent); }
+.range { position: absolute; top: -3px; bottom: -3px; border-left: 2px solid var(--ink); border-right: 2px solid var(--ink); }
+svg text { fill: var(--muted); font: 11px var(--data); }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 0.8rem; color: var(--muted); }
+.legend span { display: inline-flex; gap: 6px; align-items: center; }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>PAT16 tract envelopes</h1>
+    <p class="lede">White-matter tracts at a temporal tumour from 17 runs of the pipeline, each on a resampled copy of the
+      scan. The envelope shows where a tract may lie; its level can be stated or calibrated on real rescans of healthy subjects.</p>
+  </header>
+
+  <div class="main">
+    <section class="panel viewer" aria-label="Scan viewer">
+      <div class="scanbox">
+        <canvas id="cv" width="480" height="480" aria-label="Axial slice with tract envelopes and the tumour"></canvas>
+        <span class="orient" style="left:8px;top:50%">R</span>
+        <span class="orient" style="right:8px;top:50%">L</span>
+        <span class="orient" style="left:50%;top:6px">A</span>
+        <span class="orient" style="left:50%;bottom:6px">P</span>
+      </div>
+      <div class="controls">
+        <div class="row">
+          <div class="seg" role="group" aria-label="What to show">
+            <button id="m-today" aria-pressed="false">Today: one run</button>
+            <button id="m-ens" aria-pressed="true">Ensemble envelopes</button>
+          </div>
+          <div class="seg" role="group" aria-label="Envelope level">
+            <button id="c-stated" aria-pressed="false">Stated</button>
+            <button id="c-cal" aria-pressed="true">Calibrated</button>
+          </div>
+        </div>
+        <div class="row"><label for="lvl">Envelope level</label><input id="lvl" type="range" min="0" max="9" step="1" value="8"><span id="lvl-out" class="readout"></span></div>
+        <div class="row"><label for="sl">Axial slice</label><input id="sl" type="range" min="0" max="0" step="1" value="0"><span id="sl-out" class="readout"></span></div>
+        <div class="chips" id="chips"></div>
+        <div class="legend"><span><i class="sw" style="background:var(--tumour)"></i>Tumour</span><span><i class="sw" style="border:1px dashed var(--tumour)"></i>5 mm margin</span><span>Fill: envelope · solid edge: half the runs or more</span></div>
+      </div>
+    </section>
+
+    <div class="side">
+      <section class="panel">
+        <h2>At the tumour, over 17 runs</h2>
+        <div class="tablebox"><table id="tbl"><thead><tr><th>Tract</th><th class="n">Enters the tumour</th><th class="n">mL inside: runs</th><th class="n">today</th><th class="n">Within 5 mm</th></tr></thead><tbody></tbody></table></div>
+        <p class="note">Enters: the share of runs with at least 3 voxels of the tract inside the mask. mL inside: median and range over runs; today: the pipeline's single run.</p>
+      </section>
+      <section class="panel">
+        <h2>Tract mix in the 0–10 mm margin</h2>
+        <div id="mix"></div>
+        <p class="note">Share of streamlines crossing the margin; bar the mean, ticks the lowest and highest run.</p>
+      </section>
+      <section class="panel">
+        <h2>Do the envelopes hold on a rescan?</h2>
+        <svg id="cov" viewBox="0 0 300 210" width="100%" role="img" aria-label="Coverage of envelopes on real rescans against the stated level"></svg>
+        <p class="note" id="covnote"></p>
+      </section>
+      <section class="panel">
+        <h2>Where against which, at the margin</h2>
+        <div id="ww"></div>
+        <p class="note">Margin spheres of 8 mm, PAT16's replicate pairs; a streamline keeping its tract: MASiVar's real rescans.</p>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script>
+const D = /*DATA*/null;
+const dec = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+const [X, Y, Z] = D.shape;
+const img = dec(D.img), region = dec(D.region);
+D.tracts.forEach(t => { t.v = dec(t.votes); t.td = dec(t.today); t.on = true; });
+const at = (x, y, z) => (x * Y + y) * Z + z;
+const state = { mode: "ens", cal: true, lvl: 8, z: 0 };
+const cv = document.getElementById("cv"), ctx = cv.getContext("2d");
+const S = cv.width / X;
+const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+const zmid = (() => { let best = 0, z0 = 0; for (let z = 0; z < Z; z++) { let n = 0; for (let x = 0; x < X; x++) for (let y = 0; y < Y; y++) if (region[at(x, y, z)] === 0) n++; if (n > best) { best = n; z0 = z; } } return z0; })();
+state.z = zmid;
+
+function edges(test, color, width, dash) {
+  ctx.beginPath();
+  for (let x = 0; x < X; x++) for (let y = 0; y < Y; y++) {
+    if (!test(x, y)) continue;
+    const px = x * S, py = (Y - 1 - y) * S;
+    if (x === 0 || !test(x - 1, y)) { ctx.moveTo(px, py); ctx.lineTo(px, py + S); }
+    if (x === X - 1 || !test(x + 1, y)) { ctx.moveTo(px + S, py); ctx.lineTo(px + S, py + S); }
+    if (y === Y - 1 || !test(x, y + 1)) { ctx.moveTo(px, py); ctx.lineTo(px + S, py); }
+    if (y === 0 || !test(x, y - 1)) { ctx.moveTo(px, py + S); ctx.lineTo(px + S, py + S); }
+  }
+  ctx.strokeStyle = color; ctx.lineWidth = width; ctx.setLineDash(dash || []); ctx.stroke(); ctx.setLineDash([]);
+}
+
+function draw() {
+  const z = state.z, im = ctx.createImageData(X, Y);
+  const tumourCol = getComputedStyle(document.documentElement).getPropertyValue("--tumour").trim() || "#d9572f";
+  for (let x = 0; x < X; x++) for (let y = 0; y < Y; y++) {
+    const g = img[at(x, y, z)], o = ((Y - 1 - y) * X + x) * 4;
+    let r = g, gg = g, b = g;
+    for (const t of D.tracts) {
+      if (!t.on) continue;
+      const v = t.v[at(x, y, z)];
+      const inside = state.mode === "ens" ? (t.thr[state.cal ? "calibrated" : "stated"][state.lvl] > 0 && v >= t.thr[state.cal ? "calibrated" : "stated"][state.lvl]) : t.td[at(x, y, z)] === 1;
+      if (!inside) continue;
+      const a = state.mode === "ens" ? 0.18 + 0.4 * v / D.runs : 0.45, c = t.rgb;
+      r = r * (1 - a) + c[0] * a; gg = gg * (1 - a) + c[1] * a; b = b * (1 - a) + c[2] * a;
+    }
+    im.data.set([r, gg, b, 255], o);
+  }
+  const off = new OffscreenCanvas(X, Y); off.getContext("2d").putImageData(im, 0, 0);
+  ctx.imageSmoothingEnabled = false; ctx.clearRect(0, 0, cv.width, cv.height); ctx.drawImage(off, 0, 0, cv.width, cv.height);
+  for (const t of D.tracts) {
+    if (!t.on) continue;
+    if (state.mode === "ens") edges((x, y) => t.v[at(x, y, z)] * 2 >= D.runs, t.color, 1.6);
+    else edges((x, y) => t.td[at(x, y, z)] === 1, t.color, 1.6);
+  }
+  edges((x, y) => region[at(x, y, z)] === 0, tumourCol, 2.2);
+  edges((x, y) => region[at(x, y, z)] <= 1, tumourCol, 1.2, [4, 3]);
+  const L = D.levels[state.lvl], c = D.calib[state.lvl];
+  document.getElementById("lvl-out").textContent = state.cal ? `${Math.round(L * 100)}% → ${(c.use * 100).toFixed(1)}%${c.reached ? "" : "*"}` : `${Math.round(L * 100)}%`;
+  document.getElementById("sl-out").textContent = `z ${D.z0 + z} (${z - zmid >= 0 ? "+" : ""}${((z - zmid) * 2.5).toFixed(1)} mm)`;
+  document.getElementById("lvl").disabled = state.mode !== "ens";
+  drawCoverage();
+}
+
+function press(on, off) { on.setAttribute("aria-pressed", "true"); off.setAttribute("aria-pressed", "false"); }
+const mt = document.getElementById("m-today"), me = document.getElementById("m-ens"), cs = document.getElementById("c-stated"), cc = document.getElementById("c-cal");
+mt.onclick = () => { state.mode = "today"; press(mt, me); draw(); };
+me.onclick = () => { state.mode = "ens"; press(me, mt); draw(); };
+cs.onclick = () => { state.cal = false; press(cs, cc); draw(); };
+cc.onclick = () => { state.cal = true; press(cc, cs); draw(); };
+const lvl = document.getElementById("lvl"); lvl.oninput = () => { state.lvl = +lvl.value; draw(); };
+const sl = document.getElementById("sl"); sl.max = Z - 1; sl.value = zmid; sl.oninput = () => { state.z = +sl.value; draw(); };
+
+const chips = document.getElementById("chips"), tb = document.querySelector("#tbl tbody");
+const pct = v => `${Math.round(v * 100)}%`, ml = v => v.toFixed(2);
+D.tracts.forEach(t => {
+  t.rgb = hex(t.color);
+  const b = document.createElement("button");
+  b.className = "chip"; b.setAttribute("aria-pressed", "true"); b.title = t.full;
+  b.innerHTML = `<i class="sw" style="background:${t.color}"></i>${t.name}`;
+  b.onclick = () => { t.on = !t.on; b.setAttribute("aria-pressed", String(t.on)); draw(); };
+  chips.appendChild(b);
+  const tr = document.createElement("tr");
+  tr.innerHTML = `<td><i class="sw" style="background:${t.color}"></i> ${t.name} <span style="color:var(--muted)">${t.full}</span></td>` +
+    `<td class="n">${pct(t.enter)}</td><td class="n">${ml(t.ml_in[0])} (${ml(t.ml_in[1])}–${ml(t.ml_in[2])})</td><td class="n">${ml(t.ml_in_today)}</td><td class="n">${pct(t.within5)}</td>`;
+  tb.appendChild(tr);
+});
+
+const mix = document.getElementById("mix");
+Object.entries(D.mix).forEach(([name, [m, lo, hi]]) => {
+  const scale = 0.6, w = v => `${Math.min(v / scale, 1) * 100}%`;
+  mix.insertAdjacentHTML("beforeend", `<div class="bar"><span>${name}</span><span class="track"><span class="fill" style="width:${w(m)}"></span><span class="range" style="left:${w(lo)};width:calc(${w(hi)} - ${w(lo)})"></span></span><span class="num">${(m * 100).toFixed(1)}%</span></div>`);
+});
+
+function drawCoverage() {
+  const svg = document.getElementById("cov"), x0 = 40, x1 = 290, y0 = 180, y1 = 12, lo = 0.4, hi = 1.0;
+  const sx = v => x0 + (v - lo) / (hi - lo) * (x1 - x0), sy = v => y0 - (v - lo) / (hi - lo) * (y0 - y1);
+  let s = "";
+  [0.4, 0.6, 0.8, 1.0].forEach(v => { s += `<line x1="${x0}" x2="${x1}" y1="${sy(v)}" y2="${sy(v)}" stroke="var(--line)" stroke-width="1"/><text x="${x0 - 6}" y="${sy(v) + 4}" text-anchor="end">${v.toFixed(1)}</text>`;
+    s += `<text x="${sx(v)}" y="${y0 + 16}" text-anchor="middle">${v.toFixed(1)}</text>`; });
+  s += `<line x1="${sx(lo)}" y1="${sy(lo)}" x2="${sx(hi)}" y2="${sy(hi)}" stroke="var(--muted)" stroke-dasharray="4 3" stroke-width="1"/>`;
+  const pts = D.curve.levels.map((L, i) => `${sx(L)},${sy(D.curve.coverage[i])}`).join(" ");
+  s += `<polyline points="${pts}" fill="none" stroke="var(--accent)" stroke-width="2"/>`;
+  D.curve.levels.forEach((L, i) => { s += `<circle cx="${sx(L)}" cy="${sy(D.curve.coverage[i])}" r="2.6" fill="var(--accent)"/>`; });
+  const L = D.levels[state.lvl], use = state.cal ? D.calib[state.lvl].use : L;
+  const covAt = v => { const ls = D.curve.levels, cs = D.curve.coverage; let i = ls.findIndex(q => q >= v - 1e-9); if (i < 0) i = ls.length - 1; return cs[i]; };
+  if (state.mode === "ens") s += `<circle cx="${sx(use)}" cy="${sy(covAt(use))}" r="5" fill="none" stroke="var(--tumour)" stroke-width="2"/>`;
+  s += `<text x="${(x0 + x1) / 2}" y="206" text-anchor="middle">level stated</text>`;
+  svg.innerHTML = s;
+  const st = D.stats;
+  document.getElementById("covnote").textContent = `Share of a real rescan's tract inside the envelope (y) against the level it states (x): MASiVar, ${st.scorings} scorings, healthy adults on a Philips scanner. ` +
+    `On those rescans the ensemble ranks which streamlines change with AUROC ${st.auroc_mix.toFixed(2)} (one run ${st.auroc_single.toFixed(2)}) and is off by ECE ${st.ece_mix.toFixed(3)} (one run ${st.ece_single.toFixed(2)}). ` +
+    `PAT16 has no rescan; its calibrated levels borrow this curve.` + (D.calib.some(c => !c.reached) ? " * Beyond what the rescans reached: the widest measured level is used." : "");
+}
+
+const ww = document.getElementById("ww"), M = D.margin;
+[["Position: density shared", M.density], ["Direction agrees (|cos|)", M.direction], ["Same dominant tract", M.dominant], ["Tract mix shared (1 − TV)", 1 - M.mix_tv], ["One streamline keeps its tract", M.streamline_keep]].forEach(([n, v]) => {
+  ww.insertAdjacentHTML("beforeend", `<div class="bar" style="grid-template-columns: minmax(0, 15ch) minmax(0, 1fr) 6ch"><span>${n}</span><span class="track"><span class="fill" style="width:${v * 100}%"></span></span><span class="num">${(v * 100).toFixed(0)}%</span></div>`);
+});
+draw();
+</script>
