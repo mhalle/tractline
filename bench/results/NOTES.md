@@ -3173,3 +3173,64 @@ Levels recalibrated leaving one pair out (presence ≥ 2):
   - A held-out subject: cIIIs04 (running, entry below when done) will test the presence calibration on a subject it was
     not fitted on.
   - The PAT16 report and both viewers still draw winner maps.
+
+## 2026-10-09 A held-out subject: the calibration holds on cIIIs04, and more runs help less after 13
+
+`ensemble_retest.py` with the new pair cIIIs04-2.1 (MASiVar cohort III, subject 04, 2.1 × 2.1 × 2.2 mm, b1000 ×40 +
+b2000 ×56, 16 forward b0s). The reference is s1Bx1 scan 1; its rescans are s1Bx1 scan 2 (same session), and s1Bx3 and
+s1Bx5 scan 1 (other sessions). Every scan has a 17-run ensemble (smooth signs, FWHM 4). 71 runs on the M2, all as
+compact records: 540 MB. `ensemble_coverage.py --maps presence --min-count 2` (with `--reps`, `--tag`) →
+`ensemble_coverage_smooth_presence2_with_cIIIs04.json` and `..._cIIIs04_R{5,9,13,17}.json`; `ensemble_where_which.py`
+now includes the pair.
+
+**Held out.** All four pairs are scored at R = 9; leaving one pair out, cIIIs04 is fitted on the three earlier pairs
+only (cIIIs01 ×2, cIs1), and it is a subject none of the maps saw.
+
+| cIIIs04, held out | as stated | recalibrated |
+|---|---|---|
+| streamline ECE (6 scorings) | 0.087 | isotonic on the other pairs 0.021; **PAT16's double-bootstrap map 0.0066** |
+| mean stated P(keep), observed 0.623 | 0.709 | isotonic 0.602; PAT16's map 0.629 |
+| voxel ECE (presence ≥ 2) | 0.038 | table on the other pairs 0.009 |
+| envelope coverage, target 0.8 | 0.73 (stated 0.8) | 0.84 (stated 0.925) |
+| envelope coverage, target 0.9 | 0.82 (stated 0.9) | 0.92 (the widest, 0.995) |
+
+Per rescan (A's ensemble scored on the rescan / the rescan's on A):
+
+| rescan | change | AUROC mixture / one run | ECE mixture as stated | coverage at stated 0.9 |
+|---|---|---|---|---|
+| same session | 35.4 % | 0.790 / 0.646 | 0.063 / 0.067 | 0.84 / 0.83 |
+| session 3 | 38.2 % | 0.773 / 0.638 | 0.091 / 0.091 | 0.82 / 0.82 |
+| session 5 | 39.7 % | 0.765 / 0.639 | 0.106 / 0.104 | 0.81 / 0.80 |
+
+- **The double bootstrap's map transfers to a second healthy subject.** It was fitted on PAT16 (Siemens, simulated
+  rescans only). On cIIIs04's real rescans its ECE is 0.0066, and its mean statement is within a point of the observed
+  keep rate. This is as on cIIIs01 (0.004–0.011, entry "The ensemble scored on real rescans"), and better than a map
+  fitted on MASiVar's own rescans.
+- **The presence-map envelope levels, fitted on the other pairs, hold on cIIIs04:** a target of 0.8 holds 0.84, 0.9
+  holds 0.92.
+- **As before, another session changes more than the same session** (35 → 38–40 %), and the as-stated ECE grows with
+  it.
+
+**More runs** (cIIIs04, presence ≥ 2, the first R runs of each 17-run ensemble; the 6 rescan scorings):
+
+| R | coverage at stated 0.5 / 0.8 / 0.9 | streamline ECE / AUROC (mixture) | voxel ECE | mean stated P(keep) |
+|---|---|---|---|---|
+| 5 | 0.45 / 0.70 / 0.79 | 0.112 / 0.754 | 0.069 | 0.734 |
+| 9 | 0.46 / 0.73 / 0.82 | 0.087 / 0.775 | 0.038 | 0.709 |
+| 13 | 0.47 / 0.74 / 0.83 | 0.077 / 0.784 | 0.028 | 0.700 |
+| 17 | 0.47 / 0.74 / 0.84 | 0.072 / 0.789 | 0.023 | 0.694 |
+
+- **Every measure improves with R, with most of the gain by R = 9–13.** From 13 to 17 runs: coverage +0.01, AUROC
+  +0.005, voxel ECE −0.005.
+- **The as-stated confidence falls with R toward the observed keep rate (0.62),** so a recalibration map belongs to
+  an R. The maps here were fitted at R = 9 (MASiVar) and R = 11 (PAT16's double bootstrap).
+
+**Where and which, on cIIIs04:**
+- The main named tract in an 8 mm sphere is the same on 90 % of spheres on the same-session rescan, 90 % on session
+  3, and 86 % on session 5 (replicate pairs 88 %).
+- The named mix moves by 0.07–0.08.
+- Density shared: 0.75–0.78 (all tracts) against 0.50–0.53 per tract.
+- Direction: |cos| 0.97.
+
+Caveats: three healthy subjects in all on one Philips scanner (MASiVar), one Siemens patient; R beyond 17 untested;
+no ground truth beyond reproducibility.

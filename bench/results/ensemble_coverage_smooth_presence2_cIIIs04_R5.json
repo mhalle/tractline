@@ -1,0 +1,1886 @@
+{
+ "flip": "smooth",
+ "maps": "presence",
+ "runs per ensemble": 5,
+ "min_count": 2,
+ "classes (voxel calibration, coverage)": "the 42 named tracts; Other excluded",
+ "pairs": {
+  "cIIIs04-2.1": {
+   "runs per ensemble": 5,
+   "rescans": {
+    "within": {
+     "A's ensemble, scored on the rescan": {
+      "matched": 0.8955,
+      "change_rate": 0.3542,
+      "mean stated P(keep)": {
+       "single run: labeler probability": 0.9407,
+       "ensemble: mixture": 0.7336,
+       "ensemble: vote fraction": 0.7521
+      },
+      "auroc predicting change": {
+       "single run: labeler probability": 0.646,
+       "ensemble: mixture": 0.7684,
+       "ensemble: vote fraction": 0.7474
+      },
+      "calibration": {
+       "single run: labeler probability": {
+        "brier": 0.3063,
+        "ece": 0.2921,
+        "bins": [
+         {
+          "bin": [
+           0,
+           0.5
+          ],
+          "n": 556,
+          "stated": 0.4354,
+          "observed": 0.2986
+         },
+         {
+          "bin": [
+           0.5,
+           0.7
+          ],
+          "n": 3657,
+          "stated": 0.6079,
+          "observed": 0.4217
+         },
+         {
+          "bin": [
+           0.7,
+           0.8
+          ],
+          "n": 2514,
+          "stated": 0.7528,
+          "observed": 0.4594
+         },
+         {
+          "bin": [
+           0.8,
+           0.9
+          ],
+          "n": 3852,
+          "stated": 0.8546,
+          "observed": 0.5044
+         },
+         {
+          "bin": [
+           0.9,
+           0.95
+          ],
+          "n": 3441,
+          "stated": 0.9279,
+          "observed": 0.5269
+         },
+         {
+          "bin": [
+           0.95,
+           0.99
+          ],
+          "n": 7702,
+          "stated": 0.9749,
+          "observed": 0.5863
+         },
+         {
+          "bin": [
+           0.99,
+           1.0
+          ],
+          "n": 35285,
+          "stated": 0.9987,
+          "observed": 0.7259
+         }
+        ]
+       },
+       "ensemble: mixture": {
+        "brier": 0.1911,
+        "ece": 0.0878,
+        "bins": [
+         {
+          "bin": [
+           0,
+           0.5
+          ],
+          "n": 12070,
+          "stated": 0.3277,
+          "observed": 0.3093
+         },
+         {
+          "bin": [
+           0.5,
+           0.7
+          ],
+          "n": 10282,
+          "stated": 0.6008,
+          "observed": 0.5291
+         },
+         {
+          "bin": [
+           0.7,
+           0.8
+          ],
+          "n": 7797,
+          "stated": 0.7658,
+          "observed": 0.6476
+         },
+         {
+          "bin": [
+           0.8,
+           0.9
+          ],
+          "n": 5994,
+          "stated": 0.8351,
+          "observed": 0.7481
+         },
+         {
+          "bin": [
+           0.9,
+           0.95
+          ],
+          "n": 2535,
+          "stated": 0.9272,
+          "observed": 0.7964
+         },
+         {
+          "bin": [
+           0.95,
+           0.99
+          ],
+          "n": 4565,
+          "stated": 0.9748,
+          "observed": 0.8173
+         },
+         {
+          "bin": [
+           0.99,
+           1.0
+          ],
+          "n": 14404,
+          "stated": 0.9983,
+          "observed": 0.8868
+         }
+        ]
+       },
+       "ensemble: vote fraction": {
+        "brier": 0.1997,
+        "ece": 0.1063,
+        "bins": [
+         {
+          "bin": [
+           0,
+           0.5
+          ],
+          "n": 10805,
+          "stated": 0.3213,
+          "observed": 0.3071
+         },
+         {
+          "bin": [
+           0.5,
+           0.7
+          ],
+          "n": 10503,
+          "stated": 0.5924,
+          "observed": 0.5117
+         },
+         {
+          "bin": [
+           0.7,
+           0.8
+          ],
+          "n": 1281,
+          "stated": 0.75,
+          "observed": 0.6105
+         },
+         {
+          "bin": [
+           0.8,
+           0.9
+          ],
+          "n": 11774,
+          "stated": 0.8,
+          "observed": 0.6778
+         },
+         {
+          "bin": [
+           0.99,
+           1.0
+          ],
+          "n": 23286,
+          "stated": 1.0,
+          "observed": 0.8494
+         }
+        ]
+       }
+      },
+      "voxels": {
+       "calibration: P(v, k) against the other run's map (P > 0)": {
+        "brier": 0.1641,
+        "ece": 0.0674,
+        "bins": [
+         {
+          "bin": [
+           0,
+           0.5
+          ],
+          "n": 160336,
+          "stated": 0.268,
+          "observed": 0.2303
+         },
+         {
+          "bin": [
+           0.5,
+           0.7
+          ],
+          "n": 40626,
+          "stated": 0.6,
+          "observed": 0.4993
+         },
+         {
+          "bin": [
+           0.8,
+           0.9
+          ],
+          "n": 39181,
+          "stated": 0.8,
+          "observed": 0.6802
+         },
+         {
+          "bin": [
+           0.99,
+           1.0
+          ],
+          "n": 96258,
+          "stated": 1.0,
+          "observed": 0.9185
+         }
+        ]
+       },
+       "envelope coverage (ensemble)": {
+        "0.5": 0.4597,
+        "0.7": 0.6333,
+        "0.8": 0.7178,
+        "0.9": 0.8039,
+        "0.95": 0.8464
+       },
+       "single run's tract covers the other's": 0.7015
+      }
+     },
+     "the rescan's ensemble, scored on A": {
+      "matched": 0.8969,
+      "change_rate": 0.3542,
+      "mean stated P(keep)": {
+       "single run: labeler probability": 0.9409,
+       "ensemble: mixture": 0.7378,
+       "ensemble: vote fraction": 0.7567
+      },
+      "auroc predicting change": {
+       "single run: labeler probability": 0.6385,
+       "ensemble: mixture": 0.7631,
+       "ensemble: vote fraction": 0.7436
+      },
+      "calibration": {
+       "single run: labeler probability": {
+        "brier": 0.3068,
+        "ece": 0.2922,
+        "bins": [
+         {
+          "bin": [
+           0,
+           0.5
+          ],
+          "n": 543,
+          "stated": 0.4404,
+          "observed": 0.2965
+         },
+         {
+          "bin": [
+           0.5,
+           0.7
+          ],
+          "n": 3723,
+          "stated": 0.6083,
+          "observed": 0.4244
+         },
+         {
+          "bin": [
+           0.7,
+           0.8
+          ],
+          "n": 2506,
+          "stated": 0.7526,
+          "observed": 0.4681
+         },
+         {
+          "bin": [
+           0.8,
+           0.9
+          ],
+          "n": 3712,
+          "stated": 0.8537,
+          "observed": 0.4935
+         },
+         {
+          "bin": [
+           0.9,
+           0.95
+          ],
+          "n": 3422,
+          "stated": 0.9281,
+          "observed": 0.5415
+         },
+         {
+          "bin": [
+           0.95,
+           0.99
+          ],
+          "n": 7628,
+          "stated": 0.9749,
+          "observed": 0.5869
+         },
+         {
+          "bin": [
+           0.99,
+           1.0
+          ],
+          "n": 35489,
+          "stated": 0.9987,
+          "observed": 0.724
+         }
+        ]
+       },
+       "ensemble: mixture": {
+        "brier": 0.1933,
+        "ece": 0.0919,
+        "bins": [
+         {
+          "bin": [
+           0,
+           0.5
+          ],
+          "n": 11738,
+          "stated": 0.3284,
+          "observed": 0.3067
+         },
+         {
+          "bin": [
+           0.5,
+           0.7
+          ],
+          "n": 10322,
+          "stated": 0.6016,
+          "observed": 0.5355
+         },
+         {
+          "bin": [
+           0.7,
+           0.8
+          ],
+          "n": 7635,
+          "stated": 0.7658,
+          "observed": 0.638
+         },
+         {
+          "bin": [
+           0.8,
+           0.9
+          ],
+          "n": 6088,
+          "stated": 0.8362,
+          "observed": 0.7397
+         },
+         {
+          "bin": [
+           0.9,
+           0.95
+          ],
+          "n": 2621,
+          "stated": 0.9265,
+          "observed": 0.7814
+         },
+         {
+          "bin": [
+           0.95,
+           0.99
+          ],
+          "n": 4621,
+          "stated": 0.9742,
+          "observed": 0.8295
+         },
+         {
+          "bin": [
+           0.99,
+           1.0
+          ],
+          "n": 14614,
+          "stated": 0.9983,
+          "observed": 0.8788
+         }
+        ]
+       },
+       "ensemble: vote fraction": {
+        "brier": 0.2022,
+        "ece": 0.1108,
+        "bins": [
+         {
+          "bin": [
+           0,
+           0.5
+          ],
+          "n": 10499,
+          "stated": 0.3206,
+          "observed": 0.3043
+         },
+         {
+          "bin": [
+           0.5,
+           0.7
+          ],
+          "n": 10423,
+          "stated": 0.5927,
+          "observed": 0.5142
+         },
+         {
+          "bin": [
+           0.7,
+           0.8
+          ],
+          "n": 1280,
+          "stated": 0.75,
+          "observed": 0.5969
+         },
+         {
+          "bin": [
+           0.8,
+           0.9
+          ],
+          "n": 11651,
+          "stated": 0.8,
+          "observed": 0.6702
+         },
+         {
+          "bin": [
+           0.99,
+           1.0
+          ],
+          "n": 23796,
+          "stated": 1.0,
+          "observed": 0.8449
+         }
+        ]
+       }
+      },
+      "voxels": {
+       "calibration: P(v, k) against the other run's map (P > 0)": {
+        "brier": 0.1636,
+        "ece": 0.0591,
+        "bins": [
+         {
+          "bin": [
+           0,
+           0.5
+          ],
+          "n": 159644,
+          "stated": 0.2679,
+          "observed": 0.238
+         },
+         {
+          "bin": [
+           0.5,
+           0.7
+          ],
+          "n": 40282,
+          "stated": 0.6,
+          "observed": 0.5173
+         },
+         {
+          "bin": [
+           0.8,
+           0.9
+          ],
+          "n": 38993,
+          "stated": 0.8,
+          "observed": 0.6923
+         },
+         {
+          "bin": [
+           0.99,
+           1.0
+          ],
+          "n": 95465,
+          "stated": 1.0,
+          "observed": 0.9218
+         }
+        ]
+       },
+       "envelope coverage (ensemble)": {
+        "0.5": 0.4517,
+        "0.7": 0.6237,
+        "0.8": 0.709,
+        "0.9": 0.7956,
+        "0.95": 0.8404
+       },
+       "single run's tract covers the other's": 0.6921
+      }
+     },
+     "between the two scans": {
+      "seeds: total variation, single runs (winners)": 0.3542,
+      "seeds: total variation, ensemble mixtures": 0.2686,
+      "tract maps: intersection, single runs (named tracts)": 0.5346,
+      "tract maps: intersection, ensembles (named tracts)": 0.634
+     }
+    },
+    "session3": {
+     "A's ensemble, scored on the rescan": {
+      "matched": 0.8907,
+      "change_rate": 0.3822,
+      "mean stated P(keep)": {
+       "single run: labeler probability": 0.9406,
+       "ensemble: mixture": 0.7336,
+       "ensemble: vote fraction": 0.7522
+      },
+      "auroc predicting change": {
+       "single run: labeler probability": 0.6376,
+       "ensemble: mixture": 0.7515,
+       "ensemble: vote fraction": 0.7304
+      },
+      "calibration": {
+       "single run: labeler probability": {
+        "brier": 0.3318,
+        "ece": 0.3199,
+        "bins": [
+         {
+          "bin": [
+           0,
+           0.5
+          ],
+          "n": 560,
+          "stated": 0.4366,
+          "observed": 0.2482
+         },
+         {
+          "bin": [
+           0.5,
+           0.7
+          ],
+          "n": 3657,
+          "stated": 0.6081,
+          "observed": 0.4055
+         },
+         {
+          "bin": [
+           0.7,
+           0.8
+          ],
+          "n": 2490,
+          "stated": 0.7531,
+          "observed": 0.4586
+         },
+         {
+          "bin": [
+           0.8,
+           0.9
+          ],
+          "n": 3854,
+          "stated": 0.8545,
+          "observed": 0.4694
+         },
+         {
+          "bin": [
+           0.9,
+           0.95
+          ],
+          "n": 3422,
+          "stated": 0.9278,
+          "observed": 0.5041
+         },
+         {
+          "bin": [
+           0.95,
+           0.99
+          ],
+          "n": 7658,
+          "stated": 0.9749,
+          "observed": 0.5562
+         },
+         {
+          "bin": [
+           0.99,
+           1.0
+          ],
+          "n": 35053,
+          "stated": 0.9987,
+          "observed": 0.6957
+         }
+        ]
+       },
+       "ensemble: mixture": {
+        "brier": 0.2085,
+        "ece": 0.1158,
+        "bins": [
+         {
+          "bin": [
+           0,
+           0.5
+          ],
+          "n": 12030,
+          "stated": 0.3279,
+          "observed": 0.2995
+         },
+         {
+          "bin": [
+           0.5,
+           0.7
+          ],
+          "n": 10205,
+          "stated": 0.6008,
+          "observed": 0.504
+         },
+         {
+          "bin": [
+           0.7,
+           0.8
+          ],
+          "n": 7723,
+          "stated": 0.7659,
+          "observed": 0.6009
+         },
+         {
+          "bin": [
+           0.8,
+           0.9
+          ],
+          "n": 5973,
+          "stated": 0.8354,
+          "observed": 0.7171
+         },
+         {
+          "bin": [
+           0.9,
+           0.95
+          ],
+          "n": 2553,
+          "stated": 0.9272,
+          "observed": 0.7646
+         },
+         {
+          "bin": [
+           0.95,
+           0.99
+          ],
+          "n": 4563,
+          "stated": 0.9748,
+          "observed": 0.7861
+         },
+         {
+          "bin": [
+           0.99,
+           1.0
+          ],
+          "n": 14292,
+          "stated": 0.9983,
+          "observed": 0.8546
+         }
+        ]
+       },
+       "ensemble: vote fraction": {
+        "brier": 0.2186,
+        "ece": 0.1344,
+        "bins": [
+         {
+          "bin": [
+           0,
+           0.5
+          ],
+          "n": 10756,
+          "stated": 0.3211,
+          "observed": 0.2995
+         },
+         {
+          "bin": [
+           0.5,
+           0.7
+          ],
+          "n": 10449,
+          "stated": 0.592,
+          "observed": 0.4865
+         },
+         {
+          "bin": [
+           0.7,
+           0.8
+          ],
+          "n": 1244,
+          "stated": 0.75,
+          "observed": 0.5667
+         },
+         {
+          "bin": [
+           0.8,
+           0.9
+          ],
+          "n": 11676,
+          "stated": 0.8,
+          "observed": 0.6386
+         },
+         {
+          "bin": [
+           0.99,
+           1.0
+          ],
+          "n": 23216,
+          "stated": 1.0,
+          "observed": 0.8167
+         }
+        ]
+       }
+      },
+      "voxels": {
+       "calibration: P(v, k) against the other run's map (P > 0)": {
+        "brier": 0.17,
+        "ece": 0.0649,
+        "bins": [
+         {
+          "bin": [
+           0,
+           0.5
+          ],
+          "n": 160336,
+          "stated": 0.268,
+          "observed": 0.2425
+         },
+         {
+          "bin": [
+           0.5,
+           0.7
+          ],
+          "n": 40626,
+          "stated": 0.6,
+          "observed": 0.5019
+         },
+         {
+          "bin": [
+           0.8,
+           0.9
+          ],
+          "n": 39181,
+          "stated": 0.8,
+          "observed": 0.6713
+         },
+         {
+          "bin": [
+           0.99,
+           1.0
+          ],
+          "n": 96258,
+          "stated": 1.0,
+          "observed": 0.9093
+         }
+        ]
+       },
+       "envelope coverage (ensemble)": {
+        "0.5": 0.444,
+        "0.7": 0.6123,
+        "0.8": 0.696,
+        "0.9": 0.7826,
+        "0.95": 0.8285
+       },
+       "single run's tract covers the other's": 0.6805
+      }
+     },
+     "the rescan's ensemble, scored on A": {
+      "matched": 0.8852,
+      "change_rate": 0.3822,
+      "mean stated P(keep)": {
+       "single run: labeler probability": 0.9411,
+       "ensemble: mixture": 0.7327,
+       "ensemble: vote fraction": 0.7513
+      },
+      "auroc predicting change": {
+       "single run: labeler probability": 0.639,
+       "ensemble: mixture": 0.7514,
+       "ensemble: vote fraction": 0.7303
+      },
+      "calibration": {
+       "single run: labeler probability": {
+        "brier": 0.3315,
+        "ece": 0.3199,
+        "bins": [
+         {
+          "bin": [
+           0,
+           0.5
+          ],
+          "n": 615,
+          "stated": 0.442,
+          "observed": 0.2455
+         },
+         {
+          "bin": [
+           0.5,
+           0.7
+          ],
+          "n": 3534,
+          "stated": 0.6089,
+          "observed": 0.3933
+         },
+         {
+          "bin": [
+           0.7,
+           0.8
+          ],
+          "n": 2487,
+          "stated": 0.7523,
+          "observed": 0.4483
+         },
+         {
+          "bin": [
+           0.8,
+           0.9
+          ],
+          "n": 3807,
+          "stated": 0.8547,
+          "observed": 0.4752
+         },
+         {
+          "bin": [
+           0.9,
+           0.95
+          ],
+          "n": 3416,
+          "stated": 0.9278,
+          "observed": 0.5152
+         },
+         {
+          "bin": [
+           0.95,
+           0.99
+          ],
+          "n": 7579,
+          "stated": 0.9751,
+          "observed": 0.5462
+         },
+         {
+          "bin": [
+           0.99,
+           1.0
+          ],
+          "n": 35265,
+          "stated": 0.9987,
+          "observed": 0.6981
+         }
+        ]
+       },
+       "ensemble: mixture": {
+        "brier": 0.2077,
+        "ece": 0.1149,
+        "bins": [
+         {
+          "bin": [
+           0,
+           0.5
+          ],
+          "n": 11999,
+          "stated": 0.3284,
+          "observed": 0.293
+         },
+         {
+          "bin": [
+           0.5,
+           0.7
+          ],
+          "n": 10470,
+          "stated": 0.6015,
+          "observed": 0.5125
+         },
+         {
+          "bin": [
+           0.7,
+           0.8
+          ],
+          "n": 7545,
+          "stated": 0.7662,
+          "observed": 0.6114
+         },
+         {
+          "bin": [
+           0.8,
+           0.9
+          ],
+          "n": 6067,
+          "stated": 0.8349,
+          "observed": 0.7114
+         },
+         {
+          "bin": [
+           0.9,
+           0.95
+          ],
+          "n": 2623,
+          "stated": 0.9269,
+          "observed": 0.761
+         },
+         {
+          "bin": [
+           0.95,
+           0.99
+          ],
+          "n": 4551,
+          "stated": 0.9745,
+          "observed": 0.7926
+         },
+         {
+          "bin": [
+           0.99,
+           1.0
+          ],
+          "n": 14081,
+          "stated": 0.9983,
+          "observed": 0.8528
+         }
+        ]
+       },
+       "ensemble: vote fraction": {
+        "brier": 0.2181,
+        "ece": 0.1335,
+        "bins": [
+         {
+          "bin": [
+           0,
+           0.5
+          ],
+          "n": 10707,
+          "stated": 0.3215,
+          "observed": 0.2934
+         },
+         {
+          "bin": [
+           0.5,
+           0.7
+          ],
+          "n": 10666,
+          "stated": 0.5928,
+          "observed": 0.4944
+         },
+         {
+          "bin": [
+           0.7,
+           0.8
+          ],
+          "n": 1192,
+          "stated": 0.75,
+          "observed": 0.5755
+         },
+         {
+          "bin": [
+           0.8,
+           0.9
+          ],
+          "n": 11776,
+          "stated": 0.8,
+          "observed": 0.6418
+         },
+         {
+          "bin": [
+           0.99,
+           1.0
+          ],
+          "n": 23000,
+          "stated": 1.0,
+          "observed": 0.816
+         }
+        ]
+       }
+      },
+      "voxels": {
+       "calibration: P(v, k) against the other run's map (P > 0)": {
+        "brier": 0.17,
+        "ece": 0.0723,
+        "bins": [
+         {
+          "bin": [
+           0,
+           0.5
+          ],
+          "n": 163431,
+          "stated": 0.2684,
+          "observed": 0.2324
+         },
+         {
+          "bin": [
+           0.5,
+           0.7
+          ],
+          "n": 41877,
+          "stated": 0.6,
+          "observed": 0.4957
+         },
+         {
+          "bin": [
+           0.8,
+           0.9
+          ],
+          "n": 39733,
+          "stated": 0.8,
+          "observed": 0.6625
+         },
+         {
+          "bin": [
+           0.99,
+           1.0
+          ],
+          "n": 96642,
+          "stated": 1.0,
+          "observed": 0.9072
+         }
+        ]
+       },
+       "envelope coverage (ensemble)": {
+        "0.5": 0.4522,
+        "0.7": 0.6213,
+        "0.8": 0.7054,
+        "0.9": 0.7902,
+        "0.95": 0.8348
+       },
+       "single run's tract covers the other's": 0.6877
+      }
+     },
+     "between the two scans": {
+      "seeds: total variation, single runs (winners)": 0.3822,
+      "seeds: total variation, ensemble mixtures": 0.2936,
+      "tract maps: intersection, single runs (named tracts)": 0.5199,
+      "tract maps: intersection, ensembles (named tracts)": 0.6154
+     }
+    },
+    "session5": {
+     "A's ensemble, scored on the rescan": {
+      "matched": 0.8679,
+      "change_rate": 0.3966,
+      "mean stated P(keep)": {
+       "single run: labeler probability": 0.9408,
+       "ensemble: mixture": 0.7343,
+       "ensemble: vote fraction": 0.7528
+      },
+      "auroc predicting change": {
+       "single run: labeler probability": 0.6387,
+       "ensemble: mixture": 0.7449,
+       "ensemble: vote fraction": 0.7226
+      },
+      "calibration": {
+       "single run: labeler probability": {
+        "brier": 0.3445,
+        "ece": 0.3343,
+        "bins": [
+         {
+          "bin": [
+           0,
+           0.5
+          ],
+          "n": 535,
+          "stated": 0.436,
+          "observed": 0.2636
+         },
+         {
+          "bin": [
+           0.5,
+           0.7
+          ],
+          "n": 3546,
+          "stated": 0.6078,
+          "observed": 0.3869
+         },
+         {
+          "bin": [
+           0.7,
+           0.8
+          ],
+          "n": 2431,
+          "stated": 0.7528,
+          "observed": 0.4307
+         },
+         {
+          "bin": [
+           0.8,
+           0.9
+          ],
+          "n": 3725,
+          "stated": 0.8545,
+          "observed": 0.4556
+         },
+         {
+          "bin": [
+           0.9,
+           0.95
+          ],
+          "n": 3302,
+          "stated": 0.9278,
+          "observed": 0.4873
+         },
+         {
+          "bin": [
+           0.95,
+           0.99
+          ],
+          "n": 7460,
+          "stated": 0.9749,
+          "observed": 0.5385
+         },
+         {
+          "bin": [
+           0.99,
+           1.0
+          ],
+          "n": 34255,
+          "stated": 0.9987,
+          "observed": 0.6828
+         }
+        ]
+       },
+       "ensemble: mixture": {
+        "brier": 0.2171,
+        "ece": 0.131,
+        "bins": [
+         {
+          "bin": [
+           0,
+           0.5
+          ],
+          "n": 11692,
+          "stated": 0.3275,
+          "observed": 0.2893
+         },
+         {
+          "bin": [
+           0.5,
+           0.7
+          ],
+          "n": 9875,
+          "stated": 0.601,
+          "observed": 0.4935
+         },
+         {
+          "bin": [
+           0.7,
+           0.8
+          ],
+          "n": 7527,
+          "stated": 0.766,
+          "observed": 0.584
+         },
+         {
+          "bin": [
+           0.8,
+           0.9
+          ],
+          "n": 5838,
+          "stated": 0.8352,
+          "observed": 0.7021
+         },
+         {
+          "bin": [
+           0.9,
+           0.95
+          ],
+          "n": 2520,
+          "stated": 0.9271,
+          "observed": 0.7317
+         },
+         {
+          "bin": [
+           0.95,
+           0.99
+          ],
+          "n": 4408,
+          "stated": 0.9748,
+          "observed": 0.762
+         },
+         {
+          "bin": [
+           0.99,
+           1.0
+          ],
+          "n": 14015,
+          "stated": 0.9983,
+          "observed": 0.8391
+         }
+        ]
+       },
+       "ensemble: vote fraction": {
+        "brier": 0.2281,
+        "ece": 0.1494,
+        "bins": [
+         {
+          "bin": [
+           0,
+           0.5
+          ],
+          "n": 10471,
+          "stated": 0.3213,
+          "observed": 0.2884
+         },
+         {
+          "bin": [
+           0.5,
+           0.7
+          ],
+          "n": 10113,
+          "stated": 0.5926,
+          "observed": 0.4766
+         },
+         {
+          "bin": [
+           0.7,
+           0.8
+          ],
+          "n": 1182,
+          "stated": 0.75,
+          "observed": 0.5719
+         },
+         {
+          "bin": [
+           0.8,
+           0.9
+          ],
+          "n": 11457,
+          "stated": 0.8,
+          "observed": 0.6226
+         },
+         {
+          "bin": [
+           0.99,
+           1.0
+          ],
+          "n": 22652,
+          "stated": 1.0,
+          "observed": 0.7975
+         }
+        ]
+       }
+      },
+      "voxels": {
+       "calibration: P(v, k) against the other run's map (P > 0)": {
+        "brier": 0.1767,
+        "ece": 0.0807,
+        "bins": [
+         {
+          "bin": [
+           0,
+           0.5
+          ],
+          "n": 160336,
+          "stated": 0.268,
+          "observed": 0.2334
+         },
+         {
+          "bin": [
+           0.5,
+           0.7
+          ],
+          "n": 40626,
+          "stated": 0.6,
+          "observed": 0.4806
+         },
+         {
+          "bin": [
+           0.8,
+           0.9
+          ],
+          "n": 39181,
+          "stated": 0.8,
+          "observed": 0.6431
+         },
+         {
+          "bin": [
+           0.99,
+           1.0
+          ],
+          "n": 96258,
+          "stated": 1.0,
+          "observed": 0.8896
+         }
+        ]
+       },
+       "envelope coverage (ensemble)": {
+        "0.5": 0.4445,
+        "0.7": 0.6101,
+        "0.8": 0.6916,
+        "0.9": 0.7767,
+        "0.95": 0.8224
+       },
+       "single run's tract covers the other's": 0.675
+      }
+     },
+     "the rescan's ensemble, scored on A": {
+      "matched": 0.8706,
+      "change_rate": 0.3966,
+      "mean stated P(keep)": {
+       "single run: labeler probability": 0.9401,
+       "ensemble: mixture": 0.7338,
+       "ensemble: vote fraction": 0.7527
+      },
+      "auroc predicting change": {
+       "single run: labeler probability": 0.6385,
+       "ensemble: mixture": 0.7434,
+       "ensemble: vote fraction": 0.7214
+      },
+      "calibration": {
+       "single run: labeler probability": {
+        "brier": 0.3441,
+        "ece": 0.3343,
+        "bins": [
+         {
+          "bin": [
+           0,
+           0.5
+          ],
+          "n": 608,
+          "stated": 0.4397,
+          "observed": 0.2434
+         },
+         {
+          "bin": [
+           0.5,
+           0.7
+          ],
+          "n": 3478,
+          "stated": 0.6073,
+          "observed": 0.387
+         },
+         {
+          "bin": [
+           0.7,
+           0.8
+          ],
+          "n": 2494,
+          "stated": 0.7517,
+          "observed": 0.4334
+         },
+         {
+          "bin": [
+           0.8,
+           0.9
+          ],
+          "n": 3671,
+          "stated": 0.8537,
+          "observed": 0.4647
+         },
+         {
+          "bin": [
+           0.9,
+           0.95
+          ],
+          "n": 3463,
+          "stated": 0.9271,
+          "observed": 0.4938
+         },
+         {
+          "bin": [
+           0.95,
+           0.99
+          ],
+          "n": 7506,
+          "stated": 0.9752,
+          "observed": 0.5334
+         },
+         {
+          "bin": [
+           0.99,
+           1.0
+          ],
+          "n": 34126,
+          "stated": 0.9987,
+          "observed": 0.6836
+         }
+        ]
+       },
+       "ensemble: mixture": {
+        "brier": 0.2177,
+        "ece": 0.1304,
+        "bins": [
+         {
+          "bin": [
+           0,
+           0.5
+          ],
+          "n": 11709,
+          "stated": 0.3268,
+          "observed": 0.2896
+         },
+         {
+          "bin": [
+           0.5,
+           0.7
+          ],
+          "n": 9968,
+          "stated": 0.6018,
+          "observed": 0.4921
+         },
+         {
+          "bin": [
+           0.7,
+           0.8
+          ],
+          "n": 7428,
+          "stated": 0.7661,
+          "observed": 0.5977
+         },
+         {
+          "bin": [
+           0.8,
+           0.9
+          ],
+          "n": 5787,
+          "stated": 0.8359,
+          "observed": 0.6896
+         },
+         {
+          "bin": [
+           0.9,
+           0.95
+          ],
+          "n": 2623,
+          "stated": 0.9261,
+          "observed": 0.7278
+         },
+         {
+          "bin": [
+           0.95,
+           0.99
+          ],
+          "n": 4509,
+          "stated": 0.974,
+          "observed": 0.7687
+         },
+         {
+          "bin": [
+           0.99,
+           1.0
+          ],
+          "n": 13846,
+          "stated": 0.9983,
+          "observed": 0.8382
+         }
+        ]
+       },
+       "ensemble: vote fraction": {
+        "brier": 0.2288,
+        "ece": 0.1493,
+        "bins": [
+         {
+          "bin": [
+           0,
+           0.5
+          ],
+          "n": 10414,
+          "stated": 0.3202,
+          "observed": 0.2924
+         },
+         {
+          "bin": [
+           0.5,
+           0.7
+          ],
+          "n": 10249,
+          "stated": 0.5923,
+          "observed": 0.475
+         },
+         {
+          "bin": [
+           0.7,
+           0.8
+          ],
+          "n": 1209,
+          "stated": 0.75,
+          "observed": 0.5831
+         },
+         {
+          "bin": [
+           0.8,
+           0.9
+          ],
+          "n": 11294,
+          "stated": 0.8,
+          "observed": 0.6186
+         },
+         {
+          "bin": [
+           0.99,
+           1.0
+          ],
+          "n": 22709,
+          "stated": 1.0,
+          "observed": 0.7974
+         }
+        ]
+       }
+      },
+      "voxels": {
+       "calibration: P(v, k) against the other run's map (P > 0)": {
+        "brier": 0.1749,
+        "ece": 0.07,
+        "bins": [
+         {
+          "bin": [
+           0,
+           0.5
+          ],
+          "n": 160769,
+          "stated": 0.2685,
+          "observed": 0.242
+         },
+         {
+          "bin": [
+           0.5,
+           0.7
+          ],
+          "n": 40509,
+          "stated": 0.6,
+          "observed": 0.4987
+         },
+         {
+          "bin": [
+           0.8,
+           0.9
+          ],
+          "n": 38790,
+          "stated": 0.8,
+          "observed": 0.662
+         },
+         {
+          "bin": [
+           0.99,
+           1.0
+          ],
+          "n": 93636,
+          "stated": 1.0,
+          "observed": 0.8968
+         }
+        ]
+       },
+       "envelope coverage (ensemble)": {
+        "0.5": 0.4347,
+        "0.7": 0.5998,
+        "0.8": 0.6836,
+        "0.9": 0.768,
+        "0.95": 0.8132
+       },
+       "single run's tract covers the other's": 0.6652
+      }
+     },
+     "between the two scans": {
+      "seeds: total variation, single runs (winners)": 0.3966,
+      "seeds: total variation, ensemble mixtures": 0.3092,
+      "tract maps: intersection, single runs (named tracts)": 0.5038,
+      "tract maps: intersection, ensembles (named tracts)": 0.5958
+     }
+    }
+   },
+   "A, held-out replicate (centered)": {
+    "matched": 0.9224,
+    "change_rate": 0.32,
+    "mean stated P(keep)": {
+     "single run: labeler probability": 0.9406,
+     "ensemble: mixture": 0.7475,
+     "ensemble: vote fraction": 0.7689
+    },
+    "auroc predicting change": {
+     "single run: labeler probability": 0.6469,
+     "ensemble: mixture": 0.7677,
+     "ensemble: vote fraction": 0.7406
+    },
+    "calibration": {
+     "single run: labeler probability": {
+      "brier": 0.275,
+      "ece": 0.2582,
+      "bins": [
+       {
+        "bin": [
+         0,
+         0.5
+        ],
+        "n": 572,
+        "stated": 0.4377,
+        "observed": 0.2902
+       },
+       {
+        "bin": [
+         0.5,
+         0.7
+        ],
+        "n": 3774,
+        "stated": 0.6081,
+        "observed": 0.4372
+       },
+       {
+        "bin": [
+         0.7,
+         0.8
+        ],
+        "n": 2580,
+        "stated": 0.7527,
+        "observed": 0.5
+       },
+       {
+        "bin": [
+         0.8,
+         0.9
+        ],
+        "n": 4002,
+        "stated": 0.8547,
+        "observed": 0.538
+       },
+       {
+        "bin": [
+         0.9,
+         0.95
+        ],
+        "n": 3579,
+        "stated": 0.9279,
+        "observed": 0.5703
+       },
+       {
+        "bin": [
+         0.95,
+         0.99
+        ],
+        "n": 7929,
+        "stated": 0.9749,
+        "observed": 0.6282
+       },
+       {
+        "bin": [
+         0.99,
+         1.0
+        ],
+        "n": 36286,
+        "stated": 0.9987,
+        "observed": 0.7602
+       }
+      ]
+     },
+     "ensemble: mixture": {
+      "brier": 0.1815,
+      "ece": 0.0679,
+      "bins": [
+       {
+        "bin": [
+         0,
+         0.5
+        ],
+        "n": 12602,
+        "stated": 0.3511,
+        "observed": 0.3519
+       },
+       {
+        "bin": [
+         0.5,
+         0.7
+        ],
+        "n": 8527,
+        "stated": 0.5961,
+        "observed": 0.5636
+       },
+       {
+        "bin": [
+         0.7,
+         0.8
+        ],
+        "n": 9767,
+        "stated": 0.748,
+        "observed": 0.6875
+       },
+       {
+        "bin": [
+         0.8,
+         0.9
+        ],
+        "n": 3748,
+        "stated": 0.8508,
+        "observed": 0.7511
+       },
+       {
+        "bin": [
+         0.9,
+         0.95
+        ],
+        "n": 2712,
+        "stated": 0.9271,
+        "observed": 0.8005
+       },
+       {
+        "bin": [
+         0.95,
+         0.99
+        ],
+        "n": 5080,
+        "stated": 0.9749,
+        "observed": 0.8325
+       },
+       {
+        "bin": [
+         0.99,
+         1.0
+        ],
+        "n": 16934,
+        "stated": 0.9984,
+        "observed": 0.8974
+       }
+      ]
+     },
+     "ensemble: vote fraction": {
+      "brier": 0.1907,
+      "ece": 0.0954,
+      "bins": [
+       {
+        "bin": [
+         0,
+         0.5
+        ],
+        "n": 6441,
+        "stated": 0.263,
+        "observed": 0.2928
+       },
+       {
+        "bin": [
+         0.5,
+         0.7
+        ],
+        "n": 11552,
+        "stated": 0.5222,
+        "observed": 0.4869
+       },
+       {
+        "bin": [
+         0.7,
+         0.8
+        ],
+        "n": 13828,
+        "stated": 0.75,
+        "observed": 0.6668
+       },
+       {
+        "bin": [
+         0.99,
+         1.0
+        ],
+        "n": 27559,
+        "stated": 1.0,
+        "observed": 0.858
+       }
+      ]
+     }
+    },
+    "voxels": {
+     "calibration: P(v, k) against the other run's map (P > 0)": {
+      "brier": 0.1638,
+      "ece": 0.0712,
+      "bins": [
+       {
+        "bin": [
+         0,
+         0.5
+        ],
+        "n": 105342,
+        "stated": 0.25,
+        "observed": 0.2061
+       },
+       {
+        "bin": [
+         0.5,
+         0.7
+        ],
+        "n": 56819,
+        "stated": 0.5,
+        "observed": 0.4232
+       },
+       {
+        "bin": [
+         0.7,
+         0.8
+        ],
+        "n": 47176,
+        "stated": 0.75,
+        "observed": 0.6486
+       },
+       {
+        "bin": [
+         0.99,
+         1.0
+        ],
+        "n": 104843,
+        "stated": 1.0,
+        "observed": 0.9181
+       }
+      ]
+     },
+     "envelope coverage (ensemble)": {
+      "0.5": 0.457,
+      "0.7": 0.6319,
+      "0.8": 0.7161,
+      "0.9": 0.801,
+      "0.95": 0.8429
+     },
+     "single run's tract covers the other's": 0.7174
+    }
+   }
+  }
+ },
+ "summary": {
+  "rescan": {
+   "scorings": 6,
+   "change_rate": 0.3777,
+   "mean stated P(keep)": {
+    "single run: labeler probability": 0.9407,
+    "ensemble: mixture": 0.7343,
+    "ensemble: vote fraction": 0.753
+   },
+   "auroc": {
+    "single run: labeler probability": 0.6397,
+    "ensemble: mixture": 0.7538,
+    "ensemble: vote fraction": 0.7326
+   },
+   "ece": {
+    "single run: labeler probability": 0.3155,
+    "ensemble: mixture": 0.112,
+    "ensemble: vote fraction": 0.1306
+   },
+   "voxel ece": 0.0691,
+   "envelope coverage": {
+    "0.5": 0.4478,
+    "0.7": 0.6168,
+    "0.8": 0.7006,
+    "0.9": 0.7862,
+    "0.95": 0.8309
+   },
+   "single run's tract covers the other's": 0.6837
+  },
+  "held-out replicate": {
+   "scorings": 1,
+   "change_rate": 0.32,
+   "mean stated P(keep)": {
+    "single run: labeler probability": 0.9406,
+    "ensemble: mixture": 0.7475,
+    "ensemble: vote fraction": 0.7689
+   },
+   "auroc": {
+    "single run: labeler probability": 0.6469,
+    "ensemble: mixture": 0.7677,
+    "ensemble: vote fraction": 0.7406
+   },
+   "ece": {
+    "single run: labeler probability": 0.2582,
+    "ensemble: mixture": 0.0679,
+    "ensemble: vote fraction": 0.0954
+   },
+   "voxel ece": 0.0712,
+   "envelope coverage": {
+    "0.5": 0.457,
+    "0.7": 0.6319,
+    "0.8": 0.7161,
+    "0.9": 0.801,
+    "0.95": 0.8429
+   },
+   "single run's tract covers the other's": 0.7174
+  }
+ }
+}

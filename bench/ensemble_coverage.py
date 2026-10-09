@@ -3,8 +3,8 @@
     uv run --group dipy bench/ensemble_coverage.py [--pairs cIIIs01-2.5 cIIIs01-2.1 cIs1] [--flip smooth]
 
 From ensemble_retest.py's records (DATA/ensemble/<subject>/retest/<pair>/); no pipeline runs. Each scan of a pair
-has an ensemble on the reference's grid: the reference A with <flip>/r001..r008, and each rescan <tag>_onA with
-<flip>/<tag>_r001..r008 (`ensemble_retest.py rescans`). Each ensemble is scored against the other scan's single run,
+has an ensemble on the reference's grid: the reference A with <flip>/r001.. (--reps of them, 8 by default), and each
+rescan <tag>_onA with <flip>/<tag>_r001.. (`ensemble_retest.py rescans`). Each ensemble is scored against the other scan's single run,
 in both directions (A's ensemble against the rescan, the rescan's against A), and against a held-out replicate of its
 own (the bootstrap's centered scoring, for contrast).
 
@@ -185,19 +185,20 @@ def recalibrate(rows, groups, flip):
 
 
 def main(args):
-    res = {"flip": args.flip, "maps": args.maps, **({"min_count": args.min_count} if args.maps == "presence" else {}),
+    res = {"flip": args.flip, "maps": args.maps, "runs per ensemble": args.reps + 1, **({"min_count": args.min_count} if args.maps == "presence" else {}),
            "classes (voxel calibration, coverage)": "the 42 named tracts; Other excluded", "pairs": {}}
     pooled = {"rescan": [], "held-out replicate": []}
     groups = []
     for pair in args.pairs:
         d = DATA / "ensemble" / PAIRS[pair][0] / "retest" / pair
         rescans = PAIRS[pair][2]
-        reps = lambda prefix, n=8: [d / args.flip / f"{prefix}r{r:03d}.npz" for r in range(1, n + 1)]  # noqa: E731
+        reps = lambda prefix, n=args.reps: [d / args.flip / f"{prefix}r{r:03d}.npz" for r in range(1, n + 1)]  # noqa: E731
         A = Ensemble([d / "A.npz"] + reps(""), args.maps, args.min_count)
-        A7 = Ensemble([d / "A.npz"] + reps("", 7), args.maps, args.min_count)
+        A7 = Ensemble([d / "A.npz"] + reps("", args.reps - 1), args.maps, args.min_count)
+        held = d / args.flip / f"r{args.reps:03d}.npz"
         row = {"runs per ensemble": A.runs, "rescans": {}}
-        row["A, held-out replicate r008 (centered)"] = score(A7, *winners(d / args.flip / "r008.npz", args.maps, args.min_count))
-        pooled["held-out replicate"].append(row["A, held-out replicate r008 (centered)"])
+        row["A, held-out replicate (centered)"] = score(A7, *winners(held, args.maps, args.min_count))
+        pooled["held-out replicate"].append(row["A, held-out replicate (centered)"])
         for tag in rescans:
             paths = [d / f"{tag}_onA.npz"] + reps(f"{tag}_")
             if not all(p.exists() for p in paths):
@@ -238,7 +239,7 @@ def main(args):
     for rows in pooled.values():
         for r in rows:
             r.pop("_arrays", None)
-    name = args.flip if args.maps == "winner" else f"{args.flip}_presence{args.min_count}"
+    name = (args.flip if args.maps == "winner" else f"{args.flip}_presence{args.min_count}") + (f"_{args.tag}" if args.tag else "")
     Path(str(OUT).format(name)).write_text(json.dumps(res, indent=1))
     print(json.dumps(summ, indent=1))
 
@@ -251,4 +252,6 @@ if __name__ == "__main__":
                     help="a run's voxel map: each voxel's densest class (tracts exclude each other), or every tract with "
                          "--min-count streamlines there (overlaps allowed: the rank field's classes above NONE)")
     ap.add_argument("--min-count", type=int, default=2)
+    ap.add_argument("--reps", type=int, default=8, help="replicates per ensemble (R = reps + 1); the last is held out for the centered scoring")
+    ap.add_argument("--tag", default="", help="appended to the results' file name (e.g. cIIIs04_R9)")
     main(ap.parse_args())

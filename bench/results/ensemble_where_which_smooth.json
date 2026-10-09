@@ -305,42 +305,194 @@
    "spheres: Other: dominant in the first run's spheres": 0.9942
   }
  },
+ "cIIIs04-2.1": {
+  "rescan": {
+   "within": {
+    "brain": {
+     "where: density intersection (all tracts)": 0.7827,
+     "where: direction agreement |cos|": 0.9743,
+     "which: density intersection per tract (named, mass-weighted)": 0.5323
+    },
+    "spheres": {
+     "n": 300,
+     "where: density intersection (quartiles)": [
+      0.7724,
+      0.8071,
+      0.8417
+     ],
+     "where: direction |cos| (quartiles)": [
+      0.9554,
+      0.9724,
+      0.9833
+     ],
+     "which, named tracts (Other excluded): composition total variation (quartiles)": [
+      0.0469,
+      0.0681,
+      0.0898
+     ],
+     "which, named tracts (Other excluded): same dominant tract": 0.9033,
+     "which, with Other: composition total variation (quartiles)": [
+      0.0272,
+      0.0371,
+      0.0481
+     ],
+     "which, with Other: same dominant class": 0.9867,
+     "Other: share of a sphere's streamlines (quartiles)": [
+      0.5062,
+      0.5815,
+      0.7059
+     ],
+     "Other: dominant in the first run's spheres": 0.9767
+    }
+   },
+   "session3": {
+    "brain": {
+     "where: density intersection (all tracts)": 0.7687,
+     "where: direction agreement |cos|": 0.971,
+     "which: density intersection per tract (named, mass-weighted)": 0.5153
+    },
+    "spheres": {
+     "n": 300,
+     "where: density intersection (quartiles)": [
+      0.7545,
+      0.7926,
+      0.8271
+     ],
+     "where: direction |cos| (quartiles)": [
+      0.95,
+      0.9675,
+      0.9792
+     ],
+     "which, named tracts (Other excluded): composition total variation (quartiles)": [
+      0.0602,
+      0.0788,
+      0.1055
+     ],
+     "which, named tracts (Other excluded): same dominant tract": 0.9,
+     "which, with Other: composition total variation (quartiles)": [
+      0.0341,
+      0.0449,
+      0.0578
+     ],
+     "which, with Other: same dominant class": 0.9867,
+     "Other: share of a sphere's streamlines (quartiles)": [
+      0.5005,
+      0.5782,
+      0.6979
+     ],
+     "Other: dominant in the first run's spheres": 0.9767
+    }
+   },
+   "session5": {
+    "brain": {
+     "where: density intersection (all tracts)": 0.7489,
+     "where: direction agreement |cos|": 0.9666,
+     "which: density intersection per tract (named, mass-weighted)": 0.4963
+    },
+    "spheres": {
+     "n": 300,
+     "where: density intersection (quartiles)": [
+      0.7215,
+      0.7763,
+      0.8218
+     ],
+     "where: direction |cos| (quartiles)": [
+      0.9447,
+      0.9636,
+      0.9761
+     ],
+     "which, named tracts (Other excluded): composition total variation (quartiles)": [
+      0.0607,
+      0.0816,
+      0.1146
+     ],
+     "which, named tracts (Other excluded): same dominant tract": 0.8567,
+     "which, with Other: composition total variation (quartiles)": [
+      0.0359,
+      0.0481,
+      0.0664
+     ],
+     "which, with Other: same dominant class": 0.9833,
+     "Other: share of a sphere's streamlines (quartiles)": [
+      0.5038,
+      0.5838,
+      0.7017
+     ],
+     "Other: dominant in the first run's spheres": 0.9767
+    }
+   }
+  },
+  "replicate vs replicate (smooth)": {
+   "pairs": 4,
+   "brain: where: density intersection (all tracts)": 0.788,
+   "brain: where: direction agreement |cos|": 0.9742,
+   "brain: which: density intersection per tract (named, mass-weighted)": 0.5355,
+   "spheres: where: density intersection (quartiles)": [
+    0.7686,
+    0.8108,
+    0.844
+   ],
+   "spheres: where: direction |cos| (quartiles)": [
+    0.9555,
+    0.9731,
+    0.9828
+   ],
+   "spheres: which, named tracts (Other excluded): composition total variation (quartiles)": [
+    0.0504,
+    0.0697,
+    0.0946
+   ],
+   "spheres: which, named tracts (Other excluded): same dominant tract": 0.8758,
+   "spheres: which, with Other: composition total variation (quartiles)": [
+    0.0274,
+    0.0377,
+    0.0499
+   ],
+   "spheres: which, with Other: same dominant class": 0.995,
+   "spheres: Other: share of a sphere's streamlines (quartiles)": [
+    0.5027,
+    0.5874,
+    0.7076
+   ],
+   "spheres: Other: dominant in the first run's spheres": 0.9766
+  }
+ },
  "PAT16": {
   "tumor_voxels": 2922,
-  "margin spheres": 879,
+  "margin spheres": 885,
   "replicate vs replicate (smooth), tumor margin": {
    "pairs": 4,
    "brain: where: density intersection (all tracts)": 0.7626,
    "brain: where: direction agreement |cos|": 0.9757,
    "brain: which: density intersection per tract (named, mass-weighted)": 0.4964,
    "spheres: where: density intersection (quartiles)": [
-    0.5908,
-    0.6973,
-    0.7818
+    0.5931,
+    0.6993,
+    0.7787
    ],
    "spheres: where: direction |cos| (quartiles)": [
-    0.9432,
-    0.9719,
-    0.9856
+    0.9418,
+    0.9704,
+    0.9852
    ],
    "spheres: which, named tracts (Other excluded): composition total variation (quartiles)": [
-    0.0744,
-    0.1064,
-    0.1533
+    0.0747,
+    0.1068,
+    0.1557
    ],
-   "spheres: which, named tracts (Other excluded): same dominant tract": 0.8612,
+   "spheres: which, named tracts (Other excluded): same dominant tract": 0.86,
    "spheres: which, with Other: composition total variation (quartiles)": [
-    0.046,
-    0.0627,
-    0.0867
+    0.0467,
+    0.063,
+    0.0859
    ],
-   "spheres: which, with Other: same dominant class": 0.9713,
+   "spheres: which, with Other: same dominant class": 0.9743,
    "spheres: Other: share of a sphere's streamlines (quartiles)": [
-    0.4458,
-    0.5562,
-    0.6628
+    0.446,
+    0.555,
+    0.6585
    ],
-   "spheres: Other: dominant in the first run's spheres": 0.8789
+   "spheres: Other: dominant in the first run's spheres": 0.8842
   }
  }
 }

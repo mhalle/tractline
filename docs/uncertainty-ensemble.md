@@ -220,6 +220,15 @@ cingulum). A single run cannot tell these apart. The corticospinal tract comes w
 measures how reproducible the output is, not whether it is anatomically right: nothing here was checked against
 stimulation mapping or histology ("PAT16 at the tumor"; `bench/ensemble_pat16_viewer.py` draws it).
 
+**Presence maps and a held-out subject (NOTES 2026-10-09).** Letting tracts overlap in the voxel maps (a tract holds a
+voxel where it has at least 2 streamlines; the voxel rank field's classes above NONE) makes the envelopes usable. As
+stated, a 90 % envelope holds 78–82 % of a rescan's tract, against 60 % with winner maps. With levels recalibrated on
+three earlier pairs, a third healthy subject (cIIIs04, held out) gets 84 % for an 80 % target and 92 % for 90 %.
+
+PAT16's double-bootstrap map, fitted with no real rescan, brings that subject's streamline ECE to 0.0066. More runs
+improve every measure, with most of the gain by 9–13 runs. The as-stated confidence falls with the number of runs, so
+a recalibration map belongs to a run count.
+
 What the reported confidence should be:
 
 - the ensemble's agreement, adjusted to predict a same-session rescan using simulated rescans with correlated noise.
