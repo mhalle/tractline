@@ -147,8 +147,8 @@ log-odds or a table per vote count, and the same table works for voxels. Applied
 P(rescan keeps the tract) of 0.62, the replicate-vs-replicate rate. Under it no streamline reaches 0.99: eleven
 unanimous runs still mean a 1-in-12 chance that a rescan changes the label (NOTES 2026-10-08).
 
-**Checked against real rescans.** MASiVar (OpenNeuro ds003416) scans healthy adults repeatedly on one Philips
-scanner. Three reference scans with five rescans in all were used:
+**Checked against real rescans.** MASiVar (OpenNeuro ds003416) scans healthy adults repeatedly on two Philips Achieva 3T
+scanners at one site (cIIIs01 and cIIIs04 on scanner B, cIs1 on scanner A). Three reference scans with five rescans in all were used:
 - subject 1 (cIIIs01) at 2.5 mm, with one same-session rescan;
 - subject 1 at 2.1 mm, with one same-session and one other-session rescan;
 - subject 2 (cIs1), 38 slices and 3 forward b0s against subject 1's 16, with one same-session and one next-day rescan.

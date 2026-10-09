@@ -2783,7 +2783,8 @@ Median path distance between seed-matched streamlines (MDF, mm), in the same col
 
 Caveats:
 
-- Two subjects, five rescans, one Philips scanner.
+- Two subjects, five rescans, one Philips scanner. (Corrected 2026-10-09: two Philips Achieva 3T scanners at one site,
+  cIIIs01 on scanner B and cIs1 on scanner A.)
 - The labeler's draw is held at 0, so these rates are the data's share only. The pilot's 38 % included draws.
 - The pairs share their reference with the replicates. Replicate against replicate is therefore the comparison; A
   against a replicate is centered on A and changes less (27.7–37.4 %).
@@ -3232,7 +3233,8 @@ Per rescan (A's ensemble scored on the rescan / the rescan's on A):
 - Density shared: 0.75–0.78 (all tracts) against 0.50–0.53 per tract.
 - Direction: |cos| 0.97.
 
-Caveats: three healthy subjects in all on one Philips scanner (MASiVar), one Siemens patient; R beyond 17 untested;
+Caveats: three healthy subjects in all on two Philips scanners of one model at one site (MASiVar: cIIIs01 and cIIIs04 on
+scanner B, cIs1 on scanner A), one Siemens patient; R beyond 17 untested;
 no ground truth beyond reproducibility.
 
 ## 2026-10-09 Landmark sites on cIIIs04: the ensemble and the rescans where tracts cross and where one runs alone
