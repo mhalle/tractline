@@ -1,0 +1,259 @@
+<title>PAT16 tracts in 3D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* layout: the 3D scene first and wide, its controls under it, the reading notes beside it on wide screens */
+:root {
+  --bg: #f3f5f7; --surface: #ffffff; --ink: #15202b; --muted: #5a6876; --line: #d6dde3; --accent: #2b6a8a;
+  --tumor: #d9572f; --warn-bg: #fbf1e3; --warn-ink: #6b4310; --scene: #0b1015;
+  --ui: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --data: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e141a; --surface: #151d25; --ink: #e2e8ee; --muted: #93a2b0; --line: #26323d; --accent: #73b4d4; --tumor: #f07a52;
+  --warn-bg: #2b2213; --warn-ink: #f0cf9c; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #0e141a; --surface: #151d25; --ink: #e2e8ee; --muted: #93a2b0; --line: #26323d; --accent: #73b4d4;
+  --tumor: #f07a52; --warn-bg: #2b2213; --warn-ink: #f0cf9c; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font-family: var(--ui); font-size: 15px; line-height: 1.5; padding: 20px 16px 40px; }
+.wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: 18px; }
+h1 { font-size: 1.6rem; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 0 0 8px; font-weight: 700; }
+.lede { color: var(--muted); max-width: 74ch; margin: 4px 0 0; }
+.notice { background: var(--warn-bg); color: var(--warn-ink); border-radius: 8px; padding: 8px 12px; max-width: 74ch; margin: 10px 0 0; font-size: 0.9rem; }
+.main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 340px); gap: 18px; align-items: start; }
+@media (max-width: 960px) { .main { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; min-width: 0; }
+.scene { position: relative; background: var(--scene); border-radius: 8px; overflow: hidden; }
+canvas { display: block; width: 100%; touch-action: none; }
+.hint { position: absolute; left: 10px; bottom: 8px; font: 12px var(--data); color: #9fb0bf; pointer-events: none; }
+.controls { display: grid; gap: 10px; margin-top: 12px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; }
+.label { color: var(--muted); font-size: 0.85rem; min-width: 9ch; }
+.seg { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { font: inherit; font-size: 0.88rem; padding: 5px 11px; border: 0; background: transparent; color: var(--ink); cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--surface); }
+button.plain { font: inherit; font-size: 0.88rem; padding: 5px 11px; border: 1px solid var(--line); border-radius: 8px; background: transparent; color: var(--ink); cursor: pointer; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+input[type=range] { flex: 1; min-width: 120px; accent-color: var(--accent); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { display: inline-flex; gap: 6px; align-items: center; border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px 3px 6px; font-size: 0.85rem; cursor: pointer; color: var(--ink); background: transparent; font-family: inherit; }
+.chip[aria-pressed="false"] { opacity: 0.4; }
+.sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; flex: none; }
+.side { display: grid; gap: 14px; min-width: 0; }
+.side p { margin: 0 0 8px; font-size: 0.88rem; }
+.side p:last-child { margin-bottom: 0; }
+.key { display: grid; gap: 5px; font-size: 0.85rem; }
+.key div { display: flex; gap: 8px; align-items: center; }
+.num { font-family: var(--data); font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>PAT16 tracts in 3D</h1>
+    <p class="lede">Tracts around a temporal tumor from 17 runs of the tractography pipeline: one on the scan as acquired and 16 on
+      copies with its noise drawn again. Shells show how much of a tract the runs agree on; fans show the 17 versions of single
+      streamlines near the tumor, so you can see where they stay together and where they split.</p>
+    <p class="notice"><strong>Research prototype.</strong> This shows how reproducible the pipeline's output is, not where the fibers
+      truly run. Nothing here was checked against stimulation mapping or histology. Not for surgical planning.</p>
+  </header>
+
+  <div class="main">
+    <section class="panel" aria-label="3D scene">
+      <div class="scene" id="scene"><canvas id="cv" aria-label="Rotatable 3D view of the tumor, tract shells and streamline fans"></canvas>
+        <span class="hint">Drag to rotate · scroll or pinch to zoom · right-drag to pan</span></div>
+      <div class="controls">
+        <div class="row"><span class="label">Shells</span>
+          <div class="seg" role="group" aria-label="Which shells to show">
+            <button data-shell="core" aria-pressed="false">Core only</button>
+            <button data-shell="mid" aria-pressed="true">Core + 50% level</button>
+            <button data-shell="outer" aria-pressed="false">Core + widest</button>
+            <button data-shell="none" aria-pressed="false">None</button>
+          </div></div>
+        <div class="row"><span class="label">Fans</span>
+          <div class="seg" role="group" aria-label="Which streamline fans to show">
+            <button data-fan="disagree" aria-pressed="true">Where runs disagree</button>
+            <button data-fan="agree" aria-pressed="false">Where all agree</button>
+            <button data-fan="none" aria-pressed="false">None</button>
+          </div></div>
+        <div class="row"><span class="label">Tracts</span><div class="chips" id="chips"></div></div>
+        <div class="row"><span class="label">Axial plane</span><input id="zs" type="range" min="0" max="0" step="1" value="0" aria-label="Axial plane position">
+          <span id="zout" class="num muted" style="min-width:9ch"></span>
+          <button class="plain" id="plane" aria-pressed="true">Hide plane</button>
+          <button class="plain" id="brain" aria-pressed="true">Hide outline</button>
+          <button class="plain" id="reset">Reset view</button></div>
+      </div>
+    </section>
+
+    <div class="side">
+      <section class="panel">
+        <h2>Reading the shells</h2>
+        <p>Shells are drawn within 25 mm of the tumor.</p>
+        <p><strong>Core:</strong> voxels the tract holds in at least 9 of the 17 runs (a voxel goes to the tract with the most
+          streamlines there).</p>
+        <p><strong>50% level:</strong> the shell that held half of a healthy subject's tract on a real rescan (5 rescans of 2 adults,
+          MASiVar).</p>
+        <p><strong>Widest:</strong> every voxel any run gave the tract. On those rescans it held only <span class="num" id="widest"></span>
+          of the rescan's tract, so even this shell misses about a third.</p>
+      </section>
+      <section class="panel">
+        <h2>Reading the fans</h2>
+        <p>Each fan is one seed near the tumor, drawn 17 times, once per run, colored by the tract that run gave it. A tight fan
+          in one color is a reliable streamline. A fan that splits into routes of different colors shows where identity is
+          decided.</p>
+        <p class="muted" id="fannote"></p>
+        <div class="key" id="key"></div>
+      </section>
+      <section class="panel">
+        <h2>Limits</h2>
+        <p>Paths are stored at 20 points each and drawn as smooth curves, so fine geometry is approximate. Shell surfaces are smoothed
+          isosurfaces of vote counts; their thresholds set the apparent boundary. The tumor is the dataset's mask registered from the
+          T1. Coordinates are scanner millimeters, viewed in the patient's frame (R/L, A/P, S/I labels).</p>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+const D = /*DATA*/null;
+const bytes = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+const i16 = s => { const b = bytes(s); return new Int16Array(b.buffer, b.byteOffset, b.byteLength / 2); };
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+const canvas = document.getElementById("cv"), host = document.getElementById("scene");
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(css("--scene") || "#0b1015");
+const camera = new THREE.PerspectiveCamera(35, 4 / 3, 1, 3000);
+scene.add(new THREE.HemisphereLight(0xeef4ff, 0x30363c, 0.9));
+const sun = new THREE.DirectionalLight(0xffffff, 0.7); camera.add(sun); sun.position.set(0.3, 0.6, 1); scene.add(camera);
+
+// meshes
+const groups = { tumor: [], brain: [] }, shells = {};
+let center = new THREE.Vector3();
+for (const m of D.meshes) {
+  const v = i16(m.v), pos = new Float32Array(v.length);
+  for (let i = 0; i < v.length; i++) pos[i] = v[i] / 10;
+  const fb = bytes(m.f), idx = m.f16 ? new Uint16Array(fb.buffer, fb.byteOffset, fb.byteLength / 2) : new Uint32Array(fb.buffer, fb.byteOffset, fb.byteLength / 4);
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.BufferAttribute(pos, 3)); g.setIndex(new THREE.BufferAttribute(idx, 1)); g.computeVertexNormals();
+  let mat;
+  if (m.kind === "tumor") mat = new THREE.MeshStandardMaterial({ color: m.color, roughness: 0.6, metalness: 0, transparent: true, opacity: 0.92 });
+  else if (m.kind === "brain") mat = new THREE.MeshBasicMaterial({ color: m.color, transparent: true, opacity: 0.05, depthWrite: false, side: THREE.DoubleSide });
+  else if (m.kind === "core") mat = new THREE.MeshStandardMaterial({ color: m.color, roughness: 0.55, metalness: 0, transparent: true, opacity: 0.85 });
+  else mat = new THREE.MeshStandardMaterial({ color: m.color, roughness: 0.8, metalness: 0, transparent: true, opacity: m.kind === "mid" ? 0.26 : 0.12,
+    depthWrite: false, side: THREE.DoubleSide });
+  const mesh = new THREE.Mesh(g, mat);
+  mesh.renderOrder = { tumor: 1, core: 2, mid: 3, outer: 4, brain: 5 }[m.kind];
+  scene.add(mesh);
+  if (m.kind === "tumor") { groups.tumor.push(mesh); g.computeBoundingBox(); g.boundingBox.getCenter(center); }
+  else if (m.kind === "brain") groups.brain.push(mesh);
+  else { (shells[m.name] = shells[m.name] || {})[m.kind] = mesh; }
+}
+
+// fans: one line set per kind, each version colored by its tract
+const OTHER_NAMED = "#a9b9c8", OTHER = "#59636c";
+const tractColor = t => t === D.other ? OTHER : (D.palette[String(t)] || OTHER_NAMED);
+const fans = {};
+for (const [kind, f] of Object.entries(D.fans)) {
+  const p = i16(f.paths), pos = [], col = [];
+  for (let s = 0; s < f.n; s++) for (let r = 0; r < 17; r++) {
+    const pts = [];
+    for (let k = 0; k < 20; k++) { const o = ((s * 17 + r) * 20 + k) * 3; pts.push(new THREE.Vector3(p[o] / 10, p[o + 1] / 10, p[o + 2] / 10)); }
+    const curve = new THREE.CatmullRomCurve3(pts), dense = curve.getPoints(48), c = new THREE.Color(tractColor(f.tracts[s * 17 + r]));
+    for (let k = 0; k < dense.length - 1; k++) { pos.push(dense[k].x, dense[k].y, dense[k].z, dense[k + 1].x, dense[k + 1].y, dense[k + 1].z); col.push(c.r, c.g, c.b, c.r, c.g, c.b); }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
+  fans[kind] = new THREE.LineSegments(g, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.75 }));
+  fans[kind].renderOrder = 6; scene.add(fans[kind]);
+}
+
+// the axial plane: the corrected mean b0
+const [X, Y, Z] = D.shape, b0 = bytes(D.b0), A = D.affine;
+const world = (i, j, k) => new THREE.Vector3(A[0][0] * i + A[0][1] * j + A[0][2] * k + A[0][3], A[1][0] * i + A[1][1] * j + A[1][2] * k + A[1][3], A[2][0] * i + A[2][1] * j + A[2][2] * k + A[2][3]);
+const slice = new Uint8Array(X * Y);
+const tex = new THREE.DataTexture(slice, X, Y, THREE.LuminanceFormat); tex.magFilter = THREE.LinearFilter;
+const planeGeo = new THREE.BufferGeometry();
+planeGeo.setAttribute("uv", new THREE.Float32BufferAttribute([0, 0, 1, 0, 1, 1, 0, 1], 2)); planeGeo.setIndex([0, 1, 2, 0, 2, 3]);
+const plane = new THREE.Mesh(planeGeo, new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide, transparent: true, opacity: 0.9 }));
+plane.renderOrder = 0; scene.add(plane);
+function setPlane(k) {
+  for (let i = 0; i < X; i++) for (let j = 0; j < Y; j++) slice[j * X + i] = b0[(i * Y + j) * Z + k];
+  tex.needsUpdate = true;
+  const c = [world(-0.5, -0.5, k), world(X - 0.5, -0.5, k), world(X - 0.5, Y - 0.5, k), world(-0.5, Y - 0.5, k)];
+  planeGeo.setAttribute("position", new THREE.Float32BufferAttribute(c.flatMap(v => [v.x, v.y, v.z]), 3));
+  planeGeo.attributes.position.needsUpdate = true; planeGeo.computeBoundingSphere();
+  document.getElementById("zout").textContent = `${((k - D.tumor_z) * 2.5 >= 0 ? "+" : "")}${((k - D.tumor_z) * 2.5).toFixed(1)} mm`;
+}
+
+// orientation labels in the patient's frame (RAS: +x right, +y anterior, +z superior)
+function label(text, pos) {
+  const c = document.createElement("canvas"); c.width = c.height = 64; const g = c.getContext("2d");
+  g.font = "600 40px IBM Plex Mono, monospace"; g.fillStyle = "#c7d2dc"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(text, 32, 34);
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false, transparent: true }));
+  s.scale.set(9, 9, 1); s.position.copy(pos); s.renderOrder = 10; scene.add(s);
+}
+const R = 95;
+[["R", [R, 0, 0]], ["L", [-R, 0, 0]], ["A", [0, R, 0]], ["P", [0, -R, 0]], ["S", [0, 0, R]], ["I", [0, 0, -R]]]
+  .forEach(([t, d]) => label(t, center.clone().add(new THREE.Vector3(...d))));
+
+const controls = new THREE.OrbitControls(camera, canvas);
+controls.enableDamping = true;
+function home() {
+  camera.up.set(0, 0, 1);
+  camera.position.copy(center.clone().add(new THREE.Vector3(120, -150, 95)));
+  controls.target.copy(center); controls.update();
+}
+home();
+
+// state and controls
+const state = { shell: "mid", fan: "disagree", on: Object.fromEntries(D.shown.map(t => [t.name, true])), plane: true, brain: true };
+function apply() {
+  for (const [name, s] of Object.entries(shells)) for (const [kind, mesh] of Object.entries(s))
+    mesh.visible = state.on[name] && state.shell !== "none" && (kind === "core" || kind === state.shell);
+  for (const [k, l] of Object.entries(fans)) l.visible = state.fan === k;
+  plane.visible = state.plane; groups.brain.forEach(m => m.visible = state.brain);
+  const f = D.fans[state.fan], L = D.levels;
+  document.getElementById("fannote").textContent = state.fan === "none" ? "" :
+    `${f.n} of the ${state.fan === "disagree" ? L.disagree_seeds : L.agree_seeds} seeds near the tumor ` +
+    (state.fan === "disagree" ? "where no tract wins more than 60% of the runs." : "where all 17 runs give the same named tract.") +
+    ` ${L.near_seeds} seeds lie within 10 mm of the tumor and are labeled in every run.`;
+}
+document.querySelectorAll("[data-shell]").forEach(b => b.onclick = () => { state.shell = b.dataset.shell;
+  document.querySelectorAll("[data-shell]").forEach(x => x.setAttribute("aria-pressed", String(x === b))); apply(); });
+document.querySelectorAll("[data-fan]").forEach(b => b.onclick = () => { state.fan = b.dataset.fan;
+  document.querySelectorAll("[data-fan]").forEach(x => x.setAttribute("aria-pressed", String(x === b))); apply(); });
+const chips = document.getElementById("chips");
+D.shown.forEach(t => {
+  const b = document.createElement("button"); b.className = "chip"; b.setAttribute("aria-pressed", "true"); b.title = t.full;
+  b.innerHTML = `<i class="sw" style="background:${t.color}"></i>${t.name}`;
+  b.onclick = () => { state.on[t.name] = !state.on[t.name]; b.setAttribute("aria-pressed", String(state.on[t.name])); apply(); };
+  chips.appendChild(b);
+});
+const pl = document.getElementById("plane"); pl.onclick = () => { state.plane = !state.plane; pl.textContent = state.plane ? "Hide plane" : "Show plane"; pl.setAttribute("aria-pressed", String(state.plane)); apply(); };
+const br = document.getElementById("brain"); br.onclick = () => { state.brain = !state.brain; br.textContent = state.brain ? "Hide outline" : "Show outline"; br.setAttribute("aria-pressed", String(state.brain)); apply(); };
+document.getElementById("reset").onclick = home;
+const zs = document.getElementById("zs"); zs.max = Z - 1; zs.value = D.tumor_z; zs.oninput = () => setPlane(+zs.value); setPlane(D.tumor_z);
+document.getElementById("widest").textContent = `${Math.round(D.levels.widest_held * 100)}%`;
+
+const key = document.getElementById("key");
+D.shown.forEach(t => key.insertAdjacentHTML("beforeend", `<div><i class="sw" style="background:${t.color}"></i>${t.name} <span class="muted">${t.full}</span></div>`));
+key.insertAdjacentHTML("beforeend", `<div><i class="sw" style="background:${OTHER_NAMED}"></i><span class="muted">another named tract</span></div>`);
+key.insertAdjacentHTML("beforeend", `<div><i class="sw" style="background:${OTHER}"></i><span class="muted">Other: no tract assigned</span></div>`);
+key.insertAdjacentHTML("beforeend", `<div><i class="sw" style="background:${css("--tumor")}"></i><span class="muted">tumor</span></div>`);
+apply();
+
+function resize() {
+  const w = host.clientWidth, h = Math.round(Math.min(Math.max(w * 0.72, 320), 680));
+  renderer.setSize(w, h, false); canvas.style.height = h + "px"; camera.aspect = w / h; camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(host); resize();
+const mq = window.matchMedia("(prefers-color-scheme: dark)");
+const sync = () => { scene.background = new THREE.Color(css("--scene") || "#0b1015"); };
+mq.addEventListener ? mq.addEventListener("change", sync) : 0;
+(function loop() { controls.update(); renderer.render(scene, camera); requestAnimationFrame(loop); })();
+</script>
