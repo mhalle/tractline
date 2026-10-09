@@ -1,0 +1,866 @@
+{
+ "pair": "cIIIs04-2.1",
+ "runs": 17,
+ "min_count": 2,
+ "near_mm": 4.0,
+ "midline x (mm)": 6.4,
+ "whole brain": {
+  "seeds labeled in all 17 runs": 44717,
+  "within: changed": 0.346,
+  "within: changed, to A's runner-up": 0.508,
+  "within: changed, to a tract A's 17 runs gave": 0.861,
+  "within: all seeds, the rescan's tract among the 17 runs'": 0.952,
+  "within: gives the mode / stated": [
+   0.703,
+   0.764
+  ],
+  "session3: changed": 0.374,
+  "session3: changed, to A's runner-up": 0.491,
+  "session3: changed, to a tract A's 17 runs gave": 0.82,
+  "session3: all seeds, the rescan's tract among the 17 runs'": 0.933,
+  "session3: gives the mode / stated": [
+   0.674,
+   0.764
+  ],
+  "session5: changed": 0.389,
+  "session5: changed, to A's runner-up": 0.481,
+  "session5: changed, to a tract A's 17 runs gave": 0.79,
+  "session5: all seeds, the rescan's tract among the 17 runs'": 0.918,
+  "session5: gives the mode / stated": [
+   0.661,
+   0.765
+  ],
+  "replicate (leave one run out): gives the mode / stated": [
+   0.74,
+   0.764
+  ],
+  "runs split: share of seeds": 0.802,
+  "runs split: the most frequent other tract is A's runner-up": 0.501,
+  "A's runner-up probability (median, all seeds)": 0.002
+ },
+ "sites": [
+  {
+   "name": "centrum semiovale, left",
+   "defined by": "corticospinal, callosal (CC3-CC5) and superior longitudinal fibers all present",
+   "score": 0.673,
+   "voxel": [
+    73,
+    56,
+    32
+   ],
+   "mm": [
+    -32.6,
+    23.2,
+    59.2
+   ],
+   "tracts": [
+    "CST",
+    "CC4",
+    "SLF-II",
+    "AF"
+   ],
+   "rank field at the site (mean over 17 runs)": [
+    {
+     "tract": "Other",
+     "mean streamlines": 30.8,
+     "share of runs present": null
+    },
+    {
+     "tract": "AF",
+     "mean streamlines": 21.1,
+     "share of runs present": 1.0
+    },
+    {
+     "tract": "Sup-F",
+     "mean streamlines": 11.6,
+     "share of runs present": 1.0
+    },
+    {
+     "tract": "SLF-III",
+     "mean streamlines": 7.5,
+     "share of runs present": 1.0
+    },
+    {
+     "tract": "CST",
+     "mean streamlines": 5.9,
+     "share of runs present": 0.94
+    }
+   ],
+   "seeds near (labeled in all 17 runs)": 708,
+   "share whose mode is a named tract": 0.576,
+   "modes (top 5)": {
+    "Other": 300,
+    "AF": 149,
+    "Sup-F": 90,
+    "CC4": 53,
+    "SLF-III": 41
+   },
+   "all 17 runs agree": 0.192,
+   "mode's mean share (stated P that another run gives the mode)": 0.753,
+   "replicate (leave one run out): gives the mode / stated": [
+    0.722,
+    0.754
+   ],
+   "rescans": {
+    "within": {
+     "seeds labeled": 704,
+     "rescan gives the mode": 0.685,
+     "stated (mode's mean share, these seeds)": 0.754,
+     "rescan's tract among the 17 runs' tracts": 0.95,
+     "changed from A": 0.366,
+     "changed, to A's runner-up": 0.512
+    },
+    "session3": {
+     "seeds labeled": 696,
+     "rescan gives the mode": 0.644,
+     "stated (mode's mean share, these seeds)": 0.754,
+     "rescan's tract among the 17 runs' tracts": 0.931,
+     "changed from A": 0.425,
+     "changed, to A's runner-up": 0.486
+    },
+    "session5": {
+     "seeds labeled": 691,
+     "rescan gives the mode": 0.606,
+     "stated (mode's mean share, these seeds)": 0.754,
+     "rescan's tract among the 17 runs' tracts": 0.9,
+     "changed from A": 0.45,
+     "changed, to A's runner-up": 0.508
+    }
+   },
+   "fan seeds": {
+    "split (mode in at most 60 % of runs, some named)": 209,
+    "all agree on a named tract": 89,
+    "drawn (split)": 16,
+    "drawn (agree)": 16
+   }
+  },
+  {
+   "name": "centrum semiovale, right",
+   "defined by": "corticospinal, callosal (CC3-CC5) and superior longitudinal fibers all present",
+   "score": 0.779,
+   "voxel": [
+    39,
+    56,
+    32
+   ],
+   "mm": [
+    40.2,
+    20.7,
+    57.2
+   ],
+   "tracts": [
+    "CST",
+    "CC4",
+    "SLF-II",
+    "AF"
+   ],
+   "rank field at the site (mean over 17 runs)": [
+    {
+     "tract": "Other",
+     "mean streamlines": 50.7,
+     "share of runs present": null
+    },
+    {
+     "tract": "SLF-II",
+     "mean streamlines": 36.9,
+     "share of runs present": 1.0
+    },
+    {
+     "tract": "SLF-III",
+     "mean streamlines": 13.2,
+     "share of runs present": 1.0
+    },
+    {
+     "tract": "Sup-F",
+     "mean streamlines": 12.2,
+     "share of runs present": 1.0
+    },
+    {
+     "tract": "CC4",
+     "mean streamlines": 6.3,
+     "share of runs present": 1.0
+    }
+   ],
+   "seeds near (labeled in all 17 runs)": 812,
+   "share whose mode is a named tract": 0.485,
+   "modes (top 5)": {
+    "Other": 418,
+    "SLF-II": 129,
+    "SLF-III": 69,
+    "Sup-F": 65,
+    "CC4": 47
+   },
+   "all 17 runs agree": 0.17,
+   "mode's mean share (stated P that another run gives the mode)": 0.737,
+   "replicate (leave one run out): gives the mode / stated": [
+    0.711,
+    0.738
+   ],
+   "rescans": {
+    "within": {
+     "seeds labeled": 800,
+     "rescan gives the mode": 0.691,
+     "stated (mode's mean share, these seeds)": 0.737,
+     "rescan's tract among the 17 runs' tracts": 0.971,
+     "changed from A": 0.359,
+     "changed, to A's runner-up": 0.519
+    },
+    "session3": {
+     "seeds labeled": 799,
+     "rescan gives the mode": 0.636,
+     "stated (mode's mean share, these seeds)": 0.737,
+     "rescan's tract among the 17 runs' tracts": 0.926,
+     "changed from A": 0.401,
+     "changed, to A's runner-up": 0.509
+    },
+    "session5": {
+     "seeds labeled": 801,
+     "rescan gives the mode": 0.614,
+     "stated (mode's mean share, these seeds)": 0.736,
+     "rescan's tract among the 17 runs' tracts": 0.924,
+     "changed from A": 0.411,
+     "changed, to A's runner-up": 0.453
+    }
+   },
+   "fan seeds": {
+    "split (mode in at most 60 % of runs, some named)": 255,
+    "all agree on a named tract": 39,
+    "drawn (split)": 16,
+    "drawn (agree)": 16
+   }
+  },
+  {
+   "name": "temporal stem, left",
+   "defined by": "the most posterior point where the uncinate and inferior occipito-frontal fasciculi are both present",
+   "score": -26.532,
+   "voxel": [
+    68,
+    57,
+    18
+   ],
+   "mm": [
+    -22.6,
+    26.5,
+    28.3
+   ],
+   "tracts": [
+    "UF",
+    "IOFF",
+    "ILF"
+   ],
+   "rank field at the site (mean over 17 runs)": [
+    {
+     "tract": "Other",
+     "mean streamlines": 115.5,
+     "share of runs present": null
+    },
+    {
+     "tract": "IOFF",
+     "mean streamlines": 20.7,
+     "share of runs present": 1.0
+    },
+    {
+     "tract": "UF",
+     "mean streamlines": 5.5,
+     "share of runs present": 0.94
+    }
+   ],
+   "seeds near (labeled in all 17 runs)": 864,
+   "share whose mode is a named tract": 0.216,
+   "modes (top 5)": {
+    "Other": 677,
+    "IOFF": 102,
+    "UF": 24,
+    "EC": 22,
+    "EmC": 13
+   },
+   "all 17 runs agree": 0.236,
+   "mode's mean share (stated P that another run gives the mode)": 0.763,
+   "replicate (leave one run out): gives the mode / stated": [
+    0.738,
+    0.764
+   ],
+   "rescans": {
+    "within": {
+     "seeds labeled": 857,
+     "rescan gives the mode": 0.705,
+     "stated (mode's mean share, these seeds)": 0.763,
+     "rescan's tract among the 17 runs' tracts": 0.942,
+     "changed from A": 0.364,
+     "changed, to A's runner-up": 0.426
+    },
+    "session3": {
+     "seeds labeled": 845,
+     "rescan gives the mode": 0.669,
+     "stated (mode's mean share, these seeds)": 0.763,
+     "rescan's tract among the 17 runs' tracts": 0.902,
+     "changed from A": 0.389,
+     "changed, to A's runner-up": 0.413
+    },
+    "session5": {
+     "seeds labeled": 829,
+     "rescan gives the mode": 0.644,
+     "stated (mode's mean share, these seeds)": 0.767,
+     "rescan's tract among the 17 runs' tracts": 0.891,
+     "changed from A": 0.419,
+     "changed, to A's runner-up": 0.369
+    }
+   },
+   "fan seeds": {
+    "split (mode in at most 60 % of runs, some named)": 252,
+    "all agree on a named tract": 5,
+    "drawn (split)": 16,
+    "drawn (agree)": 5
+   }
+  },
+  {
+   "name": "temporal stem, right",
+   "defined by": "the most posterior point where the uncinate and inferior occipito-frontal fasciculi are both present",
+   "score": -24.465,
+   "voxel": [
+    40,
+    57,
+    18
+   ],
+   "mm": [
+    37.4,
+    24.5,
+    26.6
+   ],
+   "tracts": [
+    "UF",
+    "IOFF",
+    "ILF"
+   ],
+   "rank field at the site (mean over 17 runs)": [
+    {
+     "tract": "Other",
+     "mean streamlines": 159.6,
+     "share of runs present": null
+    },
+    {
+     "tract": "IOFF",
+     "mean streamlines": 35.2,
+     "share of runs present": 1.0
+    },
+    {
+     "tract": "EmC",
+     "mean streamlines": 8.6,
+     "share of runs present": 1.0
+    },
+    {
+     "tract": "UF",
+     "mean streamlines": 3.4,
+     "share of runs present": 0.82
+    },
+    {
+     "tract": "EC",
+     "mean streamlines": 2.1,
+     "share of runs present": 0.71
+    }
+   ],
+   "seeds near (labeled in all 17 runs)": 1056,
+   "share whose mode is a named tract": 0.16,
+   "modes (top 5)": {
+    "Other": 887,
+    "IOFF": 65,
+    "UF": 27,
+    "EmC": 25,
+    "CC6": 11
+   },
+   "all 17 runs agree": 0.197,
+   "mode's mean share (stated P that another run gives the mode)": 0.751,
+   "replicate (leave one run out): gives the mode / stated": [
+    0.728,
+    0.752
+   ],
+   "rescans": {
+    "within": {
+     "seeds labeled": 1040,
+     "rescan gives the mode": 0.697,
+     "stated (mode's mean share, these seeds)": 0.753,
+     "rescan's tract among the 17 runs' tracts": 0.954,
+     "changed from A": 0.333,
+     "changed, to A's runner-up": 0.324
+    },
+    "session3": {
+     "seeds labeled": 1043,
+     "rescan gives the mode": 0.667,
+     "stated (mode's mean share, these seeds)": 0.751,
+     "rescan's tract among the 17 runs' tracts": 0.928,
+     "changed from A": 0.382,
+     "changed, to A's runner-up": 0.329
+    },
+    "session5": {
+     "seeds labeled": 1018,
+     "rescan gives the mode": 0.621,
+     "stated (mode's mean share, these seeds)": 0.754,
+     "rescan's tract among the 17 runs' tracts": 0.892,
+     "changed from A": 0.421,
+     "changed, to A's runner-up": 0.287
+    }
+   },
+   "fan seeds": {
+    "split (mode in at most 60 % of runs, some named)": 322,
+    "all agree on a named tract": 1,
+    "drawn (split)": 16,
+    "drawn (agree)": 1
+   }
+  },
+  {
+   "name": "corticospinal tract alone, left",
+   "defined by": "the corticospinal tract present, every other named tract least",
+   "score": 0.665,
+   "voxel": [
+    63,
+    51,
+    20
+   ],
+   "mm": [
+    -12.2,
+    13.1,
+    31.7
+   ],
+   "tracts": [
+    "CST"
+   ],
+   "rank field at the site (mean over 17 runs)": [
+    {
+     "tract": "Other",
+     "mean streamlines": 40.7,
+     "share of runs present": null
+    },
+    {
+     "tract": "CST",
+     "mean streamlines": 15.7,
+     "share of runs present": 1.0
+    }
+   ],
+   "seeds near (labeled in all 17 runs)": 565,
+   "share whose mode is a named tract": 0.096,
+   "modes (top 5)": {
+    "Other": 511,
+    "CST": 33,
+    "PLIC": 5,
+    "CR-P": 4,
+    "TF": 2
+   },
+   "all 17 runs agree": 0.168,
+   "mode's mean share (stated P that another run gives the mode)": 0.807,
+   "replicate (leave one run out): gives the mode / stated": [
+    0.793,
+    0.807
+   ],
+   "rescans": {
+    "within": {
+     "seeds labeled": 563,
+     "rescan gives the mode": 0.767,
+     "stated (mode's mean share, these seeds)": 0.807,
+     "rescan's tract among the 17 runs' tracts": 0.961,
+     "changed from A": 0.29,
+     "changed, to A's runner-up": 0.454
+    },
+    "session3": {
+     "seeds labeled": 556,
+     "rescan gives the mode": 0.752,
+     "stated (mode's mean share, these seeds)": 0.807,
+     "rescan's tract among the 17 runs' tracts": 0.915,
+     "changed from A": 0.338,
+     "changed, to A's runner-up": 0.388
+    },
+    "session5": {
+     "seeds labeled": 552,
+     "rescan gives the mode": 0.764,
+     "stated (mode's mean share, these seeds)": 0.808,
+     "rescan's tract among the 17 runs' tracts": 0.937,
+     "changed from A": 0.317,
+     "changed, to A's runner-up": 0.377
+    }
+   },
+   "fan seeds": {
+    "split (mode in at most 60 % of runs, some named)": 87,
+    "all agree on a named tract": 0,
+    "drawn (split)": 16,
+    "drawn (agree)": 0
+   }
+  },
+  {
+   "name": "corticospinal tract alone, right",
+   "defined by": "the corticospinal tract present, every other named tract least",
+   "score": 0.681,
+   "voxel": [
+    45,
+    51,
+    22
+   ],
+   "mm": [
+    26.4,
+    11.5,
+    35.0
+   ],
+   "tracts": [
+    "CST"
+   ],
+   "rank field at the site (mean over 17 runs)": [
+    {
+     "tract": "Other",
+     "mean streamlines": 40.8,
+     "share of runs present": null
+    },
+    {
+     "tract": "CST",
+     "mean streamlines": 12.6,
+     "share of runs present": 1.0
+    }
+   ],
+   "seeds near (labeled in all 17 runs)": 619,
+   "share whose mode is a named tract": 0.212,
+   "modes (top 5)": {
+    "Other": 488,
+    "CST": 89,
+    "CR-F": 17,
+    "PLIC": 6,
+    "TF": 5
+   },
+   "all 17 runs agree": 0.12,
+   "mode's mean share (stated P that another run gives the mode)": 0.745,
+   "replicate (leave one run out): gives the mode / stated": [
+    0.709,
+    0.746
+   ],
+   "rescans": {
+    "within": {
+     "seeds labeled": 614,
+     "rescan gives the mode": 0.699,
+     "stated (mode's mean share, these seeds)": 0.745,
+     "rescan's tract among the 17 runs' tracts": 0.948,
+     "changed from A": 0.394,
+     "changed, to A's runner-up": 0.475
+    },
+    "session3": {
+     "seeds labeled": 613,
+     "rescan gives the mode": 0.67,
+     "stated (mode's mean share, these seeds)": 0.746,
+     "rescan's tract among the 17 runs' tracts": 0.943,
+     "changed from A": 0.393,
+     "changed, to A's runner-up": 0.407
+    },
+    "session5": {
+     "seeds labeled": 604,
+     "rescan gives the mode": 0.677,
+     "stated (mode's mean share, these seeds)": 0.746,
+     "rescan's tract among the 17 runs' tracts": 0.929,
+     "changed from A": 0.384,
+     "changed, to A's runner-up": 0.405
+    }
+   },
+   "fan seeds": {
+    "split (mode in at most 60 % of runs, some named)": 178,
+    "all agree on a named tract": 2,
+    "drawn (split)": 16,
+    "drawn (agree)": 2
+   }
+  },
+  {
+   "name": "genu of the corpus callosum",
+   "defined by": "CC1 densest at the midline",
+   "score": 10.814,
+   "voxel": [
+    55,
+    70,
+    25
+   ],
+   "mm": [
+    6.6,
+    52.6,
+    44.3
+   ],
+   "tracts": [
+    "CC1"
+   ],
+   "rank field at the site (mean over 17 runs)": [
+    {
+     "tract": "Other",
+     "mean streamlines": 34.8,
+     "share of runs present": null
+    },
+    {
+     "tract": "CC1",
+     "mean streamlines": 14.8,
+     "share of runs present": 1.0
+    },
+    {
+     "tract": "CC2",
+     "mean streamlines": 14.2,
+     "share of runs present": 1.0
+    }
+   ],
+   "seeds near (labeled in all 17 runs)": 464,
+   "share whose mode is a named tract": 0.407,
+   "modes (top 5)": {
+    "Other": 275,
+    "CC1": 111,
+    "CC2": 74,
+    "Sup-F": 2,
+    "IOFF": 1
+   },
+   "all 17 runs agree": 0.183,
+   "mode's mean share (stated P that another run gives the mode)": 0.77,
+   "replicate (leave one run out): gives the mode / stated": [
+    0.742,
+    0.771
+   ],
+   "rescans": {
+    "within": {
+     "seeds labeled": 460,
+     "rescan gives the mode": 0.704,
+     "stated (mode's mean share, these seeds)": 0.769,
+     "rescan's tract among the 17 runs' tracts": 0.967,
+     "changed from A": 0.335,
+     "changed, to A's runner-up": 0.565
+    },
+    "session3": {
+     "seeds labeled": 456,
+     "rescan gives the mode": 0.704,
+     "stated (mode's mean share, these seeds)": 0.773,
+     "rescan's tract among the 17 runs' tracts": 0.941,
+     "changed from A": 0.346,
+     "changed, to A's runner-up": 0.544
+    },
+    "session5": {
+     "seeds labeled": 456,
+     "rescan gives the mode": 0.704,
+     "stated (mode's mean share, these seeds)": 0.771,
+     "rescan's tract among the 17 runs' tracts": 0.943,
+     "changed from A": 0.34,
+     "changed, to A's runner-up": 0.516
+    }
+   },
+   "fan seeds": {
+    "split (mode in at most 60 % of runs, some named)": 115,
+    "all agree on a named tract": 5,
+    "drawn (split)": 16,
+    "drawn (agree)": 5
+   }
+  },
+  {
+   "name": "splenium of the corpus callosum",
+   "defined by": "CC7 densest at the midline",
+   "score": 14.679,
+   "voxel": [
+    55,
+    38,
+    25
+   ],
+   "mm": [
+    4.2,
+    -15.9,
+    40.8
+   ],
+   "tracts": [
+    "CC7"
+   ],
+   "rank field at the site (mean over 17 runs)": [
+    {
+     "tract": "Other",
+     "mean streamlines": 33.4,
+     "share of runs present": null
+    },
+    {
+     "tract": "CC7",
+     "mean streamlines": 23.9,
+     "share of runs present": 1.0
+    },
+    {
+     "tract": "CC6",
+     "mean streamlines": 8.5,
+     "share of runs present": 1.0
+    }
+   ],
+   "seeds near (labeled in all 17 runs)": 478,
+   "share whose mode is a named tract": 0.356,
+   "modes (top 5)": {
+    "Other": 308,
+    "CC7": 85,
+    "CC6": 77,
+    "CB": 4,
+    "ILF": 2
+   },
+   "all 17 runs agree": 0.059,
+   "mode's mean share (stated P that another run gives the mode)": 0.686,
+   "replicate (leave one run out): gives the mode / stated": [
+    0.656,
+    0.686
+   ],
+   "rescans": {
+    "within": {
+     "seeds labeled": 475,
+     "rescan gives the mode": 0.577,
+     "stated (mode's mean share, these seeds)": 0.686,
+     "rescan's tract among the 17 runs' tracts": 0.954,
+     "changed from A": 0.526,
+     "changed, to A's runner-up": 0.636
+    },
+    "session3": {
+     "seeds labeled": 472,
+     "rescan gives the mode": 0.589,
+     "stated (mode's mean share, these seeds)": 0.686,
+     "rescan's tract among the 17 runs' tracts": 0.949,
+     "changed from A": 0.456,
+     "changed, to A's runner-up": 0.544
+    },
+    "session5": {
+     "seeds labeled": 460,
+     "rescan gives the mode": 0.591,
+     "stated (mode's mean share, these seeds)": 0.69,
+     "rescan's tract among the 17 runs' tracts": 0.911,
+     "changed from A": 0.478,
+     "changed, to A's runner-up": 0.586
+    }
+   },
+   "fan seeds": {
+    "split (mode in at most 60 % of runs, some named)": 188,
+    "all agree on a named tract": 0,
+    "drawn (split)": 16,
+    "drawn (agree)": 0
+   }
+  }
+ ],
+ "envelopes (80 % = stated 0.925)": {
+  "CST": {
+   "core votes": 9,
+   "80 % envelope votes": 3,
+   "voxels: core / 80 % / widest": [
+    4804,
+    8523,
+    13491
+   ],
+   "within: rescan voxels inside the 80 % envelope": 0.885,
+   "within: inside the widest": 0.956,
+   "session3: rescan voxels inside the 80 % envelope": 0.856,
+   "session3: inside the widest": 0.942,
+   "session5: rescan voxels inside the 80 % envelope": 0.85,
+   "session5: inside the widest": 0.936
+  },
+  "CC1": {
+   "core votes": 9,
+   "80 % envelope votes": 2,
+   "voxels: core / 80 % / widest": [
+    1412,
+    4004,
+    5493
+   ],
+   "within: rescan voxels inside the 80 % envelope": 0.86,
+   "within: inside the widest": 0.919,
+   "session3: rescan voxels inside the 80 % envelope": 0.871,
+   "session3: inside the widest": 0.928,
+   "session5: rescan voxels inside the 80 % envelope": 0.849,
+   "session5: inside the widest": 0.928
+  },
+  "CC4": {
+   "core votes": 9,
+   "80 % envelope votes": 4,
+   "voxels: core / 80 % / widest": [
+    4740,
+    6784,
+    10403
+   ],
+   "within: rescan voxels inside the 80 % envelope": 0.92,
+   "within: inside the widest": 0.977,
+   "session3: rescan voxels inside the 80 % envelope": 0.879,
+   "session3: inside the widest": 0.959,
+   "session5: rescan voxels inside the 80 % envelope": 0.918,
+   "session5: inside the widest": 0.978
+  },
+  "CC7": {
+   "core votes": 9,
+   "80 % envelope votes": 2,
+   "voxels: core / 80 % / widest": [
+    3436,
+    8267,
+    11320
+   ],
+   "within: rescan voxels inside the 80 % envelope": 0.915,
+   "within: inside the widest": 0.957,
+   "session3: rescan voxels inside the 80 % envelope": 0.897,
+   "session3: inside the widest": 0.943,
+   "session5: rescan voxels inside the 80 % envelope": 0.879,
+   "session5: inside the widest": 0.935
+  },
+  "AF": {
+   "core votes": 9,
+   "80 % envelope votes": 3,
+   "voxels: core / 80 % / widest": [
+    4778,
+    8256,
+    12877
+   ],
+   "within: rescan voxels inside the 80 % envelope": 0.901,
+   "within: inside the widest": 0.96,
+   "session3: rescan voxels inside the 80 % envelope": 0.872,
+   "session3: inside the widest": 0.946,
+   "session5: rescan voxels inside the 80 % envelope": 0.862,
+   "session5: inside the widest": 0.941
+  },
+  "SLF-II": {
+   "core votes": 9,
+   "80 % envelope votes": 2,
+   "voxels: core / 80 % / widest": [
+    3830,
+    8553,
+    11541
+   ],
+   "within: rescan voxels inside the 80 % envelope": 0.924,
+   "within: inside the widest": 0.957,
+   "session3: rescan voxels inside the 80 % envelope": 0.903,
+   "session3: inside the widest": 0.946,
+   "session5: rescan voxels inside the 80 % envelope": 0.88,
+   "session5: inside the widest": 0.929
+  },
+  "IOFF": {
+   "core votes": 9,
+   "80 % envelope votes": 2,
+   "voxels: core / 80 % / widest": [
+    3834,
+    9303,
+    12956
+   ],
+   "within: rescan voxels inside the 80 % envelope": 0.894,
+   "within: inside the widest": 0.945,
+   "session3: rescan voxels inside the 80 % envelope": 0.845,
+   "session3: inside the widest": 0.912,
+   "session5: rescan voxels inside the 80 % envelope": 0.87,
+   "session5: inside the widest": 0.924
+  },
+  "UF": {
+   "core votes": 9,
+   "80 % envelope votes": 3,
+   "voxels: core / 80 % / widest": [
+    3694,
+    6626,
+    10375
+   ],
+   "within: rescan voxels inside the 80 % envelope": 0.897,
+   "within: inside the widest": 0.963,
+   "session3: rescan voxels inside the 80 % envelope": 0.885,
+   "session3: inside the widest": 0.95,
+   "session5: rescan voxels inside the 80 % envelope": 0.896,
+   "session5: inside the widest": 0.958
+  },
+  "ILF": {
+   "core votes": 9,
+   "80 % envelope votes": 3,
+   "voxels: core / 80 % / widest": [
+    7040,
+    12737,
+    18873
+   ],
+   "within: rescan voxels inside the 80 % envelope": 0.891,
+   "within: inside the widest": 0.956,
+   "session3: rescan voxels inside the 80 % envelope": 0.876,
+   "session3: inside the widest": 0.952,
+   "session5: rescan voxels inside the 80 % envelope": 0.848,
+   "session5: inside the widest": 0.936
+  }
+ }
+}

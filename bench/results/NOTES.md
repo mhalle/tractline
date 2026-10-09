@@ -3234,3 +3234,114 @@ Per rescan (A's ensemble scored on the rescan / the rescan's on A):
 
 Caveats: three healthy subjects in all on one Philips scanner (MASiVar), one Siemens patient; R beyond 17 untested;
 no ground truth beyond reproducibility.
+
+## 2026-10-09 Landmark sites on cIIIs04: the ensemble and the rescans where tracts cross and where one runs alone
+
+`ensemble_landmarks.py` (CPU, about 80 s; no pipeline runs) reads cIIIs04-2.1's compact records: A's 17-run ensemble
+(A, smooth/r001..r016) and the three rescans' single runs on A's grid. It writes `ensemble_landmarks_smooth.json` and
+`landmarks.npz` beside the records. `ensemble_landmarks_3d.py` draws them, and the viewer is published (private) at
+https://claude.ai/artifact/WnTmmSCx5hTrvDe1m9C67m.
+
+Terms:
+- **Presence:** a tract with at least 2 streamlines in a voxel.
+- **Other:** the labeler's class for streamlines it assigns to no named tract. It is the most frequent label at every
+  site.
+- **Mode:** the tract most of A's 17 runs give a seed.
+- **Stated:** the mode's share of the 17 runs, read as P(another run gives the mode).
+
+**Sites, without a T1.** Each site is found from the ensemble itself, on presence shares (or mean counts) smoothed by
+a Gaussian of σ = 1 voxel:
+- **centrum semiovale, left and right:** corticospinal, callosal (CC3–CC5) and superior longitudinal (SLF-II,
+  SLF-III, arcuate) fibers all present; the largest of the three shares' minimum.
+- **temporal stem, left and right:** the most posterior voxel where the uncinate and inferior occipito-frontal (IOFF)
+  fasciculi both have a smoothed share of at least 0.6. Their best overlap alone falls in the frontal lobe.
+- **corticospinal tract alone, left and right:** the CST's share minus the largest other named tract's share,
+  maximized.
+- **genu and splenium:** CC1's and CC7's densest voxel (mean streamline count) within 3 mm of the midline. A second
+  callosal segment is present at both (CC2, CC6).
+
+The names are approximate. At each site the analysis takes:
+- the voxel rank field from all 17 runs: classes by mean streamline count, those of 2 or more; the table below shows
+  the top 5;
+- the seeds whose full streamline in A passes within 4 mm and that all 17 runs labeled, 464–1056 per site.
+
+The callosal and SLF classes that define the left centrum semiovale site are present there in every run but are not
+among its top 5 by count.
+
+| site | all 17 runs agree | stated | replicate (leave one out): gives the mode / stated | rescan gives the mode: same session / s3 / s5 | rescan's tract among the 17 runs' (s5) | rank field at the site (mean streamlines) |
+|---|---|---|---|---|---|---|
+| centrum semiovale, L | 0.19 | 0.75 | 0.72 / 0.75 | 0.69 / 0.64 / 0.61 | 0.90 | Other 31, AF 21, Sup-F 12, SLF-III 8, CST 6 |
+| centrum semiovale, R | 0.17 | 0.74 | 0.71 / 0.74 | 0.69 / 0.64 / 0.61 | 0.92 | Other 51, SLF-II 37, SLF-III 13, Sup-F 12, CC4 6 |
+| temporal stem, L | 0.24 | 0.76 | 0.74 / 0.76 | 0.70 / 0.67 / 0.64 | 0.89 | Other 116, IOFF 21, UF 6 |
+| temporal stem, R | 0.20 | 0.75 | 0.73 / 0.75 | 0.70 / 0.67 / 0.62 | 0.89 | Other 160, IOFF 35, EmC 9, UF 3, EC 2 |
+| CST alone, L | 0.17 | 0.81 | 0.79 / 0.81 | 0.77 / 0.75 / 0.76 | 0.94 | Other 41, CST 16 |
+| CST alone, R | 0.12 | 0.74 | 0.71 / 0.75 | 0.70 / 0.67 / 0.68 | 0.93 | Other 41, CST 13 |
+| genu | 0.18 | 0.77 | 0.74 / 0.77 | 0.70 / 0.70 / 0.70 | 0.94 | Other 35, CC1 15, CC2 14 |
+| splenium | 0.06 | 0.69 | 0.66 / 0.69 | 0.58 / 0.59 / 0.59 | 0.91 | Other 33, CC7 24, CC6 9 |
+
+Abbreviations: AF arcuate fasciculus; Sup-F superficial frontal; SLF superior longitudinal fasciculus; CST
+corticospinal tract; CC1–CC7 corpus callosum segments, front to back; IOFF inferior occipito-frontal fasciculus; UF
+uncinate fasciculus; EmC extreme capsule; EC external capsule.
+
+**The statement is not inflated by choosing the mode on the same runs.**
+- Leaving one run out, the other 16 runs' mode has nearly the same share: 0.764 against 0.764 in-sample over the
+  whole brain.
+- The left-out run gives that mode in 0.740, so even a replicate falls 2.4 points short, 1.4–3.7 at the sites. A
+  share is a noisy estimate of a probability.
+
+**A real rescan falls further short.**
+- Whole brain, the rescan gives the mode in 0.703 (same session), 0.674 (session 3) and 0.661 (session 5), against
+  0.764 stated: 6.1, 9.0 and 10.4 points short.
+- So about 4–8 points of the gap are the rescan's own, beyond what a replicate shows.
+- At the sites, the stated value minus the rescan's is:
+  - 4–11 points for the same session;
+  - 6–11 for session 3;
+  - 4–15 for session 5.
+- At session 5 the gap is largest where tracts cross: 12–15 points at the centrum semiovale and temporal stem, against
+  4–7 at the CST-alone sites and the genu.
+- The splenium is the least stable site. Only 6 % of its seeds have all 17 runs agreeing, split between CC7 and CC6,
+  and it falls about 10 points short in every session.
+
+**Runs rarely all agree.** Only 6–24 % of the seeds near a site get the same tract in all 17 runs. Other is the mode
+for most seeds at every site (511 of 565 at the left CST-alone site), so the site names describe a minority of the
+streamlines there.
+
+**The rescan's tract is nearly always one the 17 runs gave.**
+- Over all seeds: 89–94 % at the sites (session 5) and 92–95 % over the whole brain.
+- Over the seeds whose label changed: 79–86 % over the whole brain.
+
+**Runner-up.** For each streamline, the labeler's second choice is the tract with the second-highest probability
+(cluster probabilities summed per tract). Over the 44,717 seeds labeled in all 17 runs:
+- When a rescan changes a streamline's tract (35–39 %), the new tract is A's runner-up in 48–51 % of cases.
+- When A's runs split, the most frequent tract other than run A's own is A's runner-up in 50 %.
+- Out of 42 alternatives, that is informative: the runner-up is the right kind of alternative.
+- Its probability is not useful as a statement. Its median is 0.002, though the runs split on 80 % of seeds.
+- The ensemble's set of tracts covers more of the changes (79–86 %) than the single runner-up does (about 50 %).
+
+**Voxel runner-up.** In each voxel, the named tracts are ranked by mean streamline count over the 17 runs, leaving
+out Other. The viewer draws where each shown tract comes second (`rank2` in `landmarks.npz`).
+
+**Envelopes per tract.** The 80 % envelope uses the stated level 0.925. That level was fitted at R = 9 on the other
+subjects and is applied here to 17-run votes without refitting. Its thresholds are at least 2–4 of 17 runs, by tract.
+
+For the nine tracts drawn, which were chosen because the sites concern them, the envelope holds 85–92 % of each
+rescan's tract voxels. Examples: CST 0.85–0.89, CC4 0.88–0.92, UF 0.89–0.90, ILF 0.85–0.89. This is not compared with
+the pooled 0.84 (R = 9, all 42 tracts).
+
+**The viewer** (`ensemble_landmarks_3d.py`, template `landmarks_3d.html`, 5.2 MB) shows the whole brain:
+- per tract, presence shells: the core (at least 9 of 17 runs), the 80 % envelope, the widest (any run), and where it
+  is the named runner-up;
+- dots where a chosen rescan has a tract outside its 80 % envelope;
+- the 8 sites. At a site, shells and dots are cropped to 30 mm. The fans are full streamlines (compact records) from
+  all 17 runs, colored by tract or by each run's runner-up, with the rescans' versions in white. Up to 16 split seeds
+  (mode in at most 60 % of runs, some named) and 16 agreeing seeds are drawn.
+
+A reviewer agent checked the first draft against the JSON. Its corrections are in, including the leave-one-out
+baseline it asked for.
+
+Caveats:
+- one healthy subject;
+- sites found from the tracts themselves, not from anatomy;
+- Other is left out of the shells;
+- dots outside an envelope may come from registration error or real scan-to-scan change as well as from a tight
+  envelope.

@@ -1,0 +1,470 @@
+<title>cIIIs04 tract landmarks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  --bg: #f3f5f7; --surface: #ffffff; --ink: #15202b; --muted: #5a6876; --line: #d6dde3; --accent: #2b6a8a;
+  --warn-bg: #fbf1e3; --warn-ink: #6b4310; --scene: #0b1015; --good: #2f7d4f; --bad: #a8452a;
+  --ui: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --data: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e141a; --surface: #151d25; --ink: #e2e8ee; --muted: #93a2b0; --line: #26323d; --accent: #73b4d4;
+  --warn-bg: #2b2213; --warn-ink: #f0cf9c; --good: #7fcf9c; --bad: #f09a7c; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #0e141a; --surface: #151d25; --ink: #e2e8ee; --muted: #93a2b0; --line: #26323d; --accent: #73b4d4;
+  --warn-bg: #2b2213; --warn-ink: #f0cf9c; --good: #7fcf9c; --bad: #f09a7c; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font-family: var(--ui); font-size: 15px; line-height: 1.5; padding: 20px 16px 40px; }
+.wrap { max-width: 1240px; margin: 0 auto; display: grid; gap: 18px; }
+h1 { font-size: 1.6rem; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 0 0 8px; font-weight: 700; }
+h3 { font-size: 1.02rem; margin: 0 0 4px; text-wrap: balance; }
+.lede { color: var(--muted); max-width: 78ch; margin: 4px 0 0; }
+.notice { background: var(--warn-bg); color: var(--warn-ink); border-radius: 8px; padding: 8px 12px; max-width: 78ch; margin: 10px 0 0; font-size: 0.9rem; }
+.main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 380px); gap: 18px; align-items: start; }
+@media (max-width: 1000px) { .main { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; min-width: 0; }
+.scene { position: relative; background: var(--scene); border-radius: 8px; overflow: hidden; }
+canvas { display: block; width: 100%; touch-action: none; }
+.hint { position: absolute; left: 10px; bottom: 8px; right: 10px; font: 12px var(--data); color: #9fb0bf; pointer-events: none; }
+.controls { display: grid; gap: 10px; margin-top: 12px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; }
+.label { color: var(--muted); font-size: 0.85rem; min-width: 9ch; }
+.seg { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { font: inherit; font-size: 0.86rem; padding: 5px 10px; border: 0; background: transparent; color: var(--ink); cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--surface); }
+button.plain { font: inherit; font-size: 0.86rem; padding: 5px 10px; border: 1px solid var(--line); border-radius: 8px; background: transparent; color: var(--ink); cursor: pointer; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+input[type=range] { flex: 1; min-width: 120px; accent-color: var(--accent); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { display: inline-flex; gap: 6px; align-items: center; border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px 3px 6px; font-size: 0.85rem; cursor: pointer; color: var(--ink); background: transparent; font-family: inherit; }
+.chip[aria-pressed="false"] { opacity: 0.4; }
+.sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; flex: none; }
+.sites { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 6px; }
+.site { text-align: left; font: inherit; font-size: 0.86rem; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: transparent; color: var(--ink); cursor: pointer; display: flex; gap: 8px; align-items: baseline; }
+.site[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.site b { font-family: var(--data); color: var(--accent); }
+.side { display: grid; gap: 14px; min-width: 0; }
+.side p { margin: 0 0 8px; font-size: 0.88rem; }
+.side p:last-child { margin-bottom: 0; }
+.key { display: grid; gap: 5px; font-size: 0.85rem; }
+.key div { display: flex; gap: 8px; align-items: center; }
+.num { font-family: var(--data); font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+.tbl { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 0.84rem; margin: 4px 0 10px; }
+th, td { text-align: left; padding: 3px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--muted); font-weight: 400; font-size: 0.78rem; }
+td.n, th.n { text-align: right; font-family: var(--data); font-variant-numeric: tabular-nums; }
+.stat { display: flex; justify-content: space-between; gap: 10px; font-size: 0.86rem; border-bottom: 1px solid var(--line); padding: 3px 0; }
+.stat span:last-child { font-family: var(--data); font-variant-numeric: tabular-nums; }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>cIIIs04 tract landmarks</h1>
+    <p class="lede">A healthy adult (MASiVar cohort III, subject 04). The tractography pipeline ran 17 times on one scan: once as acquired and
+      16 times on copies with its noise drawn again. The same subject was scanned three more times, once in the same session and once
+      in each of two later sessions. Shells show how much of a tract the 17 runs agree on. Dots show where a real rescan put the tract
+      outside the ensemble's 80% envelope. Fans show single streamlines at landmark sites, drawn from all 17 runs and from the rescans.</p>
+    <p class="notice"><strong>Research prototype.</strong> This shows how reproducible the pipeline's output is, not where the fibers
+      truly run. The sites are found from the tracts themselves (no T1 or atlas), so their anatomical names are approximate.</p>
+  </header>
+
+  <div class="main">
+    <section class="panel" aria-label="3D scene">
+      <div class="scene" id="scene"><canvas id="cv" aria-label="Rotatable 3D view of tract shells, rescan dots and streamline fans"></canvas>
+        <span class="hint">Drag to rotate · scroll or pinch to zoom · right-drag to pan · double-click a surface to rotate around it</span></div>
+      <div class="controls">
+        <div class="row" style="align-items:start"><span class="label">Site</span><div class="sites" id="sites" style="flex:1"></div></div>
+        <div class="row"><span class="label">Shells</span>
+          <div class="seg" role="group" aria-label="Which shells to show">
+            <button data-shell="core" aria-pressed="false">Core only</button>
+            <button data-shell="mid" aria-pressed="true">Core + 80% envelope</button>
+            <button data-shell="outer" aria-pressed="false">Core + widest</button>
+            <button data-shell="second" aria-pressed="false">Where it is runner-up</button>
+            <button data-shell="none" aria-pressed="false">None</button>
+          </div></div>
+        <div class="row"><span class="label">Rescan dots</span>
+          <div class="seg" role="group" aria-label="Which rescan's misses to show" id="rescanSeg"></div></div>
+        <div class="row"><span class="label">Fans</span>
+          <div class="seg" role="group" aria-label="Which streamline fans to show">
+            <button data-fan="split" aria-pressed="true">Where runs split</button>
+            <button data-fan="agree" aria-pressed="false">Where all agree</button>
+            <button data-fan="none" aria-pressed="false">None</button>
+          </div>
+          <div class="seg" role="group" aria-label="Color each version by">
+            <button data-color="tract" aria-pressed="true">Color: tract</button>
+            <button data-color="up" aria-pressed="false">Color: runner-up</button>
+          </div>
+          <button class="plain" id="rescanLines" aria-pressed="true">Hide rescans' versions</button></div>
+        <div class="row"><span class="label">Crop</span>
+          <button class="plain" id="crop" aria-pressed="true">Show whole tracts</button>
+          <span class="muted" style="font-size:0.85rem">Shells and dots within 30 mm of the site (each axis)</span></div>
+        <div class="row"><span class="label">Tracts</span><div class="chips" id="chips"></div></div>
+        <div class="row"><span class="label">Axial plane</span><input id="zs" type="range" min="0" max="0" step="1" value="0" aria-label="Axial plane position">
+          <span id="zout" class="num muted" style="min-width:7ch"></span>
+          <button class="plain" id="plane" aria-pressed="true">Hide plane</button>
+          <button class="plain" id="brain" aria-pressed="true">Hide outline</button></div>
+        <div class="row"><span class="label">View</span>
+          <div class="seg" role="group" aria-label="Look at the scene from">
+            <button data-view="right">Right</button><button data-view="left">Left</button><button data-view="front">Front</button>
+            <button data-view="back">Back</button><button data-view="top">Top</button><button data-view="bottom">Bottom</button>
+          </div>
+          <button class="plain" id="center">Center on site</button>
+          <button class="plain" id="reset">Reset view</button></div>
+      </div>
+    </section>
+
+    <div class="side">
+      <section class="panel" id="sitePanel"></section>
+      <section class="panel">
+        <h2>Reading the view</h2>
+        <p><strong>Core:</strong> voxels where the tract is present (2 or more of its streamlines) in at least 9 of the 17 runs.</p>
+        <p><strong>80% envelope:</strong> its level was fitted on two other subjects to hold 80% of a rescan's tract. For the tracts
+          shown it holds <span class="num" id="held80"></span> of each rescan's tract voxels. <strong>Widest:</strong> any run.</p>
+        <p><strong>Runner-up:</strong> rank the named tracts in each voxel by their mean streamline count over the 17 runs (leaving out
+          Other, which leads in most voxels). The shell is where this tract comes second among them.</p>
+        <p><strong>Dots:</strong> voxels where the chosen rescan has the tract but the 80% envelope does not: 8–16% of each rescan's
+          tract voxels here. Clusters may mean the envelope is too tight, or a registration error, or a real difference between
+          scans.</p>
+        <p><strong>Fans:</strong> each seed near the site drawn once per run, colored by the tract that run gave it (or by
+          that run's second choice), with the rescans' versions in white. Each site's fan colors are listed with the site.</p>
+        <h2 style="margin-top:10px">Shell colors</h2>
+        <div class="key" id="key"></div>
+      </section>
+      <section class="panel" id="brainPanel"></section>
+      <section class="panel">
+        <h2>Limits</h2>
+        <p>One healthy subject, one scanner (Philips, 2.1 × 2.1 × 2.2 mm, b = 1000 and 2000). The rescans were registered rigidly and
+          tracked on the reference grid. Shells are smoothed isosurfaces of vote counts; their thresholds set the apparent boundary.
+          Coordinates are scanner millimeters in the patient's frame (R/L, A/P, S/I labels).</p>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/TrackballControls.js"></script>
+<script>
+const D = /*DATA*/null;
+const bytes = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+const i16 = s => { const b = bytes(s); return new Int16Array(b.buffer, b.byteOffset, b.byteLength / 2); };
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const pct = x => x == null ? "–" : `${Math.round(x * 100)}%`;
+const RESCAN = { within: "Same session", session3: "Session 3", session5: "Session 5" };
+
+const canvas = document.getElementById("cv"), host = document.getElementById("scene");
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+renderer.localClippingEnabled = true;
+// the crop box: six planes about the chosen site (CROP_MM each way); far away when cropping is off
+const CROP_MM = 30, clip = [0, 1, 2].flatMap(a => [1, -1].map(sg => new THREE.Plane(new THREE.Vector3(...[0, 1, 2].map(b => b === a ? sg : 0)), 1e6)));
+function setCrop(c) { clip.forEach((pl, i) => { const a = i >> 1, sg = i & 1 ? -1 : 1; pl.constant = c ? -sg * (c[a] - sg * CROP_MM) : 1e6; }); }
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(css("--scene") || "#0b1015");
+const camera = new THREE.PerspectiveCamera(35, 4 / 3, 1, 3000);
+scene.add(new THREE.HemisphereLight(0xeef4ff, 0x30363c, 0.9));
+const sun = new THREE.DirectionalLight(0xffffff, 0.7); camera.add(sun); sun.position.set(0.3, 0.6, 1); scene.add(camera);
+
+// meshes
+const brainMeshes = [], shells = {};
+let center = new THREE.Vector3();
+const OP = { core: 0.6, mid: 0.2, outer: 0.09, second: 0.3 };
+for (const m of D.meshes) {
+  const v = i16(m.v), pos = new Float32Array(v.length);
+  for (let i = 0; i < v.length; i++) pos[i] = v[i] / 10;
+  const fb = bytes(m.f), idx = m.f16 ? new Uint16Array(fb.buffer, fb.byteOffset, fb.byteLength / 2) : new Uint32Array(fb.buffer, fb.byteOffset, fb.byteLength / 4);
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.BufferAttribute(pos, 3)); g.setIndex(new THREE.BufferAttribute(idx, 1)); g.computeVertexNormals();
+  let mat;
+  if (m.kind === "brain") mat = new THREE.MeshBasicMaterial({ color: m.color, transparent: true, opacity: 0.045, depthWrite: false, side: THREE.DoubleSide });
+  else if (m.kind === "core") mat = new THREE.MeshStandardMaterial({ color: m.color, roughness: 0.55, metalness: 0, transparent: true, opacity: OP.core,
+    depthWrite: false, side: THREE.DoubleSide, clippingPlanes: clip });
+  else mat = new THREE.MeshStandardMaterial({ color: m.color, roughness: 0.8, metalness: 0, transparent: true, opacity: OP[m.kind],
+    depthWrite: false, side: THREE.DoubleSide, wireframe: m.kind === "second", clippingPlanes: clip });
+  const mesh = new THREE.Mesh(g, mat);
+  mesh.renderOrder = { core: 2, mid: 3, outer: 4, second: 3, brain: 5 }[m.kind];
+  scene.add(mesh);
+  if (m.kind === "brain") { brainMeshes.push(mesh); g.computeBoundingBox(); g.boundingBox.getCenter(center); }
+  else (shells[m.name] = shells[m.name] || {})[m.kind] = mesh;
+}
+
+// colors
+const palette = Object.fromEntries(D.shown.map(t => [D.tract_names.indexOf(t.name), t.color]));
+const OTHER_NAMED = "#7d8994", OTHER = "#454e56", RESCAN_COLOR = "#ffffff";
+const EXTRA = ["#e8453c", "#3d8bfd", "#f59f00", "#20c997", "#be4bdb", "#fd7e14", "#94d82d", "#4dd4f0"];
+const siteColors = {};                 // per site: the shell tracts' colors, and EXTRA for the other tracts its fans use most
+function colorsFor(si) {
+  if (siteColors[si]) return siteColors[si];
+  const n = new Map();
+  for (const f of Object.values(D.fans[si])) for (let s = 0; s < f.n; s++) if (f.src[s] < D.runs)
+    for (const t of [f.tract[s], f.up[s]]) if (t !== D.other) n.set(t, (n.get(t) || 0) + 1);
+  const m = { ...palette }; let e = 0;
+  [...n.entries()].sort((a, b) => b[1] - a[1]).forEach(([t]) => { if (!(t in m) && e < EXTRA.length) m[t] = EXTRA[e++]; });
+  return (siteColors[si] = m);
+}
+const tractColor = (t, si) => t === D.other ? OTHER : ((si == null ? palette : colorsFor(si))[t] || OTHER_NAMED);
+
+// rescan dots: per rescan, per tract, a point set
+const dots = {};
+for (const [tag, per] of Object.entries(D.misses)) {
+  dots[tag] = {};
+  for (const [name, m] of Object.entries(per)) {
+    const p = i16(m.p), pos = new Float32Array(p.length);
+    for (let i = 0; i < p.length; i++) pos[i] = p[i] / 10;
+    const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+    const col = D.shown.find(t => t.name === name).color;
+    const pts = new THREE.Points(g, new THREE.PointsMaterial({ color: col, size: 1.5, sizeAttenuation: true, transparent: true, opacity: 0.95, clippingPlanes: clip }));
+    pts.renderOrder = 7; pts.visible = false; scene.add(pts); dots[tag][name] = pts;
+  }
+}
+
+// site markers
+const markers = [];
+D.sites.forEach((s, i) => {
+  const g = new THREE.Mesh(new THREE.SphereGeometry(2.2, 20, 14), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9, depthTest: false }));
+  g.position.set(...s.mm); g.renderOrder = 9; scene.add(g); markers.push(g);
+  label(String(i + 1), new THREE.Vector3(s.mm[0], s.mm[1], s.mm[2] + 6), 6, "#ffffff");
+});
+
+// fans, built when a site is first chosen: per kind, versions from the runs (tract and runner-up colors) and the rescans
+const fanCache = {};
+function buildFans(si) {
+  if (fanCache[si]) return fanCache[si];
+  const out = {};
+  for (const [kind, f] of Object.entries(D.fans[si])) {
+    const p = i16(f.p), sets = { tract: [[], []], up: [[], []], resc: [[], []] };
+    let o = 0;
+    for (let s = 0; s < f.n; s++) {
+      const n = f.len[s], isResc = f.src[s] >= D.runs;
+      const ct = new THREE.Color(isResc ? RESCAN_COLOR : tractColor(f.tract[s], si)), cu = new THREE.Color(isResc ? RESCAN_COLOR : tractColor(f.up[s], si));
+      for (let k = 0; k < n - 1; k++) {
+        const a = (o + k) * 3, b = (o + k + 1) * 3, seg = [p[a] / 10, p[a + 1] / 10, p[a + 2] / 10, p[b] / 10, p[b + 1] / 10, p[b + 2] / 10];
+        if (isResc) { sets.resc[0].push(...seg); sets.resc[1].push(1, 1, 1, 1, 1, 1); }
+        else { sets.tract[0].push(...seg); sets.tract[1].push(ct.r, ct.g, ct.b, ct.r, ct.g, ct.b); sets.up[0].push(...seg); sets.up[1].push(cu.r, cu.g, cu.b, cu.r, cu.g, cu.b); }
+      }
+      o += n;
+    }
+    out[kind] = {};
+    for (const [name, [pos, col]] of Object.entries(sets)) {
+      const g = new THREE.BufferGeometry();
+      g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
+      const l = new THREE.LineSegments(g, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: name === "resc" ? 1 : 0.7 }));
+      l.renderOrder = name === "resc" ? 8 : 6; l.visible = false; scene.add(l); out[kind][name] = l;
+    }
+  }
+  return (fanCache[si] = out);
+}
+
+// the axial plane: A's mean b0
+const [X, Y, Z] = D.shape, b0 = bytes(D.b0), A = D.affine;
+const world = (i, j, k) => new THREE.Vector3(A[0][0] * i + A[0][1] * j + A[0][2] * k + A[0][3], A[1][0] * i + A[1][1] * j + A[1][2] * k + A[1][3], A[2][0] * i + A[2][1] * j + A[2][2] * k + A[2][3]);
+const slice = new Uint8Array(X * Y);
+const tex = new THREE.DataTexture(slice, X, Y, THREE.LuminanceFormat); tex.magFilter = THREE.LinearFilter;
+const planeGeo = new THREE.BufferGeometry();
+planeGeo.setAttribute("uv", new THREE.Float32BufferAttribute([0, 0, 1, 0, 1, 1, 0, 1], 2)); planeGeo.setIndex([0, 1, 2, 0, 2, 3]);
+const plane = new THREE.Mesh(planeGeo, new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide, transparent: true, opacity: 0.85, depthWrite: false }));
+plane.renderOrder = 0; scene.add(plane);
+function setPlane(k) {
+  for (let i = 0; i < X; i++) for (let j = 0; j < Y; j++) slice[j * X + i] = b0[(i * Y + j) * Z + k];
+  tex.needsUpdate = true;
+  const c = [world(-0.5, -0.5, k), world(X - 0.5, -0.5, k), world(X - 0.5, Y - 0.5, k), world(-0.5, Y - 0.5, k)];
+  planeGeo.setAttribute("position", new THREE.Float32BufferAttribute(c.flatMap(v => [v.x, v.y, v.z]), 3));
+  planeGeo.attributes.position.needsUpdate = true; planeGeo.computeBoundingSphere();
+  document.getElementById("zout").textContent = `z ${world(0, 0, k).z.toFixed(0)} mm`;
+}
+
+function label(text, pos, size = 9, color = "#c7d2dc") {
+  const c = document.createElement("canvas"); c.width = c.height = 64; const g = c.getContext("2d");
+  g.font = "600 40px IBM Plex Mono, monospace"; g.fillStyle = color; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(text, 32, 34);
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false, transparent: true }));
+  s.scale.set(size, size, 1); s.position.copy(pos); s.renderOrder = 10; scene.add(s);
+}
+const R = 100;
+[["R", [R, 0, 0]], ["L", [-R, 0, 0]], ["A", [0, R, 0]], ["P", [0, -R, 0]], ["S", [0, 0, R]], ["I", [0, 0, -R]]]
+  .forEach(([t, d]) => label(t, center.clone().add(new THREE.Vector3(...d))));
+
+// trackball controls with a visible pivot
+const controls = new THREE.TrackballControls(camera, canvas);
+Object.assign(controls, { rotateSpeed: 2.6, zoomSpeed: 1.2, panSpeed: 0.7, staticMoving: false, dynamicDampingFactor: 0.2 });
+const pivot = new THREE.Mesh(new THREE.SphereGeometry(1.2, 16, 12), new THREE.MeshBasicMaterial({ color: 0xffd34d, depthTest: false, transparent: true, opacity: 0.9 }));
+pivot.renderOrder = 11; scene.add(pivot);
+const VIEWS = { right: [1, 0, 0, 0, 0, 1], left: [-1, 0, 0, 0, 0, 1], front: [0, 1, 0, 0, 0, 1], back: [0, -1, 0, 0, 0, 1],
+  top: [0, 0, 1, 0, 1, 0], bottom: [0, 0, -1, 0, 1, 0], home: [0.55, -0.68, 0.45, 0, 0, 1] };
+function view(name, at, dist) {
+  const [x, y, z, ux, uy, uz] = VIEWS[name], t = (at || controls.target).clone();
+  const d0 = dist || Math.max(camera.position.distanceTo(controls.target), 120);
+  controls.target.copy(t);
+  camera.position.copy(t.clone().add(new THREE.Vector3(x, y, z).normalize().multiplyScalar(d0)));
+  camera.up.set(ux, uy, uz); camera.lookAt(t); controls.update();
+}
+const ray = new THREE.Raycaster();
+canvas.addEventListener("dblclick", e => {
+  const r = canvas.getBoundingClientRect();
+  ray.setFromCamera(new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1), camera);
+  const targets = scene.children.filter(o => o.isMesh && o.visible && o !== pivot && !brainMeshes.includes(o));
+  const hit = ray.intersectObjects(targets, false)[0];
+  if (!hit) return;
+  const shift = hit.point.clone().sub(controls.target);
+  controls.target.add(shift); camera.position.add(shift); controls.update();
+});
+function recenter(p) { const shift = p.clone().sub(controls.target); controls.target.add(shift); camera.position.add(shift); controls.update(); }
+
+// state
+const state = { site: -1, crop: true, shell: "mid", rescan: D.rescans[D.rescans.length - 1], fan: "split", color: "tract", rescLines: true,
+  on: Object.fromEntries(D.shown.map(t => [t.name, true])), plane: true, brain: true };
+function apply() {
+  for (const [name, s] of Object.entries(shells)) for (const [kind, mesh] of Object.entries(s))
+    mesh.visible = state.on[name] && state.shell !== "none" && (state.shell === "second" ? kind === "second" : (kind === "core" || kind === state.shell));
+  for (const [tag, per] of Object.entries(dots)) for (const [name, p] of Object.entries(per)) p.visible = tag === state.rescan && state.on[name];
+  for (const [si, kinds] of Object.entries(fanCache)) for (const [kind, sets] of Object.entries(kinds)) {
+    const here = +si === state.site && kind === state.fan;
+    sets.tract.visible = here && state.color === "tract"; sets.up.visible = here && state.color === "up"; sets.resc.visible = here && state.rescLines;
+  }
+  markers.forEach((m, i) => m.material.color.set(i === state.site ? 0xffd34d : 0xffffff));
+  plane.visible = state.plane; brainMeshes.forEach(m => m.visible = state.brain);
+  setCrop(state.crop && state.site >= 0 ? D.sites[state.site].mm : null);
+  cropBtn.disabled = state.site < 0;
+  sitePanel();
+}
+function chooseSite(i) {
+  state.site = i;
+  document.querySelectorAll(".site").forEach((b, j) => b.setAttribute("aria-pressed", String(j === i)));
+  if (i >= 0) {
+    buildFans(i);
+    const s = D.sites[i];
+    for (const t of D.shown) state.on[t.name] = s.tracts.includes(t.name);
+    syncChips();
+    const zs = document.getElementById("zs"); zs.value = s.voxel[2]; setPlane(s.voxel[2]);
+    view("home", new THREE.Vector3(...s.mm), 120);
+  } else {
+    for (const t of D.shown) state.on[t.name] = true;
+    syncChips(); view("home", center, 260);
+  }
+  apply();
+}
+
+// site list
+const sitesEl = document.getElementById("sites");
+const all = document.createElement("button"); all.className = "site"; all.innerHTML = "<b>·</b>Whole brain, all tracts"; all.onclick = () => chooseSite(-1);
+D.sites.forEach((s, i) => {
+  const b = document.createElement("button"); b.className = "site"; b.innerHTML = `<b>${i + 1}</b>${s.name}`;
+  b.onclick = () => chooseSite(i); sitesEl.appendChild(b);
+});
+sitesEl.appendChild(all);
+
+// side panels
+function sitePanel() {
+  const el = document.getElementById("sitePanel");
+  if (state.site < 0) {
+    el.innerHTML = `<h2>Sites</h2><p>Pick a site to see its fans and what the ensemble and the rescans say there. The sites are found from the
+      ensemble's own tracts: where several tracts cross (centrum semiovale, temporal stem), where the corticospinal tract runs alone,
+      and the densest midline points of the genu and splenium of the corpus callosum. <em>Other</em> is the labeler's class for
+      streamlines it assigns to no named tract.</p>`;
+    return;
+  }
+  const s = D.sites[state.site];
+  const rf = s["rank field at the site (mean over 17 runs)"];
+  const rows = rf.map(r => `<tr><td>${r.tract} <span class="muted">${D.full[r.tract] && D.full[r.tract] !== r.tract ? D.full[r.tract] : (r.tract === "Other" ? "no tract" : "")}</span></td>
+    <td class="n">${r["mean streamlines"].toFixed(1)}</td><td class="n">${r["share of runs present"] == null ? "–" : pct(r["share of runs present"])}</td></tr>`).join("");
+  const resc = Object.entries(s.rescans).map(([t, r]) => `<tr><td>${RESCAN[t] || t}</td><td class="n">${pct(r["changed from A"])}</td>
+    <td class="n">${pct(r["rescan gives the mode"])}</td><td class="n">${pct(r["stated (mode's mean share, these seeds)"])}</td>
+    <td class="n">${pct(r["rescan's tract among the 17 runs' tracts"])}</td><td class="n">${pct(r["changed, to A's runner-up"])}</td></tr>`).join("");
+  const modes = Object.entries(s["modes (top 5)"]).map(([t, n]) => `${t} ${n}`).join(", ");
+  const fs = s["fan seeds"];
+  el.innerHTML = `<h2>Site ${state.site + 1}</h2><h3>${s.name}</h3>
+    <p class="muted">${s["defined by"]}. At <span class="num">${s.mm.map(v => v.toFixed(0)).join(", ")}</span> mm.</p>
+    <h2 style="margin-top:10px">Voxel rank field at the site</h2>
+    <div class="tbl"><table><thead><tr><th>Class</th><th class="n">Mean streamlines</th><th class="n">Runs present</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <h2>Streamlines within 4 mm</h2>
+    <p class="muted">Other (no named tract) is the most frequent label for most of these seeds, so the site's name describes a minority of them.</p>
+    <div class="stat"><span>Seeds labeled in all 17 runs</span><span>${s["seeds near (labeled in all 17 runs)"]}</span></div>
+    <div class="stat"><span>All 17 runs give one tract</span><span>${pct(s["all 17 runs agree"])}</span></div>
+    <div class="stat"><span>Mean share of the most frequent tract (stated)</span><span>${pct(s["mode's mean share (stated P that another run gives the mode)"])}</span></div>
+    <div class="stat"><span>A left-out run gives the others' most frequent tract</span><span>${pct(s["replicate (leave one run out): gives the mode / stated"][0])}</span></div>
+    <p class="muted" style="margin-top:6px">Most frequent tracts (seeds): ${modes}</p>
+    <h2 style="margin-top:10px">Against the real rescans</h2>
+    <div class="tbl"><table><thead><tr><th>Rescan</th><th class="n">Changed</th><th class="n">Gives the mode</th><th class="n">Stated</th>
+      <th class="n">Among 17 runs'</th><th class="n">Change to runner-up</th></tr></thead><tbody>${resc}</tbody></table></div>
+    <p class="muted">Changed: the rescan's tract differs from the reference run's. Gives the mode: the rescan's tract is the one most of
+      the 17 runs gave; stated is what the ensemble predicted for that (a left-out run falls short of it by 1–4 points too). Among 17 runs': the rescan's tract is one any run gave. Change
+      to runner-up: of the changed seeds, the share whose new tract was the reference run's second choice.</p>
+    <h2 style="margin-top:10px">Fan colors at this site</h2><div class="key">${fanKey(state.site)}</div>
+    <p class="muted" style="margin-top:8px">Fans drawn: ${fs["drawn (split)"] || 0} of ${fs["split (mode in at most 60 % of runs, some named)"]} split seeds, ${fs["drawn (agree)"] || 0} of
+      ${fs["all agree on a named tract"]} seeds where all runs agree on a named tract.</p>`;
+}
+function fanKey(si) {
+  const used = t => Object.values(D.fans[si]).some(f => f.tract.some((x, i) => x === t && f.src[i] < D.runs) || f.up.some((x, i) => x === t && f.src[i] < D.runs));
+  const rows = Object.entries(colorsFor(si)).filter(([t]) => used(+t));
+  return rows.map(([t, c]) => `<div><i class="sw" style="background:${c}"></i>${D.tract_names[t]} <span class="muted">${D.full[D.tract_names[t]]}</span></div>`).join("") +
+    `<div><i class="sw" style="background:${OTHER_NAMED}"></i><span class="muted">another named tract</span></div>` +
+    `<div><i class="sw" style="background:${OTHER}"></i><span class="muted">Other: no tract assigned</span></div>` +
+    `<div><i class="sw" style="background:${RESCAN_COLOR};outline:1px solid var(--line)"></i><span class="muted">a rescan's version (any tract)</span></div>`;
+}
+(function brainPanel() {
+  const b = D.brain, tags = D.rescans;
+  const rows = tags.map(t => `<tr><td>${RESCAN[t] || t}</td><td class="n">${pct(b[`${t}: changed`])}</td>
+    <td class="n">${pct(b[`${t}: changed, to a tract A's 17 runs gave`])}</td><td class="n">${pct(b[`${t}: changed, to A's runner-up`])}</td></tr>`).join("");
+  const loo = b["replicate (leave one run out): gives the mode / stated"];
+  const mrows = tags.map(t => `<tr><td>${RESCAN[t] || t}</td><td class="n">${pct(b[`${t}: gives the mode / stated`][0])}</td></tr>`).join("");
+  document.getElementById("brainPanel").innerHTML = `<h2>Whole brain: where do changed labels go?</h2>
+    <div class="tbl"><table><thead><tr><th>Rescan</th><th class="n">Changed</th><th class="n">To a tract the 17 runs gave</th><th class="n">To the runner-up</th></tr></thead>
+    <tbody>${rows}</tbody></table></div>
+    <p>Of the changed labels, most go to a tract one of the 17 runs already gave. About half go to the reference run's own second
+      choice, so the labeler's runner-up is the right kind of alternative. But its probability (median
+      <span class="num">${b["A's runner-up probability (median, all seeds)"]}</span>) says nothing about how often the label changes.</p>
+    <h2 style="margin-top:10px">How often the most frequent tract repeats</h2>
+    <div class="tbl"><table><thead><tr><th>Scan</th><th class="n">Gives it</th></tr></thead><tbody>
+      <tr><td>Stated by the 17 runs</td><td class="n">${pct(loo[1])}</td></tr><tr><td>A left-out run</td><td class="n">${pct(loo[0])}</td></tr>${mrows}</tbody></table></div>
+    <p class="muted">Over ${b["seeds labeled in all 17 runs"].toLocaleString("en-US")} seeds labeled in all 17 runs. In
+      ${pct(b["runs split: share of seeds"])} of them the runs do not all agree.</p>`;
+})();
+
+// controls
+document.querySelectorAll("[data-shell]").forEach(b => b.onclick = () => { state.shell = b.dataset.shell;
+  document.querySelectorAll("[data-shell]").forEach(x => x.setAttribute("aria-pressed", String(x === b))); apply(); });
+document.querySelectorAll("[data-fan]").forEach(b => b.onclick = () => { state.fan = b.dataset.fan;
+  document.querySelectorAll("[data-fan]").forEach(x => x.setAttribute("aria-pressed", String(x === b))); apply(); });
+document.querySelectorAll("[data-color]").forEach(b => b.onclick = () => { state.color = b.dataset.color;
+  document.querySelectorAll("[data-color]").forEach(x => x.setAttribute("aria-pressed", String(x === b))); apply(); });
+const rs = document.getElementById("rescanSeg");
+[...D.rescans.slice().reverse(), "none"].forEach(t => {
+  const b = document.createElement("button"); b.textContent = t === "none" ? "None" : RESCAN[t] || t; b.setAttribute("aria-pressed", String(t === state.rescan));
+  b.onclick = () => { state.rescan = t; rs.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b))); apply(); };
+  rs.appendChild(b);
+});
+const cropBtn = document.getElementById("crop");
+cropBtn.onclick = () => { state.crop = !state.crop; cropBtn.textContent = state.crop ? "Show whole tracts" : "Crop to the site"; cropBtn.setAttribute("aria-pressed", String(state.crop)); apply(); };
+const rl = document.getElementById("rescanLines");
+rl.onclick = () => { state.rescLines = !state.rescLines; rl.textContent = state.rescLines ? "Hide rescans' versions" : "Show rescans' versions"; rl.setAttribute("aria-pressed", String(state.rescLines)); apply(); };
+const chips = document.getElementById("chips"), chipEls = {};
+D.shown.forEach(t => {
+  const b = document.createElement("button"); b.className = "chip"; b.title = t.full;
+  b.innerHTML = `<i class="sw" style="background:${t.color}"></i>${t.name}`;
+  b.onclick = () => { state.on[t.name] = !state.on[t.name]; syncChips(); apply(); };
+  chips.appendChild(b); chipEls[t.name] = b;
+});
+function syncChips() { for (const t of D.shown) chipEls[t.name].setAttribute("aria-pressed", String(state.on[t.name])); }
+const pl = document.getElementById("plane"); pl.onclick = () => { state.plane = !state.plane; pl.textContent = state.plane ? "Hide plane" : "Show plane"; pl.setAttribute("aria-pressed", String(state.plane)); apply(); };
+const br = document.getElementById("brain"); br.onclick = () => { state.brain = !state.brain; br.textContent = state.brain ? "Hide outline" : "Show outline"; br.setAttribute("aria-pressed", String(state.brain)); apply(); };
+document.getElementById("reset").onclick = () => chooseSite(state.site);
+document.getElementById("center").onclick = () => recenter(state.site >= 0 ? new THREE.Vector3(...D.sites[state.site].mm) : center);
+document.querySelectorAll("[data-view]").forEach(b => b.onclick = () => view(b.dataset.view));
+const zs = document.getElementById("zs"); zs.max = Z - 1; zs.oninput = () => setPlane(+zs.value);
+zs.value = Math.round(Z / 2); setPlane(+zs.value);
+
+{ const v = Object.values(D.env).flatMap(e => D.rescans.map(t => e[`${t}: rescan voxels inside the 80 % envelope`]));
+  document.getElementById("held80").textContent = `${Math.round(Math.min(...v) * 100)}–${Math.round(Math.max(...v) * 100)}%`; }
+const key = document.getElementById("key");
+D.shown.forEach(t => key.insertAdjacentHTML("beforeend", `<div><i class="sw" style="background:${t.color}"></i>${t.name} <span class="muted">${t.full}</span></div>`));
+
+
+function resize() {
+  const w = host.clientWidth, h = Math.round(Math.min(Math.max(w * 0.72, 320), 700));
+  renderer.setSize(w, h, false); canvas.style.height = h + "px"; camera.aspect = w / h; camera.updateProjectionMatrix();
+  controls.handleResize();
+}
+new ResizeObserver(resize).observe(host); resize();
+chooseSite(0);
+(function loop() { controls.update(); pivot.position.copy(controls.target); renderer.render(scene, camera); requestAnimationFrame(loop); })();
+</script>

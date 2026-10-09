@@ -229,6 +229,31 @@ PAT16's double-bootstrap map, fitted with no real rescan, brings that subject's 
 improve every measure, with most of the gain by 9–13 runs. The as-stated confidence falls with the number of runs, so
 a recalibration map belongs to a run count.
 
+**Landmark sites and runners-up (NOTES 2026-10-09).** On cIIIs04, eight sites were found from the ensemble's own
+tracts:
+- where several cross: the centrum semiovale and the temporal stem;
+- where the corticospinal tract runs alone;
+- the densest midline points of the genu and the splenium.
+
+Over the whole brain, the 17 runs state that another run gives a streamline's most frequent tract 76 % of the time.
+- A left-out replicate does so 74 % of the time, so the statement itself is nearly unbiased.
+- A real rescan does so 70 % (same session), 67 % and 66 % (later sessions).
+- About 4–8 points of the shortfall are the rescan's own.
+- At the sites, the shortfall is largest where tracts cross in a later session: 12–15 points, against 4–7 for the
+  single-tract sites.
+
+A rescan's tract is nearly always one the 17 runs gave: 92–95 % of seeds over the whole brain, and 79–86 % of those
+whose label changed.
+
+The labeler's own runner-up is the new tract in about half of the changes. That makes it the right kind of
+alternative, but its probability (median 0.002) is no guide to how often the label changes.
+
+`bench/ensemble_landmarks_3d.py` draws the following, with full streamlines from the compact records:
+- the tracts' presence shells;
+- where each tract is the voxel's runner-up among named tracts;
+- the rescans' voxels outside the 80 % envelope;
+- fans at each site.
+
 What the reported confidence should be:
 
 - the ensemble's agreement, adjusted to predict a same-session rescan using simulated rescans with correlated noise.
@@ -236,7 +261,8 @@ What the reported confidence should be:
   for the second;
 - fitted per protocol, since it depends on the pipeline and on the number of runs, and checked on test-retest scans
   for any new protocol;
-- regional answers first: which named tracts pass near a point, and in what proportion. Envelopes cannot yet be stated
-  at 80 or 90 % with 9 runs;
+- regional answers first: which named tracts pass near a point, and in what proportion. With presence maps and levels
+  recalibrated on other subjects, an 80 % envelope can be stated. A 90 % envelope is the widest one (any run). Pooled
+  over the subjects it was fitted on, it fell short of 90 %, yet held out it covered 91–92 % on the three cohort III pairs (82 % on cIs1);
 - read as a same-session confidence, and as untested in edema and tumor tissue. Against a scan from another session
   it is still optimistic by a few points, more on protocols whose field rests on few b0s.
