@@ -1,5 +1,6 @@
 {
  "flip": "smooth",
+ "maps": "winner",
  "classes (voxel calibration, coverage)": "the 42 named tracts; Other excluded",
  "pairs": {
   "cIIIs01-2.5": {
@@ -211,7 +212,7 @@
        }
       },
       "voxels": {
-       "calibration: P(v, k) against the other run's winner (P > 0)": {
+       "calibration: P(v, k) against the other run's map (P > 0)": {
         "brier": 0.1286,
         "ece": 0.061,
         "bins": [
@@ -477,7 +478,7 @@
        }
       },
       "voxels": {
-       "calibration: P(v, k) against the other run's winner (P > 0)": {
+       "calibration: P(v, k) against the other run's map (P > 0)": {
         "brier": 0.13,
         "ece": 0.0654,
         "bins": [
@@ -751,7 +752,7 @@
      }
     },
     "voxels": {
-     "calibration: P(v, k) against the other run's winner (P > 0)": {
+     "calibration: P(v, k) against the other run's map (P > 0)": {
       "brier": 0.1262,
       "ece": 0.0694,
       "bins": [
@@ -1022,7 +1023,7 @@
        }
       },
       "voxels": {
-       "calibration: P(v, k) against the other run's winner (P > 0)": {
+       "calibration: P(v, k) against the other run's map (P > 0)": {
         "brier": 0.1251,
         "ece": 0.0711,
         "bins": [
@@ -1075,9 +1076,9 @@
        },
        "envelope coverage (ensemble)": {
         "0.5": 0.3674,
-        "0.7": 0.5074,
+        "0.7": 0.5075,
         "0.8": 0.5802,
-        "0.9": 0.6544,
+        "0.9": 0.6543,
         "0.95": 0.693
        },
        "single run's tract covers the other's": 0.3852
@@ -1288,7 +1289,7 @@
        }
       },
       "voxels": {
-       "calibration: P(v, k) against the other run's winner (P > 0)": {
+       "calibration: P(v, k) against the other run's map (P > 0)": {
         "brier": 0.1247,
         "ece": 0.0596,
         "bins": [
@@ -1562,7 +1563,7 @@
        }
       },
       "voxels": {
-       "calibration: P(v, k) against the other run's winner (P > 0)": {
+       "calibration: P(v, k) against the other run's map (P > 0)": {
         "brier": 0.1256,
         "ece": 0.0746,
         "bins": [
@@ -1616,9 +1617,9 @@
        "envelope coverage (ensemble)": {
         "0.5": 0.3379,
         "0.7": 0.477,
-        "0.8": 0.5442,
+        "0.8": 0.5443,
         "0.9": 0.6218,
-        "0.95": 0.6605
+        "0.95": 0.6606
        },
        "single run's tract covers the other's": 0.3639
       }
@@ -1828,7 +1829,7 @@
        }
       },
       "voxels": {
-       "calibration: P(v, k) against the other run's winner (P > 0)": {
+       "calibration: P(v, k) against the other run's map (P > 0)": {
         "brier": 0.1208,
         "ece": 0.0638,
         "bins": [
@@ -1882,8 +1883,8 @@
        "envelope coverage (ensemble)": {
         "0.5": 0.3485,
         "0.7": 0.4875,
-        "0.8": 0.5614,
-        "0.9": 0.6337,
+        "0.8": 0.5613,
+        "0.9": 0.6336,
         "0.95": 0.6726
        },
        "single run's tract covers the other's": 0.3588
@@ -2102,7 +2103,7 @@
      }
     },
     "voxels": {
-     "calibration: P(v, k) against the other run's winner (P > 0)": {
+     "calibration: P(v, k) against the other run's map (P > 0)": {
       "brier": 0.124,
       "ece": 0.0695,
       "bins": [
@@ -2373,7 +2374,7 @@
        }
       },
       "voxels": {
-       "calibration: P(v, k) against the other run's winner (P > 0)": {
+       "calibration: P(v, k) against the other run's map (P > 0)": {
         "brier": 0.1215,
         "ece": 0.0818,
         "bins": [
@@ -2426,9 +2427,9 @@
        },
        "envelope coverage (ensemble)": {
         "0.5": 0.2821,
-        "0.7": 0.4072,
-        "0.8": 0.4763,
-        "0.9": 0.5456,
+        "0.7": 0.4071,
+        "0.8": 0.4764,
+        "0.9": 0.5457,
         "0.95": 0.5863
        },
        "single run's tract covers the other's": 0.2624
@@ -2639,7 +2640,7 @@
        }
       },
       "voxels": {
-       "calibration: P(v, k) against the other run's winner (P > 0)": {
+       "calibration: P(v, k) against the other run's map (P > 0)": {
         "brier": 0.1264,
         "ece": 0.0895,
         "bins": [
@@ -2913,7 +2914,7 @@
        }
       },
       "voxels": {
-       "calibration: P(v, k) against the other run's winner (P > 0)": {
+       "calibration: P(v, k) against the other run's map (P > 0)": {
         "brier": 0.1255,
         "ece": 0.0707,
         "bins": [
@@ -2966,9 +2967,9 @@
        },
        "envelope coverage (ensemble)": {
         "0.5": 0.2783,
-        "0.7": 0.4005,
+        "0.7": 0.4004,
         "0.8": 0.4699,
-        "0.9": 0.5389,
+        "0.9": 0.5388,
         "0.95": 0.5817
        },
        "single run's tract covers the other's": 0.2589
@@ -3179,7 +3180,7 @@
        }
       },
       "voxels": {
-       "calibration: P(v, k) against the other run's winner (P > 0)": {
+       "calibration: P(v, k) against the other run's map (P > 0)": {
         "brier": 0.1282,
         "ece": 0.0994,
         "bins": [
@@ -3453,7 +3454,7 @@
      }
     },
     "voxels": {
-     "calibration: P(v, k) against the other run's winner (P > 0)": {
+     "calibration: P(v, k) against the other run's map (P > 0)": {
       "brier": 0.1221,
       "ece": 0.0691,
       "bins": [

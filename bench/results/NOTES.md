@@ -3112,3 +3112,64 @@ written them.
 
 **Viewer:** a research-use notice; plain control names; the single run labeled as the current pipeline; every tract
 that enters in any run listed; real-rescan figures kept apart from PAT16's replicate figures; and interpolated levels.
+
+## 2026-10-09 Compact run records, and presence maps: outlines that hold 80 % of a rescan's tract
+
+**Compact run records.** `tractline.compact` (new) ports the tractography incubation's storage (medseg,
+tractography-incubation branch: `_geometry.py`, `_pipeline.encode_payload`). `RunRecord.save(compact=True)` writes
+format 2; `RunRecord.load` reads both formats.
+
+- **Geometry:** every vertex of every labeled streamline, rounded to a 0.05 mm grid, stored as 2nd-order predictive
+  residuals (constant-velocity prediction) through blosc zstd. Lossless on the grid, so every vertex is within 0.025 mm.
+- **Labels:** the 1,600 cluster log-probabilities as a rank field (keep "clip", depth 12, tail at T = 1), decoded back
+  to dense log-probabilities with the tail spread evenly over the classes not kept.
+- **Checks:**
+  - On a stored run (41,595 streamlines), depth 12 changes tract probabilities by a median 0.0002 and at most 0.005.
+    Tract argmax is the same in 99.998 % of streamlines.
+  - The labels themselves are stored exactly.
+  - `bench/compact_check.py` re-encodes cIIIs01-2.5's 18 smooth-sign runs and scores the pair both ways. Every ensemble
+    metric matches the dense records to four decimals (mixture AUROC 0.7797 / 0.7798, ECE, voxel ECE, coverage).
+    Only the single run's labeler AUROC moves (0.654 → 0.653).
+- **Size:**
+  - A record with full geometry on cIIIs04 (64,378 streamlines, 3.8 M vertices, steps of 1.8 mm) is 7.7 MB.
+    Geometry is 5.8 MB of that (1.5 B per vertex), the field 0.8 MB.
+  - A format 1 record (20-point paths, dense float16 probabilities) is 147–230 MB.
+- `numcodecs` joins the `rankfield` dependency group. The package still needs numpy and torch only, and
+  `test_dependencies.py` now blocks both.
+
+**Presence maps.** `ensemble_coverage.py --maps presence --min-count T` (new): a run's voxel map gives tract k every voxel
+where it has at least T streamlines, so tracts may overlap. These are the voxel rank field's classes above NONE at
+tau = T. Winner maps give each voxel to its densest class only (Other included), so tracts lose voxels where they
+overlap.
+
+Same 10 scorings of MASiVar's rescans as the entry "The ensemble scored on real rescans" (R = 9, smooth signs, named
+tracts; coverage is the share of the rescan's voxels of a tract inside the ensemble's envelope):
+
+| maps | stated 0.5 / 0.8 / 0.9 | widest (0.995) | one run's tract covers the rescan's | voxel ECE | winner-territory overlap, cIIIs01: single run / ensemble |
+|---|---|---|---|---|---|
+| winner | 0.32 / 0.53 / 0.60 | 0.68 | 0.33 | 0.074 | 0.22–0.24 / 0.36–0.39 |
+| presence ≥ 1 | 0.44 / 0.70 / 0.80 | 0.90 | 0.63 | 0.045 | 0.48–0.50 / 0.64–0.65 |
+| presence ≥ 2 | 0.44 / 0.69 / 0.78 | 0.88 | 0.63 | 0.050 | 0.50–0.52 / 0.63–0.64 |
+| presence ≥ 5 | 0.42 / 0.66 / 0.75 | 0.86 | 0.64 | 0.061 | 0.50–0.53 / 0.60–0.63 |
+
+Levels recalibrated leaving one pair out (presence ≥ 2):
+
+| target | cIIIs01-2.5 | cIIIs01-2.1 | cIs1 |
+|---|---|---|---|
+| 0.8 | 0.86 (stated 0.93) | 0.86 (stated 0.945) | 0.72 (stated 0.89) |
+| 0.9 | 0.91 (widest) | 0.91 (widest) | 0.82 (stated 0.985) |
+
+- **Letting tracts overlap is what makes the outlines usable.**
+  - As stated, a 90 % envelope now holds 78–80 % of a rescan's tract, against 60 %.
+  - Recalibrated, a target of 80 % holds 84–86 % on cIIIs01, where winner maps could not reach it at all.
+  - On cIIIs01, 90 % is reachable at the widest level.
+- **cIs1 stays about 10 points short** with every map, as in every entry above.
+- **One run's map already covers twice as much** (0.63 against 0.33). Winner maps understated even the single run.
+- **The threshold matters little between 1 and 5 streamlines.** Presence ≥ 2 is the default from here: no single stray
+  streamline marks a voxel.
+- **Winner mode reproduces the committed results** (`ensemble_coverage_smooth.json`): keys renamed, values within
+  ±0.0001.
+- **Still open:**
+  - A held-out subject: cIIIs04 (running, entry below when done) will test the presence calibration on a subject it was
+    not fitted on.
+  - The PAT16 report and both viewers still draw winner maps.

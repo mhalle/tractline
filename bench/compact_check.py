@@ -51,7 +51,7 @@ def main(args):
         pick = lambda s: {"change": s["change_rate"], "auroc mixture": s["auroc predicting change"]["ensemble: mixture"],  # noqa: E731
                           "auroc one run": s["auroc predicting change"]["single run: labeler probability"],
                           "ece mixture": s["calibration"]["ensemble: mixture"]["ece"], "mean P(keep) mixture": s["mean stated P(keep)"]["ensemble: mixture"],
-                          "voxel ece": s["voxels"]["calibration: P(v, k) against the other run's winner (P > 0)"]["ece"],
+                          "voxel ece": s["voxels"]["calibration: P(v, k) against the other run's map (P > 0)"]["ece"],
                           "coverage 0.9": s["voxels"]["envelope coverage (ensemble)"]["0.9"]}
         res[name] = {"A scored on the rescan": pick(sa), "the rescan scored on A": pick(sb)}
         print(name, json.dumps(res[name]), flush=True)

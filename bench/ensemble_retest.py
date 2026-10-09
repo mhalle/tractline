@@ -43,11 +43,15 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 OUT = HERE / "results/ensemble_retest_{}.json"
 DEVICE = "mps"
+COMPACT = True                    # new records in format 2 (tractline.compact: full streamlines, rank-field probabilities); the
+                                  # older pairs' records are format 1 and are read as they are
 PAIRS = {
     # name: subject, the reference scan (session, scan), the rescans {tag: (session, scan)}, shells used, the shell tracked
     "cIIIs01-2.5": ("cIIIs01", ("s1Bx1", 2), {"within": ("s1Bx1", 4)}, None, 2000.0),
     "cIIIs01-2.1": ("cIIIs01", ("s1Bx3", 1), {"within": ("s1Bx3", 2), "between": ("s1Bx1", 1)}, None, 2000.0),
     "cIs1": ("cIs1", ("s1Ax1", 1), {"within": ("s1Ax1", 2), "between": ("s1Ax2", 1)}, (1000, 2000, 3000), 3000.0),
+    # the development subject (NOTES 2026-10-09): 10 scans in 5 sessions on one protocol; 17-run ensembles, compact records
+    "cIIIs04-2.1": ("cIIIs04", ("s1Bx1", 1), {"within": ("s1Bx1", 2), "session3": ("s1Bx3", 1), "session5": ("s1Bx5", 1)}, None, 2000.0),
 }
 
 
@@ -103,7 +107,7 @@ def run(args):
             with timer("label"):
                 labels = labeler(tg.fibers, draws=(0,), logp=True)
         moved = tg if to_ref is None else Moved([f @ to_ref[:3, :3].T + to_ref[:3, 3] for f in tg.fibers], tg.stats)
-        E.RunRecord.of(moved, labels, *(grid or (s.affine, s.dwi.shape[:3]))).save(d / f"{name}.npz")
+        E.RunRecord.of(moved, labels, *(grid or (s.affine, s.dwi.shape[:3]))).save(d / f"{name}.npz", compact=COMPACT)
         log[name] = {"fibers": len(tg.fibers), "labeled": int(labels.keep.sum()), "residual_left": corr.residual_left,
                      "field_hz_p99_abs": round(float(np.quantile(np.abs(corr.field_hz), 0.99)), 2) if corr.field_hz is not None else None,
                      "seconds": timer.seconds, "total_s": round(time.time() - t0, 1)}
@@ -247,7 +251,7 @@ def rescans(args):
                 sa = replace(A, dwi=on_a, bval=B.bval, bvec=bvec, b0s=None)
                 tg = P.track(sa, on_a, timer, device=DEVICE, shell=shell)
                 labels = labeler(tg.fibers, draws=(0,), logp=True)
-            E.RunRecord.of(tg, labels, A.affine, A.dwi.shape[:3]).save(rd / f"{tag}_r{r:03d}.npz")
+            E.RunRecord.of(tg, labels, A.affine, A.dwi.shape[:3]).save(rd / f"{tag}_r{r:03d}.npz", compact=COMPACT)
             name = f"{args.flip}/{tag}_r{r:03d}"
             log[name] = {"fibers": len(tg.fibers), "labeled": int(labels.keep.sum()), "residual_left": corr.residual_left,
                          "field_hz_p99_abs": round(float(np.quantile(np.abs(corr.field_hz), 0.99)), 2),

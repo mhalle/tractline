@@ -41,30 +41,44 @@ NAMED = E.N_TRACTS - 1                                              # the 42 nam
                                                                     # is excluded from voxel calibration and coverage
 
 
+def membership(rec, maps="winner", min_count=1):
+    """A run's voxel map as (NAMED, nvox) bool: "winner" - each voxel its densest class, tau 1 (VoxelEnsemble.winner),
+    so tracts exclude each other and Other; "presence" - every named tract with at least `min_count` streamlines
+    there, overlaps allowed (the voxel rank field's classes above NONE at tau = min_count)."""
+    if maps == "presence":
+        return rec.counts[:NAMED] >= min_count
+    w = E.VoxelEnsemble(rec.shape).winner(rec.counts)
+    return w[None] == np.arange(NAMED)[:, None]
+
+
 class Ensemble:
     """A scan's ensemble keyed on its own run: per seed the mixture's tract probabilities and the vote fraction for
-    the run's tract; per voxel P(v, k) over the runs; the run's winner map."""
-    def __init__(self, paths):
+    the run's tract; per voxel P(v, k) - the share of runs whose map gives voxel v to tract k - and the run's own map."""
+    def __init__(self, paths, maps="winner", min_count=1):
         ref = E.RunRecord.load(paths[0])
-        S, V = E.StreamlineEnsemble(ref), E.VoxelEnsemble(ref.shape)
+        S = E.StreamlineEnsemble(ref)
+        P = None
         for p in paths:
             rec = ref if p == paths[0] else E.RunRecord.load(p)
-            S.add(rec); V.add(rec)
+            S.add(rec)
+            m = membership(rec, maps, min_count)
+            P = m.astype(np.float32) if P is None else P + m
             del rec
         self.keys, self.tract = ref.keys, LUT[ref.cluster]
         rows = np.arange(S.n)
         self.p_single = (np.exp(ref.logp.astype(np.float32)) @ ONEHOT)
         self.p_mix = np.exp(S.mixture().numpy()) @ ONEHOT
         self.vfrac = S.votes()[rows, self.tract] / np.maximum(S.present, 1)
-        self.P = V.vote.astype(np.float32) / V.runs                   # (44, nvox)
-        self.win = V.winner(ref.counts)
-        self.runs = V.runs
+        self.runs = len(paths)
+        self.P = P / self.runs                                          # (NAMED, nvox)
+        self.own = membership(ref, maps, min_count)
         self.shape = ref.shape
 
 
-def winners(path):
+def winners(path, maps="winner", min_count=1):
+    """(seed keys, tracts, voxel map (NAMED, nvox) bool) of one run."""
     rec = E.RunRecord.load(path, logp=False)
-    return rec.keys, LUT[rec.cluster], E.VoxelEnsemble(rec.shape).winner(rec.counts)
+    return rec.keys, LUT[rec.cluster], membership(rec, maps, min_count)
 
 
 def match(keys_a, keys_b):
@@ -74,34 +88,16 @@ def match(keys_a, keys_b):
     return order[pos[hit]], np.flatnonzero(hit)
 
 
-def coverage(P, win_other, level):
-    """Per tract (named and Other; NONE excluded): the share of the other run's voxels of tract k inside the highest-
-    probability region holding `level` of P[k]'s mass; mass-weighted over tracts (weights: the other run's voxels)."""
-    num = den = 0.0
-    for k in range(NAMED):
-        w = P[k]
-        tot = w.sum()
-        theirs = win_other == k
-        if tot <= 0 or not theirs.any():
-            continue
-        order = np.argsort(-w, kind="stable")
-        inside = np.zeros(len(w), bool)
-        inside[order[: int(np.searchsorted(np.cumsum(w[order]), level * tot)) + 1]] = True
-        inside &= w > 0
-        num += (inside & theirs).sum()
-        den += theirs.sum()
-    return round(float(num / den), 4) if den else None
-
-
 GRID = np.round(np.arange(0.5, 0.9951, 0.005), 3)
 
 
-def coverage_curve(P, win_other, levels=GRID):
-    """coverage() at many levels at once: one sort per tract."""
+def coverage_curve(P, other, levels=GRID):
+    """Per named tract: the share of the other run's voxels of tract k (other[k]) inside the highest-probability
+    region holding each level of P[k]'s mass, pooled over tracts (weights: the other run's voxels). One sort per tract."""
     num, den = np.zeros(len(levels)), 0.0
     for k in range(NAMED):
         w = P[k]
-        theirs = win_other == k
+        theirs = other[k]
         if w.sum() <= 0 or not theirs.any():
             continue
         order = np.argsort(-w, kind="stable")
@@ -113,20 +109,16 @@ def coverage_curve(P, win_other, levels=GRID):
     return num / den
 
 
-def intersection(Pa, Pb, named=True):
-    ks = range(E.N_TRACTS - 1) if named else range(E.N_TRACTS)
-    mn = sum(float(np.minimum(Pa[k], Pb[k]).sum()) for k in ks)
-    mx = sum(float(np.maximum(Pa[k], Pb[k]).sum()) for k in ks)
-    return round(mn / mx, 4)
+def coverage(P, other, level):
+    return round(float(coverage_curve(P, other, np.array([level]))[0]), 4)
 
 
-def onehot_P(win):
-    P = np.zeros((K, len(win)), np.float32)
-    P[win, np.arange(len(win))] = 1
-    return P
+def intersection(Pa, Pb):
+    """Sum of minima over sum of maxima, pooled over the named tracts (a Jaccard index of the territories)."""
+    return round(float(np.minimum(Pa, Pb).sum() / np.maximum(Pa, Pb).sum()), 4)
 
 
-def score(ens: Ensemble, other_keys, other_tract, other_win):
+def score(ens: Ensemble, other_keys, other_tract, other):
     """The ensemble's statements against another run (the other scan's, or a held-out replicate)."""
     ia, ib = match(ens.keys, other_keys)
     keep = other_tract[ib] == ens.tract[ia]
@@ -138,15 +130,14 @@ def score(ens: Ensemble, other_keys, other_tract, other_win):
            "mean stated P(keep)": {n: round(float(p.mean()), 4) for n, p in stated.items()},
            "auroc predicting change": {n: auroc(-p, ~keep) for n, p in stated.items()},
            "calibration": {n: calibration(p, keep) for n, p in stated.items()}}
-    either = (ens.P[:NAMED].sum(0) > 0) | (other_win < NAMED)
-    Pv = ens.P[:NAMED, either]
-    hit = (other_win[either][None] == np.arange(NAMED)[:, None])
+    either = (ens.P.sum(0) > 0) | other.any(0)
+    Pv, hit = ens.P[:, either], other[:, either]
     keepv = Pv > 0
-    out["voxels"] = {"calibration: P(v, k) against the other run's winner (P > 0)": calibration(Pv[keepv], hit[keepv]),
-                     "envelope coverage (ensemble)": {f"{L:g}": coverage(ens.P, other_win, L) for L in LEVELS},
-                     "single run's tract covers the other's": coverage(onehot_P(ens.win), other_win, 1.0)}
+    out["voxels"] = {"calibration: P(v, k) against the other run's map (P > 0)": calibration(Pv[keepv], hit[keepv]),
+                     "envelope coverage (ensemble)": {f"{L:g}": coverage(ens.P, other, L) for L in LEVELS},
+                     "single run's tract covers the other's": coverage(ens.own.astype(np.float32), other, 1.0)}
     out["_arrays"] = {"p_mix": stated["ensemble: mixture"], "keep": keep, "Pv": Pv[keepv], "hitv": hit[keepv],
-                      "curve": coverage_curve(ens.P, other_win)}
+                      "curve": coverage_curve(ens.P, other)}
     return out
 
 
@@ -194,32 +185,33 @@ def recalibrate(rows, groups, flip):
 
 
 def main(args):
-    res = {"flip": args.flip, "classes (voxel calibration, coverage)": "the 42 named tracts; Other excluded", "pairs": {}}
+    res = {"flip": args.flip, "maps": args.maps, **({"min_count": args.min_count} if args.maps == "presence" else {}),
+           "classes (voxel calibration, coverage)": "the 42 named tracts; Other excluded", "pairs": {}}
     pooled = {"rescan": [], "held-out replicate": []}
     groups = []
     for pair in args.pairs:
         d = DATA / "ensemble" / PAIRS[pair][0] / "retest" / pair
         rescans = PAIRS[pair][2]
         reps = lambda prefix, n=8: [d / args.flip / f"{prefix}r{r:03d}.npz" for r in range(1, n + 1)]  # noqa: E731
-        A = Ensemble([d / "A.npz"] + reps(""))
-        A7 = Ensemble([d / "A.npz"] + reps("", 7))
+        A = Ensemble([d / "A.npz"] + reps(""), args.maps, args.min_count)
+        A7 = Ensemble([d / "A.npz"] + reps("", 7), args.maps, args.min_count)
         row = {"runs per ensemble": A.runs, "rescans": {}}
-        row["A, held-out replicate r008 (centered)"] = score(A7, *winners(d / args.flip / "r008.npz"))
+        row["A, held-out replicate r008 (centered)"] = score(A7, *winners(d / args.flip / "r008.npz", args.maps, args.min_count))
         pooled["held-out replicate"].append(row["A, held-out replicate r008 (centered)"])
         for tag in rescans:
             paths = [d / f"{tag}_onA.npz"] + reps(f"{tag}_")
             if not all(p.exists() for p in paths):
                 continue
-            B = Ensemble(paths)
-            ka, ta, wa = winners(d / "A.npz")
-            kb, tb, wb = winners(d / f"{tag}_onA.npz")
+            B = Ensemble(paths, args.maps, args.min_count)
+            ka, ta, wa = winners(d / "A.npz", args.maps, args.min_count)
+            kb, tb, wb = winners(d / f"{tag}_onA.npz", args.maps, args.min_count)
             r = {"A's ensemble, scored on the rescan": score(A, kb, tb, wb),
                  "the rescan's ensemble, scored on A": score(B, ka, ta, wa)}
             ia, ib = match(A.keys, B.keys)
             r["between the two scans"] = {
                 "seeds: total variation, single runs (winners)": round(float((A.tract[ia] != B.tract[ib]).mean()), 4),
                 "seeds: total variation, ensemble mixtures": round(float(0.5 * np.abs(A.p_mix[ia] - B.p_mix[ib]).sum(1).mean()), 4),
-                "tract maps: intersection, single runs (named tracts)": intersection(onehot_P(A.win), onehot_P(B.win)),
+                "tract maps: intersection, single runs (named tracts)": intersection(A.own.astype(np.float32), B.own.astype(np.float32)),
                 "tract maps: intersection, ensembles (named tracts)": intersection(A.P, B.P)}
             row["rescans"][tag] = r
             pooled["rescan"] += [r["A's ensemble, scored on the rescan"], r["the rescan's ensemble, scored on A"]]
@@ -237,7 +229,7 @@ def main(args):
                       "mean stated P(keep)": {n: round(float(np.mean([r["mean stated P(keep)"][n] for r in rows])), 4) for n in rows[0]["mean stated P(keep)"]},
                       "auroc": {n: round(float(np.mean([r["auroc predicting change"][n] for r in rows])), 4) for n in rows[0]["auroc predicting change"]},
                       "ece": {n: round(float(np.mean([r["calibration"][n]["ece"] for r in rows])), 4) for n in rows[0]["calibration"]},
-                      "voxel ece": round(float(np.mean([r["voxels"]["calibration: P(v, k) against the other run's winner (P > 0)"]["ece"] for r in rows])), 4),
+                      "voxel ece": round(float(np.mean([r["voxels"]["calibration: P(v, k) against the other run's map (P > 0)"]["ece"] for r in rows])), 4),
                       "envelope coverage": {f"{L:g}": round(float(np.mean([r["voxels"]["envelope coverage (ensemble)"][f"{L:g}"] for r in rows])), 4) for L in LEVELS},
                       "single run's tract covers the other's": round(float(np.mean([r["voxels"]["single run's tract covers the other's"] for r in rows])), 4)}
     res["summary"] = summ
@@ -246,12 +238,17 @@ def main(args):
     for rows in pooled.values():
         for r in rows:
             r.pop("_arrays", None)
-    Path(str(OUT).format(args.flip)).write_text(json.dumps(res, indent=1))
+    name = args.flip if args.maps == "winner" else f"{args.flip}_presence{args.min_count}"
+    Path(str(OUT).format(name)).write_text(json.dumps(res, indent=1))
     print(json.dumps(summ, indent=1))
 
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("--pairs", nargs="+", default=list(PAIRS))
+    ap.add_argument("--pairs", nargs="+", default=["cIIIs01-2.5", "cIIIs01-2.1", "cIs1"])
     ap.add_argument("--flip", default="smooth")
+    ap.add_argument("--maps", default="winner", choices=("winner", "presence"),
+                    help="a run's voxel map: each voxel's densest class (tracts exclude each other), or every tract with "
+                         "--min-count streamlines there (overlaps allowed: the rank field's classes above NONE)")
+    ap.add_argument("--min-count", type=int, default=2)
     main(ap.parse_args())
