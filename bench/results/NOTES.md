@@ -3408,8 +3408,8 @@ Caveats:
 **What this adds.**
 - Two numbers per streamline or region: how reproducible the name is (the ensemble, corrected), and whether its
   course is anatomically plausible (the endpoints).
-- They disagree in an informative way: about a third of the named, scored streamlines are reproducible yet end in
-  the wrong place.
+- They disagree in an informative way. About 31 % of the scored named streamlines end where their bundle should
+  not, and 37–43 % of those still keep the same name on a rescan: reproducible, but implausible.
 
 Caveats:
 - The rules are a first pass and have not been reviewed by an anatomist.
