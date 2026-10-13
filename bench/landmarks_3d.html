@@ -115,6 +115,7 @@ td.n, th.n { text-align: right; font-family: var(--data); font-variant-numeric: 
 .rgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 2px 14px; }
 .rgrid div { display: flex; gap: 6px; align-items: center; white-space: nowrap; border-bottom: 1px solid var(--line); padding: 2px 0; }
 .rgrid .v { margin-left: auto; font-family: var(--data); font-variant-numeric: tabular-nums; }
+.readout .line { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }   /* fixed height: no reflow on hover */
 .readout .coord { font-family: var(--data); font-variant-numeric: tabular-nums; color: var(--muted); font-size: 0.8rem; }
 </style>
 
@@ -1318,7 +1319,7 @@ function drawCut() {
   showReadout(hover || P);
 }
 function showReadout(w) {
-  if (!volume.ready || !ens_.ready) { readoutEl.innerHTML = ""; return; }
+  if (!volume.ready || !ens_.ready) return;                                  // keep the last readout (and the layout) while rebuilding
   const idx = voxelOf(w), ras = ["R", "A", "S"].map((pos, a) => `${w[a] >= 0 ? pos : "LPI"[a]} ${Math.abs(w[a]).toFixed(0)}`).join(" · ");
   const code = idx >= 0 ? volume.codes[idx] : 0, lab = code ? volume.labels[code - 1] : null;
   const where = lab == null ? "outside the labels" : lab === 0 ? "background" : (volume.names.get(lab) || `label ${lab}`);
@@ -1329,7 +1330,8 @@ function showReadout(w) {
     const run = cmpName && cmp.runs[i] && idx >= 0 ? (cmp.runs[i][idx] ? " · in its run" : "") : "";
     return `<div><i class="sw" style="background:${t.color}"></i>${t.name}<span class="muted">${inn}${run}</span><span class="v">${v}/${ens_.runs}</span></div>`;
   }).join("");
-  readoutEl.innerHTML = `<div class="coord">${hover ? "Under the cursor" : "At the point"}: ${ras} mm · FastSurfer: <strong style="font-family:var(--ui);color:var(--ink)">${where}</strong></div>
+  readoutEl.innerHTML = `<div class="coord line">${hover ? "Under the cursor" : "At the point"}: ${ras} mm</div>
+    <div class="line" title="${where}">FastSurfer: <strong>${where}</strong></div>
     <div class="rgrid" style="margin-top:4px">${rows || `<span class="muted">No tract shown.</span>`}</div>
     ${cmpName ? `<p class="muted" style="font-size:0.78rem;margin:4px 0 0">Runs present out of ${ens_.runs}; "in its run": ${cmpName.toLowerCase()}'s own run has the tract here.</p>` : ""}`;
 }
