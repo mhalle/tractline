@@ -18,23 +18,41 @@
 :root[data-theme="dark"] { --bg: #0e141a; --surface: #151d25; --ink: #e2e8ee; --muted: #93a2b0; --line: #26323d; --accent: #73b4d4;
   --warn-bg: #2b2213; --warn-ink: #f0cf9c; --good: #7fcf9c; --bad: #f09a7c; color-scheme: dark }
 html { color-scheme: light; }
+[hidden] { display: none !important; }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--ui); font-size: 15px; line-height: 1.5; padding: 20px 16px 40px; }
-.wrap { max-width: 1560px; margin: 0 auto; display: grid; gap: 16px; }
-.top { display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: end; justify-content: space-between; }
-.top .sub { color: var(--muted); margin: 2px 0 0; max-width: 68ch; }
-.top .notice { margin: 0; }
-a { color: var(--accent); }
-.app { display: grid; gap: 16px; align-items: start; grid-template-columns: minmax(0, 1fr); grid-template-areas: "d3" "cut" "ctl"; }
-.app .d3 { grid-area: d3; } .app .cutp { grid-area: cut; } .app .ctlcol { grid-area: ctl; }
-.app .d3, .app .cutp { padding: 10px; }
-.ctlcol { display: grid; gap: 16px; min-width: 0; }
-@media (min-width: 980px) {                                                  /* the 3D view with its controls under it; the cross-section beside, staying in view */
-  .app { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); grid-template-areas: "d3 cut" "ctl cut"; }
-  .app .cutp { position: sticky; top: 8px; }
+.shell { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto auto; gap: 10px; }
+.bar { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; }
+.title h1 { font-size: 1.2rem; margin: 0; }
+.title .tag { color: var(--warn-ink); background: var(--warn-bg); border-radius: 6px; padding: 1px 8px; font-size: 0.78rem; }
+.tools { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; flex: 1; min-width: 0; }
+.tool { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; min-width: 0; }
+.tl { color: var(--muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.held { color: var(--muted); font-size: 0.8rem; font-family: var(--data); }
+.panelbtn { margin-left: auto; }
+.bar .seg button { font-size: 0.8rem; padding: 4px 8px; }
+.bar .chip { font-size: 0.8rem; padding: 2px 8px 2px 5px; }
+.bar .chips { gap: 4px; }
+.title { display: grid; gap: 2px; }
+.title .tag { font-size: 0.72rem; }
+.stage { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; min-height: 0; }
+.stage .panel { padding: 8px; }
+.cutp { display: flex; flex-direction: column; gap: 6px; min-height: 0; }
+.drawer { display: grid; gap: 10px; align-content: start; min-width: 0; }
+.drawer .panel p { margin: 0 0 8px; font-size: 0.88rem; }
+.controls .label { min-width: 8ch; }
+@media (min-width: 980px) {
+  html, body { height: 100%; overflow: hidden; }
+  body { padding: 10px 12px; }
+  .shell { height: 100%; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto minmax(0, 1fr); grid-template-areas: "bar bar" "stage drawer"; }
+  .bar { grid-area: bar; } .stage { grid-area: stage; } .drawer { grid-area: drawer; }
+  .stage { grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); }
+  .stage .d3 { display: flex; flex-direction: column; min-height: 0; }
+  .stage .d3 .scene { flex: 1; min-height: 0; }
+  .stage .d3 canvas { position: absolute; inset: 0; height: 100% !important; }
+  .cutbox { flex: 1; min-height: 0; display: grid; place-items: center; }
+  .drawer { width: 400px; overflow-y: auto; padding-right: 2px; }
 }
-.legend { color: var(--muted); font-size: 0.8rem; margin: 8px 0 0; }
-.info { grid-template-columns: repeat(auto-fill, minmax(min(360px, 100%), 1fr)); align-items: start; }
 h1 { font-size: 1.6rem; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
 h2 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 0 0 8px; font-weight: 700; }
 h3 { font-size: 1.02rem; margin: 0 0 4px; text-wrap: balance; }
@@ -90,100 +108,86 @@ td.n, th.n { text-align: right; font-family: var(--data); font-variant-numeric: 
 .readout .coord { font-family: var(--data); font-variant-numeric: tabular-nums; color: var(--muted); font-size: 0.8rem; }
 </style>
 
-<div class="wrap">
-  <header class="top">
-    <div><h1>cIIIs04 tract landmarks</h1>
-      <p class="sub">How reproducible are the corticospinal tract, arcuate and uncinate fasciculi in one healthy subject? 17 runs per
-        scan, four scans. <a href="#about">About this view</a></p></div>
-    <p class="notice"><strong>Research prototype.</strong> Reproducibility, not anatomical truth. Not for clinical use.</p>
+<div class="shell" id="shell">
+  <header class="bar">
+    <div class="title"><h1>cIIIs04 tract landmarks</h1>
+      <span class="tag" title="This shows reproducibility, not anatomical truth">Research prototype · not for clinical use</span></div>
+    <div class="tools">
+      <div class="tool"><span class="tl">Ensemble</span>
+        <div class="seg" role="group" aria-label="Which runs make the shells">
+          <button data-source="single" aria-pressed="true" title="This scan's 17 runs: its own run and 16 copies with the noise drawn again">17 runs</button><button data-source="pooled" aria-pressed="false" title="The other three scans' 17-run ensembles pooled, leaving out the scan compared with">51 runs, 3 scans</button></div></div>
+      <div class="tool"><span class="tl">Envelope</span>
+        <div class="seg" role="group" aria-label="The envelope's stated level" id="levelSeg"></div>
+        <span class="held" id="levelShort"></span></div>
+      <div class="tool"><span class="tl">Shells</span>
+        <div class="seg" role="group" aria-label="Which shells to show">
+          <button data-shell="core" aria-pressed="false" title="Present in at least half the runs">Core</button><button data-shell="mid" aria-pressed="true" title="Core and the envelope at the stated level">+ envelope</button><button data-shell="outer" aria-pressed="false" title="Core and the widest shell: any run">+ widest</button><button data-shell="cloud" aria-pressed="false" title="Opacity follows the share of runs">Cloud</button><button data-shell="none" aria-pressed="false">None</button></div></div>
+      <div class="tool"><span class="tl">Compare with</span>
+        <div class="seg" role="group" aria-label="Which scan's own run to compare with the envelope" id="compareSeg"></div></div>
+      <div class="tool"><span class="tl">Tracts</span><div class="chips" id="chips"></div></div>
+    </div>
+    <button class="plain panelbtn" id="panelBtn" aria-expanded="false" aria-controls="drawer">More ▸</button>
   </header>
 
-  <div class="app">
+  <main class="stage">
     <section class="panel d3" aria-label="3D scene">
       <div class="scene" id="scene"><canvas id="cv" aria-label="Rotatable 3D view of tract shells, repeat-scan patches and streamline fans"></canvas>
         <div class="loading" id="loading" role="status">Loading the data stores…</div>
-        <span class="hint">Drag to rotate · scroll or pinch to zoom · right-drag to pan · double-click a surface to rotate around it</span></div>
+        <span class="hint">Drag to rotate · scroll to zoom · right-drag to pan · double-click a surface to rotate around it</span></div>
     </section>
-
     <section class="panel cutp" aria-label="Cross-section">
       <div class="cutbox"><canvas id="cut" aria-label="Cross-section of the shells, the compared scan's patches and the anatomy outlines; click to move the point"></canvas></div>
-      <div class="row" style="margin-top:8px">
+      <div class="row">
         <div class="seg" role="group" aria-label="Which plane">
           <button data-cut="axial" aria-pressed="true">Axial</button><button data-cut="coronal" aria-pressed="false">Coronal</button><button data-cut="sagittal" aria-pressed="false">Sagittal</button></div>
         <div class="seg" role="group" aria-label="Field of view">
-          <button data-zoom="whole" aria-pressed="true">Whole slice</button><button data-zoom="near" aria-pressed="false">30 mm</button></div>
+          <button data-zoom="whole" aria-pressed="true">Whole</button><button data-zoom="near" aria-pressed="false">30 mm</button></div>
         <div class="seg" role="group" aria-label="Background image">
           <button data-bg="b0" aria-pressed="true">b0</button><button data-bg="none" aria-pressed="false">No image</button></div>
       </div>
-      <div class="row" style="margin-top:8px"><span class="label" id="cutLabel">Slice</span>
+      <div class="row"><span class="label" id="cutLabel">Slice</span>
         <input id="cutSlider" type="range" min="0" max="1" step="0.5" value="0" aria-label="Move the slice along its axis">
         <span id="cutOut" class="num muted" style="min-width:9ch"></span></div>
-      <p class="legend">Radiological: patient's right on the left · light fill envelope · strong fill core · hatching: compared scan outside
-        the envelope · thin lines anatomy · click to move the point</p>
       <div class="readout" id="readout"></div>
     </section>
+  </main>
 
-    <aside class="ctlcol">
-    <section class="panel" aria-label="Controls">
-        <div class="controls">
-          <div class="row" style="align-items:start"><span class="label">Site</span><div class="sites" id="sites" style="flex:1"></div></div>
-          <div class="row"><span class="label">Shells</span>
-            <div class="seg" role="group" aria-label="Which shells to show">
-              <button data-shell="core" aria-pressed="false">Core only</button>
-              <button data-shell="mid" aria-pressed="true">Core + envelope</button>
-              <button data-shell="outer" aria-pressed="false">Core + widest</button>
-              <button data-shell="cloud" aria-pressed="false">Cloud</button>
-              <button data-shell="none" aria-pressed="false">None</button>
-            </div>
-            <div class="seg" role="group" aria-label="How to draw the core">
-              <button data-core="xray" aria-pressed="true">Core: x-ray</button>
-              <button data-core="solid" aria-pressed="false">Core: solid</button>
-            </div></div>
-          <div class="row"><span class="label">Ensemble</span>
-            <div class="seg" role="group" aria-label="Which runs make the shells">
-              <button data-source="single" aria-pressed="true">This scan: 17 runs</button>
-              <button data-source="pooled" aria-pressed="false">The other three scans: 51 runs</button>
-            </div></div>
-          <div class="row"><span class="label">Envelope</span>
-            <div class="seg" role="group" aria-label="The envelope's stated level" id="levelSeg"></div>
-            <p class="note" id="levelNote"></p></div>
-          <div class="row"><span class="label">Compare with</span>
-            <div class="seg" role="group" aria-label="Which scan's own run to compare with the envelope" id="compareSeg"></div></div>
-          <div class="row"><span class="label">Fans</span>
-            <div class="seg" role="group" aria-label="Which streamline fans to show">
-              <button data-fan="split" aria-pressed="true">Where runs split</button>
-              <button data-fan="agree" aria-pressed="false">Where all agree</button>
-              <button data-fan="none" aria-pressed="false">None</button>
-            </div>
-            <div class="seg" role="group" aria-label="Color each version by">
-              <button data-color="tract" aria-pressed="true">Color: tract</button>
-              <button data-color="up" aria-pressed="false">Color: runner-up</button>
-              <button data-color="check" aria-pressed="false">Color: endpoint check</button>
-            </div>
-            <button class="plain" id="rescanLines" aria-pressed="true">Hide rescans' versions</button></div>
-          <div class="row"><span class="label">Crop</span>
-            <button class="plain" id="crop" aria-pressed="true">Show whole tracts</button>
-            <span class="muted" style="font-size:0.85rem">Shells, patches and anatomy within 30 mm of the site (each axis)</span></div>
-          <div class="row"><span class="label">Tracts</span><div class="chips" id="chips"></div></div>
-          <div class="row"><span class="label">Anatomy</span><div class="chips" id="anatChips"></div></div>
-          <div class="row"><span class="label">Axial plane</span><input id="zs" type="range" min="0" max="0" step="1" value="0" aria-label="Axial plane position">
-            <span id="zout" class="num muted" style="min-width:7ch"></span>
-            <button class="plain" id="plane" aria-pressed="true">Hide plane</button>
-            <button class="plain" id="brain" aria-pressed="true">Hide outline</button></div>
-          <div class="row"><span class="label">View</span>
-            <div class="seg" role="group" aria-label="Look at the scene from">
-              <button data-view="right">Right</button><button data-view="left">Left</button><button data-view="front">Front</button>
-              <button data-view="back">Back</button><button data-view="top">Top</button><button data-view="bottom">Bottom</button>
-            </div>
-            <button class="plain" id="center">Center on site</button>
-            <button class="plain" id="reset">Reset view</button></div>
-        </div>
-      </section>
-      <section class="panel" id="envPanel"></section>
-    </aside>
-  </div>
-
-  <div class="side info">
+  <aside class="drawer" id="drawer" hidden aria-label="More controls and explanations">
+    <section class="panel">
+      <h2>Display</h2>
+      <div class="controls">
+        <div class="row"><span class="label">Core</span>
+          <div class="seg" role="group" aria-label="How to draw the core">
+            <button data-core="xray" aria-pressed="true">X-ray</button><button data-core="solid" aria-pressed="false">Solid</button></div></div>
+        <div class="row"><span class="label">Anatomy</span><div class="chips" id="anatChips"></div></div>
+        <div class="row"><span class="label">Axial plane</span><input id="zs" type="range" min="0" max="0" step="1" value="0" aria-label="Axial plane position">
+          <span id="zout" class="num muted" style="min-width:7ch"></span></div>
+        <div class="row"><span class="label"></span><button class="plain" id="plane" aria-pressed="true">Hide plane</button>
+          <button class="plain" id="brain" aria-pressed="true">Hide outline</button></div>
+        <div class="row"><span class="label">View</span>
+          <div class="seg" role="group" aria-label="Look at the scene from">
+            <button data-view="right">Right</button><button data-view="left">Left</button><button data-view="front">Front</button><button data-view="back">Back</button><button data-view="top">Top</button><button data-view="bottom">Bottom</button></div></div>
+        <div class="row"><span class="label"></span><button class="plain" id="center">Center on site</button><button class="plain" id="reset">Reset view</button></div>
+      </div>
+    </section>
+    <section class="panel"><div id="envPanel"></div><p class="note" id="levelNote" style="margin-top:6px"></p></section>
+    <section class="panel">
+      <h2>Sites and fans</h2>
+      <div class="controls">
+        <div class="sites" id="sites"></div>
+        <div class="row"><span class="label">Fans</span>
+          <div class="seg" role="group" aria-label="Which streamline fans to show">
+            <button data-fan="split" aria-pressed="true">Where runs split</button><button data-fan="agree" aria-pressed="false">Where all agree</button><button data-fan="none" aria-pressed="false">None</button></div></div>
+        <div class="row"><span class="label">Color</span>
+          <div class="seg" role="group" aria-label="Color each version by">
+            <button data-color="tract" aria-pressed="true">Tract</button><button data-color="up" aria-pressed="false">Runner-up</button><button data-color="check" aria-pressed="false">Endpoint check</button></div></div>
+        <div class="row"><span class="label"></span><button class="plain" id="rescanLines" aria-pressed="true">Hide rescans' versions</button></div>
+        <div class="row"><span class="label">Crop</span><button class="plain" id="crop" aria-pressed="true">Show whole tracts</button>
+          <span class="muted" style="font-size:0.82rem">within 30 mm of a site</span></div>
+      </div>
+    </section>
+    <section class="panel" id="sitePanel"></section>
+    <section class="panel" id="focusPanel"></section>
     <section class="panel" id="about">
       <h2>About this view</h2>
       <p>A healthy adult (MASiVar cohort III, subject 04), focused on three tracts used in surgical planning: the corticospinal
@@ -197,8 +201,6 @@ td.n, th.n { text-align: right; font-family: var(--data); font-variant-numeric: 
         automated anatomy labels, not where the fibers truly run. The internal-capsule sites come from the FastSurfer anatomy; the
         other sites were placed from the tracts themselves, so their names are approximate.</p>
     </section>
-    <section class="panel" id="focusPanel"></section>
-    <section class="panel" id="sitePanel"></section>
       <section class="panel">
         <h2>Reading the view</h2>
         <p><strong>Drawn from the data stores:</strong> the shells and the anatomy are read in your browser from two data files (the
@@ -241,9 +243,8 @@ td.n, th.n { text-align: right; font-family: var(--data); font-variant-numeric: 
           apparent boundary. The held-out figures come from this subject's own four scans, not from other subjects. Coordinates are
           scanner millimeters in the patient's frame (R/L, A/P, S/I labels).</p>
       </section>
-  </div>
+  </aside>
 </div>
-
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/TrackballControls.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/fzstd@0.1.1/umd/index.js"></script>
@@ -1010,6 +1011,9 @@ function levelNote() {
   if (!v) { el.textContent = ""; return; }
   const kind = state.source === "single" ? "single" : "pooled";
   const parts = Object.keys(D.focus).map(n => { const r = v[`${kind}, ${n}`]; return r ? `${n} ${pct(r[state.level + 1])}` : null; }).filter(Boolean);
+  const hv = Object.keys(D.focus).map(n => v[`${kind}, ${n}`]).filter(Boolean).map(r => Math.round(r[state.level + 1] * 100));
+  document.getElementById("levelShort").textContent = hv.length ? `held ${Math.min(...hv)}${Math.max(...hv) > Math.min(...hv) ? `–${Math.max(...hv)}` : ""}% out of sample` : "";
+  document.getElementById("levelShort").title = "The share of another scan's tract (CST, AF, UF) this stated level held, each of the subject's four scans left out in turn";
   el.textContent = `Stated ${lvl(LEVELS[state.level])}: held ${parts.join(", ")} of another scan's tract, each of this subject's four scans left out in turn` +
     (kind === "single" ? " and predicted by one other scan's 17 runs." : " and predicted by the other three scans' 51 runs.");
 }
@@ -1109,6 +1113,12 @@ D.anatomy.forEach(a => {
     <p class="muted">Single streamlines' names are least stable for the corticospinal tract: most changes go to Other, the class
       for streamlines given no name. Its territory is steadier: see how much of a repeat scan's tract the envelope holds, below.</p>`;
 })();
+const drawer = document.getElementById("drawer"), panelBtn = document.getElementById("panelBtn");
+panelBtn.onclick = () => {
+  drawer.hidden = !drawer.hidden;
+  panelBtn.textContent = drawer.hidden ? "More ▸" : "Hide panel ◂"; panelBtn.setAttribute("aria-expanded", String(!drawer.hidden));
+  resize(); cutDirty = true;
+};
 const pl = document.getElementById("plane"); pl.onclick = () => { state.plane = !state.plane; pl.textContent = state.plane ? "Hide plane" : "Show plane"; pl.setAttribute("aria-pressed", String(state.plane)); apply(); };
 const br = document.getElementById("brain"); br.onclick = () => { state.brain = !state.brain; br.textContent = state.brain ? "Hide outline" : "Show outline"; br.setAttribute("aria-pressed", String(state.brain)); apply(); };
 document.getElementById("reset").onclick = () => chooseSite(state.site);
@@ -1250,9 +1260,9 @@ function drawCut() {
   }
   // to the screen, scaled, with the vector overlays at screen resolution
   const off = document.createElement("canvas"); off.width = nw; off.height = nh; off.getContext("2d").putImageData(img, 0, 0);
-  const stacked = cutCanvas.parentElement.getBoundingClientRect().top - host.getBoundingClientRect().top > host.clientHeight / 2;
-  const maxH = stacked ? window.innerHeight * 0.6 : Math.max(240, Math.min(480, window.innerHeight - 430));   // the whole panel fits the window
-  const dpr = Math.min(window.devicePixelRatio || 1, 2), cw = Math.min(cutCanvas.parentElement.clientWidth || 400, Math.floor(maxH * nw / nh));
+  const box = cutCanvas.parentElement, app = window.innerWidth >= 980;
+  const maxH = app ? Math.max(160, box.clientHeight) : window.innerHeight * 0.6;            // the app layout: fit the box
+  const dpr = Math.min(window.devicePixelRatio || 1, 2), cw = Math.min(box.clientWidth || 400, Math.floor(maxH * nw / nh));
   const ch = Math.round(cw * nh / nw);
   cutCanvas.width = Math.round(cw * dpr); cutCanvas.height = Math.round(ch * dpr); cutCanvas.style.height = ch + "px"; cutCanvas.style.width = cw + "px";
   const g = cutCtx, k = cutCanvas.width / nw;
@@ -1331,9 +1341,9 @@ function render(step) {
   renderer.render(scene, camera);
 }
 function resize() {
-  const below = host.getBoundingClientRect().top + window.scrollY;           // the header's height above the views
-  const w = host.clientWidth, h = Math.round(Math.max(320, Math.min(w, window.innerHeight * 0.62, window.innerHeight - below - 24)));
-  renderer.setSize(w, h, false); canvas.style.height = h + "px"; camera.aspect = w / h; camera.updateProjectionMatrix();
+  const app = window.innerWidth >= 980;                                       // the app layout: the view fills its panel
+  const w = host.clientWidth, h = app ? Math.max(200, host.clientHeight) : Math.round(Math.max(300, Math.min(w, window.innerHeight * 0.62)));
+  renderer.setSize(w, h, false); if (!app) canvas.style.height = h + "px"; camera.aspect = w / h; camera.updateProjectionMatrix();
   controls.handleResize(); redraw();
 }
 new ResizeObserver(resize).observe(host); resize();

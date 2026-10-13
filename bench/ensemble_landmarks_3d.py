@@ -102,7 +102,8 @@ def main(args):
            "Built for the landmarks viewer (bench/ensemble_landmarks_3d.py): the top class per voxel is ranks plane 0.")
     stores = {"ensemble": {"path": ENSEMBLE_VIEW, "bytes": (out / ENSEMBLE_VIEW).stat().st_size, "scans": scans},
               "anatomy": {"path": ANATOMY_VIEW, "bytes": (out / ANATOMY_VIEW).stat().st_size}}
-    anatomy = [{"name": n, "labels": lab, "color": c, "on": on, "note": note} for n, lab, c, on, note in ANATOMY]
+    # off at first: the page opens on the whole brain, where the tracts alone are the point; the panel turns them on
+    anatomy = [{"name": n, "labels": lab, "color": c, "on": False, "note": note} for n, lab, c, on, note in ANATOMY]
     b0 = z["meanb0"]
     data = {"stores": stores, "anatomy": anatomy, "focus": focus, "fans": fans, "sites": res["sites"], "brain": res["whole brain"],
             "runs": RUNS, "rescans": [str(t) for t in z["rescans"]], "other": len(TRACT_NAMES) - 1,
