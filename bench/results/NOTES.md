@@ -3616,3 +3616,49 @@ plus spread gives 0.746. The two correlate at −0.41.
   final name, or look for two directions in one voxel. That overlaps the path-divergence measures already in hand.
 
 Caveats: one tract, one subject.
+
+## 2026-10-13 Grid-free presence: a density threshold keeps the calibration from 2 mm to 1 mm; the count rule does not
+
+`ensemble_grid_check.py` → `ensemble_grid_check.json`.
+
+**Method.**
+- **Data:** cIIIs04's 68 runs (four scans × 17), focus tracts CST, AF and UF. Each run's streamlines are sampled every
+  0.4 mm.
+- **Grids:**
+  - A's diffusion grid (2.1 × 2.1 × 2.2 mm);
+  - a 1 mm grid in the subject's T1 space (FastSurfer's grid, cropped to the brain), reached through the T1-to-DWI
+    transform.
+- **Presence, two definitions:**
+  - **density:** streamlines visiting a voxel over its mean cross-section (1.5 h²), smoothed by 1 mm, at least 0.3
+    per mm²;
+  - **count:** at least 2 streamlines per voxel, the earlier rule.
+- **Test:** leave one scan out, as in "Pooling sessions". Coverage is averaged over the four held-out scans.
+
+| coverage: widest / stated 0.5 / 0.8 / 0.9 / 0.95 | CST | AF | UF |
+|---|---|---|---|
+| 2 mm, density, single | 0.96 / 0.54 / 0.76 / 0.86 / 0.91 | 0.96 / 0.53 / 0.77 / 0.87 / 0.91 | 0.96 / 0.54 / 0.78 / 0.86 / 0.91 |
+| 1 mm, density, single | 0.96 / 0.56 / 0.77 / 0.86 / 0.92 | 0.96 / 0.55 / 0.77 / 0.86 / 0.92 | 0.96 / 0.55 / 0.77 / 0.86 / 0.91 |
+| 2 mm, density, pooled | 0.99 / 0.51 / 0.79 / 0.89 / 0.94 | 0.99 / 0.51 / 0.80 / 0.90 / 0.95 | 0.99 / 0.52 / 0.81 / 0.90 / 0.95 |
+| 1 mm, density, pooled | 0.99 / 0.51 / 0.79 / 0.89 / 0.94 | 0.99 / 0.52 / 0.81 / 0.90 / 0.95 | 0.99 / 0.52 / 0.81 / 0.91 / 0.95 |
+| 2 mm, count, single | 0.95 / 0.50 / 0.76 / 0.85 / 0.92 | 0.95 / 0.52 / 0.77 / 0.85 / 0.92 | 0.95 / 0.50 / 0.77 / 0.85 / 0.91 |
+| 1 mm, count, single | 0.91 / 0.47 / 0.72 / 0.84 / 0.91 | 0.91 / 0.47 / 0.74 / 0.83 / 0.91 | 0.90 / 0.46 / 0.72 / 0.83 / 0.90 |
+
+Tract volume (the held-out run's presence, mean):
+
+| | CST | AF | UF |
+|---|---|---|---|
+| density, 2 mm / 1 mm | 56.6 / 52.9 mL | 55.0 / 50.9 mL | 39.2 / 36.2 mL |
+| count, 2 mm / 1 mm | 69.2 / 19.3 mL | 65.4 / 21.3 mL | 47.8 / 13.4 mL |
+
+- **Density makes presence grid-free.** Coverage at every stated level agrees within 1–2 points between 2 mm and 1
+  mm, single and pooled, and the tract volume changes by about 7 %.
+- **The count rule does not survive the grid change.** At 1 mm the volumes shrink to about a third, and single-scan
+  coverage drops 3–5 points.
+- **The pooled result holds on either grid:** stated 0.8 holds 0.79–0.81, and 0.9 holds 0.89–0.91.
+
+Consequences:
+- Store and report presence as density (streamlines per mm²) and compute fields on whichever grid a use needs; the
+  calibrated levels carry over.
+- The canonical space can be the T1's 1 mm grid, where the anatomy is.
+- The rescans were still tracked on A's grid (resampled DWI). Tracking each session on its native grid and moving its
+  streamlines into T1 space is the next step for clean pooling. It was not tested here.

@@ -1,0 +1,277 @@
+{
+ "focus": [
+  "CST",
+  "AF",
+  "UF"
+ ],
+ "levels": [
+  0.5,
+  0.8,
+  0.9,
+  0.925,
+  0.95
+ ],
+ "step_mm": 0.4,
+ "smooth_mm": 1.0,
+ "rho per mm2": 0.3,
+ "grids": {
+  "dwi": {
+   "shape": [
+    112,
+    112,
+    54
+   ],
+   "voxel mm": [
+    2.14,
+    2.14,
+    2.2
+   ]
+  },
+  "t1": {
+   "shape": [
+    149,
+    183,
+    148
+   ],
+   "voxel mm": [
+    1.0,
+    1.0,
+    1.0
+   ]
+  }
+ },
+ "coverage [widest, *levels], mean over held-out scans": {
+  "dwi grid, density, single, CST": [
+   0.96,
+   0.542,
+   0.764,
+   0.864,
+   0.884,
+   0.906
+  ],
+  "dwi grid, density, single, AF": [
+   0.962,
+   0.532,
+   0.772,
+   0.868,
+   0.889,
+   0.91
+  ],
+  "dwi grid, density, single, UF": [
+   0.956,
+   0.541,
+   0.775,
+   0.863,
+   0.885,
+   0.907
+  ],
+  "dwi grid, density, pooled, CST": [
+   0.987,
+   0.507,
+   0.794,
+   0.891,
+   0.917,
+   0.944
+  ],
+  "dwi grid, density, pooled, AF": [
+   0.991,
+   0.513,
+   0.802,
+   0.901,
+   0.923,
+   0.945
+  ],
+  "dwi grid, density, pooled, UF": [
+   0.992,
+   0.52,
+   0.81,
+   0.904,
+   0.927,
+   0.951
+  ],
+  "dwi grid, count, single, CST": [
+   0.953,
+   0.495,
+   0.761,
+   0.851,
+   0.883,
+   0.918
+  ],
+  "dwi grid, count, single, AF": [
+   0.953,
+   0.519,
+   0.768,
+   0.854,
+   0.885,
+   0.917
+  ],
+  "dwi grid, count, single, UF": [
+   0.945,
+   0.502,
+   0.77,
+   0.853,
+   0.881,
+   0.912
+  ],
+  "dwi grid, count, pooled, CST": [
+   0.986,
+   0.503,
+   0.795,
+   0.893,
+   0.918,
+   0.941
+  ],
+  "dwi grid, count, pooled, AF": [
+   0.988,
+   0.507,
+   0.797,
+   0.899,
+   0.927,
+   0.946
+  ],
+  "dwi grid, count, pooled, UF": [
+   0.987,
+   0.516,
+   0.808,
+   0.906,
+   0.926,
+   0.945
+  ],
+  "t1 grid, density, single, CST": [
+   0.963,
+   0.555,
+   0.773,
+   0.86,
+   0.894,
+   0.915
+  ],
+  "t1 grid, density, single, AF": [
+   0.963,
+   0.551,
+   0.765,
+   0.857,
+   0.882,
+   0.916
+  ],
+  "t1 grid, density, single, UF": [
+   0.96,
+   0.553,
+   0.765,
+   0.861,
+   0.892,
+   0.913
+  ],
+  "t1 grid, density, pooled, CST": [
+   0.989,
+   0.511,
+   0.793,
+   0.893,
+   0.917,
+   0.943
+  ],
+  "t1 grid, density, pooled, AF": [
+   0.992,
+   0.519,
+   0.805,
+   0.902,
+   0.925,
+   0.95
+  ],
+  "t1 grid, density, pooled, UF": [
+   0.994,
+   0.52,
+   0.809,
+   0.905,
+   0.93,
+   0.954
+  ],
+  "t1 grid, count, single, CST": [
+   0.907,
+   0.465,
+   0.723,
+   0.839,
+   0.839,
+   0.907
+  ],
+  "t1 grid, count, single, AF": [
+   0.913,
+   0.473,
+   0.735,
+   0.825,
+   0.858,
+   0.913
+  ],
+  "t1 grid, count, single, UF": [
+   0.896,
+   0.456,
+   0.716,
+   0.829,
+   0.829,
+   0.896
+  ],
+  "t1 grid, count, pooled, CST": [
+   0.967,
+   0.49,
+   0.782,
+   0.876,
+   0.918,
+   0.94
+  ],
+  "t1 grid, count, pooled, AF": [
+   0.974,
+   0.501,
+   0.789,
+   0.881,
+   0.913,
+   0.932
+  ],
+  "t1 grid, count, pooled, UF": [
+   0.97,
+   0.501,
+   0.792,
+   0.893,
+   0.921,
+   0.945
+  ]
+ },
+ "dwi grid, density: target voxels per tract (mean)": {
+  "CST": 5604,
+  "AF": 5444,
+  "UF": 3884
+ },
+ "dwi grid, density: target volume per tract, mL": {
+  "CST": 56.6,
+  "AF": 55.0,
+  "UF": 39.2
+ },
+ "dwi grid, count: target voxels per tract (mean)": {
+  "CST": 6850,
+  "AF": 6472,
+  "UF": 4735
+ },
+ "dwi grid, count: target volume per tract, mL": {
+  "CST": 69.2,
+  "AF": 65.4,
+  "UF": 47.8
+ },
+ "t1 grid, density: target voxels per tract (mean)": {
+  "CST": 52897,
+  "AF": 50934,
+  "UF": 36225
+ },
+ "t1 grid, density: target volume per tract, mL": {
+  "CST": 52.9,
+  "AF": 50.9,
+  "UF": 36.2
+ },
+ "t1 grid, count: target voxels per tract (mean)": {
+  "CST": 19329,
+  "AF": 21274,
+  "UF": 13383
+ },
+ "t1 grid, count: target volume per tract, mL": {
+  "CST": 19.3,
+  "AF": 21.3,
+  "UF": 13.4
+ }
+}
