@@ -42,12 +42,17 @@ body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--u
 .drawer { display: grid; gap: 10px; align-content: start; min-width: 0; }
 .drawer .panel p { margin: 0 0 8px; font-size: 0.88rem; }
 .controls .label { min-width: 8ch; }
+.dispctl { margin-top: 8px; gap: 6px; }
+.dispctl .seg button, .dispctl button.plain { font-size: 0.8rem; padding: 3px 8px; }
+.dispctl .chip { font-size: 0.8rem; padding: 2px 8px 2px 5px; }
+.dispctl .label { font-size: 0.8rem; min-width: 0; }
+.dispctl .row > .label:first-child { min-width: 7ch; }
 @media (min-width: 980px) {
   html, body { height: 100%; overflow: hidden; }
   body { padding: 10px 12px; }
   .shell { height: 100%; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto minmax(0, 1fr); grid-template-areas: "bar bar" "stage drawer"; }
   .bar { grid-area: bar; } .stage { grid-area: stage; } .drawer { grid-area: drawer; }
-  .stage { grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); }
+  .stage { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); }
   .stage .d3 { display: flex; flex-direction: column; min-height: 0; }
   .stage .d3 .scene { flex: 1; min-height: 0; }
   .stage .d3 canvas { position: absolute; inset: 0; height: 100% !important; }
@@ -136,6 +141,20 @@ td.n, th.n { text-align: right; font-family: var(--data); font-variant-numeric: 
       <div class="scene" id="scene"><canvas id="cv" aria-label="Rotatable 3D view of tract shells, repeat-scan patches and streamline fans"></canvas>
         <div class="loading" id="loading" role="status">Loading the data stores…</div>
         <span class="hint">Drag to rotate · scroll to zoom · right-drag to pan · double-click a surface to rotate around it</span></div>
+      <div class="controls dispctl">
+        <div class="row"><span class="label">Anatomy</span><div class="chips" id="anatChips"></div></div>
+        <div class="row"><span class="label">Axial plane</span><input id="zs" type="range" min="0" max="0" step="1" value="0" aria-label="Axial plane position">
+          <span id="zout" class="num muted" style="min-width:7ch"></span>
+          <button class="plain" id="plane" aria-pressed="true">Hide plane</button>
+          <button class="plain" id="brain" aria-pressed="true">Hide outline</button></div>
+        <div class="row"><span class="label">View</span>
+          <div class="seg" role="group" aria-label="Look at the scene from">
+            <button data-view="right">Right</button><button data-view="left">Left</button><button data-view="front">Front</button><button data-view="back">Back</button><button data-view="top">Top</button><button data-view="bottom">Bottom</button></div>
+          <button class="plain" id="center">Center on site</button><button class="plain" id="reset">Reset view</button>
+          <span class="label" style="margin-left:8px">Core</span>
+          <div class="seg" role="group" aria-label="How to draw the core">
+            <button data-core="xray" aria-pressed="true">X-ray</button><button data-core="solid" aria-pressed="false">Solid</button></div></div>
+      </div>
     </section>
     <section class="panel cutp" aria-label="Cross-section">
       <div class="cutbox"><canvas id="cut" aria-label="Cross-section of the shells, the compared scan's patches and the anatomy outlines; click to move the point"></canvas></div>
@@ -155,23 +174,6 @@ td.n, th.n { text-align: right; font-family: var(--data); font-variant-numeric: 
   </main>
 
   <aside class="drawer" id="drawer" hidden aria-label="More controls and explanations">
-    <section class="panel">
-      <h2>Display</h2>
-      <div class="controls">
-        <div class="row"><span class="label">Core</span>
-          <div class="seg" role="group" aria-label="How to draw the core">
-            <button data-core="xray" aria-pressed="true">X-ray</button><button data-core="solid" aria-pressed="false">Solid</button></div></div>
-        <div class="row"><span class="label">Anatomy</span><div class="chips" id="anatChips"></div></div>
-        <div class="row"><span class="label">Axial plane</span><input id="zs" type="range" min="0" max="0" step="1" value="0" aria-label="Axial plane position">
-          <span id="zout" class="num muted" style="min-width:7ch"></span></div>
-        <div class="row"><span class="label"></span><button class="plain" id="plane" aria-pressed="true">Hide plane</button>
-          <button class="plain" id="brain" aria-pressed="true">Hide outline</button></div>
-        <div class="row"><span class="label">View</span>
-          <div class="seg" role="group" aria-label="Look at the scene from">
-            <button data-view="right">Right</button><button data-view="left">Left</button><button data-view="front">Front</button><button data-view="back">Back</button><button data-view="top">Top</button><button data-view="bottom">Bottom</button></div></div>
-        <div class="row"><span class="label"></span><button class="plain" id="center">Center on site</button><button class="plain" id="reset">Reset view</button></div>
-      </div>
-    </section>
     <section class="panel"><div id="envPanel"></div><p class="note" id="levelNote" style="margin-top:6px"></p></section>
     <section class="panel">
       <h2>Sites and fans</h2>
