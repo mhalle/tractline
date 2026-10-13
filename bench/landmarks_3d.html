@@ -39,6 +39,7 @@ body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--u
 .stage { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; min-height: 0; }
 .stage .panel { padding: 8px; }
 .cutp { display: flex; flex-direction: column; gap: 6px; min-height: 0; }
+.cutctl { display: grid; gap: 6px; align-content: start; min-width: 0; }
 .drawer { display: grid; gap: 10px; align-content: start; min-width: 0; }
 .drawer .panel p { margin: 0 0 8px; font-size: 0.88rem; }
 .controls .label { min-width: 8ch; }
@@ -52,11 +53,12 @@ body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--u
   body { padding: 10px 12px; }
   .shell { height: 100%; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto minmax(0, 1fr); grid-template-areas: "bar bar" "stage drawer"; }
   .bar { grid-area: bar; } .stage { grid-area: stage; } .drawer { grid-area: drawer; }
-  .stage { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); }
-  .stage .d3 { display: flex; flex-direction: column; min-height: 0; }
-  .stage .d3 .scene { flex: 1; min-height: 0; }
+  .stage { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; row-gap: 0; }
+  .stage > .panel { display: grid; grid-row: 1 / span 2; grid-template-rows: subgrid; row-gap: 8px; min-height: 0; }
+  .stage .d3 .scene { min-height: 0; }
   .stage .d3 canvas { position: absolute; inset: 0; height: 100% !important; }
-  .cutbox { flex: 1; min-height: 0; display: grid; place-items: center; }
+  .stage .dispctl { margin-top: 0; align-content: start; }
+  .cutbox { min-height: 0; display: grid; place-items: center; }
   .drawer { width: 400px; overflow-y: auto; padding-right: 2px; }
 }
 h1 { font-size: 1.6rem; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
@@ -158,6 +160,7 @@ td.n, th.n { text-align: right; font-family: var(--data); font-variant-numeric: 
     </section>
     <section class="panel cutp" aria-label="Cross-section">
       <div class="cutbox"><canvas id="cut" aria-label="Cross-section of the shells, the compared scan's patches and the anatomy outlines; click to move the point"></canvas></div>
+      <div class="cutctl">
       <div class="row">
         <div class="seg" role="group" aria-label="Which plane">
           <button data-cut="axial" aria-pressed="true">Axial</button><button data-cut="coronal" aria-pressed="false">Coronal</button><button data-cut="sagittal" aria-pressed="false">Sagittal</button></div>
@@ -170,6 +173,7 @@ td.n, th.n { text-align: right; font-family: var(--data); font-variant-numeric: 
         <input id="cutSlider" type="range" min="0" max="1" step="0.5" value="0" aria-label="Move the slice along its axis">
         <span id="cutOut" class="num muted" style="min-width:9ch"></span></div>
       <div class="readout" id="readout"></div>
+      </div>
     </section>
   </main>
 
@@ -923,7 +927,7 @@ function apply() {
     for (const l of Object.values(sets)) l.userData.ghost.visible = l.visible && state.solid;
   }
   markers.forEach((m, i) => { m.material.color.set(i === state.site ? 0xffd34d : 0xffffff); m.material.opacity = i === state.site ? 0.95 : 0.35; });
-  plane.visible = state.plane;
+  plane.visible = state.plane && volume.ready;                              // with the volume, not before it
   cropBtn.disabled = state.site < 0;
   [...selCompare.options].forEach(o => { o.disabled = o.value === "A" && state.source === "single"; });
   selCompare.value = state.compare; selSource.value = state.source; selLevel.value = state.level; selShell.value = state.shell;
