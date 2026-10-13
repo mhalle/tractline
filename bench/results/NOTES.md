@@ -3775,3 +3775,22 @@ whole. The shells and the anatomy are no longer marching-cubes meshes baked into
   download, decoding and smoothing take a few seconds; switching ensembles, about 2-3 s.
 - **Limits:** it needs WebGL 2 (otherwise the fans and sites still show); it uses about 130 MB of textures; the held-out
   figures come from this subject's own four scans.
+
+**Addendum, same day: a cross-section panel** (the user's request), under the 3D view.
+- **What it shows:** a plane through the current point, axial, coronal or sagittal, in the radiological convention.
+  It samples the same smoothed volumes as the 3D view, at 0.5 mm (whole slice) or 0.25 mm (within 30 mm), over A's
+  mean b0. On it:
+  - the envelope and core as fills with edges;
+  - the compared scan's tract outside the envelope, hatched;
+  - outlines of the anatomy shown in 3D;
+  - the sites within 3 mm of the plane, and a crosshair at the point.
+- **Readout:** hovering gives the coordinates, FastSurfer's label (its segment names from the store) and, for each
+  shown tract, the raw votes in that 1 mm voxel, which shell they fall in, and whether the compared scan's run has
+  the tract there.
+- **Clicking** moves the point, the 3D axial plane and the pivot.
+- **Cost:** a whole axial slice takes about 70 ms to draw.
+- **What it shows on the CST:** the coronal slice through the left posterior limb shows the whole CST fan. Session 5's
+  tract leaves the single-scan envelope mostly at the cortical fan tips and at the lower end, where the earlier
+  analysis found the pontine veering.
+- **The viewer is a local folder, not an artifact.** It is served by any static server; artifacts do not serve zip
+  files, and the user does not need one. The page now carries its own charset and viewport tags.

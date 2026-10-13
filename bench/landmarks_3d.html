@@ -1,3 +1,7 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>cIIIs04 tract landmarks</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -13,7 +17,9 @@
   --warn-bg: #2b2213; --warn-ink: #f0cf9c; --good: #7fcf9c; --bad: #f09a7c; color-scheme: dark } }
 :root[data-theme="dark"] { --bg: #0e141a; --surface: #151d25; --ink: #e2e8ee; --muted: #93a2b0; --line: #26323d; --accent: #73b4d4;
   --warn-bg: #2b2213; --warn-ink: #f0cf9c; --good: #7fcf9c; --bad: #f09a7c; color-scheme: dark }
-body { background: var(--bg); color: var(--ink); font-family: var(--ui); font-size: 15px; line-height: 1.5; padding: 20px 16px 40px; }
+html { color-scheme: light; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--ui); font-size: 15px; line-height: 1.5; padding: 20px 16px 40px; }
 .wrap { max-width: 1240px; margin: 0 auto; display: grid; gap: 18px; }
 h1 { font-size: 1.6rem; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
 h2 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 0 0 8px; font-weight: 700; }
@@ -61,6 +67,14 @@ th { color: var(--muted); font-weight: 400; font-size: 0.78rem; }
 td.n, th.n { text-align: right; font-family: var(--data); font-variant-numeric: tabular-nums; }
 .stat { display: flex; justify-content: space-between; gap: 10px; font-size: 0.86rem; border-bottom: 1px solid var(--line); padding: 3px 0; }
 .stat span:last-child { font-family: var(--data); font-variant-numeric: tabular-nums; }
+.leftcol { display: grid; gap: 18px; min-width: 0; }
+.cutgrid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 250px); gap: 14px; align-items: start; margin-top: 10px; }
+@media (max-width: 760px) { .cutgrid { grid-template-columns: minmax(0, 1fr); } }
+.cutbox { background: var(--scene); border-radius: 8px; overflow: hidden; }
+#cut { cursor: crosshair; }
+.readout { font-size: 0.84rem; min-width: 0; }
+.readout table { margin: 2px 0 8px; }
+.readout .coord { font-family: var(--data); font-variant-numeric: tabular-nums; color: var(--muted); font-size: 0.8rem; }
 </style>
 
 <div class="wrap">
@@ -78,6 +92,7 @@ td.n, th.n { text-align: right; font-family: var(--data); font-variant-numeric: 
   </header>
 
   <div class="main">
+    <div class="leftcol">
     <section class="panel" aria-label="3D scene">
       <div class="scene" id="scene"><canvas id="cv" aria-label="Rotatable 3D view of tract shells, repeat-scan patches and streamline fans"></canvas>
         <div class="loading" id="loading" role="status">Loading the data stores…</div>
@@ -136,6 +151,29 @@ td.n, th.n { text-align: right; font-family: var(--data); font-variant-numeric: 
           <button class="plain" id="reset">Reset view</button></div>
       </div>
     </section>
+
+    <section class="panel" aria-label="Cross-section">
+      <h2>Cross-section through the point</h2>
+      <div class="row">
+        <div class="seg" role="group" aria-label="Which plane">
+          <button data-cut="axial" aria-pressed="true">Axial</button><button data-cut="coronal" aria-pressed="false">Coronal</button>
+          <button data-cut="sagittal" aria-pressed="false">Sagittal</button></div>
+        <div class="seg" role="group" aria-label="Field of view">
+          <button data-zoom="whole" aria-pressed="true">Whole slice</button><button data-zoom="near" aria-pressed="false">Within 30 mm</button></div>
+        <div class="seg" role="group" aria-label="Background image">
+          <button data-bg="b0" aria-pressed="true">Background: b0</button><button data-bg="none" aria-pressed="false">None</button></div>
+      </div>
+      <div class="cutgrid">
+        <div class="cutbox"><canvas id="cut" aria-label="Cross-section of the shells, the compared scan's patches and the anatomy outlines; click to move the point"></canvas></div>
+        <div class="readout" id="readout"></div>
+      </div>
+      <p class="muted" style="font-size:0.85rem;margin:10px 0 0">Radiological convention: the patient's right is on the screen's left
+        (axial and coronal), anterior on the left (sagittal). Light fill: the envelope; strong fill: the core; lines: their edges;
+        hatching: the compared scan's tract outside the envelope; thin colored lines: the anatomy shown in 3D. The same tracts, levels and
+        ensemble as the 3D view. Click to move the point; the axial plane and the 3D pivot follow. Hover for the values under the
+        cursor.</p>
+    </section>
+    </div>
 
     <div class="side">
       <section class="panel" id="focusPanel"></section>
@@ -198,7 +236,7 @@ const status = t => { loadingEl.hidden = !t; if (t) loadingEl.textContent = t; }
 const tick = () => new Promise(r => setTimeout(r, 0));
 const lvl = L => `${Math.round(L * 1000) / 10}%`;
 const SCAN_NAME = { A: "reference", within: "same-session", session3: "session 3", session5: "session 5" };
-let dirty = true, moved = 0, sharp = true;                                 // rendering on demand (see the end)
+let dirty = true, moved = 0, sharp = true, cutDirty = true, hover = null;                                 // rendering on demand (see the end)
 
 // ---------- reading the duckn stores: a zip of stored entries holding a zarr v3 hierarchy ----------
 function unzip(u8) {
@@ -435,7 +473,7 @@ function setPlane(k) {
   planeGeo.setAttribute("position", new THREE.Float32BufferAttribute(c.flatMap(v => [v.x, v.y, v.z]), 3));
   planeGeo.attributes.position.needsUpdate = true; planeGeo.computeBoundingSphere();
   document.getElementById("zout").textContent = `z ${world(0, 0, k).z.toFixed(0)} mm`;
-  redraw();
+  redraw(); cutDirty = true;
 }
 
 function label(text, pos, size = 9, color = "#c7d2dc") {
@@ -681,6 +719,9 @@ async function loadStores() {
     }
   const groupOf = new Uint16Array(256);                                     // class code (1-based into labels) -> group bits
   labels.forEach((lab, i) => ANAT.forEach((a, gi) => { if (a.labels ? a.labels.includes(lab) : lab !== 0) groupOf[i + 1] |= 1 << gi; }));
+  const names = new Map();
+  for (const sg of (fs.duckn("").extensions.seg || {}).segments || []) for (const v of sg.label_values) names.set(v, sg.name);
+  Object.assign(volume, { codes, labels, names });
   const mask = new Uint8Array(N);
   for (let gi = 0; gi < ANAT.length; gi++) {
     status(`Smoothing anatomy: ${ANAT[gi].name}…`); await tick();
@@ -698,7 +739,7 @@ async function loadStores() {
 // the ensemble the shells come from: this scan's runs, or the other three scans' runs (leaving out the compared scan)
 const classIndex = name => root.classes.indexOf(name);
 const ens_ = { key: null, runs: 0, scale: 1, votes: [], th: [], core: 0 };
-const cmp = { key: null, hist: [], total: [] };
+const cmp = { key: null, hist: [], total: [], runs: [] };
 function poolScans() {
   const scans = D.stores.ensemble.scans;
   return state.source === "single" ? [scans[0]] : scans.filter(s => s !== (state.compare === "none" ? scans[0] : state.compare));
@@ -731,14 +772,14 @@ async function rebuildNow() {
   const ckey = state.compare === "none" ? "none" : `${state.compare} vs ${key}`;
   if (cmp.key !== ckey) {
     volume.resc.forEach(t => t.fill(0));
-    cmp.hist = []; cmp.total = [];
+    cmp.hist = []; cmp.total = []; cmp.runs = [];
     if (state.compare !== "none") for (let i = 0; i < D.shown.length; i++) {
       const name = D.shown[i].name;
       status(`Reading ${RESCAN[state.compare].toLowerCase()}'s own run: ${name}…`); await tick();
       const run = ens.chunk(`ensembles/${state.compare}/run`, [classIndex(name), 0, 0, 0]), v = ens_.votes[i];
       const h = new Float64Array(ens_.runs + 1); let n = 0;
       for (let j = 0; j < N; j++) if (run[j]) { h[v[j]]++; n++; }
-      cmp.hist.push(h); cmp.total.push(n);
+      cmp.hist.push(h); cmp.total.push(n); cmp.runs.push(run);
       volume.bbox[`r${i}`] = blurInto(run, dims, SMOOTH_TRACT, 255, volume.resc[i >> 2], i & 3);
     }
     cmp.key = ckey;
@@ -802,7 +843,7 @@ function recenter(p) { const shift = p.clone().sub(controls.target); controls.ta
 // state
 const state = { site: -1, crop: true, shell: "mid", source: "single", level: 2, compare: D.rescans[D.rescans.length - 1], fan: "split", color: "tract",
   rescLines: true, on: Object.fromEntries(D.shown.map(t => [t.name, t.name in D.focus])), plane: true, brain: true, solid: false,
-  anat: Object.fromEntries(D.anatomy.map(a => [a.name, a.on])) };
+  anat: Object.fromEntries(D.anatomy.map(a => [a.name, a.on])), point: [0, 0, 0], cut: "axial", zoom: "whole", bg: "b0" };
 const DEFAULT_LEVEL = { single: 2, pooled: 1 };                             // stated 90 % and 80 %: each held about 80-86 % out of sample
 function cropPlanes(c) {
   // world half-spaces |x_a - c_a| <= CROP_MM, carried into the volume's box coordinates
@@ -859,7 +900,7 @@ function apply() {
   document.querySelectorAll("#levelSeg button").forEach(b => b.setAttribute("aria-pressed", String(+b.dataset.level === state.level)));
   levelNote();
   sitePanel();
-  redraw();
+  redraw(); cutDirty = true;
 }
 function chooseSite(i) {
   state.site = i;
@@ -868,11 +909,13 @@ function chooseSite(i) {
     buildFans(i);
     const s = D.sites[i];
     for (const t of D.shown) state.on[t.name] = s.tracts.includes(t.name);
+    state.point = s.mm.slice();
     syncChips();
     const zs = document.getElementById("zs"); zs.value = s.voxel[2]; setPlane(s.voxel[2]);
     view("home", new THREE.Vector3(...s.mm), 120);
   } else {
     for (const t of D.shown) state.on[t.name] = t.name in D.focus;
+    state.point = center.toArray();
     syncChips(); view("home", center, 260);
   }
   apply();
@@ -1046,10 +1089,178 @@ const br = document.getElementById("brain"); br.onclick = () => { state.brain = 
 document.getElementById("reset").onclick = () => chooseSite(state.site);
 document.getElementById("center").onclick = () => recenter(state.site >= 0 ? new THREE.Vector3(...D.sites[state.site].mm) : center);
 document.querySelectorAll("[data-view]").forEach(b => b.onclick = () => view(b.dataset.view));
-const zs = document.getElementById("zs"); zs.max = Z - 1; zs.oninput = () => setPlane(+zs.value);
+const zs = document.getElementById("zs"); zs.max = Z - 1; zs.oninput = () => { setPlane(+zs.value); pointToPlane(+zs.value); };
 zs.value = Math.round(Z / 2); setPlane(+zs.value);
 const key = document.getElementById("key");
 D.shown.forEach(t => key.insertAdjacentHTML("beforeend", `<div><i class="sw" style="background:${t.color}"></i>${t.name} <span class="muted">${t.full}</span></div>`));
+
+// ---------- the cross-section: the same volumes, sampled on a plane through the point ----------
+const cutCanvas = document.getElementById("cut"), cutCtx = cutCanvas.getContext("2d"), readoutEl = document.getElementById("readout");
+const CUTS = { axial: { e1: [-1, 0, 0], e2: [0, -1, 0], n: 2, ends: ["R", "L", "A", "P"], name: "Axial", axis: "z" },
+  coronal: { e1: [-1, 0, 0], e2: [0, 0, -1], n: 1, ends: ["R", "L", "S", "I"], name: "Coronal", axis: "y" },
+  sagittal: { e1: [0, -1, 0], e2: [0, 0, -1], n: 0, ends: ["A", "P", "S", "I"], name: "Sagittal", axis: "x" } };
+const invA = new THREE.Matrix4().set(...A.flat()).invert().elements;            // A's DWI world -> b0 voxel
+const dwiIndex = w => [0, 1, 2].map(r => invA[r] * w[0] + invA[4 + r] * w[1] + invA[8 + r] * w[2] + invA[12 + r]);
+function pointToPlane(k) { const ijk = dwiIndex(state.point); state.point = world(ijk[0], ijk[1], k).toArray(); cutDirty = true; }
+let cutWin = null;
+function cutWindow() {
+  const c = CUTS[state.cut], P = state.point, dot = (e, v) => e[0] * v[0] + e[1] * v[1] + e[2] * v[2];
+  let u0, u1, v0, v1, h;
+  if (state.zoom === "near") { h = 0.25; u0 = dot(c.e1, P) - 30; u1 = u0 + 60; v0 = dot(c.e2, P) - 30; v1 = v0 + 60; }
+  else {
+    h = 0.5; u0 = v0 = Infinity; u1 = v1 = -Infinity;
+    const [W, H, Dz] = volume.dims;
+    for (const g of [[0, 0, 0], [W, 0, 0], [0, H, 0], [0, 0, Dz], [W, H, 0], [W, 0, Dz], [0, H, Dz], [W, H, Dz]]) {
+      const w = new THREE.Vector3(...g).applyMatrix4(volume.M).toArray(), u = dot(c.e1, w), v = dot(c.e2, w);
+      u0 = Math.min(u0, u); u1 = Math.max(u1, u); v0 = Math.min(v0, v); v1 = Math.max(v1, v);
+    }
+  }
+  return { c, h, u0, v0, nw: Math.round((u1 - u0) / h), nh: Math.round((v1 - v0) / h) };
+}
+// a pixel's center (or any point of the window, in pixels) -> world
+function cutWorld(win, x, y) {
+  const s = win.u0 + x * win.h, t = win.v0 + y * win.h, w = [0, 1, 2].map(a => win.c.e1[a] * s + win.c.e2[a] * t);
+  w[win.c.n] = state.point[win.c.n];
+  return w;
+}
+// trilinear sample of an RGBA byte volume at box coordinates g (voxel centers at index + 0.5); 0..1 per channel
+function tri(pack, g, out) {
+  const [W, H, Dz] = volume.dims, cx = g[0] - 0.5, cy = g[1] - 0.5, cz = g[2] - 0.5;
+  const x0 = Math.floor(cx), y0 = Math.floor(cy), z0 = Math.floor(cz);
+  out.fill(0);
+  if (x0 < 0 || y0 < 0 || z0 < 0 || x0 >= W - 1 || y0 >= H - 1 || z0 >= Dz - 1) return out;
+  const fx = cx - x0, fy = cy - y0, fz = cz - z0;
+  for (let dz = 0; dz < 2; dz++) for (let dy = 0; dy < 2; dy++) for (let dx = 0; dx < 2; dx++) {
+    const w = (dx ? fx : 1 - fx) * (dy ? fy : 1 - fy) * (dz ? fz : 1 - fz), i = 4 * (((z0 + dz) * H + y0 + dy) * W + x0 + dx);
+    if (w) for (let c = 0; c < 4; c++) out[c] += w * pack[i + c];
+  }
+  for (let c = 0; c < 4; c++) out[c] /= 255;
+  return out;
+}
+const toBox = w => { const e = volume.inv.elements; return [0, 1, 2].map(r => e[r] * w[0] + e[4 + r] * w[1] + e[8 + r] * w[2] + e[12 + r]); };
+const voxelOf = w => {                                                            // the store voxel's flat index, or -1
+  const g = toBox(w), [W, H, Dz] = volume.dims, i = Math.floor(g[0]), j = Math.floor(g[1]), k = Math.floor(g[2]);
+  return i < 0 || j < 0 || k < 0 || i >= W || j >= H || k >= Dz ? -1 : (k * H + j) * W + i;
+};
+const rgb = hex => { const c = new THREE.Color(hex); return [c.r * 255, c.g * 255, c.b * 255]; };
+function drawCut() {
+  const win = cutWin = cutWindow(), { nw, nh } = win, n = nw * nh;
+  const img = new ImageData(nw, nh), px = img.data;
+  const on = D.shown.map((t, i) => [t, i]).filter(([t]) => state.on[t.name]);
+  const shells = state.shell !== "none", cloud = state.shell === "cloud";
+  const masks = on.map(() => new Uint8Array(n)), share = cloud ? on.map(() => new Float32Array(n)) : null;   // 1 envelope, 2 core, 4 patch
+  const anat = ANAT.map((a, i) => i).filter(i => U.uAOn.value[i >> 2].getComponent(i & 3) > 0.5), bits = new Uint16Array(n);
+  const tv = [new Float32Array(4), new Float32Array(4), new Float32Array(4)], rv = [new Float32Array(4), new Float32Array(4), new Float32Array(4)];
+  const scene3 = rgb(css("--scene") || "#0b1015");
+  for (let y = 0; y < nh; y++) for (let x = 0; x < nw; x++) {
+    const p = y * nw + x, w = cutWorld(win, x + 0.5, y + 0.5), g = toBox(w);
+    let base = scene3;
+    if (state.bg === "b0") {
+      const d = dwiIndex(w), i = Math.round(d[0]), j = Math.round(d[1]), k = Math.round(d[2]);
+      if (i >= 0 && j >= 0 && k >= 0 && i < X && j < Y && k < Z) { const v = b0[(i * Y + j) * Z + k] * 0.8; base = [v, v, v]; }
+    }
+    px[4 * p] = base[0]; px[4 * p + 1] = base[1]; px[4 * p + 2] = base[2]; px[4 * p + 3] = 255;
+    const need = new Set(on.map(([, i]) => i >> 2));
+    for (const j of need) { tri(volume.tracts[j], g, tv[j]); if (state.compare !== "none") tri(volume.resc[j], g, rv[j]); }
+    on.forEach(([, i], m) => {
+      const j = i >> 2, c = i & 3, v = tv[j][c];
+      const env = U.uEnv.value[j].getComponent(c), outer = U.uOuter.value[j].getComponent(c), core = U.uCore.value[j].getComponent(c);
+      let b = 0;
+      if (shells && !cloud) { if (outer > 0 && v >= outer) b |= 1; if (v >= core) b |= 2; }
+      if (cloud) share[m][p] = v * U.uFrac.value;
+      if (state.compare !== "none" && rv[j][c] >= 0.5 && v < env) b |= 4;
+      masks[m][p] = b;
+    });
+    if (anat.length) {
+      const i0 = Math.floor(g[0]), j0 = Math.floor(g[1]), k0 = Math.floor(g[2]), [W, H, Dz] = volume.dims;
+      if (i0 >= 0 && j0 >= 0 && k0 >= 0 && i0 < W && j0 < H && k0 < Dz) {
+        const idx = 4 * ((k0 * H + j0) * W + i0);
+        for (const a of anat) if (volume.anat[a >> 2][idx + (a & 3)] >= 128) bits[p] |= 1 << a;
+      }
+    }
+  }
+  const blend = (p, col, a) => { for (let c = 0; c < 3; c++) px[4 * p + c] += (col[c] - px[4 * p + c]) * a; };
+  const edge = (m, p, bit) => {                                                   // in the mask, beside a pixel that is not
+    const x = p % nw, y = (p - x) / nw;
+    return (m[p] & bit) && ((x > 0 && !(m[p - 1] & bit)) || (x < nw - 1 && !(m[p + 1] & bit)) || (y > 0 && !(m[p - nw] & bit)) || (y < nh - 1 && !(m[p + nw] & bit)));
+  };
+  on.forEach(([t], m) => {
+    const col = rgb(t.color), light = col.map(v => v + (255 - v) * 0.6), mk = masks[m];
+    for (let p = 0; p < n; p++) {
+      if (cloud) { if (share[m][p] > 0.01) blend(p, col, Math.min(0.85, share[m][p] * 0.85)); continue; }
+      if (mk[p] & 1) blend(p, col, 0.22);
+      if (mk[p] & 2) blend(p, col, 0.38);
+      if (mk[p] & 4) { const x = p % nw, y = (p - x) / nw; blend(p, light, (x + y) % 6 < 2 ? 0.9 : 0.12); }
+    }
+  });
+  on.forEach(([t], m) => {
+    const col = rgb(t.color), bright = col.map(v => v + (255 - v) * 0.35), mk = masks[m];
+    for (let p = 0; p < n; p++) { if (edge(mk, p, 1)) blend(p, col, 0.95); if (edge(mk, p, 2)) blend(p, bright, 1); if (edge(mk, p, 4)) blend(p, col.map(v => v + (255 - v) * 0.6), 0.95); }
+  });
+  for (const a of anat) {
+    const col = rgb(ANAT[a].color), bit = 1 << a;
+    for (let p = 0; p < n; p++) if (edge(bits, p, bit)) blend(p, col, ANAT[a].labels ? 0.85 : 0.5);
+  }
+  // to the screen, scaled, with the vector overlays at screen resolution
+  const off = document.createElement("canvas"); off.width = nw; off.height = nh; off.getContext("2d").putImageData(img, 0, 0);
+  const dpr = Math.min(window.devicePixelRatio || 1, 2), cw = cutCanvas.parentElement.clientWidth || 400;
+  const ch = Math.round(cw * nh / nw);
+  cutCanvas.width = Math.round(cw * dpr); cutCanvas.height = Math.round(ch * dpr); cutCanvas.style.height = ch + "px";
+  const g = cutCtx, k = cutCanvas.width / nw;
+  g.setTransform(1, 0, 0, 1, 0, 0); g.imageSmoothingEnabled = true; g.drawImage(off, 0, 0, cutCanvas.width, cutCanvas.height);
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const sx = u => u * k / dpr, P = state.point, c = win.c;
+  const pu = (c.e1[0] * P[0] + c.e1[1] * P[1] + c.e1[2] * P[2] - win.u0) / win.h, pv = (c.e2[0] * P[0] + c.e2[1] * P[1] + c.e2[2] * P[2] - win.v0) / win.h;
+  g.strokeStyle = "rgba(255, 211, 77, 0.75)"; g.lineWidth = 1; g.setLineDash([4, 4]);
+  g.beginPath(); g.moveTo(sx(pu), 0); g.lineTo(sx(pu), ch); g.moveTo(0, sx(pv)); g.lineTo(cw, sx(pv)); g.stroke(); g.setLineDash([]);
+  g.font = "600 12px IBM Plex Mono, monospace"; g.textBaseline = "middle";
+  D.sites.forEach((st, i) => {                                                    // sites within 3 mm of the plane
+    if (Math.abs(st.mm[c.n] - P[c.n]) > 3) return;
+    const u = (c.e1[0] * st.mm[0] + c.e1[1] * st.mm[1] + c.e1[2] * st.mm[2] - win.u0) / win.h, v = (c.e2[0] * st.mm[0] + c.e2[1] * st.mm[1] + c.e2[2] * st.mm[2] - win.v0) / win.h;
+    if (u < 0 || v < 0 || u > nw || v > nh) return;
+    g.fillStyle = i === state.site ? "#ffd34d" : "#ffffff"; g.beginPath(); g.arc(sx(u), sx(v), 3.5, 0, 7); g.fill();
+    g.textAlign = "left"; g.fillText(String(i + 1), sx(u) + 6, sx(v) - 7);
+  });
+  g.fillStyle = "#c7d2dc"; g.textAlign = "center";
+  const [l, r, t, b] = c.ends;
+  g.fillText(l, 10, ch / 2); g.fillText(r, cw - 10, ch / 2); g.fillText(t, cw / 2, 10); g.fillText(b, cw / 2, ch - 10);
+  const bar = sx(10 / win.h);                                                     // a 10 mm scale bar
+  g.fillRect(cw - 14 - bar, ch - 20, bar, 2); g.textAlign = "right"; g.fillText("10 mm", cw - 14, ch - 30);
+  g.textAlign = "left"; g.fillText(`${c.name} ${c.axis} = ${P[c.n].toFixed(0)} mm`, 10, 12);
+  showReadout(hover || P);
+}
+function showReadout(w) {
+  if (!volume.ready || !ens_.votes.length) { readoutEl.innerHTML = ""; return; }
+  const idx = voxelOf(w), ras = ["R", "A", "S"].map((pos, a) => `${w[a] >= 0 ? pos : "LPI"[a]} ${Math.abs(w[a]).toFixed(0)}`).join(" · ");
+  const code = idx >= 0 ? volume.codes[idx] : 0, lab = code ? volume.labels[code - 1] : null;
+  const where = lab == null ? "outside the labels" : lab === 0 ? "background" : (volume.names.get(lab) || `label ${lab}`);
+  const th = i => (ens_.th[i] || [])[state.level];
+  const rows = D.shown.map((t, i) => [t, i]).filter(([t]) => state.on[t.name]).map(([t, i]) => {
+    const v = idx >= 0 ? ens_.votes[i][idx] : 0, inn = v >= ens_.core ? "core" : v >= th(i) ? "envelope" : v >= 1 ? "widest" : "–";
+    const run = state.compare !== "none" && cmp.runs[i] ? (cmp.runs[i][idx] ? "yes" : "no") : "";
+    return `<tr><td><i class="sw" style="background:${t.color};margin-right:6px"></i>${t.name}</td><td class="n">${v} / ${ens_.runs}</td><td>${inn}</td>${state.compare !== "none" ? `<td>${run}</td>` : ""}</tr>`;
+  }).join("");
+  readoutEl.innerHTML = `<h2>${hover ? "Under the cursor" : "At the point"}</h2>
+    <div class="coord">${ras} mm</div>
+    <p style="margin:4px 0 8px">FastSurfer: <strong>${where}</strong></p>
+    <div class="tbl"><table><thead><tr><th>Tract</th><th class="n">Runs present</th><th>In</th>${state.compare !== "none" ? `<th>${RESCAN[state.compare]}</th>` : ""}</tr></thead>
+    <tbody>${rows || `<tr><td colspan="4" class="muted">No tract shown.</td></tr>`}</tbody></table></div>
+    <p class="muted" style="font-size:0.8rem">Runs present: raw counts in this 1 mm voxel, before the 0.6 mm smoothing the drawn edges use.</p>`;
+}
+const cutPoint = e => { const r = cutCanvas.getBoundingClientRect(); return cutWin ? cutWorld(cutWin, (e.clientX - r.left) / r.width * cutWin.nw, (e.clientY - r.top) / r.height * cutWin.nh) : null; };
+cutCanvas.addEventListener("mousemove", e => { hover = cutPoint(e); if (hover) showReadout(hover); });
+cutCanvas.addEventListener("mouseleave", () => { hover = null; showReadout(state.point); });
+cutCanvas.addEventListener("click", e => {
+  const w = cutPoint(e); if (!w) return;
+  state.point = w;
+  const k = Math.max(0, Math.min(Z - 1, Math.round(dwiIndex(w)[2])));
+  zs.value = k; setPlane(k); recenter(new THREE.Vector3(...w)); cutDirty = true;
+});
+const pick2 = (sel, b) => document.querySelectorAll(sel).forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+document.querySelectorAll("[data-cut]").forEach(b => b.onclick = () => { state.cut = b.dataset.cut; pick2("[data-cut]", b); cutDirty = true; });
+document.querySelectorAll("[data-zoom]").forEach(b => b.onclick = () => { state.zoom = b.dataset.zoom; pick2("[data-zoom]", b); cutDirty = true; });
+document.querySelectorAll("[data-bg]").forEach(b => b.onclick = () => { state.bg = b.dataset.bg; pick2("[data-bg]", b); cutDirty = true; });
+new ResizeObserver(() => { cutDirty = true; }).observe(cutCanvas.parentElement);
 
 // rendering, on demand: a coarse step while the view moves, a fine one once it rests
 const COARSE = 1.0, FINE = 0.4;
@@ -1083,6 +1294,7 @@ chooseSite(0);
   controls.update();
   const moving = performance.now() - moved < 160;
   if (dirty || (!moving && !sharp)) { render(moving ? COARSE : FINE); sharp = !moving; dirty = false; }
+  if (cutDirty && volume.ready && ens_.votes.length) { cutDirty = false; drawCut(); }
   requestAnimationFrame(loop);
 })();
 loadStores().catch(fail);

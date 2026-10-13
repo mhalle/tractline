@@ -16,6 +16,12 @@ ray-marches the shown tracts and the anatomy groups together in one pass, so sur
   - the ensemble: this scan's 17 runs, or the other three scans' 51 runs pooled (leaving out the scan compared with);
   - a compared scan's own run where it falls outside the envelope, with the share of its tract the envelope holds;
   - the held-out coverage of each stated level (the store's validation block, from ensemble_grid_check.py).
+  - a cross-section through a point (axial, coronal or sagittal, radiological convention) sampling the same volumes:
+    envelope and core fills with their edges, the compared scan's patches hatched, the shown anatomy's outlines, over
+    A's mean b0; hovering reads out each shown tract's raw votes and FastSurfer's label; a click moves the point, the
+    3D axial plane and pivot.
+Open OUTDIR/index.html through any static web server (it fetches the stores beside it), e.g.
+    python3 -m http.server --directory OUTDIR
 Inline, from ensemble_landmarks.py's DATA/ensemble/<subject>/retest/<pair>/landmarks.npz and
 results/ensemble_landmarks_smooth.json (A's DWI world, millimeters, the scanner's RAS frame): the sites, their fans
 (each seed drawn from all 17 runs, colored by tract, runner-up or endpoint check against FastSurfer's labels;
