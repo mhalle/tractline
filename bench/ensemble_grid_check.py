@@ -76,9 +76,12 @@ class Grid:
         pair = np.unique(O[ok].astype(np.int64) * n + flat)
         return np.bincount(pair % n, minlength=n).astype(np.uint16)
 
+    def density(self, c):
+        """streamlines per mm^2 of a voxel's mean cross-section, smoothed by SMOOTH_MM"""
+        return gaussian_filter((c.reshape(self.shape) / self.area).astype(np.float32), SMOOTH_MM / self.h)
+
     def presence(self, c):
-        dens = gaussian_filter((c.reshape(self.shape) / self.area).astype(np.float32), SMOOTH_MM / self.h)
-        return {"density": (dens >= RHO).ravel(), "count": c >= 2}
+        return {"density": (self.density(c) >= RHO).ravel(), "count": c >= 2}
 
 
 def coverage(votes, R, target):

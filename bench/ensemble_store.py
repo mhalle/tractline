@@ -62,13 +62,19 @@ def grid_conformed():
 
 
 def compute(d, rescans, g, cache):
+    """per scan: votes (class, i, j, k) and its own run's presence; and the mean density per class over A's runs and
+    over all runs (float16, for the rank fields)"""
     if cache.exists():
         z = np.load(cache)
-        return {s: z[f"votes_{s}"] for s in z["scans"]}, {s: z[f"run_{s}"] for s in z["scans"]}
+        if "dens_A" in z:
+            return ({s: z[f"votes_{s}"] for s in z["scans"]}, {s: z[f"run_{s}"] for s in z["scans"]},
+                    {"A": z["dens_A"], "pooled": z["dens_pooled"]})
     scans = {"A": [d / "A.npz"] + [d / "smooth" / f"r{r:03d}.npz" for r in range(1, RUNS)]}
     for tag in rescans:
         scans[tag] = [d / f"{tag}_onA.npz"] + [d / "smooth" / f"{tag}_r{r:03d}.npz" for r in range(1, RUNS)]
     votes, run0 = {}, {}
+    dA = np.zeros((K,) + g.shape, np.float32)
+    dP = np.zeros((K,) + g.shape, np.float32)
     t0 = time.time()
     for s, paths in scans.items():
         v = np.zeros((K,) + g.shape, np.uint8)
@@ -78,27 +84,32 @@ def compute(d, rescans, g, cache):
             for k in range(K):
                 idx = np.flatnonzero(tract == k)
                 if len(idx):
-                    pres = g.presence(g.counts(*sample([rec.fibers[j] for j in idx])))["density"].reshape(g.shape)
+                    dens = g.density(g.counts(*sample([rec.fibers[j] for j in idx])))
+                    pres = dens >= RHO
                     v[k] += pres
+                    dP[k] += dens
+                    if s == "A":
+                        dA[k] += dens
                     if i == 0:
                         run0.setdefault(s, np.zeros((K,) + g.shape, bool))[k] = pres
             del rec
         votes[s] = v
         print(f"{s}: {time.time() - t0:.0f}s", flush=True)
+    dens = {"A": (dA / RUNS).astype(np.float16), "pooled": (dP / (RUNS * len(scans))).astype(np.float16)}
     np.savez_compressed(cache, scans=np.array(list(scans)), **{f"votes_{s}": v for s, v in votes.items()},
-                        **{f"run_{s}": r for s, r in run0.items()})
-    return votes, run0
+                        **{f"run_{s}": r for s, r in run0.items()}, dens_A=dens["A"], dens_pooled=dens["pooled"])
+    return votes, run0, dens
 
 
-def array_attrs(g, extension=None):
+def array_attrs(g, extension=None, list_axis=True):
     """duckn geometry for a (class, z, y, x) array on grid g, through duckn's models (as haversack.ranked_store)."""
     from duckn import DucknMetadata, AxisMetadata
     from duckn.models import duckn_attrs
     A = LPS @ g.affine
     spacing_xyz = np.sqrt((A[:3, :3] ** 2).sum(0))
     cols = [A[:3, 2], A[:3, 1], A[:3, 0]]                                 # array axes z, y, x
-    axes = [AxisMetadata(kind="list")] + [AxisMetadata(kind="space", centering="cell", unit="mm",
-                                                       space_direction=[round(float(v), 9) for v in c]) for c in cols]
+    axes = ([AxisMetadata(kind="list")] if list_axis else []) + [
+        AxisMetadata(kind="space", centering="cell", unit="mm", space_direction=[round(float(v), 9) for v in c]) for c in cols]
     meta = DucknMetadata(version=DUCKN_VERSION, space="left-posterior-superior",
                          space_origin=[round(float(v), 6) for v in A[:3, 3]], axes=axes,
                          extensions={"tractline": {"version": EXTENSION_VERSION, **extension}} if extension else None)
@@ -106,9 +117,11 @@ def array_attrs(g, extension=None):
     return duckn_attrs(meta)
 
 
-def group_attrs(extension):
+def group_attrs(extension, **others):
+    """a group's duckn object: our `tractline` block, and any other versioned extension blocks (rankfield's `ranked`)"""
     from duckn import DucknGroupMetadata
-    meta = DucknGroupMetadata(version=DUCKN_VERSION, extensions={"tractline": {"version": EXTENSION_VERSION, **extension}})
+    meta = DucknGroupMetadata(version=DUCKN_VERSION,
+                              extensions={"tractline": {"version": EXTENSION_VERSION, **extension}, **others})
     return {"duckn": meta.model_dump(exclude_none=True)}
 
 
@@ -129,7 +142,7 @@ def main(args):
     subject, (ses, scan), rescans, shells, _ = PAIRS[pair]
     d = DATA / "ensemble" / subject / "retest" / pair
     g, (lo, hi, conf_shape), t1_to_dwi = grid_conformed()
-    votes, run0 = compute(d, rescans, g, d / "presence_conformed.npz")
+    votes, run0, dens = compute(d, rescans, g, d / "presence_conformed.npz")
     pooled = sum(v.astype(np.uint16) for v in votes.values()).astype(np.uint8)
     out = Path(args.out or DATA / "ensemble" / subject / f"{subject}_ensemble.duckn.zip")
     validation = json.loads((HERE / "results/ensemble_grid_check.json").read_text())["coverage [widest, *levels], mean over held-out scans"]
@@ -176,6 +189,40 @@ def main(args):
         pg.attrs.update(group_attrs({"kind": "all scans' runs pooled", "scans": list(votes), "runs": RUNS * len(votes)}))
         write(pg, "votes", pooled, RUNS * len(votes),
               {"scans": list(votes), "values": "runs with the class present, all scans"})
+        # the rank fields: per voxel the classes ranked by mean streamline density, with "none" (a pseudo-class at the
+        # presence threshold) - encoded by rankfield, as FastSurfer's ranked anatomy is
+        import rankfield as rf
+        import torch
+        rg = root.create_group("rankfield")
+        rg.attrs.update(group_attrs({"kind": "rank fields of mean streamline density", "classes": names + ["none"],
+                                     "none": f"a pseudo-class of density {RHO} per mm^2 (the presence threshold)",
+                                     "floor": f"densities below {args.floor} of the threshold are absent"}))
+        checks = {}
+        for which, m in dens.items():
+            m = np.transpose(m.astype(np.float32), (0, 3, 2, 1))                  # (class, z, y, x)
+            m = np.where(m >= args.floor * RHO, m, 0)                              # faint smoothing tails: absent
+            logits = np.concatenate([np.log(m + 1e-12), np.full((1,) + m.shape[1:], np.log(RHO), np.float32)])
+            code = rf.encode(torch.from_numpy(logits), depth=args.depth)
+            ids, _ = rf.probabilities(code, 1.0)
+            ids = np.asarray(ids)
+            top = ids[0].reshape(m.shape[1:])
+            want = logits.argmax(0)
+            brain = want != K                                                       # voxels whose best class is not "none"
+            checks[which] = {"rank 1 = the densest class (voxels)": round(float((top == want).mean()), 4),
+                             "rank 1 = the densest class (voxels with a tract)": round(float((top[brain] == want[brain]).mean()), 4),
+                             "voxels with a tract ranked first": int(brain.sum())}
+            sub = rg.create_group(which)
+            meta = {**code.meta, "labels": names + ["none"]}
+            ext = {"ensemble": which, "runs": RUNS if which == "A" else RUNS * len(votes)}
+            sub.attrs.update(group_attrs(ext, ranked=meta))
+            for name, arr in (("ranks", code.ranks), ("support", code.support), ("tail", code.tail)):
+                a = np.ascontiguousarray(arr)
+                lst = a.ndim == 4
+                shp = a.shape
+                sub.create_array(name, shape=shp, dtype=a.dtype, chunks=((1,) + shp[1:]) if lst else shp, shards=shp,
+                                 compressors=codec, fill_value=0,
+                                 attributes=array_attrs(g, {**ext, "part": name}, list_axis=lst))[...] = a
+            print(which, checks[which], flush=True)
         (staging / "README.md").write_text(README.format(subject=subject, classes=K, runs=RUNS, scans=", ".join(votes)))
         out.parent.mkdir(parents=True, exist_ok=True)
         pack(staging, out)
@@ -206,6 +253,8 @@ density of at least 0.3 per mm^2 of a voxel's cross-section (smoothed 1 mm).
 - ensembles/<scan>/votes: each scan's {runs}-run ensemble (its own run and {runs_less} resampled copies); scans {scans}
 - ensembles/<scan>/run: the scan's own run, 0/1
 - pooled/votes: all scans' runs together
+- rankfield/A, rankfield/pooled: per voxel the classes ranked by mean streamline density (with "none"), as rankfield
+  encodes them (ranks, support, tail; the `ranked` block is rankfield's metadata), for A's ensemble and all runs
 
 The root's and each array's `duckn.extensions.tractline` block holds the classes, the presence definition, the vote
 counts at which the envelopes of stated levels start, the coverage those levels held on held-out scans, the T1-to-DWI
@@ -217,4 +266,6 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default=None)
     ap.add_argument("--level", type=int, default=9)
+    ap.add_argument("--depth", type=int, default=6)
+    ap.add_argument("--floor", type=float, default=0.1, help="densities below this share of RHO are absent")
     main(ap.parse_args())

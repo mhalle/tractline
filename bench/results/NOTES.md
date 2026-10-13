@@ -3705,3 +3705,17 @@ layout tried.
 - **Alignment check:** slicing FastSurfer's ranked store (parts/0/ranks, rank 1) with the recorded crop, the CST core
   (at least 9 of 17 runs) falls in cerebral white matter 46 %, brainstem 27 %, ventral DC 9 %, thalamus 5 % and
   outside the brain 4 %.
+
+**Rank fields added to the store** (`rankfield/A`: A's 17 runs; `rankfield/pooled`: all 68).
+- **Basis:** per voxel, the 43 classes ranked by mean streamline density over the runs, with "none" as a
+  pseudo-class at the presence threshold (0.3 per mm²). Densities below a tenth of the threshold count as absent,
+  which drops faint smoothing tails.
+- **Encoding:** rankfield 0.4 (`rf.encode`, depth 6, keep shell), as FastSurfer's ranked anatomy is. Arrays: ranks,
+  support and tail. The encoder's metadata is its own `ranked` extension beside `tractline`.
+- **Check:** rank 1 is the densest class in every voxel (1.0 agreement, about 1.18 million voxels with a tract ranked
+  first).
+- **Size:** about 10 MB per rank field (ranks 3.3, support 5.4, tail 1.4 MB). The store is now 39 MB.
+  - The size reflects real overlap. Above the floor, the median voxel holds 5 classes, the 90th percentile 10, and half
+    hold more than 4.
+  - Alternatives measured: no floor, 13.4 MB each (46 MB store); a floor of a third, 8.0 MB; depth 4, 7.7 MB (35 MB).
+- **Cache:** presence_conformed.npz (votes, each scan's run, and the two mean-density fields in float16) is 102 MB.
