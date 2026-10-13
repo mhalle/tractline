@@ -26,12 +26,15 @@ h3 { font-size: 1.02rem; margin: 0 0 4px; text-wrap: balance; }
 .scene { position: relative; background: var(--scene); border-radius: 8px; overflow: hidden; }
 canvas { display: block; width: 100%; touch-action: none; }
 .hint { position: absolute; left: 10px; bottom: 8px; right: 10px; font: 12px var(--data); color: #9fb0bf; pointer-events: none; }
+.loading { position: absolute; left: 10px; top: 10px; right: 10px; font: 12.5px var(--data); color: #d8e2ea; background: rgba(11, 16, 21, 0.78);
+  border: 1px solid #26323d; border-radius: 6px; padding: 6px 10px; pointer-events: none; max-width: 60ch; }
 .controls { display: grid; gap: 10px; margin-top: 12px; }
 .row { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; }
 .label { color: var(--muted); font-size: 0.85rem; min-width: 9ch; }
 .seg { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
 .seg button { font: inherit; font-size: 0.86rem; padding: 5px 10px; border: 0; background: transparent; color: var(--ink); cursor: pointer; }
 .seg button[aria-pressed="true"] { background: var(--accent); color: var(--surface); }
+.seg button:disabled { opacity: 0.35; cursor: not-allowed; }
 button.plain { font: inherit; font-size: 0.86rem; padding: 5px 10px; border: 1px solid var(--line); border-radius: 8px; background: transparent; color: var(--ink); cursor: pointer; }
 button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 input[type=range] { flex: 1; min-width: 120px; accent-color: var(--accent); }
@@ -50,6 +53,7 @@ input[type=range] { flex: 1; min-width: 120px; accent-color: var(--accent); }
 .key div { display: flex; gap: 8px; align-items: center; }
 .num { font-family: var(--data); font-variant-numeric: tabular-nums; }
 .muted { color: var(--muted); }
+.note { color: var(--muted); font-size: 0.84rem; flex-basis: 100%; margin: 0; }
 .tbl { overflow-x: auto; }
 table { border-collapse: collapse; width: 100%; font-size: 0.84rem; margin: 4px 0 10px; }
 th, td { text-align: left; padding: 3px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
@@ -64,10 +68,10 @@ td.n, th.n { text-align: right; font-family: var(--data); font-variant-numeric: 
     <h1>cIIIs04 tract landmarks</h1>
     <p class="lede">A healthy adult (MASiVar cohort III, subject 04), focused on three tracts used in surgical planning: the
       corticospinal tract, the arcuate fasciculus and the uncinate fasciculus. The tractography pipeline ran 17 times on one scan: once
-      as acquired and 16 times on copies with its noise drawn again. The same subject was scanned three more times. Shells show how much
-      of a tract the 17 runs agree on; dots show where a real repeat scan put the tract outside the 80% envelope; fans show single
-      streamlines drawn from all 17 runs and the repeat scans. Brain anatomy from FastSurfer, a segmentation of the subject's T1 image,
-      is drawn beside the tracts and used to check where each streamline ends.</p>
+      as acquired and 16 times on copies with its noise drawn again. The same subject was scanned three more times, and each of those
+      scans got 17 runs too. Shells show how much of a tract the runs agree on; patches show where a real repeat scan put the tract
+      outside the envelope; fans show single streamlines drawn from all 17 runs and the repeat scans. Brain anatomy from FastSurfer, a
+      segmentation of the subject's T1 image, is drawn with the tracts and used to check where each streamline ends.</p>
     <p class="notice"><strong>Research prototype.</strong> This shows how reproducible the pipeline's output is, and a rough check of
       its streamlines' ends against automated anatomy labels, not where the fibers truly run. The internal-capsule sites come from the
       FastSurfer anatomy; the other sites were placed from the tracts themselves, so their names are approximate. Not for clinical use.</p>
@@ -75,24 +79,33 @@ td.n, th.n { text-align: right; font-family: var(--data); font-variant-numeric: 
 
   <div class="main">
     <section class="panel" aria-label="3D scene">
-      <div class="scene" id="scene"><canvas id="cv" aria-label="Rotatable 3D view of tract shells, rescan dots and streamline fans"></canvas>
+      <div class="scene" id="scene"><canvas id="cv" aria-label="Rotatable 3D view of tract shells, repeat-scan patches and streamline fans"></canvas>
+        <div class="loading" id="loading" role="status">Loading the data stores…</div>
         <span class="hint">Drag to rotate · scroll or pinch to zoom · right-drag to pan · double-click a surface to rotate around it</span></div>
       <div class="controls">
         <div class="row" style="align-items:start"><span class="label">Site</span><div class="sites" id="sites" style="flex:1"></div></div>
         <div class="row"><span class="label">Shells</span>
           <div class="seg" role="group" aria-label="Which shells to show">
             <button data-shell="core" aria-pressed="false">Core only</button>
-            <button data-shell="mid" aria-pressed="true">Core + 80% envelope</button>
+            <button data-shell="mid" aria-pressed="true">Core + envelope</button>
             <button data-shell="outer" aria-pressed="false">Core + widest</button>
-            <button data-shell="second" aria-pressed="false">Where it is runner-up</button>
+            <button data-shell="cloud" aria-pressed="false">Cloud</button>
             <button data-shell="none" aria-pressed="false">None</button>
           </div>
           <div class="seg" role="group" aria-label="How to draw the core">
             <button data-core="xray" aria-pressed="true">Core: x-ray</button>
             <button data-core="solid" aria-pressed="false">Core: solid</button>
           </div></div>
-        <div class="row"><span class="label">Rescan dots</span>
-          <div class="seg" role="group" aria-label="Which rescan's misses to show" id="rescanSeg"></div></div>
+        <div class="row"><span class="label">Ensemble</span>
+          <div class="seg" role="group" aria-label="Which runs make the shells">
+            <button data-source="single" aria-pressed="true">This scan: 17 runs</button>
+            <button data-source="pooled" aria-pressed="false">The other three scans: 51 runs</button>
+          </div></div>
+        <div class="row"><span class="label">Envelope</span>
+          <div class="seg" role="group" aria-label="The envelope's stated level" id="levelSeg"></div>
+          <p class="note" id="levelNote"></p></div>
+        <div class="row"><span class="label">Compare with</span>
+          <div class="seg" role="group" aria-label="Which scan's own run to compare with the envelope" id="compareSeg"></div></div>
         <div class="row"><span class="label">Fans</span>
           <div class="seg" role="group" aria-label="Which streamline fans to show">
             <button data-fan="split" aria-pressed="true">Where runs split</button>
@@ -107,7 +120,7 @@ td.n, th.n { text-align: right; font-family: var(--data); font-variant-numeric: 
           <button class="plain" id="rescanLines" aria-pressed="true">Hide rescans' versions</button></div>
         <div class="row"><span class="label">Crop</span>
           <button class="plain" id="crop" aria-pressed="true">Show whole tracts</button>
-          <span class="muted" style="font-size:0.85rem">Shells and dots within 30 mm of the site (each axis)</span></div>
+          <span class="muted" style="font-size:0.85rem">Shells, patches and anatomy within 30 mm of the site (each axis)</span></div>
         <div class="row"><span class="label">Tracts</span><div class="chips" id="chips"></div></div>
         <div class="row"><span class="label">Anatomy</span><div class="chips" id="anatChips"></div></div>
         <div class="row"><span class="label">Axial plane</span><input id="zs" type="range" min="0" max="0" step="1" value="0" aria-label="Axial plane position">
@@ -126,28 +139,33 @@ td.n, th.n { text-align: right; font-family: var(--data); font-variant-numeric: 
 
     <div class="side">
       <section class="panel" id="focusPanel"></section>
+      <section class="panel" id="envPanel"></section>
       <section class="panel" id="sitePanel"></section>
       <section class="panel">
         <h2>Reading the view</h2>
-        <p><strong>Core:</strong> voxels where the tract is present (2 or more of its streamlines) in at least 9 of the 17 runs.</p>
+        <p><strong>Drawn from the data stores:</strong> the shells and the anatomy are read in your browser from two data files (the
+          ensemble's and FastSurfer's), not from precomputed surfaces. All surfaces are traced together along each line of sight, so a
+          nearer surface always covers a farther one.</p>
+        <p><strong>Present:</strong> a run has a tract in a 1 mm voxel when the tract's streamlines pass densely enough there: at least
+          0.3 streamlines per square millimeter, smoothed over 1 mm (about two streamlines through a 2 mm voxel).</p>
+        <p><strong>Core:</strong> voxels where the tract is present in at least half the runs. <strong>Envelope:</strong> the voxels
+          with the most runs agreeing, down to the count where they hold the stated share of all the runs' presence.
+          <strong>Widest:</strong> any run. <strong>Cloud:</strong> opacity follows the share of runs with the tract present.</p>
+        <p><strong>Stated and held:</strong> a stated level is not a promise. The note under Envelope gives how much of another scan's
+          tract each level held when each of this subject's four scans was left out in turn.</p>
         <p><strong>X-ray surfaces:</strong> every surface is nearly clear where it faces you and solid at its edges, so nested
           shells read as outlines. "Core: solid" draws the core opaque to show its shape; fans hidden by it then show as faint
           ghosts.</p>
-        <p><strong>80% envelope:</strong> its level was fitted on two other subjects to hold 80% of a rescan's tract. For the tracts
-          shown it holds <span class="num" id="held80"></span> of each rescan's tract voxels. <strong>Widest:</strong> any run.</p>
-        <p><strong>Runner-up:</strong> rank the named tracts in each voxel by their mean streamline count over the 17 runs (leaving out
-          Other, which leads in most voxels). The shell is where this tract comes second among them.</p>
-        <p><strong>Dots:</strong> voxels where the chosen rescan has the tract but the 80% envelope does not: 8–16% of each rescan's
-          tract voxels here. Clusters may mean the envelope is too tight, or a registration error, or a real difference between
-          scans.</p>
+        <p><strong>Patches:</strong> where the compared scan's own run has the tract but the envelope does not, in a lighter shade of
+          the tract's color. Clusters may mean the envelope is too tight, a registration error, or a real difference between scans.</p>
         <p><strong>Fans:</strong> each seed near the site drawn once per run, colored by the tract that run gave it (or by
           that run's second choice), with the rescans' versions in white. Each site's fan colors are listed with the site.</p>
         <p><strong>Endpoint check:</strong> each run's version of a streamline in
           <span style="color:#3d9df2;font-weight:700">blue</span> if its two ends fit its bundle's anatomical rule (for example, the CST
           from sensorimotor or premotor cortex to the brainstem), <span style="color:#ff7a3d;font-weight:700">orange</span> if not,
           gray if its bundle has no rule. The rules are a first pass, not checked by an anatomist.</p>
-        <p><strong>Anatomy:</strong> FastSurfer's labels on the subject's T1, aligned to the diffusion scan. Surfaces are smoothed
-          outlines of the labeled structures; they are cropped with the shells.</p>
+        <p><strong>Anatomy:</strong> FastSurfer's most likely label per voxel, on the same 1 mm grid as the shells, aligned to the
+          diffusion scan.</p>
         <h2 style="margin-top:10px">Shell colors</h2>
         <div class="key" id="key"></div>
       </section>
@@ -155,8 +173,9 @@ td.n, th.n { text-align: right; font-family: var(--data); font-variant-numeric: 
       <section class="panel">
         <h2>Limits</h2>
         <p>One healthy subject, one scanner (Philips, 2.1 × 2.1 × 2.2 mm, b = 1000 and 2000). The rescans were registered rigidly and
-          tracked on the reference grid. Shells are smoothed isosurfaces of vote counts; their thresholds set the apparent boundary.
-          Coordinates are scanner millimeters in the patient's frame (R/L, A/P, S/I labels).</p>
+          tracked on the reference grid. Shells are surfaces of vote counts smoothed slightly (0.6 mm); their thresholds set the
+          apparent boundary. The held-out figures come from this subject's own four scans, not from other subjects. Coordinates are
+          scanner millimeters in the patient's frame (R/L, A/P, S/I labels).</p>
       </section>
     </div>
   </div>
@@ -164,74 +183,181 @@ td.n, th.n { text-align: right; font-family: var(--data); font-variant-numeric: 
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/TrackballControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fzstd@0.1.1/umd/index.js"></script>
 <script>
 const D = /*DATA*/null;
 const bytes = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
 const i16 = s => { const b = bytes(s); return new Int16Array(b.buffer, b.byteOffset, b.byteLength / 2); };
 const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const pct = x => x == null ? "–" : `${Math.round(x * 100)}%`;
-const RESCAN = { within: "Same session", session3: "Session 3", session5: "Session 5" };
+const RESCAN = { within: "Same session", session3: "Session 3", session5: "Session 5", A: "This scan" };
+const LEVELS = [0.5, 0.8, 0.9, 0.925, 0.95];
+const SMOOTH_TRACT = 0.6, SMOOTH_ANAT = 0.7, SMOOTH_BRAIN = 1.5;          // Gaussian sigma, voxels (1 mm)
+const loadingEl = document.getElementById("loading");
+const status = t => { loadingEl.hidden = !t; if (t) loadingEl.textContent = t; };
+const tick = () => new Promise(r => setTimeout(r, 0));
+const lvl = L => `${Math.round(L * 1000) / 10}%`;
+const SCAN_NAME = { A: "reference", within: "same-session", session3: "session 3", session5: "session 5" };
+let dirty = true, moved = 0, sharp = true;                                 // rendering on demand (see the end)
 
+// ---------- reading the duckn stores: a zip of stored entries holding a zarr v3 hierarchy ----------
+function unzip(u8) {
+  const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+  let e = u8.length - 22;
+  while (e >= 0 && dv.getUint32(e, true) !== 0x06054b50) e--;
+  if (e < 0) throw new Error("not a zip file");
+  let n = dv.getUint16(e + 10, true), off = dv.getUint32(e + 16, true);
+  if (off === 0xffffffff || n === 0xffff) {                                  // zip64
+    const loc = e - 20;
+    if (dv.getUint32(loc, true) !== 0x07064b50) throw new Error("zip64 locator missing");
+    const r = Number(dv.getBigUint64(loc + 8, true));
+    n = Number(dv.getBigUint64(r + 32, true)); off = Number(dv.getBigUint64(r + 48, true));
+  }
+  const files = new Map(), td = new TextDecoder();
+  for (let i = 0; i < n; i++) {
+    if (dv.getUint32(off, true) !== 0x02014b50) throw new Error("bad zip directory");
+    const method = dv.getUint16(off + 10, true), nl = dv.getUint16(off + 28, true), xl = dv.getUint16(off + 30, true), cl = dv.getUint16(off + 32, true);
+    let size = dv.getUint32(off + 20, true), lho = dv.getUint32(off + 42, true);
+    const name = td.decode(u8.subarray(off + 46, off + 46 + nl));
+    if (size === 0xffffffff || lho === 0xffffffff) {                         // zip64 extra field
+      for (let x = off + 46 + nl; x < off + 46 + nl + xl;) {
+        const id = dv.getUint16(x, true), len = dv.getUint16(x + 2, true);
+        if (id === 1) {
+          let q = x + 4;
+          if (dv.getUint32(off + 24, true) === 0xffffffff) q += 8;
+          if (size === 0xffffffff) { size = Number(dv.getBigUint64(q, true)); q += 8; }
+          if (lho === 0xffffffff) lho = Number(dv.getBigUint64(q, true));
+        }
+        x += 4 + len;
+      }
+    }
+    if (method !== 0) throw new Error(`${name}: a compressed zip entry (duckn stores are zipped stored)`);
+    const start = lho + 30 + dv.getUint16(lho + 26, true) + dv.getUint16(lho + 28, true);
+    files.set(name, u8.subarray(start, start + size));
+    off += 46 + nl + xl + cl;
+  }
+  return files;
+}
+
+function zstd(src, n) {
+  const out = new Uint8Array(n), r = fzstd.decompress(src, out);
+  if (r.buffer !== out.buffer || r.byteOffset !== out.byteOffset) out.set(r.subarray(0, n));
+  return out;
+}
+
+// blosc 1 frames (zarr's blosc codec): zstd blocks, byte or bit shuffle
+function blosc(src) {
+  const dv = new DataView(src.buffer, src.byteOffset, src.byteLength);
+  const version = src[0], flags = src[2], ts = src[3], nbytes = dv.getUint32(4, true), blocksize = dv.getUint32(8, true);
+  const out = new Uint8Array(nbytes);
+  if (flags & 0x02) { out.set(src.subarray(16, 16 + nbytes)); return out; }        // stored as is
+  if (flags >> 5 !== 4) throw new Error(`blosc compressor ${flags >> 5}: only zstd is read here`);
+  const nblocks = Math.ceil(nbytes / blocksize), tmp = new Uint8Array(blocksize);
+  for (let b = 0; b < nblocks; b++) {
+    const bsize = Math.min(blocksize, nbytes - b * blocksize);
+    const ns = !(flags & 0x10) && ts <= 16 && bsize / ts >= 128 && bsize === blocksize ? ts : 1, ne = bsize / ns;
+    let p = dv.getInt32(16 + 4 * b, true);
+    for (let s = 0; s < ns; s++) {
+      const cs = dv.getInt32(p, true); p += 4;
+      tmp.set(cs === ne ? src.subarray(p, p + cs) : zstd(src.subarray(p, p + cs), ne), s * ne);
+      p += cs;
+    }
+    const blk = tmp.subarray(0, bsize), dst = out.subarray(b * blocksize, b * blocksize + bsize);
+    if (flags & 0x04) bitunshuffle(blk, dst, ts, version);
+    else if ((flags & 0x01) && ts > 1) { const m = bsize / ts; for (let e = 0; e < m; e++) for (let j = 0; j < ts; j++) dst[e * ts + j] = blk[j * m + e]; }
+    else dst.set(blk);
+  }
+  return out;
+}
+// bitshuffle: per byte j of an element and bit b, a row of n/8 bytes holding that bit of every element (element e at bit e % 8)
+function bitunshuffle(src, dst, ts, version) {
+  const n = src.length / ts;
+  if (version <= 2 && n % 8) { dst.set(src); return; }                     // blosc format 2 left such blocks unshuffled
+  const m = n - n % 8, row = m / 8;
+  for (let j = 0; j < ts; j++) for (let b = 0; b < 8; b++) {
+    const r = (j * 8 + b) * row, bit = 1 << b;
+    for (let q = 0; q < row; q++) {
+      const x = src[r + q];
+      if (x) for (let k = 0; k < 8; k++) if (x & (1 << k)) dst[(q * 8 + k) * ts + j] |= bit;
+    }
+  }
+  dst.set(src.subarray(m * ts), m * ts);
+}
+
+class Store {
+  constructor(u8) { this.files = unzip(u8); this.metas = new Map(); }
+  meta(path) {
+    if (!this.metas.has(path)) {
+      const f = this.files.get(path ? `${path}/zarr.json` : "zarr.json");
+      if (!f) throw new Error(`the store has no node ${path}`);
+      this.metas.set(path, JSON.parse(new TextDecoder().decode(f)));
+    }
+    return this.metas.get(path);
+  }
+  duckn(path) { return (this.meta(path).attributes || {}).duckn; }
+  // one inner chunk of a sharded uint8 array, by its position in the array's grid of inner chunks
+  chunk(path, idx) {
+    const m = this.meta(path), sh = m.codecs.find(c => c.name === "sharding_indexed");
+    if (m.data_type !== "uint8" || !sh) throw new Error(`${path}: only sharded uint8 arrays are read here`);
+    const outer = m.chunk_grid.configuration.chunk_shape, cfg = sh.configuration, inner = cfg.chunk_shape;
+    const per = outer.map((o, d) => o / inner[d]), shard = idx.map((v, d) => Math.floor(v / per[d]));
+    const enc = m.chunk_key_encoding || {}, sep = (enc.configuration || {}).separator || "/";
+    const key = enc.name === "v2" ? shard.join(sep) : ["c", ...shard].join(sep);
+    const n = inner.reduce((a, b) => a * b, 1), file = this.files.get(`${path}/${key}`);
+    if (!file) return new Uint8Array(n).fill(m.fill_value || 0);
+    const count = per.reduce((a, b) => a * b, 1), crc = (cfg.index_codecs || []).some(c => c.name === "crc32c") ? 4 : 0;
+    const at = cfg.index_location === "start" ? 0 : file.length - count * 16 - crc;
+    const dv = new DataView(file.buffer, file.byteOffset + at, count * 16);
+    let flat = 0;
+    idx.forEach((v, d) => { flat = flat * per[d] + (v - shard[d] * per[d]); });
+    const o = dv.getBigUint64(flat * 16, true), nb = dv.getBigUint64(flat * 16 + 8, true);
+    if (o === 0xffffffffffffffffn) return new Uint8Array(n).fill(m.fill_value || 0);
+    let data = file.subarray(Number(o), Number(o + nb));
+    for (const c of cfg.codecs.slice().reverse()) {
+      if (c.name === "bytes") continue;
+      else if (c.name === "blosc") data = blosc(data);
+      else if (c.name === "zstd") data = zstd(data, n);
+      else throw new Error(`${path}: the ${c.name} codec is not read here`);
+    }
+    if (data.length !== n) throw new Error(`${path}: chunk of ${data.length} bytes, expected ${n}`);
+    return data;
+  }
+}
+// an array's duckn geometry: voxel (x, y, z) -> LPS mm = o + x dx + y dy + z dz (array axes are (list?,) z, y, x)
+function geometry(dk) {
+  const sp = dk.axes.filter(a => a.kind === "space").map(a => a.space_direction);
+  return { o: dk.space_origin, dx: sp[2], dy: sp[1], dz: sp[0] };
+}
+async function fetchBytes(url, label) {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`${url}: HTTP ${r.status}`);
+  const total = +r.headers.get("content-length") || 0, parts = [];
+  if (!r.body) return new Uint8Array(await r.arrayBuffer());
+  const rd = r.body.getReader(); let got = 0, shown = 0;
+  for (;;) {
+    const { done, value } = await rd.read(); if (done) break;
+    parts.push(value); got += value.length;
+    if (total && got - shown > 4e5) { shown = got; status(`${label}: ${Math.min(99, Math.round(got / total * 100))}%`); }
+  }
+  const out = new Uint8Array(got); let o = 0;
+  for (const p of parts) { out.set(p, o); o += p.length; }
+  return out;
+}
+
+// ---------- the scene ----------
 const canvas = document.getElementById("cv"), host = document.getElementById("scene");
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-renderer.localClippingEnabled = true;
-// the crop box: six planes about the chosen site (CROP_MM each way); far away when cropping is off
-const CROP_MM = 30, clip = [0, 1, 2].flatMap(a => [1, -1].map(sg => new THREE.Plane(new THREE.Vector3(...[0, 1, 2].map(b => b === a ? sg : 0)), 1e6)));
-function setCrop(c) { clip.forEach((pl, i) => { const a = i >> 1, sg = i & 1 ? -1 : 1; pl.constant = c ? -sg * (c[a] - sg * CROP_MM) : 1e6; }); }
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+const webgl2 = renderer.capabilities.isWebGL2;
+// the crop box: six half-spaces about the chosen site (CROP_MM each way), applied to the volume in its shader
+const CROP_MM = 30;
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(css("--scene") || "#0b1015");
 const camera = new THREE.PerspectiveCamera(35, 4 / 3, 1, 3000);
-scene.add(new THREE.HemisphereLight(0xeef4ff, 0x30363c, 0.9));
-const sun = new THREE.DirectionalLight(0xffffff, 0.7); camera.add(sun); sun.position.set(0.3, 0.6, 1); scene.add(camera);
-
-// meshes
-const brainMeshes = [], shells = {};
-let center = new THREE.Vector3();
-// x-ray (rim) shading: a surface is nearly clear where it faces the viewer and opaque toward its silhouette, so nested
-// translucent surfaces read as outlines and the draw-order errors of ordinary transparency stay faint
-function xray(color, face, rim) {
-  const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.75, metalness: 0, transparent: true, depthWrite: false,
-    side: THREE.DoubleSide, clippingPlanes: clip });
-  mat.onBeforeCompile = sh => {
-    const out = `float ndv = abs(dot(normalize(normal), normalize(vViewPosition)));
-      gl_FragColor = vec4(outgoingLight, mix(${rim.toFixed(3)}, ${face.toFixed(3)}, pow(ndv, 1.4)));`;
-    sh.fragmentShader = sh.fragmentShader.includes("#include <output_fragment>")
-      ? sh.fragmentShader.replace("#include <output_fragment>", out)
-      : sh.fragmentShader.replace("gl_FragColor = vec4( outgoingLight, diffuseColor.a );", out);
-  };
-  return mat;
-}
-const XRAY = { core: [0.14, 0.9], mid: [0.035, 0.6], outer: [0.02, 0.38], second: [0.04, 0.6] };
-const solidCore = c => new THREE.MeshStandardMaterial({ color: c, roughness: 0.55, metalness: 0, clippingPlanes: clip });
-for (const m of D.meshes) {
-  const v = i16(m.v), pos = new Float32Array(v.length);
-  for (let i = 0; i < v.length; i++) pos[i] = v[i] / 10;
-  const fb = bytes(m.f), idx = m.f16 ? new Uint16Array(fb.buffer, fb.byteOffset, fb.byteLength / 2) : new Uint32Array(fb.buffer, fb.byteOffset, fb.byteLength / 4);
-  const g = new THREE.BufferGeometry();
-  g.setAttribute("position", new THREE.BufferAttribute(pos, 3)); g.setIndex(new THREE.BufferAttribute(idx, 1)); g.computeVertexNormals();
-  let mat;
-  if (m.kind === "brain") mat = new THREE.MeshBasicMaterial({ color: m.color, transparent: true, opacity: 0.045, depthWrite: false, side: THREE.DoubleSide });
-  else mat = xray(m.color, ...XRAY[m.kind]);
-  const mesh = new THREE.Mesh(g, mat);
-  if (m.kind === "core") mesh.userData.mats = { xray: mat, solid: solidCore(m.color) };
-  mesh.renderOrder = m.kind === "brain" ? 5 : 2;       // one order for all translucent surfaces: three.js sorts them by distance
-  scene.add(mesh);
-  if (m.kind === "brain") { brainMeshes.push(mesh); g.computeBoundingBox(); g.boundingBox.getCenter(center); }
-  else (shells[m.name] = shells[m.name] || {})[m.kind] = mesh;
-}
-
-// FastSurfer's anatomy: one translucent surface per structure group, cropped with the shells
-const anatMeshes = {};
-for (const m of D.anatomy) {
-  const v = i16(m.v), pos = new Float32Array(v.length);
-  for (let i = 0; i < v.length; i++) pos[i] = v[i] / 10;
-  const fb = bytes(m.f), idx = m.f16 ? new Uint16Array(fb.buffer, fb.byteOffset, fb.byteLength / 2) : new Uint32Array(fb.buffer, fb.byteOffset, fb.byteLength / 4);
-  const g = new THREE.BufferGeometry();
-  g.setAttribute("position", new THREE.BufferAttribute(pos, 3)); g.setIndex(new THREE.BufferAttribute(idx, 1)); g.computeVertexNormals();
-  const mesh = new THREE.Mesh(g, xray(m.color, 0.02, 0.38));
-  mesh.renderOrder = 2; mesh.visible = false; scene.add(mesh); anatMeshes[m.name] = mesh;
-}
+scene.add(camera);
+const [X, Y, Z] = D.shape, A = D.affine;
+const world = (i, j, k) => new THREE.Vector3(A[0][0] * i + A[0][1] * j + A[0][2] * k + A[0][3], A[1][0] * i + A[1][1] * j + A[1][2] * k + A[1][3], A[2][0] * i + A[2][1] * j + A[2][2] * k + A[2][3]);
+const center = world((X - 1) / 2, (Y - 1) / 2, (Z - 1) / 2);
 
 // colors
 const palette = Object.fromEntries(D.shown.map(t => [D.tract_names.indexOf(t.name), t.color]));
@@ -250,20 +376,6 @@ function colorsFor(si) {
 }
 const tractColor = (t, si) => t === D.other ? OTHER : ((si == null ? palette : colorsFor(si))[t] || OTHER_NAMED);
 
-// rescan dots: per rescan, per tract, a point set
-const dots = {};
-for (const [tag, per] of Object.entries(D.misses)) {
-  dots[tag] = {};
-  for (const [name, m] of Object.entries(per)) {
-    const p = i16(m.p), pos = new Float32Array(p.length);
-    for (let i = 0; i < p.length; i++) pos[i] = p[i] / 10;
-    const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-    const col = D.shown.find(t => t.name === name).color;
-    const pts = new THREE.Points(g, new THREE.PointsMaterial({ color: col, size: 1.5, sizeAttenuation: true, transparent: true, opacity: 0.95, clippingPlanes: clip }));
-    pts.renderOrder = 7; pts.visible = false; scene.add(pts); dots[tag][name] = pts;
-  }
-}
-
 // site markers
 const markers = [];
 D.sites.forEach((s, i) => {
@@ -272,7 +384,8 @@ D.sites.forEach((s, i) => {
   label(String(i + 1), new THREE.Vector3(s.mm[0], s.mm[1], s.mm[2] + 6), 6, "#ffffff");
 });
 
-// fans, built when a site is first chosen: per kind, versions from the runs (tract and runner-up colors) and the rescans
+// fans, built when a site is first chosen: per kind, versions from the runs (tract and runner-up colors) and the rescans.
+// Layer 1 marks what the volume must stop at (its depth pre-pass).
 const fanCache = {};
 function buildFans(si) {
   if (fanCache[si]) return fanCache[si];
@@ -297,7 +410,7 @@ function buildFans(si) {
       const g = new THREE.BufferGeometry();
       g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
       const l = new THREE.LineSegments(g, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: name === "resc" ? 1 : 0.75 }));
-      l.renderOrder = name === "resc" ? 8 : 6; l.visible = false; scene.add(l); out[kind][name] = l;
+      l.renderOrder = name === "resc" ? 8 : 6; l.visible = false; l.layers.enable(1); scene.add(l); out[kind][name] = l;
       // a faint copy drawn through everything: where a solid surface hides the line, its ghost still shows
       const ghost = new THREE.LineSegments(g, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.16,
         depthTest: false, depthWrite: false }));
@@ -308,8 +421,7 @@ function buildFans(si) {
 }
 
 // the axial plane: A's mean b0
-const [X, Y, Z] = D.shape, b0 = bytes(D.b0), A = D.affine;
-const world = (i, j, k) => new THREE.Vector3(A[0][0] * i + A[0][1] * j + A[0][2] * k + A[0][3], A[1][0] * i + A[1][1] * j + A[1][2] * k + A[1][3], A[2][0] * i + A[2][1] * j + A[2][2] * k + A[2][3]);
+const b0 = bytes(D.b0);
 const slice = new Uint8Array(X * Y);
 const tex = new THREE.DataTexture(slice, X, Y, THREE.LuminanceFormat); tex.magFilter = THREE.LinearFilter;
 const planeGeo = new THREE.BufferGeometry();
@@ -323,6 +435,7 @@ function setPlane(k) {
   planeGeo.setAttribute("position", new THREE.Float32BufferAttribute(c.flatMap(v => [v.x, v.y, v.z]), 3));
   planeGeo.attributes.position.needsUpdate = true; planeGeo.computeBoundingSphere();
   document.getElementById("zout").textContent = `z ${world(0, 0, k).z.toFixed(0)} mm`;
+  redraw();
 }
 
 function label(text, pos, size = 9, color = "#c7d2dc") {
@@ -334,6 +447,310 @@ function label(text, pos, size = 9, color = "#c7d2dc") {
 const R = 100;
 [["R", [R, 0, 0]], ["L", [-R, 0, 0]], ["A", [0, R, 0]], ["P", [0, -R, 0]], ["S", [0, 0, R]], ["I", [0, 0, -R]]]
   .forEach(([t, d]) => label(t, center.clone().add(new THREE.Vector3(...d))));
+
+// ---------- the volume: shown tracts (3 RGBA textures), the compared scan's run (3), anatomy groups and outline (2) ----------
+const NT = Math.ceil(D.shown.length / 4), ANAT = [...D.anatomy, { name: "outline", labels: null, color: "#9fb3c4" }];
+const VERT = `varying vec3 vG; void main() { vG = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`;
+const FRAG = `
+precision highp float; precision highp sampler3D;
+uniform sampler3D uT0, uT1, uT2, uR0, uR1, uR2, uA0, uA1;
+uniform sampler2D uDepth;
+uniform vec3 uShape, uCam, uBoxLo, uBoxHi;
+uniform mat4 uInvModel, uInvProjView;
+uniform mat3 uNormal, uM3;
+uniform vec2 uRes;
+uniform vec4 uClip[6];
+uniform float uStep, uSolid, uCloud, uFrac, uMidFace, uMidRim;
+uniform int uMode;                                    // 0 no tracts, 1 shells, 2 cloud
+uniform bvec3 uTOn, uROn; uniform bvec2 uAOnT;
+uniform vec4 uOn[3], uCore[3], uOuter[3], uEnv[3], uAOn[2], uAFace[2], uARim[2];
+uniform vec3 uCol[12], uACol[8];
+varying vec3 vG;
+vec4 acc; vec3 vdir;
+void comp(vec3 c, float a) { acc.rgb += (1.0 - acc.a) * a * c; acc.a += (1.0 - acc.a) * a; }
+vec3 nrm(sampler3D s, vec3 p, int c) {
+  vec3 e = vec3(0.75, 0.0, 0.0);
+  vec3 g = vec3(texture(s, (p + e.xyy) / uShape)[c] - texture(s, (p - e.xyy) / uShape)[c],
+                texture(s, (p + e.yxy) / uShape)[c] - texture(s, (p - e.yxy) / uShape)[c],
+                texture(s, (p + e.yyx) / uShape)[c] - texture(s, (p - e.yyx) / uShape)[c]);
+  return normalize(uNormal * g + vec3(0.0, 0.0, 1e-7));
+}
+void surface(vec3 col, vec3 n, float face, float rim, float solid) {
+  float ndv = abs(dot(n, vdir));
+  comp(col * (0.3 + 0.7 * ndv) + vec3(0.16) * pow(ndv, 30.0), solid > 0.5 ? 1.0 : mix(rim, face, pow(ndv, 1.4)));
+}
+void tracts(sampler3D s, int j, vec4 a, vec4 b, vec3 p0, vec3 p1) {
+  if (uMode == 2) {
+    vec4 v = b * uOn[j] * uFrac;
+    float sum = v.x + v.y + v.z + v.w;
+    if (sum > 0.002) comp((v.x * uCol[4 * j] + v.y * uCol[4 * j + 1] + v.z * uCol[4 * j + 2] + v.w * uCol[4 * j + 3]) / sum,
+                          1.0 - exp(-uCloud * sum * uStep));
+    return;
+  }
+  for (int k = 0; k < 2; k++) {
+    vec4 L = k == 0 ? uCore[j] : uOuter[j], da = a - L, db = b - L;
+    bvec4 x = notEqual(lessThan(da, vec4(0.0)), lessThan(db, vec4(0.0)));
+    if (!any(x)) continue;
+    for (int c = 0; c < 4; c++) {
+      if (!x[c] || uOn[j][c] < 0.5 || L[c] <= 0.0) continue;
+      vec3 p = mix(p0, p1, da[c] / (da[c] - db[c]));
+      if (k == 0) surface(uCol[4 * j + c], nrm(s, p, c), 0.14, 0.9, uSolid);
+      else surface(uCol[4 * j + c], nrm(s, p, c), uMidFace, uMidRim, 0.0);
+    }
+  }
+}
+void patches(sampler3D r, sampler3D t, int j, vec4 a, vec4 b, vec3 p0, vec3 p1) {
+  vec4 da = a - 0.5, db = b - 0.5;
+  bvec4 x = notEqual(lessThan(da, vec4(0.0)), lessThan(db, vec4(0.0)));
+  if (!any(x)) return;
+  for (int c = 0; c < 4; c++) {
+    if (!x[c] || uOn[j][c] < 0.5) continue;
+    vec3 p = mix(p0, p1, da[c] / (da[c] - db[c]));
+    if (texture(t, p / uShape)[c] >= uEnv[j][c]) continue;                    // inside the envelope
+    surface(mix(uCol[4 * j + c], vec3(1.0), 0.6), nrm(r, p, c), 0.3, 0.85, 0.0);
+  }
+}
+void anat(sampler3D s, int j, vec4 a, vec4 b, vec3 p0, vec3 p1) {
+  vec4 da = a - 0.5, db = b - 0.5;
+  bvec4 x = notEqual(lessThan(da, vec4(0.0)), lessThan(db, vec4(0.0)));
+  if (!any(x)) return;
+  for (int c = 0; c < 4; c++) {
+    if (!x[c] || uAOn[j][c] < 0.5) continue;
+    vec3 p = mix(p0, p1, da[c] / (da[c] - db[c]));
+    surface(uACol[4 * j + c], nrm(s, p, c), uAFace[j][c], uARim[j][c], 0.0);
+  }
+}
+void main() {
+  vec3 ro = uCam, rd = normalize(vG - uCam);
+  vec3 ir = 1.0 / (rd + vec3(1e-9)), ta = (uBoxLo - ro) * ir, tb = (uBoxHi - ro) * ir, t0 = min(ta, tb), t1 = max(ta, tb);
+  float tn = max(max(t0.x, t0.y), max(t0.z, 0.0)), tf = min(min(t1.x, t1.y), t1.z);
+  for (int i = 0; i < 6; i++) {
+    float dn = dot(uClip[i].xyz, rd), v0 = dot(uClip[i].xyz, ro) + uClip[i].w;
+    if (abs(dn) < 1e-7) { if (v0 < 0.0) discard; }
+    else if (dn > 0.0) tn = max(tn, -v0 / dn); else tf = min(tf, -v0 / dn);
+  }
+  float d = texture(uDepth, gl_FragCoord.xy / uRes).r;
+  if (d < 1.0) {
+    vec4 w = uInvProjView * vec4(vec3(gl_FragCoord.xy / uRes, d) * 2.0 - 1.0, 1.0);
+    tf = min(tf, dot((uInvModel * vec4(w.xyz / w.w, 1.0)).xyz - ro, rd));
+  }
+  if (tf <= tn) discard;
+  vdir = normalize(uM3 * rd);
+  acc = vec4(0.0);
+  float t = tn + uStep * fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453);
+  vec3 p0 = ro + rd * t, u = p0 / uShape;
+  vec4 a0 = texture(uT0, u), a1 = texture(uT1, u), a2 = texture(uT2, u), r0 = texture(uR0, u), r1 = texture(uR1, u), r2 = texture(uR2, u);
+  vec4 m0 = texture(uA0, u), m1 = texture(uA1, u);
+  for (int i = 0; i < 2000; i++) {
+    t += uStep;
+    if (t > tf) break;
+    vec3 p1 = ro + rd * t; u = p1 / uShape;
+    if (uMode > 0) {
+      if (uTOn.x) { vec4 b = texture(uT0, u); tracts(uT0, 0, a0, b, p0, p1); a0 = b; }
+      if (uTOn.y) { vec4 b = texture(uT1, u); tracts(uT1, 1, a1, b, p0, p1); a1 = b; }
+      if (uTOn.z) { vec4 b = texture(uT2, u); tracts(uT2, 2, a2, b, p0, p1); a2 = b; }
+    }
+    if (uROn.x) { vec4 b = texture(uR0, u); patches(uR0, uT0, 0, r0, b, p0, p1); r0 = b; }
+    if (uROn.y) { vec4 b = texture(uR1, u); patches(uR1, uT1, 1, r1, b, p0, p1); r1 = b; }
+    if (uROn.z) { vec4 b = texture(uR2, u); patches(uR2, uT2, 2, r2, b, p0, p1); r2 = b; }
+    if (uAOnT.x) { vec4 b = texture(uA0, u); anat(uA0, 0, m0, b, p0, p1); m0 = b; }
+    if (uAOnT.y) { vec4 b = texture(uA1, u); anat(uA1, 1, m1, b, p0, p1); m1 = b; }
+    if (acc.a > 0.98) break;
+    p0 = p1;
+  }
+  if (acc.a < 0.003) discard;
+  gl_FragColor = acc;
+}`;
+const V4 = () => new THREE.Vector4(), V3 = () => new THREE.Vector3();
+const U = {
+  uT0: { value: null }, uT1: { value: null }, uT2: { value: null }, uR0: { value: null }, uR1: { value: null }, uR2: { value: null },
+  uA0: { value: null }, uA1: { value: null }, uDepth: { value: null },
+  uShape: { value: V3() }, uCam: { value: V3() }, uBoxLo: { value: V3() }, uBoxHi: { value: V3() },
+  uInvModel: { value: new THREE.Matrix4() }, uInvProjView: { value: new THREE.Matrix4() }, uNormal: { value: new THREE.Matrix3() }, uM3: { value: new THREE.Matrix3() },
+  uRes: { value: new THREE.Vector2() }, uClip: { value: [0, 1, 2, 3, 4, 5].map(V4) },
+  uStep: { value: 0.5 }, uSolid: { value: 0 }, uCloud: { value: 0.08 }, uFrac: { value: 1 }, uMidFace: { value: 0.035 }, uMidRim: { value: 0.6 },
+  uMode: { value: 1 }, uTOn: { value: [0, 0, 0] }, uROn: { value: [0, 0, 0] }, uAOnT: { value: [0, 0] },
+  uOn: { value: [0, 1, 2].map(V4) }, uCore: { value: [0, 1, 2].map(V4) }, uOuter: { value: [0, 1, 2].map(V4) }, uEnv: { value: [0, 1, 2].map(V4) },
+  uAOn: { value: [0, 1].map(V4) }, uAFace: { value: [0, 1].map(V4) }, uARim: { value: [0, 1].map(V4) },
+  uCol: { value: Array.from({ length: 12 }, V3) }, uACol: { value: Array.from({ length: 8 }, V3) },
+};
+D.shown.forEach((t, i) => { const c = new THREE.Color(t.color); U.uCol.value[i].set(c.r, c.g, c.b); });
+ANAT.forEach((a, i) => {
+  const c = new THREE.Color(a.color); U.uACol.value[i].set(c.r, c.g, c.b);
+  U.uAFace.value[i >> 2].setComponent(i & 3, a.labels ? 0.02 : 0.0); U.uARim.value[i >> 2].setComponent(i & 3, a.labels ? 0.38 : 0.13);
+});
+const volume = { ready: false, mesh: null, M: null, inv: null, dims: null, tracts: null, resc: null, anat: null, bbox: {} };
+const depthRT = new THREE.WebGLRenderTarget(1, 1);
+depthRT.depthTexture = new THREE.DepthTexture(1, 1); depthRT.depthTexture.type = THREE.UnsignedIntType;
+U.uDepth.value = depthRT.depthTexture;
+const depthOnly = new THREE.MeshBasicMaterial({ colorWrite: false, side: THREE.DoubleSide });
+
+function tex3D(data, [x, y, z]) {
+  const t = new THREE.DataTexture3D(data, x, y, z);
+  t.format = THREE.RGBAFormat; t.type = THREE.UnsignedByteType; t.minFilter = t.magFilter = THREE.LinearFilter; t.unpackAlignment = 1; t.needsUpdate = true;
+  return t;
+}
+// a separable Gaussian of one volume (only around its nonzero voxels), scaled into channel ch of an RGBA byte volume;
+// returns the box it touched (voxels, inclusive) or null when the volume is empty
+function blurInto(src, [W, H, Dz], sigma, scale, dst, ch) {
+  let x0 = W, x1 = -1, y0 = H, y1 = -1, z0 = Dz, z1 = -1;
+  for (let z = 0, i = 0; z < Dz; z++) for (let y = 0; y < H; y++) for (let x = 0; x < W; x++, i++) if (src[i]) {
+    if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; if (z < z0) z0 = z; if (z > z1) z1 = z; }
+  if (x1 < 0) return null;
+  const r = Math.ceil(3 * sigma), k = [];
+  for (let i = -r; i <= r; i++) k.push(Math.exp(-i * i / (2 * sigma * sigma)));
+  const ks = k.reduce((a, b) => a + b, 0); for (let i = 0; i < k.length; i++) k[i] /= ks;
+  x0 = Math.max(0, x0 - r); y0 = Math.max(0, y0 - r); z0 = Math.max(0, z0 - r);
+  x1 = Math.min(W - 1, x1 + r); y1 = Math.min(H - 1, y1 + r); z1 = Math.min(Dz - 1, z1 + r);
+  const w = x1 - x0 + 1, h = y1 - y0 + 1, d = z1 - z0 + 1;
+  let a = new Float32Array(w * h * d), b = new Float32Array(w * h * d);
+  for (let z = 0; z < d; z++) for (let y = 0; y < h; y++) { const s = ((z + z0) * H + y + y0) * W + x0, o = (z * h + y) * w; for (let x = 0; x < w; x++) a[o + x] = src[s + x]; }
+  const pass = (n, stride, len) => {                                        // along one axis: n lines of len samples
+    b.fill(0);
+    for (let base = 0, line = 0; line < n; line++) {
+      // the start of line `line` in a (w, h, d) block for this axis
+      if (stride === 1) base = line * w;
+      else if (stride === w) base = Math.floor(line / w) * w * h + (line % w);
+      else base = line;
+      for (let i = 0; i < len; i++) {
+        let s = 0;
+        for (let q = -r; q <= r; q++) { const j = i + q; if (j >= 0 && j < len) s += k[q + r] * a[base + j * stride]; }
+        b[base + i * stride] = s;
+      }
+    }
+    [a, b] = [b, a];
+  };
+  pass(h * d, 1, w); pass(w * d, w, h); pass(w * h, w * h, d);
+  for (let z = 0; z < d; z++) for (let y = 0; y < h; y++) {
+    const o = (z * h + y) * w, t = ((z + z0) * H + y + y0) * W + x0;
+    for (let x = 0; x < w; x++) { const v = a[o + x] * scale; dst[4 * (t + x) + ch] = v >= 255 ? 255 : v + 0.5; }
+  }
+  return [x0, y0, z0, x1, y1, z1];
+}
+// ensemble_pooled.thresholds: per stated level, the lowest vote count its envelope keeps
+function thresholds(q, runs) {
+  const counts = new Float64Array(runs + 1);
+  for (let i = 0; i < q.length; i++) counts[q[i]]++;
+  const cum = new Float64Array(runs + 2);
+  for (let v = runs; v >= 1; v--) cum[v] = cum[v + 1] + counts[v] * v;
+  return LEVELS.map(L => { let best = 1; for (let v = 1; v <= runs; v++) if (cum[v] >= L * cum[1]) best = v; return best; });
+}
+
+let ens = null, fs = null, root = null;
+async function loadStores() {
+  if (!webgl2) { status("This view needs WebGL 2, which this browser does not offer. Fans and sites still work."); return; }
+  const mb = b => (b / 1e6).toFixed(1);
+  const eb = await fetchBytes(D.stores.ensemble.path, `Loading the ensemble store (${mb(D.stores.ensemble.bytes)} MB)`);
+  const ab = await fetchBytes(D.stores.anatomy.path, `Loading FastSurfer's store (${mb(D.stores.anatomy.bytes)} MB)`);
+  ens = new Store(eb); fs = new Store(ab);
+  root = ens.duckn("").extensions.tractline;
+  // the grid: (x, y, z) of the conformed crop -> A's DWI world. Box coordinates g = voxel + 0.5, so g / shape samples a texture.
+  const first = `ensembles/${D.stores.ensemble.scans[0]}/votes`, shp = ens.meta(first).shape;
+  const dims = [shp[3], shp[2], shp[1]], N = dims[0] * dims[1] * dims[2];
+  const g = geometry(ens.duckn(first)), T = root.t1_to_dwi_ras_mm, F = new THREE.Matrix4().makeScale(-1, -1, 1);
+  const lps = new THREE.Matrix4().set(g.dx[0], g.dy[0], g.dz[0], g.o[0], g.dx[1], g.dy[1], g.dz[1], g.o[1], g.dx[2], g.dy[2], g.dz[2], g.o[2], 0, 0, 0, 1);
+  const M = new THREE.Matrix4().set(...T.flat()).multiply(F).multiply(lps).multiply(new THREE.Matrix4().makeTranslation(-0.5, -0.5, -0.5));
+  Object.assign(volume, { M, inv: M.clone().invert(), dims, N });
+  U.uShape.value.set(...dims); U.uInvModel.value.copy(volume.inv);
+  const m3 = new THREE.Matrix3().setFromMatrix4(M);
+  U.uM3.value.copy(m3); U.uNormal.value.copy(m3.clone().invert().transpose());
+  const box = new THREE.BoxGeometry(...dims); box.translate(dims[0] / 2, dims[1] / 2, dims[2] / 2);
+  const mat = new THREE.ShaderMaterial({ uniforms: U, vertexShader: VERT, fragmentShader: FRAG, side: THREE.BackSide, transparent: true,
+    depthTest: false, depthWrite: false, blending: THREE.CustomBlending, blendSrc: THREE.OneFactor, blendDst: THREE.OneMinusSrcAlphaFactor });
+  const mesh = new THREE.Mesh(box, mat);
+  mesh.matrixAutoUpdate = false; mesh.matrix.copy(M); mesh.renderOrder = 8.5; mesh.frustumCulled = false;
+  volume.mesh = mesh;
+  volume.tracts = [0, 1, 2].map(() => new Uint8Array(4 * N));
+  volume.resc = [0, 1, 2].map(() => new Uint8Array(4 * N));
+  volume.anat = [0, 1].map(() => new Uint8Array(4 * N));
+  // anatomy: FastSurfer's top class (ranks plane 0) on the same lattice; find this crop's offset in its array
+  status("Decoding FastSurfer's labels…"); await tick();
+  const rk = "parts/0/ranks", fg = geometry(fs.duckn(rk)), labels = fs.duckn("parts/0").extensions.ranked.labels;
+  const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2], dif = g.o.map((v, i) => v - fg.o[i]);
+  const off = [fg.dx, fg.dy, fg.dz].map(dv => dot(dif, dv) / dot(dv, dv));
+  if (off.some(v => Math.abs(v - Math.round(v)) > 1e-3)) throw new Error("the stores' grids are not voxel-aligned");
+  const [ox, oy, oz] = off.map(Math.round), inner = fs.meta(rk).codecs[0].configuration.chunk_shape;
+  const [, cz, cy, cx] = inner, codes = new Uint8Array(N);
+  for (let kz = Math.floor(oz / cz); kz * cz < oz + dims[2]; kz++) for (let ky = Math.floor(oy / cy); ky * cy < oy + dims[1]; ky++)
+    for (let kx = Math.floor(ox / cx); kx * cx < ox + dims[0]; kx++) {
+      const c = fs.chunk(rk, [0, kz, ky, kx]);
+      for (let z = 0; z < cz; z++) { const zz = kz * cz + z - oz; if (zz < 0 || zz >= dims[2]) continue;
+        for (let y = 0; y < cy; y++) { const yy = ky * cy + y - oy; if (yy < 0 || yy >= dims[1]) continue;
+          for (let x = 0; x < cx; x++) { const xx = kx * cx + x - ox; if (xx < 0 || xx >= dims[0]) continue;
+            codes[(zz * dims[1] + yy) * dims[0] + xx] = c[(z * cy + y) * cx + x]; } } }
+    }
+  const groupOf = new Uint16Array(256);                                     // class code (1-based into labels) -> group bits
+  labels.forEach((lab, i) => ANAT.forEach((a, gi) => { if (a.labels ? a.labels.includes(lab) : lab !== 0) groupOf[i + 1] |= 1 << gi; }));
+  const mask = new Uint8Array(N);
+  for (let gi = 0; gi < ANAT.length; gi++) {
+    status(`Smoothing anatomy: ${ANAT[gi].name}…`); await tick();
+    for (let i = 0; i < N; i++) mask[i] = (groupOf[codes[i]] >> gi) & 1;
+    volume.bbox[`a${gi}`] = blurInto(mask, dims, ANAT[gi].labels ? SMOOTH_ANAT : SMOOTH_BRAIN, 255, volume.anat[gi >> 2], gi & 3);
+  }
+  U.uA0.value = tex3D(volume.anat[0], dims); U.uA1.value = tex3D(volume.anat[1], dims);
+  U.uR0.value = tex3D(volume.resc[0], dims); U.uR1.value = tex3D(volume.resc[1], dims); U.uR2.value = tex3D(volume.resc[2], dims);
+  U.uT0.value = tex3D(volume.tracts[0], dims); U.uT1.value = tex3D(volume.tracts[1], dims); U.uT2.value = tex3D(volume.tracts[2], dims);
+  scene.add(mesh);
+  volume.ready = true;
+  await rebuild();
+}
+
+// the ensemble the shells come from: this scan's runs, or the other three scans' runs (leaving out the compared scan)
+const classIndex = name => root.classes.indexOf(name);
+const ens_ = { key: null, runs: 0, scale: 1, votes: [], th: [], core: 0 };
+const cmp = { key: null, hist: [], total: [] };
+function poolScans() {
+  const scans = D.stores.ensemble.scans;
+  return state.source === "single" ? [scans[0]] : scans.filter(s => s !== (state.compare === "none" ? scans[0] : state.compare));
+}
+let building = Promise.resolve();
+function rebuild() { building = building.then(rebuildNow).catch(fail); return building; }
+async function rebuildNow() {
+  if (!volume.ready) return;
+  const pool = poolScans(), key = pool.join("+"), dims = volume.dims, N = volume.N;
+  if (ens_.key !== key) {
+    const runs = D.runs * pool.length, scale = Math.floor(255 / runs);
+    volume.tracts.forEach(t => t.fill(0));
+    ens_.votes = []; ens_.th = [];
+    for (let i = 0; i < D.shown.length; i++) {
+      const name = D.shown[i].name, k = classIndex(name);
+      status(`Reading ${name} from ${pool.length > 1 ? `${pool.length} scans` : "the store"}…`); await tick();
+      const v = new Uint8Array(N);
+      for (const s of pool) { const c = ens.chunk(`ensembles/${s}/votes`, [k, 0, 0, 0]); for (let j = 0; j < N; j++) v[j] += c[j]; }
+      ens_.votes.push(v); ens_.th.push(thresholds(v, runs));
+      if (pool.length === 1) {                                              // the page's envelope rule against the store's own
+        const st = ens.duckn(`ensembles/${pool[0]}/votes`).extensions.tractline.envelope_votes[name];
+        if (st && st.join() !== ens_.th[i].join()) console.warn(`${name}: envelope votes ${ens_.th[i]} here, ${st} in the store`);
+      }
+      volume.bbox[`t${i}`] = blurInto(v, dims, SMOOTH_TRACT, scale, volume.tracts[i >> 2], i & 3);
+    }
+    Object.assign(ens_, { key, runs, scale, core: Math.ceil(runs / 2) });
+    [U.uT0, U.uT1, U.uT2].forEach(u => { u.value.needsUpdate = true; });
+    cmp.key = null;
+  }
+  const ckey = state.compare === "none" ? "none" : `${state.compare} vs ${key}`;
+  if (cmp.key !== ckey) {
+    volume.resc.forEach(t => t.fill(0));
+    cmp.hist = []; cmp.total = [];
+    if (state.compare !== "none") for (let i = 0; i < D.shown.length; i++) {
+      const name = D.shown[i].name;
+      status(`Reading ${RESCAN[state.compare].toLowerCase()}'s own run: ${name}…`); await tick();
+      const run = ens.chunk(`ensembles/${state.compare}/run`, [classIndex(name), 0, 0, 0]), v = ens_.votes[i];
+      const h = new Float64Array(ens_.runs + 1); let n = 0;
+      for (let j = 0; j < N; j++) if (run[j]) { h[v[j]]++; n++; }
+      cmp.hist.push(h); cmp.total.push(n);
+      volume.bbox[`r${i}`] = blurInto(run, dims, SMOOTH_TRACT, 255, volume.resc[i >> 2], i & 3);
+    }
+    cmp.key = ckey;
+    [U.uR0, U.uR1, U.uR2].forEach(u => { u.value.needsUpdate = true; });
+  }
+  status("");
+  apply();
+}
+function fail(e) { console.error(e); status(`Could not draw the volume: ${e.message}`); }
+// share of the compared scan's tract voxels with at least `t` votes
+const held = (i, t) => { const h = cmp.hist[i]; if (!h || t == null) return null; let s = 0; for (let v = t; v < h.length; v++) s += h[v]; return cmp.total[i] ? s / cmp.total[i] : null; };
+const level = t => (t - 0.5) * ens_.scale / 255;                            // a vote count's surface, in texture units
 
 // trackball controls with a visible pivot
 const controls = new THREE.TrackballControls(camera, canvas);
@@ -347,41 +764,102 @@ function view(name, at, dist) {
   const d0 = dist || Math.max(camera.position.distanceTo(controls.target), 120);
   controls.target.copy(t);
   camera.position.copy(t.clone().add(new THREE.Vector3(x, y, z).normalize().multiplyScalar(d0)));
-  camera.up.set(ux, uy, uz); camera.lookAt(t); controls.update();
+  camera.up.set(ux, uy, uz); camera.lookAt(t); controls.update(); redraw();
 }
+// double-click: march the ray through the same volumes on the CPU to the first visible surface
 const ray = new THREE.Raycaster();
 canvas.addEventListener("dblclick", e => {
+  if (!volume.ready) return;
   const r = canvas.getBoundingClientRect();
   ray.setFromCamera(new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1), camera);
-  const targets = scene.children.filter(o => o.isMesh && o.visible && o !== pivot && !brainMeshes.includes(o));
-  const hit = ray.intersectObjects(targets, false)[0];
-  if (!hit) return;
-  const shift = hit.point.clone().sub(controls.target);
-  controls.target.add(shift); camera.position.add(shift); controls.update();
+  const hit = pick(ray.ray);
+  if (hit) recenter(hit);
 });
-function recenter(p) { const shift = p.clone().sub(controls.target); controls.target.add(shift); camera.position.add(shift); controls.update(); }
+function pick(wr) {
+  const o = wr.origin.clone().applyMatrix4(volume.inv), d = wr.at(1, new THREE.Vector3()).applyMatrix4(volume.inv).sub(o).normalize();
+  const [W, H, Dz] = volume.dims, lo = U.uBoxLo.value, hi = U.uBoxHi.value;
+  const inside = p => U.uClip.value.every(c => c.x * p.x + c.y * p.y + c.z * p.z + c.w >= 0);
+  const lv = [U.uCore.value, U.uOuter.value];
+  for (let t = 0; t < 1500; t += 0.5) {
+    const p = o.clone().addScaledVector(d, t);
+    if (p.x < lo.x || p.y < lo.y || p.z < lo.z || p.x > hi.x || p.y > hi.y || p.z > hi.z || !inside(p)) continue;
+    const i = Math.floor(p.x), j = Math.floor(p.y), k = Math.floor(p.z);
+    if (i < 0 || j < 0 || k < 0 || i >= W || j >= H || k >= Dz) continue;
+    const idx = 4 * ((k * H + j) * W + i);
+    for (let s = 0; s < D.shown.length && U.uMode.value > 0; s++) {
+      const tj = s >> 2, c = s & 3, v = volume.tracts[tj][idx + c] / 255;
+      if (U.uOn.value[tj].getComponent(c) < 0.5) continue;
+      const L = U.uMode.value === 2 ? 0.5 / (ens_.runs * U.uFrac.value) : Math.min(...lv.map(x => x[tj].getComponent(c)).filter(x => x > 0));
+      if (v >= L) return p.applyMatrix4(volume.M);
+    }
+    for (let a = 0; a < ANAT.length; a++)
+      if (U.uAOn.value[a >> 2].getComponent(a & 3) > 0.5 && a < ANAT.length - 1 && volume.anat[a >> 2][idx + (a & 3)] >= 128) return p.applyMatrix4(volume.M);
+  }
+  return null;
+}
+function recenter(p) { const shift = p.clone().sub(controls.target); controls.target.add(shift); camera.position.add(shift); controls.update(); redraw(); }
 
 // state
-const state = { site: -1, crop: true, shell: "mid", rescan: D.rescans[D.rescans.length - 1], fan: "split", color: "tract", rescLines: true,
-  on: Object.fromEntries(D.shown.map(t => [t.name, t.name in D.focus])), plane: true, brain: true, solid: false,
+const state = { site: -1, crop: true, shell: "mid", source: "single", level: 2, compare: D.rescans[D.rescans.length - 1], fan: "split", color: "tract",
+  rescLines: true, on: Object.fromEntries(D.shown.map(t => [t.name, t.name in D.focus])), plane: true, brain: true, solid: false,
   anat: Object.fromEntries(D.anatomy.map(a => [a.name, a.on])) };
+const DEFAULT_LEVEL = { single: 2, pooled: 1 };                             // stated 90 % and 80 %: each held about 80-86 % out of sample
+function cropPlanes(c) {
+  // world half-spaces |x_a - c_a| <= CROP_MM, carried into the volume's box coordinates
+  const M = volume.M, m3 = new THREE.Matrix3().setFromMatrix4(M), tr = new THREE.Vector3().setFromMatrixPosition(M);
+  U.uClip.value.forEach((v, i) => {
+    if (!c) { v.set(0, 0, 0, 1); return; }
+    const a = i >> 1, sg = i & 1 ? -1 : 1, n = new THREE.Vector3(...[0, 1, 2].map(b => b === a ? sg : 0));
+    const dw = -sg * (c[a] - sg * CROP_MM), ng = n.clone().applyMatrix3(m3.clone().transpose());
+    v.set(ng.x, ng.y, ng.z, n.dot(tr) + dw);
+  });
+}
 function apply() {
-  for (const [name, s] of Object.entries(shells)) for (const [kind, mesh] of Object.entries(s))
-    mesh.visible = state.on[name] && state.shell !== "none" && (state.shell === "second" ? kind === "second" : (kind === "core" || kind === state.shell));
-  for (const [tag, per] of Object.entries(dots)) for (const [name, p] of Object.entries(per)) p.visible = tag === state.rescan && state.on[name];
+  if (volume.ready) {
+    const shells = state.shell !== "none";
+    U.uMode.value = !shells ? 0 : state.shell === "cloud" ? 2 : 1;
+    U.uSolid.value = state.solid ? 1 : 0;
+    [U.uMidFace.value, U.uMidRim.value] = state.shell === "outer" ? [0.02, 0.38] : [0.035, 0.6];
+    U.uFrac.value = 255 / (ens_.scale * ens_.runs);
+    const lo = [Infinity, Infinity, Infinity], hi = [-Infinity, -Infinity, -Infinity];
+    const grow = b => { if (b) for (let a = 0; a < 3; a++) { lo[a] = Math.min(lo[a], b[a]); hi[a] = Math.max(hi[a], b[a + 3] + 1); } };
+    D.shown.forEach((t, i) => {
+      const on = state.on[t.name] ? 1 : 0, th = ens_.th[i] || [1], j = i >> 2, c = i & 3;
+      U.uOn.value[j].setComponent(c, on);
+      U.uCore.value[j].setComponent(c, level(ens_.core));
+      U.uOuter.value[j].setComponent(c, state.shell === "mid" ? level(th[state.level]) : state.shell === "outer" ? level(1) : -1);
+      U.uEnv.value[j].setComponent(c, level(th[state.level]));
+      if (on && shells) grow(volume.bbox[`t${i}`]);
+      if (on && state.compare !== "none") grow(volume.bbox[`r${i}`]);
+    });
+    U.uTOn.value = [0, 1, 2].map(j => +(shells && D.shown.some((t, i) => i >> 2 === j && state.on[t.name])));
+    U.uROn.value = [0, 1, 2].map(j => +(state.compare !== "none" && cmp.key !== null && D.shown.some((t, i) => i >> 2 === j && state.on[t.name])));
+    ANAT.forEach((a, i) => {
+      const on = a.labels ? state.anat[a.name] : state.brain;
+      U.uAOn.value[i >> 2].setComponent(i & 3, on ? 1 : 0);
+      if (on) grow(volume.bbox[`a${i}`]);
+    });
+    U.uAOnT.value = [0, 1].map(j => +ANAT.some((a, i) => i >> 2 === j && (a.labels ? state.anat[a.name] : state.brain)));
+    if (lo[0] === Infinity) { lo.fill(0); hi.fill(0); }
+    U.uBoxLo.value.set(...lo); U.uBoxHi.value.set(...hi);
+    cropPlanes(state.crop && state.site >= 0 ? D.sites[state.site].mm : null);
+    envPanel();
+  }
   for (const [si, kinds] of Object.entries(fanCache)) for (const [kind, sets] of Object.entries(kinds)) {
     const here = +si === state.site && kind === state.fan;
     sets.tract.visible = here && state.color === "tract"; sets.up.visible = here && state.color === "up";
     sets.check.visible = here && state.color === "check"; sets.resc.visible = here && state.rescLines;
     for (const l of Object.values(sets)) l.userData.ghost.visible = l.visible && state.solid;
   }
-  for (const s of Object.values(shells)) if (s.core) s.core.material = s.core.userData.mats[state.solid ? "solid" : "xray"];
   markers.forEach((m, i) => { m.material.color.set(i === state.site ? 0xffd34d : 0xffffff); m.material.opacity = i === state.site ? 0.95 : 0.35; });
-  plane.visible = state.plane; brainMeshes.forEach(m => m.visible = state.brain);
-  for (const [name, m] of Object.entries(anatMeshes)) m.visible = state.anat[name];
-  setCrop(state.crop && state.site >= 0 ? D.sites[state.site].mm : null);
+  plane.visible = state.plane;
   cropBtn.disabled = state.site < 0;
+  document.querySelectorAll("#compareSeg button").forEach(b => { b.disabled = b.dataset.compare === "A" && state.source === "single";
+    b.setAttribute("aria-pressed", String(b.dataset.compare === state.compare)); });
+  document.querySelectorAll("#levelSeg button").forEach(b => b.setAttribute("aria-pressed", String(+b.dataset.level === state.level)));
+  levelNote();
   sitePanel();
+  redraw();
 }
 function chooseSite(i) {
   state.site = i;
@@ -427,11 +905,12 @@ function sitePanel() {
     <td class="n">${pct(r["rescan gives the mode"])}</td><td class="n">${pct(r["stated (mode's mean share, these seeds)"])}</td>
     <td class="n">${pct(r["rescan's tract among the 17 runs' tracts"])}</td><td class="n">${pct(r["changed, to A's runner-up"])}</td></tr>`).join("");
   const modes = Object.entries(s["modes (top 5)"]).map(([t, n]) => `${t} ${n}`).join(", ");
-  const fs = s["fan seeds"];
+  const fs_ = s["fan seeds"];
   el.innerHTML = `<h2>Site ${state.site + 1}</h2><h3>${s.name}</h3>
     <p class="muted">${s["defined by"]}. At <span class="num">${s.mm.map(v => v.toFixed(0)).join(", ")}</span> mm.</p>
     <h2 style="margin-top:10px">Voxel rank field at the site</h2>
     <div class="tbl"><table><thead><tr><th>Class</th><th class="n">Mean streamlines</th><th class="n">Runs present</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <p class="muted">From the 2.1 mm diffusion grid, where a run had a tract present with 2 or more of its streamlines in the voxel.</p>
     <h2>Streamlines within 4 mm</h2>
     <p class="muted">Other (no named tract) is the most frequent label for most of these seeds, so the site's name describes a minority of them.</p>
     <div class="stat"><span>Seeds labeled in all 17 runs</span><span>${s["seeds near (labeled in all 17 runs)"]}</span></div>
@@ -446,8 +925,8 @@ function sitePanel() {
       the 17 runs gave; stated is what the ensemble predicted for that (a left-out run falls short of it by 1–4 points too). Among 17 runs': the rescan's tract is one any run gave. Change
       to runner-up: of the changed seeds, the share whose new tract was the reference run's second choice.</p>
     <h2 style="margin-top:10px">Fan colors at this site</h2><div class="key">${fanKey(state.site)}</div>
-    <p class="muted" style="margin-top:8px">Fans drawn: ${fs["drawn (split)"] || 0} of ${fs["split (mode in at most 60 % of runs, some named)"]} split seeds, ${fs["drawn (agree)"] || 0} of
-      ${fs["all agree on a named tract"]} seeds where all runs agree on a named tract.</p>`;
+    <p class="muted" style="margin-top:8px">Fans drawn: ${fs_["drawn (split)"] || 0} of ${fs_["split (mode in at most 60 % of runs, some named)"]} split seeds, ${fs_["drawn (agree)"] || 0} of
+      ${fs_["all agree on a named tract"]} seeds where all runs agree on a named tract.</p>`;
 }
 function fanKey(si) {
   const used = t => Object.values(D.fans[si]).some(f => f.tract.some((x, i) => x === t && f.src[i] < D.runs) || f.up.some((x, i) => x === t && f.src[i] < D.runs));
@@ -456,6 +935,31 @@ function fanKey(si) {
     `<div><i class="sw" style="background:${OTHER_NAMED}"></i><span class="muted">another named tract</span></div>` +
     `<div><i class="sw" style="background:${OTHER}"></i><span class="muted">Other: no tract assigned</span></div>` +
     `<div><i class="sw" style="background:${RESCAN_COLOR};outline:1px solid var(--line)"></i><span class="muted">a rescan's version (any tract)</span></div>`;
+}
+const validation = () => root ? root[Object.keys(root).find(k => k.startsWith("validation"))] : null;
+function levelNote() {
+  const el = document.getElementById("levelNote"), v = validation();
+  if (!v) { el.textContent = ""; return; }
+  const kind = state.source === "single" ? "single" : "pooled";
+  const parts = Object.keys(D.focus).map(n => { const r = v[`${kind}, ${n}`]; return r ? `${n} ${pct(r[state.level + 1])}` : null; }).filter(Boolean);
+  el.textContent = `Stated ${lvl(LEVELS[state.level])}: held ${parts.join(", ")} of another scan's tract, each of this subject's four scans left out in turn` +
+    (kind === "single" ? " and predicted by one other scan's 17 runs." : " and predicted by the other three scans' 51 runs.");
+}
+function envPanel() {
+  const el = document.getElementById("envPanel"), pool = poolScans();
+  const src = state.source === "single" ? "this scan's 17 runs" : `the ${pool.map(s => SCAN_NAME[s]).join(", ").replace(/, ([^,]*)$/, " and $1")} scans' ${ens_.runs} runs`;
+  const shown = D.shown.map((t, i) => [t, i]).filter(([t]) => state.on[t.name]);
+  const rows = shown.map(([t, i]) => `<tr><td><i class="sw" style="background:${t.color};margin-right:6px"></i>${t.name}</td>
+    <td class="n">${ens_.core}</td><td class="n">${(ens_.th[i] || [])[state.level]}</td>
+    ${state.compare === "none" ? "" : `<td class="n">${pct(held(i, (ens_.th[i] || [])[state.level]))}</td><td class="n">${pct(held(i, 1))}</td>`}</tr>`).join("");
+  el.innerHTML = `<h2>The envelope, from ${src}</h2>
+    <div class="tbl"><table><thead><tr><th>Tract</th><th class="n">Core: runs</th><th class="n">Envelope: runs</th>
+      ${state.compare === "none" ? "" : `<th class="n">Holds ${RESCAN[state.compare].toLowerCase()}</th><th class="n">Widest holds</th>`}</tr></thead>
+      <tbody>${rows || `<tr><td colspan="5" class="muted">No tract shown.</td></tr>`}</tbody></table></div>
+    <p class="muted">Runs: how many of the ${ens_.runs} must have the tract present in a voxel for it to be in the core or in the envelope
+      at stated ${lvl(LEVELS[state.level])}. ${state.compare === "none" ? "Choose a scan to compare with to see how much of its tract the envelope holds." :
+      `Holds: the share of ${RESCAN[state.compare].toLowerCase()}'s own run's tract voxels inside it (whole tract, not cropped).`}
+</p>`;
 }
 (function brainPanel() {
   const b = D.brain, tags = D.rescans;
@@ -477,19 +981,27 @@ function fanKey(si) {
 })();
 
 // controls
-document.querySelectorAll("[data-shell]").forEach(b => b.onclick = () => { state.shell = b.dataset.shell;
-  document.querySelectorAll("[data-shell]").forEach(x => x.setAttribute("aria-pressed", String(x === b))); apply(); });
-document.querySelectorAll("[data-fan]").forEach(b => b.onclick = () => { state.fan = b.dataset.fan;
-  document.querySelectorAll("[data-fan]").forEach(x => x.setAttribute("aria-pressed", String(x === b))); apply(); });
-document.querySelectorAll("[data-core]").forEach(b => b.onclick = () => { state.solid = b.dataset.core === "solid";
-  document.querySelectorAll("[data-core]").forEach(x => x.setAttribute("aria-pressed", String(x === b))); apply(); });
-document.querySelectorAll("[data-color]").forEach(b => b.onclick = () => { state.color = b.dataset.color;
-  document.querySelectorAll("[data-color]").forEach(x => x.setAttribute("aria-pressed", String(x === b))); apply(); });
-const rs = document.getElementById("rescanSeg");
-[...D.rescans.slice().reverse(), "none"].forEach(t => {
-  const b = document.createElement("button"); b.textContent = t === "none" ? "None" : RESCAN[t] || t; b.setAttribute("aria-pressed", String(t === state.rescan));
-  b.onclick = () => { state.rescan = t; rs.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b))); apply(); };
-  rs.appendChild(b);
+const pick1 = (sel, b) => document.querySelectorAll(sel).forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+document.querySelectorAll("[data-shell]").forEach(b => b.onclick = () => { state.shell = b.dataset.shell; pick1("[data-shell]", b); apply(); });
+document.querySelectorAll("[data-fan]").forEach(b => b.onclick = () => { state.fan = b.dataset.fan; pick1("[data-fan]", b); apply(); });
+document.querySelectorAll("[data-core]").forEach(b => b.onclick = () => { state.solid = b.dataset.core === "solid"; pick1("[data-core]", b); apply(); });
+document.querySelectorAll("[data-color]").forEach(b => b.onclick = () => { state.color = b.dataset.color; pick1("[data-color]", b); apply(); });
+document.querySelectorAll("[data-source]").forEach(b => b.onclick = () => {
+  if (state.source === b.dataset.source) return;
+  state.source = b.dataset.source; state.level = DEFAULT_LEVEL[state.source]; pick1("[data-source]", b);
+  if (state.source === "single" && state.compare === "A") state.compare = D.rescans[D.rescans.length - 1];
+  if (state.source === "pooled" && state.compare === "none") state.compare = "A";
+  apply(); rebuild();
+});
+const levelSeg = document.getElementById("levelSeg");
+LEVELS.forEach((L, i) => { const b = document.createElement("button"); b.dataset.level = i; b.textContent = lvl(L);
+  b.onclick = () => { state.level = i; apply(); }; levelSeg.appendChild(b); });
+const cs = document.getElementById("compareSeg");
+[...D.rescans.slice().reverse(), "A", "none"].forEach(t => {
+  const b = document.createElement("button"); b.dataset.compare = t;
+  b.textContent = t === "none" ? "None" : t === "A" ? "This scan's own run" : RESCAN[t] || t;
+  b.onclick = () => { state.compare = t; apply(); rebuild(); };
+  cs.appendChild(b);
 });
 const cropBtn = document.getElementById("crop");
 cropBtn.onclick = () => { state.crop = !state.crop; cropBtn.textContent = state.crop ? "Show whole tracts" : "Crop to the site"; cropBtn.setAttribute("aria-pressed", String(state.crop)); apply(); };
@@ -524,11 +1036,10 @@ D.anatomy.forEach(a => {
       ${row("Predicted: the runs' share keeping the name", f => pct(f["stated: the runs' share giving it"]))}
       ${tags.map(t => row(`Kept on the ${RESCAN[t] ? RESCAN[t].toLowerCase() : t} repeat scan`, f => pct(f[`${t}: keeps it`]))).join("")}
       ${row("Changed names go to (session 5)", (f, n) => `<span style="font-family:var(--ui);font-size:0.78rem">${goes(n)}</span>`)}
-      ${row("80% outline holds the repeat scan's bundle (session 5)", f => pct(f.outline[`${tags[tags.length - 1]}: rescan voxels inside the 80 % envelope`]))}
       ${row("Ends fit the bundle's anatomical rule", f => pct(f["endpoints consistent"]))}
     </tbody></table></div>
     <p class="muted">Single streamlines' names are least stable for the corticospinal tract: most changes go to Other, the class
-      for streamlines given no name. Its territory is steadier: the 80% outline holds most of a repeat scan's bundle.</p>`;
+      for streamlines given no name. Its territory is steadier: see how much of a repeat scan's tract the envelope holds, below.</p>`;
 })();
 const pl = document.getElementById("plane"); pl.onclick = () => { state.plane = !state.plane; pl.textContent = state.plane ? "Hide plane" : "Show plane"; pl.setAttribute("aria-pressed", String(state.plane)); apply(); };
 const br = document.getElementById("brain"); br.onclick = () => { state.brain = !state.brain; br.textContent = state.brain ? "Hide outline" : "Show outline"; br.setAttribute("aria-pressed", String(state.brain)); apply(); };
@@ -537,19 +1048,42 @@ document.getElementById("center").onclick = () => recenter(state.site >= 0 ? new
 document.querySelectorAll("[data-view]").forEach(b => b.onclick = () => view(b.dataset.view));
 const zs = document.getElementById("zs"); zs.max = Z - 1; zs.oninput = () => setPlane(+zs.value);
 zs.value = Math.round(Z / 2); setPlane(+zs.value);
-
-{ const v = Object.values(D.env).flatMap(e => D.rescans.map(t => e[`${t}: rescan voxels inside the 80 % envelope`]));
-  document.getElementById("held80").textContent = `${Math.round(Math.min(...v) * 100)}–${Math.round(Math.max(...v) * 100)}%`; }
 const key = document.getElementById("key");
 D.shown.forEach(t => key.insertAdjacentHTML("beforeend", `<div><i class="sw" style="background:${t.color}"></i>${t.name} <span class="muted">${t.full}</span></div>`));
 
-
+// rendering, on demand: a coarse step while the view moves, a fine one once it rests
+const COARSE = 1.0, FINE = 0.4;
+function redraw() { dirty = true; }
+controls.addEventListener("change", () => { dirty = true; moved = performance.now(); });
+const ipv = new THREE.Matrix4(), size = new THREE.Vector2();
+function render(step) {
+  pivot.position.copy(controls.target);
+  if (volume.ready) {
+    renderer.getDrawingBufferSize(size);
+    if (depthRT.width !== size.x || depthRT.height !== size.y) depthRT.setSize(size.x, size.y);
+    U.uRes.value.copy(size); U.uStep.value = step;
+    camera.updateMatrixWorld();
+    U.uCam.value.copy(camera.position).applyMatrix4(volume.inv);
+    U.uInvProjView.value.copy(ipv.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse).invert());
+    // depth pre-pass: what the rays stop at (the fans)
+    camera.layers.set(1); scene.overrideMaterial = depthOnly; const bg = scene.background; scene.background = null;
+    renderer.setRenderTarget(depthRT); renderer.clear(); renderer.render(scene, camera);
+    renderer.setRenderTarget(null); scene.overrideMaterial = null; scene.background = bg; camera.layers.set(0);
+  }
+  renderer.render(scene, camera);
+}
 function resize() {
   const w = host.clientWidth, h = Math.round(Math.min(Math.max(w * 0.72, 320), 700));
   renderer.setSize(w, h, false); canvas.style.height = h + "px"; camera.aspect = w / h; camera.updateProjectionMatrix();
-  controls.handleResize();
+  controls.handleResize(); redraw();
 }
 new ResizeObserver(resize).observe(host); resize();
 chooseSite(0);
-(function loop() { controls.update(); pivot.position.copy(controls.target); renderer.render(scene, camera); requestAnimationFrame(loop); })();
+(function loop() {
+  controls.update();
+  const moving = performance.now() - moved < 160;
+  if (dirty || (!moving && !sharp)) { render(moving ? COARSE : FINE); sharp = !moving; dirty = false; }
+  requestAnimationFrame(loop);
+})();
+loadStores().catch(fail);
 </script>

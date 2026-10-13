@@ -133,6 +133,31 @@ def pack(src_dir: Path, archive: Path):
     os.replace(partial, archive)
 
 
+def subset(src: Path, dst: Path, keep, note=""):
+    """A smaller store holding only the nodes under `keep` and every group above them, entries copied byte for byte
+    (no recompression), with a README naming what was kept. For publishing beside a viewer, which reads it whole."""
+    keep = [k.strip("/") for k in keep]
+
+    def wanted(n):
+        if any(n.startswith(k + "/") for k in keep):
+            return True
+        if n == "zarr.json" or n.endswith("/zarr.json"):
+            g = n[: -len("zarr.json")].rstrip("/")
+            return g == "" or any(k.startswith(g + "/") for k in keep)
+        return False
+    partial = dst.with_name(dst.name + ".partial")
+    with zipfile.ZipFile(src) as zs, zipfile.ZipFile(partial, "w", compression=zipfile.ZIP_STORED, allowZip64=True) as zd:
+        names = [n for n in zs.namelist() if wanted(n)]
+        for k in keep:
+            assert f"{k}/zarr.json" in names, f"{src.name} has no node {k}"
+        for n in names:
+            zd.writestr(zs.getinfo(n), zs.read(n))
+        zd.writestr("README.md", f"# A subset of {src.name}\n\nEntries copied byte for byte from the full store; only these "
+                    f"nodes (and the groups above them) are here:\n\n" + "".join(f"- {k}\n" for k in keep) + (f"\n{note}\n" if note else ""))
+    os.replace(partial, dst)
+    return dst
+
+
 def main(args):
     import zarr
     from zarr.codecs import BloscCodec

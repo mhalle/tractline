@@ -3719,3 +3719,59 @@ layout tried.
     hold more than 4.
   - Alternatives measured: no floor, 13.4 MB each (46 MB store); a floor of a third, 8.0 MB; depth 4, 7.7 MB (35 MB).
 - **Cache:** presence_conformed.npz (votes, each scan's run, and the two mean-density fields in float16) is 102 MB.
+
+## 2026-10-13 Volume rendering from the stores: the cIIIs04 viewer reads the duckn stores in the browser
+
+`bench/ensemble_landmarks_3d.py OUTDIR` now writes a folder: the page and two subsets of the stores that it reads
+whole. The shells and the anatomy are no longer marching-cubes meshes baked into the page.
+
+- **Store subsets** (`ensemble_store.subset`): entries copied byte for byte, with a README naming the kept nodes.
+  - `cIIIs04_ensemble.view.duckn.zip`, 14.3 MB: each scan's votes and its own run. The pooled votes and the rank fields
+    are left out; the page sums any pool itself.
+  - `cIIIs04_asegdkt.view.duckn.zip`, 1.2 MB: FastSurfer's ranks only (the top class per voxel is plane 0).
+  - The page itself is 3.0 MB (the fans, the b0 plane, the panels' figures).
+- **Reading in the browser:** a small reader for stored zips, zarr v3 sharding (index at the end, crc32c not checked),
+  blosc 1 frames (zstd blocks, bitshuffle) and plain zstd, with fzstd 0.1.1 from jsDelivr for zstd itself.
+  - **Checked against zarr in Python:** for A's and session 5's CST, AF and UF votes (sum, voxels with a vote, maximum),
+    session 5's own CST run, and FastSurfer's labels in the crop, the browser's decode matches exactly.
+  - The page computes each envelope's vote count with `ensemble_pooled.thresholds`, ported; it agrees with the store's
+    `envelope_votes` for every shown tract.
+  - The two stores' grids are matched from their duckn geometry: FastSurfer's array offset is (54, 43, 27) voxels,
+    checked to be whole numbers.
+- **Rendering:** one ray-marching pass draws every shown tract (three RGBA 3D textures), the compared scan's run
+  (three more) and the anatomy groups with the brain outline (two). Each surface is found where the ray crosses its
+  level, so all surfaces composite in depth order: no sorting errors between translucent shells, which the meshes
+  had.
+  - **Levels:**
+    - core: at least half the runs;
+    - envelope: the stated level's vote count;
+    - widest: one run;
+    - cloud: opacity in proportion to the runs' share.
+  - **Smoothing:** votes are smoothed by a Gaussian of 0.6 mm before upload; anatomy masks by 0.7 mm, the outline
+    by 1.5 mm.
+  - **Fans stay geometry.** A depth pre-pass of the fans' lines stops the rays, so a fan in front of a shell covers
+    it and one behind is dimmed by it.
+  - **Crop box:** applied to the rays as six half-spaces carried into the grid's coordinates.
+  - **Double-click picking:** marches the same volumes on the CPU.
+- **New controls:**
+  - the ensemble: this scan's 17 runs, or the other three scans' 51 runs, leaving out the scan compared with
+    (plan item 2's first half);
+  - the stated level (50 to 95 %), with the store's held-out coverage for CST, AF and UF printed under it;
+  - the scan to compare with: its own run's tract outside the envelope drawn as lighter patches (replacing the dots),
+    and a table of the share of its tract each envelope holds.
+  - Dropped: the runner-up shell (rank 2 by mean count on the 2.1 mm grid). The rank fields could bring it back.
+- **The comparison table on session 5** (whole tracts; A's 17 runs, stated 50 / 80 / 90 / 92.5 / 95 %, then widest):
+
+  | Tract | 50 % | 80 % | 90 % | 92.5 % | 95 % | Widest |
+  |---|---|---|---|---|---|---|
+  | CST | 54 % | 75 % | 83 % | 87 % | 89 % | 95 % |
+  | AF | 56 % | 76 % | 85 % | 87 % | 91 % | 96 % |
+  | UF | 61 % | 80 % | 90 % | 92 % | 94 % | 98 % |
+
+  These sit close to the store's held-out means for one scan's ensemble (0.86 at stated 90 %). The other three
+  scans' 51 runs at stated 80 % (28 of 51 votes for the CST) hold 77 % of session 5's CST, and their widest 98 %.
+- **Cost** (the browser pane on this Mac, 1212 × 873 drawing buffer, whole brain): a still frame (0.4 mm steps) takes
+  85-130 ms; while the view moves, 1 mm steps take 35-45 ms. Frames are drawn only when something changes. After the
+  download, decoding and smoothing take a few seconds; switching ensembles, about 2-3 s.
+- **Limits:** it needs WebGL 2 (otherwise the fans and sites still show); it uses about 130 MB of textures; the held-out
+  figures come from this subject's own four scans.
