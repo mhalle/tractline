@@ -11,7 +11,7 @@ copied byte for byte by ensemble_store.subset):
   - cIIIs04_asegdkt.view.duckn.zip: FastSurfer's ranked anatomy, only its ranks (the top class per voxel is plane 0).
 The page unzips them, decodes the sharded zarr chunks (blosc zstd with bitshuffle, or zstd; fzstd from jsDelivr), and
 ray-marches the shown tracts and the anatomy groups together in one pass, so surfaces composite in depth order:
-  - shells per tract: the core (at least half the runs), the envelope at a stated level (votes from the envelope rule,
+  - shells per tract: the core (the Vorob'ev expectation: a typical run's tract volume, ensemble_vorobev.py), the envelope at a stated level (votes from the envelope rule,
     computed in the page as ensemble_pooled.thresholds does), the widest (any run); or a cloud of the runs' share;
   - the ensemble: this scan's 17 runs, or the other three scans' 51 runs pooled (leaving out the scan compared with);
   - a compared scan's own run where it falls outside the envelope, with the share of its tract the envelope holds;

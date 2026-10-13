@@ -216,7 +216,9 @@ td.n, th.n { text-align: right; font-family: var(--data); font-variant-numeric: 
           nearer surface always covers a farther one.</p>
         <p><strong>Present:</strong> a run has a tract in a 1 mm voxel when the tract's streamlines pass densely enough there: at least
           0.3 streamlines per square millimeter, smoothed over 1 mm (about two streamlines through a 2 mm voxel).</p>
-        <p><strong>Core:</strong> voxels where the tract is present in at least half the runs. <strong>Envelope:</strong> the voxels
+        <p><strong>Core:</strong> a typical tract: the voxels where the most runs agree, taken until the shape is as large as one run's
+          tract on average (the Vorob'ev expectation; about 8 of 17 runs). Against a repeat scan it is the right size, where a
+          majority vote (9 of 17) came out 5-9% too small, and it matches as well. <strong>Envelope:</strong> the voxels
           with the most runs agreeing, down to the count where they hold the stated share of all the runs' presence.
           <strong>Widest:</strong> any run. <strong>Cloud:</strong> opacity follows the share of runs with the tract present.</p>
         <p><strong>Stated and held:</strong> a stated level is not a promise. The note under Envelope gives how much of another scan's
@@ -718,6 +720,16 @@ function blurInto(src, [W, H, Dz], sigma, scale, dst, ch) {
   }
   return [x0, y0, z0, x1, y1, z1];
 }
+// the core: the Vorob'ev expectation (ensemble_vorobev.py), the most-agreed voxels cut where the shape's volume is
+// closest to a run's mean tract volume - a typical tract's size, placed where the runs agree most
+function vorobev(q, runs) {
+  const counts = new Float64Array(runs + 1);
+  for (let i = 0; i < q.length; i++) counts[q[i]]++;
+  let mean = 0; for (let v = 1; v <= runs; v++) mean += counts[v] * v; mean /= runs;
+  let best = 1, err = Infinity, vol = 0;
+  for (let v = runs; v >= 1; v--) { vol += counts[v]; if (Math.abs(vol - mean) < err) { err = Math.abs(vol - mean); best = v; } }
+  return best;
+}
 // ensemble_pooled.thresholds: per stated level, the lowest vote count its envelope keeps
 function thresholds(q, runs) {
   const counts = new Float64Array(runs + 1);
@@ -796,7 +808,7 @@ async function loadStores() {
 
 // the ensemble the shells come from: this scan's runs, or the other three scans' runs (leaving out the compared scan)
 const classIndex = name => root.classes.indexOf(name);
-const ens_ = { key: null, runs: 0, scale: 1, votes: [], th: [], core: 0, ready: false };   // ready: no rebuild under way
+const ens_ = { key: null, runs: 0, scale: 1, votes: [], th: [], cores: [], ready: false };   // ready: no rebuild under way
 const cmp = { key: null, hist: [], total: [], runs: [] };
 function poolScans() {
   const scans = D.stores.ensemble.scans;
@@ -809,21 +821,21 @@ async function rebuildNow() {
   const pool = poolScans(), key = pool.join("+"), dims = volume.dims, N = volume.N;
   ens_.ready = false;                                                       // the cross-section waits until both are swapped in
   if (ens_.key !== key) {
-    const runs = D.runs * pool.length, scale = Math.floor(255 / runs), votes = [], th = [];
+    const runs = D.runs * pool.length, scale = Math.floor(255 / runs), votes = [], th = [], cores = [];
     volume.tracts.forEach(t => t.fill(0));
     for (let i = 0; i < D.shown.length; i++) {
       const name = D.shown[i].name, k = classIndex(name);
       status(`Reading ${name} from ${pool.length > 1 ? `${pool.length} scans` : "the store"}…`); await tick();
       const v = new Uint8Array(N);
       for (const s of pool) { const c = ens.chunk(`ensembles/${s}/votes`, [k, 0, 0, 0]); for (let j = 0; j < N; j++) v[j] += c[j]; }
-      votes.push(v); th.push(thresholds(v, runs));
+      votes.push(v); th.push(thresholds(v, runs)); cores.push(vorobev(v, runs));
       if (pool.length === 1) {                                              // the page's envelope rule against the store's own
         const st = ens.duckn(`ensembles/${pool[0]}/votes`).extensions.tractline.envelope_votes[name];
         if (st && st.join() !== th[i].join()) console.warn(`${name}: envelope votes ${th[i]} here, ${st} in the store`);
       }
       volume.bbox[`t${i}`] = blurInto(v, dims, SMOOTH_TRACT, scale, volume.tracts[i >> 2], i & 3);
     }
-    Object.assign(ens_, { key, runs, scale, votes, th, core: Math.ceil(runs / 2) });
+    Object.assign(ens_, { key, runs, scale, votes, th, cores });
     [U.uT0, U.uT1, U.uT2].forEach(u => { u.value.needsUpdate = true; });
     cmp.key = null;
   }
@@ -925,7 +937,7 @@ function apply() {
     D.shown.forEach((t, i) => {
       const on = state.on[t.name] ? 1 : 0, th = ens_.th[i] || [1], j = i >> 2, c = i & 3;
       U.uOn.value[j].setComponent(c, on);
-      U.uCore.value[j].setComponent(c, level(ens_.core));
+      U.uCore.value[j].setComponent(c, level(ens_.cores[i] || 1));
       U.uOuter.value[j].setComponent(c, state.shell === "mid" ? level(th[state.level]) : state.shell === "outer" ? level(1) : -1);
       U.uEnv.value[j].setComponent(c, level(th[state.level]));
       if (on && shells) grow(volume.bbox[`t${i}`]);
@@ -1049,15 +1061,15 @@ function envPanel() {
   const src = state.source === "single" ? "this scan's 17 runs" : `the ${pool.map(s => SCAN_NAME[s]).join(", ").replace(/, ([^,]*)$/, " and $1")} scans' ${ens_.runs} runs`;
   const shown = D.shown.map((t, i) => [t, i]).filter(([t]) => state.on[t.name]);
   const rows = shown.map(([t, i]) => `<tr><td><i class="sw" style="background:${t.color};margin-right:6px"></i>${t.name}</td>
-    <td class="n">${ens_.core}</td><td class="n">${(ens_.th[i] || [])[state.level]}</td>
-    ${state.compare === "none" ? "" : `<td class="n">${pct(held(i, (ens_.th[i] || [])[state.level]))}</td><td class="n">${pct(held(i, 1))}</td>`}</tr>`).join("");
+    <td class="n">${ens_.cores[i]}</td><td class="n">${(ens_.th[i] || [])[state.level]}</td>
+    ${state.compare === "none" ? "" : `<td class="n">${pct(held(i, ens_.cores[i]))}</td><td class="n">${pct(held(i, (ens_.th[i] || [])[state.level]))}</td><td class="n">${pct(held(i, 1))}</td>`}</tr>`).join("");
   el.innerHTML = `<h2>The envelope, from ${src}</h2>
     <div class="tbl"><table><thead><tr><th>Tract</th><th class="n">Core: runs</th><th class="n">Envelope: runs</th>
-      ${state.compare === "none" ? "" : `<th class="n">Holds ${RESCAN[state.compare].toLowerCase()}</th><th class="n">Widest holds</th>`}</tr></thead>
-      <tbody>${rows || `<tr><td colspan="5" class="muted">No tract shown.</td></tr>`}</tbody></table></div>
-    <p class="muted">Runs: how many of the ${ens_.runs} must have the tract present in a voxel for it to be in the core or in the envelope
-      at stated ${lvl(LEVELS[state.level])}. ${state.compare === "none" ? "Choose a scan to compare with to see how much of its tract the envelope holds." :
-      `Holds: the share of ${RESCAN[state.compare].toLowerCase()}'s own run's tract voxels inside it (whole tract, not cropped).`}
+      ${state.compare === "none" ? "" : `<th class="n">Core holds</th><th class="n">Envelope holds</th><th class="n">Widest holds</th>`}</tr></thead>
+      <tbody>${rows || `<tr><td colspan="6" class="muted">No tract shown.</td></tr>`}</tbody></table></div>
+    <p class="muted">Runs: how many of the ${ens_.runs} must have the tract present in a voxel for it to be in the core (a typical tract's
+      size) or in the envelope at stated ${lvl(LEVELS[state.level])}. ${state.compare === "none" ? "Choose a scan to compare with to see how much of its tract each shell holds." :
+      `Holds: the share of ${RESCAN[state.compare].toLowerCase()}'s own run's tract voxels inside each shell (whole tract, not cropped).`}
 </p>`;
 }
 (function brainPanel() {
@@ -1326,7 +1338,7 @@ function showReadout(w) {
   const th = i => (ens_.th[i] || [])[state.level];
   const cmpName = state.compare !== "none" ? (RESCAN[state.compare] || state.compare) : null;
   const rows = D.shown.map((t, i) => [t, i]).filter(([t]) => state.on[t.name]).map(([t, i]) => {
-    const v = idx >= 0 ? ens_.votes[i][idx] : 0, inn = v >= ens_.core ? "core" : v >= th(i) ? "envelope" : v >= 1 ? "widest" : "outside";
+    const v = idx >= 0 ? ens_.votes[i][idx] : 0, inn = v >= ens_.cores[i] ? "core" : v >= th(i) ? "envelope" : v >= 1 ? "widest" : "outside";
     const run = cmpName && cmp.runs[i] && idx >= 0 ? (cmp.runs[i][idx] ? " · in its run" : "") : "";
     return `<div><i class="sw" style="background:${t.color}"></i>${t.name}<span class="muted">${inn}${run}</span><span class="v">${v}/${ens_.runs}</span></div>`;
   }).join("");

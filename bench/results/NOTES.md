@@ -3842,3 +3842,9 @@ with 3-4 points more coverage and 3-4 less precision; Dice equal or +0.003.
   the runs agree most", which is the right shape when a volume or an extent is quoted, as in planning.
 - **Limits:** one subject; the targets are density-presence maps on the conformed grid; the held-out scans are three
   sessions of the same scanner.
+
+**Adopted in the viewer, same day:** the user chose a single core, so the core is now the Vorob'ev shape (the
+closest-volume cut, computed in the page from the ensemble's votes). On A's 17 runs it needs 8 runs for the CST, AF
+and UF, and on the other three scans' 51 runs 22, 21 and 22, as in ensemble_vorobev.py. Against session 5 it holds
+79 / 82 / 84 % of the tract, against 77 / 80 / 82 % for the majority vote. The envelope table now also gives what the
+core holds.
