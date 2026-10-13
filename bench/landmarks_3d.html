@@ -30,7 +30,8 @@ body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--u
 .tl { color: var(--muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; }
 .held { color: var(--muted); font-size: 0.8rem; font-family: var(--data); }
 .panelbtn { margin-left: auto; }
-.bar .seg button { font-size: 0.8rem; padding: 4px 8px; }
+.bar select { font: inherit; font-size: 0.84rem; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 4px 8px; }
+.bar select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .bar .chip { font-size: 0.8rem; padding: 2px 8px 2px 5px; }
 .bar .chips { gap: 4px; }
 .title { display: grid; gap: 2px; }
@@ -114,16 +115,17 @@ td.n, th.n { text-align: right; font-family: var(--data); font-variant-numeric: 
       <span class="tag" title="This shows reproducibility, not anatomical truth">Research prototype · not for clinical use</span></div>
     <div class="tools">
       <div class="tool"><span class="tl">Ensemble</span>
-        <div class="seg" role="group" aria-label="Which runs make the shells">
-          <button data-source="single" aria-pressed="true" title="This scan's 17 runs: its own run and 16 copies with the noise drawn again">17 runs</button><button data-source="pooled" aria-pressed="false" title="The other three scans' 17-run ensembles pooled, leaving out the scan compared with">51 runs, 3 scans</button></div></div>
+        <select id="selSource" aria-label="Which runs make the shells" title="17 runs: this scan's own run and 16 copies with the noise drawn again. 51 runs: the other three scans' 17-run ensembles pooled, leaving out the scan compared with">
+          <option value="single">17 runs (this scan)</option><option value="pooled">51 runs (other 3 scans)</option></select></div>
       <div class="tool"><span class="tl">Envelope</span>
-        <div class="seg" role="group" aria-label="The envelope's stated level" id="levelSeg"></div>
+        <select id="selLevel" aria-label="The envelope's stated level"></select>
         <span class="held" id="levelShort"></span></div>
       <div class="tool"><span class="tl">Shells</span>
-        <div class="seg" role="group" aria-label="Which shells to show">
-          <button data-shell="core" aria-pressed="false" title="Present in at least half the runs">Core</button><button data-shell="mid" aria-pressed="true" title="Core and the envelope at the stated level">+ envelope</button><button data-shell="outer" aria-pressed="false" title="Core and the widest shell: any run">+ widest</button><button data-shell="cloud" aria-pressed="false" title="Opacity follows the share of runs">Cloud</button><button data-shell="none" aria-pressed="false">None</button></div></div>
+        <select id="selShell" aria-label="Which shells to show">
+          <option value="core">Core only</option><option value="mid" selected>Core + envelope</option><option value="outer">Core + widest</option>
+          <option value="cloud">Cloud (share of runs)</option><option value="none">None</option></select></div>
       <div class="tool"><span class="tl">Compare with</span>
-        <div class="seg" role="group" aria-label="Which scan's own run to compare with the envelope" id="compareSeg"></div></div>
+        <select id="selCompare" aria-label="Which scan's own run to compare with the envelope"></select></div>
       <div class="tool"><span class="tl">Tracts</span><div class="chips" id="chips"></div></div>
     </div>
     <button class="plain panelbtn" id="panelBtn" aria-expanded="false" aria-controls="drawer">More ▸</button>
@@ -921,9 +923,8 @@ function apply() {
   markers.forEach((m, i) => { m.material.color.set(i === state.site ? 0xffd34d : 0xffffff); m.material.opacity = i === state.site ? 0.95 : 0.35; });
   plane.visible = state.plane;
   cropBtn.disabled = state.site < 0;
-  document.querySelectorAll("#compareSeg button").forEach(b => { b.disabled = b.dataset.compare === "A" && state.source === "single";
-    b.setAttribute("aria-pressed", String(b.dataset.compare === state.compare)); });
-  document.querySelectorAll("#levelSeg button").forEach(b => b.setAttribute("aria-pressed", String(+b.dataset.level === state.level)));
+  [...selCompare.options].forEach(o => { o.disabled = o.value === "A" && state.source === "single"; });
+  selCompare.value = state.compare; selSource.value = state.source; selLevel.value = state.level; selShell.value = state.shell;
   levelNote();
   sitePanel();
   redraw(); cutDirty = true;
@@ -1054,27 +1055,23 @@ function envPanel() {
 
 // controls
 const pick1 = (sel, b) => document.querySelectorAll(sel).forEach(x => x.setAttribute("aria-pressed", String(x === b)));
-document.querySelectorAll("[data-shell]").forEach(b => b.onclick = () => { state.shell = b.dataset.shell; pick1("[data-shell]", b); apply(); });
+const selShell = document.getElementById("selShell"), selSource = document.getElementById("selSource");
+const selLevel = document.getElementById("selLevel"), selCompare = document.getElementById("selCompare");
+selShell.onchange = () => { state.shell = selShell.value; apply(); };
 document.querySelectorAll("[data-fan]").forEach(b => b.onclick = () => { state.fan = b.dataset.fan; pick1("[data-fan]", b); apply(); });
 document.querySelectorAll("[data-core]").forEach(b => b.onclick = () => { state.solid = b.dataset.core === "solid"; pick1("[data-core]", b); apply(); });
 document.querySelectorAll("[data-color]").forEach(b => b.onclick = () => { state.color = b.dataset.color; pick1("[data-color]", b); apply(); });
-document.querySelectorAll("[data-source]").forEach(b => b.onclick = () => {
-  if (state.source === b.dataset.source) return;
-  state.source = b.dataset.source; pick1("[data-source]", b);                // the envelope level stays as chosen
+selSource.onchange = () => {
+  state.source = selSource.value;                                             // the envelope level stays as chosen
   if (state.source === "single" && state.compare === "A") state.compare = D.rescans[D.rescans.length - 1];
   if (state.source === "pooled" && state.compare === "none") state.compare = "A";
   apply(); rebuild();
-});
-const levelSeg = document.getElementById("levelSeg");
-LEVELS.forEach((L, i) => { const b = document.createElement("button"); b.dataset.level = i; b.textContent = lvl(L);
-  b.onclick = () => { state.level = i; apply(); }; levelSeg.appendChild(b); });
-const cs = document.getElementById("compareSeg");
-[...D.rescans.slice().reverse(), "A", "none"].forEach(t => {
-  const b = document.createElement("button"); b.dataset.compare = t;
-  b.textContent = t === "none" ? "None" : t === "A" ? "This scan's own run" : RESCAN[t] || t;
-  b.onclick = () => { state.compare = t; apply(); rebuild(); };
-  cs.appendChild(b);
-});
+};
+LEVELS.forEach((L, i) => selLevel.add(new Option(`stated ${lvl(L)}`, i)));
+selLevel.onchange = () => { state.level = +selLevel.value; apply(); };
+[...D.rescans.slice().reverse(), "A", "none"].forEach(t =>
+  selCompare.add(new Option(t === "none" ? "None" : t === "A" ? "This scan's own run" : RESCAN[t] || t, t)));
+selCompare.onchange = () => { state.compare = selCompare.value; apply(); rebuild(); };
 const cropBtn = document.getElementById("crop");
 cropBtn.onclick = () => { state.crop = !state.crop; cropBtn.textContent = state.crop ? "Show whole tracts" : "Crop to the site"; cropBtn.setAttribute("aria-pressed", String(state.crop)); apply(); };
 const rl = document.getElementById("rescanLines");
