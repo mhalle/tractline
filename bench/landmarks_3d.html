@@ -43,6 +43,11 @@ body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--u
 .cutctl { display: grid; gap: 6px; align-content: start; min-width: 0; }
 .drawer { display: grid; gap: 10px; align-content: start; min-width: 0; }
 .drawer .panel p { margin: 0 0 8px; font-size: 0.88rem; }
+.form { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 10px; align-items: center; font-size: 0.86rem; }
+.form label { display: contents; color: var(--muted); }
+.form label.check { display: flex; grid-column: 1 / -1; gap: 6px; align-items: center; color: var(--ink); }
+.form select { font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 4px 8px; min-width: 0; max-width: 100%; }
+.form input[type=checkbox] { accent-color: var(--accent); }
 .controls .label { min-width: 8ch; }
 .dispctl { margin-top: 8px; gap: 6px; }
 .dispctl .seg button, .dispctl button.plain { font-size: 0.8rem; padding: 3px 8px; }
@@ -87,10 +92,6 @@ input[type=range] { flex: 1; min-width: 120px; accent-color: var(--accent); }
 .chip { display: inline-flex; gap: 6px; align-items: center; border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px 3px 6px; font-size: 0.85rem; cursor: pointer; color: var(--ink); background: transparent; font-family: inherit; }
 .chip[aria-pressed="false"] { opacity: 0.4; }
 .sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; flex: none; }
-.sites { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 6px; }
-.site { text-align: left; font: inherit; font-size: 0.86rem; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: transparent; color: var(--ink); cursor: pointer; display: flex; gap: 8px; align-items: baseline; }
-.site[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
-.site b { font-family: var(--data); color: var(--accent); }
 .side { display: grid; gap: 14px; min-width: 0; }
 .side p { margin: 0 0 8px; font-size: 0.88rem; }
 .side p:last-child { margin-bottom: 0; }
@@ -146,8 +147,7 @@ td.n, th.n { text-align: right; font-family: var(--data); font-variant-numeric: 
         <span class="hint">Drag to rotate · scroll to zoom · right-drag to pan · double-click a surface to rotate around it</span></div>
       <div class="controls dispctl">
         <div class="row"><span class="label">Anatomy</span><div class="chips" id="anatChips"></div></div>
-        <div class="row"><span class="label">Axial plane</span><input id="zs" type="range" min="0" max="0" step="1" value="0" aria-label="Axial plane position">
-          <span id="zout" class="num muted" style="min-width:7ch"></span>
+        <div class="row"><span class="label">Slice plane</span><span class="muted" style="font-size:0.8rem">follows the cross-section</span>
           <button class="plain" id="plane" aria-pressed="true">Hide plane</button>
           <button class="plain" id="brain" aria-pressed="true">Hide outline</button></div>
         <div class="row"><span class="label">View</span>
@@ -179,22 +179,20 @@ td.n, th.n { text-align: right; font-family: var(--data); font-variant-numeric: 
   </main>
 
   <aside class="drawer" id="drawer" hidden aria-label="More controls and explanations">
-    <section class="panel"><div id="envPanel"></div><p class="note" id="levelNote" style="margin-top:6px"></p></section>
     <section class="panel">
-      <h2>Sites and fans</h2>
-      <div class="controls">
-        <div class="sites" id="sites"></div>
-        <div class="row"><span class="label">Fans</span>
-          <div class="seg" role="group" aria-label="Which streamline fans to show">
-            <button data-fan="split" aria-pressed="true">Where runs split</button><button data-fan="agree" aria-pressed="false">Where all agree</button><button data-fan="none" aria-pressed="false">None</button></div></div>
-        <div class="row"><span class="label">Color</span>
-          <div class="seg" role="group" aria-label="Color each version by">
-            <button data-color="tract" aria-pressed="true">Tract</button><button data-color="up" aria-pressed="false">Runner-up</button><button data-color="check" aria-pressed="false">Endpoint check</button></div></div>
-        <div class="row"><span class="label"></span><button class="plain" id="rescanLines" aria-pressed="true">Hide rescans' versions</button></div>
-        <div class="row"><span class="label">Crop</span><button class="plain" id="crop" aria-pressed="true">Show whole tracts</button>
-          <span class="muted" style="font-size:0.82rem">within 30 mm of a site</span></div>
+      <h2>Site and streamlines</h2>
+      <div class="form">
+        <label>Site <select id="selSite" aria-label="Site"></select></label>
+        <label>Fans <select id="selFan" aria-label="Which streamline fans to show">
+          <option value="split">Where runs split</option><option value="agree">Where all runs agree</option><option value="none">None</option></select></label>
+        <label>Fan color <select id="selColor" aria-label="Color each version by">
+          <option value="tract">Tract each run gave</option><option value="up">Each run's runner-up</option><option value="check">Endpoint check</option></select></label>
+        <label class="check"><input type="checkbox" id="chkResc" checked> Show the repeat scans' versions (white)</label>
+        <label class="check"><input type="checkbox" id="chkCrop" checked> Crop shells and anatomy to 30 mm around the site</label>
       </div>
+      <p class="muted" style="font-size:0.8rem;margin:6px 0 0">Fans and cropping apply at a site, not in the whole-brain view.</p>
     </section>
+    <section class="panel"><div id="envPanel"></div><p class="note" id="levelNote" style="margin-top:6px"></p></section>
     <section class="panel" id="sitePanel"></section>
     <section class="panel" id="focusPanel"></section>
     <section class="panel" id="about">
@@ -236,7 +234,7 @@ td.n, th.n { text-align: right; font-family: var(--data); font-variant-numeric: 
         <p><strong>Cross-section:</strong> a plane through the point, in the radiological convention: the patient's right is on the
           screen's left (axial and coronal), anterior on the left (sagittal). Light fill: the envelope; strong fill: the core; lines:
           their edges; hatching: the compared scan's tract outside the envelope; thin colored lines: the anatomy shown in 3D. It uses the
-          same tracts, levels and ensemble as the 3D view. Click to move the point (the axial plane and the 3D pivot follow); scroll over it to step the slice (1 mm, 5 mm with Shift); hover
+          same tracts, levels and ensemble as the 3D view. The 3D view shows the same slice as a plane (A's mean b0) at the same orientation and position, composited in depth with the shells: what lies in front of it covers it, what lies behind shows faintly through it. Click to move the point (the 3D pivot follows); scroll over it to step the slice (1 mm, 5 mm with Shift); hover
           for the values under the cursor. Its "runs present" are raw counts in that 1 mm voxel, before the 0.6 mm smoothing the drawn
           edges use.</p>
         <p><strong>Anatomy:</strong> FastSurfer's most likely label per voxel, on the same 1 mm grid as the shells, aligned to the
@@ -493,22 +491,29 @@ function buildFans(si) {
   return (fanCache[si] = out);
 }
 
-// the axial plane: A's mean b0
+// the slice plane: A's mean b0 on the cross-section's plane, composited inside the volume's ray march (uPlane); a
+// depth-only copy hides the fans' lines behind it
 const b0 = bytes(D.b0);
-const slice = new Uint8Array(X * Y);
-const tex = new THREE.DataTexture(slice, X, Y, THREE.LuminanceFormat); tex.magFilter = THREE.LinearFilter;
-const planeGeo = new THREE.BufferGeometry();
-planeGeo.setAttribute("uv", new THREE.Float32BufferAttribute([0, 0, 1, 0, 1, 1, 0, 1], 2)); planeGeo.setIndex([0, 1, 2, 0, 2, 3]);
-const plane = new THREE.Mesh(planeGeo, new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide, transparent: true, opacity: 0.85, depthWrite: false }));
-plane.renderOrder = 0; scene.add(plane);
-function setPlane(k) {
-  for (let i = 0; i < X; i++) for (let j = 0; j < Y; j++) slice[j * X + i] = b0[(i * Y + j) * Z + k];
-  tex.needsUpdate = true;
-  const c = [world(-0.5, -0.5, k), world(X - 0.5, -0.5, k), world(X - 0.5, Y - 0.5, k), world(-0.5, Y - 0.5, k)];
-  planeGeo.setAttribute("position", new THREE.Float32BufferAttribute(c.flatMap(v => [v.x, v.y, v.z]), 3));
-  planeGeo.attributes.position.needsUpdate = true; planeGeo.computeBoundingSphere();
-  document.getElementById("zout").textContent = `z ${world(0, 0, k).z.toFixed(0)} mm`;
-  redraw(); cutDirty = true;
+const occluder = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial({ colorWrite: false, side: THREE.DoubleSide }));
+occluder.geometry.setIndex([0, 1, 2, 0, 2, 3]); occluder.renderOrder = -1; occluder.visible = false; scene.add(occluder);
+function updatePlane() {
+  if (!volume.ready) return;
+  const n = CUTS[state.cut].n, c = state.point[n], on = state.plane;
+  U.uPlaneOn.value = on ? 1 : 0;
+  // world: x_n = c  ->  box coordinates g, with world = M g
+  const e = volume.M.elements, row = [e[n], e[4 + n], e[8 + n], e[12 + n]];
+  U.uPlane.value.set(row[0], row[1], row[2], row[3] - c);
+  // the stand-in: the plane across the box's world extent (and the crop box, when on)
+  const lo = [Infinity, Infinity, Infinity], hi = [-Infinity, -Infinity, -Infinity], [W, H, Dz] = volume.dims;
+  for (const g of [[0, 0, 0], [W, 0, 0], [0, H, 0], [0, 0, Dz], [W, H, 0], [W, 0, Dz], [0, H, Dz], [W, H, Dz]]) {
+    const w = new THREE.Vector3(...g).applyMatrix4(volume.M).toArray(); for (let a = 0; a < 3; a++) { lo[a] = Math.min(lo[a], w[a]); hi[a] = Math.max(hi[a], w[a]); }
+  }
+  if (state.crop && state.site >= 0) { const m = D.sites[state.site].mm; for (let a = 0; a < 3; a++) { lo[a] = Math.max(lo[a], m[a] - CROP_MM); hi[a] = Math.min(hi[a], m[a] + CROP_MM); } }
+  const [u, v] = [0, 1, 2].filter(a => a !== n), q = (su, sv) => { const w = [0, 0, 0]; w[n] = c; w[u] = su; w[v] = sv; return w; };
+  occluder.geometry.setAttribute("position", new THREE.Float32BufferAttribute([...q(lo[u], lo[v]), ...q(hi[u], lo[v]), ...q(hi[u], hi[v]), ...q(lo[u], hi[v])], 3));
+  occluder.geometry.computeBoundingSphere();
+  occluder.visible = on && c >= lo[n] && c <= hi[n];
+  redraw();
 }
 
 function label(text, pos, size = 9, color = "#c7d2dc") {
@@ -538,6 +543,7 @@ uniform int uMode;                                    // 0 no tracts, 1 shells, 
 uniform bvec3 uTOn, uROn; uniform bvec2 uAOnT;
 uniform vec4 uOn[3], uCore[3], uOuter[3], uEnv[3], uAOn[2], uAFace[2], uARim[2];
 uniform vec3 uCol[12], uACol[8];
+uniform sampler3D uB0; uniform mat4 uGridToDwi; uniform vec3 uB0Shape; uniform vec4 uPlane; uniform float uPlaneOn;
 varying vec3 vG;
 vec4 acc; vec3 vdir;
 void comp(vec3 c, float a) { acc.rgb += (1.0 - acc.a) * a * c; acc.a += (1.0 - acc.a) * a; }
@@ -593,6 +599,12 @@ void anat(sampler3D s, int j, vec4 a, vec4 b, vec3 p0, vec3 p1) {
     surface(uACol[4 * j + c], nrm(s, p, c), uAFace[j][c], uARim[j][c], 0.0);
   }
 }
+void slicePlane(vec3 g) {                                                   // A's mean b0 where the ray crosses the plane
+  vec3 d = (uGridToDwi * vec4(g, 1.0)).xyz;                                  // b0 voxel (i, j, k)
+  vec3 dims = uB0Shape.zyx;
+  if (any(lessThan(d, vec3(-0.5))) || any(greaterThan(d, dims - 0.5))) return;
+  comp(vec3(texture(uB0, (d.zyx + 0.5) / uB0Shape).r), 0.85);
+}
 void main() {
   vec3 ro = uCam, rd = normalize(vG - uCam);
   vec3 ir = 1.0 / (rd + vec3(1e-9)), ta = (uBoxLo - ro) * ir, tb = (uBoxHi - ro) * ir, t0 = min(ta, tb), t1 = max(ta, tb);
@@ -611,10 +623,14 @@ void main() {
   vdir = normalize(uM3 * rd);
   acc = vec4(0.0);
   float t = tn + uStep * fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453);
+  float tp = -1.0;                                                           // where the ray crosses the slice plane
+  if (uPlaneOn > 0.5) { float dn = dot(uPlane.xyz, rd); if (abs(dn) > 1e-7) tp = -(dot(uPlane.xyz, ro) + uPlane.w) / dn; }
+  if (tp >= tn && tp < t) slicePlane(ro + rd * tp);
   vec3 p0 = ro + rd * t, u = p0 / uShape;
   vec4 a0 = texture(uT0, u), a1 = texture(uT1, u), a2 = texture(uT2, u), r0 = texture(uR0, u), r1 = texture(uR1, u), r2 = texture(uR2, u);
   vec4 m0 = texture(uA0, u), m1 = texture(uA1, u);
   for (int i = 0; i < 2000; i++) {
+    if (tp >= t && tp < min(t + uStep, tf)) slicePlane(ro + rd * tp);       // in this step, ahead of its surfaces
     t += uStep;
     if (t > tf) break;
     vec3 p1 = ro + rd * t; u = p1 / uShape;
@@ -646,6 +662,7 @@ const U = {
   uOn: { value: [0, 1, 2].map(V4) }, uCore: { value: [0, 1, 2].map(V4) }, uOuter: { value: [0, 1, 2].map(V4) }, uEnv: { value: [0, 1, 2].map(V4) },
   uAOn: { value: [0, 1].map(V4) }, uAFace: { value: [0, 1].map(V4) }, uARim: { value: [0, 1].map(V4) },
   uCol: { value: Array.from({ length: 12 }, V3) }, uACol: { value: Array.from({ length: 8 }, V3) },
+  uB0: { value: null }, uGridToDwi: { value: new THREE.Matrix4() }, uB0Shape: { value: V3() }, uPlane: { value: V4() }, uPlaneOn: { value: 0 },
 };
 D.shown.forEach((t, i) => { const c = new THREE.Color(t.color); U.uCol.value[i].set(c.r, c.g, c.b); });
 ANAT.forEach((a, i) => {
@@ -725,6 +742,11 @@ async function loadStores() {
   const M = new THREE.Matrix4().set(...T.flat()).multiply(F).multiply(lps).multiply(new THREE.Matrix4().makeTranslation(-0.5, -0.5, -0.5));
   Object.assign(volume, { M, inv: M.clone().invert(), dims, N });
   U.uShape.value.set(...dims); U.uInvModel.value.copy(volume.inv);
+  const b0tex = new THREE.DataTexture3D(b0, Z, Y, X);                          // b0 is (i, j, k) with k fastest
+  b0tex.format = THREE.RedFormat; b0tex.type = THREE.UnsignedByteType; b0tex.minFilter = b0tex.magFilter = THREE.LinearFilter;
+  b0tex.unpackAlignment = 1; b0tex.needsUpdate = true;
+  U.uB0.value = b0tex; U.uB0Shape.value.set(Z, Y, X);
+  U.uGridToDwi.value.set(...A.flat()).invert().multiply(M);
   const m3 = new THREE.Matrix3().setFromMatrix4(M);
   U.uM3.value.copy(m3); U.uNormal.value.copy(m3.clone().invert().transpose());
   const box = new THREE.BoxGeometry(...dims); box.translate(dims[0] / 2, dims[1] / 2, dims[2] / 2);
@@ -928,8 +950,8 @@ function apply() {
     for (const l of Object.values(sets)) l.userData.ghost.visible = l.visible && state.solid;
   }
   markers.forEach((m, i) => { m.material.color.set(i === state.site ? 0xffd34d : 0xffffff); m.material.opacity = i === state.site ? 0.95 : 0.35; });
-  plane.visible = state.plane && volume.ready;                              // with the volume, not before it
-  cropBtn.disabled = state.site < 0;
+  updatePlane();                                                            // with the volume, not before it
+  chkCrop.disabled = selFan.disabled = selColor.disabled = chkResc.disabled = state.site < 0;   // site-only controls
   [...selCompare.options].forEach(o => { o.disabled = o.value === "A" && state.source === "single"; });
   selCompare.value = state.compare; selSource.value = state.source; selLevel.value = state.level; selShell.value = state.shell;
   levelNote();
@@ -938,14 +960,13 @@ function apply() {
 }
 function chooseSite(i) {
   state.site = i;
-  document.querySelectorAll(".site").forEach((b, j) => b.setAttribute("aria-pressed", String(j - 1 === i)));   // button 0 is the whole brain
+  selSite.value = i;
   if (i >= 0) {
     buildFans(i);
     const s = D.sites[i];
     for (const t of D.shown) state.on[t.name] = s.tracts.includes(t.name);
     state.point = s.mm.slice();
     syncChips();
-    const zs = document.getElementById("zs"); zs.value = s.voxel[2]; setPlane(s.voxel[2]);
     view("home", new THREE.Vector3(...s.mm), 120);
   } else {
     for (const t of D.shown) state.on[t.name] = t.name in D.focus;
@@ -955,14 +976,11 @@ function chooseSite(i) {
   apply();
 }
 
-// site list
-const sitesEl = document.getElementById("sites");
-const all = document.createElement("button"); all.className = "site"; all.innerHTML = "<b>·</b>Whole brain"; all.onclick = () => chooseSite(-1);
-sitesEl.appendChild(all);                                                      // first: the view a reader knows best
-D.sites.forEach((s, i) => {
-  const b = document.createElement("button"); b.className = "site"; b.innerHTML = `<b>${i + 1}</b>${s.name}`;
-  b.onclick = () => chooseSite(i); sitesEl.appendChild(b);
-});
+// site menu: the whole brain first, the view a reader knows best
+const selSite = document.getElementById("selSite");
+selSite.add(new Option("Whole brain", -1));
+D.sites.forEach((st, i) => selSite.add(new Option(`${i + 1}. ${st.name}`, i)));
+selSite.onchange = () => chooseSite(+selSite.value);
 
 // side panels
 function sitePanel() {
@@ -1065,9 +1083,10 @@ const pick1 = (sel, b) => document.querySelectorAll(sel).forEach(x => x.setAttri
 const selShell = document.getElementById("selShell"), selSource = document.getElementById("selSource");
 const selLevel = document.getElementById("selLevel"), selCompare = document.getElementById("selCompare");
 selShell.onchange = () => { state.shell = selShell.value; apply(); };
-document.querySelectorAll("[data-fan]").forEach(b => b.onclick = () => { state.fan = b.dataset.fan; pick1("[data-fan]", b); apply(); });
+const selFan = document.getElementById("selFan"), selColor = document.getElementById("selColor");
+selFan.onchange = () => { state.fan = selFan.value; apply(); };
+selColor.onchange = () => { state.color = selColor.value; apply(); };
 document.querySelectorAll("[data-core]").forEach(b => b.onclick = () => { state.solid = b.dataset.core === "solid"; pick1("[data-core]", b); apply(); });
-document.querySelectorAll("[data-color]").forEach(b => b.onclick = () => { state.color = b.dataset.color; pick1("[data-color]", b); apply(); });
 selSource.onchange = () => {
   state.source = selSource.value;                                             // the envelope level stays as chosen
   if (state.source === "single" && state.compare === "A") state.compare = D.rescans[D.rescans.length - 1];
@@ -1079,10 +1098,9 @@ selLevel.onchange = () => { state.level = +selLevel.value; apply(); };
 [...D.rescans.slice().reverse(), "A", "none"].forEach(t =>
   selCompare.add(new Option(t === "none" ? "None" : t === "A" ? "This scan's own run" : RESCAN[t] || t, t)));
 selCompare.onchange = () => { state.compare = selCompare.value; apply(); rebuild(); };
-const cropBtn = document.getElementById("crop");
-cropBtn.onclick = () => { state.crop = !state.crop; cropBtn.textContent = state.crop ? "Show whole tracts" : "Crop to the site"; cropBtn.setAttribute("aria-pressed", String(state.crop)); apply(); };
-const rl = document.getElementById("rescanLines");
-rl.onclick = () => { state.rescLines = !state.rescLines; rl.textContent = state.rescLines ? "Hide rescans' versions" : "Show rescans' versions"; rl.setAttribute("aria-pressed", String(state.rescLines)); apply(); };
+const chkCrop = document.getElementById("chkCrop"), chkResc = document.getElementById("chkResc");
+chkCrop.onchange = () => { state.crop = chkCrop.checked; apply(); };
+chkResc.onchange = () => { state.rescLines = chkResc.checked; apply(); };
 const chips = document.getElementById("chips"), chipEls = {};
 D.shown.forEach(t => {
   const b = document.createElement("button"); b.className = "chip"; b.title = t.full;
@@ -1128,8 +1146,6 @@ const br = document.getElementById("brain"); br.onclick = () => { state.brain = 
 document.getElementById("reset").onclick = () => chooseSite(state.site);
 document.getElementById("center").onclick = () => recenter(state.site >= 0 ? new THREE.Vector3(...D.sites[state.site].mm) : center);
 document.querySelectorAll("[data-view]").forEach(b => b.onclick = () => view(b.dataset.view));
-const zs = document.getElementById("zs"); zs.max = Z - 1; zs.oninput = () => { setPlane(+zs.value); pointToPlane(+zs.value); };
-zs.value = Math.round(Z / 2); setPlane(+zs.value);
 const key = document.getElementById("key");
 D.shown.forEach(t => key.insertAdjacentHTML("beforeend", `<div><i class="sw" style="background:${t.color}"></i>${t.name} <span class="muted">${t.full}</span></div>`));
 
@@ -1140,7 +1156,6 @@ const CUTS = { axial: { e1: [-1, 0, 0], e2: [0, -1, 0], n: 2, ends: ["R", "L", "
   sagittal: { e1: [0, -1, 0], e2: [0, 0, -1], n: 0, ends: ["A", "P", "S", "I"], name: "Sagittal", axis: "x" } };
 const invA = new THREE.Matrix4().set(...A.flat()).invert().elements;            // A's DWI world -> b0 voxel
 const dwiIndex = w => [0, 1, 2].map(r => invA[r] * w[0] + invA[4 + r] * w[1] + invA[8 + r] * w[2] + invA[12 + r]);
-function pointToPlane(k) { const ijk = dwiIndex(state.point); state.point = world(ijk[0], ijk[1], k).toArray(); cutDirty = true; }
 let cutWin = null;
 function cutWindow() {
   const c = CUTS[state.cut], P = state.point, dot = (e, v) => e[0] * v[0] + e[1] * v[1] + e[2] * v[2];
@@ -1184,7 +1199,6 @@ cutCanvas.addEventListener("wheel", e => {
 cutSlider.addEventListener("input", () => {
   const n = CUTS[state.cut].n;
   state.point[n] = +cutSlider.value;
-  if (n === 2) { const k = Math.max(0, Math.min(Z - 1, Math.round(dwiIndex(state.point)[2]))); zs.value = k; setPlane(k); }
   cutDirty = true;
 });
 
@@ -1215,7 +1229,7 @@ const voxelOf = w => {                                                          
 };
 const rgb = hex => { const c = new THREE.Color(hex); return [c.r * 255, c.g * 255, c.b * 255]; };
 function drawCut() {
-  syncCutSlider();
+  syncCutSlider(); updatePlane();
   const win = cutWin = cutWindow(), { nw, nh } = win, n = nw * nh;
   const img = new ImageData(nw, nh), px = img.data;
   const on = D.shown.map((t, i) => [t, i]).filter(([t]) => state.on[t.name]);
@@ -1325,8 +1339,7 @@ cutCanvas.addEventListener("mouseleave", () => { hover = null; showReadout(state
 cutCanvas.addEventListener("click", e => {
   const w = cutPoint(e); if (!w) return;
   state.point = w;
-  const k = Math.max(0, Math.min(Z - 1, Math.round(dwiIndex(w)[2])));
-  zs.value = k; setPlane(k); recenter(new THREE.Vector3(...w)); cutDirty = true;
+  recenter(new THREE.Vector3(...w)); cutDirty = true;
 });
 const pick2 = (sel, b) => document.querySelectorAll(sel).forEach(x => x.setAttribute("aria-pressed", String(x === b)));
 document.querySelectorAll("[data-cut]").forEach(b => b.onclick = () => { state.cut = b.dataset.cut; pick2("[data-cut]", b); cutDirty = true; });
