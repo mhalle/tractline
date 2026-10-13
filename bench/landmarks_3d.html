@@ -62,12 +62,15 @@ td.n, th.n { text-align: right; font-family: var(--data); font-variant-numeric: 
 <div class="wrap">
   <header>
     <h1>cIIIs04 tract landmarks</h1>
-    <p class="lede">A healthy adult (MASiVar cohort III, subject 04). The tractography pipeline ran 17 times on one scan: once as acquired and
-      16 times on copies with its noise drawn again. The same subject was scanned three more times, once in the same session and once
-      in each of two later sessions. Shells show how much of a tract the 17 runs agree on. Dots show where a real rescan put the tract
-      outside the ensemble's 80% envelope. Fans show single streamlines at landmark sites, drawn from all 17 runs and from the rescans.</p>
-    <p class="notice"><strong>Research prototype.</strong> This shows how reproducible the pipeline's output is, not where the fibers
-      truly run. The sites are found from the tracts themselves (no T1 or atlas), so their anatomical names are approximate.</p>
+    <p class="lede">A healthy adult (MASiVar cohort III, subject 04), focused on three tracts used in surgical planning: the
+      corticospinal tract, the arcuate fasciculus and the uncinate fasciculus. The tractography pipeline ran 17 times on one scan: once
+      as acquired and 16 times on copies with its noise drawn again. The same subject was scanned three more times. Shells show how much
+      of a tract the 17 runs agree on; dots show where a real repeat scan put the tract outside the 80% envelope; fans show single
+      streamlines drawn from all 17 runs and the repeat scans. Brain anatomy from FastSurfer, a segmentation of the subject's T1 image,
+      is drawn beside the tracts and used to check where each streamline ends.</p>
+    <p class="notice"><strong>Research prototype.</strong> This shows how reproducible the pipeline's output is, and a rough check of
+      its streamlines' ends against automated anatomy labels, not where the fibers truly run. The internal-capsule sites come from the
+      FastSurfer anatomy; the other sites were placed from the tracts themselves, so their names are approximate. Not for clinical use.</p>
   </header>
 
   <div class="main">
@@ -95,12 +98,14 @@ td.n, th.n { text-align: right; font-family: var(--data); font-variant-numeric: 
           <div class="seg" role="group" aria-label="Color each version by">
             <button data-color="tract" aria-pressed="true">Color: tract</button>
             <button data-color="up" aria-pressed="false">Color: runner-up</button>
+            <button data-color="check" aria-pressed="false">Color: endpoint check</button>
           </div>
           <button class="plain" id="rescanLines" aria-pressed="true">Hide rescans' versions</button></div>
         <div class="row"><span class="label">Crop</span>
           <button class="plain" id="crop" aria-pressed="true">Show whole tracts</button>
           <span class="muted" style="font-size:0.85rem">Shells and dots within 30 mm of the site (each axis)</span></div>
         <div class="row"><span class="label">Tracts</span><div class="chips" id="chips"></div></div>
+        <div class="row"><span class="label">Anatomy</span><div class="chips" id="anatChips"></div></div>
         <div class="row"><span class="label">Axial plane</span><input id="zs" type="range" min="0" max="0" step="1" value="0" aria-label="Axial plane position">
           <span id="zout" class="num muted" style="min-width:7ch"></span>
           <button class="plain" id="plane" aria-pressed="true">Hide plane</button>
@@ -116,6 +121,7 @@ td.n, th.n { text-align: right; font-family: var(--data); font-variant-numeric: 
     </section>
 
     <div class="side">
+      <section class="panel" id="focusPanel"></section>
       <section class="panel" id="sitePanel"></section>
       <section class="panel">
         <h2>Reading the view</h2>
@@ -129,6 +135,12 @@ td.n, th.n { text-align: right; font-family: var(--data); font-variant-numeric: 
           scans.</p>
         <p><strong>Fans:</strong> each seed near the site drawn once per run, colored by the tract that run gave it (or by
           that run's second choice), with the rescans' versions in white. Each site's fan colors are listed with the site.</p>
+        <p><strong>Endpoint check:</strong> each run's version of a streamline in
+          <span style="color:#3d9df2;font-weight:700">blue</span> if its two ends fit its bundle's anatomical rule (for example, the CST
+          from sensorimotor or premotor cortex to the brainstem), <span style="color:#ff7a3d;font-weight:700">orange</span> if not,
+          gray if its bundle has no rule. The rules are a first pass, not checked by an anatomist.</p>
+        <p><strong>Anatomy:</strong> FastSurfer's labels on the subject's T1, aligned to the diffusion scan. Surfaces are smoothed
+          outlines of the labeled structures; they are cropped with the shells.</p>
         <h2 style="margin-top:10px">Shell colors</h2>
         <div class="key" id="key"></div>
       </section>
@@ -189,9 +201,23 @@ for (const m of D.meshes) {
   else (shells[m.name] = shells[m.name] || {})[m.kind] = mesh;
 }
 
+// FastSurfer's anatomy: one translucent surface per structure group, cropped with the shells
+const anatMeshes = {};
+for (const m of D.anatomy) {
+  const v = i16(m.v), pos = new Float32Array(v.length);
+  for (let i = 0; i < v.length; i++) pos[i] = v[i] / 10;
+  const fb = bytes(m.f), idx = m.f16 ? new Uint16Array(fb.buffer, fb.byteOffset, fb.byteLength / 2) : new Uint32Array(fb.buffer, fb.byteOffset, fb.byteLength / 4);
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.BufferAttribute(pos, 3)); g.setIndex(new THREE.BufferAttribute(idx, 1)); g.computeVertexNormals();
+  const mesh = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ color: m.color, roughness: 0.9, metalness: 0, transparent: true,
+    opacity: 0.28, depthWrite: false, side: THREE.DoubleSide, clippingPlanes: clip }));
+  mesh.renderOrder = 1; mesh.visible = false; scene.add(mesh); anatMeshes[m.name] = mesh;
+}
+
 // colors
 const palette = Object.fromEntries(D.shown.map(t => [D.tract_names.indexOf(t.name), t.color]));
 const OTHER_NAMED = "#7d8994", OTHER = "#454e56", RESCAN_COLOR = "#ffffff";
+const CHECK_COLORS = ["#ff7a3d", "#3d9df2", "#59636c"];          // inconsistent, consistent, not scored
 const EXTRA = ["#e8453c", "#3d8bfd", "#f59f00", "#20c997", "#be4bdb", "#fd7e14", "#94d82d", "#4dd4f0"];
 const siteColors = {};                 // per site: the shell tracts' colors, and EXTRA for the other tracts its fans use most
 function colorsFor(si) {
@@ -233,15 +259,17 @@ function buildFans(si) {
   if (fanCache[si]) return fanCache[si];
   const out = {};
   for (const [kind, f] of Object.entries(D.fans[si])) {
-    const p = i16(f.p), sets = { tract: [[], []], up: [[], []], resc: [[], []] };
+    const p = i16(f.p), sets = { tract: [[], []], up: [[], []], check: [[], []], resc: [[], []] };
     let o = 0;
     for (let s = 0; s < f.n; s++) {
       const n = f.len[s], isResc = f.src[s] >= D.runs;
       const ct = new THREE.Color(isResc ? RESCAN_COLOR : tractColor(f.tract[s], si)), cu = new THREE.Color(isResc ? RESCAN_COLOR : tractColor(f.up[s], si));
+      const cc = new THREE.Color(CHECK_COLORS[f.ok[s]]);
       for (let k = 0; k < n - 1; k++) {
         const a = (o + k) * 3, b = (o + k + 1) * 3, seg = [p[a] / 10, p[a + 1] / 10, p[a + 2] / 10, p[b] / 10, p[b + 1] / 10, p[b + 2] / 10];
         if (isResc) { sets.resc[0].push(...seg); sets.resc[1].push(1, 1, 1, 1, 1, 1); }
-        else { sets.tract[0].push(...seg); sets.tract[1].push(ct.r, ct.g, ct.b, ct.r, ct.g, ct.b); sets.up[0].push(...seg); sets.up[1].push(cu.r, cu.g, cu.b, cu.r, cu.g, cu.b); }
+        else { sets.tract[0].push(...seg); sets.tract[1].push(ct.r, ct.g, ct.b, ct.r, ct.g, ct.b); sets.up[0].push(...seg); sets.up[1].push(cu.r, cu.g, cu.b, cu.r, cu.g, cu.b);
+          sets.check[0].push(...seg); sets.check[1].push(cc.r, cc.g, cc.b, cc.r, cc.g, cc.b); }
       }
       o += n;
     }
@@ -312,17 +340,20 @@ function recenter(p) { const shift = p.clone().sub(controls.target); controls.ta
 
 // state
 const state = { site: -1, crop: true, shell: "mid", rescan: D.rescans[D.rescans.length - 1], fan: "split", color: "tract", rescLines: true,
-  on: Object.fromEntries(D.shown.map(t => [t.name, true])), plane: true, brain: true };
+  on: Object.fromEntries(D.shown.map(t => [t.name, t.name in D.focus])), plane: true, brain: true,
+  anat: Object.fromEntries(D.anatomy.map(a => [a.name, a.on])) };
 function apply() {
   for (const [name, s] of Object.entries(shells)) for (const [kind, mesh] of Object.entries(s))
     mesh.visible = state.on[name] && state.shell !== "none" && (state.shell === "second" ? kind === "second" : (kind === "core" || kind === state.shell));
   for (const [tag, per] of Object.entries(dots)) for (const [name, p] of Object.entries(per)) p.visible = tag === state.rescan && state.on[name];
   for (const [si, kinds] of Object.entries(fanCache)) for (const [kind, sets] of Object.entries(kinds)) {
     const here = +si === state.site && kind === state.fan;
-    sets.tract.visible = here && state.color === "tract"; sets.up.visible = here && state.color === "up"; sets.resc.visible = here && state.rescLines;
+    sets.tract.visible = here && state.color === "tract"; sets.up.visible = here && state.color === "up";
+    sets.check.visible = here && state.color === "check"; sets.resc.visible = here && state.rescLines;
   }
   markers.forEach((m, i) => m.material.color.set(i === state.site ? 0xffd34d : 0xffffff));
   plane.visible = state.plane; brainMeshes.forEach(m => m.visible = state.brain);
+  for (const [name, m] of Object.entries(anatMeshes)) m.visible = state.anat[name];
   setCrop(state.crop && state.site >= 0 ? D.sites[state.site].mm : null);
   cropBtn.disabled = state.site < 0;
   sitePanel();
@@ -338,7 +369,7 @@ function chooseSite(i) {
     const zs = document.getElementById("zs"); zs.value = s.voxel[2]; setPlane(s.voxel[2]);
     view("home", new THREE.Vector3(...s.mm), 120);
   } else {
-    for (const t of D.shown) state.on[t.name] = true;
+    for (const t of D.shown) state.on[t.name] = t.name in D.focus;
     syncChips(); view("home", center, 260);
   }
   apply();
@@ -445,6 +476,33 @@ D.shown.forEach(t => {
   chips.appendChild(b); chipEls[t.name] = b;
 });
 function syncChips() { for (const t of D.shown) chipEls[t.name].setAttribute("aria-pressed", String(state.on[t.name])); }
+D.shown.forEach(t => { if (!(t.name in D.focus)) chipEls[t.name].title = t.full + " (more tracts)"; });
+const anatChips = document.getElementById("anatChips");
+D.anatomy.forEach(a => {
+  const b = document.createElement("button"); b.className = "chip"; b.title = a.note; b.setAttribute("aria-pressed", String(a.on));
+  b.innerHTML = `<i class="sw" style="background:${a.color}"></i>${a.name}`;
+  b.onclick = () => { state.anat[a.name] = !state.anat[a.name]; b.setAttribute("aria-pressed", String(state.anat[a.name])); apply(); };
+  anatChips.appendChild(b);
+});
+(function focusPanel() {
+  const names = Object.keys(D.focus), F = D.focus, tags = D.rescans;
+  const head = names.map(n => `<th class="n">${n}</th>`).join("");
+  const row = (label, f) => `<tr><td>${label}</td>${names.map(n => `<td class="n">${f(F[n], n)}</td>`).join("")}</tr>`;
+  const goes = n => Object.entries(F[n][`${tags[tags.length - 1]}: changed to (top 3)`]).slice(0, 2)
+    .map(([t, x]) => `${t} ${pct(x)}`).join(", ");
+  document.getElementById("focusPanel").innerHTML = `<h2>The three focus tracts</h2>
+    <p class="muted">${names.map(n => `${n} = ${D.full[n]}`).join("; ")}.</p>
+    <div class="tbl"><table><thead><tr><th></th>${head}</tr></thead><tbody>
+      ${row("Streamlines named so in the reference run", f => f["A's streamlines (labeled in all 17 runs)"])}
+      ${row("Predicted: the runs' share keeping the name", f => pct(f["stated: the runs' share giving it"]))}
+      ${tags.map(t => row(`Kept on the ${RESCAN[t] ? RESCAN[t].toLowerCase() : t} repeat scan`, f => pct(f[`${t}: keeps it`]))).join("")}
+      ${row("Changed names go to (session 5)", (f, n) => `<span style="font-family:var(--ui);font-size:0.78rem">${goes(n)}</span>`)}
+      ${row("80% outline holds the repeat scan's bundle (session 5)", f => pct(f.outline[`${tags[tags.length - 1]}: rescan voxels inside the 80 % envelope`]))}
+      ${row("Ends fit the bundle's anatomical rule", f => pct(f["endpoints consistent"]))}
+    </tbody></table></div>
+    <p class="muted">Single streamlines' names are least stable for the corticospinal tract: most changes go to Other, the class
+      for streamlines given no name. Its territory is steadier: the 80% outline holds most of a repeat scan's bundle.</p>`;
+})();
 const pl = document.getElementById("plane"); pl.onclick = () => { state.plane = !state.plane; pl.textContent = state.plane ? "Hide plane" : "Show plane"; pl.setAttribute("aria-pressed", String(state.plane)); apply(); };
 const br = document.getElementById("brain"); br.onclick = () => { state.brain = !state.brain; br.textContent = state.brain ? "Hide outline" : "Show outline"; br.setAttribute("aria-pressed", String(state.brain)); apply(); };
 document.getElementById("reset").onclick = () => chooseSite(state.site);

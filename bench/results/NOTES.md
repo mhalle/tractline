@@ -3446,3 +3446,42 @@ Caveats:
 - One healthy subject and one patient.
 - PAT16 uses 20-point paths, and its labels near the tumor are unchecked.
 - The runner-up and rank information in FastSurfer's store is not used yet.
+
+## 2026-10-13 The cIIIs04 viewer refocused on the CST, AF and UF, with FastSurfer's anatomy
+
+A clinical collaborator suggested focusing on the corticospinal tract, arcuate fasciculus and uncinate fasciculus.
+`ensemble_landmarks.py` and `ensemble_landmarks_3d.py` were rerun; the viewer's link is unchanged
+(https://claude.ai/artifact/WnTmmSCx5hTrvDe1m9C67m).
+
+**What changed.**
+- **Tracts:** the three are drawn by default; the others are listed but off.
+- **New sites:** the posterior limb of the internal capsule, left and right, from FastSurfer. Each is the white-matter
+  voxel within 5 mm of both the thalamus and the lentiform nucleus that lies nearest the centroid of all such voxels.
+  - They land at (−10, 17, 41) and (22, 16, 40) mm, between each thalamus and lentiform nucleus and behind the
+    thalamus's front.
+  - They replace the tract-defined "CST alone" sites. The other sites are unchanged.
+- **Anatomy surfaces:** FastSurfer's sensorimotor cortex, language cortex, orbitofrontal cortex, thalamus, lentiform
+  nucleus, brainstem and lateral ventricles. They are carried onto the DWI by the T1-to-DWI transform and cropped with
+  the shells.
+- **Endpoint coloring:** each fan version can be colored by the endpoint check (ensemble_endpoints.py's rules): 1,584
+  consistent, 517 not, 1,369 unscored.
+- **Focus panel:** per tract, as in the table below.
+
+**The focus tracts** (`focus tracts` in ensemble_landmarks_smooth.json; A's streamlines named so, among seeds labeled
+in all 17 runs):
+
+| | CST | AF | UF |
+|---|---|---|---|
+| streamlines | 443 | 646 | 426 |
+| stated (the runs' share giving it) | 0.40 | 0.74 | 0.59 |
+| a fresh run keeps it | 0.36 | 0.73 | 0.56 |
+| rescan keeps it: same session / s3 / s5 | 0.27 / 0.30 / 0.33 | 0.67 / 0.63 / 0.57 | 0.47 / 0.51 / 0.40 |
+| changed names go to (s5) | Other 75 %, TF 5 % | Other 60 %, Sup-PT 9 % | Other 83 %, SF 5 % |
+| 80 % outline holds the rescan's bundle (s5) | 0.85 | 0.86 | 0.90 |
+| ends consistent with the rule | 0.76 | 0.94 | 0.78 |
+
+- **The CST's name is the least stable of the three per streamline,** though the collaborator expects it to be the
+  most reliable. Three quarters of the changes go to Other. The ensemble's own statement (0.40) already flags this.
+- **Its territory is steady:** the 80 % outline holds 85 % of a rescan's CST.
+- So for the CST, voxel-level outlines answer the clinical question better than streamline names. The likely cause is
+  the labeler sorting corticospinal streamlines between CST and Other; it has not been checked.

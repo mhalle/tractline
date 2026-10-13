@@ -4,7 +4,7 @@
     uv run --group rankfield bench/ensemble_landmarks.py [--pair cIIIs04-2.1] [--fans 16]
 
 From ensemble_retest.py's compact records of the pair (no pipeline runs): A's 17-run ensemble (A, smooth/r001..r016)
-and the three rescans' single runs on A's grid (<tag>_onA). Without a T1, the sites are found in the ensemble itself,
+and the three rescans' single runs on A's grid (<tag>_onA). Most sites are found in the ensemble itself,
 on its presence shares P(v, k) (the share of runs with at least MIN_COUNT streamlines of tract k in voxel v,
 smoothed by a Gaussian of sigma 1 voxel; the genu and splenium on mean counts):
   - centrum semiovale, left and right: corticospinal, callosal (CC3-CC5) and superior longitudinal (SLF-II, SLF-III,
@@ -12,8 +12,10 @@ smoothed by a Gaussian of sigma 1 voxel; the genu and splenium on mean counts):
   - temporal stem, left and right: the most posterior voxel where the uncinate and inferior occipito-frontal
     fasciculi are both present (smoothed P at least 0.6): their shared course runs forward from where they leave the
     temporal lobe (the best overlap alone falls in the frontal lobe);
-  - the corticospinal tract alone, left and right: the tract present and every other named tract least (P minus the
-    largest other P);
+  - the posterior limb of the internal capsule, left and right, from FastSurfer's anatomy (ensemble_endpoints.py; the
+    T1 registered to the DWI): the cerebral white matter within PLIC_MM of both the thalamus and the lentiform nucleus
+    (putamen, pallidum), and of that set the voxel nearest its centroid, carried onto the DWI grid. Where the
+    corticospinal tract should pass, found without the tracts;
   - the genu (CC1) and splenium (CC7) of the corpus callosum: the tract's densest voxel (mean streamline count)
     within 3 mm of the midline.
 At each site:
@@ -52,7 +54,9 @@ OTHER = NAMED
 NEAR_MM = 4.0
 ONEHOT = np.eye(E.N_TRACTS, dtype=np.float32)[LUT]                  # (1600, 43)
 T = TRACT_NAMES.index
-SHOWN = ("CST", "CC1", "CC4", "CC7", "AF", "SLF-II", "IOFF", "UF", "ILF")   # the tracts the sites are about
+FOCUS = ("CST", "AF", "UF")       # the clinical focus (the collaborator's suggestion: the most reliable for planning)
+SHOWN = FOCUS + ("SLF-II", "IOFF", "ILF", "CC4", "CC1", "CC7")   # the tracts drawn; the focus first
+PLIC_MM = 5.0
 ENVELOPE_80 = 0.925               # the stated level that held 0.8 of cIIIs04's rescan tracts, fitted on the other pairs
                                   # (ensemble_coverage_smooth_presence2_with_cIIIs04.json, leave one pair out)
 
@@ -86,15 +90,12 @@ def sites(Ps, mean, aff, shape, mid_x):
     xw, yw = w[0], w[1]
     side = {"left": xw < mid_x - 6, "right": xw > mid_x + 6, "midline": np.abs(xw - mid_x) <= 3}
     dens = lambda k: gaussian_filter(mean[k].reshape(shape), 1.0)  # noqa: E731
-    alone = lambda k: Ps[k] - np.delete(Ps, k, 0).max(0)             # noqa: E731
     cc_body = Ps[[T("CC3"), T("CC4"), T("CC5")]].max(0)
     slf = Ps[[T("SLF-II"), T("SLF-III"), T("AF")]].max(0)
     defs = [("centrum semiovale", "corticospinal, callosal (CC3-CC5) and superior longitudinal fibers all present",
              np.minimum(np.minimum(Ps[T("CST")], cc_body), slf), ("left", "right"), ("CST", "CC4", "SLF-II", "AF")),
             ("temporal stem", "the most posterior point where the uncinate and inferior occipito-frontal fasciculi are both present",
              np.where(np.minimum(Ps[T("UF")], Ps[T("IOFF")]) >= 0.6, -yw, -np.inf), ("left", "right"), ("UF", "IOFF", "ILF")),
-            ("corticospinal tract alone", "the corticospinal tract present, every other named tract least",
-             alone(T("CST")), ("left", "right"), ("CST",)),
             ("genu of the corpus callosum", "CC1 densest at the midline", dens(T("CC1")), ("midline",), ("CC1",)),
             ("splenium of the corpus callosum", "CC7 densest at the midline", dens(T("CC7")), ("midline",), ("CC7",))]
     out = []
@@ -106,6 +107,30 @@ def sites(Ps, mean, aff, shape, mid_x):
             label = name if s == "midline" else f"{name}, {s}"
             out.append({"name": label, "defined by": what, "score": round(float(v[ijk]), 3), "voxel": [int(c) for c in ijk],
                         "mm": [round(float(c), 1) for c in aff[:3, :3] @ np.array(ijk) + aff[:3, 3]], "tracts": list(tracts)})
+    return out
+
+
+def plic_sites(aff):
+    """The posterior limb of the internal capsule, left and right, from FastSurfer's labels on the T1."""
+    from scipy.ndimage import distance_transform_edt
+    from ensemble_endpoints import Anatomy, FS
+    anat = Anatomy("cIIIs04")
+    T1 = np.load(FS / "cIIIs04_t1_to_dwi.npz")["t1_to_dwi"]
+    vox = np.sqrt((anat.affine[:3, :3] ** 2).sum(0))
+    out = []
+    for side, (wm, thal, lent) in {"left": (2, 10, (12, 13)), "right": (41, 49, (51, 52))}.items():
+        dt = distance_transform_edt(anat.lab != thal, sampling=vox)
+        dl = distance_transform_edt(~np.isin(anat.lab, lent), sampling=vox)
+        ijk = np.argwhere((anat.lab == wm) & (dt <= PLIC_MM) & (dl <= PLIC_MM))
+        w = ijk @ anat.affine[:3, :3].T + anat.affine[:3, 3]
+        pick = w[np.argmin(((w - w.mean(0)) ** 2).sum(1))]
+        mm = T1[:3, :3] @ pick + T1[:3, 3]
+        v = np.rint(np.linalg.inv(aff)[:3, :3] @ mm + np.linalg.inv(aff)[:3, 3]).astype(int)
+        out.append({"name": f"posterior limb of the internal capsule, {side}",
+                    "defined by": f"FastSurfer: white matter within {PLIC_MM:g} mm of both the thalamus and the lentiform nucleus "
+                                  f"({len(ijk)} voxels at 1 mm), the one nearest their centroid",
+                    "score": None, "voxel": [int(c) for c in v], "mm": [round(float(c), 1) for c in aff[:3, :3] @ v + aff[:3, 3]],
+                    "tracts": ["CST"]})
     return out
 
 
@@ -152,7 +177,7 @@ def main(args):
     mask = np.load(d / "A_mask.npy")
     mid_x = float((np.argwhere(mask) @ aff[:3, :3].T + aff[:3, 3])[:, 0].mean())
     Ps = np.stack([gaussian_filter(P[k].reshape(shape), 1.0) for k in range(NAMED)])
-    S = sites(Ps, mean, aff, shape, mid_x)
+    S = plic_sites(aff) + sites(Ps, mean, aff, shape, mid_x)
     del Ps
 
     # seeds labeled in all 17 runs; their tracts (m, 17)
@@ -304,8 +329,26 @@ def main(args):
             row[f"{tag}: inside the widest"] = round(float((pr & (votes[k] > 0)).sum() / max(pr.sum(), 1)), 3)
         env[name] = row
 
+    # the focus tracts: how A's streamlines of each fare on a fresh run and on each rescan, and where changed ones go
+    focus = {}
+    for name in FOCUS:
+        k = T(name)
+        m = tr[:, 0] == k
+        row = {"A's streamlines (labeled in all 17 runs)": int(m.sum()),
+               "stated: the runs' share giving it": round(float((tr[m] == k).mean()), 3),
+               "a fresh run keeps it (the 16 others)": round(float((tr[m, 1:] == k).mean()), 3)}
+        for tag, R in resc.items():
+            rt = R["tract"][m]
+            ok = rt >= 0
+            row[f"{tag}: keeps it"] = round(float((rt[ok] == k).mean()), 3)
+            gone = rt[ok & (rt != k)]
+            row[f"{tag}: changed to (top 3)"] = {TRACT_NAMES[c]: round(float(n / max(len(gone), 1)), 2)
+                                                for c, n in sorted(zip(*np.unique(gone, return_counts=True)), key=lambda x: -x[1])[:3]}
+        focus[name] = row
+    print(json.dumps(focus), flush=True)
+
     res = {"pair": args.pair, "runs": RUNS, "min_count": MIN_COUNT, "near_mm": NEAR_MM, "midline x (mm)": round(mid_x, 1),
-           "whole brain": brain, "sites": S, f"envelopes (80 % = stated {ENVELOPE_80})": env}
+           "whole brain": brain, "focus tracts": focus, "sites": S, f"envelopes (80 % = stated {ENVELOPE_80})": env}
     (HERE / "results/ensemble_landmarks_smooth.json").write_text(json.dumps(res, indent=1))
     sh = [T(n) for n in SHOWN]
     np.savez_compressed(d / "landmarks.npz", votes=votes[sh].reshape(len(sh), *shape), shown=np.array(SHOWN),
