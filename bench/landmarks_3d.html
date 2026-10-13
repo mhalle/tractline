@@ -738,7 +738,7 @@ async function loadStores() {
 
 // the ensemble the shells come from: this scan's runs, or the other three scans' runs (leaving out the compared scan)
 const classIndex = name => root.classes.indexOf(name);
-const ens_ = { key: null, runs: 0, scale: 1, votes: [], th: [], core: 0 };
+const ens_ = { key: null, runs: 0, scale: 1, votes: [], th: [], core: 0, ready: false };   // ready: no rebuild under way
 const cmp = { key: null, hist: [], total: [], runs: [] };
 function poolScans() {
   const scans = D.stores.ensemble.scans;
@@ -749,46 +749,47 @@ function rebuild() { building = building.then(rebuildNow).catch(fail); return bu
 async function rebuildNow() {
   if (!volume.ready) return;
   const pool = poolScans(), key = pool.join("+"), dims = volume.dims, N = volume.N;
+  ens_.ready = false;                                                       // the cross-section waits until both are swapped in
   if (ens_.key !== key) {
-    const runs = D.runs * pool.length, scale = Math.floor(255 / runs);
+    const runs = D.runs * pool.length, scale = Math.floor(255 / runs), votes = [], th = [];
     volume.tracts.forEach(t => t.fill(0));
-    ens_.votes = []; ens_.th = [];
     for (let i = 0; i < D.shown.length; i++) {
       const name = D.shown[i].name, k = classIndex(name);
       status(`Reading ${name} from ${pool.length > 1 ? `${pool.length} scans` : "the store"}…`); await tick();
       const v = new Uint8Array(N);
       for (const s of pool) { const c = ens.chunk(`ensembles/${s}/votes`, [k, 0, 0, 0]); for (let j = 0; j < N; j++) v[j] += c[j]; }
-      ens_.votes.push(v); ens_.th.push(thresholds(v, runs));
+      votes.push(v); th.push(thresholds(v, runs));
       if (pool.length === 1) {                                              // the page's envelope rule against the store's own
         const st = ens.duckn(`ensembles/${pool[0]}/votes`).extensions.tractline.envelope_votes[name];
-        if (st && st.join() !== ens_.th[i].join()) console.warn(`${name}: envelope votes ${ens_.th[i]} here, ${st} in the store`);
+        if (st && st.join() !== th[i].join()) console.warn(`${name}: envelope votes ${th[i]} here, ${st} in the store`);
       }
       volume.bbox[`t${i}`] = blurInto(v, dims, SMOOTH_TRACT, scale, volume.tracts[i >> 2], i & 3);
     }
-    Object.assign(ens_, { key, runs, scale, core: Math.ceil(runs / 2) });
+    Object.assign(ens_, { key, runs, scale, votes, th, core: Math.ceil(runs / 2) });
     [U.uT0, U.uT1, U.uT2].forEach(u => { u.value.needsUpdate = true; });
     cmp.key = null;
   }
   const ckey = state.compare === "none" ? "none" : `${state.compare} vs ${key}`;
   if (cmp.key !== ckey) {
     volume.resc.forEach(t => t.fill(0));
-    cmp.hist = []; cmp.total = []; cmp.runs = [];
+    const hist = [], total = [], runs = [];
     if (state.compare !== "none") for (let i = 0; i < D.shown.length; i++) {
       const name = D.shown[i].name;
       status(`Reading ${RESCAN[state.compare].toLowerCase()}'s own run: ${name}…`); await tick();
       const run = ens.chunk(`ensembles/${state.compare}/run`, [classIndex(name), 0, 0, 0]), v = ens_.votes[i];
       const h = new Float64Array(ens_.runs + 1); let n = 0;
       for (let j = 0; j < N; j++) if (run[j]) { h[v[j]]++; n++; }
-      cmp.hist.push(h); cmp.total.push(n); cmp.runs.push(run);
+      hist.push(h); total.push(n); runs.push(run);
       volume.bbox[`r${i}`] = blurInto(run, dims, SMOOTH_TRACT, 255, volume.resc[i >> 2], i & 3);
     }
-    cmp.key = ckey;
+    Object.assign(cmp, { key: ckey, hist, total, runs });
     [U.uR0, U.uR1, U.uR2].forEach(u => { u.value.needsUpdate = true; });
   }
+  ens_.ready = true;
   status("");
   apply();
 }
-function fail(e) { console.error(e); status(`Could not draw the volume: ${e.message}`); }
+function fail(e) { console.error(e); ens_.ready = !!ens_.votes.length; status(`Could not draw the volume: ${e.message}`); }
 // share of the compared scan's tract voxels with at least `t` votes
 const held = (i, t) => { const h = cmp.hist[i]; if (!h || t == null) return null; let s = 0; for (let v = t; v < h.length; v++) s += h[v]; return cmp.total[i] ? s / cmp.total[i] : null; };
 const level = t => (t - 0.5) * ens_.scale / 255;                            // a vote count's surface, in texture units
@@ -1230,7 +1231,7 @@ function drawCut() {
   showReadout(hover || P);
 }
 function showReadout(w) {
-  if (!volume.ready || !ens_.votes.length) { readoutEl.innerHTML = ""; return; }
+  if (!volume.ready || !ens_.ready) { readoutEl.innerHTML = ""; return; }
   const idx = voxelOf(w), ras = ["R", "A", "S"].map((pos, a) => `${w[a] >= 0 ? pos : "LPI"[a]} ${Math.abs(w[a]).toFixed(0)}`).join(" · ");
   const code = idx >= 0 ? volume.codes[idx] : 0, lab = code ? volume.labels[code - 1] : null;
   const where = lab == null ? "outside the labels" : lab === 0 ? "background" : (volume.names.get(lab) || `label ${lab}`);
@@ -1293,9 +1294,11 @@ chooseSite(0);
 (function loop() {
   controls.update();
   const moving = performance.now() - moved < 160;
-  if (dirty || (!moving && !sharp)) { render(moving ? COARSE : FINE); sharp = !moving; dirty = false; }
-  if (cutDirty && volume.ready && ens_.votes.length) { cutDirty = false; drawCut(); }
-  requestAnimationFrame(loop);
+  requestAnimationFrame(loop);                                                // first, so an error below cannot stop the loop
+  try {
+    if (dirty || (!moving && !sharp)) { render(moving ? COARSE : FINE); sharp = !moving; dirty = false; }
+    if (cutDirty && volume.ready && ens_.ready) { cutDirty = false; drawCut(); }
+  } catch (e) { dirty = cutDirty = false; fail(e); }
 })();
 loadStores().catch(fail);
 </script>
