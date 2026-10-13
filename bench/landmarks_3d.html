@@ -236,7 +236,7 @@ td.n, th.n { text-align: right; font-family: var(--data); font-variant-numeric: 
         <p><strong>Cross-section:</strong> a plane through the point, in the radiological convention: the patient's right is on the
           screen's left (axial and coronal), anterior on the left (sagittal). Light fill: the envelope; strong fill: the core; lines:
           their edges; hatching: the compared scan's tract outside the envelope; thin colored lines: the anatomy shown in 3D. It uses the
-          same tracts, levels and ensemble as the 3D view. Click to move the point (the axial plane and the 3D pivot follow); hover
+          same tracts, levels and ensemble as the 3D view. Click to move the point (the axial plane and the 3D pivot follow); scroll over it to step the slice (1 mm, 5 mm with Shift); hover
           for the values under the cursor. Its "runs present" are raw counts in that 1 mm voxel, before the 0.6 mm smoothing the drawn
           edges use.</p>
         <p><strong>Anatomy:</strong> FastSurfer's most likely label per voxel, on the same 1 mm grid as the shells, aligned to the
@@ -1170,6 +1170,17 @@ function syncCutSlider() {
   cutLabel.textContent = { 0: "Left–right", 1: "Back–front", 2: "Down–up" }[n];
   cutOut.textContent = mmName(n, state.point[n]);
 }
+// the wheel over the slice steps it like the slider: 1 mm a notch (5 mm with Shift); trackpad deltas add up to a notch
+let wheelAcc = 0;
+cutCanvas.addEventListener("wheel", e => {
+  e.preventDefault();
+  wheelAcc += e.deltaY * (e.deltaMode === 1 ? 33 : e.deltaMode === 2 ? 800 : 1);   // lines or pages to pixels
+  const notches = Math.trunc(wheelAcc / 100);                                 // a mouse notch is about 100 px
+  if (!notches) return;
+  wheelAcc -= notches * 100;
+  const v = Math.max(+cutSlider.min, Math.min(+cutSlider.max, +cutSlider.value - notches * (e.shiftKey ? 5 : 1)));
+  cutSlider.value = v; cutSlider.dispatchEvent(new Event("input"));
+}, { passive: false });
 cutSlider.addEventListener("input", () => {
   const n = CUTS[state.cut].n;
   state.point[n] = +cutSlider.value;
