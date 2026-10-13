@@ -132,7 +132,7 @@ td.n, th.n { text-align: right; font-family: var(--data); font-variant-numeric: 
         <span class="held" id="levelShort"></span></div>
       <div class="tool"><span class="tl">Shells</span>
         <select id="selShell" aria-label="Which shells to show">
-          <option value="core">Core only</option><option value="mid" selected>Core + envelope</option><option value="outer">Core + widest</option>
+          <option value="core">Core only</option><option value="mid" selected>Core + envelope</option>
           <option value="cloud">Cloud (share of runs)</option><option value="none">None</option></select></div>
       <div class="tool"><span class="tl">Compare with</span>
         <select id="selCompare" aria-label="Which scan's own run to compare with the envelope"></select></div>
@@ -220,7 +220,7 @@ td.n, th.n { text-align: right; font-family: var(--data); font-variant-numeric: 
           tract on average (the Vorob'ev expectation; about 8 of 17 runs). Against a repeat scan it is the right size, where a
           majority vote (9 of 17) came out 5-9% too small, and it matches as well. <strong>Envelope:</strong> the voxels
           with the most runs agreeing, down to the count where they hold the stated share of all the runs' presence.
-          <strong>Widest:</strong> any run. <strong>Cloud:</strong> opacity follows the share of runs with the tract present.</p>
+          At 100% the envelope is the <strong>widest</strong> shell: any run. <strong>Cloud:</strong> opacity follows the share of runs with the tract present.</p>
         <p><strong>Stated and held:</strong> a stated level is not a promise. The note under Envelope gives how much of another scan's
           tract each level held when each of this subject's four scans was left out in turn.</p>
         <p><strong>X-ray surfaces:</strong> every surface is nearly clear where it faces you and solid at its edges, so nested
@@ -265,7 +265,7 @@ const i16 = s => { const b = bytes(s); return new Int16Array(b.buffer, b.byteOff
 const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const pct = x => x == null ? "–" : `${Math.round(x * 100)}%`;
 const RESCAN = { within: "Same session", session3: "Session 3", session5: "Session 5", A: "This scan" };
-const LEVELS = [0.5, 0.8, 0.9, 0.925, 0.95];
+const LEVELS = [0.5, 0.8, 0.9, 0.925, 0.95, 1];                          // 100 %: the widest shell (any run)
 const SMOOTH_TRACT = 0.6, SMOOTH_ANAT = 0.7, SMOOTH_BRAIN = 1.5;          // Gaussian sigma, voxels (1 mm)
 const loadingEl = document.getElementById("loading");
 const status = t => { loadingEl.hidden = !t; if (t) loadingEl.textContent = t; };
@@ -831,7 +831,7 @@ async function rebuildNow() {
       votes.push(v); th.push(thresholds(v, runs)); cores.push(vorobev(v, runs));
       if (pool.length === 1) {                                              // the page's envelope rule against the store's own
         const st = ens.duckn(`ensembles/${pool[0]}/votes`).extensions.tractline.envelope_votes[name];
-        if (st && st.join() !== th[i].join()) console.warn(`${name}: envelope votes ${th[i]} here, ${st} in the store`);
+        if (st && st.join() !== th[i].slice(0, st.length).join()) console.warn(`${name}: envelope votes ${th[i]} here, ${st} in the store`);
       }
       volume.bbox[`t${i}`] = blurInto(v, dims, SMOOTH_TRACT, scale, volume.tracts[i >> 2], i & 3);
     }
@@ -930,7 +930,7 @@ function apply() {
     const shells = state.shell !== "none";
     U.uMode.value = !shells ? 0 : state.shell === "cloud" ? 2 : 1;
     U.uSolid.value = state.solid ? 1 : 0;
-    [U.uMidFace.value, U.uMidRim.value] = state.shell === "outer" ? [0.02, 0.38] : [0.035, 0.6];
+    [U.uMidFace.value, U.uMidRim.value] = LEVELS[state.level] === 1 ? [0.02, 0.38] : [0.035, 0.6];   // the widest, fainter
     U.uFrac.value = 255 / (ens_.scale * ens_.runs);
     const lo = [Infinity, Infinity, Infinity], hi = [-Infinity, -Infinity, -Infinity];
     const grow = b => { if (b) for (let a = 0; a < 3; a++) { lo[a] = Math.min(lo[a], b[a]); hi[a] = Math.max(hi[a], b[a + 3] + 1); } };
@@ -938,7 +938,7 @@ function apply() {
       const on = state.on[t.name] ? 1 : 0, th = ens_.th[i] || [1], j = i >> 2, c = i & 3;
       U.uOn.value[j].setComponent(c, on);
       U.uCore.value[j].setComponent(c, level(ens_.cores[i] || 1));
-      U.uOuter.value[j].setComponent(c, state.shell === "mid" ? level(th[state.level]) : state.shell === "outer" ? level(1) : -1);
+      U.uOuter.value[j].setComponent(c, state.shell === "mid" ? level(th[state.level]) : -1);
       U.uEnv.value[j].setComponent(c, level(th[state.level]));
       if (on && shells) grow(volume.bbox[`t${i}`]);
       if (on && state.compare !== "none") grow(volume.bbox[`r${i}`]);
@@ -1049,8 +1049,9 @@ function levelNote() {
   const el = document.getElementById("levelNote"), v = validation();
   if (!v) { el.textContent = ""; return; }
   const kind = state.source === "single" ? "single" : "pooled";
-  const parts = Object.keys(D.focus).map(n => { const r = v[`${kind}, ${n}`]; return r ? `${n} ${pct(r[state.level + 1])}` : null; }).filter(Boolean);
-  const hv = Object.keys(D.focus).map(n => v[`${kind}, ${n}`]).filter(Boolean).map(r => Math.round(r[state.level + 1] * 100));
+  const at = r => LEVELS[state.level] === 1 ? r[0] : r[state.level + 1];      // validation rows: [widest, 50, 80, 90, 92.5, 95 %]
+  const parts = Object.keys(D.focus).map(n => { const r = v[`${kind}, ${n}`]; return r ? `${n} ${pct(at(r))}` : null; }).filter(Boolean);
+  const hv = Object.keys(D.focus).map(n => v[`${kind}, ${n}`]).filter(Boolean).map(r => Math.round(at(r) * 100));
   document.getElementById("levelShort").textContent = hv.length ? `held ${Math.min(...hv)}${Math.max(...hv) > Math.min(...hv) ? `–${Math.max(...hv)}` : ""}% out of sample` : "";
   document.getElementById("levelShort").title = "The share of another scan's tract (CST, AF, UF) this stated level held, each of the subject's four scans left out in turn";
   el.textContent = `Stated ${lvl(LEVELS[state.level])}: held ${parts.join(", ")} of another scan's tract, each of this subject's four scans left out in turn` +
@@ -1106,7 +1107,7 @@ selSource.onchange = () => {
   if (state.source === "pooled" && state.compare === "none") state.compare = "A";
   apply(); rebuild();
 };
-LEVELS.forEach((L, i) => selLevel.add(new Option(`stated ${lvl(L)}`, i)));
+LEVELS.forEach((L, i) => selLevel.add(new Option(L === 1 ? "stated 100% (widest)" : `stated ${lvl(L)}`, i)));
 selLevel.onchange = () => { state.level = +selLevel.value; apply(); };
 [...D.rescans.slice().reverse(), "A", "none"].forEach(t =>
   selCompare.add(new Option(t === "none" ? "None" : t === "A" ? "This scan's own run" : RESCAN[t] || t, t)));
@@ -1370,6 +1371,7 @@ function render(step) {
   pivot.position.copy(controls.target);
   if (volume.ready) {
     renderer.getDrawingBufferSize(size);
+    if (!size.x || !size.y) return;                                          // hidden or not laid out yet: nothing to draw
     if (depthRT.width !== size.x || depthRT.height !== size.y) depthRT.setSize(size.x, size.y);
     U.uRes.value.copy(size); U.uStep.value = step;
     camera.updateMatrixWorld();

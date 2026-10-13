@@ -3848,3 +3848,8 @@ closest-volume cut, computed in the page from the ensemble's votes). On A's 17 r
 and UF, and on the other three scans' 51 runs 22, 21 and 22, as in ensemble_vorobev.py. Against session 5 it holds
 79 / 82 / 84 % of the tract, against 77 / 80 / 82 % for the majority vote. The envelope table now also gives what the
 core holds.
+
+**Same day: the widest shell is the 100 % envelope in the viewer.** The envelope rule reaches 100 % of the runs'
+presence only at one vote, so "Core + widest" was the top of the envelope scale under another name. The Envelope menu
+now runs to "stated 100% (widest)", with its held-out figure from the store (the widest held 96 % of another scan's
+tract from one scan's 17 runs, 99 % from three scans' 51). The separate shell option is gone.
