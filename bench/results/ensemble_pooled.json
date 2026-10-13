@@ -1,0 +1,309 @@
+{
+ "pair": "cIIIs04-2.1",
+ "seeds labeled in all 68 runs": 33228,
+ "levels": [
+  0.5,
+  0.8,
+  0.9,
+  0.925,
+  0.95
+ ],
+ "held out": {
+  "A": {
+   "voxels, all named tracts: single (mean of 3)": {
+    "widest": 0.951,
+    "envelope 0.5": 0.499,
+    "envelope 0.8": 0.758,
+    "envelope 0.9": 0.859,
+    "envelope 0.925": 0.884,
+    "envelope 0.95": 0.91
+   },
+   "voxels, all named tracts: pooled": {
+    "widest": 0.989,
+    "envelope 0.5": 0.508,
+    "envelope 0.8": 0.806,
+    "envelope 0.9": 0.902,
+    "envelope 0.925": 0.926,
+    "envelope 0.95": 0.949
+   },
+   "voxels, CST: single (mean of 3)": {
+    "widest": 0.96,
+    "envelope 0.5": 0.543,
+    "envelope 0.8": 0.789,
+    "envelope 0.9": 0.894,
+    "envelope 0.925": 0.894,
+    "envelope 0.95": 0.926
+   },
+   "voxels, CST: pooled": {
+    "widest": 0.99,
+    "envelope 0.5": 0.542,
+    "envelope 0.8": 0.827,
+    "envelope 0.9": 0.92,
+    "envelope 0.925": 0.941,
+    "envelope 0.95": 0.962
+   },
+   "voxels, AF: single (mean of 3)": {
+    "widest": 0.951,
+    "envelope 0.5": 0.508,
+    "envelope 0.8": 0.761,
+    "envelope 0.9": 0.86,
+    "envelope 0.925": 0.881,
+    "envelope 0.95": 0.916
+   },
+   "voxels, AF: pooled": {
+    "widest": 0.989,
+    "envelope 0.5": 0.513,
+    "envelope 0.8": 0.818,
+    "envelope 0.9": 0.903,
+    "envelope 0.925": 0.935,
+    "envelope 0.95": 0.959
+   },
+   "voxels, UF: single (mean of 3)": {
+    "widest": 0.936,
+    "envelope 0.5": 0.478,
+    "envelope 0.8": 0.745,
+    "envelope 0.9": 0.858,
+    "envelope 0.925": 0.858,
+    "envelope 0.95": 0.895
+   },
+   "voxels, UF: pooled": {
+    "widest": 0.988,
+    "envelope 0.5": 0.503,
+    "envelope 0.8": 0.796,
+    "envelope 0.9": 0.907,
+    "envelope 0.925": 0.929,
+    "envelope 0.95": 0.951
+   },
+   "streamlines: stated / observed, single (mean of 3)": [
+    0.766,
+    0.683
+   ],
+   "streamlines: stated / observed, pooled": [
+    0.721,
+    0.721
+   ]
+  },
+  "within": {
+   "voxels, all named tracts: single (mean of 3)": {
+    "widest": 0.951,
+    "envelope 0.5": 0.502,
+    "envelope 0.8": 0.762,
+    "envelope 0.9": 0.86,
+    "envelope 0.925": 0.885,
+    "envelope 0.95": 0.911
+   },
+   "voxels, all named tracts: pooled": {
+    "widest": 0.988,
+    "envelope 0.5": 0.512,
+    "envelope 0.8": 0.807,
+    "envelope 0.9": 0.901,
+    "envelope 0.925": 0.925,
+    "envelope 0.95": 0.948
+   },
+   "voxels, CST: single (mean of 3)": {
+    "widest": 0.954,
+    "envelope 0.5": 0.505,
+    "envelope 0.8": 0.762,
+    "envelope 0.9": 0.879,
+    "envelope 0.925": 0.879,
+    "envelope 0.95": 0.915
+   },
+   "voxels, CST: pooled": {
+    "widest": 0.987,
+    "envelope 0.5": 0.491,
+    "envelope 0.8": 0.797,
+    "envelope 0.9": 0.908,
+    "envelope 0.925": 0.929,
+    "envelope 0.95": 0.954
+   },
+   "voxels, AF: single (mean of 3)": {
+    "widest": 0.955,
+    "envelope 0.5": 0.513,
+    "envelope 0.8": 0.769,
+    "envelope 0.9": 0.859,
+    "envelope 0.925": 0.889,
+    "envelope 0.95": 0.921
+   },
+   "voxels, AF: pooled": {
+    "widest": 0.991,
+    "envelope 0.5": 0.524,
+    "envelope 0.8": 0.825,
+    "envelope 0.9": 0.912,
+    "envelope 0.925": 0.936,
+    "envelope 0.95": 0.964
+   },
+   "voxels, UF: single (mean of 3)": {
+    "widest": 0.938,
+    "envelope 0.5": 0.473,
+    "envelope 0.8": 0.753,
+    "envelope 0.9": 0.862,
+    "envelope 0.925": 0.862,
+    "envelope 0.95": 0.897
+   },
+   "voxels, UF: pooled": {
+    "widest": 0.986,
+    "envelope 0.5": 0.497,
+    "envelope 0.8": 0.81,
+    "envelope 0.9": 0.901,
+    "envelope 0.925": 0.927,
+    "envelope 0.95": 0.951
+   },
+   "streamlines: stated / observed, single (mean of 3)": [
+    0.766,
+    0.682
+   ],
+   "streamlines: stated / observed, pooled": [
+    0.722,
+    0.718
+   ]
+  },
+  "session3": {
+   "voxels, all named tracts: single (mean of 3)": {
+    "widest": 0.941,
+    "envelope 0.5": 0.489,
+    "envelope 0.8": 0.744,
+    "envelope 0.9": 0.846,
+    "envelope 0.925": 0.871,
+    "envelope 0.95": 0.899
+   },
+   "voxels, all named tracts: pooled": {
+    "widest": 0.983,
+    "envelope 0.5": 0.496,
+    "envelope 0.8": 0.785,
+    "envelope 0.9": 0.883,
+    "envelope 0.925": 0.91,
+    "envelope 0.95": 0.935
+   },
+   "voxels, CST: single (mean of 3)": {
+    "widest": 0.94,
+    "envelope 0.5": 0.486,
+    "envelope 0.8": 0.732,
+    "envelope 0.9": 0.856,
+    "envelope 0.925": 0.856,
+    "envelope 0.95": 0.895
+   },
+   "voxels, CST: pooled": {
+    "widest": 0.981,
+    "envelope 0.5": 0.473,
+    "envelope 0.8": 0.767,
+    "envelope 0.9": 0.864,
+    "envelope 0.925": 0.907,
+    "envelope 0.95": 0.919
+   },
+   "voxels, AF: single (mean of 3)": {
+    "widest": 0.942,
+    "envelope 0.5": 0.485,
+    "envelope 0.8": 0.738,
+    "envelope 0.9": 0.841,
+    "envelope 0.925": 0.864,
+    "envelope 0.95": 0.901
+   },
+   "voxels, AF: pooled": {
+    "widest": 0.986,
+    "envelope 0.5": 0.492,
+    "envelope 0.8": 0.787,
+    "envelope 0.9": 0.888,
+    "envelope 0.925": 0.913,
+    "envelope 0.95": 0.946
+   },
+   "voxels, UF: single (mean of 3)": {
+    "widest": 0.927,
+    "envelope 0.5": 0.49,
+    "envelope 0.8": 0.758,
+    "envelope 0.9": 0.858,
+    "envelope 0.925": 0.858,
+    "envelope 0.95": 0.889
+   },
+   "voxels, UF: pooled": {
+    "widest": 0.978,
+    "envelope 0.5": 0.501,
+    "envelope 0.8": 0.793,
+    "envelope 0.9": 0.892,
+    "envelope 0.925": 0.914,
+    "envelope 0.95": 0.939
+   },
+   "streamlines: stated / observed, single (mean of 3)": [
+    0.767,
+    0.669
+   ],
+   "streamlines: stated / observed, pooled": [
+    0.726,
+    0.701
+   ]
+  },
+  "session5": {
+   "voxels, all named tracts: single (mean of 3)": {
+    "widest": 0.944,
+    "envelope 0.5": 0.493,
+    "envelope 0.8": 0.746,
+    "envelope 0.9": 0.845,
+    "envelope 0.925": 0.871,
+    "envelope 0.95": 0.9
+   },
+   "voxels, all named tracts: pooled": {
+    "widest": 0.983,
+    "envelope 0.5": 0.497,
+    "envelope 0.8": 0.778,
+    "envelope 0.9": 0.876,
+    "envelope 0.925": 0.902,
+    "envelope 0.95": 0.929
+   },
+   "voxels, CST: single (mean of 3)": {
+    "widest": 0.941,
+    "envelope 0.5": 0.498,
+    "envelope 0.8": 0.733,
+    "envelope 0.9": 0.858,
+    "envelope 0.925": 0.858,
+    "envelope 0.95": 0.898
+   },
+   "voxels, CST: pooled": {
+    "widest": 0.98,
+    "envelope 0.5": 0.484,
+    "envelope 0.8": 0.775,
+    "envelope 0.9": 0.866,
+    "envelope 0.925": 0.904,
+    "envelope 0.95": 0.933
+   },
+   "voxels, AF: single (mean of 3)": {
+    "widest": 0.942,
+    "envelope 0.5": 0.494,
+    "envelope 0.8": 0.74,
+    "envelope 0.9": 0.843,
+    "envelope 0.925": 0.864,
+    "envelope 0.95": 0.898
+   },
+   "voxels, AF: pooled": {
+    "widest": 0.98,
+    "envelope 0.5": 0.485,
+    "envelope 0.8": 0.775,
+    "envelope 0.9": 0.878,
+    "envelope 0.925": 0.9,
+    "envelope 0.95": 0.93
+   },
+   "voxels, UF: single (mean of 3)": {
+    "widest": 0.954,
+    "envelope 0.5": 0.53,
+    "envelope 0.8": 0.785,
+    "envelope 0.9": 0.888,
+    "envelope 0.925": 0.888,
+    "envelope 0.95": 0.919
+   },
+   "voxels, UF: pooled": {
+    "widest": 0.984,
+    "envelope 0.5": 0.552,
+    "envelope 0.8": 0.822,
+    "envelope 0.9": 0.909,
+    "envelope 0.925": 0.927,
+    "envelope 0.95": 0.948
+   },
+   "streamlines: stated / observed, single (mean of 3)": [
+    0.767,
+    0.662
+   ],
+   "streamlines: stated / observed, pooled": [
+    0.731,
+    0.69
+   ]
+  }
+ }
+}

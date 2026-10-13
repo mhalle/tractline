@@ -3527,3 +3527,52 @@ What it suggests:
   cerebellar peduncle.
 - **Report the CST at the voxel level.** Its outline holds 85 % of a rescan's bundle.
 - **Test a tracker setting at the pons** that keeps to the superior–inferior fiber population where two cross.
+
+## 2026-10-13 Pooling sessions: three scans' ensembles predict a fourth scan almost as stated, with no correction
+
+`ensemble_pooled.py` → `ensemble_pooled.json`. cIIIs04's four scans (A and the same-session, session 3 and session 5
+rescans) each have a 17-run ensemble on A's grid. Leaving each scan out in turn, its own run is predicted by:
+- **single:** each other scan's ensemble alone, averaged over the three;
+- **pooled:** the three other ensembles together, 51 runs, each scan weighted equally.
+
+Envelope levels are as stated, with no recalibration. Streamline figures use the 33,228 seeds labeled in all 68 runs.
+
+**All named tracts** (voxels pooled over the 42, weighted by the target's voxels), held-out scan A / same session /
+session 3 / session 5:
+
+| | single | pooled |
+|---|---|---|
+| widest outline holds | 0.95 / 0.95 / 0.94 / 0.94 | 0.99 / 0.99 / 0.98 / 0.98 |
+| envelope stated 0.8 holds | 0.76 / 0.76 / 0.74 / 0.75 | 0.81 / 0.81 / 0.79 / 0.78 |
+| envelope stated 0.9 holds | 0.86 / 0.86 / 0.85 / 0.85 | 0.90 / 0.90 / 0.88 / 0.88 |
+| envelope stated 0.95 holds | 0.91 / 0.91 / 0.90 / 0.90 | 0.95 / 0.95 / 0.94 / 0.93 |
+| streamlines, the mode: stated / observed | 0.77 / 0.66–0.68 | 0.72–0.73 / 0.69–0.72 |
+
+**Focus tracts** (stated 0.8 and 0.9, ranges over the four held-out scans):
+
+| | single 0.8 / 0.9 | pooled 0.8 / 0.9 | widest: single / pooled |
+|---|---|---|---|
+| CST | 0.73–0.79 / 0.86–0.89 | 0.77–0.83 / 0.86–0.92 | 0.94–0.96 / 0.98–0.99 |
+| AF | 0.74–0.77 / 0.84–0.86 | 0.78–0.83 / 0.88–0.91 | 0.94–0.96 / 0.98–0.99 |
+| UF | 0.75–0.79 / 0.86–0.89 | 0.79–0.82 / 0.89–0.91 | 0.93–0.95 / 0.98–0.99 |
+
+- **Pooling sessions makes the stated levels hold without any correction map.**
+  - An envelope stated as 80 % holds 78–81 %, 90 % holds 88–90 %, and 95 % holds 93–95 %. One scan's ensemble falls 4–5
+    points short at each level.
+  - The widest outline misses 1–2 % of the new scan's tract, against 5–6 %.
+  - The streamline statement shrinks to a 0–4 point gap (from 8–10). The pooled ensemble states less (0.72 against
+    0.77) and is right more often (0.69–0.72 against 0.66–0.68).
+- **What the single-scan ensemble lacks is between-session variation.** Head position, slice placement, registration
+  and the distortion field are what resampling one scan cannot produce.
+- **Caveat: run count is confounded.** Pooled is 51 runs, single 17. On this subject, going from 13 to 17 runs gained
+  about 0.01 in coverage (NOTES "A held-out subject"), so most of the 0.04–0.05 gain is likely the sessions, not the
+  count; a single scan with 51 runs was not available to check.
+- **Other caveats:**
+  - one subject, one protocol;
+  - for the A and same-session held-out scans, the pool includes a scan from the same session.
+
+What it means:
+- For this subject, three sessions' ensembles give honest uncertainty with no correction.
+- For a patient with one scan, the honest route is to add a session term learned from test-retest data like this. The
+  pooled-versus-single gap is the size of that term: about 4–5 points of coverage at each stated level, and a widest
+  outline about 4 % too tight.
