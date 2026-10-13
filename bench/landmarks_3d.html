@@ -86,6 +86,10 @@ td.n, th.n { text-align: right; font-family: var(--data); font-variant-numeric: 
             <button data-shell="outer" aria-pressed="false">Core + widest</button>
             <button data-shell="second" aria-pressed="false">Where it is runner-up</button>
             <button data-shell="none" aria-pressed="false">None</button>
+          </div>
+          <div class="seg" role="group" aria-label="How to draw the core">
+            <button data-core="xray" aria-pressed="true">Core: x-ray</button>
+            <button data-core="solid" aria-pressed="false">Core: solid</button>
           </div></div>
         <div class="row"><span class="label">Rescan dots</span>
           <div class="seg" role="group" aria-label="Which rescan's misses to show" id="rescanSeg"></div></div>
@@ -126,6 +130,9 @@ td.n, th.n { text-align: right; font-family: var(--data); font-variant-numeric: 
       <section class="panel">
         <h2>Reading the view</h2>
         <p><strong>Core:</strong> voxels where the tract is present (2 or more of its streamlines) in at least 9 of the 17 runs.</p>
+        <p><strong>X-ray surfaces:</strong> every surface is nearly clear where it faces you and solid at its edges, so nested
+          shells read as outlines. "Core: solid" draws the core opaque to show its shape; fans hidden by it then show as faint
+          ghosts.</p>
         <p><strong>80% envelope:</strong> its level was fitted on two other subjects to hold 80% of a rescan's tract. For the tracts
           shown it holds <span class="num" id="held80"></span> of each rescan's tract voxels. <strong>Widest:</strong> any run.</p>
         <p><strong>Runner-up:</strong> rank the named tracts in each voxel by their mean streamline count over the 17 runs (leaving out
@@ -181,7 +188,22 @@ const sun = new THREE.DirectionalLight(0xffffff, 0.7); camera.add(sun); sun.posi
 // meshes
 const brainMeshes = [], shells = {};
 let center = new THREE.Vector3();
-const OP = { core: 0.6, mid: 0.2, outer: 0.09, second: 0.3 };
+// x-ray (rim) shading: a surface is nearly clear where it faces the viewer and opaque toward its silhouette, so nested
+// translucent surfaces read as outlines and the draw-order errors of ordinary transparency stay faint
+function xray(color, face, rim) {
+  const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.75, metalness: 0, transparent: true, depthWrite: false,
+    side: THREE.DoubleSide, clippingPlanes: clip });
+  mat.onBeforeCompile = sh => {
+    const out = `float ndv = abs(dot(normalize(normal), normalize(vViewPosition)));
+      gl_FragColor = vec4(outgoingLight, mix(${rim.toFixed(3)}, ${face.toFixed(3)}, pow(ndv, 1.4)));`;
+    sh.fragmentShader = sh.fragmentShader.includes("#include <output_fragment>")
+      ? sh.fragmentShader.replace("#include <output_fragment>", out)
+      : sh.fragmentShader.replace("gl_FragColor = vec4( outgoingLight, diffuseColor.a );", out);
+  };
+  return mat;
+}
+const XRAY = { core: [0.14, 0.9], mid: [0.035, 0.6], outer: [0.02, 0.38], second: [0.04, 0.6] };
+const solidCore = c => new THREE.MeshStandardMaterial({ color: c, roughness: 0.55, metalness: 0, clippingPlanes: clip });
 for (const m of D.meshes) {
   const v = i16(m.v), pos = new Float32Array(v.length);
   for (let i = 0; i < v.length; i++) pos[i] = v[i] / 10;
@@ -190,12 +212,10 @@ for (const m of D.meshes) {
   g.setAttribute("position", new THREE.BufferAttribute(pos, 3)); g.setIndex(new THREE.BufferAttribute(idx, 1)); g.computeVertexNormals();
   let mat;
   if (m.kind === "brain") mat = new THREE.MeshBasicMaterial({ color: m.color, transparent: true, opacity: 0.045, depthWrite: false, side: THREE.DoubleSide });
-  else if (m.kind === "core") mat = new THREE.MeshStandardMaterial({ color: m.color, roughness: 0.55, metalness: 0, transparent: true, opacity: OP.core,
-    depthWrite: false, side: THREE.DoubleSide, clippingPlanes: clip });
-  else mat = new THREE.MeshStandardMaterial({ color: m.color, roughness: 0.8, metalness: 0, transparent: true, opacity: OP[m.kind],
-    depthWrite: false, side: THREE.DoubleSide, wireframe: m.kind === "second", clippingPlanes: clip });
+  else mat = xray(m.color, ...XRAY[m.kind]);
   const mesh = new THREE.Mesh(g, mat);
-  mesh.renderOrder = { core: 2, mid: 3, outer: 4, second: 3, brain: 5 }[m.kind];
+  if (m.kind === "core") mesh.userData.mats = { xray: mat, solid: solidCore(m.color) };
+  mesh.renderOrder = m.kind === "brain" ? 5 : 2;       // one order for all translucent surfaces: three.js sorts them by distance
   scene.add(mesh);
   if (m.kind === "brain") { brainMeshes.push(mesh); g.computeBoundingBox(); g.boundingBox.getCenter(center); }
   else (shells[m.name] = shells[m.name] || {})[m.kind] = mesh;
@@ -209,9 +229,8 @@ for (const m of D.anatomy) {
   const fb = bytes(m.f), idx = m.f16 ? new Uint16Array(fb.buffer, fb.byteOffset, fb.byteLength / 2) : new Uint32Array(fb.buffer, fb.byteOffset, fb.byteLength / 4);
   const g = new THREE.BufferGeometry();
   g.setAttribute("position", new THREE.BufferAttribute(pos, 3)); g.setIndex(new THREE.BufferAttribute(idx, 1)); g.computeVertexNormals();
-  const mesh = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ color: m.color, roughness: 0.9, metalness: 0, transparent: true,
-    opacity: 0.28, depthWrite: false, side: THREE.DoubleSide, clippingPlanes: clip }));
-  mesh.renderOrder = 1; mesh.visible = false; scene.add(mesh); anatMeshes[m.name] = mesh;
+  const mesh = new THREE.Mesh(g, xray(m.color, 0.02, 0.38));
+  mesh.renderOrder = 2; mesh.visible = false; scene.add(mesh); anatMeshes[m.name] = mesh;
 }
 
 // colors
@@ -248,7 +267,7 @@ for (const [tag, per] of Object.entries(D.misses)) {
 // site markers
 const markers = [];
 D.sites.forEach((s, i) => {
-  const g = new THREE.Mesh(new THREE.SphereGeometry(2.2, 20, 14), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9, depthTest: false }));
+  const g = new THREE.Mesh(new THREE.SphereGeometry(1.3, 20, 14), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9, depthTest: false }));
   g.position.set(...s.mm); g.renderOrder = 9; scene.add(g); markers.push(g);
   label(String(i + 1), new THREE.Vector3(s.mm[0], s.mm[1], s.mm[2] + 6), 6, "#ffffff");
 });
@@ -277,8 +296,12 @@ function buildFans(si) {
     for (const [name, [pos, col]] of Object.entries(sets)) {
       const g = new THREE.BufferGeometry();
       g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
-      const l = new THREE.LineSegments(g, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: name === "resc" ? 1 : 0.7 }));
+      const l = new THREE.LineSegments(g, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: name === "resc" ? 1 : 0.75 }));
       l.renderOrder = name === "resc" ? 8 : 6; l.visible = false; scene.add(l); out[kind][name] = l;
+      // a faint copy drawn through everything: where a solid surface hides the line, its ghost still shows
+      const ghost = new THREE.LineSegments(g, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.16,
+        depthTest: false, depthWrite: false }));
+      ghost.renderOrder = 9; ghost.visible = false; scene.add(ghost); l.userData.ghost = ghost;
     }
   }
   return (fanCache[si] = out);
@@ -340,7 +363,7 @@ function recenter(p) { const shift = p.clone().sub(controls.target); controls.ta
 
 // state
 const state = { site: -1, crop: true, shell: "mid", rescan: D.rescans[D.rescans.length - 1], fan: "split", color: "tract", rescLines: true,
-  on: Object.fromEntries(D.shown.map(t => [t.name, t.name in D.focus])), plane: true, brain: true,
+  on: Object.fromEntries(D.shown.map(t => [t.name, t.name in D.focus])), plane: true, brain: true, solid: false,
   anat: Object.fromEntries(D.anatomy.map(a => [a.name, a.on])) };
 function apply() {
   for (const [name, s] of Object.entries(shells)) for (const [kind, mesh] of Object.entries(s))
@@ -350,8 +373,10 @@ function apply() {
     const here = +si === state.site && kind === state.fan;
     sets.tract.visible = here && state.color === "tract"; sets.up.visible = here && state.color === "up";
     sets.check.visible = here && state.color === "check"; sets.resc.visible = here && state.rescLines;
+    for (const l of Object.values(sets)) l.userData.ghost.visible = l.visible && state.solid;
   }
-  markers.forEach((m, i) => m.material.color.set(i === state.site ? 0xffd34d : 0xffffff));
+  for (const s of Object.values(shells)) if (s.core) s.core.material = s.core.userData.mats[state.solid ? "solid" : "xray"];
+  markers.forEach((m, i) => { m.material.color.set(i === state.site ? 0xffd34d : 0xffffff); m.material.opacity = i === state.site ? 0.95 : 0.35; });
   plane.visible = state.plane; brainMeshes.forEach(m => m.visible = state.brain);
   for (const [name, m] of Object.entries(anatMeshes)) m.visible = state.anat[name];
   setCrop(state.crop && state.site >= 0 ? D.sites[state.site].mm : null);
@@ -456,6 +481,8 @@ document.querySelectorAll("[data-shell]").forEach(b => b.onclick = () => { state
   document.querySelectorAll("[data-shell]").forEach(x => x.setAttribute("aria-pressed", String(x === b))); apply(); });
 document.querySelectorAll("[data-fan]").forEach(b => b.onclick = () => { state.fan = b.dataset.fan;
   document.querySelectorAll("[data-fan]").forEach(x => x.setAttribute("aria-pressed", String(x === b))); apply(); });
+document.querySelectorAll("[data-core]").forEach(b => b.onclick = () => { state.solid = b.dataset.core === "solid";
+  document.querySelectorAll("[data-core]").forEach(x => x.setAttribute("aria-pressed", String(x === b))); apply(); });
 document.querySelectorAll("[data-color]").forEach(b => b.onclick = () => { state.color = b.dataset.color;
   document.querySelectorAll("[data-color]").forEach(x => x.setAttribute("aria-pressed", String(x === b))); apply(); });
 const rs = document.getElementById("rescanSeg");
