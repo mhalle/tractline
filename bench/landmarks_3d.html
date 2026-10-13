@@ -20,21 +20,37 @@
 html { color-scheme: light; }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--ui); font-size: 15px; line-height: 1.5; padding: 20px 16px 40px; }
-.wrap { max-width: 1240px; margin: 0 auto; display: grid; gap: 18px; }
+.wrap { max-width: 1560px; margin: 0 auto; display: grid; gap: 16px; }
+.top { display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: end; justify-content: space-between; }
+.top .sub { color: var(--muted); margin: 2px 0 0; max-width: 68ch; }
+.top .notice { margin: 0; }
+a { color: var(--accent); }
+.app { display: grid; gap: 16px; align-items: start; grid-template-columns: minmax(0, 1fr); grid-template-areas: "d3" "cut" "ctl"; }
+.app .d3 { grid-area: d3; } .app .cutp { grid-area: cut; } .app .ctlcol { grid-area: ctl; }
+.app .d3, .app .cutp { padding: 10px; }
+.ctlcol { display: grid; gap: 16px; min-width: 0; }
+@media (min-width: 980px) { .app { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); grid-template-areas: "d3 cut" "ctl ctl"; } }
+@media (min-width: 1280px) {
+  .app { grid-template-columns: minmax(0, 340px) minmax(0, 1.1fr) minmax(0, 1fr); grid-template-areas: "ctl d3 cut"; }
+  .ctlcol { position: sticky; top: 8px; max-height: calc(100vh - 16px); overflow-y: auto; }
+  .ctlcol .sites { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+  .ctlcol .site { font-size: 0.8rem; padding: 4px 8px; }
+  .ctlcol .label { flex-basis: 100%; min-width: 0; }
+}
+.legend { color: var(--muted); font-size: 0.8rem; margin: 8px 0 0; }
+.info { grid-template-columns: repeat(auto-fill, minmax(min(360px, 100%), 1fr)); align-items: start; }
 h1 { font-size: 1.6rem; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
 h2 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 0 0 8px; font-weight: 700; }
 h3 { font-size: 1.02rem; margin: 0 0 4px; text-wrap: balance; }
 .lede { color: var(--muted); max-width: 78ch; margin: 4px 0 0; }
 .notice { background: var(--warn-bg); color: var(--warn-ink); border-radius: 8px; padding: 8px 12px; max-width: 78ch; margin: 10px 0 0; font-size: 0.9rem; }
-.main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 380px); gap: 18px; align-items: start; }
-@media (max-width: 1000px) { .main { grid-template-columns: minmax(0, 1fr); } }
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; min-width: 0; }
 .scene { position: relative; background: var(--scene); border-radius: 8px; overflow: hidden; }
 canvas { display: block; width: 100%; touch-action: none; }
 .hint { position: absolute; left: 10px; bottom: 8px; right: 10px; font: 12px var(--data); color: #9fb0bf; pointer-events: none; }
 .loading { position: absolute; left: 10px; top: 10px; right: 10px; font: 12.5px var(--data); color: #d8e2ea; background: rgba(11, 16, 21, 0.78);
   border: 1px solid #26323d; border-radius: 6px; padding: 6px 10px; pointer-events: none; max-width: 60ch; }
-.controls { display: grid; gap: 10px; margin-top: 12px; }
+.controls { display: grid; gap: 10px; }
 .row { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; }
 .label { color: var(--muted); font-size: 0.85rem; min-width: 9ch; }
 .seg { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
@@ -67,121 +83,123 @@ th { color: var(--muted); font-weight: 400; font-size: 0.78rem; }
 td.n, th.n { text-align: right; font-family: var(--data); font-variant-numeric: tabular-nums; }
 .stat { display: flex; justify-content: space-between; gap: 10px; font-size: 0.86rem; border-bottom: 1px solid var(--line); padding: 3px 0; }
 .stat span:last-child { font-family: var(--data); font-variant-numeric: tabular-nums; }
-.leftcol { display: grid; gap: 18px; min-width: 0; }
-.cutgrid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 250px); gap: 14px; align-items: start; margin-top: 10px; }
-@media (max-width: 760px) { .cutgrid { grid-template-columns: minmax(0, 1fr); } }
-.cutbox { background: var(--scene); border-radius: 8px; overflow: hidden; }
+.cutbox { background: var(--scene); border-radius: 8px; overflow: hidden; margin-top: 8px; }
+#cut { display: block; margin: 0 auto; }
 #cut { cursor: crosshair; }
-.readout { font-size: 0.84rem; min-width: 0; }
+.readout { font-size: 0.84rem; min-width: 0; margin-top: 8px; }
 .readout table { margin: 2px 0 8px; }
 .readout .coord { font-family: var(--data); font-variant-numeric: tabular-nums; color: var(--muted); font-size: 0.8rem; }
 </style>
 
 <div class="wrap">
-  <header>
-    <h1>cIIIs04 tract landmarks</h1>
-    <p class="lede">A healthy adult (MASiVar cohort III, subject 04), focused on three tracts used in surgical planning: the
-      corticospinal tract, the arcuate fasciculus and the uncinate fasciculus. The tractography pipeline ran 17 times on one scan: once
-      as acquired and 16 times on copies with its noise drawn again. The same subject was scanned three more times, and each of those
-      scans got 17 runs too. Shells show how much of a tract the runs agree on; patches show where a real repeat scan put the tract
-      outside the envelope; fans show single streamlines drawn from all 17 runs and the repeat scans. Brain anatomy from FastSurfer, a
-      segmentation of the subject's T1 image, is drawn with the tracts and used to check where each streamline ends.</p>
-    <p class="notice"><strong>Research prototype.</strong> This shows how reproducible the pipeline's output is, and a rough check of
-      its streamlines' ends against automated anatomy labels, not where the fibers truly run. The internal-capsule sites come from the
-      FastSurfer anatomy; the other sites were placed from the tracts themselves, so their names are approximate. Not for clinical use.</p>
+  <header class="top">
+    <div><h1>cIIIs04 tract landmarks</h1>
+      <p class="sub">How reproducible are the corticospinal tract, arcuate and uncinate fasciculi in one healthy subject? 17 runs per
+        scan, four scans. <a href="#about">About this view</a></p></div>
+    <p class="notice"><strong>Research prototype.</strong> Reproducibility, not anatomical truth. Not for clinical use.</p>
   </header>
 
-  <div class="main">
-    <div class="leftcol">
-    <section class="panel" aria-label="3D scene">
+  <div class="app">
+    <section class="panel d3" aria-label="3D scene">
       <div class="scene" id="scene"><canvas id="cv" aria-label="Rotatable 3D view of tract shells, repeat-scan patches and streamline fans"></canvas>
         <div class="loading" id="loading" role="status">Loading the data stores…</div>
         <span class="hint">Drag to rotate · scroll or pinch to zoom · right-drag to pan · double-click a surface to rotate around it</span></div>
-      <div class="controls">
-        <div class="row" style="align-items:start"><span class="label">Site</span><div class="sites" id="sites" style="flex:1"></div></div>
-        <div class="row"><span class="label">Shells</span>
-          <div class="seg" role="group" aria-label="Which shells to show">
-            <button data-shell="core" aria-pressed="false">Core only</button>
-            <button data-shell="mid" aria-pressed="true">Core + envelope</button>
-            <button data-shell="outer" aria-pressed="false">Core + widest</button>
-            <button data-shell="cloud" aria-pressed="false">Cloud</button>
-            <button data-shell="none" aria-pressed="false">None</button>
-          </div>
-          <div class="seg" role="group" aria-label="How to draw the core">
-            <button data-core="xray" aria-pressed="true">Core: x-ray</button>
-            <button data-core="solid" aria-pressed="false">Core: solid</button>
-          </div></div>
-        <div class="row"><span class="label">Ensemble</span>
-          <div class="seg" role="group" aria-label="Which runs make the shells">
-            <button data-source="single" aria-pressed="true">This scan: 17 runs</button>
-            <button data-source="pooled" aria-pressed="false">The other three scans: 51 runs</button>
-          </div></div>
-        <div class="row"><span class="label">Envelope</span>
-          <div class="seg" role="group" aria-label="The envelope's stated level" id="levelSeg"></div>
-          <p class="note" id="levelNote"></p></div>
-        <div class="row"><span class="label">Compare with</span>
-          <div class="seg" role="group" aria-label="Which scan's own run to compare with the envelope" id="compareSeg"></div></div>
-        <div class="row"><span class="label">Fans</span>
-          <div class="seg" role="group" aria-label="Which streamline fans to show">
-            <button data-fan="split" aria-pressed="true">Where runs split</button>
-            <button data-fan="agree" aria-pressed="false">Where all agree</button>
-            <button data-fan="none" aria-pressed="false">None</button>
-          </div>
-          <div class="seg" role="group" aria-label="Color each version by">
-            <button data-color="tract" aria-pressed="true">Color: tract</button>
-            <button data-color="up" aria-pressed="false">Color: runner-up</button>
-            <button data-color="check" aria-pressed="false">Color: endpoint check</button>
-          </div>
-          <button class="plain" id="rescanLines" aria-pressed="true">Hide rescans' versions</button></div>
-        <div class="row"><span class="label">Crop</span>
-          <button class="plain" id="crop" aria-pressed="true">Show whole tracts</button>
-          <span class="muted" style="font-size:0.85rem">Shells, patches and anatomy within 30 mm of the site (each axis)</span></div>
-        <div class="row"><span class="label">Tracts</span><div class="chips" id="chips"></div></div>
-        <div class="row"><span class="label">Anatomy</span><div class="chips" id="anatChips"></div></div>
-        <div class="row"><span class="label">Axial plane</span><input id="zs" type="range" min="0" max="0" step="1" value="0" aria-label="Axial plane position">
-          <span id="zout" class="num muted" style="min-width:7ch"></span>
-          <button class="plain" id="plane" aria-pressed="true">Hide plane</button>
-          <button class="plain" id="brain" aria-pressed="true">Hide outline</button></div>
-        <div class="row"><span class="label">View</span>
-          <div class="seg" role="group" aria-label="Look at the scene from">
-            <button data-view="right">Right</button><button data-view="left">Left</button><button data-view="front">Front</button>
-            <button data-view="back">Back</button><button data-view="top">Top</button><button data-view="bottom">Bottom</button>
-          </div>
-          <button class="plain" id="center">Center on site</button>
-          <button class="plain" id="reset">Reset view</button></div>
-      </div>
     </section>
 
-    <section class="panel" aria-label="Cross-section">
-      <h2>Cross-section through the point</h2>
+    <section class="panel cutp" aria-label="Cross-section">
       <div class="row">
         <div class="seg" role="group" aria-label="Which plane">
-          <button data-cut="axial" aria-pressed="true">Axial</button><button data-cut="coronal" aria-pressed="false">Coronal</button>
-          <button data-cut="sagittal" aria-pressed="false">Sagittal</button></div>
+          <button data-cut="axial" aria-pressed="true">Axial</button><button data-cut="coronal" aria-pressed="false">Coronal</button><button data-cut="sagittal" aria-pressed="false">Sagittal</button></div>
         <div class="seg" role="group" aria-label="Field of view">
-          <button data-zoom="whole" aria-pressed="true">Whole slice</button><button data-zoom="near" aria-pressed="false">Within 30 mm</button></div>
+          <button data-zoom="whole" aria-pressed="true">Whole slice</button><button data-zoom="near" aria-pressed="false">30 mm</button></div>
         <div class="seg" role="group" aria-label="Background image">
-          <button data-bg="b0" aria-pressed="true">Background: b0</button><button data-bg="none" aria-pressed="false">None</button></div>
+          <button data-bg="b0" aria-pressed="true">b0</button><button data-bg="none" aria-pressed="false">No image</button></div>
       </div>
       <div class="row" style="margin-top:8px"><span class="label" id="cutLabel">Slice</span>
         <input id="cutSlider" type="range" min="0" max="1" step="0.5" value="0" aria-label="Move the slice along its axis">
         <span id="cutOut" class="num muted" style="min-width:9ch"></span></div>
-      <div class="cutgrid">
-        <div class="cutbox"><canvas id="cut" aria-label="Cross-section of the shells, the compared scan's patches and the anatomy outlines; click to move the point"></canvas></div>
-        <div class="readout" id="readout"></div>
-      </div>
-      <p class="muted" style="font-size:0.85rem;margin:10px 0 0">Radiological convention: the patient's right is on the screen's left
-        (axial and coronal), anterior on the left (sagittal). Light fill: the envelope; strong fill: the core; lines: their edges;
-        hatching: the compared scan's tract outside the envelope; thin colored lines: the anatomy shown in 3D. The same tracts, levels and
-        ensemble as the 3D view. Click to move the point; the axial plane and the 3D pivot follow. Hover for the values under the
-        cursor.</p>
+      <div class="cutbox"><canvas id="cut" aria-label="Cross-section of the shells, the compared scan's patches and the anatomy outlines; click to move the point"></canvas></div>
+      <p class="legend">Radiological: patient's right on the left · light fill envelope · strong fill core · hatching: compared scan outside
+        the envelope · thin lines anatomy · click to move the point</p>
+      <div class="readout" id="readout"></div>
     </section>
-    </div>
 
-    <div class="side">
-      <section class="panel" id="focusPanel"></section>
+    <aside class="ctlcol">
+    <section class="panel" aria-label="Controls">
+        <div class="controls">
+          <div class="row" style="align-items:start"><span class="label">Site</span><div class="sites" id="sites" style="flex:1"></div></div>
+          <div class="row"><span class="label">Shells</span>
+            <div class="seg" role="group" aria-label="Which shells to show">
+              <button data-shell="core" aria-pressed="false">Core only</button>
+              <button data-shell="mid" aria-pressed="true">Core + envelope</button>
+              <button data-shell="outer" aria-pressed="false">Core + widest</button>
+              <button data-shell="cloud" aria-pressed="false">Cloud</button>
+              <button data-shell="none" aria-pressed="false">None</button>
+            </div>
+            <div class="seg" role="group" aria-label="How to draw the core">
+              <button data-core="xray" aria-pressed="true">Core: x-ray</button>
+              <button data-core="solid" aria-pressed="false">Core: solid</button>
+            </div></div>
+          <div class="row"><span class="label">Ensemble</span>
+            <div class="seg" role="group" aria-label="Which runs make the shells">
+              <button data-source="single" aria-pressed="true">This scan: 17 runs</button>
+              <button data-source="pooled" aria-pressed="false">The other three scans: 51 runs</button>
+            </div></div>
+          <div class="row"><span class="label">Envelope</span>
+            <div class="seg" role="group" aria-label="The envelope's stated level" id="levelSeg"></div>
+            <p class="note" id="levelNote"></p></div>
+          <div class="row"><span class="label">Compare with</span>
+            <div class="seg" role="group" aria-label="Which scan's own run to compare with the envelope" id="compareSeg"></div></div>
+          <div class="row"><span class="label">Fans</span>
+            <div class="seg" role="group" aria-label="Which streamline fans to show">
+              <button data-fan="split" aria-pressed="true">Where runs split</button>
+              <button data-fan="agree" aria-pressed="false">Where all agree</button>
+              <button data-fan="none" aria-pressed="false">None</button>
+            </div>
+            <div class="seg" role="group" aria-label="Color each version by">
+              <button data-color="tract" aria-pressed="true">Color: tract</button>
+              <button data-color="up" aria-pressed="false">Color: runner-up</button>
+              <button data-color="check" aria-pressed="false">Color: endpoint check</button>
+            </div>
+            <button class="plain" id="rescanLines" aria-pressed="true">Hide rescans' versions</button></div>
+          <div class="row"><span class="label">Crop</span>
+            <button class="plain" id="crop" aria-pressed="true">Show whole tracts</button>
+            <span class="muted" style="font-size:0.85rem">Shells, patches and anatomy within 30 mm of the site (each axis)</span></div>
+          <div class="row"><span class="label">Tracts</span><div class="chips" id="chips"></div></div>
+          <div class="row"><span class="label">Anatomy</span><div class="chips" id="anatChips"></div></div>
+          <div class="row"><span class="label">Axial plane</span><input id="zs" type="range" min="0" max="0" step="1" value="0" aria-label="Axial plane position">
+            <span id="zout" class="num muted" style="min-width:7ch"></span>
+            <button class="plain" id="plane" aria-pressed="true">Hide plane</button>
+            <button class="plain" id="brain" aria-pressed="true">Hide outline</button></div>
+          <div class="row"><span class="label">View</span>
+            <div class="seg" role="group" aria-label="Look at the scene from">
+              <button data-view="right">Right</button><button data-view="left">Left</button><button data-view="front">Front</button>
+              <button data-view="back">Back</button><button data-view="top">Top</button><button data-view="bottom">Bottom</button>
+            </div>
+            <button class="plain" id="center">Center on site</button>
+            <button class="plain" id="reset">Reset view</button></div>
+        </div>
+      </section>
       <section class="panel" id="envPanel"></section>
-      <section class="panel" id="sitePanel"></section>
+    </aside>
+  </div>
+
+  <div class="side info">
+    <section class="panel" id="about">
+      <h2>About this view</h2>
+      <p>A healthy adult (MASiVar cohort III, subject 04), focused on three tracts used in surgical planning: the corticospinal
+        tract, the arcuate fasciculus and the uncinate fasciculus. The tractography pipeline ran 17 times on one scan: once as acquired
+        and 16 times on copies with its noise drawn again. The same subject was scanned three more times, and each of those scans got
+        17 runs too.</p>
+      <p>Shells show how much of a tract the runs agree on; patches show where a real repeat scan put the tract outside the envelope;
+        fans show single streamlines drawn from all 17 runs and the repeat scans. Brain anatomy from FastSurfer, a segmentation of the
+        subject's T1 image, is drawn with the tracts and used to check where each streamline ends.</p>
+      <p class="muted">This shows how reproducible the pipeline's output is, and a rough check of its streamlines' ends against
+        automated anatomy labels, not where the fibers truly run. The internal-capsule sites come from the FastSurfer anatomy; the
+        other sites were placed from the tracts themselves, so their names are approximate.</p>
+    </section>
+    <section class="panel" id="focusPanel"></section>
+    <section class="panel" id="sitePanel"></section>
       <section class="panel">
         <h2>Reading the view</h2>
         <p><strong>Drawn from the data stores:</strong> the shells and the anatomy are read in your browser from two data files (the
@@ -205,12 +223,17 @@ td.n, th.n { text-align: right; font-family: var(--data); font-variant-numeric: 
           <span style="color:#3d9df2;font-weight:700">blue</span> if its two ends fit its bundle's anatomical rule (for example, the CST
           from sensorimotor or premotor cortex to the brainstem), <span style="color:#ff7a3d;font-weight:700">orange</span> if not,
           gray if its bundle has no rule. The rules are a first pass, not checked by an anatomist.</p>
+        <p><strong>Cross-section:</strong> a plane through the point, in the radiological convention: the patient's right is on the
+          screen's left (axial and coronal), anterior on the left (sagittal). Light fill: the envelope; strong fill: the core; lines:
+          their edges; hatching: the compared scan's tract outside the envelope; thin colored lines: the anatomy shown in 3D. It uses the
+          same tracts, levels and ensemble as the 3D view. Click to move the point (the axial plane and the 3D pivot follow); hover
+          for the values under the cursor.</p>
         <p><strong>Anatomy:</strong> FastSurfer's most likely label per voxel, on the same 1 mm grid as the shells, aligned to the
           diffusion scan.</p>
         <h2 style="margin-top:10px">Shell colors</h2>
         <div class="key" id="key"></div>
       </section>
-      <section class="panel" id="brainPanel"></section>
+    <section class="panel" id="brainPanel"></section>
       <section class="panel">
         <h2>Limits</h2>
         <p>One healthy subject, one scanner (Philips, 2.1 × 2.1 × 2.2 mm, b = 1000 and 2000). The rescans were registered rigidly and
@@ -218,7 +241,6 @@ td.n, th.n { text-align: right; font-family: var(--data); font-variant-numeric: 
           apparent boundary. The held-out figures come from this subject's own four scans, not from other subjects. Coordinates are
           scanner millimeters in the patient's frame (R/L, A/P, S/I labels).</p>
       </section>
-    </div>
   </div>
 </div>
 
@@ -1229,9 +1251,11 @@ function drawCut() {
   }
   // to the screen, scaled, with the vector overlays at screen resolution
   const off = document.createElement("canvas"); off.width = nw; off.height = nh; off.getContext("2d").putImageData(img, 0, 0);
-  const dpr = Math.min(window.devicePixelRatio || 1, 2), cw = cutCanvas.parentElement.clientWidth || 400;
+  const stacked = cutCanvas.parentElement.getBoundingClientRect().top - host.getBoundingClientRect().top > host.clientHeight / 2;
+  const maxH = stacked ? window.innerHeight * 0.75 : Math.max(280, host.clientHeight - 84);         // stacked, or beside the 3D view
+  const dpr = Math.min(window.devicePixelRatio || 1, 2), cw = Math.min(cutCanvas.parentElement.clientWidth || 400, Math.floor(maxH * nw / nh));
   const ch = Math.round(cw * nh / nw);
-  cutCanvas.width = Math.round(cw * dpr); cutCanvas.height = Math.round(ch * dpr); cutCanvas.style.height = ch + "px";
+  cutCanvas.width = Math.round(cw * dpr); cutCanvas.height = Math.round(ch * dpr); cutCanvas.style.height = ch + "px"; cutCanvas.style.width = cw + "px";
   const g = cutCtx, k = cutCanvas.width / nw;
   g.setTransform(1, 0, 0, 1, 0, 0); g.imageSmoothingEnabled = true; g.drawImage(off, 0, 0, cutCanvas.width, cutCanvas.height);
   g.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -1310,7 +1334,8 @@ function render(step) {
   renderer.render(scene, camera);
 }
 function resize() {
-  const w = host.clientWidth, h = Math.round(Math.min(Math.max(w * 0.72, 320), 700));
+  const below = host.getBoundingClientRect().top + window.scrollY;           // the header's height above the views
+  const w = host.clientWidth, h = Math.round(Math.max(320, Math.min(w * 1.4, window.innerHeight - below - 24)));
   renderer.setSize(w, h, false); canvas.style.height = h + "px"; camera.aspect = w / h; camera.updateProjectionMatrix();
   controls.handleResize(); redraw();
 }
