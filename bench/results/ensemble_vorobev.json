@@ -1,0 +1,360 @@
+{
+ "store": "ensemble/cIIIs04/cIIIs04_ensemble.duckn.zip",
+ "scans": [
+  "A",
+  "within",
+  "session3",
+  "session5"
+ ],
+ "min target voxels": 2000,
+ "focus": {
+  "single, CST": {
+   "runs needed": {
+    "core": 9.0,
+    "vorobev": 8.0,
+    "envelope 80": 10.0,
+    "envelope 90": 6.0,
+    "widest": 1.0
+   },
+   "core": {
+    "coverage": 0.795,
+    "precision": 0.843,
+    "dice": 0.817,
+    "size": 0.945,
+    "symmetric difference": 0.355
+   },
+   "vorobev": {
+    "coverage": 0.816,
+    "precision": 0.824,
+    "dice": 0.819,
+    "size": 0.993,
+    "symmetric difference": 0.361
+   },
+   "envelope 80": {
+    "coverage": 0.773,
+    "precision": 0.861,
+    "dice": 0.814,
+    "size": 0.9,
+    "symmetric difference": 0.354
+   },
+   "envelope 90": {
+    "coverage": 0.86,
+    "precision": 0.772,
+    "dice": 0.813,
+    "size": 1.118,
+    "symmetric difference": 0.398
+   },
+   "widest": {
+    "coverage": 0.963,
+    "precision": 0.516,
+    "dice": 0.671,
+    "size": 1.874,
+    "symmetric difference": 0.949
+   }
+  },
+  "single, AF": {
+   "runs needed": {
+    "core": 9.0,
+    "vorobev": 8.0,
+    "envelope 80": 11.0,
+    "envelope 90": 6.0,
+    "widest": 1.0
+   },
+   "core": {
+    "coverage": 0.802,
+    "precision": 0.848,
+    "dice": 0.824,
+    "size": 0.946,
+    "symmetric difference": 0.343
+   },
+   "vorobev": {
+    "coverage": 0.821,
+    "precision": 0.828,
+    "dice": 0.824,
+    "size": 0.991,
+    "symmetric difference": 0.35
+   },
+   "envelope 80": {
+    "coverage": 0.766,
+    "precision": 0.878,
+    "dice": 0.818,
+    "size": 0.874,
+    "symmetric difference": 0.341
+   },
+   "envelope 90": {
+    "coverage": 0.859,
+    "precision": 0.783,
+    "dice": 0.819,
+    "size": 1.098,
+    "symmetric difference": 0.38
+   },
+   "widest": {
+    "coverage": 0.964,
+    "precision": 0.527,
+    "dice": 0.681,
+    "size": 1.834,
+    "symmetric difference": 0.906
+   }
+  },
+  "single, UF": {
+   "runs needed": {
+    "core": 9.0,
+    "vorobev": 8.0,
+    "envelope 80": 10.0,
+    "envelope 90": 5.0,
+    "widest": 1.0
+   },
+   "core": {
+    "coverage": 0.783,
+    "precision": 0.805,
+    "dice": 0.791,
+    "size": 0.978,
+    "symmetric difference": 0.413
+   },
+   "vorobev": {
+    "coverage": 0.805,
+    "precision": 0.784,
+    "dice": 0.792,
+    "size": 1.034,
+    "symmetric difference": 0.423
+   },
+   "envelope 80": {
+    "coverage": 0.766,
+    "precision": 0.821,
+    "dice": 0.791,
+    "size": 0.937,
+    "symmetric difference": 0.406
+   },
+   "envelope 90": {
+    "coverage": 0.865,
+    "precision": 0.716,
+    "dice": 0.781,
+    "size": 1.217,
+    "symmetric difference": 0.486
+   },
+   "widest": {
+    "coverage": 0.96,
+    "precision": 0.495,
+    "dice": 0.651,
+    "size": 1.959,
+    "symmetric difference": 1.04
+   }
+  },
+  "pooled, CST": {
+   "runs needed": {
+    "core": 26.0,
+    "vorobev": 22.0,
+    "envelope 80": 27.0,
+    "envelope 90": 14.0,
+    "widest": 1.0
+   },
+   "core": {
+    "coverage": 0.804,
+    "precision": 0.865,
+    "dice": 0.832,
+    "size": 0.931,
+    "symmetric difference": 0.324
+   },
+   "vorobev": {
+    "coverage": 0.838,
+    "precision": 0.834,
+    "dice": 0.835,
+    "size": 1.007,
+    "symmetric difference": 0.331
+   },
+   "envelope 80": {
+    "coverage": 0.793,
+    "precision": 0.874,
+    "dice": 0.831,
+    "size": 0.91,
+    "symmetric difference": 0.323
+   },
+   "envelope 90": {
+    "coverage": 0.892,
+    "precision": 0.765,
+    "dice": 0.823,
+    "size": 1.171,
+    "symmetric difference": 0.386
+   },
+   "widest": {
+    "coverage": 0.989,
+    "precision": 0.411,
+    "dice": 0.58,
+    "size": 2.418,
+    "symmetric difference": 1.44
+   }
+  },
+  "pooled, AF": {
+   "runs needed": {
+    "core": 26.0,
+    "vorobev": 21.0,
+    "envelope 80": 26.5,
+    "envelope 90": 14.0,
+    "widest": 1.0
+   },
+   "core": {
+    "coverage": 0.813,
+    "precision": 0.877,
+    "dice": 0.843,
+    "size": 0.927,
+    "symmetric difference": 0.302
+   },
+   "vorobev": {
+    "coverage": 0.852,
+    "precision": 0.838,
+    "dice": 0.845,
+    "size": 1.018,
+    "symmetric difference": 0.313
+   },
+   "envelope 80": {
+    "coverage": 0.806,
+    "precision": 0.882,
+    "dice": 0.842,
+    "size": 0.915,
+    "symmetric difference": 0.302
+   },
+   "envelope 90": {
+    "coverage": 0.903,
+    "precision": 0.768,
+    "dice": 0.829,
+    "size": 1.177,
+    "symmetric difference": 0.372
+   },
+   "widest": {
+    "coverage": 0.992,
+    "precision": 0.415,
+    "dice": 0.585,
+    "size": 2.396,
+    "symmetric difference": 1.411
+   }
+  },
+  "pooled, UF": {
+   "runs needed": {
+    "core": 26.0,
+    "vorobev": 22.0,
+    "envelope 80": 24.5,
+    "envelope 90": 14.0,
+    "widest": 1.0
+   },
+   "core": {
+    "coverage": 0.795,
+    "precision": 0.834,
+    "dice": 0.812,
+    "size": 0.959,
+    "symmetric difference": 0.37
+   },
+   "vorobev": {
+    "coverage": 0.832,
+    "precision": 0.801,
+    "dice": 0.815,
+    "size": 1.045,
+    "symmetric difference": 0.381
+   },
+   "envelope 80": {
+    "coverage": 0.811,
+    "precision": 0.821,
+    "dice": 0.815,
+    "size": 0.993,
+    "symmetric difference": 0.371
+   },
+   "envelope 90": {
+    "coverage": 0.906,
+    "precision": 0.712,
+    "dice": 0.796,
+    "size": 1.28,
+    "symmetric difference": 0.467
+   },
+   "widest": {
+    "coverage": 0.994,
+    "precision": 0.396,
+    "dice": 0.565,
+    "size": 2.527,
+    "symmetric difference": 1.539
+   }
+  }
+ },
+ "all named tracts (median)": {
+  "single": {
+   "tracts": 41,
+   "runs": 17,
+   "core": {
+    "coverage": 0.753,
+    "precision": 0.816,
+    "dice": 0.78,
+    "size": 0.931,
+    "symmetric difference": 0.425
+   },
+   "vorobev": {
+    "coverage": 0.782,
+    "precision": 0.787,
+    "dice": 0.781,
+    "size": 1.0,
+    "symmetric difference": 0.436
+   },
+   "envelope 80": {
+    "coverage": 0.758,
+    "precision": 0.81,
+    "dice": 0.78,
+    "size": 0.927,
+    "symmetric difference": 0.426
+   },
+   "envelope 90": {
+    "coverage": 0.85,
+    "precision": 0.703,
+    "dice": 0.768,
+    "size": 1.213,
+    "symmetric difference": 0.512
+   },
+   "widest": {
+    "coverage": 0.954,
+    "precision": 0.482,
+    "dice": 0.641,
+    "size": 1.991,
+    "symmetric difference": 1.08
+   },
+   "Vorob'ev beats core on symmetric difference (tracts)": 0,
+   "Vorob'ev beats core on Dice (tracts)": 39
+  },
+  "pooled": {
+   "tracts": 41,
+   "runs": 51,
+   "core": {
+    "coverage": 0.763,
+    "precision": 0.846,
+    "dice": 0.803,
+    "size": 0.909,
+    "symmetric difference": 0.376
+   },
+   "vorobev": {
+    "coverage": 0.807,
+    "precision": 0.809,
+    "dice": 0.807,
+    "size": 1.007,
+    "symmetric difference": 0.386
+   },
+   "envelope 80": {
+    "coverage": 0.795,
+    "precision": 0.814,
+    "dice": 0.806,
+    "size": 0.983,
+    "symmetric difference": 0.384
+   },
+   "envelope 90": {
+    "coverage": 0.892,
+    "precision": 0.691,
+    "dice": 0.779,
+    "size": 1.293,
+    "symmetric difference": 0.51
+   },
+   "widest": {
+    "coverage": 0.989,
+    "precision": 0.375,
+    "dice": 0.544,
+    "size": 2.648,
+    "symmetric difference": 1.669
+   },
+   "Vorob'ev beats core on symmetric difference (tracts)": 1,
+   "Vorob'ev beats core on Dice (tracts)": 40
+  }
+ }
+}

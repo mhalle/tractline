@@ -3794,3 +3794,51 @@ whole. The shells and the anatomy are no longer marching-cubes meshes baked into
   analysis found the pontine veering.
 - **The viewer is a local folder, not an artifact.** It is served by any static server; artifacts do not serve zip
   files, and the user does not need one. The page now carries its own charset and viewport tags.
+
+## 2026-10-13 A volume-matched core: the Vorob'ev expectation against the majority vote
+
+`bench/ensemble_vorobev.py` (results/ensemble_vorobev.json). The store's four scans of cIIIs04. Each scan is held out
+in turn, and its own run is the target. Predictions come from each other scan's 17 runs ("single", averaged) or
+from the other three scans pooled (51 runs). The shapes compared are sets {p >= t}, where p is the share of runs with
+the tract present:
+- **core:** at least half the runs;
+- **Vorob'ev expectation:** the cut whose volume is closest to a run's mean tract volume (the sum of p);
+- **envelopes:** 80 % and 90 %;
+- **widest:** any run.
+
+Why it was tried: the viewer's core is a per-voxel rule with no claim about the whole tract. It turned out to be an
+80-85 % envelope, and "50 %" meant two different things on screen.
+
+**Focus tracts** (one scan's 17 runs; Vorob'ev cut 8 runs, core 9):
+
+| Tract | Shape | Coverage | Precision | Dice | Size vs target | Symmetric difference |
+|---|---|---|---|---|---|---|
+| CST | core | 0.795 | 0.843 | 0.817 | 0.945 | 0.355 |
+| CST | Vorob'ev | 0.816 | 0.824 | 0.819 | 0.993 | 0.361 |
+| AF | core | 0.802 | 0.848 | 0.824 | 0.946 | 0.343 |
+| AF | Vorob'ev | 0.821 | 0.828 | 0.824 | 0.991 | 0.350 |
+| UF | core | 0.783 | 0.805 | 0.791 | 0.978 | 0.413 |
+| UF | Vorob'ev | 0.805 | 0.784 | 0.792 | 1.034 | 0.423 |
+
+Pooled (51 runs; Vorob'ev cut 21-22, core 26): the same pattern. The core's size is 0.93-0.96; Vorob'ev's 1.01-1.05
+with 3-4 points more coverage and 3-4 less precision; Dice equal or +0.003.
+
+**All 41 named tracts with at least 2000 target voxels** (medians):
+- **single:** core size 0.93, Dice 0.780; Vorob'ev size 1.00, Dice 0.781;
+- **pooled:** core size 0.91, Dice 0.803; Vorob'ev size 1.01, Dice 0.807;
+- **Dice:** Vorob'ev is higher in 39 and 40 of 41 tracts;
+- **symmetric difference:** the core is lower in 41 and 40 of 41 tracts (0.425 against 0.436, single).
+
+**Reading it:**
+- **Both results are what the theory says.** The majority set {p > 1/2} minimizes the expected symmetric difference
+  with a new realization over all sets. The Vorob'ev expectation minimizes it only among sets of the expected volume.
+  The rescans behave the same way as the ensemble's own runs here.
+- **The difference is small.** The two shapes are one vote apart (8 against 9 of 17). Dice agrees to within 0.004.
+- **What the Vorob'ev shape gains is an honest size.** The core underestimates the volume of a repeat scan's tract by
+  5-9 % (single) or 7-9 % (pooled), consistently across tracts. The Vorob'ev shape is unbiased (0.99-1.05), with
+  coverage about equal to precision (~0.82 for the focus tracts).
+- **So the choice is about the claim made.** The core says "each voxel is more likely than not to be tract": it gives
+  the fewest misclassified voxels, but it is too small. The Vorob'ev shape says "a typical tract's size, placed where
+  the runs agree most", which is the right shape when a volume or an extent is quoted, as in planning.
+- **Limits:** one subject; the targets are density-presence maps on the conformed grid; the held-out scans are three
+  sessions of the same scanner.
