@@ -3693,3 +3693,15 @@ layout tried.
 - one block per class: 2.9 MB, written in 4.5 s at zstd 9, or 3.6 MB in 0.04 s at zstd 3;
 - four blocks per class: 2.4 MB in 16 s;
 - 64³ chunks with empty chunks skipped: 2.9 MB in 19 s.
+
+**Revised the same day: FastSurfer's conformed grid is the canonical per-subject grid** (the user's suggestion).
+- **What changed:** the store now uses FastSurfer's conformed lattice (256³, 1 mm, where its ranked anatomy is
+  native), cropped to the brain. The crop is conformed (i, j, k) [54, 43, 27] to [204, 190, 211], 150 × 147 × 184
+  voxels, about the same count as before, so the same cost (about 9 minutes for 68 runs).
+- **The crop is recorded** in the `tractline` block, so FastSurfer's own arrays slice to the same voxels; the old
+  route restored its labels onto the original T1 grid. The cache is now presence_conformed.npz, and the original-T1
+  version is removed.
+- **The store is 19.6 MB, and every node validates.**
+- **Alignment check:** slicing FastSurfer's ranked store (parts/0/ranks, rank 1) with the recorded crop, the CST core
+  (at least 9 of 17 runs) falls in cerebral white matter 46 %, brainstem 27 %, ventral DC 9 %, thalamus 5 % and
+  outside the brain 4 %.

@@ -3,7 +3,9 @@ as a duckn store").
 
     uv run --group dipy --group rankfield --group store bench/ensemble_store.py [--out PATH]
 
-Presence on a 1 mm grid in the subject's T1 space (FastSurfer's label grid cropped to the brain), by streamline
+Presence on FastSurfer's conformed grid (its native 256^3, 1 mm lattice, where its ranked anatomy lives; the
+canonical per-subject grid), cropped to the brain with the crop's offset recorded so the anatomy's arrays slice to
+the same voxels, by streamline
 density (ensemble_grid_check.py: streamlines per mm^2 of a voxel's mean cross-section, smoothed 1 mm, at least 0.3),
 which keeps the calibration across grids. For each of the four scans (A and the same-session, session 3 and session 5
 rescans), its 17-run ensemble's votes per class and voxel (how many runs have the class present), and its own run's
@@ -40,14 +42,23 @@ L = np.asarray(LUT)
 K = len(TRACT_NAMES)
 
 
-def grid_t1():
-    anat = Anatomy("cIIIs04")
-    ijk = np.argwhere(anat.lab > 0)
-    lo, hi = np.maximum(ijk.min(0) - 5, 0), np.minimum(ijk.max(0) + 6, anat.lab.shape)
-    crop = anat.affine.copy()
-    crop[:3, 3] = anat.affine[:3, :3] @ lo + anat.affine[:3, 3]
+MARGIN = 5
+
+
+def grid_conformed():
+    """FastSurfer's conformed lattice, cropped to the brain (its labels' extent plus MARGIN voxels): the grid, the crop's
+    start and stop in the conformed array's (i, j, k), the full conformed shape, and the T1-to-DWI transform."""
+    import nibabel as nib
+    conf = nib.load(FS / "ranked_cIIIs04_brain" / "conformed_1mm.nii.gz")
+    anat = Anatomy("cIIIs04")                                            # labels on the original T1 grid, the same world
+    w = np.argwhere(anat.lab > 0)[::7] @ anat.affine[:3, :3].T + anat.affine[:3, 3]
+    ijk = w @ np.linalg.inv(conf.affine)[:3, :3].T + np.linalg.inv(conf.affine)[:3, 3]
+    lo = np.maximum(np.floor(ijk.min(0)).astype(int) - MARGIN, 0)
+    hi = np.minimum(np.ceil(ijk.max(0)).astype(int) + MARGIN + 1, conf.shape[:3])
+    crop = conf.affine.copy()
+    crop[:3, 3] = conf.affine[:3, :3] @ lo + conf.affine[:3, 3]
     t1_to_dwi = np.load(FS / "cIIIs04_t1_to_dwi.npz")["t1_to_dwi"]
-    return Grid("t1", crop, hi - lo, np.linalg.inv(t1_to_dwi)), t1_to_dwi
+    return Grid("conformed", crop, hi - lo, np.linalg.inv(t1_to_dwi)), (lo, hi, conf.shape[:3]), t1_to_dwi
 
 
 def compute(d, rescans, g, cache):
@@ -117,8 +128,8 @@ def main(args):
     pair = "cIIIs04-2.1"
     subject, (ses, scan), rescans, shells, _ = PAIRS[pair]
     d = DATA / "ensemble" / subject / "retest" / pair
-    g, t1_to_dwi = grid_t1()
-    votes, run0 = compute(d, rescans, g, d / "presence_t1.npz")
+    g, (lo, hi, conf_shape), t1_to_dwi = grid_conformed()
+    votes, run0 = compute(d, rescans, g, d / "presence_conformed.npz")
     pooled = sum(v.astype(np.uint16) for v in votes.values()).astype(np.uint8)
     out = Path(args.out or DATA / "ensemble" / subject / f"{subject}_ensemble.duckn.zip")
     validation = json.loads((HERE / "results/ensemble_grid_check.json").read_text())["coverage [widest, *levels], mean over held-out scans"]
@@ -131,7 +142,10 @@ def main(args):
             "kind": "ensemble presence", "subject": subject, "pair": pair, "classes": names,
             "presence": {"definition": "streamline density", "rho_per_mm2": RHO, "smooth_mm": SMOOTH_MM, "sample_step_mm": STEP_MM,
                          "cross_section": "1.5 h^2 (the mean projected area of a voxel of side h)"},
-            "grid": "1 mm, the subject's T1 space (FastSurfer's label grid, cropped to the brain)",
+            "grid": {"lattice": "FastSurfer's conformed grid (256^3, 1 mm), cropped to the brain",
+                     "crop_ijk_start": [int(v) for v in lo], "crop_ijk_stop": [int(v) for v in hi],
+                     "conformed_shape_ijk": [int(v) for v in conf_shape],
+                     "note": "the crop's (i, j, k) are the conformed NIfTI's array indices; these arrays are stored (z, y, x) = (k, j, i)"},
             "t1_to_dwi_ras_mm": np.round(t1_to_dwi, 9).tolist(),
             "dwi_affine_ras": np.round(nib.load(scan_files(subject, ses, scan, shells)["APP"][0][1]).affine, 9).tolist(),
             "anatomy": {"store": os.path.relpath(FS / "cIIIs04_asegdkt.duckn.zip", out.parent), "frame": "the same T1 world"},
@@ -185,8 +199,8 @@ def main(args):
 
 README = """# {subject}: tractography ensemble presence (tractline)
 
-A duckn store (zarr v3). Per class (42 tracts and Other, the TractCloud/RapidParc scheme) and voxel of a 1 mm grid in
-the subject's T1 space: how many runs of the tractography ensemble have the class present, presence being streamline
+A duckn store (zarr v3). Per class (42 tracts and Other, the TractCloud/RapidParc scheme) and voxel of FastSurfer's
+conformed 1 mm grid (cropped to the brain, voxel-aligned with the subject's FastSurfer store): how many runs of the tractography ensemble have the class present, presence being streamline
 density of at least 0.3 per mm^2 of a voxel's cross-section (smoothed 1 mm).
 
 - ensembles/<scan>/votes: each scan's {runs}-run ensemble (its own run and {runs_less} resampled copies); scans {scans}
