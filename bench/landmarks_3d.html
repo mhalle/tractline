@@ -163,6 +163,9 @@ td.n, th.n { text-align: right; font-family: var(--data); font-variant-numeric: 
         <div class="seg" role="group" aria-label="Background image">
           <button data-bg="b0" aria-pressed="true">Background: b0</button><button data-bg="none" aria-pressed="false">None</button></div>
       </div>
+      <div class="row" style="margin-top:8px"><span class="label" id="cutLabel">Slice</span>
+        <input id="cutSlider" type="range" min="0" max="1" step="0.5" value="0" aria-label="Move the slice along its axis">
+        <span id="cutOut" class="num muted" style="min-width:9ch"></span></div>
       <div class="cutgrid">
         <div class="cutbox"><canvas id="cut" aria-label="Cross-section of the shells, the compared scan's patches and the anatomy outlines; click to move the point"></canvas></div>
         <div class="readout" id="readout"></div>
@@ -1118,6 +1121,27 @@ function cutWindow() {
   }
   return { c, h, u0, v0, nw: Math.round((u1 - u0) / h), nh: Math.round((v1 - v0) / h) };
 }
+// the slice slider: the point's coordinate along the cut's axis, over the store box's extent
+const cutSlider = document.getElementById("cutSlider"), cutOut = document.getElementById("cutOut"), cutLabel = document.getElementById("cutLabel");
+const SIDE = [["R", "L"], ["A", "P"], ["S", "I"]];                            // RAS: + then - names per world axis
+const mmName = (a, v) => `${v >= 0 ? SIDE[a][0] : SIDE[a][1]} ${Math.abs(v).toFixed(1).replace(/\.0$/, "")} mm`;
+function syncCutSlider() {
+  const n = CUTS[state.cut].n, [W, H, Dz] = volume.dims;
+  let lo = Infinity, hi = -Infinity;
+  for (const g of [[0, 0, 0], [W, 0, 0], [0, H, 0], [0, 0, Dz], [W, H, 0], [W, 0, Dz], [0, H, Dz], [W, H, Dz]]) {
+    const v = new THREE.Vector3(...g).applyMatrix4(volume.M).getComponent(n); lo = Math.min(lo, v); hi = Math.max(hi, v);
+  }
+  cutSlider.min = Math.floor(lo); cutSlider.max = Math.ceil(hi); cutSlider.value = state.point[n];
+  cutLabel.textContent = { 0: "Left–right", 1: "Back–front", 2: "Down–up" }[n];
+  cutOut.textContent = mmName(n, state.point[n]);
+}
+cutSlider.addEventListener("input", () => {
+  const n = CUTS[state.cut].n;
+  state.point[n] = +cutSlider.value;
+  if (n === 2) { const k = Math.max(0, Math.min(Z - 1, Math.round(dwiIndex(state.point)[2]))); zs.value = k; setPlane(k); }
+  cutDirty = true;
+});
+
 // a pixel's center (or any point of the window, in pixels) -> world
 function cutWorld(win, x, y) {
   const s = win.u0 + x * win.h, t = win.v0 + y * win.h, w = [0, 1, 2].map(a => win.c.e1[a] * s + win.c.e2[a] * t);
@@ -1145,6 +1169,7 @@ const voxelOf = w => {                                                          
 };
 const rgb = hex => { const c = new THREE.Color(hex); return [c.r * 255, c.g * 255, c.b * 255]; };
 function drawCut() {
+  syncCutSlider();
   const win = cutWin = cutWindow(), { nw, nh } = win, n = nw * nh;
   const img = new ImageData(nw, nh), px = img.data;
   const on = D.shown.map((t, i) => [t, i]).filter(([t]) => state.on[t.name]);
