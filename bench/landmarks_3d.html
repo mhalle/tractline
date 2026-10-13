@@ -1167,7 +1167,7 @@ function syncCutSlider() {
     const v = new THREE.Vector3(...g).applyMatrix4(volume.M).getComponent(n); lo = Math.min(lo, v); hi = Math.max(hi, v);
   }
   cutSlider.min = Math.floor(lo); cutSlider.max = Math.ceil(hi); cutSlider.value = state.point[n];
-  cutLabel.textContent = { 0: "Left–right", 1: "Back–front", 2: "Down–up" }[n];
+  cutLabel.textContent = { 0: "Left → right", 1: "Posterior → anterior", 2: "Inferior → superior" }[n];   // the slider's ends, patient's frame
   cutOut.textContent = mmName(n, state.point[n]);
 }
 // the wheel over the slice steps it like the slider: 1 mm a notch (5 mm with Shift); trackpad deltas add up to a notch
@@ -1178,7 +1178,7 @@ cutCanvas.addEventListener("wheel", e => {
   const notches = Math.trunc(wheelAcc / 100);                                 // a mouse notch is about 100 px
   if (!notches) return;
   wheelAcc -= notches * 100;
-  const v = Math.max(+cutSlider.min, Math.min(+cutSlider.max, +cutSlider.value - notches * (e.shiftKey ? 5 : 1)));
+  const v = Math.max(+cutSlider.min, Math.min(+cutSlider.max, +cutSlider.value + notches * (e.shiftKey ? 5 : 1)));
   cutSlider.value = v; cutSlider.dispatchEvent(new Event("input"));
 }, { passive: false });
 cutSlider.addEventListener("input", () => {
