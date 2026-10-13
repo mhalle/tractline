@@ -29,13 +29,9 @@ a { color: var(--accent); }
 .app .d3 { grid-area: d3; } .app .cutp { grid-area: cut; } .app .ctlcol { grid-area: ctl; }
 .app .d3, .app .cutp { padding: 10px; }
 .ctlcol { display: grid; gap: 16px; min-width: 0; }
-@media (min-width: 980px) { .app { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); grid-template-areas: "d3 cut" "ctl ctl"; } }
-@media (min-width: 1280px) {
-  .app { grid-template-columns: minmax(0, 340px) minmax(0, 1.1fr) minmax(0, 1fr); grid-template-areas: "ctl d3 cut"; }
-  .ctlcol { position: sticky; top: 8px; max-height: calc(100vh - 16px); overflow-y: auto; }
-  .ctlcol .sites { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
-  .ctlcol .site { font-size: 0.8rem; padding: 4px 8px; }
-  .ctlcol .label { flex-basis: 100%; min-width: 0; }
+@media (min-width: 980px) {                                                  /* the 3D view with its controls under it; the cross-section beside, staying in view */
+  .app { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); grid-template-areas: "d3 cut" "ctl cut"; }
+  .app .cutp { position: sticky; top: 8px; max-height: calc(100vh - 16px); overflow-y: auto; }
 }
 .legend { color: var(--muted); font-size: 0.8rem; margin: 8px 0 0; }
 .info { grid-template-columns: repeat(auto-fill, minmax(min(360px, 100%), 1fr)); align-items: start; }
@@ -1252,7 +1248,7 @@ function drawCut() {
   // to the screen, scaled, with the vector overlays at screen resolution
   const off = document.createElement("canvas"); off.width = nw; off.height = nh; off.getContext("2d").putImageData(img, 0, 0);
   const stacked = cutCanvas.parentElement.getBoundingClientRect().top - host.getBoundingClientRect().top > host.clientHeight / 2;
-  const maxH = stacked ? window.innerHeight * 0.75 : Math.max(280, host.clientHeight - 84);         // stacked, or beside the 3D view
+  const maxH = stacked ? window.innerHeight * 0.75 : Math.max(280, window.innerHeight - 230);    // stacked, or in its own column
   const dpr = Math.min(window.devicePixelRatio || 1, 2), cw = Math.min(cutCanvas.parentElement.clientWidth || 400, Math.floor(maxH * nw / nh));
   const ch = Math.round(cw * nh / nw);
   cutCanvas.width = Math.round(cw * dpr); cutCanvas.height = Math.round(ch * dpr); cutCanvas.style.height = ch + "px"; cutCanvas.style.width = cw + "px";
@@ -1335,7 +1331,7 @@ function render(step) {
 }
 function resize() {
   const below = host.getBoundingClientRect().top + window.scrollY;           // the header's height above the views
-  const w = host.clientWidth, h = Math.round(Math.max(320, Math.min(w * 1.4, window.innerHeight - below - 24)));
+  const w = host.clientWidth, h = Math.round(Math.max(320, Math.min(w, window.innerHeight * 0.62, window.innerHeight - below - 24)));
   renderer.setSize(w, h, false); canvas.style.height = h + "px"; camera.aspect = w / h; camera.updateProjectionMatrix();
   controls.handleResize(); redraw();
 }
