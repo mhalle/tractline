@@ -3576,3 +3576,43 @@ What it means:
 - For a patient with one scan, the honest route is to add a session term learned from test-retest data like this. The
   pooled-versus-single gap is the size of that term: about 4–5 points of coverage at each stated level, and a widest
   outline about 4 % too tight.
+
+## 2026-10-13 Direction spread along the CST: flat, and adds nothing to the vote share
+
+`ensemble_cst_direction.py` → `ensemble_cst_direction.json`. This is the simplest test of per-voxel, per-tract direction
+statistics.
+
+**Method.**
+- For each of cIIIs04's 17 runs and each voxel, the CST streamlines' direction is the principal axis of their
+  segment tangents (at least 3 segments).
+- For each voxel where at least 9 runs have one, the spread is the mean angle between each run's direction and their
+  common one (3,875 voxels).
+
+**Where.**
+- The spread is flat: median 4.5° (90th percentile 9.0°), and 3.0–5.4° in every 6 mm axial band from the brainstem to
+  the cortex.
+- Brainstem 4.5° against 4.6° elsewhere. There is no peak at the pons.
+
+**Whether it predicts.** For A's CST streamlines, the spread along the path, against keeping the name on a rescan
+(AUROC for a change):
+
+| rescan | path mean spread | path 90th-percentile spread | 1 − vote share |
+|---|---|---|---|
+| same session | 0.59 | 0.59 | 0.68 |
+| session 3 | 0.67 | 0.64 | 0.72 |
+| session 5 | 0.66 | 0.66 | 0.74 |
+
+Fitted on the same-session rescan and scored on session 5, the vote share alone gives AUROC 0.740, and vote share
+plus spread gives 0.746. The two correlate at −0.41.
+
+- **Why it fails: selection.** Statistics conditioned on the label see only the streamlines still named CST. The
+  unstable ones veer into the cerebellum and are named Other (NOTES "Why CST streamlines become Other"), so they leave
+  the class. What remains agrees in direction. Instability shows as streamlines leaving the bundle (presence, which
+  the vote share carries), not as the bundle's direction wobbling.
+- **Per-tract direction statistics are descriptive, not predictive.** They can still label crossings ("CST
+  superior–inferior ±5°, runner-up SLF anterior–posterior") and drive glyphs. As a stability signal for the CST they
+  do not earn a rank-field format extension.
+- **A version that might predict** would compute direction over all streamlines from the tract's seeds whatever their
+  final name, or look for two directions in one voxel. That overlaps the path-divergence measures already in hand.
+
+Caveats: one tract, one subject.

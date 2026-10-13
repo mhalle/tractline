@@ -1,0 +1,179 @@
+{
+ "voxels with the CST in at least 9 runs": 3810,
+ "spread (deg): median / 90th percentile": [
+  4.5,
+  9.0
+ ],
+ "by axial band (inferior first)": [
+  {
+   "z (mm)": "-18 to -12",
+   "voxels": 45,
+   "median spread (deg)": 4.5,
+   "brainstem share": 0.69,
+   "cerebral white matter share": 0.0
+  },
+  {
+   "z (mm)": "-12 to -6",
+   "voxels": 213,
+   "median spread (deg)": 5.4,
+   "brainstem share": 0.82,
+   "cerebral white matter share": 0.0
+  },
+  {
+   "z (mm)": "-6 to 0",
+   "voxels": 205,
+   "median spread (deg)": 4.2,
+   "brainstem share": 0.91,
+   "cerebral white matter share": 0.0
+  },
+  {
+   "z (mm)": "0 to 6",
+   "voxels": 191,
+   "median spread (deg)": 4.0,
+   "brainstem share": 0.95,
+   "cerebral white matter share": 0.0
+  },
+  {
+   "z (mm)": "6 to 12",
+   "voxels": 232,
+   "median spread (deg)": 4.2,
+   "brainstem share": 0.91,
+   "cerebral white matter share": 0.0
+  },
+  {
+   "z (mm)": "12 to 18",
+   "voxels": 228,
+   "median spread (deg)": 4.4,
+   "brainstem share": 0.79,
+   "cerebral white matter share": 0.0
+  },
+  {
+   "z (mm)": "18 to 24",
+   "voxels": 217,
+   "median spread (deg)": 4.8,
+   "brainstem share": 0.41,
+   "cerebral white matter share": 0.01
+  },
+  {
+   "z (mm)": "24 to 30",
+   "voxels": 262,
+   "median spread (deg)": 5.3,
+   "brainstem share": 0.13,
+   "cerebral white matter share": 0.04
+  },
+  {
+   "z (mm)": "30 to 36",
+   "voxels": 265,
+   "median spread (deg)": 5.4,
+   "brainstem share": 0.01,
+   "cerebral white matter share": 0.33
+  },
+  {
+   "z (mm)": "36 to 42",
+   "voxels": 226,
+   "median spread (deg)": 4.6,
+   "brainstem share": 0.0,
+   "cerebral white matter share": 0.37
+  },
+  {
+   "z (mm)": "42 to 48",
+   "voxels": 229,
+   "median spread (deg)": 4.3,
+   "brainstem share": 0.0,
+   "cerebral white matter share": 0.59
+  },
+  {
+   "z (mm)": "48 to 54",
+   "voxels": 365,
+   "median spread (deg)": 4.4,
+   "brainstem share": 0.0,
+   "cerebral white matter share": 0.88
+  },
+  {
+   "z (mm)": "54 to 60",
+   "voxels": 469,
+   "median spread (deg)": 4.8,
+   "brainstem share": 0.0,
+   "cerebral white matter share": 1.0
+  },
+  {
+   "z (mm)": "60 to 66",
+   "voxels": 196,
+   "median spread (deg)": 4.4,
+   "brainstem share": 0.0,
+   "cerebral white matter share": 1.0
+  },
+  {
+   "z (mm)": "66 to 72",
+   "voxels": 127,
+   "median spread (deg)": 4.6,
+   "brainstem share": 0.0,
+   "cerebral white matter share": 1.0
+  },
+  {
+   "z (mm)": "72 to 78",
+   "voxels": 113,
+   "median spread (deg)": 4.2,
+   "brainstem share": 0.0,
+   "cerebral white matter share": 1.0
+  },
+  {
+   "z (mm)": "78 to 84",
+   "voxels": 110,
+   "median spread (deg)": 3.0,
+   "brainstem share": 0.0,
+   "cerebral white matter share": 0.98
+  },
+  {
+   "z (mm)": "84 to 90",
+   "voxels": 83,
+   "median spread (deg)": 3.5,
+   "brainstem share": 0.0,
+   "cerebral white matter share": 0.86
+  },
+  {
+   "z (mm)": "90 to 96",
+   "voxels": 33,
+   "median spread (deg)": 4.6,
+   "brainstem share": 0.0,
+   "cerebral white matter share": 0.55
+  }
+ ],
+ "median spread (deg): brainstem / elsewhere": [
+  4.5,
+  4.6
+ ],
+ "A's CST streamlines with a defined path spread": 522,
+ "within: AUROC predicting a name change (higher score = change)": {
+  "path mean spread": 0.593,
+  "path 90th-percentile spread": 0.588,
+  "ensemble: 1 - vote share": 0.679,
+  "keeps CST (n)": [
+   0.262,
+   496
+  ]
+ },
+ "session3: AUROC predicting a name change (higher score = change)": {
+  "path mean spread": 0.666,
+  "path 90th-percentile spread": 0.644,
+  "ensemble: 1 - vote share": 0.723,
+  "keeps CST (n)": [
+   0.294,
+   493
+  ]
+ },
+ "session5: AUROC predicting a name change (higher score = change)": {
+  "path mean spread": 0.661,
+  "path 90th-percentile spread": 0.655,
+  "ensemble: 1 - vote share": 0.74,
+  "keeps CST (n)": [
+   0.312,
+   481
+  ]
+ },
+ "fitted on the same-session rescan, scored on session 5: AUROC predicting keep, share only / share + spread": [
+  0.74,
+  0.746
+ ],
+ "correlation of vote share with path 90th-percentile spread": -0.411
+}
