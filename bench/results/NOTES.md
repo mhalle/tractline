@@ -3485,3 +3485,45 @@ in all 17 runs):
 - **Its territory is steady:** the 80 % outline holds 85 % of a rescan's CST.
 - So for the CST, voxel-level outlines answer the clinical question better than streamline names. The likely cause is
   the labeler sorting corticospinal streamlines between CST and Other; it has not been checked.
+
+## 2026-10-13 Why CST streamlines become Other: their lower end turns into the cerebellum at the pons
+
+`ensemble_cst_other.py` → `ensemble_cst_other.json`. It compares cIIIs04's run A with a replicate (smooth/r001), the
+same-session rescan and the session 5 rescan, for A's streamlines named CST (482–507, seeds labeled in both).
+
+| | replicate | same session | session 5 |
+|---|---|---|---|
+| keeps CST | 0.33 | 0.26 | 0.31 |
+| Other: another cluster's outlier twin / a non-anatomical cluster / its own cluster's twin | 0.35 / 0.18 / 0.02 | 0.36 / 0.20 / 0.02 | 0.29 / 0.20 / 0.02 |
+| another named tract | 0.11 | 0.15 | 0.18 |
+| MDF between versions, median: kept / became Other | 3.0 / 19.9 mm | 4.0 / 20.9 mm | 4.7 / 21.0 mm |
+| upper end moved: kept / Other | 1.7 / 3.8 mm | 2.2 / 4.0 mm | 2.5 / 10.4 mm |
+| lower end moved: kept / Other | 3.9 / 32.1 mm | 5.0 / 34.7 mm | 7.7 / 35.6 mm |
+| the Other version's lower end in the cerebellum (A's version, same seeds) | 0.36 (0.06) | 0.37 (0.07) | 0.39 (0.07) |
+| fits the CST endpoint rule: A's version / the Other version | 0.76 / 0.20 | 0.75 / 0.22 | 0.75 / 0.22 |
+| labeler's P(CST) in A, median: kept / became Other | 0.959 / 0.945 | 0.957 / 0.941 | 0.961 / 0.934 |
+
+- **It is the path, not the labeler.**
+  - A's versions are good CST courses: precentral or postcentral cortex to the brainstem, and 75 % fit the rule
+    whether or not they later change.
+  - The labeler is equally sure of both groups (P(CST) about 0.94–0.96).
+  - On the other run, the cortical end stays within a few millimeters, but the lower end moves 32–36 mm.
+  - About 37 % of the Other versions end in the cerebellum, against 6–7 % of A's: they cross from the pons into the
+    cerebellum (the middle cerebellar peduncle) instead of descending. Others stop early or take another brainstem
+    course.
+  - Only 20–22 % of the Other versions still fit the CST rule. The labeler calls them Other because they are no longer
+    CST-shaped, which is right.
+- **It is not the outlier twin.** Only 2 % go to their own cluster's outlier twin (cluster + 800). Most go to twins of
+  non-CST clusters, or to the atlas's non-anatomical clusters.
+- **A replicate does the same as a rescan** (keeps 0.33 against 0.26–0.31). So the cause is tracking variability at
+  the pons, where descending corticospinal fibers cross transverse pontine fibers, not anything particular to
+  rescanning. This crossing is a known difficulty for CST tractography.
+- **"Unlabeled" lower ends** (about half of A's) lie outside FastSurfer's labeled brain at the bottom of the field of
+  view, around the lower brainstem.
+
+What it suggests:
+- **Constrain the descent anatomically.** A CST path should not enter the cerebellum: FastSurfer gives the
+  cerebellum, brainstem and ventral DC. The constraint can stop such a path or penalize turning into the middle
+  cerebellar peduncle.
+- **Report the CST at the voxel level.** Its outline holds 85 % of a rescan's bundle.
+- **Test a tracker setting at the pons** that keeps to the superior–inferior fiber population where two cross.

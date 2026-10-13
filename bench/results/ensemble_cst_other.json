@@ -1,0 +1,201 @@
+{
+ "CST clusters": [
+  172,
+  193,
+  237,
+  673,
+  696,
+  708,
+  710,
+  729,
+  745,
+  772,
+  792
+ ],
+ "replicate": {
+  "A's CST streamlines": 507,
+  "the other run gives": {
+   "Other: another cluster's outlier twin": 0.347,
+   "CST": 0.333,
+   "Other: a non-anatomical cluster": 0.183,
+   "another tract": 0.112,
+   "Other: its own cluster's outlier twin": 0.024
+  },
+  "Other's twins belong to clusters of": {
+   "Other": 0.665,
+   "CST": 0.128,
+   "CR-F": 0.048,
+   "TF": 0.037,
+   "CPC": 0.037
+  },
+  "MDF between versions, median mm: kept CST / became Other": [
+   3.0,
+   19.9
+  ],
+  "upper end moved, median mm: kept / Other": [
+   1.7,
+   3.8
+  ],
+  "lower end moved, median mm: kept / Other": [
+   3.9,
+   32.1
+  ],
+  "length, median mm: A / B, became Other": [
+   121.7,
+   129.0
+  ],
+  "fits the CST rule: A kept / A became Other / B kept / B became Other": [
+   0.8,
+   0.76,
+   0.8,
+   0.2
+  ],
+  "lower end's label: B where it became Other": {
+   "cerebellum": 0.359,
+   "unlabeled": 0.263,
+   "brainstem": 0.196,
+   "other": 0.121,
+   "cerebral white matter": 0.036,
+   "ventral DC": 0.025
+  },
+  "lower end's label: A, the same seeds": {
+   "unlabeled": 0.477,
+   "brainstem": 0.452,
+   "cerebellum": 0.064,
+   "other": 0.007
+  },
+  "lower end's label: B where it kept CST": {
+   "unlabeled": 0.55,
+   "brainstem": 0.396,
+   "cerebellum": 0.053
+  },
+  "labeler's P(CST) in A, median: kept / became Other": [
+   0.959,
+   0.945
+  ]
+ },
+ "same-session rescan": {
+  "A's CST streamlines": 497,
+  "the other run gives": {
+   "Other: another cluster's outlier twin": 0.362,
+   "CST": 0.262,
+   "Other: a non-anatomical cluster": 0.201,
+   "another tract": 0.151,
+   "Other: its own cluster's outlier twin": 0.024
+  },
+  "Other's twins belong to clusters of": {
+   "Other": 0.62,
+   "CST": 0.161,
+   "CR-F": 0.062,
+   "CPC": 0.042,
+   "TF": 0.026
+  },
+  "MDF between versions, median mm: kept CST / became Other": [
+   4.0,
+   20.9
+  ],
+  "upper end moved, median mm: kept / Other": [
+   2.2,
+   4.0
+  ],
+  "lower end moved, median mm: kept / Other": [
+   5.0,
+   34.7
+  ],
+  "length, median mm: A / B, became Other": [
+   121.7,
+   130.7
+  ],
+  "fits the CST rule: A kept / A became Other / B kept / B became Other": [
+   0.85,
+   0.75,
+   0.85,
+   0.22
+  ],
+  "lower end's label: B where it became Other": {
+   "cerebellum": 0.373,
+   "unlabeled": 0.233,
+   "brainstem": 0.171,
+   "other": 0.12,
+   "cerebral white matter": 0.082,
+   "ventral DC": 0.021
+  },
+  "lower end's label: A, the same seeds": {
+   "unlabeled": 0.517,
+   "brainstem": 0.401,
+   "cerebellum": 0.065,
+   "other": 0.017
+  },
+  "lower end's label: B where it kept CST": {
+   "unlabeled": 0.485,
+   "brainstem": 0.477,
+   "cerebellum": 0.038
+  },
+  "labeler's P(CST) in A, median: kept / became Other": [
+   0.957,
+   0.941
+  ]
+ },
+ "session 5 rescan": {
+  "A's CST streamlines": 482,
+  "the other run gives": {
+   "CST": 0.313,
+   "Other: another cluster's outlier twin": 0.286,
+   "Other: a non-anatomical cluster": 0.201,
+   "another tract": 0.18,
+   "Other: its own cluster's outlier twin": 0.019
+  },
+  "Other's twins belong to clusters of": {
+   "Other": 0.612,
+   "CST": 0.204,
+   "CR-F": 0.041,
+   "TP": 0.027,
+   "TF": 0.027
+  },
+  "MDF between versions, median mm: kept CST / became Other": [
+   4.7,
+   21.0
+  ],
+  "upper end moved, median mm: kept / Other": [
+   2.5,
+   10.4
+  ],
+  "lower end moved, median mm: kept / Other": [
+   7.7,
+   35.6
+  ],
+  "length, median mm: A / B, became Other": [
+   121.7,
+   122.7
+  ],
+  "fits the CST rule: A kept / A became Other / B kept / B became Other": [
+   0.84,
+   0.75,
+   0.72,
+   0.22
+  ],
+  "lower end's label: B where it became Other": {
+   "cerebellum": 0.385,
+   "brainstem": 0.234,
+   "unlabeled": 0.164,
+   "other": 0.123,
+   "cerebral white matter": 0.086,
+   "ventral DC": 0.008
+  },
+  "lower end's label: A, the same seeds": {
+   "brainstem": 0.471,
+   "unlabeled": 0.443,
+   "cerebellum": 0.066,
+   "other": 0.02
+  },
+  "lower end's label: B where it kept CST": {
+   "unlabeled": 0.563,
+   "brainstem": 0.404,
+   "cerebellum": 0.033
+  },
+  "labeler's P(CST) in A, median: kept / became Other": [
+   0.961,
+   0.934
+  ]
+ }
+}
