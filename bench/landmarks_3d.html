@@ -25,12 +25,13 @@ body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--u
 .bar { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; }
 .title h1 { font-size: 1.2rem; margin: 0; }
 .title .tag { color: var(--warn-ink); background: var(--warn-bg); border-radius: 6px; padding: 1px 8px; font-size: 0.78rem; }
-.tools { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; flex: 1; min-width: 0; }
+.tools { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; flex: 1 1 340px; min-width: 0; }
 .tool { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; min-width: 0; }
 .tl { color: var(--muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; }
 .held { color: var(--muted); font-size: 0.8rem; font-family: var(--data); }
 .panelbtn { margin-left: auto; }
 .bar select { font: inherit; font-size: 0.84rem; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 4px 8px; }
+.bar select { max-width: 100%; }
 .bar select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .bar .chip { font-size: 0.8rem; padding: 2px 8px 2px 5px; }
 .bar .chips { gap: 4px; }
