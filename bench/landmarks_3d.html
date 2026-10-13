@@ -870,7 +870,6 @@ function recenter(p) { const shift = p.clone().sub(controls.target); controls.ta
 const state = { site: -1, crop: true, shell: "mid", source: "single", level: 2, compare: D.rescans[D.rescans.length - 1], fan: "split", color: "tract",
   rescLines: true, on: Object.fromEntries(D.shown.map(t => [t.name, t.name in D.focus])), plane: true, brain: true, solid: false,
   anat: Object.fromEntries(D.anatomy.map(a => [a.name, a.on])), point: [0, 0, 0], cut: "axial", zoom: "whole", bg: "b0" };
-const DEFAULT_LEVEL = { single: 2, pooled: 1 };                             // stated 90 % and 80 %: each held about 80-86 % out of sample
 function cropPlanes(c) {
   // world half-spaces |x_a - c_a| <= CROP_MM, carried into the volume's box coordinates
   const M = volume.M, m3 = new THREE.Matrix3().setFromMatrix4(M), tr = new THREE.Vector3().setFromMatrixPosition(M);
@@ -930,7 +929,7 @@ function apply() {
 }
 function chooseSite(i) {
   state.site = i;
-  document.querySelectorAll(".site").forEach((b, j) => b.setAttribute("aria-pressed", String(j === i)));
+  document.querySelectorAll(".site").forEach((b, j) => b.setAttribute("aria-pressed", String(j - 1 === i)));   // button 0 is the whole brain
   if (i >= 0) {
     buildFans(i);
     const s = D.sites[i];
@@ -949,12 +948,12 @@ function chooseSite(i) {
 
 // site list
 const sitesEl = document.getElementById("sites");
-const all = document.createElement("button"); all.className = "site"; all.innerHTML = "<b>·</b>Whole brain, all tracts"; all.onclick = () => chooseSite(-1);
+const all = document.createElement("button"); all.className = "site"; all.innerHTML = "<b>·</b>Whole brain"; all.onclick = () => chooseSite(-1);
+sitesEl.appendChild(all);                                                      // first: the view a reader knows best
 D.sites.forEach((s, i) => {
   const b = document.createElement("button"); b.className = "site"; b.innerHTML = `<b>${i + 1}</b>${s.name}`;
   b.onclick = () => chooseSite(i); sitesEl.appendChild(b);
 });
-sitesEl.appendChild(all);
 
 // side panels
 function sitePanel() {
@@ -1057,7 +1056,7 @@ document.querySelectorAll("[data-core]").forEach(b => b.onclick = () => { state.
 document.querySelectorAll("[data-color]").forEach(b => b.onclick = () => { state.color = b.dataset.color; pick1("[data-color]", b); apply(); });
 document.querySelectorAll("[data-source]").forEach(b => b.onclick = () => {
   if (state.source === b.dataset.source) return;
-  state.source = b.dataset.source; state.level = DEFAULT_LEVEL[state.source]; pick1("[data-source]", b);
+  state.source = b.dataset.source; pick1("[data-source]", b);                // the envelope level stays as chosen
   if (state.source === "single" && state.compare === "A") state.compare = D.rescans[D.rescans.length - 1];
   if (state.source === "pooled" && state.compare === "none") state.compare = "A";
   apply(); rebuild();
@@ -1338,7 +1337,7 @@ function resize() {
   controls.handleResize(); redraw();
 }
 new ResizeObserver(resize).observe(host); resize();
-chooseSite(0);
+chooseSite(-1);
 (function loop() {
   controls.update();
   const moving = performance.now() - moved < 160;
