@@ -30,8 +30,8 @@ a { color: var(--accent); }
 .app .d3, .app .cutp { padding: 10px; }
 .ctlcol { display: grid; gap: 16px; min-width: 0; }
 @media (min-width: 980px) {                                                  /* the 3D view with its controls under it; the cross-section beside, staying in view */
-  .app { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); grid-template-areas: "d3 cut" "ctl cut"; }
-  .app .cutp { position: sticky; top: 8px; max-height: calc(100vh - 16px); overflow-y: auto; }
+  .app { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); grid-template-areas: "d3 cut" "ctl cut"; }
+  .app .cutp { position: sticky; top: 8px; }
 }
 .legend { color: var(--muted); font-size: 0.8rem; margin: 8px 0 0; }
 .info { grid-template-columns: repeat(auto-fill, minmax(min(360px, 100%), 1fr)); align-items: start; }
@@ -79,11 +79,14 @@ th { color: var(--muted); font-weight: 400; font-size: 0.78rem; }
 td.n, th.n { text-align: right; font-family: var(--data); font-variant-numeric: tabular-nums; }
 .stat { display: flex; justify-content: space-between; gap: 10px; font-size: 0.86rem; border-bottom: 1px solid var(--line); padding: 3px 0; }
 .stat span:last-child { font-family: var(--data); font-variant-numeric: tabular-nums; }
-.cutbox { background: var(--scene); border-radius: 8px; overflow: hidden; margin-top: 8px; }
+.cutbox { background: var(--scene); border-radius: 8px; overflow: hidden; }
 #cut { display: block; margin: 0 auto; }
 #cut { cursor: crosshair; }
 .readout { font-size: 0.84rem; min-width: 0; margin-top: 8px; }
 .readout table { margin: 2px 0 8px; }
+.rgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 2px 14px; }
+.rgrid div { display: flex; gap: 6px; align-items: center; white-space: nowrap; border-bottom: 1px solid var(--line); padding: 2px 0; }
+.rgrid .v { margin-left: auto; font-family: var(--data); font-variant-numeric: tabular-nums; }
 .readout .coord { font-family: var(--data); font-variant-numeric: tabular-nums; color: var(--muted); font-size: 0.8rem; }
 </style>
 
@@ -103,7 +106,8 @@ td.n, th.n { text-align: right; font-family: var(--data); font-variant-numeric: 
     </section>
 
     <section class="panel cutp" aria-label="Cross-section">
-      <div class="row">
+      <div class="cutbox"><canvas id="cut" aria-label="Cross-section of the shells, the compared scan's patches and the anatomy outlines; click to move the point"></canvas></div>
+      <div class="row" style="margin-top:8px">
         <div class="seg" role="group" aria-label="Which plane">
           <button data-cut="axial" aria-pressed="true">Axial</button><button data-cut="coronal" aria-pressed="false">Coronal</button><button data-cut="sagittal" aria-pressed="false">Sagittal</button></div>
         <div class="seg" role="group" aria-label="Field of view">
@@ -114,7 +118,6 @@ td.n, th.n { text-align: right; font-family: var(--data); font-variant-numeric: 
       <div class="row" style="margin-top:8px"><span class="label" id="cutLabel">Slice</span>
         <input id="cutSlider" type="range" min="0" max="1" step="0.5" value="0" aria-label="Move the slice along its axis">
         <span id="cutOut" class="num muted" style="min-width:9ch"></span></div>
-      <div class="cutbox"><canvas id="cut" aria-label="Cross-section of the shells, the compared scan's patches and the anatomy outlines; click to move the point"></canvas></div>
       <p class="legend">Radiological: patient's right on the left · light fill envelope · strong fill core · hatching: compared scan outside
         the envelope · thin lines anatomy · click to move the point</p>
       <div class="readout" id="readout"></div>
@@ -223,7 +226,8 @@ td.n, th.n { text-align: right; font-family: var(--data); font-variant-numeric: 
           screen's left (axial and coronal), anterior on the left (sagittal). Light fill: the envelope; strong fill: the core; lines:
           their edges; hatching: the compared scan's tract outside the envelope; thin colored lines: the anatomy shown in 3D. It uses the
           same tracts, levels and ensemble as the 3D view. Click to move the point (the axial plane and the 3D pivot follow); hover
-          for the values under the cursor.</p>
+          for the values under the cursor. Its "runs present" are raw counts in that 1 mm voxel, before the 0.6 mm smoothing the drawn
+          edges use.</p>
         <p><strong>Anatomy:</strong> FastSurfer's most likely label per voxel, on the same 1 mm grid as the shells, aligned to the
           diffusion scan.</p>
         <h2 style="margin-top:10px">Shell colors</h2>
@@ -1248,7 +1252,7 @@ function drawCut() {
   // to the screen, scaled, with the vector overlays at screen resolution
   const off = document.createElement("canvas"); off.width = nw; off.height = nh; off.getContext("2d").putImageData(img, 0, 0);
   const stacked = cutCanvas.parentElement.getBoundingClientRect().top - host.getBoundingClientRect().top > host.clientHeight / 2;
-  const maxH = stacked ? window.innerHeight * 0.75 : Math.max(280, window.innerHeight - 230);    // stacked, or in its own column
+  const maxH = stacked ? window.innerHeight * 0.6 : Math.max(240, Math.min(480, window.innerHeight - 430));   // the whole panel fits the window
   const dpr = Math.min(window.devicePixelRatio || 1, 2), cw = Math.min(cutCanvas.parentElement.clientWidth || 400, Math.floor(maxH * nw / nh));
   const ch = Math.round(cw * nh / nw);
   cutCanvas.width = Math.round(cw * dpr); cutCanvas.height = Math.round(ch * dpr); cutCanvas.style.height = ch + "px"; cutCanvas.style.width = cw + "px";
@@ -1281,17 +1285,15 @@ function showReadout(w) {
   const code = idx >= 0 ? volume.codes[idx] : 0, lab = code ? volume.labels[code - 1] : null;
   const where = lab == null ? "outside the labels" : lab === 0 ? "background" : (volume.names.get(lab) || `label ${lab}`);
   const th = i => (ens_.th[i] || [])[state.level];
+  const cmpName = state.compare !== "none" ? (RESCAN[state.compare] || state.compare) : null;
   const rows = D.shown.map((t, i) => [t, i]).filter(([t]) => state.on[t.name]).map(([t, i]) => {
-    const v = idx >= 0 ? ens_.votes[i][idx] : 0, inn = v >= ens_.core ? "core" : v >= th(i) ? "envelope" : v >= 1 ? "widest" : "–";
-    const run = state.compare !== "none" && cmp.runs[i] ? (cmp.runs[i][idx] ? "yes" : "no") : "";
-    return `<tr><td><i class="sw" style="background:${t.color};margin-right:6px"></i>${t.name}</td><td class="n">${v} / ${ens_.runs}</td><td>${inn}</td>${state.compare !== "none" ? `<td>${run}</td>` : ""}</tr>`;
+    const v = idx >= 0 ? ens_.votes[i][idx] : 0, inn = v >= ens_.core ? "core" : v >= th(i) ? "envelope" : v >= 1 ? "widest" : "outside";
+    const run = cmpName && cmp.runs[i] && idx >= 0 ? (cmp.runs[i][idx] ? " · in its run" : "") : "";
+    return `<div><i class="sw" style="background:${t.color}"></i>${t.name}<span class="muted">${inn}${run}</span><span class="v">${v}/${ens_.runs}</span></div>`;
   }).join("");
-  readoutEl.innerHTML = `<h2>${hover ? "Under the cursor" : "At the point"}</h2>
-    <div class="coord">${ras} mm</div>
-    <p style="margin:4px 0 8px">FastSurfer: <strong>${where}</strong></p>
-    <div class="tbl"><table><thead><tr><th>Tract</th><th class="n">Runs present</th><th>In</th>${state.compare !== "none" ? `<th>${RESCAN[state.compare]}</th>` : ""}</tr></thead>
-    <tbody>${rows || `<tr><td colspan="4" class="muted">No tract shown.</td></tr>`}</tbody></table></div>
-    <p class="muted" style="font-size:0.8rem">Runs present: raw counts in this 1 mm voxel, before the 0.6 mm smoothing the drawn edges use.</p>`;
+  readoutEl.innerHTML = `<div class="coord">${hover ? "Under the cursor" : "At the point"}: ${ras} mm · FastSurfer: <strong style="font-family:var(--ui);color:var(--ink)">${where}</strong></div>
+    <div class="rgrid" style="margin-top:4px">${rows || `<span class="muted">No tract shown.</span>`}</div>
+    ${cmpName ? `<p class="muted" style="font-size:0.78rem;margin:4px 0 0">Runs present out of ${ens_.runs}; "in its run": ${cmpName.toLowerCase()}'s own run has the tract here.</p>` : ""}`;
 }
 const cutPoint = e => { const r = cutCanvas.getBoundingClientRect(); return cutWin ? cutWorld(cutWin, (e.clientX - r.left) / r.width * cutWin.nw, (e.clientY - r.top) / r.height * cutWin.nh) : null; };
 cutCanvas.addEventListener("mousemove", e => { hover = cutPoint(e); if (hover) showReadout(hover); });
