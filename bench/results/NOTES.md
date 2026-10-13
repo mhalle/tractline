@@ -3662,3 +3662,34 @@ Consequences:
 - The canonical space can be the T1's 1 mm grid, where the anatomy is.
 - The rescans were still tracked on A's grid (resampled DWI). Tracking each session on its native grid and moving its
   streamlines into T1 space is the next step for clean pooling. It was not tested here.
+
+## 2026-10-13 The ensemble as a duckn store: 18.7 MB for four scans' presence at 1 mm
+
+`ensemble_store.py` (the new optional `store` group: zarr ≥ 3.3, and duckn at haversack's tag v0.6.2; Python 3.12+)
+→ DATA/ensemble/cIIIs04/cIIIs04_ensemble.duckn.zip. The votes are cached beside the records (presence_t1.npz, 15 MB).
+
+**Contents.** Per class (42 tracts and Other) and voxel of a 1 mm grid in the subject's T1 space (149 × 183 × 148,
+FastSurfer's label grid cropped to the brain), with density presence (ensemble_grid_check.py):
+- ensembles/<scan>/votes: each scan's 17-run ensemble (2.9 MB each);
+- ensembles/<scan>/run: the scan's own run (0.45 MB each);
+- pooled/votes: all 68 runs (5.0 MB).
+
+**Layout.** It follows haversack's ranked stores, with the user's convention for anatomy: sharded with few blocks,
+since a reader decompresses whole arrays.
+- The store is zarr v3, built in a staging directory and packed into a zip with every entry stored uncompressed.
+- Each array is (class, z, y, x): one chunk per class in one shard per array, blosc zstd 9 with bitshuffle.
+- Geometry goes through duckn's own models: LPS mm, cell centering, a list axis for the class. Every group and array
+  carries duckn metadata, and every node validates on read-back (DucknMetadata and DucknGroupMetadata).
+- The `tractline` extension block (version 0.1) holds:
+  - the class names and the presence definition;
+  - per class and array, the vote counts where the envelopes of stated 0.5 / 0.8 / 0.9 / 0.925 / 0.95 start (CST in
+    A's ensemble: 16 / 10 / 6 / 4 / 3 of 17 runs);
+  - the coverage those levels held on held-out scans;
+  - the T1-to-DWI transform and the DWI affine;
+  - the FastSurfer store, by relative path, as sharing this T1 frame.
+
+**Block layout** (one 17-run ensemble, 43 classes, 174 MB raw): the whole array decompresses in 0.04–0.08 s in every
+layout tried.
+- one block per class: 2.9 MB, written in 4.5 s at zstd 9, or 3.6 MB in 0.04 s at zstd 3;
+- four blocks per class: 2.4 MB in 16 s;
+- 64³ chunks with empty chunks skipped: 2.9 MB in 19 s.

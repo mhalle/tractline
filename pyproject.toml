@@ -47,6 +47,12 @@ rankfield = [
     "numcodecs>=0.15",
     "rankfield[torch] @ git+https://github.com/mhalle/rankfield.git@v0.3.11 ; python_version >= '3.12'",
 ]
+# ensemble_store.py: the ensemble's per-voxel fields as a duckn store (zarr v3, sharded, zipped), the convention
+# haversack's ranked stores use; duckn at haversack's tag
+store = [
+    "zarr>=3.3 ; python_version >= '3.12'",
+    "duckn @ git+https://github.com/mhalle/duckn.git@v0.6.2 ; python_version >= '3.12'",
+]
 
 [tool.hatch.version]
 path = "src/tractline/__init__.py"

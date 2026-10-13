@@ -1,0 +1,206 @@
+"""cIIIs04's ensemble presence as a duckn store: zarr v3, sharded, few blocks, zipped (NOTES 2026-10-13, "The ensemble
+as a duckn store").
+
+    uv run --group dipy --group rankfield --group store bench/ensemble_store.py [--out PATH]
+
+Presence on a 1 mm grid in the subject's T1 space (FastSurfer's label grid cropped to the brain), by streamline
+density (ensemble_grid_check.py: streamlines per mm^2 of a voxel's mean cross-section, smoothed 1 mm, at least 0.3),
+which keeps the calibration across grids. For each of the four scans (A and the same-session, session 3 and session 5
+rescans), its 17-run ensemble's votes per class and voxel (how many runs have the class present), and its own run's
+presence; and the four ensembles pooled (68 runs). Votes are computed once and cached beside the records
+(presence_t1.npz).
+
+The store, following haversack's ranked stores (haversack.ranked_store): a zarr v3 hierarchy built in a staging
+directory and packed into a zip with every entry stored (the chunks are already compressed); arrays (class, z, y, x),
+one chunk per class in one shard per array, blosc zstd with bitshuffle; geometry through duckn's own models (LPS mm,
+cell centering, a list axis for the class); this project's facts in a versioned `tractline` extension block: classes,
+runs, the presence definition, per class and array the vote counts at which the envelopes of the stated levels start,
+the coverage those levels held on held-out scans (ensemble_grid_check.json), the T1-to-DWI transform, and the
+FastSurfer store it shares a frame with.
+"""
+import argparse, json, os, shutil, sys, tempfile, time, zipfile
+from pathlib import Path
+import numpy as np
+from tractline import ensemble as E
+from tractline.data import DATA
+from tractline.labelers.base import LUT, TRACT_NAMES
+
+HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))
+from ensemble_retest import PAIRS  # noqa: E402
+from ensemble_grid_check import Grid, sample, STEP_MM, SMOOTH_MM, RHO  # noqa: E402
+from ensemble_pooled import thresholds, LEVELS  # noqa: E402
+from ensemble_endpoints import Anatomy, FS  # noqa: E402
+
+RUNS = 17
+DUCKN_VERSION = "1.2"                     # haversack.ranked_store's
+EXTENSION_VERSION = "0.1"
+LPS = np.diag([-1.0, -1.0, 1.0, 1.0])
+L = np.asarray(LUT)
+K = len(TRACT_NAMES)
+
+
+def grid_t1():
+    anat = Anatomy("cIIIs04")
+    ijk = np.argwhere(anat.lab > 0)
+    lo, hi = np.maximum(ijk.min(0) - 5, 0), np.minimum(ijk.max(0) + 6, anat.lab.shape)
+    crop = anat.affine.copy()
+    crop[:3, 3] = anat.affine[:3, :3] @ lo + anat.affine[:3, 3]
+    t1_to_dwi = np.load(FS / "cIIIs04_t1_to_dwi.npz")["t1_to_dwi"]
+    return Grid("t1", crop, hi - lo, np.linalg.inv(t1_to_dwi)), t1_to_dwi
+
+
+def compute(d, rescans, g, cache):
+    if cache.exists():
+        z = np.load(cache)
+        return {s: z[f"votes_{s}"] for s in z["scans"]}, {s: z[f"run_{s}"] for s in z["scans"]}
+    scans = {"A": [d / "A.npz"] + [d / "smooth" / f"r{r:03d}.npz" for r in range(1, RUNS)]}
+    for tag in rescans:
+        scans[tag] = [d / f"{tag}_onA.npz"] + [d / "smooth" / f"{tag}_r{r:03d}.npz" for r in range(1, RUNS)]
+    votes, run0 = {}, {}
+    t0 = time.time()
+    for s, paths in scans.items():
+        v = np.zeros((K,) + g.shape, np.uint8)
+        for i, p in enumerate(paths):
+            rec = E.RunRecord.load(p, logp=False, fibers=True)
+            tract = L[rec.cluster]
+            for k in range(K):
+                idx = np.flatnonzero(tract == k)
+                if len(idx):
+                    pres = g.presence(g.counts(*sample([rec.fibers[j] for j in idx])))["density"].reshape(g.shape)
+                    v[k] += pres
+                    if i == 0:
+                        run0.setdefault(s, np.zeros((K,) + g.shape, bool))[k] = pres
+            del rec
+        votes[s] = v
+        print(f"{s}: {time.time() - t0:.0f}s", flush=True)
+    np.savez_compressed(cache, scans=np.array(list(scans)), **{f"votes_{s}": v for s, v in votes.items()},
+                        **{f"run_{s}": r for s, r in run0.items()})
+    return votes, run0
+
+
+def array_attrs(g, extension=None):
+    """duckn geometry for a (class, z, y, x) array on grid g, through duckn's models (as haversack.ranked_store)."""
+    from duckn import DucknMetadata, AxisMetadata
+    from duckn.models import duckn_attrs
+    A = LPS @ g.affine
+    spacing_xyz = np.sqrt((A[:3, :3] ** 2).sum(0))
+    cols = [A[:3, 2], A[:3, 1], A[:3, 0]]                                 # array axes z, y, x
+    axes = [AxisMetadata(kind="list")] + [AxisMetadata(kind="space", centering="cell", unit="mm",
+                                                       space_direction=[round(float(v), 9) for v in c]) for c in cols]
+    meta = DucknMetadata(version=DUCKN_VERSION, space="left-posterior-superior",
+                         space_origin=[round(float(v), 6) for v in A[:3, 3]], axes=axes,
+                         extensions={"tractline": {"version": EXTENSION_VERSION, **extension}} if extension else None)
+    assert np.allclose(spacing_xyz, g.h, atol=1e-6)
+    return duckn_attrs(meta)
+
+
+def group_attrs(extension):
+    from duckn import DucknGroupMetadata
+    meta = DucknGroupMetadata(version=DUCKN_VERSION, extensions={"tractline": {"version": EXTENSION_VERSION, **extension}})
+    return {"duckn": meta.model_dump(exclude_none=True)}
+
+
+def pack(src_dir: Path, archive: Path):
+    partial = archive.with_name(archive.name + ".partial")
+    with zipfile.ZipFile(partial, "w", compression=zipfile.ZIP_STORED, allowZip64=True) as zf:
+        for f in sorted(p for p in src_dir.rglob("*") if p.is_file()):
+            zf.write(f, f.relative_to(src_dir).as_posix())
+    os.replace(partial, archive)
+
+
+def main(args):
+    import zarr
+    from zarr.codecs import BloscCodec
+    from _masivar import scan_files
+    import nibabel as nib
+    pair = "cIIIs04-2.1"
+    subject, (ses, scan), rescans, shells, _ = PAIRS[pair]
+    d = DATA / "ensemble" / subject / "retest" / pair
+    g, t1_to_dwi = grid_t1()
+    votes, run0 = compute(d, rescans, g, d / "presence_t1.npz")
+    pooled = sum(v.astype(np.uint16) for v in votes.values()).astype(np.uint8)
+    out = Path(args.out or DATA / "ensemble" / subject / f"{subject}_ensemble.duckn.zip")
+    validation = json.loads((HERE / "results/ensemble_grid_check.json").read_text())["coverage [widest, *levels], mean over held-out scans"]
+    names = list(TRACT_NAMES)
+    codec = BloscCodec(cname="zstd", clevel=args.level, shuffle="bitshuffle")
+    staging = Path(tempfile.mkdtemp(prefix="ensemble_store_"))
+    try:
+        root = zarr.open_group(zarr.storage.LocalStore(str(staging)), mode="w")
+        root.attrs.update(group_attrs({
+            "kind": "ensemble presence", "subject": subject, "pair": pair, "classes": names,
+            "presence": {"definition": "streamline density", "rho_per_mm2": RHO, "smooth_mm": SMOOTH_MM, "sample_step_mm": STEP_MM,
+                         "cross_section": "1.5 h^2 (the mean projected area of a voxel of side h)"},
+            "grid": "1 mm, the subject's T1 space (FastSurfer's label grid, cropped to the brain)",
+            "t1_to_dwi_ras_mm": np.round(t1_to_dwi, 9).tolist(),
+            "dwi_affine_ras": np.round(nib.load(scan_files(subject, ses, scan, shells)["APP"][0][1]).affine, 9).tolist(),
+            "anatomy": {"store": os.path.relpath(FS / "cIIIs04_asegdkt.duckn.zip", out.parent), "frame": "the same T1 world"},
+            "levels": list(LEVELS),
+            "validation (coverage on held-out scans, [widest, *levels]; ensemble_grid_check.json)":
+                {k.replace("t1 grid, density, ", ""): v for k, v in validation.items() if k.startswith("t1 grid, density")},
+            "arrays": {"ensembles/<scan>/votes": "runs (of the scan's 17) with the class present",
+                       "ensembles/<scan>/run": "the scan's own run (1: present)",
+                       "pooled/votes": "runs (of all 68, four scans) with the class present"}}))
+        shape = (K,) + tuple(int(s) for s in g.shape[::-1])
+
+        def write(group, name, data_kxyz, runs, ext):
+            data = np.ascontiguousarray(np.transpose(data_kxyz, (0, 3, 2, 1)))     # (class, z, y, x)
+            th = {names[k]: thresholds(data[k].ravel().astype(int), runs, LEVELS) for k in range(K)} if runs else None
+            a = group.create_array(name, shape=shape, dtype=np.uint8, chunks=(1,) + shape[1:], shards=shape,
+                                   compressors=codec, fill_value=0,
+                                   attributes=array_attrs(g, {**ext, **({"runs": runs, "envelope_votes": th} if runs else {})}))
+            a[...] = data
+
+        ens = root.create_group("ensembles")
+        ens.attrs.update(group_attrs({"kind": "per-scan ensembles", "scans": list(votes)}))
+        for s, v in votes.items():
+            grp = ens.create_group(s)
+            grp.attrs.update(group_attrs({"kind": "one scan's ensemble", "scan": s, "runs": RUNS}))
+            write(grp, "votes", v, RUNS, {"scan": s, "values": "runs with the class present"})
+            write(grp, "run", run0[s].astype(np.uint8), None, {"scan": s, "values": "the scan's own run: 1 present"})
+        pg = root.create_group("pooled")
+        pg.attrs.update(group_attrs({"kind": "all scans' runs pooled", "scans": list(votes), "runs": RUNS * len(votes)}))
+        write(pg, "votes", pooled, RUNS * len(votes),
+              {"scans": list(votes), "values": "runs with the class present, all scans"})
+        (staging / "README.md").write_text(README.format(subject=subject, classes=K, runs=RUNS, scans=", ".join(votes)))
+        out.parent.mkdir(parents=True, exist_ok=True)
+        pack(staging, out)
+    finally:
+        shutil.rmtree(staging, ignore_errors=True)
+    print(f"{out}: {out.stat().st_size / 1e6:.2f} MB")
+    # read back through a ZipStore and check
+    from duckn import DucknMetadata, DucknGroupMetadata
+    z = zarr.open_group(zarr.storage.ZipStore(str(out), mode="r"), mode="r")
+    for name, node in [("", z)] + list(z.members(max_depth=None)):
+        model = DucknGroupMetadata if isinstance(node, zarr.Group) else DucknMetadata
+        model.model_validate(node.attrs["duckn"])
+    print("every node's duckn metadata validates")
+    a = z["ensembles/A/votes"]
+    DucknMetadata.model_validate(a.attrs["duckn"])
+    back = a[names.index("CST")]
+    assert np.array_equal(back, np.transpose(votes["A"][names.index("CST")], (2, 1, 0)))
+    print("read back: ensembles/A/votes", a.shape, a.dtype, "CST voxels with votes:", int((back > 0).sum()),
+          "| envelope votes CST:", a.attrs["duckn"]["extensions"]["tractline"]["envelope_votes"]["CST"])
+
+
+README = """# {subject}: tractography ensemble presence (tractline)
+
+A duckn store (zarr v3). Per class (42 tracts and Other, the TractCloud/RapidParc scheme) and voxel of a 1 mm grid in
+the subject's T1 space: how many runs of the tractography ensemble have the class present, presence being streamline
+density of at least 0.3 per mm^2 of a voxel's cross-section (smoothed 1 mm).
+
+- ensembles/<scan>/votes: each scan's {runs}-run ensemble (its own run and {runs_less} resampled copies); scans {scans}
+- ensembles/<scan>/run: the scan's own run, 0/1
+- pooled/votes: all scans' runs together
+
+The root's and each array's `duckn.extensions.tractline` block holds the classes, the presence definition, the vote
+counts at which the envelopes of stated levels start, the coverage those levels held on held-out scans, the T1-to-DWI
+transform, and the FastSurfer anatomy store in the same frame. Research use only.
+""".replace("{runs_less}", "16")
+
+
+if __name__ == "__main__":
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--out", default=None)
+    ap.add_argument("--level", type=int, default=9)
+    main(ap.parse_args())
