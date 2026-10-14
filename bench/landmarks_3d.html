@@ -965,6 +965,8 @@ function apply() {
   markers.forEach((m, i) => { m.material.color.set(i === state.site ? 0xffd34d : 0xffffff); m.material.opacity = i === state.site ? 0.95 : 0.35; });
   updatePlane();                                                            // with the volume, not before it
   chkCrop.disabled = selFan.disabled = selColor.disabled = chkResc.disabled = state.site < 0;   // site-only controls
+  selFan.value = state.site < 0 ? "none" : state.fan;                          // the whole brain has no fans or crop; the choices
+  chkCrop.checked = state.site >= 0 && state.crop;                             // are kept for when a site is chosen
   [...selCompare.options].forEach(o => { o.disabled = o.value === "A" && state.source === "single"; });
   selCompare.value = state.compare; selSource.value = state.source; selLevel.value = state.level; selShell.value = state.shell;
   levelNote();
