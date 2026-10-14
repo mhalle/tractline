@@ -501,7 +501,7 @@ const occluder = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicM
 occluder.geometry.setIndex([0, 1, 2, 0, 2, 3]); occluder.renderOrder = -1; occluder.visible = false; scene.add(occluder);
 function updatePlane() {
   if (!volume.ready) return;
-  const n = CUTS[state.cut].n, c = state.point[n], on = state.plane;
+  const n = CUTS[state.cut].n, c = state.point[n], on = state.plane && state.bg === "b0";   // "No image" applies to both views
   U.uPlaneOn.value = on ? 1 : 0;
   // world: x_n = c  ->  box coordinates g, with world = M g
   const e = volume.M.elements, row = [e[n], e[4 + n], e[8 + n], e[12 + n]];
