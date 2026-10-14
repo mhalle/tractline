@@ -77,8 +77,10 @@ h3 { font-size: 1.02rem; margin: 0 0 4px; text-wrap: balance; }
 canvas { display: block; width: 100%; touch-action: none; }
 .hint { position: absolute; left: 10px; bottom: 8px; right: 10px; font: 12px var(--data); color: #9fb0bf; pointer-events: none; }
 .fankey { position: absolute; right: 10px; top: 10px; font: 12px var(--ui); color: #d8e2ea; background: rgba(11, 16, 21, 0.8);
-  border: 1px solid #26323d; border-radius: 6px; padding: 6px 9px; pointer-events: none; display: grid; gap: 2px; max-width: 46%; }
-.fankey b { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: #9fb0bf; font-weight: 700; margin-bottom: 2px; }
+  border: 1px solid #26323d; border-radius: 6px; padding: 6px 9px; display: grid; gap: 2px; max-width: 46%; }
+.fankey .kh { all: unset; cursor: pointer; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: #9fb0bf; font-weight: 700; display: flex; gap: 6px; }
+.fankey .kh:focus-visible { outline: 2px solid #73b4d4; outline-offset: 2px; }
+.fankey .kh + div { margin-top: 2px; }
 .fankey div { display: flex; gap: 6px; align-items: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .fankey .n { margin-left: auto; padding-left: 8px; font-family: var(--data); color: #9fb0bf; }
 .loading { position: absolute; left: 10px; top: 10px; right: 10px; font: 12.5px var(--data); color: #d8e2ea; background: rgba(11, 16, 21, 0.78);
@@ -920,7 +922,7 @@ function recenter(p) { const shift = p.clone().sub(controls.target); controls.ta
 // state
 const state = { site: -1, crop: true, shell: "mid", source: "single", level: 2, compare: D.rescans[D.rescans.length - 1], fan: "split", color: "tract",
   rescLines: true, on: Object.fromEntries(D.shown.map(t => [t.name, t.name in D.focus])), plane: true, brain: true, solid: false,
-  anat: Object.fromEntries(D.anatomy.map(a => [a.name, a.on])), point: [0, 0, 0], cut: "axial", zoom: "whole", bg: "b0" };
+  anat: Object.fromEntries(D.anatomy.map(a => [a.name, a.on])), point: [0, 0, 0], cut: "axial", zoom: "whole", bg: "b0", keyOpen: true };
 function cropPlanes(c) {
   // world half-spaces |x_a - c_a| <= CROP_MM, carried into the volume's box coordinates
   const M = volume.M, m3 = new THREE.Matrix3().setFromMatrix4(M), tr = new THREE.Vector3().setFromMatrixPosition(M);
@@ -1071,7 +1073,9 @@ function fanLegend() {
   }
   if (resc && state.rescLines) rows += `<div>${sw(RESCAN_COLOR)}repeat scans' versions<span class="n">${resc}</span></div>`;
   const title = state.color === "check" ? "Endpoint check" : state.color === "up" ? "Each run's runner-up" : "Tract each run gave";
-  el.innerHTML = `<b>${title}</b>${rows}`;
+  el.innerHTML = `<button class="kh" aria-expanded="${state.keyOpen}" title="${state.keyOpen ? "Collapse" : "Expand"} the fan colors">` +
+    `<span>${state.keyOpen ? "▾" : "▸"}</span>${title}</button>${state.keyOpen ? rows : ""}`;
+  el.querySelector(".kh").onclick = () => { state.keyOpen = !state.keyOpen; fanLegend(); };
   el.hidden = false;
 }
 function fanKey(si) {
