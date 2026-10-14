@@ -76,6 +76,11 @@ h3 { font-size: 1.02rem; margin: 0 0 4px; text-wrap: balance; }
 .scene { position: relative; background: var(--scene); border-radius: 8px; overflow: hidden; }
 canvas { display: block; width: 100%; touch-action: none; }
 .hint { position: absolute; left: 10px; bottom: 8px; right: 10px; font: 12px var(--data); color: #9fb0bf; pointer-events: none; }
+.fankey { position: absolute; right: 10px; top: 10px; font: 12px var(--ui); color: #d8e2ea; background: rgba(11, 16, 21, 0.8);
+  border: 1px solid #26323d; border-radius: 6px; padding: 6px 9px; pointer-events: none; display: grid; gap: 2px; max-width: 46%; }
+.fankey b { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: #9fb0bf; font-weight: 700; margin-bottom: 2px; }
+.fankey div { display: flex; gap: 6px; align-items: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fankey .n { margin-left: auto; padding-left: 8px; font-family: var(--data); color: #9fb0bf; }
 .loading { position: absolute; left: 10px; top: 10px; right: 10px; font: 12.5px var(--data); color: #d8e2ea; background: rgba(11, 16, 21, 0.78);
   border: 1px solid #26323d; border-radius: 6px; padding: 6px 10px; pointer-events: none; max-width: 60ch; }
 .controls { display: grid; gap: 10px; }
@@ -145,6 +150,7 @@ td.n, th.n { text-align: right; font-family: var(--data); font-variant-numeric: 
     <section class="panel d3" aria-label="3D scene">
       <div class="scene" id="scene"><canvas id="cv" aria-label="Rotatable 3D view of tract shells, repeat-scan patches and streamline fans"></canvas>
         <div class="loading" id="loading" role="status">Loading the data stores…</div>
+        <div class="fankey" id="fanKey" hidden></div>
         <span class="hint">Drag to rotate · scroll to zoom · right-drag to pan · double-click a surface to rotate around it</span></div>
       <div class="controls dispctl">
         <div class="row"><span class="label">Anatomy</span><div class="chips" id="anatChips"></div></div>
@@ -970,6 +976,7 @@ function apply() {
   [...selCompare.options].forEach(o => { o.disabled = o.value === "A" && state.source === "single"; });
   selCompare.value = state.compare; selSource.value = state.source; selLevel.value = state.level; selShell.value = state.shell;
   levelNote();
+  fanLegend();
   sitePanel();
   redraw(); cutDirty = true;
 }
@@ -1037,6 +1044,35 @@ function sitePanel() {
     <h2 style="margin-top:10px">Fan colors at this site</h2><div class="key">${fanKey(state.site)}</div>
     <p class="muted" style="margin-top:8px">Fans drawn: ${fs_["drawn (split)"] || 0} of ${fs_["split (mode in at most 60 % of runs, some named)"]} split seeds, ${fs_["drawn (agree)"] || 0} of
       ${fs_["all agree on a named tract"]} seeds where all runs agree on a named tract.</p>`;
+}
+// the key for the fans on screen: their colors in the current mode, the most frequent first
+function fanLegend() {
+  const el = document.getElementById("fanKey");
+  if (state.site < 0 || state.fan === "none" || !D.fans[state.site][state.fan]) { el.hidden = true; return; }
+  const f = D.fans[state.site][state.fan], sw = c => `<i class="sw" style="background:${c}"></i>`;
+  const resc = f.src.filter(x => x >= D.runs).length;
+  let rows = "";
+  if (state.color === "check") {
+    const n = [0, 0, 0]; f.ok.forEach((k, i) => { if (f.src[i] < D.runs) n[k]++; });
+    rows = [[1, "ends fit the tract's rule"], [0, "ends do not fit"], [2, "no rule for this tract"]]
+      .map(([k, t]) => `<div>${sw(CHECK_COLORS[k])}${t}<span class="n">${n[k]}</span></div>`).join("");
+  } else {
+    const field = state.color === "up" ? f.up : f.tract, cols = colorsFor(state.site), n = new Map();
+    field.forEach((t, i) => { if (f.src[i] < D.runs) n.set(t, (n.get(t) || 0) + 1); });
+    let other = 0, otherNamed = 0;
+    const named = [...n.entries()].filter(([t, c]) => {
+      if (t === D.other) { other += c; return false; }
+      if (!(t in cols)) { otherNamed += c; return false; }
+      return true; }).sort((a, b) => b[1] - a[1]);
+    for (const [, c] of named.splice(8)) otherNamed += c;                    // the eight most frequent; the rest as one row
+    rows = named.map(([t, c]) => `<div title="${D.full[D.tract_names[t]]}">${sw(cols[t])}${D.tract_names[t]} <span style="color:#9fb0bf">${D.full[D.tract_names[t]] !== D.tract_names[t] ? D.full[D.tract_names[t]] : ""}</span><span class="n">${c}</span></div>`).join("") +
+      (otherNamed ? `<div>${sw(OTHER_NAMED)}another named tract<span class="n">${otherNamed}</span></div>` : "") +
+      (other ? `<div>${sw(OTHER)}Other: no tract<span class="n">${other}</span></div>` : "");
+  }
+  if (resc && state.rescLines) rows += `<div>${sw(RESCAN_COLOR)}repeat scans' versions<span class="n">${resc}</span></div>`;
+  const title = state.color === "check" ? "Endpoint check" : state.color === "up" ? "Each run's runner-up" : "Tract each run gave";
+  el.innerHTML = `<b>${title}</b>${rows}`;
+  el.hidden = false;
 }
 function fanKey(si) {
   const used = t => Object.values(D.fans[si]).some(f => f.tract.some((x, i) => x === t && f.src[i] < D.runs) || f.up.some((x, i) => x === t && f.src[i] < D.runs));
