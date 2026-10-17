@@ -15,7 +15,24 @@ tract names are TractCloud's, checked identical). Per draw d:
     scaled to [-1, 1] again - its context and its frame are its group's, as in training;
   - the embedding (the 45 coordinates and a linear layer's 83, LeakyReLU), PyTorch's transformer encoder
     (8 layers, d_model 128, 1 head, feed-forward 256), a two-layer classifier to 1,600 logits.
-Several draws average their cluster probabilities. Dependencies: torch and numpy only (the weights'
+Several draws average their cluster probabilities.
+
+The grouping above ("index") is RapidParc's, and the default: a streamline's company depends on every other
+streamline in the set, so a run whose seed set differs by a few streamlines labels every streamline in new
+company (NOTES 2026-10-17). Two opt-in groupings take each streamline's seed key (ensemble.seed_keys; unique
+among the labeled streamlines) and a 64-bit hash of (key, draw) instead of the shuffle. The hash (splitmix64)
+is the same in any process or platform - as RapidParc's shuffle is for the same streamlines; what the keyed
+groupings add is a company that does not depend on which other seeds exist. Labels still depend on the
+network's float rounding (MPS against CPU, for instance):
+  - "hash-sorted": the streamlines in hash order, cut every 2,000 and padded as above. Removing a streamline
+    shifts each later group by one member, not a reshuffle;
+  - "hash-bucket": group floor(u G), u the hash in [0, 1), G = ceil(n / 2,000). A group's members are its
+    seeds whatever other seeds exist (as long as G is), in groups of about n / G (1,000-2,000) +- binomial, each run
+    at its own size, one group a forward pass (the network is a transformer encoder over the group with no
+    positional encoding: any group size fits; it was trained at 2,000).
+Both skip the whole set's [-1, 1] scaling: each group's own scaling makes it a no-op up to float rounding,
+and without it a group's input does not depend on the other groups' extent.
+Dependencies: torch and numpy only (the weights'
 safetensors file is read here; RapidParc's package pins pandas, scikit-learn, matplotlib and more).
 Checked against RapidParc's package: bench/rapidparc_check.py.
 """
@@ -31,6 +48,7 @@ from ..data import DATA
 WEIGHTS = DATA / "RapidParc"
 MODELS = ("rapidparc", "hemiaug")
 CONTEXT, POINTS = 2000, 15
+GROUPINGS = ("index", "hash-sorted", "hash-bucket")      # index: RapidParc's shuffle (the default); the others need seed keys
 SETTINGS = dict(num_layers=8, d_model=128, nhead=1, dim_feedforward=256, dropout=0.1, dim_class_hidden=256, dim_out=1600)
 
 
@@ -87,6 +105,39 @@ class Model(nn.Module):
         return self.classifier(self.embeddingTransformer(self.embedding_layer(normalize(x))))
 
 
+def splitmix64(x) -> np.ndarray:
+    """splitmix64's finalizer, elementwise on uint64 (wrapping arithmetic): a fixed 64-bit mix, no hash seed."""
+    x = np.asarray(x, np.uint64)
+    with np.errstate(over="ignore"):
+        x = x + np.uint64(0x9E3779B97F4A7C15)
+        x = (x ^ (x >> np.uint64(30))) * np.uint64(0xBF58476D1CE4E5B9)
+        x = (x ^ (x >> np.uint64(27))) * np.uint64(0x94D049BB133111EB)
+    return x ^ (x >> np.uint64(31))
+
+
+def key_hash(keys, draw) -> np.ndarray:
+    """(n,) uint64 hash of each (seed key, draw): the same pair, the same hash, in any run."""
+    return splitmix64(np.asarray(keys, np.int64).astype(np.uint64) ^ splitmix64(np.uint64(int(draw))))
+
+
+def keyed_groups(keys, draw, grouping) -> list:
+    """The context groups of a keyed grouping, as index arrays into keys (each in hash order, ties by key):
+    "hash-sorted" CONTEXT-wide cuts of the hash order, the last padded from its start as RapidParc pads
+    (pad rows are indices < n repeated); "hash-bucket" G = ceil(n / CONTEXT) buckets by the hash's top 53
+    bits, the empty ones left out."""
+    keys = np.asarray(keys, np.int64)
+    n = len(keys)
+    h = key_hash(keys, draw)
+    order = np.lexsort((keys, h))
+    if grouping == "hash-sorted":
+        m = -(-n // CONTEXT) * CONTEXT
+        return list(np.resize(order, m).reshape(-1, CONTEXT))             # np.resize repeats the order cyclically
+    assert grouping == "hash-bucket", grouping
+    G = -(-n // CONTEXT)
+    b = ((h[order] >> np.uint64(11)).astype(np.float64) * 2.0 ** -53 * G).astype(np.int64)
+    return [g for g in np.split(order, np.searchsorted(b, np.arange(1, G))) if len(g)]
+
+
 def resample(fibers, points=POINTS):
     """(n, points, 3) float32: each streamline's points at np.round(linspace(0, len - 1, points))."""
     return torch.from_numpy(np.stack([f[np.round(np.linspace(0, len(f) - 1, points)).astype(int)] for f in fibers]))
@@ -116,11 +167,15 @@ class Labeler:
         self.lut = LUT                                                     # RapidParc's mapping file, identical (base.py)
 
     @torch.inference_mode()
-    def batches(self, feat, seed):
-        """One draw, batch by batch: (original indices (m,), logits (m, 1600) float32 on the device). The
-        shuffle, the groups and the padding are RapidParc's; the padding repeats the shuffled streamlines
-        as often as needed (RapidParc's takes the first CONTEXT - n % CONTEXT once - the same rows whenever
-        n >= 1,000 - and fails below); padded rows are dropped here."""
+    def batches(self, feat, seed, keys=None, grouping="index"):
+        """One draw, batch by batch: (original indices (m,), logits (m, 1600) float32 on the device). For
+        grouping "index", the shuffle, the groups and the padding are RapidParc's; the padding repeats the
+        shuffled streamlines as often as needed (RapidParc's takes the first CONTEXT - n % CONTEXT once - the
+        same rows whenever n >= 1,000 - and fails below); padded rows are dropped here. The keyed groupings
+        (keys: (n,) int64 seed keys): keyed_groups."""
+        if grouping != "index":
+            yield from self._keyed(feat, seed, keys, grouping)
+            return
         n = len(feat)
         data = normalize(feat.unsqueeze(0)).squeeze(0)
         perm = torch.randperm(n, generator=torch.Generator(device="cpu").manual_seed(int(seed)))
@@ -135,17 +190,43 @@ class Labeler:
             real = max(0, min(n - r0, len(out)))                           # rows beyond n are padding
             yield perm[r0:r0 + real], out[:real]
 
-    def logits(self, feat, seed):
+    def _keyed(self, feat, seed, keys, grouping):
+        """batches() for the keyed groupings: hash-sorted's equal groups `batch` at a time (pad rows dropped),
+        hash-bucket's one group a forward pass (a group's logits then depend on its members alone)."""
+        if grouping not in GROUPINGS:
+            raise ValueError(f"grouping {grouping!r}: one of {GROUPINGS}")
+        if keys is None or len(keys) != len(feat):
+            raise ValueError(f"grouping {grouping!r} needs one seed key per streamline")
+        n = len(feat)
+        if len(np.unique(keys)) != n:
+            raise ValueError(f"grouping {grouping!r}: the seed keys of the labeled streamlines must be unique "
+                             f"({n - len(np.unique(keys))} repeated)")
+        groups = keyed_groups(keys, seed, grouping)
+        step = self.batch if grouping == "hash-sorted" else 1
+        for a in range(0, len(groups), step):
+            idx = np.concatenate(groups[a:a + step])
+            out = self.model(feat[torch.from_numpy(idx)].reshape(-1, len(groups[a]), POINTS, 3).to(self.device)).reshape(-1, 1600)
+            r0 = a * CONTEXT if grouping == "hash-sorted" else 0
+            real = max(0, min(n - r0, len(out))) if grouping == "hash-sorted" else len(out)
+            yield torch.from_numpy(idx[:real]), out[:real]
+
+    def logits(self, feat, seed, keys=None, grouping="index"):
         """(n, 1600) logits (float32, CPU) for one draw - for checks against RapidParc's package."""
         out = torch.empty(len(feat), 1600)
-        for idx, lg in self.batches(feat, seed):
+        for idx, lg in self.batches(feat, seed, keys, grouping):
             out[idx] = lg.float().cpu()
         return out
 
-    def __call__(self, fibers, draws=(0,), logp=False) -> Labels:
+    def __call__(self, fibers, draws=(0,), logp=False, keys=None, grouping="index") -> Labels:
         """fibers: (n, 3) RAS mm arrays. draws: the shuffle seeds (any iterable) whose cluster probabilities
         are averaged. logp: keep the cluster log-probabilities (float16; several draws: the log of their mean
-        probability, without underflow)."""
+        probability, without underflow). grouping: "index" (RapidParc's, the default), "hash-sorted" or
+        "hash-bucket" (module docstring), the last two with keys: one seed key per fiber (ensemble.seed_keys;
+        unique among the labeled ones)."""
+        if grouping not in GROUPINGS:
+            raise ValueError(f"grouping {grouping!r}: one of {GROUPINGS}")
+        if grouping != "index" and (keys is None or len(keys) != len(fibers)):
+            raise ValueError(f"grouping {grouping!r} needs keys, one per fiber")
         _, _, length = lengths(fibers)
         keep = length >= MIN_LENGTH_MM
         draws = tuple(draws)
@@ -153,10 +234,12 @@ class Labeler:
             return empty(keep, length, logp)
         feat = resample([np.asarray(f, np.float32) for f, k in zip(fibers, keep) if k])
         n = len(feat)
+        kk = None if grouping == "index" else np.asarray(keys, np.int64)[keep]
+        batches = lambda d: self.batches(feat, d, kk, grouping)
         if len(draws) == 1:
             arg = torch.empty(n, dtype=torch.int64)
             lp = torch.empty(n, 1600, dtype=torch.float16) if logp else None
-            for idx, lg in self.batches(feat, draws[0]):
+            for idx, lg in batches(draws[0]):
                 arg[idx] = lg.argmax(1).cpu()
                 if logp:
                     lp[idx] = F.log_softmax(lg.float(), 1).half().cpu()
@@ -164,7 +247,7 @@ class Labeler:
             mean = LogMean()
             for d in draws:
                 full = torch.empty(n, 1600)
-                for idx, lg in self.batches(feat, d):
+                for idx, lg in batches(d):
                     full[idx] = F.log_softmax(lg.float(), 1).cpu()
                 mean.add(full)
             m = mean.result()

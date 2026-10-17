@@ -4027,3 +4027,132 @@ Caveats:
 - epsilon's 10⁻⁶ is about 4–8 float32 units in the last place on average (up to about 17), applied to every value at
   once;
 - motion and between-session terms are absent, as in every single-scan ensemble.
+
+## 2026-10-17 Robustness step 1: a labeler grouping that does not depend on the seed set; the rounding-level floor falls from 4.0 % to 1.5 %, and rescan agreement does not move
+
+`robust_labeler.py` → `robust_labeler.json`; labeler: `labelers/rapidparc.py`, `grouping=`. docs/robustness-plan.md,
+step 1. RapidParc's grouping ("index", the default) cuts a shuffle of all streamlines into context groups of 2,000.
+A run whose seed set differs by a few streamlines therefore labels every streamline in new company (NOTES 2026-10-17,
+"Where the ensemble's spread comes from"). Two opt-in groupings key each streamline's company to its seed instead,
+through a 64-bit hash (splitmix64) of its seed key and the draw:
+- **hash-sorted:** the hash order, cut every 2,000 and padded as RapidParc pads. Removing a streamline shifts each
+  later group by one member.
+- **hash-bucket:** group floor(u G), u the hash in [0, 1), G = ceil(n / 2,000). A group's members are the same
+  whatever other seeds exist, as long as G is. Groups are about n / G in size (between about 1,000 and 2,000,
+  depending on n), plus or minus binomial noise: 1,874–2,028 on A (n = 64,378, G = 33). They run one at a time.
+  The network takes any group size: it is a transformer encoder with no positional encoding.
+
+Both skip the whole set's [-1, 1] scaling, which each group's own scaling makes a no-op up to rounding. The hash
+is the same on any platform, but so is RapidParc's shuffle for the same streamlines. What the keyed groupings
+change is that the company no longer depends on which other seeds exist. Labels still depend on the network's float
+rounding (MPS against CPU).
+
+The existing compact records of cIIIs04 A's ensemble were relabeled with each grouping, with no tracking: A, the
+epsilon arm, the full arm (A + smooth r001–r016) and the three rescans tracked on A's grid. Each run is compared
+with A relabeled the same way, at draw 0 unless stated.
+- **Quantization.** The records hold geometry at 0.05 mm. A relabeled with index differs from its stored labels in
+  0.04 % of streamlines, and index's epsilon figures reproduce the stored arm's: 3.97 against 4.0 %; 3.37 against
+  3.4 % on identical paths; 2.89 against 2.9 % within 0.1 mm.
+- **Repeat runs.** The script was run three times, two of the later runs adding sections. Every reported (rounded)
+  figure of the earlier runs was identical in the later ones.
+- **On A itself,** hash-sorted and hash-bucket rename 3.08 and 3.01 % against index: a draw's worth, as any other
+  grouping would.
+
+**The epsilon arm** (A's DWI × (1 + 10⁻⁶ u); 16 runs, 82.3 of A's seeds lost per run, G = 33 in every run): renamed
+against A, by how far the path moved:
+
+| grouping | renamed: mean (SD over runs) | identical paths (33 % of streamlines) | MDF (0, 0.1] mm (53 %) | (0.1, 5] mm (10 %) | > 5 mm (3.4 %) | share of renames on paths > 5 mm |
+|---|---|---|---|---|---|---|
+| index | 3.97 % (0.05) | 3.37 % | 2.89 % | 4.59 % | 24.83 % | 21 % |
+| hash-sorted | 1.61 % (0.04) | 0.52 % | 0.47 % | 3.28 % | 24.88 % | 53 % |
+| hash-bucket | 1.54 % (0.04) | 0.42 % | 0.40 % | 3.35 % | 24.80 % | 55 % |
+
+**What does not change:**
+
+| grouping | draws 1–16 against draw 0, renamed | test split: tract accuracy, draw 0 / 1 | macro F1, draw 0 / 1 | full arm: Other share | full arm: tract mix, total variation against index |
+|---|---|---|---|---|---|
+| index | 2.98 % | 94.48 / 94.50 % | 93.23 / 93.30 % | 0.5303 | — |
+| hash-sorted | 2.97 % | 94.50 / 94.46 % | 93.29 / 93.21 % | 0.5305 | 0.0006 |
+| hash-bucket | 2.96 % | 94.49 / 94.47 % | 93.28 / 93.22 % | 0.5303 | 0.0005 |
+
+- **Test split.** TractCloud's test split has 20 subjects × 10,000 streamlines; each subject is labeled whole.
+  - It has no seeds, so the key is the streamline's index in its subject.
+  - At n = 10,000, G is 5: every grouping has groups of 2,000 (hash-bucket on average) and none pads.
+  - Draws 0 and 1 agree on 98.37, 98.36 and 98.38 % of streamlines.
+- **Tract mix.** No single class's share in the full arm's pooled mix moves by more than 0.017 points.
+
+**Against the real rescans.** The full arm's 17 runs, over the 44,717 seeds every run labels:
+
+| grouping | stated: the mode's mean share | a rescan gives the mode (within / session 3 / session 5) | AUROC, the rescan's change from A's tract | the rescan renames A's: draw 0 | the same, draws 0–4: mean (SD) |
+|---|---|---|---|---|---|
+| index | 0.764 | 0.703 / 0.674 / 0.661 | 0.8006 / 0.7785 / 0.7731 | 34.63 / 37.34 / 38.88 % | 34.69 (0.04) / 37.27 (0.08) / 38.90 (0.06) % |
+| hash-sorted | 0.765 | 0.702 / 0.675 / 0.660 | 0.8005 / 0.7765 / 0.7726 | 34.61 / 37.17 / 39.00 % | 34.63 (0.09) / 37.17 (0.05) / 38.91 (0.07) % |
+| hash-bucket | 0.765 | 0.703 / 0.675 / 0.661 | 0.8013 / 0.7759 / 0.7723 | 34.68 / 37.20 / 38.82 % | 34.63 (0.10) / 37.16 (0.05) / 38.89 (0.06) % |
+
+- **The draw columns.** For draws 0–4, A and the rescan are relabeled at the same draw; the SD is over the 5 draws.
+  Within a grouping, a rescan's renames span up to 0.29 points across draws (hash-bucket, within: 34.51–34.80 %).
+- **Seed sets.** Over every A seed that A and the rescan both label, rather than the 44,717, the rescans rename
+  35.4–39.8 % in every grouping.
+- **The stated share.** The previous entry's 0.77 is over the 43,170 seeds common to all its arms; over the full
+  arm's own seeds it is 0.764 here.
+
+**Why the rescans do not move: the paths change.** Over A's seeds:
+
+| | streamlines with MDF ≤ 1 / (1, 5] / > 5 mm | renamed, MDF ≤ 1 mm: index / hash-sorted / hash-bucket | renamed, (1, 5] mm | renamed, > 5 mm |
+|---|---|---|---|---|
+| full runs (16) | 6 / 29 / 65 % | 4.36 / 3.70 / 3.51 % | 11.12 / 10.85 / 10.76 % | 43.4 / 43.3 / 43.4 % |
+| within | 3 / 26 / 72 % | 4.65 / 3.89 / 3.44 % | 11.01 / 11.00 / 10.96 % | 45.3 / 45.4 / 45.5 % |
+| session 3 | 2 / 23 / 75 % | 5.80 / 4.80 / 3.90 % | 11.75 / 11.16 / 11.08 % | 47.0 / 46.9 / 47.1 % |
+| session 5 | 1 / 21 / 78 % | 5.17 / 4.06 / 3.92 % | 11.83 / 11.94 / 11.70 % | 47.7 / 47.9 / 47.8 % |
+
+- **The paths.** A rescan or a full-arm run moves 65–78 % of streamlines by more than 5 mm. Those are renamed
+  43–48 % of the time under every grouping, and they hold most of the renames.
+- **The near-identical paths.** The keyed groupings lower renames within 1 mm by 0.7–1.9 points and in (1, 5] mm by
+  up to 0.7 points. Weighted by those bins' shares, the gain is at most about 0.2 points (hash-bucket, session 3).
+  That is the size of the spread over draws above, and of the differences between the groupings' totals.
+- **The company.** Even near-identical paths keep 3.4–3.9 % renames under hash-bucket, against 0.40 % in epsilon,
+  because their company changed. G is 33 in every full run and rescan, so hash-bucket's groups keep their identity.
+  Yet in each group of a full run, a mean of 67.9 % of members (at least 64.2 % in any group of any run) are seeds A
+  lacks or paths more than 5 mm from A's. In the rescans the share is 74.6, 78.2 and 80.7 % (at least 72.8, 76.8 and
+  78.7 %).
+
+Reading it:
+- **What this fixes: reproducibility under tiny input changes.** A rounding-level change to the DWI renames 1.5–1.6 %
+  instead of 4.0 %. On paths that did not move, or moved at most 0.1 mm, renames fall from 2.9–3.4 % to 0.4–0.5 %.
+  More than half of what remains (53–55 %) is on paths that diverged by more than 5 mm: the tracker, step 2's
+  subject. Another platform's rounding is the same kind of perturbation, so the gain plausibly carries across
+  platforms; that was not measured.
+- **What it does not fix: agreement with a rescan.** Rescan renames, the stated share, how often a rescan gives the
+  mode, and AUROC all move by at most about 0.003 at draw 0. Rescan agreement is driven by paths: most streamlines
+  move more than 5 mm, and the labeler's grouping is a negligible part of the 35–40 %.
+- **Free.** Accuracy on the test split, draw-to-draw agreement, the Other share and the tract mix do not change. The
+  two keyed groupings differ from index only as one draw differs from another.
+- **Recommendation: hash-sorted, if either becomes the pipeline's default.**
+  - **Group size.** Hash-sorted always runs groups of 2,000, the size the network was trained at. Hash-bucket's
+    groups are n / G: about 1,000 for n just above a multiple of 2,000 (n = 2,001 gave two groups of 971–1,030 for
+    two key sets). Accuracy was measured only at 2,000.
+  - **Floor.** Hash-sorted's is within 0.07 points of hash-bucket's: 1.61 against 1.54 %, and 0.52 against 0.42 % on
+    identical paths.
+  - **Expectations, not yet measured.**
+    - Hash-bucket's stability holds only while G = ceil(n / 2,000) is fixed. A pair of runs whose n straddles a
+      multiple of 2,000 should regroup every streamline, about a draw's worth (3 %); that was not exercised here.
+    - Hash-sorted should degrade smoothly with the number of seeds that differ, but it was tested only with about
+      82. With many, its cut points shift by the running count of seeds gained minus seeds lost, and it approaches a
+      reshuffle, while hash-bucket keeps its groups. Such runs move most paths anyway, as the rescans show.
+
+  The cost of switching: every existing output would relabel about 3 % of streamlines once, a draw's worth. The
+  pipeline's `label()` would have to pass seed keys (`ensemble.seed_keys` of the seed voxels), unique among the
+  labeled streamlines; the labeler checks this. "Index" should stay available for the check against RapidParc's
+  package (`rapidparc_check.py`). The default is unchanged here.
+
+Caveats:
+- one subject (cIIIs04), one protocol, scan A's grid;
+- hash-bucket needs G to stay fixed between the runs compared. G was 33 throughout here, so its cliff was not
+  exercised;
+- accuracy was measured only at n = 10,000 per tractogram (G = 5: groups of 2,000, no padding), with the
+  streamline's index as its key, since the test split has no seeds:
+  - it shows that keyed grouping costs no accuracy at that size, not that it is stable;
+  - hash-bucket with groups near 1,000 is unmeasured;
+- the full arm and rescans are labeled at draw 0, except the rescans' renames at draws 0–4; the draw comparison
+  uses A's streamlines;
+- the records' 0.05 mm quantization is the same input for every grouping, so it does not enter the comparison.

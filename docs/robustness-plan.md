@@ -65,6 +65,13 @@ opt-in; no default changes until you decide.
 - **Cost:** labeling only, from the existing compact records, with no tracking. About an hour; a few hundred MB.
 - **Limit:** RapidParc labels in context, so group-mates whose paths changed still matter. This reduces the floor; it
   cannot remove it.
+- **Outcome (2026-10-17, NOTES "Robustness step 1").**
+  - The opt-in groupings `hash-sorted` and `hash-bucket` cut the epsilon floor from 4.0 % to 1.6 / 1.5 %, and renames
+    on paths within 0.1 mm from about 3 % to 0.4–0.5 %. Accuracy, draws and the tract mix are unchanged.
+  - Rescan agreement and AUROC do not move, because the paths change: 65–78 % of streamlines move more than 5 mm and
+    are renamed 43–48 % of the time under every grouping.
+  - Hash-sorted is the candidate default: its groups always hold 2,000; hash-bucket's shrink toward 1,000 for some n.
+    The default stays `index` until you decide.
 
 ### 2. Tracker: which decision makes paths diverge, then a softer one
 
