@@ -239,7 +239,7 @@ def correct(s, timer: Timer, device="mps") -> Correction:
 
 #: ukf.track's settings pipeline.track passes on when asked (tracker=); every other keyword is the pipeline's own
 TRACKER_SETTINGS = frozenset({"seeding_threshold", "stopping_fa", "stopping_threshold", "step_length", "record_length",
-                              "max_half_length", "Qm", "Ql", "Rs"})
+                              "max_half_length", "Qm", "Ql", "Rs", "tie_angle", "tie_sw2"})
 CPU_BATCH = 1024                 # half-fibers per batch on the CPU: cache-sized (ukf_cpu_check.py)
 GPU_BATCH = 200_000              # on a GPU: each block steps until its longest fiber stops, so fewer, larger blocks keep it
                                  # fuller - 2-17 % faster than 50,000, the fibers bit for bit the same (a fiber's arithmetic
@@ -255,7 +255,7 @@ def track(s, dwi, timer: Timer, prefix="", device="mps", workers=None, shell=280
     script running the CPU path needs an `if __name__ == "__main__":` guard. shell: the b-value tracked
     (prep.prepare; ds001226's 2800, the nearest to TractCloud's training b = 3000). tracker: opt-in settings passed
     on to ukf.track (e.g. {"Rs": 0.1} or {"step_length": 0.6}; its keywords: seeding_threshold, stopping_fa,
-    stopping_threshold, step_length, record_length, max_half_length, Qm, Ql, Rs); None or {} is today's, the ORG
+    stopping_threshold, step_length, record_length, max_half_length, Qm, Ql, Rs, tie_angle, tie_sw2); None or {} is today's, the ORG
     settings, and the labelers were trained on tractography made with those."""
     if torch.device(device).type == "cpu" and (workers or os.cpu_count() or 1) > 1:
         U.require_main_guard()                                             # before any work, not after it

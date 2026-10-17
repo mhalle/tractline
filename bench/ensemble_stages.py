@@ -185,13 +185,15 @@ def matched(SA, A, rec):
 
 
 def by_distance(T, M, tA):
-    """Renames against A pooled over the runs, split by how far the seed's path moved (MDF to A's path)"""
+    """Renames against A pooled over the runs, split by how far the seed's path moved (MDF to A's path). Each bin's
+    count is given: a bin can hold a handful of streamlines (its share rounds to 0) and a "renamed" of 1.0 then means
+    all of a handful; an empty bin reports renamed 0."""
     ok = T >= 0
     ch = (T != tA) & ok
     out = {}
     for name, lo, hi in MDF_BINS:
         b = ok & ((M == 0) if hi == 0 else (M > lo) & (M <= hi))
-        out[name] = {"share of streamlines": round(float(b.sum() / ok.sum()), 4),
+        out[name] = {"share of streamlines": round(float(b.sum() / ok.sum()), 4), "streamlines": int(b.sum()),
                      "renamed": round(float(ch[b].sum() / max(b.sum(), 1)), 4),
                      "share of all renames": round(float(ch[b].sum() / max(ch.sum(), 1)), 4)}
     return out

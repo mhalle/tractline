@@ -1,0 +1,450 @@
+{
+ "pair": "cIIIs04-2.1",
+ "diverged mm": 5.0,
+ "separated mm": 0.5,
+ "flags from mm": 3.0,
+ "settings": {
+  "base": {},
+  "tie_angle=0.1": {
+   "tie_angle": 0.1
+  },
+  "tie_angle=0.5": {
+   "tie_angle": 0.5
+  },
+  "tie_angle=2": {
+   "tie_angle": 2.0
+  },
+  "tie_angle=5": {
+   "tie_angle": 5.0
+  }
+ },
+ "variants": {
+  "base": {
+   "cost and bias (A's whole tractography)": {
+    "seeds": 88328,
+    "fibers (>= 10 points)": 78187,
+    "streamlines >= 40 mm": 64378,
+    "length mm of those (quartiles)": [
+     67.8,
+     96.5,
+     130.8
+    ],
+    "Other share (RapidParc, draw 0)": 0.5256,
+    "focus volume mL": {
+     "CST": 51.8,
+     "AF": 53.6,
+     "UF": 41.8
+    }
+   },
+   "A's sampled steps: share with the two tensors within (deg)": {
+    "0.1": 0.0875,
+    "0.5": 0.1107,
+    "2": 0.1463,
+    "5": 0.1783,
+    "20": 0.2541
+   },
+   "A's sampled steps within (deg): share straddling FA 0.2 (one tensor's FA above, the other's at or below)": {
+    "0.1": 0.0003,
+    "0.5": 0.0008,
+    "2": 0.0032,
+    "5": 0.0088,
+    "20": 0.05
+   },
+   "reproduction: A's sampled fibers equal robust_ukf_sweep's base": true,
+   "epsilon": {
+    "runs": 8,
+    "pairs": 2200,
+    "neither side tracked (not seeded, or under 10 points)": 0,
+    "diverged (weighted)": 0.0352,
+    "median MDF mm (weighted)": 0.001,
+    "diverged in the '> 5 mm' stratum": 0.9983,
+    "diverged in the '<= 0.1 mm' stratum": 0.0,
+    "switch flags differ beyond 3 mm (either half, to the separation): diverged / together (weighted)": [
+     0.7589,
+     0.2847
+    ],
+    "the same, unweighted": [
+     0.7778,
+     0.4543
+    ],
+    "reproduction: fibers equal robust_ukf_sweep's base": true
+   },
+   "fieldonly": {
+    "runs": 8,
+    "pairs": 2200,
+    "neither side tracked (not seeded, or under 10 points)": 0,
+    "diverged (weighted)": 0.3602,
+    "median MDF mm (weighted)": 1.8859,
+    "diverged in the '> 5 mm' stratum": 0.9833,
+    "diverged in the '<= 0.1 mm' stratum": 0.0025,
+    "switch flags differ beyond 3 mm (either half, to the separation): diverged / together (weighted)": [
+     0.5461,
+     0.4815
+    ],
+    "the same, unweighted": [
+     0.554,
+     0.5602
+    ],
+    "reproduction: fibers equal robust_ukf_sweep's base": true
+   }
+  },
+  "tie_angle=0.1": {
+   "cost and bias (A's whole tractography)": {
+    "seeds": 88328,
+    "fibers (>= 10 points)": 78186,
+    "streamlines >= 40 mm": 64389,
+    "length mm of those (quartiles)": [
+     67.8,
+     96.5,
+     130.8
+    ],
+    "Other share (RapidParc, draw 0)": 0.5252,
+    "focus volume mL": {
+     "CST": 50.6,
+     "AF": 53.0,
+     "UF": 41.3
+    },
+    "against today's A: share moved more than 5 mm (change, not bias)": 0.051,
+    "against today's A: median MDF mm": 0.002,
+    "today's >= 40 mm seeds lost": 0.0019,
+    "streamlines >= 40 mm against today's": 1.0002,
+    "tract mix: total variation against today's": 0.0025,
+    "focus volume against today's": {
+     "CST": 0.976,
+     "AF": 0.989,
+     "UF": 0.99
+    }
+   },
+   "A's sampled steps: share with the two tensors within (deg)": {
+    "0.1": 0.0835,
+    "0.5": 0.111,
+    "2": 0.1471,
+    "5": 0.1794,
+    "20": 0.2555
+   },
+   "A's sampled steps within (deg): share straddling FA 0.2 (one tensor's FA above, the other's at or below)": {
+    "0.1": 0.0006,
+    "0.5": 0.0014,
+    "2": 0.0037,
+    "5": 0.0097,
+    "20": 0.0495
+   },
+   "epsilon": {
+    "runs": 8,
+    "pairs": 2200,
+    "neither side tracked (not seeded, or under 10 points)": 0,
+    "diverged (weighted)": 0.0398,
+    "median MDF mm (weighted)": 0.0008,
+    "diverged in the '> 5 mm' stratum": 0.5008,
+    "diverged in the '<= 0.1 mm' stratum": 0.01,
+    "switch flags differ beyond 3 mm (either half, to the separation): diverged / together (weighted)": [
+     0.7307,
+     0.2091
+    ],
+    "the same, unweighted": [
+     0.7238,
+     0.3902
+    ]
+   },
+   "fieldonly": {
+    "runs": 8,
+    "pairs": 2200,
+    "neither side tracked (not seeded, or under 10 points)": 0,
+    "diverged (weighted)": 0.3587,
+    "median MDF mm (weighted)": 1.8866,
+    "diverged in the '> 5 mm' stratum": 0.9517,
+    "diverged in the '<= 0.1 mm' stratum": 0.005,
+    "switch flags differ beyond 3 mm (either half, to the separation): diverged / together (weighted)": [
+     0.5084,
+     0.441
+    ],
+    "the same, unweighted": [
+     0.5091,
+     0.5285
+    ]
+   }
+  },
+  "tie_angle=0.5": {
+   "cost and bias (A's whole tractography)": {
+    "seeds": 88328,
+    "fibers (>= 10 points)": 78182,
+    "streamlines >= 40 mm": 64269,
+    "length mm of those (quartiles)": [
+     67.8,
+     96.6,
+     130.8
+    ],
+    "Other share (RapidParc, draw 0)": 0.5256,
+    "focus volume mL": {
+     "CST": 51.4,
+     "AF": 52.6,
+     "UF": 40.9
+    },
+    "against today's A: share moved more than 5 mm (change, not bias)": 0.0811,
+    "against today's A: median MDF mm": 0.005,
+    "today's >= 40 mm seeds lost": 0.005,
+    "streamlines >= 40 mm against today's": 0.9983,
+    "tract mix: total variation against today's": 0.0025,
+    "focus volume against today's": {
+     "CST": 0.993,
+     "AF": 0.981,
+     "UF": 0.98
+    }
+   },
+   "A's sampled steps: share with the two tensors within (deg)": {
+    "0.1": 0.0803,
+    "0.5": 0.1076,
+    "2": 0.1472,
+    "5": 0.1799,
+    "20": 0.2566
+   },
+   "A's sampled steps within (deg): share straddling FA 0.2 (one tensor's FA above, the other's at or below)": {
+    "0.1": 0.0002,
+    "0.5": 0.0014,
+    "2": 0.0048,
+    "5": 0.0107,
+    "20": 0.0494
+   },
+   "epsilon": {
+    "runs": 8,
+    "pairs": 2200,
+    "neither side tracked (not seeded, or under 10 points)": 0,
+    "diverged (weighted)": 0.04,
+    "median MDF mm (weighted)": 0.0008,
+    "diverged in the '> 5 mm' stratum": 0.4542,
+    "diverged in the '<= 0.1 mm' stratum": 0.01,
+    "switch flags differ beyond 3 mm (either half, to the separation): diverged / together (weighted)": [
+     0.7928,
+     0.1758
+    ],
+    "the same, unweighted": [
+     0.7303,
+     0.3421
+    ]
+   },
+   "fieldonly": {
+    "runs": 8,
+    "pairs": 2200,
+    "neither side tracked (not seeded, or under 10 points)": 0,
+    "diverged (weighted)": 0.3676,
+    "median MDF mm (weighted)": 1.9902,
+    "diverged in the '> 5 mm' stratum": 0.9275,
+    "diverged in the '<= 0.1 mm' stratum": 0.0075,
+    "switch flags differ beyond 3 mm (either half, to the separation): diverged / together (weighted)": [
+     0.4735,
+     0.4154
+    ],
+    "the same, unweighted": [
+     0.4777,
+     0.5011
+    ]
+   }
+  },
+  "tie_angle=2": {
+   "cost and bias (A's whole tractography)": {
+    "seeds": 88328,
+    "fibers (>= 10 points)": 78148,
+    "streamlines >= 40 mm": 64162,
+    "length mm of those (quartiles)": [
+     67.8,
+     96.6,
+     132.5
+    ],
+    "Other share (RapidParc, draw 0)": 0.5242,
+    "focus volume mL": {
+     "CST": 51.9,
+     "AF": 53.1,
+     "UF": 41.4
+    },
+    "against today's A: share moved more than 5 mm (change, not bias)": 0.113,
+    "against today's A: median MDF mm": 0.01,
+    "today's >= 40 mm seeds lost": 0.0081,
+    "streamlines >= 40 mm against today's": 0.9966,
+    "tract mix: total variation against today's": 0.0045,
+    "focus volume against today's": {
+     "CST": 1.002,
+     "AF": 0.992,
+     "UF": 0.991
+    }
+   },
+   "A's sampled steps: share with the two tensors within (deg)": {
+    "0.1": 0.0807,
+    "0.5": 0.107,
+    "2": 0.145,
+    "5": 0.1784,
+    "20": 0.2561
+   },
+   "A's sampled steps within (deg): share straddling FA 0.2 (one tensor's FA above, the other's at or below)": {
+    "0.1": 0.0002,
+    "0.5": 0.0009,
+    "2": 0.0037,
+    "5": 0.011,
+    "20": 0.053
+   },
+   "epsilon": {
+    "runs": 8,
+    "pairs": 2199,
+    "neither side tracked (not seeded, or under 10 points)": 1,
+    "diverged (weighted)": 0.0379,
+    "median MDF mm (weighted)": 0.0007,
+    "diverged in the '> 5 mm' stratum": 0.4229,
+    "diverged in the '<= 0.1 mm' stratum": 0.01,
+    "switch flags differ beyond 3 mm (either half, to the separation): diverged / together (weighted)": [
+     0.7864,
+     0.1655
+    ],
+    "the same, unweighted": [
+     0.7071,
+     0.3321
+    ]
+   },
+   "fieldonly": {
+    "runs": 8,
+    "pairs": 2200,
+    "neither side tracked (not seeded, or under 10 points)": 0,
+    "diverged (weighted)": 0.3671,
+    "median MDF mm (weighted)": 1.9354,
+    "diverged in the '> 5 mm' stratum": 0.9042,
+    "diverged in the '<= 0.1 mm' stratum": 0.0225,
+    "switch flags differ beyond 3 mm (either half, to the separation): diverged / together (weighted)": [
+     0.4343,
+     0.3702
+    ],
+    "the same, unweighted": [
+     0.4391,
+     0.463
+    ]
+   }
+  },
+  "tie_angle=5": {
+   "cost and bias (A's whole tractography)": {
+    "seeds": 88328,
+    "fibers (>= 10 points)": 78142,
+    "streamlines >= 40 mm": 64200,
+    "length mm of those (quartiles)": [
+     67.8,
+     96.6,
+     132.5
+    ],
+    "Other share (RapidParc, draw 0)": 0.5245,
+    "focus volume mL": {
+     "CST": 52.7,
+     "AF": 53.8,
+     "UF": 40.8
+    },
+    "against today's A: share moved more than 5 mm (change, not bias)": 0.1249,
+    "against today's A: median MDF mm": 0.011,
+    "today's >= 40 mm seeds lost": 0.0085,
+    "streamlines >= 40 mm against today's": 0.9972,
+    "tract mix: total variation against today's": 0.0045,
+    "focus volume against today's": {
+     "CST": 1.017,
+     "AF": 1.004,
+     "UF": 0.977
+    }
+   },
+   "A's sampled steps: share with the two tensors within (deg)": {
+    "0.1": 0.0807,
+    "0.5": 0.107,
+    "2": 0.1451,
+    "5": 0.1783,
+    "20": 0.2564
+   },
+   "A's sampled steps within (deg): share straddling FA 0.2 (one tensor's FA above, the other's at or below)": {
+    "0.1": 0.0002,
+    "0.5": 0.0009,
+    "2": 0.0036,
+    "5": 0.0105,
+    "20": 0.0526
+   },
+   "epsilon": {
+    "runs": 8,
+    "pairs": 2198,
+    "neither side tracked (not seeded, or under 10 points)": 2,
+    "diverged (weighted)": 0.0398,
+    "median MDF mm (weighted)": 0.0008,
+    "diverged in the '> 5 mm' stratum": 0.4178,
+    "diverged in the '<= 0.1 mm' stratum": 0.0125,
+    "switch flags differ beyond 3 mm (either half, to the separation): diverged / together (weighted)": [
+     0.7922,
+     0.1614
+    ],
+    "the same, unweighted": [
+     0.6876,
+     0.3302
+    ]
+   },
+   "fieldonly": {
+    "runs": 8,
+    "pairs": 2200,
+    "neither side tracked (not seeded, or under 10 points)": 0,
+    "diverged (weighted)": 0.367,
+    "median MDF mm (weighted)": 1.8707,
+    "diverged in the '> 5 mm' stratum": 0.8958,
+    "diverged in the '<= 0.1 mm' stratum": 0.02,
+    "switch flags differ beyond 3 mm (either half, to the separation): diverged / together (weighted)": [
+     0.437,
+     0.3524
+    ],
+    "the same, unweighted": [
+     0.4343,
+     0.4403
+    ]
+   }
+  }
+ },
+ "for scale (robust_ukf_sweep's records)": {
+  "Rs=0.1": {
+   "seeds": 88328,
+   "fibers (>= 10 points)": 81903,
+   "streamlines >= 40 mm": 57512,
+   "length mm of those (quartiles)": [
+    62.4,
+    91.2,
+    120.0
+   ],
+   "Other share (RapidParc, draw 0)": 0.5623,
+   "focus volume mL": {
+    "CST": 68.6,
+    "AF": 23.2,
+    "UF": 28.4
+   },
+   "against today's A: share moved more than 5 mm (change, not bias)": 0.9212,
+   "against today's A: median MDF mm": 21.297,
+   "today's >= 40 mm seeds lost": 0.1829,
+   "streamlines >= 40 mm against today's": 0.8933,
+   "tract mix: total variation against today's": 0.1132,
+   "focus volume against today's": {
+    "CST": 1.323,
+    "AF": 0.433,
+    "UF": 0.68
+   }
+  },
+  "step_length=0.6": {
+   "seeds": 88328,
+   "fibers (>= 10 points)": 82583,
+   "streamlines >= 40 mm": 64704,
+   "length mm of those (quartiles)": [
+    70.8,
+    99.6,
+    128.4
+   ],
+   "Other share (RapidParc, draw 0)": 0.5618,
+   "focus volume mL": {
+    "CST": 64.7,
+    "AF": 41.1,
+    "UF": 40.7
+   },
+   "against today's A: share moved more than 5 mm (change, not bias)": 0.8568,
+   "against today's A: median MDF mm": 18.234,
+   "today's >= 40 mm seeds lost": 0.0836,
+   "streamlines >= 40 mm against today's": 1.0051,
+   "tract mix: total variation against today's": 0.0719,
+   "focus volume against today's": {
+    "CST": 1.25,
+    "AF": 0.768,
+    "UF": 0.975
+   }
+  }
+ }
+}

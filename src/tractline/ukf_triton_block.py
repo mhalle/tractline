@@ -100,10 +100,14 @@ def _cround(x):
 #: the integer arguments are not specialized: by default Triton compiles a copy for each that equals 1 or is
 #: divisible by 16, and B (active fibers) and step pass through all three, the grid adds its own - 6-8 copies
 #: per scan, 33-50 s each (ds005123: 4.4-6.7 min on its first run; NOTES 2026-10-06). One copy per NPAD now.
+#: cos_tie, TIE and TIE_SW2 are ukf.advance's opt-in tie_angle and tie_sw2 (TIE=False: the code is not compiled in,
+#: cos_tie unused). They
+#: change the default kernel's signature, not its arithmetic, but bit-for-bit equality with the earlier kernel on CUDA
+#: is unverified (no CUDA where they were added), as is the tie-break itself on this kernel.
 @triton.jit(do_not_specialize=["B", "N", "nk", "nj", "ni", "step", "max_steps"])
 def ukf_step_block(A, MASK, G, BV, X, ST, P, OLD, DIR, FLAGS, FAO, MSIG, B, N, nk, nj, ni, step, max_steps,
-                   vox0, vox1, vox2, sigma, step_length, stop_fa, stop_thr, rr, Qm, Ql, c, W0, Wi,
-                   F: tl.constexpr, NPAD: tl.constexpr):
+                   vox0, vox1, vox2, sigma, step_length, stop_fa, stop_thr, rr, Qm, Ql, c, W0, Wi, cos_tie,
+                   F: tl.constexpr, NPAD: tl.constexpr, TIE: tl.constexpr, TIE_SW2: tl.constexpr):
     f = tl.program_id(0) * F + tl.arange(0, F)
     fm = f < B
     n = tl.arange(0, NPAD)
@@ -215,6 +219,9 @@ def ukf_step_block(A, MASK, G, BV, X, ST, P, OLD, DIR, FLAGS, FAO, MSIG, B, N, n
     fat1 = _l2fa(L1a, L1b); fat2 = _l2fa(L2a, L2b)
     angle = libdevice.acos(m1x * m2x + m1y * m2y + m1z * m2z) * 57.29577951308232
     sw = (m1x * o0 + m1y * o1 + m1z * o2) < (m2x * o0 + m2y * o1 + m2z * o2)
+    if TIE:                                                              # ukf.advance's opt-in tie_angle: at a near tie sw keeps the order
+        tie = tl.abs(m1x * m2x + m1y * m2y + m1z * m2z) > cos_tie
+        sw = sw & ~tie
     # the permutation that swaps the two tensors: Pi[i, k] = (k == (i + 5) % 10), identity past 10
     pidx = tl.where(ii < 10, (ii + 5) % 10, ii)
     Pi = tl.where(jj == pidx, 1.0, 0.0) + tl.zeros([F, 16, 16], dtype=tl.float32)
@@ -233,6 +240,8 @@ def ukf_step_block(A, MASK, G, BV, X, ST, P, OLD, DIR, FLAGS, FAO, MSIG, B, N, n
     t = s3; s3 = tl.where(sw, s8, s3); s8 = tl.where(sw, t, s8)
     t = s4; s4 = tl.where(sw, s9, s4); s9 = tl.where(sw, t, s9)
     sw2 = (angle <= 20.0) & (tl.minimum(fat1, fat2) <= 0.2) & ~(fat1 > 0.2)
+    if TIE and TIE_SW2:                                                  # tie_sw2: and so does sw2
+        sw2 = sw2 & ~tie
     Psw = tl.dot(tl.dot(Pi, Pn, input_precision="ieee"), PiT, input_precision="ieee")
     Pn = tl.where(sw2[:, None, None], Psw, Pn)
     t = m1x; m1x = tl.where(sw2, m2x, m1x); m2x = tl.where(sw2, t, m2x)
@@ -318,16 +327,17 @@ def warm(npads=NPADS, F=None, num_warps=None, workers=None) -> dict:
         t0 = time.time()
         ukf_step_block.warmup(f32(1), torch.empty(1, dtype=torch.int8, device=dev), f32(1), f32(1), f32(1), f32(1),
                               f32(1), f32(1), f32(1), torch.empty(1, dtype=torch.int32, device=dev), f32(1), f32(1),
-                              1, 1, 1, 1, 1, 1, 1, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
-                              F=F, NPAD=n, num_warps=num_warps, enable_fp_fusion=False, grid=(1,))
+                              1, 1, 1, 1, 1, 1, 1, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+                              F=F, NPAD=n, TIE=False, TIE_SW2=False, num_warps=num_warps, enable_fp_fusion=False, grid=(1,))
         out[n] = round(time.time() - t0, 1)
     return out
 
 
 @torch.no_grad()
 def advance(D: dict, xa, sa, Pa, oa, Q, Rs, step, max_steps, step_length=0.3, stopping_fa=0.08,
-            stopping_threshold=0.06, F=None, num_warps=None):
-    """ukf.advance's contract on CUDA, float32. D is ukf.at_dtype(D, torch.float32, 'cuda')."""
+            stopping_threshold=0.06, tie_angle=0.0, tie_sw2=False, F=None, num_warps=None):
+    """ukf.advance's contract on CUDA, float32. D is ukf.at_dtype(D, torch.float32, 'cuda'). tie_angle > 0: the
+    kernel's TIE copy (compiled on first use; warm() compiles only today's)."""
     F = F or F_DEFAULT
     num_warps = num_warps or WARPS_DEFAULT
     dev = xa.device
@@ -358,7 +368,8 @@ def advance(D: dict, xa, sa, Pa, oa, Q, Rs, step, max_steps, step_length=0.3, st
     ukf_step_block[grid](D["A"], D["mask"], g, b, x, s, P, o, d, flags, fa, ms, B, N, nk, nj, ni, int(step), int(max_steps),
                          v0, v1, v2, vmin, float(step_length),
                          float(stopping_fa), float(stopping_threshold), rr, q0, q3, c, W0, Wi,
-                         F=F, NPAD=NPAD, num_warps=num_warps, enable_fp_fusion=False)
+                         float(np.float32(np.cos(np.radians(tie_angle)))) if tie_angle else 1.0,
+                         F=F, NPAD=NPAD, TIE=bool(tie_angle), TIE_SW2=bool(tie_angle and tie_sw2), num_warps=num_warps, enable_fp_fusion=False)
     stop = (flags & 1).bool()
     info = {"swap": (flags & 2).bool(), "swap2": (flags & 4).bool(), "fa": fa, "mean_signal": ms, "inside": (flags & 8).bool()}
     return x, s, P.reshape(B, 10, 10), d, stop, info

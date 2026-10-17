@@ -4493,3 +4493,238 @@ Caveats (scoring):
 - volumes are density presence at one threshold (RHO), on A's grid;
 - the honesty and AUROC rows are over different seed sets per configuration, with no uncertainty attached;
 - no ground truth: reproducibility and honesty only.
+
+## 2026-10-17 Robustness step 2b: holding both tensor swaps at a near tie removes most of the tracker's rounding-level divergence; holding only the first does not, so holding sw2 is necessary
+
+`robust_ukf_tiebreak.py` → `robust_ukf_tiebreak_sweep.json` (sw only) and `robust_ukf_tiebreak_sweep_sw-and-sw2.json`
+(both swaps); `robust_ukf_score.py` (configurations `tie_angle=0.5` and `tie_angle=0.5_sw-and-sw2`) →
+`robust_ukf_score.json`; `robust_floor.py` → `robust_floor.json` and `robust_floor_sw-and-sw2.json`. Records in
+`DATA/ensemble/cIIIs04/robustness/ukf/sweep_tiebreak/` and `.../score/`, the both-swaps rule's under names ending
+`_sw-and-sw2`. Tracker: `ukf.py`, `ukf_metal.py`, `ukf_triton.py`, `ukf_triton_block.py`, the opt-in settings
+`tie_angle` and `tie_sw2`. docs/robustness-plan.md, step 2b.
+
+Step 2 found that about three quarters of epsilon's diverging pairs part with no ≥5° event. In those pairs the switch
+flags differ beyond 3 mm twice as often as in pairs that stay together, at steps where A's two tensors are a median
+0.02° apart. Is the tracker's choice between two all but equal tensors the hard decision the 5° rule could not see?
+
+**The swap logic** (tractography.cc:1641-1776, as `ukf.advance` reproduces it). After each filter update, both
+directions are normalized and flipped toward the previous step's direction o. Then:
+- **sw:** swap when the second tensor is closer to o (m2·o > m1·o);
+- **sw2:** then swap again when the two are within 20° and the (new) first's FA is at most 0.2. It does not look at
+  the second's FA. In low-FA regions with near-parallel tensors it therefore fires every step: the tensor followed
+  alternates, by design.
+
+Each swap exchanges the state's two halves and permutes the covariance P's blocks, exactly. But the next step's
+sigma points come from P's Cholesky factor, and the factor of a permuted P is not the permuted factor. So the swap
+changes the next update beyond rounding: the sigma-point set itself is different, though the two sets agree in their
+first two moments. A swap between all but equal tensors is therefore a real hard decision, and every seed starts at
+one: both tensors begin as the seed tensor.
+
+**Two opt-in rules,** in every backend (torch `advance`, the Metal kernel, both Triton kernels), and in
+`pipeline.TRACKER_SETTINGS`. A tie is two directions within `tie_angle` degrees as axes (|m1·m2| > cos tie_angle,
+after the flips).
+- **`tie_angle` (sw only):** at a tie, sw does not fire; sw2 is the binary's.
+- **`tie_angle` with `tie_sw2=True` (both swaps):** at a tie neither fires, so the state keeps its order. This
+  overrides UKF's designed alternation while the tensors are within the angle.
+- The both-swaps rule was built and scored first. An independent reviewer argued that the coin flip is sw's
+  comparison alone: once sw has run, sw2 reduces to "within 20° and fat1 ≤ 0.2", which follows the higher-FA tensor
+  whenever the two straddle FA 0.2. On that view, holding sw2 only costs the designed behavior. The sw-only rule was
+  built to test this. **The test refutes it** (below).
+- Not built: a minimum stretch between swaps. It needs a per-fiber counter through the stream's compaction and every
+  kernel, and it would block sw2's alternation everywhere in low-FA regions, not only at ties.
+- `robust_ukf_score.py` and `robust_ukf_tiebreak.py` read a name ending in `_sw-and-sw2` as `tie_sw2=True`, so both
+  rules' records are reproducible from the code.
+
+**Proofs.**
+- **Defaults unchanged.** A's whole Metal tractography through `P.track` gives the same SHA-256 (b92eed8a…, 78,187
+  fibers) at HEAD and after each change (sw and sw2, sw only, and `tie_sw2`), with `tie_angle` 0 spelled out too.
+  The default generated source of `ukf_triton` is byte-identical to HEAD's. `ukf_triton_block`'s default kernel
+  gains an unused argument (`cos_tie`) and two constexprs (`TIE`, `TIE_SW2`), so its signature changes; its
+  bit-for-bit equality on CUDA is unverified, as is either rule there (no CUDA here).
+- **The both-swaps rule is reproduced from the code.** Re-tracking A with `{tie_angle: 0.5, tie_sw2: True}` matches
+  both of its records (the sweep's 78,153 fibers and the score's 64,175 labeled ones) to their 0.05 mm quantization.
+  The largest vertex deviation is 0.025 mm, with no point count differing.
+- **The sweep's base is today's.** It reproduces robust_ukf_sweep's base records bit for bit: A's whole tractography,
+  A's sampled fibers and all 16 perturbed runs.
+- **Tests** (`test_pipeline_cpu.py`, 13 pass):
+  - `test_tracker_settings_opt_in`: `tie_angle` 0 and `tie_sw2` False give today's fibers; either rule changes
+    them; `tie_sw2` without `tie_angle` is refused.
+  - On constructed near ties (one step, torch and Metal):
+    - `test_tie_angle_keeps_the_order`: sw does not fire. Where the default's sw did not fire either, everything is
+      the default's, bit for bit. Where it did, sw2 matches the default's when the two tensors lie on the same side of
+      FA 0.2.
+    - `test_tie_sw2_keeps_the_order`: neither swap fires, and the state is the default's, permuted, bit for bit.
+  - `test_tie_angle_torch_and_metal_agree`, for both rules: the flags agree on more than 99.5 % of half-fibers in one
+    step; on the phantom, fiber counts agree within 2 % and more than 80 % of fibers lie within 0.1 mm (at 2°).
+    That is all that is measured of agreement across backends.
+
+**The sweeps.** The method is robust_ukf_sweep's: step 2's stratified seeds for runs 1–8 of each input, 2,200 pairs
+per input, weighted back to each run's population.
+- Each tie angle also tracks A's whole tractography (about 51 s, as today's). It is labeled with RapidParc (draw 0,
+  index grouping) for the tract mix and the focus volumes.
+- The switch flags are compared beyond 3 mm, in either half, up to where the halves separate (0.5 mm apart, or one
+  stops). Step 2 compared the classified half of drift pairs, so the base figures differ from its 60 / 30 %.
+- The both-swaps queue ran once with the disk guard lowered to 12 GB through `TRACTLINE_MIN_FREE_GB` in
+  `robust_ukf_diagnose.py`, while macOS held 13–17 GB free preparing an update. The default is still 20 GB.
+
+Columns: epsilon diverged; the same in step 2's "> 5 mm" stratum; switch flags differing in diverged / together
+pairs; fieldonly diverged (median MDF); A's streamlines ≥ 40 mm; their length quartiles (mm); today's paths moved
+more than 5 mm (median MDF), which is change, not bias; today's ≥ 40 mm seeds lost; tract mix, total variation
+against today; CST / AF / UF volume against today.
+
+Both swaps held (`tie_sw2`):
+
+| tie angle | epsilon | "> 5 mm" | flags differ | fieldonly | ≥ 40 mm | length | moved > 5 mm | seeds lost | TV | volumes |
+|---|---|---|---|---|---|---|---|---|---|---|
+| today (0) | 3.52 % | 99.8 % | 75.9 / 28.5 % | 36.0 % (1.89 mm) | 64,378 | 67.8 / 96.5 / 130.8 | — | — | — | — |
+| 0.1° | 2.41 % | 27.3 % | 57.7 / 15.8 % | 36.3 % (1.92 mm) | 64,388 | 67.8 / 96.5 / 130.8 | 7.9 % (0.014 mm) | 0.4 % | 0.0029 | ×0.99 / 1.01 / 0.97 |
+| 0.5° | **0.68 %** | 12.3 % | 26.7 / 2.6 % | 36.9 % (2.16 mm) | 64,175 | 67.8 / 96.5 / 132.5 | 14.5 % (0.030 mm) | 1.3 % | 0.0043 | ×1.01 / 0.98 / 1.02 |
+| 2° | 0.65 % | 9.2 % | 3.5 / 0.7 % | 35.9 % (1.87 mm) | 63,569 | 67.8 / 96.6 / 132.5 | 21.2 % (0.070 mm) | 3.1 % | 0.0112 | ×1.00 / 1.02 / 0.99 |
+| 5° | 0.87 % | 8.4 % | 2.3 / 0.4 % | 36.0 % (1.86 mm) | 63,583 | 67.8 / 96.6 / 132.5 | 23.2 % (0.109 mm) | 3.5 % | 0.0120 | ×1.00 / 1.02 / 0.97 |
+
+sw only:
+
+| tie angle | epsilon | "> 5 mm" | flags differ | fieldonly | ≥ 40 mm | length | moved > 5 mm | seeds lost | TV | volumes |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 0.1° | 3.98 % | 50.1 % | 73.1 / 20.9 % | 35.9 % (1.89 mm) | 64,389 | 67.8 / 96.5 / 130.8 | 5.1 % (0.002 mm) | 0.2 % | 0.0025 | ×0.98 / 0.99 / 0.99 |
+| 0.5° | 4.00 % | 45.4 % | 79.3 / 17.6 % | 36.8 % (1.99 mm) | 64,269 | 67.8 / 96.6 / 130.8 | 8.1 % (0.005 mm) | 0.5 % | 0.0025 | ×0.99 / 0.98 / 0.98 |
+| 2° | 3.79 % | 42.3 % | 78.6 / 16.6 % | 36.7 % (1.94 mm) | 64,162 | 67.8 / 96.6 / 132.5 | 11.3 % (0.010 mm) | 0.8 % | 0.0045 | ×1.00 / 0.99 / 0.99 |
+| 5° | 3.98 % | 41.8 % | 79.2 / 16.1 % | 36.7 % (1.87 mm) | 64,200 | 67.8 / 96.6 / 132.5 | 12.5 % (0.011 mm) | 0.9 % | 0.0045 | ×1.02 / 1.00 / 0.98 |
+
+For scale, from step 2's sweep and labeled the same way:
+- **Rs 0.1:** epsilon 1.24 % and fieldonly 19.0 % diverged. It moves 92.1 % of today's paths and loses 18.3 % of the
+  seeds; total variation 0.113; volumes ×1.32 / 0.43 / 0.68.
+- **step_length 0.6:** epsilon 0.66 % and fieldonly 29.8 %. It moves 85.7 % of paths and loses 8.4 % of the seeds;
+  total variation 0.072; volumes ×1.25 / 0.77 / 0.97.
+
+- **Ties are common; ties that straddle FA 0.2 are not.** Today, 8.8 % of A's sampled steps have the two tensors
+  within 0.1°, 11.1 % within 0.5°, 14.6 % within 2° and 25.4 % within 20° (unweighted; these seeds over-represent
+  fragile ones). Of the steps within 0.5°, 0.08 % have one tensor's FA above 0.2 and the other's at or below
+  (0.14 % under the sw-only rule; 0.32 % within 2°, 5.0 % within 20°). At almost every tie, both tensors lie on the
+  same side of 0.2. Then sw2 either fires every step (both at or below 0.2) or never.
+- **0.5° for the both-swaps rule** takes most of the gain (0.68 %) at about 0.4× the cost of 2°: 1.3 against 3.1 % of
+  today's long seeds lost, and a total variation of 0.0043 against 0.0112.
+- **At 0.1° it does less (2.41 %).** Many of the fragile ties lie between 0.1° and 0.5°. And float32 resolves the
+  angle between unit vectors only to a few hundredths of a degree near 0 (cos 0.1° = 1 − 1.5 × 10⁻⁶), so 0.1° is
+  a coarse cut. A tie keyed on the quantity the decision itself compares would avoid both: |m1·o − m2·o| for sw, or
+  |fat1 − 0.2| for sw2.
+- **The neither-tracked pairs grow with the angle** under the both-swaps rule: 0 / 3 / 7 / 34 / 47 epsilon pairs at
+  0 / 0.1 / 0.5 / 2 / 5°.
+
+**Scoring at 0.5°: both rules against today, step 0.6 and Rs 0.1.** The method is step 2's scoring: A, the three
+rescans on A's grid, a 17-run ensemble, and 8 epsilon and 8 fieldonly runs, RapidParc at draw 0 with its index
+grouping. The three figures per cell are the within, session 3 and session 5 rescans.
+
+| | today | Rs 0.1 | step_length 0.6 | tie_angle 0.5, sw only | tie_angle 0.5, both swaps |
+|---|---|---|---|---|---|
+| A: streamlines labeled (≥ 40 mm) | 64,378 | 57,512 | 64,704 | 64,269 | 64,175 |
+| A: length, quartiles (mm) | 67.8 / 96.5 / 130.8 | 62.4 / 91.2 / 120.0 | 70.8 / 99.6 / 128.4 | 67.8 / 96.6 / 130.8 | 67.8 / 96.5 / 132.5 |
+| the rescan renames | 35.4 / 38.2 / 39.7 % | 28.8 / 31.4 / 34.1 % | 31.8 / 34.0 / 36.5 % | 35.5 / 38.2 / 39.8 % | 35.8 / 38.3 / 39.7 % |
+| the same, hash-sorted grouping | 35.5 / 38.0 / 39.8 % | 28.7 / 31.3 / 34.0 % | 31.7 / 33.9 / 36.5 % | 35.5 / 38.1 / 39.8 % | 35.8 / 38.3 / 39.7 % |
+| presence Dice, CST | 0.78 / 0.78 / 0.75 | 0.80 / 0.79 / 0.80 | 0.79 / 0.78 / 0.76 | 0.78 / 0.77 / 0.75 | 0.78 / 0.78 / 0.75 |
+| presence Dice, AF | 0.81 / 0.79 / 0.77 | 0.79 / 0.76 / 0.73 | 0.80 / 0.79 / 0.76 | 0.81 / 0.79 / 0.77 | 0.81 / 0.79 / 0.78 |
+| presence Dice, UF | 0.79 / 0.76 / 0.73 | 0.75 / 0.74 / 0.69 | 0.78 / 0.76 / 0.73 | 0.79 / 0.76 / 0.72 | 0.78 / 0.76 / 0.73 |
+| landmark sites with the same main named tract within 8 mm (of 8) | 6 / 6 / 5 | 6 / 7 / 6 | 8 / 6 / 7 | 7 / 8 / 6 | 7 / 7 / 6 |
+| stated: the mode's mean share | 0.764 | 0.812 | 0.791 | 0.764 | 0.763 |
+| a rescan gives the mode | 0.703 / 0.674 / 0.661 | 0.749 / 0.724 / 0.699 | 0.731 / 0.708 / 0.683 | 0.702 / 0.675 / 0.662 | 0.701 / 0.674 / 0.662 |
+| AUROC, the rescan's change from A's tract | 0.801 / 0.779 / 0.773 | 0.815 / 0.796 / 0.780 | 0.808 / 0.784 / 0.772 | 0.801 / 0.778 / 0.776 | 0.800 / 0.777 / 0.773 |
+| epsilon: renamed / paths > 5 mm | 3.96 / 3.42 % | 3.62 / 0.69 % | 3.71 / 1.52 % | 4.03 / 3.62 % | 3.24 / **1.16 %** |
+| epsilon: A's seeds a run lacks (mean) | 83.0 | 12.8 | 36.1 | 132.8 | 22.8 |
+| fieldonly: renamed / paths > 5 mm | 16.4 / 34.6 % | 12.2 / 19.5 % | 14.3 / 28.0 % | 16.5 / 34.9 % | 16.8 / 35.3 % |
+| Other share: A (17 runs) | 0.526 (0.531) | 0.562 (0.568) | 0.562 (0.563) | 0.526 (0.531) | 0.525 (0.530) |
+| RapidParc's mean top tract probability, A | 0.941 | 0.931 | 0.935 | 0.941 | 0.941 |
+| tract mix, total variation against today: A / 17 runs | — | 0.113 / 0.113 | 0.072 / 0.070 | 0.003 / 0.001 | 0.004 / 0.002 |
+| CST volume against today: A (17 runs) | — | ×1.32 (1.22) | ×1.25 (1.17) | ×1.00 (0.99) | ×1.01 (1.00) |
+| AF volume against today | — | ×0.43 (0.43) | ×0.77 (0.76) | ×0.98 (0.99) | ×0.98 (1.00) |
+| UF volume against today | — | ×0.68 (0.72) | ×0.97 (1.03) | ×0.98 (1.01) | ×1.02 (1.01) |
+
+The honesty rows are over the seeds every run labels: 44,717 today, 44,766 sw only, 44,687 both swaps.
+
+**The combined floors: step 1's grouping with each rule.** `robust_floor.py` relabels A and the 8 epsilon and 8
+fieldonly records of each tracker with RapidParc at draw 0, with no tracking. Each run is compared with A relabeled
+the same way. The index relabel matches the stored labels to the records' quantization (0.02–0.04 % of A), and its
+figures equal the scoring's to 0.01 point.
+
+| renamed (8 runs) | epsilon: index | epsilon: hash-sorted | fieldonly: index | fieldonly: hash-sorted |
+|---|---|---|---|---|
+| today's tracker | 3.96 % | 1.61 % | 16.4 % | 15.7 % |
+| tie_angle 0.5, sw only | 4.04 % | 1.90 % | 16.5 % | 15.9 % |
+| tie_angle 0.5, both swaps | 3.24 % | **0.58 %** | 16.8 % | 16.2 % |
+
+Epsilon, pooled over the runs and split by how far the path moved (ensemble_stages' MDF bins). The share of
+streamlines in each bin is given first:
+
+| | identical (MDF 0) | (0, 0.1] mm | (0.1, 5] mm | > 5 mm |
+|---|---|---|---|---|
+| today's tracker: share of streamlines | 33.2 % | 53.0 % | 10.4 % | 3.4 % |
+| renamed: index / hash-sorted | 3.37 / 0.52 % | 2.85 / 0.46 % | 4.62 / 3.31 % | 24.7 / 24.7 % |
+| both swaps: share of streamlines | 44.9 % | 49.5 % | 4.4 % | 1.2 % |
+| renamed: index / hash-sorted | 3.46 / 0.32 % | 2.76 / 0.25 % | 3.08 / 2.71 % | 16.6 / 16.7 % |
+
+- The share of streamlines within 0.1 mm rises from 86.2 % (today) to 94.5 % (both swaps); sw only gives 86.7 %.
+- Of what is left of the 0.58 %, a third (33.1 %) comes from paths that still move more than 5 mm. A quarter
+  (25.0 %) comes from identical paths: hash-sorted's groups shift by one member for each seed a run lacks (22.8 a run,
+  against 83.0 today).
+- Fieldonly's "identical" bin (today, hash-sorted: renamed 1.0) holds a single streamline across the 8 runs.
+  `ensemble_stages.by_distance` now prints each bin's count; `robust_floor.json` has them.
+
+Reading it:
+- **The reviewer's sw-only hypothesis was tested and refuted.** Holding sw alone at a tie leaves epsilon's divergence
+  where it was or a little worse: 3.8–4.0 % at every angle against 3.5 % in the sample, and 3.62 against 3.42 %
+  whole brain. No spread over runs is given for these figures, so "a little worse" may be noise. It also loses more
+  of A's seeds per epsilon run (132.8 against 83.0). Holding both swaps cuts it to 0.68 % in the sample and 1.16 %
+  whole brain. The straddles the hypothesis rests on are 0.08 % of ties.
+- **Holding sw2 at a tie is necessary.** Holding sw alone is not enough; holding both is. Holding sw2 with sw free
+  was never run, so whether sw2 alone suffices is untested.
+- **The mechanism is an inference.** At a tie the two tensors are almost always on the same side of 0.2. Where both
+  FAs are at or below 0.2 (low-FA, near-parallel regions), sw2 swaps every step. A rounding-level change could then
+  flip which tensor is followed from then on: fat1 crossing 0.2, or a shift in the alternation's phase. Neither was
+  isolated. Why the sw-only rule may be slightly worse is not explained.
+- **Only the rule that holds sw2 damps the rounding-level divergence.**
+  - Whole-brain paths more than 5 mm apart: 3.42 → 1.16 %.
+  - With hash-sorted grouping, renames: 3.96 → 0.58 %. Neither the rule alone (3.24 %) nor hash-sorted alone
+    (1.61 %) gets close. The rule fixes the paths, and hash-sorted fixes their company.
+  - Of the pairs that diverge today, 12.3 % still do.
+- **Its cost is small in the aggregates, on one subject.**
+  - Total variation of the tract mix: 0.004 (A) and 0.002 (17 runs), against 0.07–0.11 for step 0.6 and Rs 0.1.
+  - Focus volumes within 2.2 % (A) and 1.2 % (17 runs); Other share and RapidParc's confidence unchanged.
+  - Long seeds lost 1.3 %, against 0.5 % for sw only. The upper length quartile moves from 130.8 to 132.5 mm; the
+    median does not.
+  - It moves 14.5 % of today's paths by more than 5 mm (median MDF 0.03 mm). That is change, not bias.
+  - It overrides UKF's designed alternation wherever the two tensors are within 0.5°.
+- **Neither rule reduces the data-noise sensitivity or changes rescan agreement.**
+  - Fieldonly diverges and renames as much as today or slightly more. Every fieldonly measure is a little higher
+    under both rules (sw only / both swaps):
+    - the sweep: 36.0 → 36.8 / 36.9 %, median MDF 1.89 → 1.99 / 2.16 mm;
+    - whole brain: 34.6 → 34.9 / 35.3 %;
+    - renamed, index grouping: 16.4 → 16.5 / 16.8 %;
+    - renamed, hash-sorted grouping: 15.7 → 15.9 / 16.2 %.
+
+    The rises are small but consistent, over 8 runs.
+  - The rescans rename as many streamlines, and Dice, honesty and AUROC are unchanged. The landmark sites (7 / 7 / 6
+    and 7 / 8 / 6 against 6 / 6 / 5) differ by a site or two: within what a different path through the same data
+    can do.
+  - Real rescans differ by noise, which moves the data along the whole path. These rules remove only the tracker's
+    own amplification of rounding.
+- **What this buys is reproducibility under rounding-level perturbations of the input.** With hash-sorted grouping, a
+  rerun on the same data, nudged at 10⁻⁶, gives nearly the same tractography and labels. Agreement across backends
+  (Metal, CPU, CUDA) is a different rounding and was not measured beyond the phantom tests above. Together with step
+  1, the both-swaps rule is a candidate default for reproducibility, not for rescan agreement; the decision is yours.
+  The defaults are unchanged.
+- **The natural next candidate (not run):** target sw2's coin flip without disabling the alternation, by hysteresis
+  on sw2's FA threshold or by a tie keyed on |fat1 − 0.2|.
+
+Caveats:
+- one subject, one protocol, scan A; epsilon and fieldonly stand in for rounding and noise, not a rescan;
+- the Triton kernels carry both rules but are untested (no CUDA here), and the block kernel's default signature
+  changed (above);
+- selection: 0.5° was chosen from 0.1, 0.5, 2 and 5° on the sweep's runs 1–8. The whole-brain scoring reuses the same
+  epsilon and fieldonly runs 1–8, so it is not independent of the choice. 2° gives the same divergence (0.65 %) at
+  more than twice the seeds lost;
+- crossings: a tie never holds a swap between tensors more than 0.5° apart, so neither rule chooses between the
+  tensors of a crossing directly. Where two tensors part slowly (a fan or a gradual split), though, the both-swaps
+  rule fixes the order until they pass the angle. That makes the branch taken a deterministic function of the order
+  at entry, which may favor one branch systematically. This was not measured per crossing; the tract mix and focus
+  volumes do not show it;
+- one labeler draw (0); 8 epsilon and 8 fieldonly runs per configuration;
+- no ground truth: reproducibility and bias against today only.

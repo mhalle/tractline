@@ -9,8 +9,8 @@ displacement) 34 % (NOTES 2026-10-17). Here a sample of cIIIs04 A's seeds is tra
 were, with ukf.track's observe hook (off by default; the fibers are the same with it) recording every step of both
 half-fibers: the new position, the stop decision and which conditions fired (outside the mask, mean signal below
 stopping_threshold 0.06, FA below stopping_fa 0.08, the step limit), both tensor switches (sw: the second tensor is
-closer to the previous direction; sw2: within 20 degrees and the smaller FA <= 0.2), FA, the mean signal and the
-filter's state after the swaps (both tensors: the second's direction and FA, the angle between them).
+closer to the previous direction; sw2: within 20 degrees and the first's FA, after sw, <= 0.2), FA, the mean signal
+and the filter's state after the swaps (both tensors: the second's direction and FA, the angle between them).
 
 run: per arm and run r, three tractographies of the sampled seeds (select, in each input's own seed list):
   A     A's corrected DWI (A's field, stages/A_field_hz.npy), its own mask: the reference;
@@ -73,7 +73,7 @@ from ensemble_stages import PAIR, EPS, where as stages     # noqa: E402
 
 DEVICE = "mps"
 OUT = DATA / "ensemble" / "cIIIs04" / "robustness" / "ukf"
-MIN_FREE_GB = 20.0
+MIN_FREE_GB = float(os.environ.get("TRACTLINE_MIN_FREE_GB", 20.0))   # queues stop below this; the override is for one small run
 ARMS = ("epsilon", "fieldonly")
 #: seeds per run and stratum (the stored records' MDF of the run's path to A's), times --scale
 STRATA = (("> 5 mm", 150), ("(0.1, 5] mm", 50), ("<= 0.1 mm", 50), ("unmatched", 25))

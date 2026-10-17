@@ -105,6 +105,19 @@ opt-in; no default changes until you decide.
   - Next, step 2b: a minimum stretch before a switch, or a tie-break for near-equal tensors (never tried). Then score
     the variants on the ISMRM 2015 phantom (docs/validation-datasets.md) with its ROI scorer. Its ground truth has no
     AF, and its b = 1000 shell may not carry the Rs effect at b = 2800.
+- **Outcome of step 2b (2026-10-17, NOTES "Robustness step 2b").**
+  - Holding both tensor swaps while the two directions are within 0.5° (opt-in `tie_angle=0.5, tie_sw2=True`) cuts
+    epsilon's whole-brain paths more than 5 mm apart from 3.42 to 1.16 %. With step 1's hash-sorted grouping,
+    epsilon's renames fall from 3.96 to 0.58 %.
+  - The cost is small in the aggregates, on one subject: tract mix total variation 0.004, 1.3 % of long seeds lost.
+    It overrides UKF's designed sw2 alternation at those ties.
+  - Holding only the first swap (`tie_angle` alone, the reviewer's hypothesis) does not help: 3.62 against 3.42 %
+    today. So holding sw2 is necessary. Holding sw2 alone was not run. That the instability is sw2's alternation at
+    ties where both FAs are at or below 0.2 is an inference.
+  - Neither rule reduces fieldonly's sensitivity (both are slightly higher) or changes rescan agreement.
+  - The both-swaps rule is a candidate default for reproducibility under rounding-level input perturbations;
+    agreement across backends was not measured. The decision is yours; the defaults are unchanged.
+  - Next candidate, not run: hysteresis on sw2's FA threshold, or a tie keyed on |fat1 − 0.2|.
 
 ### 3. Denoising before tracking
 

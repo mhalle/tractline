@@ -37,9 +37,15 @@ Compile-time options (`defines`), measured on an M2 with HARDI (ukf_metal.json):
   SPDINV          both 10x10 inverses (Pm, Yk + I: symmetric positive definite) through Cholesky,
                   L^-T L^-1 with packed triangles, instead of Gauss-Jordan: per-step state error
                   against float64 3.5e-7 instead of 1.3e-5, and faster (207 k against 183 k steps/s)
+  TIEBREAK        ukf.advance's opt-in tie_angle (advance() adds it when tie_angle > 0, and passes cos tie_angle
+                  as fp[10]): the first swap (sw) does not fire when the two directions are within tie_angle as
+                  axes; sw2 is today's unless TIESW2 (tie_sw2) suppresses it at the tie too. Without them the
+                  kernel is today's: the preprocessor removes the lines
 Tested against the float32 torch step and float64 on captured fixtures (ukf_metal_check.py).
 """
 from __future__ import annotations
+
+import math
 
 import torch
 
@@ -206,7 +212,7 @@ kernel void ukf_step(
     device float*       faout   [[buffer(10)]],   // (B,) out
     device float*       msig    [[buffer(11)]],   // (B,) out
     device const int*   ip      [[buffer(12)]],   // B, N, nk, nj, ni, step, max_steps
-    device const float* fp      [[buffer(13)]],   // vox0, vox1, vox2, sigma, step_length, stop_fa, stop_thr, Rs, Qm, Ql
+    device const float* fp      [[buffer(13)]],   // vox0, vox1, vox2, sigma, step_length, stop_fa, stop_thr, Rs, Qm, Ql[, cos tie]
     uint tid  [[thread_position_in_grid]],
     uint lane [[thread_index_in_simdgroup]])
 {
@@ -470,6 +476,10 @@ kernel void ukf_step(
     float fat1 = l2fa(L1a, L1b), fat2 = l2fa(L2a, L2b);
     float angle = MATHNS::acos(m1[0] * m2[0] + m1[1] * m2[1] + m1[2] * m2[2]) * (180.0f / M_PI_F);
     bool sw = (m1[0] * o3[0] + m1[1] * o3[1] + m1[2] * o3[2]) < (m2[0] * o3[0] + m2[1] * o3[1] + m2[2] * o3[2]);
+#ifdef TIEBREAK
+    const bool tie = fabs(m1[0] * m2[0] + m1[1] * m2[1] + m1[2] * m2[2]) > fp[10];
+    sw = sw && !tie;                                                // at a near tie sw keeps the order
+#endif
     #define SWAPALL { for (int i = 0; i < 3; i++) { float t = m1[i]; m1[i] = m2[i]; m2[i] = t; } \
         float t = L1a; L1a = L2a; L2a = t; t = L1b; L1b = L2b; L2b = t; \
         for (int i = 0; i < 5; i++) { float t2 = s[i]; s[i] = s[5 + i]; s[5 + i] = t2; } \
@@ -477,6 +487,9 @@ kernel void ukf_step(
         for (int i = 0; i < NS * NS; i++) Pc[i] = Q2[i]; }
     if (sw) { SWAPALL; float t = fat1; fat1 = fat2; fat2 = t; }
     bool sw2 = (angle <= 20.0f) && (min(fat1, fat2) <= 0.2f) && !(fat1 > 0.2f);
+#ifdef TIESW2
+    sw2 = sw2 && !tie;                                              // and so does sw2
+#endif
     if (sw2) { SWAPALL; }
     float fa = L1a < L1b ? 0.0f : l2fa(L1a, L1b);
     p0 = p0 + pdiv(m1[2], vox0) * step_length;
@@ -524,14 +537,17 @@ def library(defines: tuple | None = None):
 
 @torch.no_grad()
 def advance(D: dict, xa, sa, Pa, oa, Q, Rs, step, max_steps, step_length=0.3, stopping_fa=0.08,
-            stopping_threshold=0.06, group_size=256, defines=None):
+            stopping_threshold=0.06, tie_angle=0.0, tie_sw2=False, group_size=256, defines=None):
     """ukf.advance's contract on the 'mps' device, float32: returns (x, state, P, direction,
-    stop, info). D is ukf.at_dtype(D, torch.float32, 'mps')."""
+    stop, info). D is ukf.at_dtype(D, torch.float32, 'mps'). tie_angle > 0 compiles the kernel with TIEBREAK, and
+    tie_sw2 with TIESW2 too."""
     dev = xa.device
     N = int(D["N"])
     if N > MAX_GRADIENTS:
         raise ValueError(f"ukf_metal: {N} gradients; the kernel takes at most {MAX_GRADIENTS}")
     defs = DEFINES if defines is None else tuple(defines)
+    if tie_angle:
+        defs = defs + (("TIEBREAK", "TIESW2") if tie_sw2 else ("TIEBREAK",))
     if "NGRAD" in defs:                                                      # bare NGRAD: fill in this data's count
         defs = tuple(f"NGRAD={N}" if d == "NGRAD" else d for d in defs)
     defines = defs
@@ -546,13 +562,14 @@ def advance(D: dict, xa, sa, Pa, oa, Q, Rs, step, max_steps, step_length=0.3, st
     ip = torch.tensor([B, N, nk, nj, ni, int(step), int(max_steps)], dtype=torch.int32, device=dev)
     # the step's constants, read back from the device once per tractography (cached on D) - not every step:
     # each .cpu() of a device tensor waits for the device
-    key = (id(Q), float(Rs), float(step_length), float(stopping_fa), float(stopping_threshold), N)
+    key = (id(Q), float(Rs), float(step_length), float(stopping_fa), float(stopping_threshold), N, float(tie_angle))
     cache = D.get("_metal_consts")
     if cache is None or cache[0] != key:
         q = torch.diagonal(Q).cpu()
         vox = D["voxel"].cpu()
         fp = torch.tensor([float(vox[0]), float(vox[1]), float(vox[2]), float(vox.min()), step_length, stopping_fa,
-                           stopping_threshold, float(Rs), float(q[0]), float(q[3])], dtype=torch.float32, device=dev)
+                           stopping_threshold, float(Rs), float(q[0]), float(q[3])]
+                          + ([math.cos(math.radians(tie_angle))] if tie_angle else []), dtype=torch.float32, device=dev)
         cache = D["_metal_consts"] = (key, fp, D["g"][:N].contiguous(), D["b"][:N].contiguous())
     _, fp, g, b = cache
     A = D["A"]

@@ -42,9 +42,10 @@ analyze: per configuration (today from the existing records; seeding_threshold=0
   (d) bias and the labeler's fit: streamlines labeled (>= 40 mm), their lengths, the Other share, the tract mix
       (total variation against today's), RapidParc's mean top tract probability, and the focus tracts' volumes (A's
       presence, and the mean over the 17 runs) against today's.
-Writes results/robust_ukf_score.json. reweight then adds, per rescan, the rename rate by A's tract and reweighted to
-today's tract mix: whether a lower rate is only fewer streamlines in tracts that rename often. paths adds the rescans'
-path agreement and where the CST's renames go and its new streamlines come from (paths()).
+Writes results/robust_ukf_score.json, then runs reweight and paths on it, so a rerun of analyze rebuilds every key.
+reweight adds, per rescan, the rename rate by A's tract and reweighted to today's tract mix: whether a lower rate is
+only fewer streamlines in tracts that rename often. paths adds the rescans' path agreement and where the CST's renames
+go and its new streamlines come from (paths()). Each can also be run on its own on an existing results file.
 """
 import argparse, json, os, sys, time
 from dataclasses import replace
@@ -72,14 +73,22 @@ L = np.asarray(LUT)
 ONEHOT = np.eye(E.N_TRACTS, dtype=np.float32)[LUT]                                         # (1600, 43)
 
 
+#: a variant name's suffix for the first tie-break rule, sw and sw2 both held at a tie: "tie_angle=0.5_sw-and-sw2" is
+#: {tie_angle: 0.5, tie_sw2: True} (its records were written under that name before tie_sw2 existed)
+SW2_SUFFIX = "_sw-and-sw2"
+
+
 def parse(variant):
-    """'Rs=0.1' or 'Rs=0.1,step_length=0.6' -> {setting: value}, settings pipeline.track passes on."""
+    """'Rs=0.1' or 'Rs=0.1,step_length=0.6' -> {setting: value}, settings pipeline.track passes on; a boolean setting
+    (tie_sw2) as 0 or 1. A name ending in SW2_SUFFIX adds tie_sw2."""
     out = {}
+    if variant.endswith(SW2_SUFFIX):
+        variant, out["tie_sw2"] = variant[:-len(SW2_SUFFIX)], True
     for part in variant.split(","):
         k, v = part.split("=")
         if k not in P.TRACKER_SETTINGS:
             raise SystemExit(f"{k}: not a tracker setting ({sorted(P.TRACKER_SETTINGS)})")
-        out[k] = float(v)
+        out[k] = bool(float(v)) if k == "tie_sw2" else float(v)
     return out
 
 
@@ -354,6 +363,8 @@ def analyze(args):
             r[k] = [round(x, 5) for x in r.get(k, [])] or None
         print(name, json.dumps({k: v for k, v in r.items() if not k.startswith("tract mix")}), flush=True)
     (HERE / "results/robust_ukf_score.json").write_text(json.dumps(res, indent=1))
+    reweight(args)                                                       # the keys these add, so analyze is complete on its own
+    paths(args)
     print(f"{time.time() - t0:.0f}s")
 
 

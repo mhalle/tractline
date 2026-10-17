@@ -1,0 +1,259 @@
+{
+ "runs per arm": 8,
+ "draw": 0,
+ "modes": [
+  "index",
+  "hash-sorted"
+ ],
+ "trackers": {
+  "today": {
+   "A seeds labeled": 64378,
+   "A: index relabel against the stored labels, renamed": 0.0004,
+   "epsilon": {
+    "stored labels (index), renamed (mean)": 0.0396,
+    "paths more than 5 mm apart (mean)": 0.0342,
+    "index": {
+     "renamed: mean, SD over runs": [
+      0.0396,
+      0.0004
+     ],
+     "by path distance": {
+      "identical (MDF 0)": {
+       "share of streamlines": 0.3319,
+       "renamed": 0.0337,
+       "share of all renames": 0.2831
+      },
+      "MDF (0, 0.1] mm": {
+       "share of streamlines": 0.5304,
+       "renamed": 0.0285,
+       "share of all renames": 0.3826
+      },
+      "MDF (0.1, 5] mm": {
+       "share of streamlines": 0.1035,
+       "renamed": 0.0462,
+       "share of all renames": 0.1211
+      },
+      "MDF > 5 mm": {
+       "share of streamlines": 0.0342,
+       "renamed": 0.2466,
+       "share of all renames": 0.2132
+      }
+     }
+    },
+    "hash-sorted": {
+     "renamed: mean, SD over runs": [
+      0.0161,
+      0.0003
+     ],
+     "by path distance": {
+      "identical (MDF 0)": {
+       "share of streamlines": 0.3319,
+       "renamed": 0.0052,
+       "share of all renames": 0.1078
+      },
+      "MDF (0, 0.1] mm": {
+       "share of streamlines": 0.5304,
+       "renamed": 0.0046,
+       "share of all renames": 0.1526
+      },
+      "MDF (0.1, 5] mm": {
+       "share of streamlines": 0.1035,
+       "renamed": 0.0331,
+       "share of all renames": 0.2137
+      },
+      "MDF > 5 mm": {
+       "share of streamlines": 0.0342,
+       "renamed": 0.2469,
+       "share of all renames": 0.5259
+      }
+     }
+    }
+   },
+   "fieldonly": {
+    "stored labels (index), renamed (mean)": 0.1641,
+    "paths more than 5 mm apart (mean)": 0.3464,
+    "index": {
+     "renamed: mean, SD over runs": [
+      0.1641,
+      0.0065
+     ],
+     "by path distance": {
+      "identical (MDF 0)": {
+       "share of streamlines": 0.0,
+       "renamed": 0.0,
+       "share of all renames": 0.0
+      },
+      "MDF (0, 0.1] mm": {
+       "share of streamlines": 0.057,
+       "renamed": 0.0376,
+       "share of all renames": 0.0131
+      },
+      "MDF (0.1, 5] mm": {
+       "share of streamlines": 0.5965,
+       "renamed": 0.0681,
+       "share of all renames": 0.2474
+      },
+      "MDF > 5 mm": {
+       "share of streamlines": 0.3464,
+       "renamed": 0.3503,
+       "share of all renames": 0.7395
+      }
+     }
+    },
+    "hash-sorted": {
+     "renamed: mean, SD over runs": [
+      0.1573,
+      0.0073
+     ],
+     "by path distance": {
+      "identical (MDF 0)": {
+       "share of streamlines": 0.0,
+       "renamed": 1.0,
+       "share of all renames": 0.0
+      },
+      "MDF (0, 0.1] mm": {
+       "share of streamlines": 0.057,
+       "renamed": 0.0187,
+       "share of all renames": 0.0068
+      },
+      "MDF (0.1, 5] mm": {
+       "share of streamlines": 0.5965,
+       "renamed": 0.0586,
+       "share of all renames": 0.2224
+      },
+      "MDF > 5 mm": {
+       "share of streamlines": 0.3464,
+       "renamed": 0.3499,
+       "share of all renames": 0.7708
+      }
+     }
+    }
+   }
+  },
+  "tie_angle=0.5": {
+   "A seeds labeled": 64175,
+   "A: index relabel against the stored labels, renamed": 0.0004,
+   "epsilon": {
+    "stored labels (index), renamed (mean)": 0.0324,
+    "paths more than 5 mm apart (mean)": 0.0116,
+    "index": {
+     "renamed: mean, SD over runs": [
+      0.0324,
+      0.0007
+     ],
+     "by path distance": {
+      "identical (MDF 0)": {
+       "share of streamlines": 0.4494,
+       "renamed": 0.0346,
+       "share of all renames": 0.4786
+      },
+      "MDF (0, 0.1] mm": {
+       "share of streamlines": 0.4952,
+       "renamed": 0.0276,
+       "share of all renames": 0.4205
+      },
+      "MDF (0.1, 5] mm": {
+       "share of streamlines": 0.0439,
+       "renamed": 0.0308,
+       "share of all renames": 0.0417
+      },
+      "MDF > 5 mm": {
+       "share of streamlines": 0.0116,
+       "renamed": 0.1658,
+       "share of all renames": 0.0592
+      }
+     }
+    },
+    "hash-sorted": {
+     "renamed: mean, SD over runs": [
+      0.0058,
+      0.0002
+     ],
+     "by path distance": {
+      "identical (MDF 0)": {
+       "share of streamlines": 0.4494,
+       "renamed": 0.0032,
+       "share of all renames": 0.2498
+      },
+      "MDF (0, 0.1] mm": {
+       "share of streamlines": 0.4952,
+       "renamed": 0.0025,
+       "share of all renames": 0.2154
+      },
+      "MDF (0.1, 5] mm": {
+       "share of streamlines": 0.0439,
+       "renamed": 0.0271,
+       "share of all renames": 0.2037
+      },
+      "MDF > 5 mm": {
+       "share of streamlines": 0.0116,
+       "renamed": 0.1668,
+       "share of all renames": 0.331
+      }
+     }
+    }
+   },
+   "fieldonly": {
+    "stored labels (index), renamed (mean)": 0.1684,
+    "paths more than 5 mm apart (mean)": 0.3533,
+    "index": {
+     "renamed: mean, SD over runs": [
+      0.1685,
+      0.0069
+     ],
+     "by path distance": {
+      "identical (MDF 0)": {
+       "share of streamlines": 0.0,
+       "renamed": 0.0,
+       "share of all renames": 0.0
+      },
+      "MDF (0, 0.1] mm": {
+       "share of streamlines": 0.053,
+       "renamed": 0.0376,
+       "share of all renames": 0.0118
+      },
+      "MDF (0.1, 5] mm": {
+       "share of streamlines": 0.5937,
+       "renamed": 0.0678,
+       "share of all renames": 0.2387
+      },
+      "MDF > 5 mm": {
+       "share of streamlines": 0.3533,
+       "renamed": 0.3575,
+       "share of all renames": 0.7494
+      }
+     }
+    },
+    "hash-sorted": {
+     "renamed: mean, SD over runs": [
+      0.1623,
+      0.0076
+     ],
+     "by path distance": {
+      "identical (MDF 0)": {
+       "share of streamlines": 0.0,
+       "renamed": 0.0,
+       "share of all renames": 0.0
+      },
+      "MDF (0, 0.1] mm": {
+       "share of streamlines": 0.053,
+       "renamed": 0.0207,
+       "share of all renames": 0.0067
+      },
+      "MDF (0.1, 5] mm": {
+       "share of streamlines": 0.5937,
+       "renamed": 0.059,
+       "share of all renames": 0.2159
+      },
+      "MDF > 5 mm": {
+       "share of streamlines": 0.3533,
+       "renamed": 0.357,
+       "share of all renames": 0.7774
+      }
+     }
+    }
+   }
+  }
+ },
+ "seconds": 124.0
+}

@@ -28,6 +28,8 @@ to that commit. Every rule below is the binary's, including the ones that look l
             swap the tensors when m2 is closer to the previous direction, then when they are within 20
             degrees and the smaller FA <= 0.2 swap unless FA1 > 0.2; fa = 0 when l1 is not the largest;
             Euler step of 0.3 mm along m1 (index units: m1 reversed over the reversed spacings).
+            Not the binary's, opt-in (track(tie_angle=, tie_sw2=)): the first swap does not fire when the
+            two directions are within tie_angle degrees as axes; with tie_sw2, nor does the second.
   stop      tractography.cc:1341-1382, at the new position: mask <= 0, mean of H(state) < stoppingThreshold,
             fa < stoppingFA, or step > ceil(maxHalfFiberLength / stepLength). The stopped step is not
             recorded. A point is recorded after the checks when (step + 1) % 6 == 0, the seed first.
@@ -396,11 +398,21 @@ def at_dtype(D: dict, dtype, device=None) -> dict:
 
 
 def advance(D: dict, xa, sa, Pa, oa, Q, Rs, step, max_steps, step_length=0.3, stopping_fa=0.08,
-            stopping_threshold=0.06):
+            stopping_threshold=0.06, tie_angle=0.0, tie_sw2=False):
     """One step of every live half-fiber: the filter at xa, the tensors, the swaps, the Euler step
     and the stopping checks at the new position (tractography.cc:1641-1776, 1341-1382). Every
     tensor in `dtype` of the state. Returns (x, state, P, direction, stop, info), info holding the
-    intermediate decisions the one-step fixtures compare: both swaps, fa, mean signal, in-mask."""
+    intermediate decisions the one-step fixtures compare: both swaps, fa, mean signal, in-mask.
+    tie_angle (degrees; 0, the binary's rule, by default): a tie-break, not the binary's - when the two
+    tensors' directions are within tie_angle as axes (|m1.m2| > cos tie_angle), the first swap (sw: m2 closer to the
+    previous direction) does not fire; the second (sw2) is evaluated as always, on the state as it then stands. At
+    such a tie sw's comparison m2.o > m1.o is decided by rounding, while sw2 (within 20 degrees and fat1 <= 0.2)
+    is not: it follows the higher-FA tensor when the two straddle FA 0.2. A swap permutes the state and its
+    covariance, and P's Cholesky factor is not permuted with P, so the next step's sigma points, and its update,
+    differ: the swap is a hard decision, not a relabeling. tie_sw2 (with tie_angle > 0): sw2 does not fire at such a
+    tie either, so the state keeps its order through both swaps. sw2's FA threshold (fat1 <= 0.2), and the
+    alternation it drives in low-FA near-parallel regions, is the decision rounding flips in practice (NOTES
+    2026-10-17, "Robustness step 2b"); this overrides that designed alternation while the tensors are within the angle."""
     vox = D["voxel"]
     fast = D.get("fast", False)
     z = _interp_half(D, xa) if fast else interp(D, xa)
@@ -414,11 +426,16 @@ def advance(D: dict, xa, sa, Pa, oa, Q, Rs, step, max_steps, step_length=0.3, st
     fat1, fat2 = l2fa(L1[:, 0], L1[:, 1], L1[:, 1]), l2fa(L2[:, 0], L2[:, 1], L2[:, 1])
     angle = torch.rad2deg(torch.acos((m1 * m2).sum(1)))
     sw = (m1 * oa).sum(1) < (m2 * oa).sum(1)
+    if tie_angle:                                                        # opt-in: at a near tie sw keeps the order
+        tie = (m1 * m2).sum(1).abs() > math.cos(math.radians(tie_angle))
+        sw = sw & ~tie
     m1, m2 = torch.where(sw[:, None], m2, m1), torch.where(sw[:, None], m1, m2)
     L1, L2 = torch.where(sw[:, None], L2, L1), torch.where(sw[:, None], L1, L2)
     fat1, fat2 = torch.where(sw, fat2, fat1), torch.where(sw, fat1, fat2)
     sa, Pa = _swap(sa, Pa, sw)
     sw2 = (angle <= 20) & (torch.minimum(fat1, fat2) <= 0.2) & ~(fat1 > 0.2)
+    if tie_angle and tie_sw2:                                            # opt-in: and so does sw2
+        sw2 = sw2 & ~tie
     m1, m2 = torch.where(sw2[:, None], m2, m1), torch.where(sw2[:, None], m1, m2)
     L1, L2 = torch.where(sw2[:, None], L2, L1), torch.where(sw2[:, None], L1, L2)
     sa, Pa = _swap(sa, Pa, sw2)
@@ -429,6 +446,13 @@ def advance(D: dict, xa, sa, Pa, oa, Q, Rs, step, max_steps, step_length=0.3, st
     inside = mask_at(D, xa) > 0
     stop = ~inside | (mean_sig < stopping_threshold) | (fa < stopping_fa) | (step > max_steps)
     return xa, sa, Pa, m1, stop, {"swap": sw, "swap2": sw2, "fa": fa, "mean_signal": mean_sig, "inside": inside}
+
+
+def _tie(params: dict) -> dict:
+    """The step's opt-in tie-break as a keyword, or nothing when it is off: the default step is called as before."""
+    if not params.get("tie_angle"):
+        return {}
+    return {"tie_angle": params["tie_angle"], **({"tie_sw2": True} if params.get("tie_sw2") else {})}
 
 
 def _track_block(D: dict, x, state, old, step_fn, params, s0=0, capture=None, progress=None, observe=None):
@@ -452,7 +476,7 @@ def _track_block(D: dict, x, state, old, step_fn, params, s0=0, capture=None, pr
         if capture:
             capture(step, s0 + alive, xa, sa, Pa, oa)
         xa, sa, Pa, m1, stop, info = step_fn(D, xa, sa, Pa, oa, Q, Rs, step, max_steps, params["step_length"],
-                                             params["stopping_fa"], params["stopping_threshold"])
+                                             params["stopping_fa"], params["stopping_threshold"], **_tie(params))
         if observe:
             observe(step, s0 + alive, xa, sa, m1, stop, info)
         go = torch.nonzero(~stop).squeeze(1)                              # one synchronization; then plain gathers
@@ -503,7 +527,7 @@ def _track_stream(D: dict, x0, st0, dir0, step_fn, params, capacity, progress=No
             break
         it += 1
         steps += len(alive)
-        xa, sa, Pa, m1, stop, _ = step_fn(D, xa, sa, Pa, oa, Q, Rs, 0, max_steps, sl, sfa, sth)
+        xa, sa, Pa, m1, stop, _ = step_fn(D, xa, sa, Pa, oa, Q, Rs, 0, max_steps, sl, sfa, sth, **_tie(params))
         if it - max_steps - 1 in births:                                    # a cohort reaches the limit (age > max_steps)
             stop = stop | (it - born > max_steps)
         go = torch.nonzero(~stop).squeeze(1)                                  # the one synchronization a step
@@ -533,14 +557,15 @@ def _compiled_advance():
     The padded pair's arithmetic is a batch of two's, the same in every process."""
     global _COMPILED
     if _COMPILED is None:
-        core = torch.compile(lambda D, xa, sa, Pa, oa, Q, Rs, sl, sfa, sth: advance(D, xa, sa, Pa, oa, Q, Rs, 0, 1, sl, sfa, sth),
+        core = torch.compile(lambda D, xa, sa, Pa, oa, Q, Rs, sl, sfa, sth, ta, t2: advance(D, xa, sa, Pa, oa, Q, Rs, 0, 1, sl, sfa, sth, ta, t2),
                              dynamic=True, options={"cpp.threads": 1})
 
-        def step_fn(D, xa, sa, Pa, oa, Q, Rs, step, max_steps, step_length=0.3, stopping_fa=0.08, stopping_threshold=0.06):
+        def step_fn(D, xa, sa, Pa, oa, Q, Rs, step, max_steps, step_length=0.3, stopping_fa=0.08, stopping_threshold=0.06,
+                    tie_angle=0.0, tie_sw2=False):
             one = len(xa) == 1
             if one:
                 xa, sa, Pa, oa = (torch.cat([t, t]) for t in (xa, sa, Pa, oa))
-            xa, sa, Pa, m1, stop, info = core(D, xa, sa, Pa, oa, Q, Rs, step_length, stopping_fa, stopping_threshold)
+            xa, sa, Pa, m1, stop, info = core(D, xa, sa, Pa, oa, Q, Rs, step_length, stopping_fa, stopping_threshold, tie_angle, tie_sw2)
             if one:
                 xa, sa, Pa, m1, stop = xa[:1], sa[:1], Pa[:1], m1[:1], stop[:1]
                 info = {k: v[:1] for k, v in info.items()}
@@ -652,7 +677,7 @@ def track(D: dict, offset_kji=SRAND0_OFFSET, seeding_threshold=0.1, stopping_fa=
           step_length=0.3, record_length=1.8, max_half_length=250.0, Qm=0.001, Ql=50.0, Rs=0.02,
           batch=50_000, progress=None, select=None, dtype=torch.float64, device=None, capture=None,
           seed_points=None, backend="torch", workers=1, threads_per_worker=1, fast=False, compile=False, stream=True,
-          observe=None):
+          observe=None, tie_angle=0.0, tie_sw2=False):
     """All fibers. Returns (points list of (n, 3) RAS arrays in seed order, stats). With `select`
     (indices into the seed list), only those seeds are tracked; stats["seed_index"] then says which
     seed each returned fiber came from, stats["seed_voxel"] its mask voxel (k, j, i) - the key to
@@ -679,7 +704,14 @@ def track(D: dict, offset_kji=SRAND0_OFFSET, seeding_threshold=0.1, stopping_fa=
     state, direction, stop, info)`, when given (a diagnostic, off by default), sees every step's outputs: the new
     positions, states and directions, the stop decision and the step's info (both swaps, fa, mean signal, in-mask),
     `index` being the half-fibers'. It reads and never writes, so the fibers are the same with it or without it; like
-    capture it tracks in blocks (one process, no stream), which on the GPU kernels gives the same fibers too."""
+    capture it tracks in blocks (one process, no stream), which on the GPU kernels gives the same fibers too.
+    `tie_angle` (degrees, opt-in; 0, the binary's rule, by default): the first tensor swap (sw) does not fire when the
+    two directions are within it as axes; the second (sw2) is the binary's unless `tie_sw2` (advance), on every
+    backend."""
+    if tie_angle < 0 or tie_angle >= 90:
+        raise ValueError(f"tie_angle {tie_angle}: degrees in [0, 90)")
+    if tie_sw2 and not tie_angle:
+        raise ValueError("tie_sw2 extends tie_angle's tie to sw2: it needs tie_angle > 0")
     step_fn = advance
     if backend == "metal":
         from . import ukf_metal as ukf_metal
@@ -712,7 +744,7 @@ def track(D: dict, offset_kji=SRAND0_OFFSET, seeding_threshold=0.1, stopping_fa=
     max_steps = math.ceil(max_half_length / step_length)
     spr = int(record_length / step_length)
     params = dict(Q=Q, Rs=Rs, max_steps=max_steps, spr=spr, step_length=step_length, stopping_fa=stopping_fa,
-                  stopping_threshold=stopping_threshold)
+                  stopping_threshold=stopping_threshold, tie_angle=float(tie_angle), tie_sw2=bool(tie_sw2))
     blocks = [(s0, x0[s0:s0 + batch], st0[s0:s0 + batch], dir0[s0:s0 + batch]) for s0 in range(0, len(x0), batch)]
     compile_s = 0.0
     if compile and blocks:

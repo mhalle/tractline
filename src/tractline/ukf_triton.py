@@ -36,8 +36,9 @@ def _lo(name: str, i: int, j: int) -> str:
     return f"{name}{max(i, j)}_{min(i, j)}"
 
 
-def source(math: str = "precise") -> str:
-    """The kernel's Python source."""
+def source(math: str = "precise", tie: bool = False, tie_sw2: bool = False) -> str:
+    """The kernel's Python source; tie: with ukf.advance's opt-in tie-break (one more argument, cos_tie), and tie_sw2
+    its extension to sw2; else today's source, unchanged."""
     if math == "precise":
         DIV = lambda a, b: f"tl.div_rn({a}, {b})"
         SQRT = lambda a: f"tl.sqrt_rn({a})"
@@ -114,7 +115,8 @@ def source(math: str = "precise") -> str:
     out.append("import triton\nimport triton.language as tl\nfrom triton.language.extra import libdevice\n\n")
     out.append("@triton.jit")
     out.append("def ukf_step(A, MASK, G, BV, X, ST, P, OLD, DIR, FLAGS, FAO, MSIG, B, N, nk, nj, ni, step, max_steps,")
-    out.append("             vox0, vox1, vox2, sigma, step_length, stop_fa, stop_thr, rr, Qm, Ql, c, W0, Wi,")
+    out.append("             vox0, vox1, vox2, sigma, step_length, stop_fa, stop_thr, rr, Qm, Ql, c, W0, Wi,"
+               + (" cos_tie," if tie else ""))
     out.append("             F: tl.constexpr, NPAD: tl.constexpr):")
     e("f = tl.program_id(0) * F + tl.arange(0, F)")
     e("fm = f < B")
@@ -245,6 +247,9 @@ def source(math: str = "precise") -> str:
     e(f"fat1 = {l2fa('L1a', 'L1b')}; fat2 = {l2fa('L2a', 'L2b')}")
     e("angle = libdevice.acos(m1x * m2x + m1y * m2y + m1z * m2z) * 57.29577951308232")
     e("sw = (m1x * o0 + m1y * o1 + m1z * o2) < (m2x * o0 + m2y * o1 + m2z * o2)")
+    if tie:                                                           # ukf.advance's opt-in tie_angle: at a near tie sw keeps the order
+        e("_tie = tl.abs(m1x * m2x + m1y * m2y + m1z * m2z) > cos_tie")
+        e("sw = sw & ~_tie")
 
     def swap(cond):
         for a in "xyz":
@@ -262,6 +267,8 @@ def source(math: str = "precise") -> str:
     swap("sw")
     e("_t = fat1; fat1 = tl.where(sw, fat2, fat1); fat2 = tl.where(sw, _t, fat2)")
     e("sw2 = (angle <= 20.0) & (tl.minimum(fat1, fat2) <= 0.2) & ~(fat1 > 0.2)")
+    if tie and tie_sw2:                                               # tie_sw2: and so does sw2
+        e("sw2 = sw2 & ~_tie")
     swap("sw2")
     e(f"fa = tl.where(L1a < L1b, 0.0, {l2fa('L1a', 'L1b')})")
     e(f"x0 = x0 + {DIV('m1z', 'vox0')} * step_length")
@@ -297,10 +304,10 @@ def source(math: str = "precise") -> str:
 _MODS: dict = {}
 
 
-def kernel(math: str = "precise"):
+def kernel(math: str = "precise", tie: bool = False, tie_sw2: bool = False):
     """The generated kernel, imported from a file (Triton reads a kernel's source from its module)."""
-    if math not in _MODS:
-        src = source(math)
+    if (math, tie, tie_sw2) not in _MODS:
+        src = source(math, tie, tie_sw2)
         h = hashlib.sha256(src.encode()).hexdigest()[:16]
         d = os.path.join(tempfile.gettempdir(), "ukf_triton")
         os.makedirs(d, exist_ok=True)
@@ -312,8 +319,8 @@ def kernel(math: str = "precise"):
         spec = importlib.util.spec_from_file_location(f"ukf_step_{math}_{h}", path)
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
-        _MODS[math] = mod.ukf_step
-    return _MODS[math]
+        _MODS[math, tie, tie_sw2] = mod.ukf_step
+    return _MODS[math, tie, tie_sw2]
 
 
 #: launch defaults (tuned on an A10G by modal_ukf_triton.py)
@@ -322,9 +329,9 @@ F_DEFAULT, WARPS_DEFAULT = 4, 4
 
 @torch.no_grad()
 def advance(D: dict, xa, sa, Pa, oa, Q, Rs, step, max_steps, step_length=0.3, stopping_fa=0.08,
-            stopping_threshold=0.06, F=None, num_warps=None, math="precise"):
+            stopping_threshold=0.06, tie_angle=0.0, tie_sw2=False, F=None, num_warps=None, math="precise"):
     """ukf.advance's contract on CUDA, float32: returns (x, state, P, direction, stop, info).
-    D is ukf.at_dtype(D, torch.float32, 'cuda')."""
+    D is ukf.at_dtype(D, torch.float32, 'cuda'). tie_angle > 0: the kernel generated with the tie-break."""
     F = F or F_DEFAULT
     num_warps = num_warps or WARPS_DEFAULT
     dev = xa.device
@@ -345,9 +352,10 @@ def advance(D: dict, xa, sa, Pa, oa, Q, Rs, step, max_steps, step_length=0.3, st
     g = D["g"][:N].contiguous(); b = D["b"][:N].contiguous()
     NPAD = 1 << max(0, (N - 1).bit_length())
     grid = ((B + F - 1) // F,)
-    kernel(math)[grid](D["A"], D["mask"], g, b, x, s, P, o, d, flags, fa, ms, B, N, nk, nj, ni, int(step), int(max_steps),
-                       float(vox[0]), float(vox[1]), float(vox[2]), float(vox.min()), float(step_length),
-                       float(stopping_fa), float(stopping_threshold), rr, float(q[0]), float(q[3]), c, W0, Wi,
+    tie = (float(np.float32(np.cos(np.radians(tie_angle)))),) if tie_angle else ()
+    kernel(math, bool(tie_angle), bool(tie_angle and tie_sw2))[grid](D["A"], D["mask"], g, b, x, s, P, o, d, flags, fa, ms, B, N, nk, nj, ni, int(step),
+                       int(max_steps), float(vox[0]), float(vox[1]), float(vox[2]), float(vox.min()), float(step_length),
+                       float(stopping_fa), float(stopping_threshold), rr, float(q[0]), float(q[3]), c, W0, Wi, *tie,
                        F=F, NPAD=NPAD, num_warps=num_warps, enable_fp_fusion=False)
     stop = (flags & 1).bool()
     info = {"swap": (flags & 2).bool(), "swap2": (flags & 4).bool(), "fa": fa, "mean_signal": ms, "inside": (flags & 8).bool()}
