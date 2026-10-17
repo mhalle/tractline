@@ -3853,3 +3853,177 @@ core holds.
 presence only at one vote, so "Core + widest" was the top of the envelope scale under another name. The Envelope menu
 now runs to "stated 100% (widest)", with its held-out figure from the store (the widest held 96 % of another scan's
 tract from one scan's 17 runs, 99 % from three scans' 51). The separate shell option is gone.
+
+## 2026-10-17 Where the ensemble's spread comes from: the DWI's noise through the tracker; the field adds little, and the labeler's grouping sets a floor near 3 %
+
+`ensemble_stages.py` → `ensemble_stages.json`; records in `DATA/ensemble/cIIIs04/retest/cIIIs04-2.1/stages/`. cIIIs04
+scan A (16 forward b0s, one reversed). Each full run resamples every stage at once (smooth signs, FWHM 4, labeler
+draw 0), so its spread had not been split by stage before. Four more arms were run, each A plus 16 runs.
+- **frozen and fieldonly share noise with the full arm.** Their run r draws its noise with full run r's seed: the
+  DWI's noise in frozen, the b0s' in fieldonly. Rebuilding full run 1 reproduced the stored record bit for bit (same
+  seeds, clusters and paths), so the replicates are the full arm's.
+- **draw and epsilon share none.** The draw arm has no data noise, and epsilon is seeded independently.
+
+| arm | what varies | renamed vs A: mean (SD over runs) | median MDF |
+|---|---|---|---|
+| full | the DWI's noise, and the field re-estimated from noisy b0s | 31.6 % (0.21) | 10.5 mm |
+| frozen | the DWI's noise; A's own field applied to every run | 31.1 % (0.15) | 10.2 mm |
+| fieldonly | the field estimated from noisy b0s, applied to A's DWI as acquired | 16.3 % (0.73) | 1.9 mm |
+| draw | the labeler's draw (1-16) on A's own streamlines | 3.0 % (0.04) | 0 |
+| epsilon | A's corrected DWI × (1 + 10⁻⁶ u), u uniform in ±1 per value | 4.0 % (0.05) | 0.003 mm |
+
+| arm | presence spread, share of full's | renames on paths within 0.1 mm of A's | renames on paths > 5 mm away |
+|---|---|---|---|
+| full | 1 | 0 % | 89 % |
+| frozen | 0.99 | 0 % | 89 % |
+| fieldonly | 0.65 | 1 % | 74 % |
+| draw | 0.12 | 100 % | 0 % |
+| epsilon | 0.19 | 67 % | 21 % |
+
+- **Presence spread** is U = Σ over the 42 named tracts of p (1 − p) per voxel, summed over the brain. Here p is the
+  share of the arm's 17 runs with the tract present (density presence, A's grid).
+- **Run against run,** the renamed shares are 35.5, 35.2, 17.5, 2.9 and 4.0 %.
+- **Matching.** Seeds are matched by seed voxel. A run leaves some of A's seeds unmatched: 4,961 in full, 4,807 in
+  frozen, 1,760 in fieldonly, 82 in epsilon and none in draw.
+
+**The labeler's grouping is in every arm except draw.** RapidParc shuffles streamlines into context groups by their
+index (`labelers/rapidparc.py`, `batches`). A run whose seed set differs from A's even by a few streamlines therefore
+labels every streamline in new company, about a draw's worth of change.
+- In epsilon, streamlines whose path is identical to A's (33 % of them) are renamed at 3.4 %. Those moved by more than
+  0 and at most 0.1 mm (53 %) are renamed at 2.9 %. Draw alone renames 3.0 %.
+- So the draw-0 runs of full, frozen and fieldonly are not free of the labeler's variation either. It is inside each
+  arm's figure, up to about a draw's worth. In full and frozen no path stays within 0.1 mm of A's, so it cannot be
+  separated there from the renames that path changes cause.
+
+**The field's own noise is small.** Across the fieldonly runs, its SD is 1.0 Hz at the median, 2.1 at the 90th
+percentile and 4.6 at the 99th. That is about 0.1, 0.2 and 0.5 mm of displacement at the nominal 0.05 s readout, since
+the sidecars state none. Its 99th-percentile |field| ranges over 154–162 Hz, against A's 158.
+
+**Focus tracts.**
+
+| tract | measure | full | frozen | fieldonly | draw | epsilon |
+|---|---|---|---|---|---|---|
+| CST | uncertain band | 80 mL | 81 mL | 53 mL | 8 mL | 13 mL |
+| CST | Dice with A | 0.80 | 0.80 | 0.85 | 0.98 | 0.96 |
+| AF | uncertain band | 74 mL | 73 mL | 42 mL | 4 mL | 10 mL |
+| UF | uncertain band | 63 mL | 62 mL | 38 mL | 8 mL | 11 mL |
+
+The uncertain band holds the voxels some but not all of the 17 runs give the tract.
+
+**Where presence flips.** For each (tract, voxel) where some but not all of an arm's runs have the tract, the share
+where A's density is within 0.5–2 times the presence threshold (0.3 per mm²):
+
+| | full | frozen | fieldonly | draw | epsilon |
+|---|---|---|---|---|---|
+| flips | 55 % | 56 % | 73 % | 97 % | 96 % |
+| every (tract, voxel) any run has | 44 % | 44 % | 50 % | 47 % | 50 % |
+
+The draw and epsilon arms' flips sit at the threshold: A's density there has quartiles 0.83, 1.00 and 1.15 times the
+threshold for draw. For presence, these arms thin tracts at the threshold rather than move them, though 21 % of
+  epsilon's renames are on paths that diverge by more than 5 mm. Full's flips spread widely: quartiles 0.37, 0.74
+and 1.26.
+
+**Against the real rescans** (within, session 3, session 5; tracked on A's grid). Each arm's 17 runs are scored over
+the 43,170 seeds that every run of every arm labels:
+
+| arm | stated: the mode's mean share | a rescan gives the mode | AUROC, the rescan's change from A's tract |
+|---|---|---|---|
+| full | 0.77 | 0.70 / 0.68 / 0.66 | 0.80 / 0.78 / 0.77 |
+| frozen | 0.77 | 0.70 / 0.68 / 0.66 | 0.80 / 0.78 / 0.77 |
+| fieldonly | 0.89 | 0.67 / 0.64 / 0.62 | 0.70 / 0.68 / 0.67 |
+| draw | 0.98 | 0.66 / 0.63 / 0.61 | 0.54 / 0.54 / 0.54 |
+| epsilon | 0.98 | 0.66 / 0.63 / 0.61 | 0.55 / 0.55 / 0.55 |
+
+Scored instead over each arm's own seeds (44,717 for full to 64,378 for draw), every figure moves by about 0.01 at most.
+
+**Which seeds are renamed: paired runs against an unpaired baseline.** Of the seeds full run r renames, the share a
+second run also renames:
+
+| second run | renames too | to the same tract | renames seeds full run r keeps |
+|---|---|---|---|
+| full run r − 1 (unpaired baseline) | 53 % | 34 % | 21 % |
+| frozen run r (the same DWI noise) | 78 % | 67 % | 10 % |
+| frozen run r − 1 | 53 % | 34 % | 21 % |
+| fieldonly run r (the same b0 noise) | 31 % | 21 % | 9 % |
+| fieldonly run r − 1 | 31 % | 20 % | 10 % |
+
+Draw and epsilon repeat 5–7 % of full run r's renames and rename 2 % of the seeds it keeps, with or without pairing.
+
+**By region.** The regions are:
+- FastSurfer's classes carried to A's grid;
+- three bands of A's |field| (the brain's weakest half, the 50th–90th percentile, the strongest tenth, ≥ 37 Hz);
+- 8 mm spheres at the eight landmark sites.
+
+The arms' shares of full's presence spread:
+
+| | tissue classes and field bands | site spheres |
+|---|---|---|
+| frozen / full | 0.98–1.00 | 0.90–1.16 |
+| fieldonly / full | 0.62–0.69 | 0.60–0.80 |
+| draw / full | 0.09–0.15 | 0.11–0.24 |
+| epsilon / full | 0.165–0.21 | 0.17–0.30 |
+
+- **Field strength.** Fieldonly's share does not grow with the field's strength: 0.64, 0.65 and 0.65 across the
+  three bands.
+- **The arm with the largest U.** Where the full arm's U is at least 0.5:
+  - frozen's U is the largest in 83–94 % of voxels;
+  - fieldonly's in 5–17 %;
+  - draw's or epsilon's in at most 1.3 %;
+  - ties go to frozen; they are under 1.3 % of these voxels in the tissue classes and bands, and up to 6 % at one site.
+- **Brainstem and cerebellum.** Fieldonly comes closest to the full arm here: 0.69 and 0.67 of its spread, and the
+  largest U in 17 % and 16 % of their high-spread voxels, against 9–12 % in the other tissue classes.
+- **No high-spread voxels.** The genu and splenium spheres have none.
+
+Reading it:
+- **The DWI's noise reaching the tracker is the spread; the field adds little on top.** Holding the field at A's
+  estimate lowers label change by 0.5 points (31.6 against 31.1 %, per-run SD 0.21 and 0.15) and presence spread by under 2 %.
+  The focus tracts' bands, the calibration and the rescan AUROC do not move. With 16 forward b0s the field estimate
+  varies by about 0.1 mm.
+- **The stages' effects do not add.** The field's noise alone renames 16 % and gives 0.65 of the presence spread. On
+  top of the DWI's noise it adds about 0.5 points. Frozen's 0.99 plus fieldonly's 0.65 is far above 1. The renames
+  come from a shared pool of seeds whose paths are fragile, and any of these perturbations draws on it. A split by
+  stage would have to model that interaction; shares that add up to 1 do not describe it.
+- **The field's noise moves paths, not just labels.** 74 % of fieldonly's renames are on paths more than 5 mm from
+  A's, and 34 % of its streamlines move that far. A displacement of about 0.1 mm at the median is enough.
+- **Which seeds a run renames depends on its noise, but not entirely.**
+  - With the same DWI noise, frozen run r repeats 78 % of full run r's renames (67 % to the same tract), against 53 %
+    (34 %) for an unrelated run. The rest differ because the field's wobble and the labeler's grouping differ between
+    the two runs.
+  - Fieldonly run r is no closer to full run r than to any other full run (31 % either way). The b0s' noise leaves
+    almost no trace in which seeds the full run renames (31.4 against 30.5 %; 21.3 against 20.3 % to the same tract).
+  - What ranks the rescans (AUROC 0.77–0.80) is a seed's propensity to change across many runs, not the flip in one
+    run.
+- **Cheap perturbations are not a substitute for the bootstrap.** Ensembles of rounding-level nudges, labeler draws
+  or field-only noise state far too much confidence: 0.89–0.98 against 0.61–0.67 observed. They also rank a rescan's
+  changes poorly: AUROC 0.54–0.70 against 0.77–0.80. Draw and epsilon mostly relabel streamlines and thin tracts at the
+  presence threshold. Fieldonly moves too few paths. The bootstrap needs the scan's actual noise level.
+- **No region belongs to the field.** Its share is flat across field strength. It comes closest to the full arm's in
+  the brainstem and cerebellum, where the CST's lower end is unstable (NOTES 2026-10-13), but even there frozen
+  dominates. On this protocol a per-region map of which stage the uncertainty comes from would show one source, the
+  DWI's noise reaching the tracker, nearly everywhere.
+  - This may differ where the field rests on few b0s. On cIs1 (3 forward b0s) the replicates' fields stayed at 105–114
+    Hz while its rescans gave 95 and 159 Hz (NOTES 2026-10-08). That was not tested here.
+- **A floor under reproducibility.** On the same machine runs reproduce bit for bit. A rounding-level change to the
+  input renames 4.0 %, which breaks down as:
+  - about two thirds through the labeler's grouping, on paths within 0.1 mm of A's;
+  - about a fifth on paths that diverge by more than 5 mm (3.4 % of streamlines).
+
+  The epsilon perturbation also moves the tracking mask (82 of A's seeds lost per run), which can end paths
+  differently; that route was not separated from divergence along the way.
+  - Another platform's rounding is a different perturbation and was not measured. Across five platforms, aggregates
+    hold: PAT16's Other share spans 0.3 points (NOTES 2026-10-02, "RapidParc is the default").
+  - The grouping part of this floor is an implementation choice and could be reduced, for example by assigning each
+    seed to its context group by a hash of its key. It cannot be removed entirely: RapidParc labels a streamline in
+    the context of its 2,000 group-mates, and group-mates whose paths changed still change that context.
+  - Kiar et al. 2020/2021 studied a related instability with Monte Carlo Arithmetic, which perturbs arithmetic
+    operations rather than the input.
+
+Caveats:
+- one subject, one protocol (Philips, 16 forward b0s, one reversed);
+- the readout time is the nominal 0.05 s, so the field's millimeters are approximate;
+- the fields were stored as float16 (0.125 Hz steps at 158 Hz), small against a 1 Hz SD;
+- every correction on this protocol is above the residual warning (A 0.514; fieldonly runs 0.524–0.536, against
+  RESIDUAL_WARN 0.5);
+- epsilon's 10⁻⁶ is about 4–8 float32 units in the last place on average (up to about 17), applied to every value at
+  once;
+- motion and between-session terms are absent, as in every single-scan ensemble.

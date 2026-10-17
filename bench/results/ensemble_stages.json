@@ -1,0 +1,836 @@
+{
+ "pair": "cIIIs04-2.1",
+ "flip": "smooth",
+ "fwhm": 4.0,
+ "u_min": 0.5,
+ "site radius mm": 8.0,
+ "eps": 1e-06,
+ "arms": {
+  "full": {
+   "runs": 17,
+   "fibers (mean)": 65001,
+   "A's seeds unmatched (mean per run)": 4960.5,
+   "A vs run: tract changed (mean, SD, min, max over runs)": [
+    0.3163,
+    0.0021,
+    0.3128,
+    0.3203
+   ],
+   "A vs run: median MDF mm (mean over runs)": 10.4604,
+   "A vs run: renames by path distance": {
+    "identical (MDF 0)": {
+     "share of streamlines": 0.0,
+     "renamed": 0.0,
+     "share of all renames": 0.0
+    },
+    "MDF (0, 0.1] mm": {
+     "share of streamlines": 0.0,
+     "renamed": 0.0,
+     "share of all renames": 0.0
+    },
+    "MDF (0.1, 5] mm": {
+     "share of streamlines": 0.3514,
+     "renamed": 0.0997,
+     "share of all renames": 0.1108
+    },
+    "MDF > 5 mm": {
+     "share of streamlines": 0.6486,
+     "renamed": 0.4336,
+     "share of all renames": 0.8892
+    }
+   },
+   "run vs run (disjoint pairs): tract changed": 0.3551,
+   "run vs run: median MDF mm": 13.7825,
+   "A vs run: voxel winner agrees": 0.7283,
+   "presence spread U, whole brain (sum)": 38748.4,
+   "presence flips (tract, voxel) with A's density in [0.5, 2) x RHO": 0.5527,
+   "every (tract, voxel) any run has, the same": 0.4362,
+   "A's density / RHO at flips: quartiles": [
+    0.372,
+    0.737,
+    1.255
+   ]
+  },
+  "frozen": {
+   "runs": 17,
+   "fibers (mean)": 64959,
+   "A's seeds unmatched (mean per run)": 4807.4,
+   "A vs run: tract changed (mean, SD, min, max over runs)": [
+    0.3112,
+    0.0015,
+    0.3078,
+    0.3151
+   ],
+   "A vs run: median MDF mm (mean over runs)": 10.1617,
+   "A vs run: renames by path distance": {
+    "identical (MDF 0)": {
+     "share of streamlines": 0.0,
+     "renamed": 0.0,
+     "share of all renames": 0.0
+    },
+    "MDF (0, 0.1] mm": {
+     "share of streamlines": 0.0,
+     "renamed": 0.0,
+     "share of all renames": 0.0
+    },
+    "MDF (0.1, 5] mm": {
+     "share of streamlines": 0.3591,
+     "renamed": 0.0992,
+     "share of all renames": 0.1145
+    },
+    "MDF > 5 mm": {
+     "share of streamlines": 0.6409,
+     "renamed": 0.43,
+     "share of all renames": 0.8855
+    }
+   },
+   "run vs run (disjoint pairs): tract changed": 0.3522,
+   "run vs run: median MDF mm": 13.5175,
+   "A vs run: voxel winner agrees": 0.7302,
+   "presence spread U, whole brain (sum)": 38509.5,
+   "presence flips (tract, voxel) with A's density in [0.5, 2) x RHO": 0.5559,
+   "every (tract, voxel) any run has, the same": 0.4377,
+   "A's density / RHO at flips: quartiles": [
+    0.374,
+    0.741,
+    1.257
+   ]
+  },
+  "fieldonly": {
+   "runs": 17,
+   "fibers (mean)": 64404,
+   "A's seeds unmatched (mean per run)": 1758.8,
+   "A vs run: tract changed (mean, SD, min, max over runs)": [
+    0.1633,
+    0.0073,
+    0.1544,
+    0.1827
+   ],
+   "A vs run: median MDF mm (mean over runs)": 1.8909,
+   "A vs run: renames by path distance": {
+    "identical (MDF 0)": {
+     "share of streamlines": 0.0,
+     "renamed": 0.0,
+     "share of all renames": 0.0
+    },
+    "MDF (0, 0.1] mm": {
+     "share of streamlines": 0.0577,
+     "renamed": 0.0362,
+     "share of all renames": 0.0128
+    },
+    "MDF (0.1, 5] mm": {
+     "share of streamlines": 0.5979,
+     "renamed": 0.0676,
+     "share of all renames": 0.2476
+    },
+    "MDF > 5 mm": {
+     "share of streamlines": 0.3443,
+     "renamed": 0.3508,
+     "share of all renames": 0.7396
+    }
+   },
+   "run vs run (disjoint pairs): tract changed": 0.1746,
+   "run vs run: median MDF mm": 2.21,
+   "A vs run: voxel winner agrees": 0.7825,
+   "presence spread U, whole brain (sum)": 24949.7,
+   "presence flips (tract, voxel) with A's density in [0.5, 2) x RHO": 0.7298,
+   "every (tract, voxel) any run has, the same": 0.5,
+   "A's density / RHO at flips: quartiles": [
+    0.516,
+    0.84,
+    1.199
+   ]
+  },
+  "draw": {
+   "runs": 17,
+   "fibers (mean)": 64378,
+   "A's seeds unmatched (mean per run)": 0.0,
+   "A vs run: tract changed (mean, SD, min, max over runs)": [
+    0.0298,
+    0.0004,
+    0.0292,
+    0.0306
+   ],
+   "A vs run: median MDF mm (mean over runs)": 0.0,
+   "A vs run: renames by path distance": {
+    "identical (MDF 0)": {
+     "share of streamlines": 1.0,
+     "renamed": 0.0298,
+     "share of all renames": 1.0
+    },
+    "MDF (0, 0.1] mm": {
+     "share of streamlines": 0.0,
+     "renamed": 0.0,
+     "share of all renames": 0.0
+    },
+    "MDF (0.1, 5] mm": {
+     "share of streamlines": 0.0,
+     "renamed": 0.0,
+     "share of all renames": 0.0
+    },
+    "MDF > 5 mm": {
+     "share of streamlines": 0.0,
+     "renamed": 0.0,
+     "share of all renames": 0.0
+    }
+   },
+   "run vs run (disjoint pairs): tract changed": 0.0293,
+   "run vs run: median MDF mm": 0.0,
+   "A vs run: voxel winner agrees": 0.9755,
+   "presence spread U, whole brain (sum)": 4619.6,
+   "presence flips (tract, voxel) with A's density in [0.5, 2) x RHO": 0.9702,
+   "every (tract, voxel) any run has, the same": 0.4733,
+   "A's density / RHO at flips: quartiles": [
+    0.828,
+    0.999,
+    1.15
+   ]
+  },
+  "epsilon": {
+   "runs": 17,
+   "fibers (mean)": 64379,
+   "A's seeds unmatched (mean per run)": 82.3,
+   "A vs run: tract changed (mean, SD, min, max over runs)": [
+    0.0397,
+    0.0005,
+    0.0388,
+    0.0407
+   ],
+   "A vs run: median MDF mm (mean over runs)": 0.0033,
+   "A vs run: renames by path distance": {
+    "identical (MDF 0)": {
+     "share of streamlines": 0.3315,
+     "renamed": 0.0337,
+     "share of all renames": 0.281
+    },
+    "MDF (0, 0.1] mm": {
+     "share of streamlines": 0.5306,
+     "renamed": 0.0289,
+     "share of all renames": 0.3858
+    },
+    "MDF (0.1, 5] mm": {
+     "share of streamlines": 0.1039,
+     "renamed": 0.046,
+     "share of all renames": 0.1204
+    },
+    "MDF > 5 mm": {
+     "share of streamlines": 0.034,
+     "renamed": 0.2483,
+     "share of all renames": 0.2128
+    }
+   },
+   "run vs run (disjoint pairs): tract changed": 0.0396,
+   "run vs run: median MDF mm": 0.0,
+   "A vs run: voxel winner agrees": 0.9282,
+   "presence spread U, whole brain (sum)": 7416.0,
+   "presence flips (tract, voxel) with A's density in [0.5, 2) x RHO": 0.9554,
+   "every (tract, voxel) any run has, the same": 0.4985,
+   "A's density / RHO at flips: quartiles": [
+    0.787,
+    0.972,
+    1.133
+   ]
+  }
+ },
+ "against rescans, each arm's own seeds": {
+  "full": {
+   "seeds": 44717,
+   "stated: mode's mean share": 0.7638,
+   "within": {
+    "gives the mode": 0.7027,
+    "AUROC, change from A's tract": 0.8007
+   },
+   "session3": {
+    "gives the mode": 0.674,
+    "AUROC, change from A's tract": 0.7786
+   },
+   "session5": {
+    "gives the mode": 0.6614,
+    "AUROC, change from A's tract": 0.7732
+   }
+  },
+  "frozen": {
+   "seeds": 45199,
+   "stated: mode's mean share": 0.7663,
+   "within": {
+    "gives the mode": 0.7006,
+    "AUROC, change from A's tract": 0.7968
+   },
+   "session3": {
+    "gives the mode": 0.6739,
+    "AUROC, change from A's tract": 0.7773
+   },
+   "session5": {
+    "gives the mode": 0.6586,
+    "AUROC, change from A's tract": 0.7739
+   }
+  },
+  "fieldonly": {
+   "seeds": 57906,
+   "stated: mode's mean share": 0.8851,
+   "within": {
+    "gives the mode": 0.6652,
+    "AUROC, change from A's tract": 0.6993
+   },
+   "session3": {
+    "gives the mode": 0.6359,
+    "AUROC, change from A's tract": 0.6824
+   },
+   "session5": {
+    "gives the mode": 0.6199,
+    "AUROC, change from A's tract": 0.6723
+   }
+  },
+  "draw": {
+   "seeds": 64378,
+   "stated: mode's mean share": 0.9801,
+   "within": {
+    "gives the mode": 0.647,
+    "AUROC, change from A's tract": 0.5413
+   },
+   "session3": {
+    "gives the mode": 0.6189,
+    "AUROC, change from A's tract": 0.5384
+   },
+   "session5": {
+    "gives the mode": 0.604,
+    "AUROC, change from A's tract": 0.5391
+   }
+  },
+  "epsilon": {
+   "seeds": 64072,
+   "stated: mode's mean share": 0.9734,
+   "within": {
+    "gives the mode": 0.6474,
+    "AUROC, change from A's tract": 0.5568
+   },
+   "session3": {
+    "gives the mode": 0.6197,
+    "AUROC, change from A's tract": 0.552
+   },
+   "session5": {
+    "gives the mode": 0.6046,
+    "AUROC, change from A's tract": 0.5506
+   }
+  }
+ },
+ "focus tracts": {
+  "full": {
+   "CST": {
+    "Dice with A (mean)": 0.799,
+    "uncertain band, mL": 80.0,
+    "any run, mL": 106.2
+   },
+   "AF": {
+    "Dice with A (mean)": 0.822,
+    "uncertain band, mL": 74.0,
+    "any run, mL": 104.8
+   },
+   "UF": {
+    "Dice with A (mean)": 0.798,
+    "uncertain band, mL": 63.3,
+    "any run, mL": 83.0
+   }
+  },
+  "frozen": {
+   "CST": {
+    "Dice with A (mean)": 0.801,
+    "uncertain band, mL": 80.7,
+    "any run, mL": 105.9
+   },
+   "AF": {
+    "Dice with A (mean)": 0.824,
+    "uncertain band, mL": 73.3,
+    "any run, mL": 104.3
+   },
+   "UF": {
+    "Dice with A (mean)": 0.801,
+    "uncertain band, mL": 62.2,
+    "any run, mL": 82.0
+   }
+  },
+  "fieldonly": {
+   "CST": {
+    "Dice with A (mean)": 0.85,
+    "uncertain band, mL": 53.4,
+    "any run, mL": 86.1
+   },
+   "AF": {
+    "Dice with A (mean)": 0.889,
+    "uncertain band, mL": 42.4,
+    "any run, mL": 80.4
+   },
+   "UF": {
+    "Dice with A (mean)": 0.866,
+    "uncertain band, mL": 37.9,
+    "any run, mL": 65.1
+   }
+  },
+  "draw": {
+   "CST": {
+    "Dice with A (mean)": 0.976,
+    "uncertain band, mL": 8.3,
+    "any run, mL": 55.4
+   },
+   "AF": {
+    "Dice with A (mean)": 0.988,
+    "uncertain band, mL": 4.1,
+    "any run, mL": 55.4
+   },
+   "UF": {
+    "Dice with A (mean)": 0.974,
+    "uncertain band, mL": 7.5,
+    "any run, mL": 45.4
+   }
+  },
+  "epsilon": {
+   "CST": {
+    "Dice with A (mean)": 0.962,
+    "uncertain band, mL": 13.1,
+    "any run, mL": 59.1
+   },
+   "AF": {
+    "Dice with A (mean)": 0.971,
+    "uncertain band, mL": 10.3,
+    "any run, mL": 59.3
+   },
+   "UF": {
+    "Dice with A (mean)": 0.962,
+    "uncertain band, mL": 11.2,
+    "any run, mL": 47.5
+   }
+  }
+ },
+ "against rescans, common seeds": {
+  "full": {
+   "seeds": 43170,
+   "stated: mode's mean share": 0.7653,
+   "within": {
+    "gives the mode": 0.7036,
+    "AUROC, change from A's tract": 0.8
+   },
+   "session3": {
+    "gives the mode": 0.6751,
+    "AUROC, change from A's tract": 0.7777
+   },
+   "session5": {
+    "gives the mode": 0.6625,
+    "AUROC, change from A's tract": 0.7729
+   }
+  },
+  "frozen": {
+   "seeds": 43170,
+   "stated: mode's mean share": 0.7678,
+   "within": {
+    "gives the mode": 0.7013,
+    "AUROC, change from A's tract": 0.7966
+   },
+   "session3": {
+    "gives the mode": 0.6755,
+    "AUROC, change from A's tract": 0.7775
+   },
+   "session5": {
+    "gives the mode": 0.6601,
+    "AUROC, change from A's tract": 0.7737
+   }
+  },
+  "fieldonly": {
+   "seeds": 43170,
+   "stated: mode's mean share": 0.8909,
+   "within": {
+    "gives the mode": 0.6695,
+    "AUROC, change from A's tract": 0.6952
+   },
+   "session3": {
+    "gives the mode": 0.6413,
+    "AUROC, change from A's tract": 0.6794
+   },
+   "session5": {
+    "gives the mode": 0.6245,
+    "AUROC, change from A's tract": 0.6678
+   }
+  },
+  "draw": {
+   "seeds": 43170,
+   "stated: mode's mean share": 0.9817,
+   "within": {
+    "gives the mode": 0.656,
+    "AUROC, change from A's tract": 0.5425
+   },
+   "session3": {
+    "gives the mode": 0.6295,
+    "AUROC, change from A's tract": 0.5387
+   },
+   "session5": {
+    "gives the mode": 0.6137,
+    "AUROC, change from A's tract": 0.5392
+   }
+  },
+  "epsilon": {
+   "seeds": 43170,
+   "stated: mode's mean share": 0.9779,
+   "within": {
+    "gives the mode": 0.656,
+    "AUROC, change from A's tract": 0.5522
+   },
+   "session3": {
+    "gives the mode": 0.6301,
+    "AUROC, change from A's tract": 0.5468
+   },
+   "session5": {
+    "gives the mode": 0.6134,
+    "AUROC, change from A's tract": 0.5454
+   }
+  }
+ },
+ "renames of full run r found in another run": {
+  "full, run r - 1 (baseline)": {
+   "renames too": 0.5322,
+   "to the same tract": 0.343,
+   "renames seeds full's run keeps": 0.2147
+  },
+  "frozen, run r": {
+   "renames too": 0.7761,
+   "to the same tract": 0.672,
+   "renames seeds full's run keeps": 0.0958
+  },
+  "frozen, run r - 1": {
+   "renames too": 0.5251,
+   "to the same tract": 0.3377,
+   "renames seeds full's run keeps": 0.2106
+  },
+  "fieldonly, run r": {
+   "renames too": 0.3138,
+   "to the same tract": 0.2125,
+   "renames seeds full's run keeps": 0.0915
+  },
+  "fieldonly, run r - 1": {
+   "renames too": 0.3052,
+   "to the same tract": 0.2029,
+   "renames seeds full's run keeps": 0.0955
+  },
+  "draw, run r": {
+   "renames too": 0.0551,
+   "to the same tract": 0.0385,
+   "renames seeds full's run keeps": 0.0171
+  },
+  "draw, run r - 1": {
+   "renames too": 0.0548,
+   "to the same tract": 0.0381,
+   "renames seeds full's run keeps": 0.0172
+  },
+  "epsilon, run r": {
+   "renames too": 0.0724,
+   "to the same tract": 0.0484,
+   "renames seeds full's run keeps": 0.022
+  },
+  "epsilon, run r - 1": {
+   "renames too": 0.0718,
+   "to the same tract": 0.0484,
+   "renames seeds full's run keeps": 0.0224
+  }
+ },
+ "presence spread by region": {
+  "cerebral white matter": {
+   "voxels": 51997,
+   "full U (sum)": 23327.9,
+   "frozen / full": 0.997,
+   "fieldonly / full": 0.648,
+   "draw / full": 0.128,
+   "epsilon / full": 0.2,
+   "voxels with full U >= 0.5": 20421,
+   "largest there: frozen / fieldonly / draw / epsilon": [
+    0.901,
+    0.096,
+    0.001,
+    0.002
+   ],
+   "ties for the largest": 0.0045
+  },
+  "cortex": {
+   "voxels": 51077,
+   "full U (sum)": 8327.9,
+   "frozen / full": 0.99,
+   "fieldonly / full": 0.633,
+   "draw / full": 0.094,
+   "epsilon / full": 0.168,
+   "voxels with full U >= 0.5": 4203,
+   "largest there: frozen / fieldonly / draw / epsilon": [
+    0.873,
+    0.124,
+    0.001,
+    0.002
+   ],
+   "ties for the largest": 0.0055
+  },
+  "deep gray (thalamus, basal ganglia)": {
+   "voxels": 4020,
+   "full U (sum)": 1495.3,
+   "frozen / full": 0.99,
+   "fieldonly / full": 0.631,
+   "draw / full": 0.139,
+   "epsilon / full": 0.207,
+   "voxels with full U >= 0.5": 1192,
+   "largest there: frozen / fieldonly / draw / epsilon": [
+    0.9,
+    0.095,
+    0.0,
+    0.005
+   ],
+   "ties for the largest": 0.0067
+  },
+  "brainstem": {
+   "voxels": 1846,
+   "full U (sum)": 659.6,
+   "frozen / full": 0.984,
+   "fieldonly / full": 0.692,
+   "draw / full": 0.125,
+   "epsilon / full": 0.203,
+   "voxels with full U >= 0.5": 477,
+   "largest there: frozen / fieldonly / draw / epsilon": [
+    0.832,
+    0.168,
+    0.0,
+    0.0
+   ],
+   "ties for the largest": 0.0
+  },
+  "cerebellum": {
+   "voxels": 13907,
+   "full U (sum)": 1944.9,
+   "frozen / full": 0.99,
+   "fieldonly / full": 0.672,
+   "draw / full": 0.147,
+   "epsilon / full": 0.206,
+   "voxels with full U >= 0.5": 479,
+   "largest there: frozen / fieldonly / draw / epsilon": [
+    0.831,
+    0.163,
+    0.002,
+    0.004
+   ],
+   "ties for the largest": 0.0125
+  },
+  "orbitofrontal and ventral temporal cortex": {
+   "voxels": 6076,
+   "full U (sum)": 835.8,
+   "frozen / full": 0.998,
+   "fieldonly / full": 0.618,
+   "draw / full": 0.122,
+   "epsilon / full": 0.181,
+   "voxels with full U >= 0.5": 320,
+   "largest there: frozen / fieldonly / draw / epsilon": [
+    0.912,
+    0.087,
+    0.0,
+    0.0
+   ],
+   "ties for the largest": 0.0063
+  },
+  "field: weakest half (|field| < 15 Hz)": {
+   "voxels": 63255,
+   "full U (sum)": 20230.2,
+   "frozen / full": 0.996,
+   "fieldonly / full": 0.64,
+   "draw / full": 0.127,
+   "epsilon / full": 0.198,
+   "voxels with full U >= 0.5": 15200,
+   "largest there: frozen / fieldonly / draw / epsilon": [
+    0.901,
+    0.097,
+    0.001,
+    0.002
+   ],
+   "ties for the largest": 0.0051
+  },
+  "field: 50th-90th percentile": {
+   "voxels": 50604,
+   "full U (sum)": 14156.2,
+   "frozen / full": 0.992,
+   "fieldonly / full": 0.652,
+   "draw / full": 0.118,
+   "epsilon / full": 0.191,
+   "voxels with full U >= 0.5": 10491,
+   "largest there: frozen / fieldonly / draw / epsilon": [
+    0.887,
+    0.109,
+    0.001,
+    0.002
+   ],
+   "ties for the largest": 0.0048
+  },
+  "field: strongest tenth (|field| >= 37 Hz)": {
+   "voxels": 12651,
+   "full U (sum)": 2300.4,
+   "frozen / full": 0.992,
+   "fieldonly / full": 0.648,
+   "draw / full": 0.093,
+   "epsilon / full": 0.165,
+   "voxels with full U >= 0.5": 1547,
+   "largest there: frozen / fieldonly / draw / epsilon": [
+    0.877,
+    0.122,
+    0.0,
+    0.001
+   ],
+   "ties for the largest": 0.0045
+  },
+  "site: posterior limb of the internal capsule, left": {
+   "voxels": 207,
+   "full U (sum)": 91.8,
+   "frozen / full": 0.963,
+   "fieldonly / full": 0.698,
+   "draw / full": 0.178,
+   "epsilon / full": 0.253,
+   "voxels with full U >= 0.5": 78,
+   "largest there: frozen / fieldonly / draw / epsilon": [
+    0.872,
+    0.115,
+    0.0,
+    0.013
+   ],
+   "ties for the largest": 0.0
+  },
+  "site: posterior limb of the internal capsule, right": {
+   "voxels": 206,
+   "full U (sum)": 73.7,
+   "frozen / full": 0.961,
+   "fieldonly / full": 0.733,
+   "draw / full": 0.124,
+   "epsilon / full": 0.177,
+   "voxels with full U >= 0.5": 52,
+   "largest there: frozen / fieldonly / draw / epsilon": [
+    0.904,
+    0.096,
+    0.0,
+    0.0
+   ],
+   "ties for the largest": 0.0577
+  },
+  "site: centrum semiovale, left": {
+   "voxels": 207,
+   "full U (sum)": 111.1,
+   "frozen / full": 0.97,
+   "fieldonly / full": 0.611,
+   "draw / full": 0.108,
+   "epsilon / full": 0.18,
+   "voxels with full U >= 0.5": 112,
+   "largest there: frozen / fieldonly / draw / epsilon": [
+    0.938,
+    0.054,
+    0.0,
+    0.009
+   ],
+   "ties for the largest": 0.0
+  },
+  "site: centrum semiovale, right": {
+   "voxels": 207,
+   "full U (sum)": 114.9,
+   "frozen / full": 1.03,
+   "fieldonly / full": 0.604,
+   "draw / full": 0.131,
+   "epsilon / full": 0.168,
+   "voxels with full U >= 0.5": 115,
+   "largest there: frozen / fieldonly / draw / epsilon": [
+    0.939,
+    0.061,
+    0.0,
+    0.0
+   ],
+   "ties for the largest": 0.0
+  },
+  "site: temporal stem, left": {
+   "voxels": 205,
+   "full U (sum)": 64.8,
+   "frozen / full": 0.968,
+   "fieldonly / full": 0.64,
+   "draw / full": 0.121,
+   "epsilon / full": 0.202,
+   "voxels with full U >= 0.5": 43,
+   "largest there: frozen / fieldonly / draw / epsilon": [
+    0.907,
+    0.093,
+    0.0,
+    0.0
+   ],
+   "ties for the largest": 0.0233
+  },
+  "site: temporal stem, right": {
+   "voxels": 207,
+   "full U (sum)": 78.3,
+   "frozen / full": 1.047,
+   "fieldonly / full": 0.649,
+   "draw / full": 0.15,
+   "epsilon / full": 0.225,
+   "voxels with full U >= 0.5": 61,
+   "largest there: frozen / fieldonly / draw / epsilon": [
+    0.918,
+    0.082,
+    0.0,
+    0.0
+   ],
+   "ties for the largest": 0.0
+  },
+  "site: genu of the corpus callosum": {
+   "voxels": 207,
+   "full U (sum)": 12.5,
+   "frozen / full": 0.904,
+   "fieldonly / full": 0.679,
+   "draw / full": 0.238,
+   "epsilon / full": 0.296
+  },
+  "site: splenium of the corpus callosum": {
+   "voxels": 204,
+   "full U (sum)": 14.7,
+   "frozen / full": 1.156,
+   "fieldonly / full": 0.796,
+   "draw / full": 0.16,
+   "epsilon / full": 0.259
+  }
+ },
+ "whole brain": {
+  "frozen / full": 0.994,
+  "fieldonly / full": 0.645,
+  "draw / full": 0.121,
+  "epsilon / full": 0.193
+ },
+ "field across fieldonly replicates": {
+  "runs": 16,
+  "SD Hz: median / 90th / 99th in the brain": [
+   0.99,
+   2.14,
+   4.64
+  ],
+  "SD mm (Hz x readout x voxel): median / 90th / 99th": [
+   0.11,
+   0.23,
+   0.5
+  ],
+  "SD Hz: 99th, strongest tenth of A's field": 7.06,
+  "p99 |field| Hz: A / replicates": [
+   157.98,
+   [
+    158.0,
+    157.12,
+    161.88,
+    156.88,
+    158.0,
+    156.91,
+    156.12,
+    160.5,
+    157.25,
+    154.88,
+    158.75,
+    158.75,
+    160.0,
+    156.38,
+    156.25,
+    154.12
+   ]
+  ],
+  "residual_left: replicates (min, max)": [
+   0.524,
+   0.536
+  ]
+ }
+}

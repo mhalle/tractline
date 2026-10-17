@@ -254,6 +254,31 @@ alternative, but its probability (median 0.002) is no guide to how often the lab
 - the rescans' voxels outside the 80 % envelope;
 - fans at each site.
 
+**Which stage the spread comes from (NOTES 2026-10-17).** cIIIs04 A's ensemble was rerun with stages held fixed,
+17 runs per arm. The field-frozen and field-only arms share each run's noise with the full ensemble (the DWI's, the
+b0s'); the labeler-draw and rounding-nudge arms share none.
+- **Field held at A's own estimate:** label change falls only from 31.6 to 31.1 % (per-run SD 0.21 and 0.15), and presence
+  spread by under 2 %. Calibration and the rescan AUROC do not move. With 16 forward b0s the field varies by about
+  0.1 mm and adds little once the DWI's noise reaches the tracker.
+- **Small perturbations alone:**
+  - A field-only ensemble renames 16 % of streamlines, three quarters of them on paths that move more than 5 mm.
+  - A rounding-level nudge (10⁻⁶) renames 4 %, two thirds of them on paths within 0.1 mm of the original.
+  - The labeler's draw renames 3 %.
+  - The effects do not add: the renames come from a shared pool of fragile seeds, which any perturbation draws on.
+- **The labeler's grouping sets a floor of about 3 %.** RapidParc groups streamlines by their index, so a run whose
+  seed set differs by a few streamlines labels every streamline in new company. This is inside every arm, at draw 0
+  too. The grouping's flips, like the draw's, thin tracts at the presence threshold. Assigning each seed to its group by a hash of
+  its key would reduce the floor; it cannot vanish, since group-mates' paths still change a streamline's context.
+- **Not a substitute for the bootstrap:** those cheap ensembles state 0.89–0.98 against 0.61–0.67 observed on
+  rescans, and rank the rescan's changes at AUROC 0.54–0.70 against 0.77–0.80. The ensemble needs the scan's actual
+  noise level.
+- **No region where the field dominates:** its share is flat across field strength. It is highest in the brainstem
+  and cerebellum, but even there the DWI's noise dominates.
+- **Reproducibility:** the same machine reproduces runs bit for bit. A rounding-level input change renames about 4 %
+  of streamlines, mostly through the labeler's grouping. Other platforms' rounding was not measured; aggregates are
+  known to hold across them.
+- **Not tested:** protocols whose field rests on few b0s.
+
 What the reported confidence should be:
 
 - the ensemble's agreement, adjusted to predict a same-session rescan using simulated rescans with correlated noise.
