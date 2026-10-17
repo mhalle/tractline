@@ -431,10 +431,11 @@ def advance(D: dict, xa, sa, Pa, oa, Q, Rs, step, max_steps, step_length=0.3, st
     return xa, sa, Pa, m1, stop, {"swap": sw, "swap2": sw2, "fa": fa, "mean_signal": mean_sig, "inside": inside}
 
 
-def _track_block(D: dict, x, state, old, step_fn, params, s0=0, capture=None, progress=None):
+def _track_block(D: dict, x, state, old, step_fn, params, s0=0, capture=None, progress=None, observe=None):
     """One batch of half-fibers, from their seed states to their recorded points: (list of (n_rec, 3)
     (k, j, i) arrays, steps taken). A batch's results depend on its composition at the rounding level
-    (vectorized math rounds by position), so blocks are fixed by `batch`, never by worker count."""
+    (vectorized math rounds by position), so blocks are fixed by `batch`, never by worker count.
+    observe(step, index, x, state, direction, stop, info), when given, sees every step's outputs (track)."""
     dtype, dev = x.dtype, x.device
     Q, Rs, max_steps, spr = params["Q"], params["Rs"], params["max_steps"], params["spr"]
     nb = len(x)
@@ -450,8 +451,10 @@ def _track_block(D: dict, x, state, old, step_fn, params, s0=0, capture=None, pr
         steps += len(alive)
         if capture:
             capture(step, s0 + alive, xa, sa, Pa, oa)
-        xa, sa, Pa, m1, stop, _ = step_fn(D, xa, sa, Pa, oa, Q, Rs, step, max_steps, params["step_length"],
-                                          params["stopping_fa"], params["stopping_threshold"])
+        xa, sa, Pa, m1, stop, info = step_fn(D, xa, sa, Pa, oa, Q, Rs, step, max_steps, params["step_length"],
+                                             params["stopping_fa"], params["stopping_threshold"])
+        if observe:
+            observe(step, s0 + alive, xa, sa, m1, stop, info)
         go = torch.nonzero(~stop).squeeze(1)                              # one synchronization; then plain gathers
         if (step + 1) % spr == 0:
             ia = alive[go]
@@ -648,7 +651,8 @@ def _parallel(D, blocks, params, workers, threads_per_worker):
 def track(D: dict, offset_kji=SRAND0_OFFSET, seeding_threshold=0.1, stopping_fa=0.08, stopping_threshold=0.06,
           step_length=0.3, record_length=1.8, max_half_length=250.0, Qm=0.001, Ql=50.0, Rs=0.02,
           batch=50_000, progress=None, select=None, dtype=torch.float64, device=None, capture=None,
-          seed_points=None, backend="torch", workers=1, threads_per_worker=1, fast=False, compile=False, stream=True):
+          seed_points=None, backend="torch", workers=1, threads_per_worker=1, fast=False, compile=False, stream=True,
+          observe=None):
     """All fibers. Returns (points list of (n, 3) RAS arrays in seed order, stats). With `select`
     (indices into the seed list), only those seeds are tracked; stats["seed_index"] then says which
     seed each returned fiber came from, stats["seed_voxel"] its mask voxel (k, j, i) - the key to
@@ -671,7 +675,11 @@ def track(D: dict, offset_kji=SRAND0_OFFSET, seeding_threshold=0.1, stopping_fa=
     tracker): that step through torch.compile, compiled here first and loaded by the workers from Inductor's
     disk cache; when compiling fails, a warning and the uncompiled step. stats["compile_s"]: that time. `stream` (the
     GPU kernels, "metal" and "triton_block"; on by default): one stream of at most `batch` live half-fibers, topped up
-    as they stop, instead of blocks of `batch` (_track_stream: the same fibers, bit for bit)."""
+    as they stop, instead of blocks of `batch` (_track_stream: the same fibers, bit for bit). `observe(step, index, x,
+    state, direction, stop, info)`, when given (a diagnostic, off by default), sees every step's outputs: the new
+    positions, states and directions, the stop decision and the step's info (both swaps, fa, mean signal, in-mask),
+    `index` being the half-fibers'. It reads and never writes, so the fibers are the same with it or without it; like
+    capture it tracks in blocks (one process, no stream), which on the GPU kernels gives the same fibers too."""
     step_fn = advance
     if backend == "metal":
         from . import ukf_metal as ukf_metal
@@ -708,7 +716,8 @@ def track(D: dict, offset_kji=SRAND0_OFFSET, seeding_threshold=0.1, stopping_fa=
     blocks = [(s0, x0[s0:s0 + batch], st0[s0:s0 + batch], dir0[s0:s0 + batch]) for s0 in range(0, len(x0), batch)]
     compile_s = 0.0
     if compile and blocks:
-        assert backend == "torch" and fast and dev.type == "cpu" and capture is None, "compile: the CPU torch tracker with fast"
+        assert backend == "torch" and fast and dev.type == "cpu" and capture is None and observe is None, \
+            "compile: the CPU torch tracker with fast"
         step_fn, compile_s, err = _warm_compiled(D, blocks, params)
         if err is not None:
             import warnings
@@ -716,12 +725,12 @@ def track(D: dict, offset_kji=SRAND0_OFFSET, seeding_threshold=0.1, stopping_fa=
                           "tracking with the uncompiled fast step")
         params = {**params, "compile": err is None}
     if workers > 1:
-        assert backend == "torch" and dev.type == "cpu" and capture is None, "workers: the CPU torch tracker only"
+        assert backend == "torch" and dev.type == "cpu" and capture is None and observe is None, "workers: the CPU torch tracker only"
         done = _parallel(D, blocks, params, workers, threads_per_worker)
-    elif stream and backend in ("metal", "triton_block") and capture is None:
+    elif stream and backend in ("metal", "triton_block") and capture is None and observe is None:
         done = [_track_stream(D, x0, st0, dir0, step_fn, params, batch, progress)]
     else:
-        done = [_track_block(D, x, st, d, step_fn, params, s0, capture, progress) for s0, x, st, d in blocks]
+        done = [_track_block(D, x, st, d, step_fn, params, s0, capture, progress, observe) for s0, x, st, d in blocks]
     halves = [h for hs, _ in done for h in hs]                       # per half-fiber: (n_rec, 3) in (k, j, i)
     steps_total = sum(n for _, n in done)
     # join: first half reversed without its seed, then the second half with it; drop < 10 points

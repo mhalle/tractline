@@ -92,6 +92,19 @@ opt-in; no default changes until you decide.
   - a 17-run ensemble for honesty;
   - tract volumes and lengths, to catch bias.
 - **Cost:** about 2–3 hours of tracking; under 1 GB.
+- **Outcome (2026-10-17, NOTES "Robustness step 2").**
+  - About three quarters of epsilon's diverging pairs part with no ≥5° event. That class may include swaps between
+    near-identical tensors, which the 5° rule cannot see. Divergence comes mostly from low-FA seeds (FA below 0.2:
+    69 % of it); that the filter amplifies fastest where its two tensors are degenerate is a hypothesis. The mask
+    plays no part.
+  - Rs 0.1 and step_length 0.6 cut rescan renames by 3–7 points and raise AUROC by at most 0.018 (one subject, no
+    uncertainty). But each is a different, stiffer tractography with large tract-level changes (Rs 0.1: AF volume
+    ×0.43, CST ×1.32), and over-smoothing explains the gains as well as better tracking does.
+  - No tracker setting is a safe default. The defaults are unchanged; the variants stay opt-in through
+    `pipeline.track(tracker=)`.
+  - Next, step 2b: a minimum stretch before a switch, or a tie-break for near-equal tensors (never tried). Then score
+    the variants on the ISMRM 2015 phantom (docs/validation-datasets.md) with its ROI scorer. Its ground truth has no
+    AF, and its b = 1000 shell may not carry the Rs effect at b = 2800.
 
 ### 3. Denoising before tracking
 

@@ -237,22 +237,32 @@ def correct(s, timer: Timer, device="mps") -> Correction:
                       note=note, residual_left=None if left is None else round(left, 3), warnings=warnings)
 
 
+#: ukf.track's settings pipeline.track passes on when asked (tracker=); every other keyword is the pipeline's own
+TRACKER_SETTINGS = frozenset({"seeding_threshold", "stopping_fa", "stopping_threshold", "step_length", "record_length",
+                              "max_half_length", "Qm", "Ql", "Rs"})
 CPU_BATCH = 1024                 # half-fibers per batch on the CPU: cache-sized (ukf_cpu_check.py)
 GPU_BATCH = 200_000              # on a GPU: each block steps until its longest fiber stops, so fewer, larger blocks keep it
                                  # fuller - 2-17 % faster than 50,000, the fibers bit for bit the same (a fiber's arithmetic
                                  # does not depend on its batch; gpu_track_profile.py); ~0.4 GB of device memory
 
 
-def track(s, dwi, timer: Timer, prefix="", device="mps", workers=None, shell=2800.0) -> Tractogram:
+def track(s, dwi, timer: Timer, prefix="", device="mps", workers=None, shell=2800.0, tracker=None) -> Tractogram:
     """device "mps": the Metal kernel; "cuda": the Triton block kernel (ukf_triton_block); "cpu": ukf's
     steps in float32 with the fast step (ukf._ukf_step_fast: as close to float64 as the binary's operation
     order in float32, ukf_cpu_tune.py), through torch.compile only when TRACTLINE_COMPILE=1 (ukf.can_compile; the
     parent compiles, ~10-80 s, in stats["compile_s"], and each worker then loads it), batches of
     CPU_BATCH on `workers` processes of one thread (default: one per core). Workers are spawned, so a
     script running the CPU path needs an `if __name__ == "__main__":` guard. shell: the b-value tracked
-    (prep.prepare; ds001226's 2800, the nearest to TractCloud's training b = 3000)."""
+    (prep.prepare; ds001226's 2800, the nearest to TractCloud's training b = 3000). tracker: opt-in settings passed
+    on to ukf.track (e.g. {"Rs": 0.1} or {"step_length": 0.6}; its keywords: seeding_threshold, stopping_fa,
+    stopping_threshold, step_length, record_length, max_half_length, Qm, Ql, Rs); None or {} is today's, the ORG
+    settings, and the labelers were trained on tractography made with those."""
     if torch.device(device).type == "cpu" and (workers or os.cpu_count() or 1) > 1:
         U.require_main_guard()                                             # before any work, not after it
+    tracker = dict(tracker or {})
+    unknown = set(tracker) - TRACKER_SETTINGS
+    if unknown:
+        raise ValueError(f"track: {sorted(unknown)} not among the tracker's settings {sorted(TRACKER_SETTINGS)}")
     with timer(prefix + "prep"):
         t = prepare(dwi, s.affine, s.bval, s.bvec, shell=shell, device=device)
     with timer(prefix + "load"):                                          # on the host: the seeds' fit in float64 there, the same
@@ -260,12 +270,12 @@ def track(s, dwi, timer: Timer, prefix="", device="mps", workers=None, shell=280
     with timer(prefix + "ukf"):
         kind = torch.device(device).type
         if kind == "mps":
-            fibers, stats = U.track(D, backend="metal", batch=GPU_BATCH)
+            fibers, stats = U.track(D, backend="metal", batch=GPU_BATCH, **tracker)
         elif kind == "cuda":
-            fibers, stats = U.track(D, backend="triton_block", batch=GPU_BATCH)
+            fibers, stats = U.track(D, backend="triton_block", batch=GPU_BATCH, **tracker)
         else:
             fibers, stats = U.track(D, dtype=torch.float32, device=device, fast=True, batch=CPU_BATCH,
-                                    workers=workers or os.cpu_count() or 1, compile=U.can_compile())
+                                    workers=workers or os.cpu_count() or 1, compile=U.can_compile(), **tracker)
     return Tractogram(fibers, stats, t.mask, t.info)
 
 
@@ -286,7 +296,8 @@ def label(tg: Tractogram, labeler, timer: Timer, prefix="") -> Labels:
 STAGES = ("field_estimate", "field_apply", "prep", "load", "ukf", "label")
 
 
-def run(s, labeler, timer: Timer, prefix="", trx=None, device="mps", workers=None, release=True, shell=2800.0, **trx_options):
+def run(s, labeler, timer: Timer, prefix="", trx=None, device="mps", workers=None, release=True, shell=2800.0, tracker=None,
+        **trx_options):
     """The whole pipeline on a subject: (Correction, Tractogram, Labels). labeler: None for the default
     (default_labeler: RapidParc), or any labeler (labelers.tractcloud.Labeler, ...). Its time is
     timer.total(*pipeline_stages(prefix)). trx: also write the tractogram there as TRX (trx.write;
@@ -296,13 +307,13 @@ def run(s, labeler, timer: Timer, prefix="", trx=None, device="mps", workers=Non
     the estimate and the tracking run ("mps", "cuda" or "cpu"; the labeler has its own); shell: the b-value
     tracked (track); workers: the CPU
     tracker's processes (default one per core as os.cpu_count() sees them - in a container, pass the
-    container's own)."""
+    container's own); tracker: opt-in tracker settings (track), None for today's."""
     if torch.device(device).type == "cpu" and (workers or os.cpu_count() or 1) > 1:
         U.require_main_guard()                                             # before the 20 s field estimate
     labeler = labeler if labeler is not None else default_labeler(device)
     with exact_float32(device):
         corr = correct(s, timer, device)
-        tg = track(s, corr.dwi, timer, prefix, device, workers, shell)
+        tg = track(s, corr.dwi, timer, prefix, device, workers, shell, tracker)
         labels = label(tg, labeler, timer, prefix)
     if trx is not None:
         from . import trx as _trx

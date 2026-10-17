@@ -1,0 +1,363 @@
+{
+ "pair": "cIIIs04-2.1",
+ "diverged mm": 5.0,
+ "settings": {
+  "base": {},
+  "seeding_threshold=0.15": {
+   "seeding_threshold": 0.15
+  },
+  "seeding_threshold=0.2": {
+   "seeding_threshold": 0.2
+  },
+  "Qm=0.0003": {
+   "Qm": 0.0003
+  },
+  "Qm=0.0001": {
+   "Qm": 0.0001
+  },
+  "Ql=10": {
+   "Ql": 10.0
+  },
+  "Rs=0.05": {
+   "Rs": 0.05
+  },
+  "Rs=0.1": {
+   "Rs": 0.1
+  },
+  "step_length=0.6": {
+   "step_length": 0.6
+  },
+  "stopping_fa=0.06": {
+   "stopping_fa": 0.06
+  }
+ },
+ "variants": {
+  "base": {
+   "cost and bias (A's whole tractography)": {
+    "seeds": 88328,
+    "fibers (>= 10 points)": 78187,
+    "streamlines >= 40 mm": 64378,
+    "length mm of those (quartiles)": [
+     67.8,
+     96.5,
+     130.8
+    ]
+   },
+   "epsilon": {
+    "runs": 8,
+    "pairs": 2200,
+    "neither side tracked (not seeded, or under 10 points)": 0,
+    "diverged (weighted)": 0.0352,
+    "median MDF mm (weighted)": 0.001,
+    "diverged in the '> 5 mm' stratum": 0.9983,
+    "diverged in the '<= 0.1 mm' stratum": 0.0
+   },
+   "fieldonly": {
+    "runs": 8,
+    "pairs": 2200,
+    "neither side tracked (not seeded, or under 10 points)": 0,
+    "diverged (weighted)": 0.3602,
+    "median MDF mm (weighted)": 1.8859,
+    "diverged in the '> 5 mm' stratum": 0.9833,
+    "diverged in the '<= 0.1 mm' stratum": 0.0025
+   }
+  },
+  "seeding_threshold=0.15": {
+   "cost and bias (A's whole tractography)": {
+    "seeds": 63828,
+    "fibers (>= 10 points)": 60740,
+    "streamlines >= 40 mm": 52607,
+    "length mm of those (quartiles)": [
+     69.6,
+     100.1,
+     134.3
+    ],
+    "against today's A: median MDF mm over seeds both keep at >= 40 mm": 0.0,
+    "against today's A: share moved more than 5 mm": 0.0,
+    "today's >= 40 mm seeds this variant loses": 0.1828
+   },
+   "epsilon": {
+    "runs": 8,
+    "pairs": 1434,
+    "neither side tracked (not seeded, or under 10 points)": 766,
+    "diverged (weighted)": 0.025,
+    "median MDF mm (weighted)": 0.0007,
+    "diverged in the '> 5 mm' stratum": 1.0,
+    "diverged in the '<= 0.1 mm' stratum": 0.0
+   },
+   "fieldonly": {
+    "runs": 8,
+    "pairs": 1756,
+    "neither side tracked (not seeded, or under 10 points)": 444,
+    "diverged (weighted)": 0.3697,
+    "median MDF mm (weighted)": 1.9853,
+    "diverged in the '> 5 mm' stratum": 0.9871,
+    "diverged in the '<= 0.1 mm' stratum": 0.0095
+   }
+  },
+  "seeding_threshold=0.2": {
+   "cost and bias (A's whole tractography)": {
+    "seeds": 46512,
+    "fibers (>= 10 points)": 45600,
+    "streamlines >= 40 mm": 41548,
+    "length mm of those (quartiles)": [
+     74.9,
+     103.8,
+     137.9
+    ],
+    "against today's A: median MDF mm over seeds both keep at >= 40 mm": 0.0,
+    "against today's A: share moved more than 5 mm": 0.0,
+    "today's >= 40 mm seeds this variant loses": 0.3546
+   },
+   "epsilon": {
+    "runs": 8,
+    "pairs": 838,
+    "neither side tracked (not seeded, or under 10 points)": 1362,
+    "diverged (weighted)": 0.0164,
+    "median MDF mm (weighted)": 0.0004,
+    "diverged in the '> 5 mm' stratum": 1.0,
+    "diverged in the '<= 0.1 mm' stratum": 0.0
+   },
+   "fieldonly": {
+    "runs": 8,
+    "pairs": 1332,
+    "neither side tracked (not seeded, or under 10 points)": 868,
+    "diverged (weighted)": 0.3735,
+    "median MDF mm (weighted)": 2.0298,
+    "diverged in the '> 5 mm' stratum": 0.9914,
+    "diverged in the '<= 0.1 mm' stratum": 0.0104
+   }
+  },
+  "Qm=0.0003": {
+   "cost and bias (A's whole tractography)": {
+    "seeds": 88328,
+    "fibers (>= 10 points)": 76073,
+    "streamlines >= 40 mm": 55420,
+    "length mm of those (quartiles)": [
+     64.2,
+     87.6,
+     118.2
+    ],
+    "against today's A: median MDF mm over seeds both keep at >= 40 mm": 14.994,
+    "against today's A: share moved more than 5 mm": 0.7799,
+    "today's >= 40 mm seeds this variant loses": 0.1703
+   },
+   "epsilon": {
+    "runs": 8,
+    "pairs": 2084,
+    "neither side tracked (not seeded, or under 10 points)": 116,
+    "diverged (weighted)": 0.0176,
+    "median MDF mm (weighted)": 0.0009,
+    "diverged in the '> 5 mm' stratum": 0.0623,
+    "diverged in the '<= 0.1 mm' stratum": 0.0126
+   },
+   "fieldonly": {
+    "runs": 8,
+    "pairs": 2155,
+    "neither side tracked (not seeded, or under 10 points)": 45,
+    "diverged (weighted)": 0.254,
+    "median MDF mm (weighted)": 1.0205,
+    "diverged in the '> 5 mm' stratum": 0.3376,
+    "diverged in the '<= 0.1 mm' stratum": 0.0658
+   }
+  },
+  "Qm=0.0001": {
+   "cost and bias (A's whole tractography)": {
+    "seeds": 88328,
+    "fibers (>= 10 points)": 74853,
+    "streamlines >= 40 mm": 47544,
+    "length mm of those (quartiles)": [
+     58.8,
+     79.6,
+     107.4
+    ],
+    "against today's A: median MDF mm over seeds both keep at >= 40 mm": 20.314,
+    "against today's A: share moved more than 5 mm": 0.8901,
+    "today's >= 40 mm seeds this variant loses": 0.2902
+   },
+   "epsilon": {
+    "runs": 8,
+    "pairs": 2005,
+    "neither side tracked (not seeded, or under 10 points)": 195,
+    "diverged (weighted)": 0.0097,
+    "median MDF mm (weighted)": 0.0006,
+    "diverged in the '> 5 mm' stratum": 0.0326,
+    "diverged in the '<= 0.1 mm' stratum": 0.0051
+   },
+   "fieldonly": {
+    "runs": 8,
+    "pairs": 2122,
+    "neither side tracked (not seeded, or under 10 points)": 78,
+    "diverged (weighted)": 0.1781,
+    "median MDF mm (weighted)": 0.9052,
+    "diverged in the '> 5 mm' stratum": 0.2489,
+    "diverged in the '<= 0.1 mm' stratum": 0.0538
+   }
+  },
+  "Ql=10": {
+   "cost and bias (A's whole tractography)": {
+    "seeds": 88328,
+    "fibers (>= 10 points)": 83918,
+    "streamlines >= 40 mm": 73902,
+    "length mm of those (quartiles)": [
+     75.0,
+     112.7,
+     148.7
+    ],
+    "against today's A: median MDF mm over seeds both keep at >= 40 mm": 17.972,
+    "against today's A: share moved more than 5 mm": 0.7997,
+    "today's >= 40 mm seeds this variant loses": 0.0083
+   },
+   "epsilon": {
+    "runs": 8,
+    "pairs": 2200,
+    "neither side tracked (not seeded, or under 10 points)": 0,
+    "diverged (weighted)": 0.0395,
+    "median MDF mm (weighted)": 0.0017,
+    "diverged in the '> 5 mm' stratum": 0.1375,
+    "diverged in the '<= 0.1 mm' stratum": 0.03
+   },
+   "fieldonly": {
+    "runs": 8,
+    "pairs": 2200,
+    "neither side tracked (not seeded, or under 10 points)": 0,
+    "diverged (weighted)": 0.4073,
+    "median MDF mm (weighted)": 2.8262,
+    "diverged in the '> 5 mm' stratum": 0.555,
+    "diverged in the '<= 0.1 mm' stratum": 0.1475
+   }
+  },
+  "Rs=0.05": {
+   "cost and bias (A's whole tractography)": {
+    "seeds": 88328,
+    "fibers (>= 10 points)": 79719,
+    "streamlines >= 40 mm": 59944,
+    "length mm of those (quartiles)": [
+     69.6,
+     96.6,
+     125.4
+    ],
+    "against today's A: median MDF mm over seeds both keep at >= 40 mm": 17.733,
+    "against today's A: share moved more than 5 mm": 0.8436,
+    "today's >= 40 mm seeds this variant loses": 0.1284
+   },
+   "epsilon": {
+    "runs": 8,
+    "pairs": 2142,
+    "neither side tracked (not seeded, or under 10 points)": 58,
+    "diverged (weighted)": 0.0167,
+    "median MDF mm (weighted)": 0.0008,
+    "diverged in the '> 5 mm' stratum": 0.0337,
+    "diverged in the '<= 0.1 mm' stratum": 0.0126
+   },
+   "fieldonly": {
+    "runs": 8,
+    "pairs": 2172,
+    "neither side tracked (not seeded, or under 10 points)": 28,
+    "diverged (weighted)": 0.2588,
+    "median MDF mm (weighted)": 1.172,
+    "diverged in the '> 5 mm' stratum": 0.344,
+    "diverged in the '<= 0.1 mm' stratum": 0.1035
+   }
+  },
+  "Rs=0.1": {
+   "cost and bias (A's whole tractography)": {
+    "seeds": 88328,
+    "fibers (>= 10 points)": 81903,
+    "streamlines >= 40 mm": 57512,
+    "length mm of those (quartiles)": [
+     62.4,
+     91.2,
+     120.0
+    ],
+    "against today's A: median MDF mm over seeds both keep at >= 40 mm": 21.297,
+    "against today's A: share moved more than 5 mm": 0.9212,
+    "today's >= 40 mm seeds this variant loses": 0.1829
+   },
+   "epsilon": {
+    "runs": 8,
+    "pairs": 2146,
+    "neither side tracked (not seeded, or under 10 points)": 54,
+    "diverged (weighted)": 0.0124,
+    "median MDF mm (weighted)": 0.0005,
+    "diverged in the '> 5 mm' stratum": 0.0137,
+    "diverged in the '<= 0.1 mm' stratum": 0.0126
+   },
+   "fieldonly": {
+    "runs": 8,
+    "pairs": 2175,
+    "neither side tracked (not seeded, or under 10 points)": 25,
+    "diverged (weighted)": 0.1901,
+    "median MDF mm (weighted)": 0.9568,
+    "diverged in the '> 5 mm' stratum": 0.2637,
+    "diverged in the '<= 0.1 mm' stratum": 0.0729
+   }
+  },
+  "step_length=0.6": {
+   "cost and bias (A's whole tractography)": {
+    "seeds": 88328,
+    "fibers (>= 10 points)": 82583,
+    "streamlines >= 40 mm": 64704,
+    "length mm of those (quartiles)": [
+     70.8,
+     99.6,
+     128.4
+    ],
+    "against today's A: median MDF mm over seeds both keep at >= 40 mm": 18.234,
+    "against today's A: share moved more than 5 mm": 0.8568,
+    "today's >= 40 mm seeds this variant loses": 0.0836
+   },
+   "epsilon": {
+    "runs": 8,
+    "pairs": 2182,
+    "neither side tracked (not seeded, or under 10 points)": 18,
+    "diverged (weighted)": 0.0066,
+    "median MDF mm (weighted)": 0.0004,
+    "diverged in the '> 5 mm' stratum": 0.0311,
+    "diverged in the '<= 0.1 mm' stratum": 0.0025
+   },
+   "fieldonly": {
+    "runs": 8,
+    "pairs": 2194,
+    "neither side tracked (not seeded, or under 10 points)": 6,
+    "diverged (weighted)": 0.2979,
+    "median MDF mm (weighted)": 1.5125,
+    "diverged in the '> 5 mm' stratum": 0.3837,
+    "diverged in the '<= 0.1 mm' stratum": 0.0902
+   }
+  },
+  "stopping_fa=0.06": {
+   "cost and bias (A's whole tractography)": {
+    "seeds": 88328,
+    "fibers (>= 10 points)": 80591,
+    "streamlines >= 40 mm": 67075,
+    "length mm of those (quartiles)": [
+     67.8,
+     98.3,
+     132.8
+    ],
+    "against today's A: median MDF mm over seeds both keep at >= 40 mm": 0.0,
+    "against today's A: share moved more than 5 mm": 0.0429,
+    "today's >= 40 mm seeds this variant loses": 0.0
+   },
+   "epsilon": {
+    "runs": 8,
+    "pairs": 2200,
+    "neither side tracked (not seeded, or under 10 points)": 0,
+    "diverged (weighted)": 0.0359,
+    "median MDF mm (weighted)": 0.0011,
+    "diverged in the '> 5 mm' stratum": 0.9358,
+    "diverged in the '<= 0.1 mm' stratum": 0.0
+   },
+   "fieldonly": {
+    "runs": 8,
+    "pairs": 2200,
+    "neither side tracked (not seeded, or under 10 points)": 0,
+    "diverged (weighted)": 0.3763,
+    "median MDF mm (weighted)": 1.9902,
+    "diverged in the '> 5 mm' stratum": 0.9483,
+    "diverged in the '<= 0.1 mm' stratum": 0.015
+   }
+  }
+ }
+}

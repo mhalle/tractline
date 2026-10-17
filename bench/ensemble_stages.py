@@ -18,7 +18,8 @@ plus `runs` replicates:
   draw       A's corrected DWI tracked once (the fibers are A's), labeled with draws 1..runs: the labeler alone;
   epsilon    A's corrected DWI (A's field) times 1 + EPS u, u uniform in [-1, 1] per value, seeded by 10,000 + r: every
              value moved by up to EPS (1e-6: about 4-8 float32 units in the last place on average, up to about 17), no
-             noise model at all. It also moves the mask and so the seed set (about 82 of A's seeds per run);
+             noise model at all. The mask and the seed set stay A's; a run lacks about 82 of A's labeled seeds
+             because their streamlines fell under 40 mm (robust_ukf_diagnose.py);
   check      full replicate 1 rebuilt here, compared with smooth/r001.npz: the replicates are the full arm's.
 Records in DATA/ensemble/cIIIs04/retest/cIIIs04-2.1/stages/<arm>/r001.. (compact), the fields beside them.
 

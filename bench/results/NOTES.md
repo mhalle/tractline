@@ -4008,8 +4008,9 @@ Reading it:
   - about two thirds through the labeler's grouping, on paths within 0.1 mm of A's;
   - about a fifth on paths that diverge by more than 5 mm (3.4 % of streamlines).
 
-  The epsilon perturbation also moves the tracking mask (82 of A's seeds lost per run), which can end paths
-  differently; that route was not separated from divergence along the way.
+  The epsilon perturbation leaves the tracking mask unchanged (no voxel differs in any of the 16 runs). The 82 of A's
+  seeds a run lacks are streamlines that fell under 40 mm, the labeler's minimum: all 400 sampled were still seeded,
+  and every one was shorter (corrected after step 2's diagnosis, NOTES 2026-10-17, "Robustness step 2").
   - Another platform's rounding is a different perturbation and was not measured. Across five platforms, aggregates
     hold: PAT16's Other share spans 0.3 points (NOTES 2026-10-02, "RapidParc is the default").
   - The grouping part of this floor is an implementation choice and could be reduced, for example by assigning each
@@ -4156,3 +4157,339 @@ Caveats:
 - the full arm and rescans are labeled at draw 0, except the rescans' renames at draws 0–4; the draw comparison
   uses A's streamlines;
 - the records' 0.05 mm quantization is the same input for every grouping, so it does not enter the comparison.
+
+## 2026-10-17 Robustness step 2: most diverging paths part with no ≥5° event, mostly from low-FA seeds; the settings that damp divergence change the tractography, and none is a safe default
+
+`robust_ukf_diagnose.py` → `robust_ukf_diagnose.json`; `robust_ukf_sweep.py` → `robust_ukf_sweep.json`; records
+in `DATA/ensemble/cIIIs04/robustness/ukf/`. docs/robustness-plan.md, step 2. The tracker is deterministic given its
+input, yet a 10⁻⁶ relative nudge of the DWI (epsilon) moves 3.4 % of streamlines by more than 5 mm, and a field
+re-estimated from noisy b0s (fieldonly, about 0.1 mm) 34 % (NOTES 2026-10-17, "Where the ensemble's spread comes
+from"). Which decision turns the small change into a different path?
+
+Method:
+- **The hook.** `ukf.track` takes an opt-in `observe(step, index, x, state, direction, stop, info)`, off by default,
+  which sees each step's outputs: the new position, the filter's state after the swaps, the stop decision and the
+  step's switches (sw, sw2), FA, mean signal and in-mask test. The default path is unchanged bit for bit: A's whole
+  tractography through `P.track` on Metal gave the same SHA-256 over all 78,187 fibers with and without the change.
+  `test_observe_changes_nothing` checks that observing changes no fiber (torch and Metal).
+- **The sample.** Per run, 275 of A's seeds, stratified on the stored records: 150 whose path moved more than 5 mm,
+  50 in (0.1, 5] mm, 50 within 0.1 mm, and 25 the run's record lacks. 16 epsilon runs and 16 fieldonly runs, 4,400
+  seeds each. Every share and quantile below is weighted back to each run's population by stratum unless stated;
+  counts of pairs are unweighted.
+- **Three tractographies per run,** on Metal as the records were: A; the perturbed input with its own mask (P); the
+  perturbed input with A's mask held fixed.
+- **Reproduction.** In every run, A matches `A.npz` and epsilon's P its stored run to the records' 0.05 mm quantum
+  (largest vertex deviation 0.025 mm; no point count differs). Fieldonly's P is corrected with the stored float16
+  field, not the run's own: against the stored run its median MDF is 0.022–0.024 mm, and 2.8–9.2 % of paths move
+  more than 5 mm. The float16 rounding is itself a perturbation of this kind.
+- **Classification.** A pair diverges when its MDF exceeds 5 mm, or when the tracker drops one side (under 10 points)
+  and not the other. The half-fiber that moved more is classified. It separates at the first step where the two
+  positions are more than 0.5 mm apart, or where one side stops and the other goes on. The first event at or before
+  that step decides:
+  - **switch:** the step directions jump at least 5° further apart in one step, and one side's step lies along the
+    other side's second tensor;
+  - **turn:** such a jump without that match;
+  - **stop:** one side stops first, by the condition that fired. "The mask" means the other input's mask includes the
+    point;
+  - **seed:** the initial directions differ by more than 1°, or the jump comes at the first step;
+  - **no ≥5° event ("drift"):** none of these. This class is what is left; it may include swaps between
+    near-identical tensors (below).
+- **Why directions, not the switch flags.** Both tensors start as the seed tensor. So the flags often differ within the
+  first steps, a harmless swap of two equal tensors, in pairs that stay together as well. After that the two states'
+  tensor order can differ for good, and the flags no longer say which tensor each side follows. The price: a swap
+  between tensors less than 5° apart is invisible to this rule.
+
+| | epsilon | fieldonly |
+|---|---|---|
+| pairs / diverged | 4,400 / 2,749 | 4,346 / 2,671 |
+| no ≥5° event ("drift") | 74.9 % | 61.3 % |
+| seed (initial direction) | 0 | 23.1 % |
+| switch: sw2 | 13.7 % | 8.6 % |
+| switch: sw | 0.4 % | 0.2 % |
+| switch, the flags equal (the states' tensor order differs) | 1.0 % | 1.4 % |
+| turn without a switch | 3.4 % | 2.7 % |
+| stop: FA < 0.08 | 6.5 % | 2.7 % |
+| stop: signal < 0.06 | 0.1 % | 0 |
+| stop: outside the mask, both masks agree | 0.04 % | 0.04 % |
+| stop: the mask itself | 0 | 0 |
+| event: arc length from the seed, quartiles | 31.2 / 53.7 / 87.3 mm | 14.4 / 24.9 / 39.3 mm |
+| crossing share at the event / along the path before it | 0.57 / 0.41 | 0.60 / 0.37 |
+
+- **Crossing.** A's second tensor has FA > 0.2 and lies more than 20° from the first: two tensors the tracker itself
+  treats as distinct. The model's two tensors are weighted equally ("2T simple"), so there is no weight to report.
+- **The mask plays no part.**
+  - Epsilon's mask is A's in all 16 runs, voxel for voxel. With A's mask held fixed the same 2,749 pairs diverge.
+  - Fieldonly's mask differs from A's by 223–487 voxels per run. With A's mask held fixed, 2,668 pairs diverge either
+    way, 3 only with the run's own mask and 2 only with A's.
+- **Most threshold stops are coin flips.** Where an FA stop separates epsilon's pair, the other side's FA at that
+  step has quartiles 0.084 / 0.094 / 0.319, against the 0.08 threshold: half are within 0.014 of it.
+- **Base rates.** Of the pairs that stay together (MDF ≤ 5 mm), 1.2 % (epsilon) and 10.0 % (fieldonly) have a jump
+  while within 0.5 mm. 15.9 % and 89.2 % stop at a different step. Different stopping steps are common and mostly
+  harmless: the length differs by a few steps.
+- **Switch flags beyond the first 3 mm.** The flags (sw or sw2) differ somewhere between 3 mm and the separation:
+
+  | | epsilon | fieldonly |
+  |---|---|---|
+  | no ≥5° event pairs, the classified half: weighted (unweighted) | 60.0 % (60.4 %) | 27.2 % (27.3 %) |
+  | pairs that stay together, either half: weighted (unweighted) | 29.6 % (46.0 %) | 48.8 % (55.9 %) |
+  | the angle between A's tensors at those steps, quartiles | 0.009 / 0.024 / 0.094° | 0.015 / 0.049 / 0.327° |
+  | steps from the last such difference to the separation, quartiles | 63 / 122 / 212 | 24 / 59 / 106 |
+
+  - In epsilon, the pairs with no ≥5° event carry such differences twice as often as pairs that stay together. Those
+    are swaps between tensors a few hundredths of a degree apart, a median 122 steps (37 mm) before the paths part.
+    They may be part of what "drift" is: a tie between near-identical tensors broken differently, which the 5° rule
+    cannot see.
+  - In fieldonly the contrast is reversed, so there such differences are no sign of divergence.
+  - A minimum stretch before a switch, or a tie-break for near-equal tensors, was never tried. It is being tried next,
+    as step 2b.
+
+**Drift: where the difference grows.** Each classified half's distance from its counterpart, epsilon:
+
+| apart by | 10⁻⁴ mm | 10⁻³ mm | 10⁻² mm | 0.1 mm | 0.5 mm |
+|---|---|---|---|---|---|
+| arc length from the seed, quartiles (mm) | 4.8 / 7.2 / 10.2 | 8.7 / 12.0 / 16.8 | 14.1 / 18.9 / 29.4 | 22.5 / 35.7 / 61.8 | 33.3 / 56.7 / 88.8 |
+
+- **Epsilon starts at the float32 quantum.** The two halves start about 10⁻⁵ mm apart, the float32 position's
+  resolution. They reach 10⁻³ mm (about a hundredfold) at a median 12.0 mm from the seed, and 10⁻² mm (a
+  thousandfold) at 18.9 mm.
+- **The voxel read is not the trigger.** The voxel the tracker reads (round(position): its 3 × 3 × 3 interpolation
+  neighborhood and the mask) first differs at a median 27.9 mm. It comes before 10⁻³ mm in only 0.9 % of the halves.
+- **Fieldonly starts where epsilon's grown difference is.** Its halves are already 10⁻³ mm apart after the first step
+  (0.3 mm), and 0.5 mm apart at a median 26.1 mm.
+
+The growth rate per step, in decades per mm, weighted over every step of every pair: of the halves' position
+distance, where it lies in [10⁻⁴, 0.3] mm, and of the filter's state difference, where it lies in [10⁻⁶, 10⁻²]. The
+state difference is the largest of the two tensors' direction differences (radians) and eigenvalue differences
+(relative), under the better of the two pairings of the tensors.
+
+| epsilon, by | | | | | | |
+|---|---|---|---|---|---|---|
+| arc length from the seed (mm): state | 0–5: **0.174** | 5–10: 0.084 | 10–20: 0.042 | 20–40: 0.022 | 40–80: 0.018 | 80+: 0.016 |
+| the same: position | 0.219 | 0.121 | 0.063 | 0.028 | 0.019 | 0.019 |
+| angle between A's two tensors: state | < 2°: **0.121** | 2–10°: 0.102 | 10–20°: 0.083 | 20–45°: 0.029 | 45–90°: 0.015 | |
+| the same: position | 0.060 | **0.089** | 0.062 | 0.043 | 0.021 | |
+| A's FA: state | < 0.15: 0.092 | 0.15–0.2: **0.104** | 0.2–0.3: 0.065 | 0.3–0.45: 0.044 | ≥ 0.45: 0.019 | |
+| the same: position | 0.013 | 0.015 | **0.073** | 0.044 | 0.019 | |
+
+- **Fast near the seed.** Both measures grow fastest in the first 5 mm (state 0.17 decades per mm: tenfold every
+  6 mm) and slowest beyond 20 mm.
+- **By FA and by the tensors' angle the two measures disagree.** The state difference grows fastest below FA 0.2 and
+  where A's tensors are within 2°; the position distance grows slowly there (0.013–0.015 below FA 0.2) and fastest at
+  FA 0.2–0.3 and 2–10°. The state's direction term is ill-conditioned for near-isotropic or near-equal tensors, and
+  near the seed low FA, "within 2°" and a short arc length go together: every seed starts with two equal tensors,
+  and the filter starts from P0. So "the filter amplifies fastest where its two tensors are degenerate" is a
+  hypothesis these rates do not establish. Both measures agree that well-separated tensors (45–90°) and high FA
+  amplify least.
+- **Fieldonly is different.** Its state difference grows at 0.032 decades per mm on average and rises about
+  fourfold with FA (0.011 below FA 0.15, 0.042 at 0.3–0.45). Its paths differ because the data along them differ
+  from the first step, not because a seed-level difference is amplified.
+
+**The seed's FA: the solid evidence.** Whatever the mechanism, epsilon's divergence falls steeply with the seed
+tensor's FA (weighted):
+
+| seed FA | 0.1–0.15 | 0.15–0.2 | 0.2–0.3 | 0.3–0.45 | ≥ 0.45 |
+|---|---|---|---|---|---|
+| share of A's labeled seeds | 16.1 % | 17.5 % | 25.7 % | 25.8 % | 14.9 % |
+| epsilon: diverged | **8.8 %** | **5.7 %** | 2.3 % | 1.2 % | 1.4 % |
+| fieldonly: diverged | 34.1 % | 33.6 % | 39.8 % | 35.9 % | 33.2 % |
+
+- Seeds with FA below 0.2 are 33.6 % of the labeled seeds and hold 69.1 % of epsilon's diverging pairs (weighted);
+  in fieldonly 33.7 % and 31.9 %.
+- In the first 40 mm of the path, epsilon's diverging pairs spend 27.6 % of their steps at FA < 0.2 (pairs that stay
+  together: 15.8 %) and 36.1 % with the two tensors still within 2° (24.8 %). They spend fewer at a crossing: 40.6 %
+  against 50.8 %. Fieldonly shows no such contrast (14.5 / 23.8 / 50.6 % against 16.2 / 25.6 / 51.4 %).
+- **Fieldonly's "seed" class is the initial direction.** The seed tensor's main direction differs by 1.4 / 2.1 / 3.7°
+  (quartiles); in 4.9 % of these pairs by more than 10°, in 0.3 % by more than 45°. The seed FA differs by only 0.006
+  (median), and e1 changes sign in 4.1 %. A sign change only swaps which half runs forward. Pairs with no ≥5° event
+  differ by a median 0.30° at the seed, pairs that stay together by 0.32°.
+  - A start more than 1° off is not enough to diverge: 17.3 % of fieldonly's pairs that stay together start that far
+    apart.
+
+**The sweep.** `robust_ukf_sweep.py` → `robust_ukf_sweep.json`; records in `.../robustness/ukf/sweep/`. Each variant
+is one opt-in setting of `ukf.track` (defaults unchanged), on Metal:
+- **The sample.** The diagnosis's sampled seeds for runs 1–8 of each input: 2,200 pairs per input, weighted as
+  above. Seeds a variant does not seed are left out.
+- **Cost and change.** A's whole tractography under the variant (88,328 seeds today), compared with today's A over
+  the seeds both keep at ≥ 40 mm. A per-path distance from today's paths measures change, not bias: any change to the
+  integrator moves most paths, as fieldonly's 0.1 mm moves 36 %. Bias is in the aggregates (count, lengths, and in
+  the scoring below, volumes and the tract mix).
+- **Hysteresis on the FA stop was not tried.** The Metal kernel decides each step's stop on its own, so a stop that
+  needs several low-FA steps would need a change to the kernel or the tracking loop.
+
+| variant | streamlines ≥ 40 mm | their length, quartiles (mm) | today's paths moved > 5 mm (median MDF) | today's ≥ 40 mm seeds lost | epsilon: diverged | fieldonly: diverged (median MDF) |
+|---|---|---|---|---|---|---|
+| today (base) | 64,378 | 67.8 / 96.5 / 130.8 | — | — | 3.52 % | 36.0 % (1.89 mm) |
+| seeding_threshold 0.15 | 52,607 | 69.6 / 100.1 / 134.3 | 0 (0) | 18.3 % | 2.50 % | 37.0 % (1.99 mm) |
+| seeding_threshold 0.2 | 41,548 | 74.9 / 103.8 / 137.9 | 0 (0) | 35.5 % | 1.64 % | 37.4 % (2.03 mm) |
+| Qm 0.0003 (0.001) | 55,420 | 64.2 / 87.6 / 118.2 | 78.0 % (15.0 mm) | 17.0 % | 1.76 % | 25.4 % (1.02 mm) |
+| Qm 0.0001 | 47,544 | 58.8 / 79.6 / 107.4 | 89.0 % (20.3 mm) | 29.0 % | 0.97 % | 17.8 % (0.91 mm) |
+| Ql 10 (50) | 73,902 | 75.0 / 112.7 / 148.7 | 80.0 % (18.0 mm) | 0.8 % | 3.95 % | 40.7 % (2.83 mm) |
+| Rs 0.05 (0.02) | 59,944 | 69.6 / 96.6 / 125.4 | 84.4 % (17.7 mm) | 12.8 % | 1.67 % | 25.9 % (1.17 mm) |
+| Rs 0.1 | 57,512 | 62.4 / 91.2 / 120.0 | 92.1 % (21.3 mm) | 18.3 % | 1.24 % | 19.0 % (0.96 mm) |
+| step_length 0.6 (0.3) | 64,704 | 70.8 / 99.6 / 128.4 | 85.7 % (18.2 mm) | 8.4 % | 0.66 % | 29.8 % (1.51 mm) |
+| stopping_fa 0.06 (0.08) | 67,075 | 67.8 / 98.3 / 132.8 | 4.3 % (0) | 0 | 3.59 % | 37.6 % (1.99 mm) |
+
+- **Seeding threshold: the only setting that leaves the paths alone.** It drops seeds and leaves the rest alone:
+  over the seeds both trackers keep, the median MDF is 0 and none moved more than 5 mm. At 0.2 it removes 53 % of
+  epsilon's divergence (3.52 to 1.64 %), as the seed-FA table predicts, but none of fieldonly's (36.0 to 37.4 %). It
+  costs 35.5 % of the streamlines, mostly short ones: the median length rises from 96.5 to 103.8 mm.
+- **The filter's noise settings and the step change the tractography itself.** Trusting the model more (a lower Qm)
+  or each signal less (a higher Rs) cuts both kinds of divergence: fieldonly to 17.8–25.9 %, epsilon to
+  0.97–1.76 %. A 0.6 mm step cuts epsilon's to 0.66 % and fieldonly's to 29.8 %. Each moves 78–92 % of today's paths
+  by more than 5 mm (median MDF 15–21 mm); that alone is expected of any integrator change. The aggregates show the
+  bias: the Qm and Rs settings give fewer and shorter streamlines. Qm 0.0001 loses 29.0 % of today's long seeds, and
+  its median length is 79.6 mm. Part of their robustness may be the shorter paths.
+- **Ql 10 and a lower FA stop do not help.** Ql 10 gives more and longer streamlines and more divergence (40.7 %).
+  stopping_fa 0.06 keeps 95.7 % of paths within 5 mm of today's and changes neither kind of divergence.
+- **The step length is nearly free in cost.** It keeps the streamline count (64,704) and the lengths, and tracks A
+  in 26.6 s against 50.9 s (the sweep's runs.json). It still moves 85.7 % of today's paths.
+
+Reading it:
+- **No ≥5° event parts most diverging pairs.** Switches (15.0 %), stops (6.7 %) and abrupt turns (3.4 %) together
+  part about a quarter of epsilon's diverging pairs. Three quarters part with no ≥5° event: a rounding-level
+  difference grows a hundredfold by about 12 mm from the seed and a thousandfold by about 19 mm. That class may
+  include swaps between near-identical tensors, broken differently: 60 % of these pairs have a switch flag that
+  differs beyond 3 mm, against 30 % of the pairs that stay together. The mask, recomputed per run, plays no part.
+- **Where it grows: near the seed, and from low-FA seeds.** Seeds with FA below 0.2 hold 69 % of epsilon's
+  divergence, and both growth measures are fastest in the first 5 mm. That the filter amplifies fastest where its two
+  tensors are still degenerate is a hypothesis: the state and position measures disagree on it. Well-separated tensors
+  amplify least, though divergence points often lie at crossings (0.57 against 0.41 before them).
+- **Noise is different from rounding.** Fieldonly's paths differ from the first step because the data along them
+  differ, and the seed's FA does not matter. 23 % of its diverging pairs start from a seed direction 1.4–3.7° off
+  (quartiles). Real rescans are noise, so settings that only remove the rounding floor are unlikely to move rescan
+  agreement.
+- **Nothing in the sweep damps divergence without changing the tractography.** The seeding threshold is free of path
+  bias but helps only the rounding floor, at a cost of a third of the streamlines. The settings that damp
+  noise-driven divergence (Rs 0.1, Qm 0.0001, the 0.6 mm step) produce a different tractography. Whether it is
+  better cannot be told from reproducibility. RapidParc was trained on tractography made with today's settings, so a
+  changed tracker may also shift its labels.
+- **For scoring: Rs 0.1 and step_length 0.6.** Rs 0.1 damps fieldonly the most of the settings that do not shorten
+  streamlines much (19.0 %; median length 91.2 mm). The 0.6 mm step damps epsilon the most and keeps the streamline
+  count and lengths, at half the tracking time. A seeding threshold of 0.2 needs no tracking: its tractography is a
+  subset of today's, so the existing records can score it by dropping seeds.
+
+Caveats:
+- one subject, one protocol, scan A; epsilon and fieldonly stand in for noise, not a rescan;
+- fieldonly's inputs use the stored float16 fields;
+- the classes depend on the thresholds (0.5 mm, 5°, 1°); "no ≥5° event" is what the rules leave, not a mechanism;
+- the growth rates are per-step ratios averaged over steps in a window, not a fitted Lyapunov exponent;
+- the sweep uses 8 runs per input, a few hundred seeds each, stratified by today's tracker; under a variant the
+  weights still estimate the share over today's labeled seeds;
+- one value per setting, no combinations.
+
+**Scoring: Rs 0.1 and step_length 0.6 against today's tracker on cIIIs04.** `robust_ukf_score.py` →
+`robust_ukf_score.json`; records in `.../robustness/ukf/score/<variant>/`.
+- **What was scored.** Each variant reruns A, the three rescans tracked on A's grid, 16 bootstrap replicates (the
+  17-run ensemble), and 8 epsilon and 8 fieldonly runs. Every other stage is today's: the variant passes through
+  `pipeline.track`'s opt-in `tracker=`, and RapidParc labels at draw 0 with its index grouping. Today's figures come
+  from the existing records.
+- **Seeding threshold 0.2, scored without tracking.** Every record is restricted to the 46,512 seeds `ukf.seeds`
+  accepts at 0.2 on A's corrected DWI. The labels stay as stored, given in today's full company.
+- **Default unchanged.** `tracker=None` reproduces A's 78,187 fibers bit for bit (the same SHA-256 as before the
+  change); `test_tracker_settings_opt_in` checks the CPU path.
+
+The three figures per cell are the within, session 3 and session 5 rescans:
+
+| | today | seeding_threshold 0.2 | Rs 0.1 | step_length 0.6 |
+|---|---|---|---|---|
+| A: streamlines labeled (≥ 40 mm) | 64,378 | 41,548 | 57,512 | 64,704 |
+| A: length, quartiles (mm) | 67.8 / 96.5 / 130.8 | 74.9 / 103.8 / 137.9 | 62.4 / 91.2 / 120.0 | 70.8 / 99.6 / 128.4 |
+| **(a)** A's paths more than 5 mm from the rescan's | 71.6 / 75.4 / 77.8 % | 73.6 / 77.8 / 79.9 % | 55.7 / 60.1 / 65.5 % | 65.3 / 69.3 / 73.4 % |
+| the same: median MDF (mm) | 13.4 / 15.1 / 16.2 | 14.0 / 15.8 / 16.8 | 6.3 / 7.4 / 8.9 | 9.5 / 10.8 / 12.4 |
+| the rescan renames | 35.4 / 38.2 / 39.7 % | 35.4 / 38.1 / 39.9 % | **28.8 / 31.4 / 34.1 %** | 31.8 / 34.0 / 36.5 % |
+| the same, reweighted to today's tract mix | — | 34.7 / 37.4 / 39.0 % | 28.4 / 31.4 / 34.0 % | 32.0 / 34.6 / 37.1 % |
+| the same, hash-sorted grouping | 35.5 / 38.0 / 39.8 % | 35.5 / 38.1 / 40.0 % | 28.7 / 31.3 / 34.0 % | 31.7 / 33.9 / 36.5 % |
+| A's CST streamlines the within rescan renames | 73.8 % | 73.3 % | 46.3 % | 58.5 % |
+| presence Dice, CST | 0.78 / 0.78 / 0.75 | 0.76 / 0.78 / 0.74 | 0.80 / 0.79 / 0.80 | 0.79 / 0.78 / 0.76 |
+| presence Dice, AF | 0.81 / 0.79 / 0.77 | 0.80 / 0.80 / 0.77 | 0.79 / 0.76 / 0.73 | 0.80 / 0.79 / 0.76 |
+| presence Dice, UF | 0.79 / 0.76 / 0.73 | 0.75 / 0.75 / 0.71 | 0.75 / 0.74 / 0.69 | 0.78 / 0.76 / 0.73 |
+| landmark sites with the same main named tract within 8 mm (of 8) | 6 / 6 / 5 | 6 / 5 / 5 | 6 / 7 / 6 | 8 / 6 / 7 |
+| **(b)** stated: the mode's mean share | 0.764 | 0.765 | 0.812 | 0.791 |
+| a rescan gives the mode | 0.703 / 0.674 / 0.661 | 0.701 / 0.675 / 0.660 | 0.749 / 0.724 / 0.699 | 0.731 / 0.708 / 0.683 |
+| stated minus observed | 0.061 / 0.090 / 0.102 | 0.065 / 0.090 / 0.105 | 0.063 / 0.089 / 0.113 | 0.061 / 0.084 / 0.109 |
+| AUROC, the rescan's change from A's tract | 0.801 / 0.779 / 0.773 | 0.794 / 0.774 / 0.767 | 0.815 / 0.796 / 0.780 | 0.808 / 0.784 / 0.772 |
+| **(c)** epsilon: renamed / paths > 5 mm | 3.96 / 3.42 % | 3.12 / 1.66 % | 3.62 / 0.69 % | 3.71 / 1.52 % |
+| fieldonly: renamed / paths > 5 mm | 16.4 / 34.6 % | 15.9 / 35.4 % | 12.2 / 19.5 % | 14.3 / 28.0 % |
+| **(d)** Other share: A (17 runs) | 0.526 (0.531) | 0.546 (0.551) | 0.562 (0.568) | 0.562 (0.563) |
+| RapidParc's mean top tract probability, A | 0.941 | 0.942 | 0.931 | 0.935 |
+| tract mix, total variation against today: A / 17 runs | — | 0.044 / 0.043 | 0.113 / 0.113 | 0.072 / 0.070 |
+| CST volume against today: A (17 runs) | — | ×0.87 (0.86) | ×1.32 (1.22) | ×1.25 (1.17) |
+| AF volume against today | — | ×0.84 (0.81) | ×0.43 (0.43) | ×0.77 (0.76) |
+| UF volume against today | — | ×0.69 (0.68) | ×0.68 (0.72) | ×0.97 (1.03) |
+
+How the rows are computed:
+- **Common seeds.** Renames are over the seeds both runs label: 57,649 / 57,341 / 55,875 today.
+- **Reweighting.** Each tract's rename rate is weighted by today's A tract mix over today's common seeds.
+- **Stated minus observed** is the stated mode share minus how often a rescan gives the mode.
+- **Volumes** are density presence on A's grid.
+- **Seeds.** The honesty rows are over the seeds every run labels: 44,717 (today), 34,953 (seeding 0.2), 42,100
+  (Rs 0.1) and 47,726 (step 0.6), so the configurations are not scored on the same set.
+
+Where the CST's renames go, and where its new streamlines come from:
+
+| | today | seeding_threshold 0.2 | Rs 0.1 | step_length 0.6 |
+|---|---|---|---|---|
+| A's CST streamlines a rescan renames (the three pooled): to Other | 77.8 % | 79.3 % | 78.8 % | 79.8 % |
+| the next destination | TF 3.8 % | CR-F 3.9 % | CR-F 7.3 % | CR-F 5.3 % |
+| the variant's CST streamlines: today's tract from the same seed | — | CST 100 % | Other 64.9 %, CST 12.9 %, Sup-F 5.4 % | Other 60.9 %, CST 18.3 %, CR-F 4.0 % |
+| today's CST streamlines the variant keeps CST | — | 100 % | 23.0 % | 25.8 % |
+
+Reading it:
+- **Rescan agreement improves with both variants, paths more than labels.** On the within rescan, Rs 0.1 halves the
+  median path distance (6.3 against 13.4 mm) and moves 55.7 % of paths more than 5 mm (today 71.6 %). Step 0.6:
+  9.5 mm and 65.3 %. Renames fall less: Rs 0.1 renames 6.7 points fewer of A's streamlines on the within rescan
+  (28.8 against 35.4 %) and 5.6–6.8 points fewer on the others; step 0.6, 3.2–4.3 points fewer. Step 0.6 keeps the
+  main named tract at all 8 landmark sites on the within rescan, but 6 and 7 on the others (today 6, 6 and 5). A
+  seeding threshold of 0.2 changes nothing on rescans.
+- **Reweighting to today's tract mix does not explain the gain.** Rs 0.1 still renames 28.4 / 31.4 / 34.0 %. The
+  drop is within tracts. A's CST streamlines are renamed by the within rescan 46.3 % of the time under Rs 0.1 and
+  58.5 % under step 0.6, against 73.8 % today. Other's rate falls from 26.6 to about 21 % (Rs 0.1).
+  - Reweighting does not control for a class that changes what it holds. Under Rs 0.1 the CST is 32 % larger and
+    holds different streamlines: 64.9 % of its streamlines come from seeds that are Other today, and it keeps 23.0 %
+    of today's CST. A larger class that absorbs its neighbors renames less. Whatever the class, the CST's renames
+    still go mostly to Other (77.8–79.8 %).
+- **Honesty: more confident, equally overconfident.** Both variants' ensembles state more (0.812 and 0.791 against
+  0.764) and are right more often, so the gap between stated and observed is unchanged at about 0.06–0.11.
+  - AUROC rises slightly for Rs 0.1 on all three rescans (+0.006 to +0.018).
+  - Step 0.6's rises on two (0.808 and 0.784) and not on session 5 (0.772 against 0.773).
+  - The seeding subset's AUROC falls by 0.005–0.007.
+  - These differences come from one subject, over different seed sets, with no uncertainty attached; they are
+    within what a second subject could reverse.
+- **Robustness follows the sweep.** Paths more than 5 mm apart fall to 0.69 % (Rs 0.1) and 1.52 % (step 0.6) under
+  epsilon, and to 19.5 and 28.0 % under fieldonly. Epsilon's renames barely move (3.6–3.7 % against 3.96 %): at the
+  rounding level they are mostly the index grouping's floor (step 1).
+- **The bias is large, and tract-specific.**
+  - **Rs 0.1:** the tract mix moves by 0.113 in total variation. The AF loses 57 % of its volume, the CST gains 32 %
+    and the UF loses 32 %. The Other share rises from 0.526 to 0.562, and RapidParc's mean top probability falls
+    from 0.941 to 0.931: the labeler is a little less sure of these streamlines.
+  - **Step 0.6:** total variation 0.072, the CST ×1.25 and the AF ×0.77, the same rise in Other, the UF unchanged.
+  - **Seeding threshold 0.2:** a third fewer streamlines (41,548), the UF ×0.69.
+  - The labeler was trained on tractography made with today's settings, so part of this may be the labeler meeting
+    unfamiliar streamlines rather than different anatomy.
+- **Over-smoothing explains the rescan gains as well as better tracking does.** Rs 0.1 trusts each step's signal
+  less, and step 0.6 halves the process noise per millimeter (Q is added per step). Both make paths stiffer. The
+  pattern fits a stiffer tracker: the curved AF ×0.43 and the hooked UF ×0.68 shrink, the straight CST grows ×1.32,
+  paths are shorter, more streamlines are Other, and the labeler is less sure. A stiffer tracker agrees better with
+  itself across rescans whether or not it follows the anatomy better.
+- **No tracker setting is a safe default.** The settings that damp divergence produce a different tractography.
+  The gains on rescans are modest (3–7 points of renames, AUROC up by at most 0.018) and come with tract-level
+  changes, such as the AF halving under Rs 0.1, that only a ground truth can judge. The seeding threshold is the
+  only setting without path bias, and it gains nothing on rescans.
+- **Next: test step 0.6 and Rs 0.1 against the ISMRM 2015 phantom before anything else** (docs/validation-datasets.md:
+  25 bundles with ground truth, scored with scilpy's ROI-based 2023 scorer).
+  - The scorer assigns streamlines to the ground-truth bundles itself, independent of the labeler, and counts
+    invalid bundles. Its ground truth has no arcuate fasciculus: the AF was one of the invalid bundles most
+    submissions found, generated from ILF and SLF crossing streamlines.
+  - The measure is the scorer's: the valid and invalid bundles, and whether a stiffer tracker loses true curved
+    bundles or false ones. RapidParc's AF label is not: ORG splits the AF from SLF-I to III, so streamlines along the
+    phantom's valid SLF may be labeled AF.
+  - The phantom is b = 1000 with 32 directions. The Rs and Qm effects at the b = 2800 shell may not carry over to it.
+
+Caveats (scoring):
+- one subject, one protocol, scan A;
+- one draw of the labeler (draw 0), index grouping;
+- 8 epsilon and 8 fieldonly runs per configuration;
+- the seeding threshold is scored on A's seed set throughout, with labels from today's company;
+- volumes are density presence at one threshold (RHO), on A's grid;
+- the honesty and AUROC rows are over different seed sets per configuration, with no uncertainty attached;
+- no ground truth: reproducibility and honesty only.

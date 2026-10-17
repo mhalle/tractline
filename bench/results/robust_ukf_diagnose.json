@@ -1,0 +1,2373 @@
+{
+ "pair": "cIIIs04-2.1",
+ "eps": 1e-06,
+ "strata": [
+  "> 5 mm",
+  "(0.1, 5] mm",
+  "<= 0.1 mm",
+  "unmatched"
+ ],
+ "diverged mm": 5.0,
+ "separation mm": 0.5,
+ "seed: deg, steps": [
+  1.0,
+  3
+ ],
+ "crossing: fa2 >, angle >": [
+  0.2,
+  20.0
+ ],
+ "arms": {
+  "epsilon": {
+   "runs": [
+    "r001",
+    "r002",
+    "r003",
+    "r004",
+    "r005",
+    "r006",
+    "r007",
+    "r008",
+    "r009",
+    "r010",
+    "r011",
+    "r012",
+    "r013",
+    "r014",
+    "r015",
+    "r016"
+   ],
+   "stop decisions not the OR of the recorded conditions": 0,
+   "lost seeds (not in P's seed list)": {},
+   "the 'unmatched' stratum": {
+    "sampled": 400,
+    "in P's seed list": 400,
+    "P's streamline under 40 mm or dropped": 400
+   },
+   "mask voxels differing from A's, per run": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "A's seeds the stored run lacks, per run (mean)": 82.3,
+   "diverged with its own mask (P) / with A's mask (Pfix)": {
+    "P only": 0,
+    "Pfix only": 0,
+    "both": 2749
+   },
+   "reproduction": {
+    "r001": {
+     "A against A.npz": {
+      "compared": 275,
+      "point counts differ": 0,
+      "max vertex deviation mm": 0.025
+     },
+     "P against the stored epsilon r001": {
+      "compared": 250,
+      "point counts differ": 0,
+      "max vertex deviation mm": 0.025
+     }
+    },
+    "r002": {
+     "A against A.npz": {
+      "compared": 275,
+      "point counts differ": 0,
+      "max vertex deviation mm": 0.025
+     },
+     "P against the stored epsilon r002": {
+      "compared": 250,
+      "point counts differ": 0,
+      "max vertex deviation mm": 0.025
+     }
+    },
+    "r003": {
+     "A against A.npz": {
+      "compared": 275,
+      "point counts differ": 0,
+      "max vertex deviation mm": 0.025
+     },
+     "P against the stored epsilon r003": {
+      "compared": 250,
+      "point counts differ": 0,
+      "max vertex deviation mm": 0.025
+     }
+    },
+    "r004": {
+     "A against A.npz": {
+      "compared": 275,
+      "point counts differ": 0,
+      "max vertex deviation mm": 0.025
+     },
+     "P against the stored epsilon r004": {
+      "compared": 250,
+      "point counts differ": 0,
+      "max vertex deviation mm": 0.025
+     }
+    },
+    "r005": {
+     "A against A.npz": {
+      "compared": 275,
+      "point counts differ": 0,
+      "max vertex deviation mm": 0.025
+     },
+     "P against the stored epsilon r005": {
+      "compared": 250,
+      "point counts differ": 0,
+      "max vertex deviation mm": 0.025
+     }
+    },
+    "r006": {
+     "A against A.npz": {
+      "compared": 275,
+      "point counts differ": 0,
+      "max vertex deviation mm": 0.025
+     },
+     "P against the stored epsilon r006": {
+      "compared": 250,
+      "point counts differ": 0,
+      "max vertex deviation mm": 0.025
+     }
+    },
+    "r007": {
+     "A against A.npz": {
+      "compared": 275,
+      "point counts differ": 0,
+      "max vertex deviation mm": 0.025
+     },
+     "P against the stored epsilon r007": {
+      "compared": 250,
+      "point counts differ": 0,
+      "max vertex deviation mm": 0.025
+     }
+    },
+    "r008": {
+     "A against A.npz": {
+      "compared": 275,
+      "point counts differ": 0,
+      "max vertex deviation mm": 0.025
+     },
+     "P against the stored epsilon r008": {
+      "compared": 250,
+      "point counts differ": 0,
+      "max vertex deviation mm": 0.025
+     }
+    },
+    "r009": {
+     "A against A.npz": {
+      "compared": 275,
+      "point counts differ": 0,
+      "max vertex deviation mm": 0.025
+     },
+     "P against the stored epsilon r009": {
+      "compared": 250,
+      "point counts differ": 0,
+      "max vertex deviation mm": 0.025
+     }
+    },
+    "r010": {
+     "A against A.npz": {
+      "compared": 275,
+      "point counts differ": 0,
+      "max vertex deviation mm": 0.025
+     },
+     "P against the stored epsilon r010": {
+      "compared": 250,
+      "point counts differ": 0,
+      "max vertex deviation mm": 0.025
+     }
+    },
+    "r011": {
+     "A against A.npz": {
+      "compared": 275,
+      "point counts differ": 0,
+      "max vertex deviation mm": 0.025
+     },
+     "P against the stored epsilon r011": {
+      "compared": 250,
+      "point counts differ": 0,
+      "max vertex deviation mm": 0.025
+     }
+    },
+    "r012": {
+     "A against A.npz": {
+      "compared": 275,
+      "point counts differ": 0,
+      "max vertex deviation mm": 0.025
+     },
+     "P against the stored epsilon r012": {
+      "compared": 250,
+      "point counts differ": 0,
+      "max vertex deviation mm": 0.025
+     }
+    },
+    "r013": {
+     "A against A.npz": {
+      "compared": 275,
+      "point counts differ": 0,
+      "max vertex deviation mm": 0.025
+     },
+     "P against the stored epsilon r013": {
+      "compared": 250,
+      "point counts differ": 0,
+      "max vertex deviation mm": 0.025
+     }
+    },
+    "r014": {
+     "A against A.npz": {
+      "compared": 275,
+      "point counts differ": 0,
+      "max vertex deviation mm": 0.025
+     },
+     "P against the stored epsilon r014": {
+      "compared": 250,
+      "point counts differ": 0,
+      "max vertex deviation mm": 0.025
+     }
+    },
+    "r015": {
+     "A against A.npz": {
+      "compared": 275,
+      "point counts differ": 0,
+      "max vertex deviation mm": 0.025
+     },
+     "P against the stored epsilon r015": {
+      "compared": 250,
+      "point counts differ": 0,
+      "max vertex deviation mm": 0.025
+     }
+    },
+    "r016": {
+     "A against A.npz": {
+      "compared": 275,
+      "point counts differ": 0,
+      "max vertex deviation mm": 0.025
+     },
+     "P against the stored epsilon r016": {
+      "compared": 250,
+      "point counts differ": 0,
+      "max vertex deviation mm": 0.025
+     }
+    }
+   },
+   "P": {
+    "pairs": 4400,
+    "diverged": 2749,
+    "diverged with an event": 2749,
+    "diverged, no event in either half": 0,
+    "classes (unweighted)": {
+     "drift": 0.6879,
+     "stop: FA < 0.08": 0.0815,
+     "stop: outside the mask (both masks agree)": 0.0004,
+     "stop: signal < 0.06": 0.0011,
+     "switch: flags equal (the states' tensor order differs)": 0.0095,
+     "switch: sw": 0.0069,
+     "switch: sw2": 0.1797,
+     "turn: the tensor estimate itself (no switch)": 0.0331
+    },
+    "classes (weighted to the population)": {
+     "drift": 0.7491,
+     "stop: FA < 0.08": 0.065,
+     "stop: outside the mask (both masks agree)": 0.0004,
+     "stop: signal < 0.06": 0.0012,
+     "switch: flags equal (the states' tensor order differs)": 0.0102,
+     "switch: sw": 0.0036,
+     "switch: sw2": 0.1365,
+     "turn: the tensor estimate itself (no switch)": 0.034
+    },
+    "classes by family (weighted)": {
+     "switch": 0.1503,
+     "turn": 0.034,
+     "stop": 0.0666,
+     "seed": 0.0,
+     "drift": 0.7491
+    },
+    "event: arc length from the seed mm (quartiles)": [
+     31.2,
+     53.7,
+     87.3
+    ],
+    "event: steps to separation (quartiles)": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "event: distance just before mm (quartiles)": [
+     0.485,
+     0.498,
+     0.5
+    ],
+    "by class: arc length mm (quartiles), steps to separation (median)": {
+     "drift": [
+      [
+       40.2,
+       63.6,
+       93.9
+      ],
+      [
+       0.0
+      ]
+     ],
+     "stop: FA < 0.08": [
+      [
+       42.407,
+       65.1,
+       96.568
+      ],
+      [
+       0.0
+      ]
+     ],
+     "stop: outside the mask (both masks agree)": [
+      [
+       138.9,
+       138.9,
+       138.9
+      ],
+      [
+       0.0
+      ]
+     ],
+     "stop: signal < 0.06": [
+      [
+       75.619,
+       93.748,
+       136.386
+      ],
+      [
+       0.0
+      ]
+     ],
+     "switch: flags equal (the states' tensor order differs)": [
+      [
+       10.749,
+       15.933,
+       20.7
+      ],
+      [
+       2.0
+      ]
+     ],
+     "switch: sw": [
+      [
+       10.5,
+       14.003,
+       14.4
+      ],
+      [
+       9.0
+      ]
+     ],
+     "switch: sw2": [
+      [
+       15.68,
+       21.6,
+       33.379
+      ],
+      [
+       4.0
+      ]
+     ],
+     "turn: the tensor estimate itself (no switch)": [
+      [
+       10.2,
+       13.2,
+       23.1
+      ],
+      [
+       3.0
+      ]
+     ]
+    },
+    "crossing share: at the event / the steps before it (mean over pairs)": [
+     0.5724,
+     0.4126
+    ],
+    "crossing share at the event, by class": {
+     "drift": 0.6786,
+     "stop: FA < 0.08": 0.4209,
+     "stop: outside the mask (both masks agree)": 0.0,
+     "stop: signal < 0.06": 0.0,
+     "switch: flags equal (the states' tensor order differs)": 0.4744,
+     "switch: sw": 0.0,
+     "switch: sw2": 0.1125,
+     "turn: the tensor estimate itself (no switch)": 0.4852
+    },
+    "A at the event: fa / fa2 / angle (medians)": [
+     0.384,
+     0.367,
+     48.657
+    ],
+    "threshold stops, FA: the other side's value (quartiles)": [
+     0.084,
+     0.094,
+     0.319
+    ],
+    "threshold stops, signal: the other side's value (quartiles)": [
+     0.061,
+     0.061,
+     0.061
+    ],
+    "voxel read differs before the event, by class": {
+     "drift": 0.9833,
+     "stop: FA < 0.08": 0.7845,
+     "stop: outside the mask (both masks agree)": 1.0,
+     "stop: signal < 0.06": 1.0,
+     "switch: flags equal (the states' tensor order differs)": 0.4833,
+     "switch: sw": 0.0,
+     "switch: sw2": 0.3257,
+     "turn: the tensor estimate itself (no switch)": 0.3299
+    },
+    "growth: arc length mm where the halves are first 0.0001 / 0.001 / 0.01 / 0.1 / 0.5 mm apart (quartiles)": [
+     [
+      4.8,
+      7.2,
+      10.2
+     ],
+     [
+      8.7,
+      12.0,
+      16.8
+     ],
+     [
+      14.1,
+      18.9,
+      29.4
+     ],
+     [
+      22.5,
+      35.7,
+      61.8
+     ],
+     [
+      33.3,
+      56.7,
+      88.8
+     ]
+    ],
+    "growth: arc length mm where the voxel read first differs (quartiles)": [
+     20.1,
+     27.9,
+     42.0
+    ],
+    "growth: the voxel read differs before the halves are 1e-3 mm apart": 0.0088,
+    "turns: deg (quartiles)": [
+     13.552,
+     18.925,
+     20.04
+    ],
+    "the other half separated too": 0.0235,
+    "seed FA (A's seed tensor; both tensors start as it): quartiles, diverged / stayed together": [
+     [
+      0.128,
+      0.165,
+      0.226
+     ],
+     [
+      0.177,
+      0.267,
+      0.382
+     ]
+    ],
+    "e1 flipped, pairs (unweighted counts): diverged / stayed": [
+     0,
+     0
+    ],
+    "stayed together (MDF <= 5 mm): pairs, a turn while together, stop step differs": [
+     1651,
+     0.0123,
+     0.1586
+    ],
+    "diverged: a turn while together, stop step differs": [
+     0.1839,
+     0.9903
+    ],
+    "switch flags differing beyond 3 mm": {
+     "drift pairs: weighted / unweighted": [
+      0.5996,
+      0.6039
+     ],
+     "stayed together: weighted / unweighted": [
+      0.2956,
+      0.4603
+     ],
+     "drift pairs: angle between A's tensors at those steps, deg (quartiles over steps, weighted by pair)": [
+      0.009,
+      0.024,
+      0.094
+     ],
+     "drift pairs: steps from the last such difference to the separation (quartiles)": [
+      63.0,
+      122.0,
+      212.404
+     ]
+    },
+    "by stratum (sampled on the stored records)": {
+     "> 5 mm": {
+      "pairs": 2400,
+      "diverged": 2398
+     },
+     "(0.1, 5] mm": {
+      "pairs": 800,
+      "diverged": 0
+     },
+     "<= 0.1 mm": {
+      "pairs": 800,
+      "diverged": 0
+     },
+     "unmatched": {
+      "pairs": 400,
+      "diverged": 351
+     }
+    }
+   },
+   "Pfix": {
+    "pairs": 4400,
+    "diverged": 2749,
+    "diverged with an event": 2749,
+    "diverged, no event in either half": 0,
+    "classes (unweighted)": {
+     "drift": 0.6879,
+     "stop: FA < 0.08": 0.0815,
+     "stop: outside the mask (both masks agree)": 0.0004,
+     "stop: signal < 0.06": 0.0011,
+     "switch: flags equal (the states' tensor order differs)": 0.0095,
+     "switch: sw": 0.0069,
+     "switch: sw2": 0.1797,
+     "turn: the tensor estimate itself (no switch)": 0.0331
+    },
+    "classes (weighted to the population)": {
+     "drift": 0.7491,
+     "stop: FA < 0.08": 0.065,
+     "stop: outside the mask (both masks agree)": 0.0004,
+     "stop: signal < 0.06": 0.0012,
+     "switch: flags equal (the states' tensor order differs)": 0.0102,
+     "switch: sw": 0.0036,
+     "switch: sw2": 0.1365,
+     "turn: the tensor estimate itself (no switch)": 0.034
+    },
+    "classes by family (weighted)": {
+     "switch": 0.1503,
+     "turn": 0.034,
+     "stop": 0.0666,
+     "seed": 0.0,
+     "drift": 0.7491
+    },
+    "event: arc length from the seed mm (quartiles)": [
+     31.2,
+     53.7,
+     87.3
+    ],
+    "event: steps to separation (quartiles)": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "event: distance just before mm (quartiles)": [
+     0.485,
+     0.498,
+     0.5
+    ],
+    "by class: arc length mm (quartiles), steps to separation (median)": {
+     "drift": [
+      [
+       40.2,
+       63.6,
+       93.9
+      ],
+      [
+       0.0
+      ]
+     ],
+     "stop: FA < 0.08": [
+      [
+       42.407,
+       65.1,
+       96.568
+      ],
+      [
+       0.0
+      ]
+     ],
+     "stop: outside the mask (both masks agree)": [
+      [
+       138.9,
+       138.9,
+       138.9
+      ],
+      [
+       0.0
+      ]
+     ],
+     "stop: signal < 0.06": [
+      [
+       75.619,
+       93.748,
+       136.386
+      ],
+      [
+       0.0
+      ]
+     ],
+     "switch: flags equal (the states' tensor order differs)": [
+      [
+       10.749,
+       15.933,
+       20.7
+      ],
+      [
+       2.0
+      ]
+     ],
+     "switch: sw": [
+      [
+       10.5,
+       14.003,
+       14.4
+      ],
+      [
+       9.0
+      ]
+     ],
+     "switch: sw2": [
+      [
+       15.68,
+       21.6,
+       33.379
+      ],
+      [
+       4.0
+      ]
+     ],
+     "turn: the tensor estimate itself (no switch)": [
+      [
+       10.2,
+       13.2,
+       23.1
+      ],
+      [
+       3.0
+      ]
+     ]
+    },
+    "crossing share: at the event / the steps before it (mean over pairs)": [
+     0.5724,
+     0.4126
+    ],
+    "crossing share at the event, by class": {
+     "drift": 0.6786,
+     "stop: FA < 0.08": 0.4209,
+     "stop: outside the mask (both masks agree)": 0.0,
+     "stop: signal < 0.06": 0.0,
+     "switch: flags equal (the states' tensor order differs)": 0.4744,
+     "switch: sw": 0.0,
+     "switch: sw2": 0.1125,
+     "turn: the tensor estimate itself (no switch)": 0.4852
+    },
+    "A at the event: fa / fa2 / angle (medians)": [
+     0.384,
+     0.367,
+     48.657
+    ],
+    "threshold stops, FA: the other side's value (quartiles)": [
+     0.084,
+     0.094,
+     0.319
+    ],
+    "threshold stops, signal: the other side's value (quartiles)": [
+     0.061,
+     0.061,
+     0.061
+    ],
+    "voxel read differs before the event, by class": {
+     "drift": 0.9833,
+     "stop: FA < 0.08": 0.7845,
+     "stop: outside the mask (both masks agree)": 1.0,
+     "stop: signal < 0.06": 1.0,
+     "switch: flags equal (the states' tensor order differs)": 0.4833,
+     "switch: sw": 0.0,
+     "switch: sw2": 0.3257,
+     "turn: the tensor estimate itself (no switch)": 0.3299
+    },
+    "growth: arc length mm where the halves are first 0.0001 / 0.001 / 0.01 / 0.1 / 0.5 mm apart (quartiles)": [
+     [
+      4.8,
+      7.2,
+      10.2
+     ],
+     [
+      8.7,
+      12.0,
+      16.8
+     ],
+     [
+      14.1,
+      18.9,
+      29.4
+     ],
+     [
+      22.5,
+      35.7,
+      61.8
+     ],
+     [
+      33.3,
+      56.7,
+      88.8
+     ]
+    ],
+    "growth: arc length mm where the voxel read first differs (quartiles)": [
+     20.1,
+     27.9,
+     42.0
+    ],
+    "growth: the voxel read differs before the halves are 1e-3 mm apart": 0.0088,
+    "turns: deg (quartiles)": [
+     13.552,
+     18.925,
+     20.04
+    ],
+    "the other half separated too": 0.0235,
+    "seed FA (A's seed tensor; both tensors start as it): quartiles, diverged / stayed together": [
+     [
+      0.128,
+      0.165,
+      0.226
+     ],
+     [
+      0.177,
+      0.267,
+      0.382
+     ]
+    ],
+    "e1 flipped, pairs (unweighted counts): diverged / stayed": [
+     0,
+     0
+    ],
+    "stayed together (MDF <= 5 mm): pairs, a turn while together, stop step differs": [
+     1651,
+     0.0123,
+     0.1586
+    ],
+    "diverged: a turn while together, stop step differs": [
+     0.1839,
+     0.9903
+    ],
+    "switch flags differing beyond 3 mm": {
+     "drift pairs: weighted / unweighted": [
+      0.5996,
+      0.6039
+     ],
+     "stayed together: weighted / unweighted": [
+      0.2956,
+      0.4603
+     ],
+     "drift pairs: angle between A's tensors at those steps, deg (quartiles over steps, weighted by pair)": [
+      0.009,
+      0.024,
+      0.094
+     ],
+     "drift pairs: steps from the last such difference to the separation (quartiles)": [
+      63.0,
+      122.0,
+      212.404
+     ]
+    },
+    "by stratum (sampled on the stored records)": {
+     "> 5 mm": {
+      "pairs": 2400,
+      "diverged": 2398
+     },
+     "(0.1, 5] mm": {
+      "pairs": 800,
+      "diverged": 0
+     },
+     "<= 0.1 mm": {
+      "pairs": 800,
+      "diverged": 0
+     },
+     "unmatched": {
+      "pairs": 400,
+      "diverged": 351
+     }
+    }
+   },
+   "drift": {
+    "growth, decades per mm (weighted mean over steps): position distance / state difference": [
+     0.03,
+     0.041
+    ],
+    "the same, diverged pairs / pairs that stay together: state difference": [
+     0.086,
+     0.04
+    ],
+    "growth by A's FA": {
+     "[0, 0.15)": {
+      "steps (state window)": 98976,
+      "position": 0.013,
+      "state": 0.092,
+      "state: diverged / stayed": [
+       0.163,
+       0.089
+      ]
+     },
+     "[0.15, 0.2)": {
+      "steps (state window)": 93467,
+      "position": 0.015,
+      "state": 0.104,
+      "state: diverged / stayed": [
+       0.178,
+       0.101
+      ]
+     },
+     "[0.2, 0.3)": {
+      "steps (state window)": 146604,
+      "position": 0.073,
+      "state": 0.065,
+      "state: diverged / stayed": [
+       0.114,
+       0.064
+      ]
+     },
+     "[0.3, 0.45)": {
+      "steps (state window)": 188142,
+      "position": 0.044,
+      "state": 0.044,
+      "state: diverged / stayed": [
+       0.064,
+       0.043
+      ]
+     },
+     "[0.45, 1.01)": {
+      "steps (state window)": 394155,
+      "position": 0.019,
+      "state": 0.019,
+      "state: diverged / stayed": [
+       0.031,
+       0.019
+      ]
+     }
+    },
+    "growth by angle between A's tensors (deg)": {
+     "[0, 2)": {
+      "steps (state window)": 234092,
+      "position": 0.06,
+      "state": 0.121,
+      "state: diverged / stayed": [
+       0.185,
+       0.118
+      ]
+     },
+     "[2, 10)": {
+      "steps (state window)": 79644,
+      "position": 0.089,
+      "state": 0.102,
+      "state: diverged / stayed": [
+       0.129,
+       0.101
+      ]
+     },
+     "[10, 20)": {
+      "steps (state window)": 44352,
+      "position": 0.062,
+      "state": 0.083,
+      "state: diverged / stayed": [
+       0.09,
+       0.083
+      ]
+     },
+     "[20, 45)": {
+      "steps (state window)": 108004,
+      "position": 0.043,
+      "state": 0.029,
+      "state: diverged / stayed": [
+       0.039,
+       0.028
+      ]
+     },
+     "[45, 90)": {
+      "steps (state window)": 455252,
+      "position": 0.021,
+      "state": 0.015,
+      "state: diverged / stayed": [
+       0.019,
+       0.015
+      ]
+     }
+    },
+    "growth by A's second tensor's FA": {
+     "[0, 0.15)": {
+      "steps (state window)": 153324,
+      "position": 0.018,
+      "state": 0.058,
+      "state: diverged / stayed": [
+       0.121,
+       0.056
+      ]
+     },
+     "[0.15, 0.2)": {
+      "steps (state window)": 108930,
+      "position": 0.011,
+      "state": 0.087,
+      "state: diverged / stayed": [
+       0.165,
+       0.084
+      ]
+     },
+     "[0.2, 0.3)": {
+      "steps (state window)": 150241,
+      "position": 0.049,
+      "state": 0.047,
+      "state: diverged / stayed": [
+       0.101,
+       0.046
+      ]
+     },
+     "[0.3, 0.45)": {
+      "steps (state window)": 200392,
+      "position": 0.036,
+      "state": 0.037,
+      "state: diverged / stayed": [
+       0.063,
+       0.037
+      ]
+     },
+     "[0.45, 1.01)": {
+      "steps (state window)": 308457,
+      "position": 0.026,
+      "state": 0.025,
+      "state: diverged / stayed": [
+       0.039,
+       0.025
+      ]
+     }
+    },
+    "growth by A's mean signal (quintiles of the steps)": {
+     "[0.0594, 0.254)": {
+      "steps (state window)": 184269,
+      "position": 0.026,
+      "state": 0.043,
+      "state: diverged / stayed": [
+       0.094,
+       0.042
+      ]
+     },
+     "[0.254, 0.284)": {
+      "steps (state window)": 184269,
+      "position": 0.028,
+      "state": 0.05,
+      "state: diverged / stayed": [
+       0.106,
+       0.049
+      ]
+     },
+     "[0.284, 0.303)": {
+      "steps (state window)": 184267,
+      "position": 0.034,
+      "state": 0.044,
+      "state: diverged / stayed": [
+       0.084,
+       0.043
+      ]
+     },
+     "[0.303, 0.323)": {
+      "steps (state window)": 184270,
+      "position": 0.032,
+      "state": 0.039,
+      "state: diverged / stayed": [
+       0.078,
+       0.038
+      ]
+     },
+     "[0.323, 0.744)": {
+      "steps (state window)": 184269,
+      "position": 0.029,
+      "state": 0.031,
+      "state: diverged / stayed": [
+       0.065,
+       0.03
+      ]
+     }
+    },
+    "growth by arc length from the seed (mm)": {
+     "[0, 5)": {
+      "steps (state window)": 102668,
+      "position": 0.219,
+      "state": 0.174,
+      "state: diverged / stayed": [
+       0.281,
+       0.17
+      ]
+     },
+     "[5, 10)": {
+      "steps (state window)": 118646,
+      "position": 0.121,
+      "state": 0.084,
+      "state: diverged / stayed": [
+       0.124,
+       0.083
+      ]
+     },
+     "[10, 20)": {
+      "steps (state window)": 176257,
+      "position": 0.063,
+      "state": 0.042,
+      "state: diverged / stayed": [
+       0.087,
+       0.041
+      ]
+     },
+     "[20, 40)": {
+      "steps (state window)": 222209,
+      "position": 0.028,
+      "state": 0.022,
+      "state: diverged / stayed": [
+       0.035,
+       0.021
+      ]
+     },
+     "[40, 80)": {
+      "steps (state window)": 213043,
+      "position": 0.019,
+      "state": 0.018,
+      "state: diverged / stayed": [
+       0.023,
+       0.018
+      ]
+     },
+     "[80, 251)": {
+      "steps (state window)": 88521,
+      "position": 0.019,
+      "state": 0.016,
+      "state: diverged / stayed": [
+       0.026,
+       0.016
+      ]
+     }
+    },
+    "share of steps in the first 40 mm: diverged / stayed": {
+     "near-isotropic (A's FA < 0.2)": [
+      0.276,
+      0.158
+     ],
+     "one tensor (A's tensors within 2 deg)": [
+      0.361,
+      0.248
+     ],
+     "crossing (second tensor's FA > 0.2, tensors > 20 deg apart)": [
+      0.406,
+      0.508
+     ]
+    },
+    "by the seed's FA: share of the population / diverged (weighted)": {
+     "[0.1, 0.15)": [
+      0.1609,
+      0.0884
+     ],
+     "[0.15, 0.2)": [
+      0.1754,
+      0.0571
+     ],
+     "[0.2, 0.3)": [
+      0.257,
+      0.0226
+     ],
+     "[0.3, 0.45)": [
+      0.2578,
+      0.0117
+     ],
+     "[0.45, 1.01)": [
+      0.1489,
+      0.0137
+     ]
+    },
+    "seeds with FA < 0.2: share of the population / of the diverging (weighted)": [
+     0.3363,
+     0.6905
+    ],
+    "at the seed": {
+     "seed class": {
+      "pairs": 0,
+      "initial direction: deg (quartiles)": null,
+      "initial direction more than 1 / 10 / 45 deg apart": null,
+      "seed FA: A (quartiles)": null,
+      "seed FA: |A - perturbed| (quartiles)": null,
+      "e1 changed sign (the halves swap)": null
+     },
+     "drift class": {
+      "pairs": 1891,
+      "initial direction: deg (quartiles)": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "initial direction more than 1 / 10 / 45 deg apart": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "seed FA: A (quartiles)": [
+       0.128,
+       0.162,
+       0.219
+      ],
+      "seed FA: |A - perturbed| (quartiles)": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "e1 changed sign (the halves swap)": 0.0
+     },
+     "stayed together": {
+      "pairs": 1651,
+      "initial direction: deg (quartiles)": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "initial direction more than 1 / 10 / 45 deg apart": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "seed FA: A (quartiles)": [
+       0.177,
+       0.267,
+       0.382
+      ],
+      "seed FA: |A - perturbed| (quartiles)": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "e1 changed sign (the halves swap)": 0.0
+     }
+    }
+   }
+  },
+  "fieldonly": {
+   "runs": [
+    "r001",
+    "r002",
+    "r003",
+    "r004",
+    "r005",
+    "r006",
+    "r007",
+    "r008",
+    "r009",
+    "r010",
+    "r011",
+    "r012",
+    "r013",
+    "r014",
+    "r015",
+    "r016"
+   ],
+   "stop decisions not the OR of the recorded conditions": 0,
+   "lost seeds (not in P's seed list)": {
+    "unmatched: rejected by the seeding thresholds": 51,
+    "unmatched: the seed's voxel left P's mask": 3
+   },
+   "the 'unmatched' stratum": {
+    "sampled": 400,
+    "in P's seed list": 346,
+    "P's streamline under 40 mm or dropped": 335
+   },
+   "mask voxels differing from A's, per run": [
+    353,
+    346,
+    328,
+    478,
+    292,
+    371,
+    487,
+    315,
+    388,
+    372,
+    367,
+    391,
+    327,
+    305,
+    223,
+    460
+   ],
+   "A's seeds the stored run lacks, per run (mean)": 1758.8,
+   "diverged with its own mask (P) / with A's mask (Pfix)": {
+    "P only": 3,
+    "Pfix only": 2,
+    "both": 2668
+   },
+   "reproduction": {
+    "r001": {
+     "A against A.npz": {
+      "compared": 275,
+      "point counts differ": 0,
+      "max vertex deviation mm": 0.025
+     },
+     "P against the stored fieldonly r001": {
+      "compared": 250,
+      "MDF to the stored run: quartiles mm": [
+       0.019,
+       0.023,
+       0.049
+      ],
+      "share above 5 mm": 0.06
+     }
+    },
+    "r002": {
+     "A against A.npz": {
+      "compared": 275,
+      "point counts differ": 0,
+      "max vertex deviation mm": 0.025
+     },
+     "P against the stored fieldonly r002": {
+      "compared": 250,
+      "MDF to the stored run: quartiles mm": [
+       0.019,
+       0.023,
+       0.036
+      ],
+      "share above 5 mm": 0.048
+     }
+    },
+    "r003": {
+     "A against A.npz": {
+      "compared": 275,
+      "point counts differ": 0,
+      "max vertex deviation mm": 0.025
+     },
+     "P against the stored fieldonly r003": {
+      "compared": 250,
+      "MDF to the stored run: quartiles mm": [
+       0.019,
+       0.023,
+       0.051
+      ],
+      "share above 5 mm": 0.064
+     }
+    },
+    "r004": {
+     "A against A.npz": {
+      "compared": 275,
+      "point counts differ": 0,
+      "max vertex deviation mm": 0.025
+     },
+     "P against the stored fieldonly r004": {
+      "compared": 250,
+      "MDF to the stored run: quartiles mm": [
+       0.019,
+       0.024,
+       0.038
+      ],
+      "share above 5 mm": 0.028
+     }
+    },
+    "r005": {
+     "A against A.npz": {
+      "compared": 275,
+      "point counts differ": 0,
+      "max vertex deviation mm": 0.025
+     },
+     "P against the stored fieldonly r005": {
+      "compared": 250,
+      "MDF to the stored run: quartiles mm": [
+       0.019,
+       0.022,
+       0.05
+      ],
+      "share above 5 mm": 0.068
+     }
+    },
+    "r006": {
+     "A against A.npz": {
+      "compared": 275,
+      "point counts differ": 0,
+      "max vertex deviation mm": 0.025
+     },
+     "P against the stored fieldonly r006": {
+      "compared": 250,
+      "MDF to the stored run: quartiles mm": [
+       0.019,
+       0.023,
+       0.042
+      ],
+      "share above 5 mm": 0.064
+     }
+    },
+    "r007": {
+     "A against A.npz": {
+      "compared": 275,
+      "point counts differ": 0,
+      "max vertex deviation mm": 0.025
+     },
+     "P against the stored fieldonly r007": {
+      "compared": 250,
+      "MDF to the stored run: quartiles mm": [
+       0.019,
+       0.023,
+       0.038
+      ],
+      "share above 5 mm": 0.068
+     }
+    },
+    "r008": {
+     "A against A.npz": {
+      "compared": 275,
+      "point counts differ": 0,
+      "max vertex deviation mm": 0.025
+     },
+     "P against the stored fieldonly r008": {
+      "compared": 250,
+      "MDF to the stored run: quartiles mm": [
+       0.019,
+       0.024,
+       0.08
+      ],
+      "share above 5 mm": 0.092
+     }
+    },
+    "r009": {
+     "A against A.npz": {
+      "compared": 275,
+      "point counts differ": 0,
+      "max vertex deviation mm": 0.025
+     },
+     "P against the stored fieldonly r009": {
+      "compared": 250,
+      "MDF to the stored run: quartiles mm": [
+       0.02,
+       0.024,
+       0.073
+      ],
+      "share above 5 mm": 0.068
+     }
+    },
+    "r010": {
+     "A against A.npz": {
+      "compared": 275,
+      "point counts differ": 0,
+      "max vertex deviation mm": 0.025
+     },
+     "P against the stored fieldonly r010": {
+      "compared": 250,
+      "MDF to the stored run: quartiles mm": [
+       0.02,
+       0.024,
+       0.071
+      ],
+      "share above 5 mm": 0.056
+     }
+    },
+    "r011": {
+     "A against A.npz": {
+      "compared": 275,
+      "point counts differ": 0,
+      "max vertex deviation mm": 0.025
+     },
+     "P against the stored fieldonly r011": {
+      "compared": 250,
+      "MDF to the stored run: quartiles mm": [
+       0.019,
+       0.024,
+       0.057
+      ],
+      "share above 5 mm": 0.068
+     }
+    },
+    "r012": {
+     "A against A.npz": {
+      "compared": 275,
+      "point counts differ": 0,
+      "max vertex deviation mm": 0.025
+     },
+     "P against the stored fieldonly r012": {
+      "compared": 250,
+      "MDF to the stored run: quartiles mm": [
+       0.02,
+       0.023,
+       0.063
+      ],
+      "share above 5 mm": 0.064
+     }
+    },
+    "r013": {
+     "A against A.npz": {
+      "compared": 275,
+      "point counts differ": 0,
+      "max vertex deviation mm": 0.025
+     },
+     "P against the stored fieldonly r013": {
+      "compared": 250,
+      "MDF to the stored run: quartiles mm": [
+       0.019,
+       0.024,
+       0.056
+      ],
+      "share above 5 mm": 0.056
+     }
+    },
+    "r014": {
+     "A against A.npz": {
+      "compared": 275,
+      "point counts differ": 0,
+      "max vertex deviation mm": 0.025
+     },
+     "P against the stored fieldonly r014": {
+      "compared": 250,
+      "MDF to the stored run: quartiles mm": [
+       0.019,
+       0.023,
+       0.047
+      ],
+      "share above 5 mm": 0.056
+     }
+    },
+    "r015": {
+     "A against A.npz": {
+      "compared": 275,
+      "point counts differ": 0,
+      "max vertex deviation mm": 0.025
+     },
+     "P against the stored fieldonly r015": {
+      "compared": 250,
+      "MDF to the stored run: quartiles mm": [
+       0.019,
+       0.023,
+       0.065
+      ],
+      "share above 5 mm": 0.088
+     }
+    },
+    "r016": {
+     "A against A.npz": {
+      "compared": 275,
+      "point counts differ": 0,
+      "max vertex deviation mm": 0.025
+     },
+     "P against the stored fieldonly r016": {
+      "compared": 250,
+      "MDF to the stored run: quartiles mm": [
+       0.018,
+       0.022,
+       0.041
+      ],
+      "share above 5 mm": 0.076
+     }
+    }
+   },
+   "P": {
+    "pairs": 4346,
+    "diverged": 2671,
+    "diverged with an event": 2671,
+    "diverged, no event in either half": 0,
+    "classes (unweighted)": {
+     "drift": 0.5852,
+     "seed": 0.2344,
+     "stop: FA < 0.08": 0.0371,
+     "stop: outside the mask (both masks agree)": 0.0004,
+     "switch: flags equal (the states' tensor order differs)": 0.0154,
+     "switch: sw": 0.003,
+     "switch: sw2": 0.097,
+     "turn: the tensor estimate itself (no switch)": 0.0277
+    },
+    "classes (weighted to the population)": {
+     "drift": 0.6131,
+     "seed": 0.2313,
+     "stop: FA < 0.08": 0.0266,
+     "stop: outside the mask (both masks agree)": 0.0004,
+     "switch: flags equal (the states' tensor order differs)": 0.0143,
+     "switch: sw": 0.002,
+     "switch: sw2": 0.0855,
+     "turn: the tensor estimate itself (no switch)": 0.0269
+    },
+    "classes by family (weighted)": {
+     "switch": 0.1017,
+     "turn": 0.0269,
+     "stop": 0.027,
+     "seed": 0.2313,
+     "drift": 0.6131
+    },
+    "event: arc length from the seed mm (quartiles)": [
+     14.4,
+     24.9,
+     39.3
+    ],
+    "event: steps to separation (quartiles)": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "event: distance just before mm (quartiles)": [
+     0.487,
+     0.498,
+     0.5
+    ],
+    "by class: arc length mm (quartiles), steps to separation (median)": {
+     "drift": [
+      [
+       22.8,
+       32.7,
+       46.578
+      ],
+      [
+       0.0
+      ]
+     ],
+     "seed": [
+      [
+       7.8,
+       15.0,
+       25.8
+      ],
+      [
+       0.0
+      ]
+     ],
+     "stop: FA < 0.08": [
+      [
+       9.395,
+       15.941,
+       28.219
+      ],
+      [
+       0.0
+      ]
+     ],
+     "stop: outside the mask (both masks agree)": [
+      [
+       39.0,
+       39.0,
+       39.0
+      ],
+      [
+       0.0
+      ]
+     ],
+     "switch: flags equal (the states' tensor order differs)": [
+      [
+       8.437,
+       12.249,
+       15.699
+      ],
+      [
+       2.0
+      ]
+     ],
+     "switch: sw": [
+      [
+       6.731,
+       8.573,
+       18.228
+      ],
+      [
+       7.489
+      ]
+     ],
+     "switch: sw2": [
+      [
+       8.1,
+       11.7,
+       17.1
+      ],
+      [
+       5.748
+      ]
+     ],
+     "turn: the tensor estimate itself (no switch)": [
+      [
+       7.2,
+       10.56,
+       16.309
+      ],
+      [
+       2.0
+      ]
+     ]
+    },
+    "crossing share: at the event / the steps before it (mean over pairs)": [
+     0.5975,
+     0.3695
+    ],
+    "crossing share at the event, by class": {
+     "drift": 0.7457,
+     "seed": 0.4783,
+     "stop: FA < 0.08": 0.2484,
+     "stop: outside the mask (both masks agree)": 1.0,
+     "switch: flags equal (the states' tensor order differs)": 0.3472,
+     "switch: sw": 0.0,
+     "switch: sw2": 0.099,
+     "turn: the tensor estimate itself (no switch)": 0.3439
+    },
+    "A at the event: fa / fa2 / angle (medians)": [
+     0.377,
+     0.384,
+     46.518
+    ],
+    "threshold stops, FA: the other side's value (quartiles)": [
+     0.086,
+     0.091,
+     0.106
+    ],
+    "voxel read differs before the event, by class": {
+     "drift": 0.9883,
+     "seed": 0.814,
+     "stop: FA < 0.08": 0.856,
+     "stop: outside the mask (both masks agree)": 1.0,
+     "switch: flags equal (the states' tensor order differs)": 0.7933,
+     "switch: sw": 0.7206,
+     "switch: sw2": 0.6959,
+     "turn: the tensor estimate itself (no switch)": 0.7031
+    },
+    "growth: arc length mm where the halves are first 0.0001 / 0.001 / 0.01 / 0.1 / 0.5 mm apart (quartiles)": [
+     [
+      0.3,
+      0.3,
+      0.3
+     ],
+     [
+      0.3,
+      0.3,
+      0.3
+     ],
+     [
+      0.6,
+      1.5,
+      3.0
+     ],
+     [
+      5.4,
+      10.5,
+      17.4
+     ],
+     [
+      15.9,
+      26.1,
+      40.5
+     ]
+    ],
+    "growth: arc length mm where the voxel read first differs (quartiles)": [
+     4.8,
+     8.1,
+     12.9
+    ],
+    "growth: the voxel read differs before the halves are 1e-3 mm apart": 0.0,
+    "turns: deg (quartiles)": [
+     11.585,
+     16.703,
+     20.08
+    ],
+    "the other half separated too": 0.5788,
+    "seed FA (A's seed tensor; both tensors start as it): quartiles, diverged / stayed together": [
+     [
+      0.177,
+      0.264,
+      0.378
+     ],
+     [
+      0.169,
+      0.265,
+      0.383
+     ]
+    ],
+    "e1 flipped, pairs (unweighted counts): diverged / stayed": [
+     45,
+     13
+    ],
+    "stayed together (MDF <= 5 mm): pairs, a turn while together, stop step differs": [
+     1675,
+     0.0997,
+     0.8923
+    ],
+    "diverged: a turn while together, stop step differs": [
+     0.2092,
+     0.9996
+    ],
+    "switch flags differing beyond 3 mm": {
+     "drift pairs: weighted / unweighted": [
+      0.272,
+      0.2732
+     ],
+     "stayed together: weighted / unweighted": [
+      0.4884,
+      0.5588
+     ],
+     "drift pairs: angle between A's tensors at those steps, deg (quartiles over steps, weighted by pair)": [
+      0.015,
+      0.049,
+      0.327
+     ],
+     "drift pairs: steps from the last such difference to the separation (quartiles)": [
+      24.0,
+      59.0,
+      106.0
+     ]
+    },
+    "by stratum (sampled on the stored records)": {
+     "> 5 mm": {
+      "pairs": 2400,
+      "diverged": 2364
+     },
+     "(0.1, 5] mm": {
+      "pairs": 800,
+      "diverged": 8
+     },
+     "<= 0.1 mm": {
+      "pairs": 800,
+      "diverged": 2
+     },
+     "unmatched": {
+      "pairs": 346,
+      "diverged": 297
+     }
+    }
+   },
+   "Pfix": {
+    "pairs": 4349,
+    "diverged": 2670,
+    "diverged with an event": 2670,
+    "diverged, no event in either half": 0,
+    "classes (unweighted)": {
+     "drift": 0.5846,
+     "seed": 0.2348,
+     "stop: FA < 0.08": 0.0371,
+     "stop: outside the mask (both masks agree)": 0.0004,
+     "switch: flags equal (the states' tensor order differs)": 0.0154,
+     "switch: sw": 0.003,
+     "switch: sw2": 0.097,
+     "turn: the tensor estimate itself (no switch)": 0.0277
+    },
+    "classes (weighted to the population)": {
+     "drift": 0.6126,
+     "seed": 0.2317,
+     "stop: FA < 0.08": 0.0266,
+     "stop: outside the mask (both masks agree)": 0.0004,
+     "switch: flags equal (the states' tensor order differs)": 0.0143,
+     "switch: sw": 0.002,
+     "switch: sw2": 0.0855,
+     "turn: the tensor estimate itself (no switch)": 0.0269
+    },
+    "classes by family (weighted)": {
+     "switch": 0.1018,
+     "turn": 0.0269,
+     "stop": 0.027,
+     "seed": 0.2317,
+     "drift": 0.6126
+    },
+    "event: arc length from the seed mm (quartiles)": [
+     14.4,
+     24.9,
+     39.3
+    ],
+    "event: steps to separation (quartiles)": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "event: distance just before mm (quartiles)": [
+     0.487,
+     0.498,
+     0.5
+    ],
+    "by class: arc length mm (quartiles), steps to separation (median)": {
+     "drift": [
+      [
+       22.8,
+       32.7,
+       46.8
+      ],
+      [
+       0.0
+      ]
+     ],
+     "seed": [
+      [
+       7.8,
+       15.0,
+       25.844
+      ],
+      [
+       0.0
+      ]
+     ],
+     "stop: FA < 0.08": [
+      [
+       9.395,
+       15.941,
+       28.219
+      ],
+      [
+       0.0
+      ]
+     ],
+     "stop: outside the mask (both masks agree)": [
+      [
+       39.0,
+       39.0,
+       39.0
+      ],
+      [
+       0.0
+      ]
+     ],
+     "switch: flags equal (the states' tensor order differs)": [
+      [
+       8.437,
+       12.249,
+       15.699
+      ],
+      [
+       2.0
+      ]
+     ],
+     "switch: sw": [
+      [
+       6.731,
+       8.573,
+       18.228
+      ],
+      [
+       7.489
+      ]
+     ],
+     "switch: sw2": [
+      [
+       8.1,
+       11.7,
+       17.1
+      ],
+      [
+       5.748
+      ]
+     ],
+     "turn: the tensor estimate itself (no switch)": [
+      [
+       7.2,
+       10.56,
+       16.309
+      ],
+      [
+       2.0
+      ]
+     ]
+    },
+    "crossing share: at the event / the steps before it (mean over pairs)": [
+     0.5971,
+     0.3694
+    ],
+    "crossing share at the event, by class": {
+     "drift": 0.7453,
+     "seed": 0.4787,
+     "stop: FA < 0.08": 0.2484,
+     "stop: outside the mask (both masks agree)": 1.0,
+     "switch: flags equal (the states' tensor order differs)": 0.3472,
+     "switch: sw": 0.0,
+     "switch: sw2": 0.099,
+     "turn: the tensor estimate itself (no switch)": 0.3439
+    },
+    "A at the event: fa / fa2 / angle (medians)": [
+     0.377,
+     0.384,
+     46.504
+    ],
+    "threshold stops, FA: the other side's value (quartiles)": [
+     0.086,
+     0.091,
+     0.106
+    ],
+    "voxel read differs before the event, by class": {
+     "drift": 0.9883,
+     "seed": 0.8142,
+     "stop: FA < 0.08": 0.856,
+     "stop: outside the mask (both masks agree)": 1.0,
+     "switch: flags equal (the states' tensor order differs)": 0.7933,
+     "switch: sw": 0.7206,
+     "switch: sw2": 0.6959,
+     "turn: the tensor estimate itself (no switch)": 0.7031
+    },
+    "growth: arc length mm where the halves are first 0.0001 / 0.001 / 0.01 / 0.1 / 0.5 mm apart (quartiles)": [
+     [
+      0.3,
+      0.3,
+      0.3
+     ],
+     [
+      0.3,
+      0.3,
+      0.3
+     ],
+     [
+      0.6,
+      1.5,
+      3.0
+     ],
+     [
+      5.4,
+      10.5,
+      17.4
+     ],
+     [
+      15.9,
+      26.1,
+      40.5
+     ]
+    ],
+    "growth: arc length mm where the voxel read first differs (quartiles)": [
+     4.8,
+     8.1,
+     12.9
+    ],
+    "growth: the voxel read differs before the halves are 1e-3 mm apart": 0.0,
+    "turns: deg (quartiles)": [
+     11.585,
+     16.703,
+     20.08
+    ],
+    "the other half separated too": 0.5675,
+    "seed FA (A's seed tensor; both tensors start as it): quartiles, diverged / stayed together": [
+     [
+      0.176,
+      0.264,
+      0.378
+     ],
+     [
+      0.169,
+      0.265,
+      0.383
+     ]
+    ],
+    "e1 flipped, pairs (unweighted counts): diverged / stayed": [
+     45,
+     13
+    ],
+    "stayed together (MDF <= 5 mm): pairs, a turn while together, stop step differs": [
+     1679,
+     0.0998,
+     0.892
+    ],
+    "diverged: a turn while together, stop step differs": [
+     0.2089,
+     0.9996
+    ],
+    "switch flags differing beyond 3 mm": {
+     "drift pairs: weighted / unweighted": [
+      0.2727,
+      0.2742
+     ],
+     "stayed together: weighted / unweighted": [
+      0.4885,
+      0.5587
+     ],
+     "drift pairs: angle between A's tensors at those steps, deg (quartiles over steps, weighted by pair)": [
+      0.015,
+      0.049,
+      0.327
+     ],
+     "drift pairs: steps from the last such difference to the separation (quartiles)": [
+      24.0,
+      59.0,
+      106.0
+     ]
+    },
+    "by stratum (sampled on the stored records)": {
+     "> 5 mm": {
+      "pairs": 2400,
+      "diverged": 2361
+     },
+     "(0.1, 5] mm": {
+      "pairs": 800,
+      "diverged": 8
+     },
+     "<= 0.1 mm": {
+      "pairs": 800,
+      "diverged": 2
+     },
+     "unmatched": {
+      "pairs": 349,
+      "diverged": 299
+     }
+    }
+   },
+   "drift": {
+    "growth, decades per mm (weighted mean over steps): position distance / state difference": [
+     0.077,
+     0.032
+    ],
+    "the same, diverged pairs / pairs that stay together: state difference": [
+     0.036,
+     0.031
+    ],
+    "growth by A's FA": {
+     "[0, 0.15)": {
+      "steps (state window)": 31934,
+      "position": 0.137,
+      "state": 0.011,
+      "state: diverged / stayed": [
+       0.011,
+       0.011
+      ]
+     },
+     "[0.15, 0.2)": {
+      "steps (state window)": 38344,
+      "position": 0.127,
+      "state": 0.012,
+      "state: diverged / stayed": [
+       0.019,
+       0.01
+      ]
+     },
+     "[0.2, 0.3)": {
+      "steps (state window)": 44426,
+      "position": 0.111,
+      "state": 0.034,
+      "state: diverged / stayed": [
+       0.034,
+       0.034
+      ]
+     },
+     "[0.3, 0.45)": {
+      "steps (state window)": 57087,
+      "position": 0.09,
+      "state": 0.042,
+      "state: diverged / stayed": [
+       0.043,
+       0.041
+      ]
+     },
+     "[0.45, 1.01)": {
+      "steps (state window)": 77844,
+      "position": 0.042,
+      "state": 0.037,
+      "state: diverged / stayed": [
+       0.045,
+       0.035
+      ]
+     }
+    },
+    "growth by angle between A's tensors (deg)": {
+     "[0, 2)": {
+      "steps (state window)": 130823,
+      "position": 0.183,
+      "state": 0.016,
+      "state: diverged / stayed": [
+       0.019,
+       0.015
+      ]
+     },
+     "[2, 10)": {
+      "steps (state window)": 37621,
+      "position": 0.059,
+      "state": 0.067,
+      "state: diverged / stayed": [
+       0.074,
+       0.064
+      ]
+     },
+     "[10, 20)": {
+      "steps (state window)": 11820,
+      "position": 0.058,
+      "state": 0.096,
+      "state: diverged / stayed": [
+       0.099,
+       0.096
+      ]
+     },
+     "[20, 45)": {
+      "steps (state window)": 16887,
+      "position": 0.05,
+      "state": 0.042,
+      "state: diverged / stayed": [
+       0.051,
+       0.039
+      ]
+     },
+     "[45, 90)": {
+      "steps (state window)": 52484,
+      "position": 0.028,
+      "state": 0.023,
+      "state: diverged / stayed": [
+       0.025,
+       0.023
+      ]
+     }
+    },
+    "growth by A's second tensor's FA": {
+     "[0, 0.15)": {
+      "steps (state window)": 33033,
+      "position": 0.099,
+      "state": 0.012,
+      "state: diverged / stayed": [
+       0.011,
+       0.012
+      ]
+     },
+     "[0.15, 0.2)": {
+      "steps (state window)": 39740,
+      "position": 0.107,
+      "state": 0.015,
+      "state: diverged / stayed": [
+       0.022,
+       0.013
+      ]
+     },
+     "[0.2, 0.3)": {
+      "steps (state window)": 40849,
+      "position": 0.099,
+      "state": 0.03,
+      "state: diverged / stayed": [
+       0.029,
+       0.031
+      ]
+     },
+     "[0.3, 0.45)": {
+      "steps (state window)": 57873,
+      "position": 0.08,
+      "state": 0.041,
+      "state: diverged / stayed": [
+       0.043,
+       0.04
+      ]
+     },
+     "[0.45, 1.01)": {
+      "steps (state window)": 78140,
+      "position": 0.053,
+      "state": 0.038,
+      "state: diverged / stayed": [
+       0.046,
+       0.036
+      ]
+     }
+    },
+    "growth by A's mean signal (quintiles of the steps)": {
+     "[0.0597, 0.267)": {
+      "steps (state window)": 49927,
+      "position": 0.091,
+      "state": 0.02,
+      "state: diverged / stayed": [
+       0.023,
+       0.018
+      ]
+     },
+     "[0.267, 0.292)": {
+      "steps (state window)": 49927,
+      "position": 0.085,
+      "state": 0.031,
+      "state: diverged / stayed": [
+       0.038,
+       0.028
+      ]
+     },
+     "[0.292, 0.309)": {
+      "steps (state window)": 49927,
+      "position": 0.079,
+      "state": 0.038,
+      "state: diverged / stayed": [
+       0.04,
+       0.037
+      ]
+     },
+     "[0.309, 0.327)": {
+      "steps (state window)": 49927,
+      "position": 0.069,
+      "state": 0.038,
+      "state: diverged / stayed": [
+       0.041,
+       0.038
+      ]
+     },
+     "[0.327, 0.458)": {
+      "steps (state window)": 49927,
+      "position": 0.062,
+      "state": 0.035,
+      "state: diverged / stayed": [
+       0.041,
+       0.032
+      ]
+     }
+    },
+    "growth by arc length from the seed (mm)": {
+     "[0, 5)": {
+      "steps (state window)": 74740,
+      "position": 0.268,
+      "state": 0.016,
+      "state: diverged / stayed": [
+       0.016,
+       0.016
+      ]
+     },
+     "[5, 10)": {
+      "steps (state window)": 63886,
+      "position": 0.072,
+      "state": 0.05,
+      "state: diverged / stayed": [
+       0.057,
+       0.048
+      ]
+     },
+     "[10, 20)": {
+      "steps (state window)": 62265,
+      "position": 0.043,
+      "state": 0.038,
+      "state: diverged / stayed": [
+       0.046,
+       0.036
+      ]
+     },
+     "[20, 40)": {
+      "steps (state window)": 38446,
+      "position": 0.025,
+      "state": 0.028,
+      "state: diverged / stayed": [
+       0.032,
+       0.027
+      ]
+     },
+     "[40, 80)": {
+      "steps (state window)": 9661,
+      "position": 0.015,
+      "state": 0.024,
+      "state: diverged / stayed": [
+       0.027,
+       0.024
+      ]
+     },
+     "[80, 251)": {
+      "steps (state window)": 637,
+      "position": 0.018,
+      "state": 0.025,
+      "state: diverged / stayed": [
+       0.036,
+       0.023
+      ]
+     }
+    },
+    "share of steps in the first 40 mm: diverged / stayed": {
+     "near-isotropic (A's FA < 0.2)": [
+      0.145,
+      0.162
+     ],
+     "one tensor (A's tensors within 2 deg)": [
+      0.238,
+      0.256
+     ],
+     "crossing (second tensor's FA > 0.2, tensors > 20 deg apart)": [
+      0.506,
+      0.514
+     ]
+    },
+    "by the seed's FA: share of the population / diverged (weighted)": {
+     "[0.1, 0.15)": [
+      0.176,
+      0.3413
+     ],
+     "[0.15, 0.2)": [
+      0.161,
+      0.3358
+     ],
+     "[0.2, 0.3)": [
+      0.2468,
+      0.3977
+     ],
+     "[0.3, 0.45)": [
+      0.2618,
+      0.359
+     ],
+     "[0.45, 1.01)": [
+      0.1544,
+      0.332
+     ]
+    },
+    "seeds with FA < 0.2: share of the population / of the diverging (weighted)": [
+     0.337,
+     0.3192
+    ],
+    "at the seed": {
+     "seed class": {
+      "pairs": 626,
+      "initial direction: deg (quartiles)": [
+       1.416,
+       2.093,
+       3.724
+      ],
+      "initial direction more than 1 / 10 / 45 deg apart": [
+       1.0,
+       0.0488,
+       0.0034
+      ],
+      "seed FA: A (quartiles)": [
+       0.156,
+       0.216,
+       0.3
+      ],
+      "seed FA: |A - perturbed| (quartiles)": [
+       0.002,
+       0.006,
+       0.013
+      ],
+      "e1 changed sign (the halves swap)": 0.0406
+     },
+     "drift class": {
+      "pairs": 1563,
+      "initial direction: deg (quartiles)": [
+       0.141,
+       0.295,
+       0.544
+      ],
+      "initial direction more than 1 / 10 / 45 deg apart": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "seed FA: A (quartiles)": [
+       0.189,
+       0.298,
+       0.416
+      ],
+      "seed FA: |A - perturbed| (quartiles)": [
+       0.001,
+       0.002,
+       0.005
+      ],
+      "e1 changed sign (the halves swap)": 0.009
+     },
+     "stayed together": {
+      "pairs": 1675,
+      "initial direction: deg (quartiles)": [
+       0.137,
+       0.319,
+       0.684
+      ],
+      "initial direction more than 1 / 10 / 45 deg apart": [
+       0.1733,
+       0.0035,
+       0.0
+      ],
+      "seed FA: A (quartiles)": [
+       0.169,
+       0.265,
+       0.383
+      ],
+      "seed FA: |A - perturbed| (quartiles)": [
+       0.001,
+       0.002,
+       0.004
+      ],
+      "e1 changed sign (the halves swap)": 0.0057
+     }
+    }
+   }
+  }
+ }
+}

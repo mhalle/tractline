@@ -1,0 +1,962 @@
+{
+ "pair": "cIIIs04-2.1",
+ "focus": [
+  "CST",
+  "AF",
+  "UF"
+ ],
+ "site radius mm": 8.0,
+ "configurations": {
+  "today": {
+   "A": {
+    "streamlines labeled (>= 40 mm)": 64378,
+    "fibers (>= 10 points), from the run's log": 78187,
+    "length mm (quartiles)": [
+     67.8,
+     96.5,
+     130.8
+    ],
+    "Other share": 0.5258,
+    "mean top tract probability": 0.9409,
+    "focus volume mL": {
+     "CST": 51.8,
+     "AF": 53.6,
+     "UF": 41.8
+    }
+   },
+   "tract mix, A": [
+    0.01222,
+    0.01191,
+    0.00312,
+    0.00308,
+    0.01556,
+    0.0069,
+    0.01766,
+    0.00994,
+    0.00839,
+    0.00527,
+    0.01131,
+    0.00812,
+    0.0103,
+    0.00106,
+    0.01766,
+    0.00043,
+    0.00101,
+    0.02058,
+    0.0014,
+    0.00699,
+    0.00635,
+    0.00109,
+    0.00373,
+    0.01642,
+    0.00825,
+    0.01007,
+    0.00839,
+    0.02429,
+    0.00651,
+    0.00172,
+    0.00298,
+    0.00948,
+    0.02975,
+    0.00276,
+    0.07423,
+    0.00584,
+    0.00342,
+    0.01092,
+    0.03368,
+    0.00665,
+    0.02397,
+    0.01084,
+    0.52575
+   ],
+   "(a) rescan agreement": {
+    "within": {
+     "common seeds": 57649,
+     "renamed": 0.3542,
+     "renamed, hash-sorted grouping": 0.3546,
+     "presence Dice": {
+      "CST": 0.7754,
+      "AF": 0.811,
+      "UF": 0.7885
+     },
+     "landmark sites: the same main named tract within 8 mm": 6,
+     "landmark sites": 8,
+     "renamed, reweighted to today's tract mix": 0.3542,
+     "renamed by A's tract": {
+      "CST": 0.7384,
+      "AF": 0.3547,
+      "UF": 0.5537,
+      "Other": 0.2663
+     },
+     "paths more than 5 mm apart": 0.7164,
+     "median MDF mm": 13.402
+    },
+    "session3": {
+     "common seeds": 57341,
+     "renamed": 0.3822,
+     "renamed, hash-sorted grouping": 0.3803,
+     "presence Dice": {
+      "CST": 0.7828,
+      "AF": 0.7886,
+      "UF": 0.7628
+     },
+     "landmark sites: the same main named tract within 8 mm": 6,
+     "landmark sites": 8,
+     "renamed, reweighted to today's tract mix": 0.3822,
+     "renamed by A's tract": {
+      "CST": 0.7065,
+      "AF": 0.3956,
+      "UF": 0.5363,
+      "Other": 0.2889
+     },
+     "paths more than 5 mm apart": 0.754,
+     "median MDF mm": 15.114
+    },
+    "session5": {
+     "common seeds": 55875,
+     "renamed": 0.3966,
+     "renamed, hash-sorted grouping": 0.398,
+     "presence Dice": {
+      "CST": 0.7495,
+      "AF": 0.7696,
+      "UF": 0.7339
+     },
+     "landmark sites: the same main named tract within 8 mm": 5,
+     "landmark sites": 8,
+     "renamed, reweighted to today's tract mix": 0.3966,
+     "renamed by A's tract": {
+      "CST": 0.6867,
+      "AF": 0.4571,
+      "UF": 0.6183,
+      "Other": 0.2966
+     },
+     "paths more than 5 mm apart": 0.778,
+     "median MDF mm": 16.191
+    }
+   },
+   "(b) honesty (17 runs)": {
+    "seeds": 44717,
+    "stated: mode's mean share": 0.7638,
+    "within": {
+     "gives the mode": 0.7027,
+     "AUROC, change from A's tract": 0.8007
+    },
+    "session3": {
+     "gives the mode": 0.674,
+     "AUROC, change from A's tract": 0.7786
+    },
+    "session5": {
+     "gives the mode": 0.6614,
+     "AUROC, change from A's tract": 0.7732
+    }
+   },
+   "17 runs: Other share": 0.5307,
+   "17 runs: focus volume mL (mean)": {
+    "CST": 54.5,
+    "AF": 55.9,
+    "UF": 42.1
+   },
+   "tract mix, 17 runs": [
+    0.01251,
+    0.01164,
+    0.00267,
+    0.00312,
+    0.01506,
+    0.00659,
+    0.01716,
+    0.00982,
+    0.00821,
+    0.00511,
+    0.01116,
+    0.00874,
+    0.0098,
+    0.0012,
+    0.01712,
+    0.0004,
+    0.00114,
+    0.01864,
+    0.00121,
+    0.00672,
+    0.00634,
+    0.00115,
+    0.00317,
+    0.01704,
+    0.00896,
+    0.01018,
+    0.00809,
+    0.02338,
+    0.00613,
+    0.00175,
+    0.00263,
+    0.00963,
+    0.02868,
+    0.00267,
+    0.07431,
+    0.00598,
+    0.00353,
+    0.0111,
+    0.03403,
+    0.00669,
+    0.02398,
+    0.01187,
+    0.53071
+   ],
+   "(c) robustness": {
+    "epsilon": {
+     "runs": 8,
+     "renamed (mean)": 0.0396,
+     "paths more than 5 mm apart (mean)": 0.0342,
+     "A's seeds the run lacks (mean)": 83.0
+    },
+    "fieldonly": {
+     "runs": 8,
+     "renamed (mean)": 0.1641,
+     "paths more than 5 mm apart (mean)": 0.3464,
+     "A's seeds the run lacks (mean)": 1773.6
+    }
+   },
+   "(d) against today": {
+    "tract mix, A: total variation": 0.0,
+    "focus volume, A: ratio": {
+     "CST": 1.0,
+     "AF": 1.0,
+     "UF": 1.0
+    },
+    "tract mix, 17 runs: total variation": 0.0,
+    "focus volume, 17 runs: ratio": {
+     "CST": 1.0,
+     "AF": 1.0,
+     "UF": 1.0
+    }
+   },
+   "(b) CST: where renames go and where CST comes from": {
+    "A's CST streamlines a rescan renames, pooled: their new tract (top 5)": {
+     "Other": 0.7784,
+     "TF": 0.0382,
+     "CR-F": 0.0353,
+     "TP": 0.0344,
+     "Sup-F": 0.021
+    }
+   }
+  },
+  "seeding_threshold=0.2": {
+   "A": {
+    "streamlines labeled (>= 40 mm)": 41548,
+    "fibers (>= 10 points), from the run's log": null,
+    "length mm (quartiles)": [
+     74.9,
+     103.8,
+     137.9
+    ],
+    "Other share": 0.5461,
+    "mean top tract probability": 0.9422,
+    "focus volume mL": {
+     "CST": 45.0,
+     "AF": 45.1,
+     "UF": 28.8
+    }
+   },
+   "tract mix, A": [
+    0.01398,
+    0.01208,
+    0.00363,
+    0.00351,
+    0.01673,
+    0.00732,
+    0.01986,
+    0.00922,
+    0.0091,
+    0.00501,
+    0.01049,
+    0.01045,
+    0.01218,
+    0.00128,
+    0.01538,
+    0.00055,
+    0.00113,
+    0.02118,
+    0.00161,
+    0.00643,
+    0.00669,
+    0.00144,
+    0.00431,
+    0.01586,
+    0.00927,
+    0.01172,
+    0.00977,
+    0.02737,
+    0.0077,
+    0.00205,
+    0.00282,
+    0.00854,
+    0.00419,
+    0.00289,
+    0.06804,
+    0.00539,
+    0.00315,
+    0.0115,
+    0.0304,
+    0.00672,
+    0.02335,
+    0.00958,
+    0.54614
+   ],
+   "(a) rescan agreement": {
+    "within": {
+     "common seeds": 39866,
+     "renamed": 0.3537,
+     "renamed, hash-sorted grouping": 0.3545,
+     "presence Dice": {
+      "CST": 0.7637,
+      "AF": 0.8048,
+      "UF": 0.7545
+     },
+     "landmark sites: the same main named tract within 8 mm": 6,
+     "landmark sites": 8,
+     "renamed, reweighted to today's tract mix": 0.3469,
+     "renamed by A's tract": {
+      "CST": 0.733,
+      "AF": 0.328,
+      "UF": 0.5455,
+      "Other": 0.2578
+     },
+     "paths more than 5 mm apart": 0.7359,
+     "median MDF mm": 14.016
+    },
+    "session3": {
+     "common seeds": 39660,
+     "renamed": 0.3811,
+     "renamed, hash-sorted grouping": 0.3812,
+     "presence Dice": {
+      "CST": 0.778,
+      "AF": 0.796,
+      "UF": 0.7462
+     },
+     "landmark sites: the same main named tract within 8 mm": 5,
+     "landmark sites": 8,
+     "renamed, reweighted to today's tract mix": 0.3736,
+     "renamed by A's tract": {
+      "CST": 0.7069,
+      "AF": 0.3719,
+      "UF": 0.5158,
+      "Other": 0.2781
+     },
+     "paths more than 5 mm apart": 0.778,
+     "median MDF mm": 15.78
+    },
+    "session5": {
+     "common seeds": 39055,
+     "renamed": 0.3985,
+     "renamed, hash-sorted grouping": 0.3996,
+     "presence Dice": {
+      "CST": 0.7387,
+      "AF": 0.7704,
+      "UF": 0.7121
+     },
+     "landmark sites: the same main named tract within 8 mm": 5,
+     "landmark sites": 8,
+     "renamed, reweighted to today's tract mix": 0.3903,
+     "renamed by A's tract": {
+      "CST": 0.677,
+      "AF": 0.427,
+      "UF": 0.6026,
+      "Other": 0.2899
+     },
+     "paths more than 5 mm apart": 0.7987,
+     "median MDF mm": 16.8
+    }
+   },
+   "(b) honesty (17 runs)": {
+    "seeds": 34953,
+    "stated: mode's mean share": 0.7651,
+    "within": {
+     "gives the mode": 0.7006,
+     "AUROC, change from A's tract": 0.7938
+    },
+    "session3": {
+     "gives the mode": 0.6748,
+     "AUROC, change from A's tract": 0.7736
+    },
+    "session5": {
+     "gives the mode": 0.6601,
+     "AUROC, change from A's tract": 0.7666
+    }
+   },
+   "17 runs: Other share": 0.551,
+   "17 runs: focus volume mL (mean)": {
+    "CST": 46.9,
+    "AF": 45.4,
+    "UF": 28.8
+   },
+   "tract mix, 17 runs": [
+    0.01401,
+    0.01161,
+    0.00297,
+    0.00345,
+    0.01629,
+    0.00727,
+    0.01899,
+    0.00892,
+    0.00884,
+    0.00487,
+    0.01032,
+    0.01105,
+    0.01137,
+    0.00148,
+    0.01468,
+    0.00043,
+    0.00125,
+    0.01957,
+    0.00139,
+    0.00594,
+    0.00665,
+    0.00144,
+    0.0038,
+    0.01668,
+    0.00993,
+    0.01179,
+    0.00966,
+    0.02647,
+    0.00722,
+    0.00211,
+    0.00259,
+    0.00837,
+    0.00452,
+    0.00291,
+    0.06827,
+    0.00571,
+    0.00337,
+    0.01167,
+    0.03116,
+    0.00681,
+    0.0233,
+    0.00994,
+    0.55097
+   ],
+   "(c) robustness": {
+    "epsilon": {
+     "runs": 8,
+     "renamed (mean)": 0.0312,
+     "paths more than 5 mm apart (mean)": 0.0166,
+     "A's seeds the run lacks (mean)": 15.5
+    },
+    "fieldonly": {
+     "runs": 8,
+     "renamed (mean)": 0.1592,
+     "paths more than 5 mm apart (mean)": 0.354,
+     "A's seeds the run lacks (mean)": 627.5
+    }
+   },
+   "(d) against today": {
+    "tract mix, A: total variation": 0.0439,
+    "focus volume, A: ratio": {
+     "CST": 0.869,
+     "AF": 0.841,
+     "UF": 0.689
+    },
+    "tract mix, 17 runs: total variation": 0.043,
+    "focus volume, 17 runs: ratio": {
+     "CST": 0.861,
+     "AF": 0.812,
+     "UF": 0.684
+    }
+   },
+   "(b) CST: where renames go and where CST comes from": {
+    "A's CST streamlines a rescan renames, pooled: their new tract (top 5)": {
+     "Other": 0.7933,
+     "CR-F": 0.0391,
+     "TF": 0.0358,
+     "TP": 0.0346,
+     "Sup-F": 0.0134
+    },
+    "against today's A, the seeds both label": 41548,
+    "the variant's CST streamlines: today's tract (top 5)": {
+     "CST": 1.0
+    },
+    "today's CST streamlines the variant keeps CST": 1.0
+   }
+  },
+  "Rs=0.1": {
+   "A": {
+    "streamlines labeled (>= 40 mm)": 57512,
+    "fibers (>= 10 points), from the run's log": 81903,
+    "length mm (quartiles)": [
+     62.4,
+     91.2,
+     120.0
+    ],
+    "Other share": 0.5623,
+    "mean top tract probability": 0.9313,
+    "focus volume mL": {
+     "CST": 68.6,
+     "AF": 23.2,
+     "UF": 28.5
+    }
+   },
+   "tract mix, A": [
+    0.00492,
+    0.01549,
+    0.00264,
+    0.00252,
+    0.02492,
+    0.00755,
+    0.02639,
+    0.0012,
+    0.00383,
+    0.00261,
+    0.00857,
+    0.01542,
+    0.01638,
+    0.00369,
+    0.02806,
+    0.00019,
+    0.00384,
+    0.03112,
+    0.00127,
+    0.00803,
+    0.00621,
+    0.00412,
+    0.00296,
+    0.01791,
+    0.01163,
+    0.01321,
+    0.00652,
+    0.0184,
+    0.00445,
+    0.00219,
+    0.00275,
+    0.00889,
+    0.02739,
+    0.00054,
+    0.04696,
+    0.00111,
+    0.00172,
+    0.01287,
+    0.01177,
+    0.00308,
+    0.01589,
+    0.0085,
+    0.56228
+   ],
+   "(a) rescan agreement": {
+    "within": {
+     "common seeds": 51244,
+     "renamed": 0.2877,
+     "renamed, hash-sorted grouping": 0.2867,
+     "presence Dice": {
+      "CST": 0.8045,
+      "AF": 0.7872,
+      "UF": 0.7542
+     },
+     "landmark sites: the same main named tract within 8 mm": 6,
+     "landmark sites": 8,
+     "renamed, reweighted to today's tract mix": 0.2843,
+     "renamed by A's tract": {
+      "CST": 0.4633,
+      "AF": 0.3172,
+      "UF": 0.4848,
+      "Other": 0.2115
+     },
+     "paths more than 5 mm apart": 0.5572,
+     "median MDF mm": 6.269
+    },
+    "session3": {
+     "common seeds": 51095,
+     "renamed": 0.3138,
+     "renamed, hash-sorted grouping": 0.3126,
+     "presence Dice": {
+      "CST": 0.7943,
+      "AF": 0.7608,
+      "UF": 0.744
+     },
+     "landmark sites: the same main named tract within 8 mm": 7,
+     "landmark sites": 8,
+     "renamed, reweighted to today's tract mix": 0.3139,
+     "renamed by A's tract": {
+      "CST": 0.4669,
+      "AF": 0.444,
+      "UF": 0.5383,
+      "Other": 0.2334
+     },
+     "paths more than 5 mm apart": 0.6007,
+     "median MDF mm": 7.377
+    },
+    "session5": {
+     "common seeds": 49785,
+     "renamed": 0.3408,
+     "renamed, hash-sorted grouping": 0.3403,
+     "presence Dice": {
+      "CST": 0.8044,
+      "AF": 0.7343,
+      "UF": 0.6927
+     },
+     "landmark sites: the same main named tract within 8 mm": 6,
+     "landmark sites": 8,
+     "renamed, reweighted to today's tract mix": 0.3403,
+     "renamed by A's tract": {
+      "CST": 0.4739,
+      "AF": 0.4943,
+      "UF": 0.6425,
+      "Other": 0.2512
+     },
+     "paths more than 5 mm apart": 0.6554,
+     "median MDF mm": 8.881
+    }
+   },
+   "(b) honesty (17 runs)": {
+    "seeds": 42100,
+    "stated: mode's mean share": 0.8124,
+    "within": {
+     "gives the mode": 0.749,
+     "AUROC, change from A's tract": 0.815
+    },
+    "session3": {
+     "gives the mode": 0.7236,
+     "AUROC, change from A's tract": 0.7962
+    },
+    "session5": {
+     "gives the mode": 0.6993,
+     "AUROC, change from A's tract": 0.7796
+    }
+   },
+   "17 runs: Other share": 0.5684,
+   "17 runs: focus volume mL (mean)": {
+    "CST": 66.5,
+    "AF": 23.8,
+    "UF": 30.4
+   },
+   "tract mix, 17 runs": [
+    0.00501,
+    0.01544,
+    0.00252,
+    0.0027,
+    0.02466,
+    0.00722,
+    0.02624,
+    0.00112,
+    0.00417,
+    0.00267,
+    0.00885,
+    0.01469,
+    0.01608,
+    0.00376,
+    0.02759,
+    0.0002,
+    0.00357,
+    0.03049,
+    0.00126,
+    0.00768,
+    0.00591,
+    0.00427,
+    0.00305,
+    0.01743,
+    0.01188,
+    0.01283,
+    0.00641,
+    0.0179,
+    0.00393,
+    0.00202,
+    0.00271,
+    0.00891,
+    0.02688,
+    0.00066,
+    0.04644,
+    0.00126,
+    0.0015,
+    0.01287,
+    0.01155,
+    0.00322,
+    0.01544,
+    0.00863,
+    0.56836
+   ],
+   "(c) robustness": {
+    "epsilon": {
+     "runs": 8,
+     "renamed (mean)": 0.0362,
+     "paths more than 5 mm apart (mean)": 0.0069,
+     "A's seeds the run lacks (mean)": 12.8
+    },
+    "fieldonly": {
+     "runs": 8,
+     "renamed (mean)": 0.1217,
+     "paths more than 5 mm apart (mean)": 0.1947,
+     "A's seeds the run lacks (mean)": 1254.8
+    }
+   },
+   "(d) against today": {
+    "tract mix, A: total variation": 0.1131,
+    "focus volume, A: ratio": {
+     "CST": 1.324,
+     "AF": 0.433,
+     "UF": 0.682
+    },
+    "tract mix, 17 runs: total variation": 0.1125,
+    "focus volume, 17 runs: ratio": {
+     "CST": 1.22,
+     "AF": 0.426,
+     "UF": 0.722
+    }
+   },
+   "(b) CST: where renames go and where CST comes from": {
+    "A's CST streamlines a rescan renames, pooled: their new tract (top 5)": {
+     "Other": 0.7876,
+     "CR-F": 0.0731,
+     "TF": 0.037,
+     "CPC": 0.0275,
+     "CR-P": 0.0249
+    },
+    "against today's A, the seeds both label": 52603,
+    "the variant's CST streamlines: today's tract (top 5)": {
+     "Other": 0.6489,
+     "CST": 0.1288,
+     "Sup-F": 0.0544,
+     "CR-F": 0.0272,
+     "TF": 0.0177
+    },
+    "today's CST streamlines the variant keeps CST": 0.2304
+   }
+  },
+  "step_length=0.6": {
+   "A": {
+    "streamlines labeled (>= 40 mm)": 64704,
+    "fibers (>= 10 points), from the run's log": 82583,
+    "length mm (quartiles)": [
+     70.8,
+     99.6,
+     128.4
+    ],
+    "Other share": 0.5617,
+    "mean top tract probability": 0.935,
+    "focus volume mL": {
+     "CST": 64.9,
+     "AF": 41.1,
+     "UF": 40.7
+    }
+   },
+   "tract mix, A": [
+    0.00879,
+    0.01218,
+    0.00249,
+    0.00301,
+    0.01886,
+    0.0062,
+    0.02637,
+    0.00267,
+    0.00583,
+    0.00308,
+    0.01048,
+    0.01128,
+    0.01332,
+    0.00189,
+    0.01793,
+    0.00011,
+    0.00215,
+    0.02545,
+    0.00097,
+    0.00593,
+    0.00453,
+    0.00209,
+    0.00294,
+    0.01771,
+    0.01043,
+    0.01238,
+    0.00773,
+    0.02332,
+    0.00524,
+    0.00292,
+    0.00301,
+    0.00884,
+    0.02952,
+    0.00119,
+    0.06167,
+    0.00164,
+    0.00182,
+    0.01328,
+    0.01655,
+    0.00379,
+    0.01981,
+    0.00892,
+    0.5617
+   ],
+   "(a) rescan agreement": {
+    "within": {
+     "common seeds": 58149,
+     "renamed": 0.318,
+     "renamed, hash-sorted grouping": 0.3173,
+     "presence Dice": {
+      "CST": 0.7904,
+      "AF": 0.7975,
+      "UF": 0.7783
+     },
+     "landmark sites: the same main named tract within 8 mm": 8,
+     "landmark sites": 8,
+     "renamed, reweighted to today's tract mix": 0.3203,
+     "renamed by A's tract": {
+      "CST": 0.585,
+      "AF": 0.3371,
+      "UF": 0.4497,
+      "Other": 0.2371
+     },
+     "paths more than 5 mm apart": 0.6528,
+     "median MDF mm": 9.508
+    },
+    "session3": {
+     "common seeds": 57929,
+     "renamed": 0.3396,
+     "renamed, hash-sorted grouping": 0.3393,
+     "presence Dice": {
+      "CST": 0.7829,
+      "AF": 0.7919,
+      "UF": 0.7634
+     },
+     "landmark sites: the same main named tract within 8 mm": 6,
+     "landmark sites": 8,
+     "renamed, reweighted to today's tract mix": 0.3459,
+     "renamed by A's tract": {
+      "CST": 0.5942,
+      "AF": 0.392,
+      "UF": 0.4841,
+      "Other": 0.2502
+     },
+     "paths more than 5 mm apart": 0.6925,
+     "median MDF mm": 10.844
+    },
+    "session5": {
+     "common seeds": 56514,
+     "renamed": 0.365,
+     "renamed, hash-sorted grouping": 0.3646,
+     "presence Dice": {
+      "CST": 0.7641,
+      "AF": 0.7649,
+      "UF": 0.7311
+     },
+     "landmark sites: the same main named tract within 8 mm": 7,
+     "landmark sites": 8,
+     "renamed, reweighted to today's tract mix": 0.3707,
+     "renamed by A's tract": {
+      "CST": 0.6213,
+      "AF": 0.5132,
+      "UF": 0.5743,
+      "Other": 0.2667
+     },
+     "paths more than 5 mm apart": 0.7343,
+     "median MDF mm": 12.375
+    }
+   },
+   "(b) honesty (17 runs)": {
+    "seeds": 47726,
+    "stated: mode's mean share": 0.7914,
+    "within": {
+     "gives the mode": 0.7305,
+     "AUROC, change from A's tract": 0.808
+    },
+    "session3": {
+     "gives the mode": 0.7075,
+     "AUROC, change from A's tract": 0.7837
+    },
+    "session5": {
+     "gives the mode": 0.6826,
+     "AUROC, change from A's tract": 0.7722
+    }
+   },
+   "17 runs: Other share": 0.5627,
+   "17 runs: focus volume mL (mean)": {
+    "CST": 63.6,
+    "AF": 42.2,
+    "UF": 43.3
+   },
+   "tract mix, 17 runs": [
+    0.00902,
+    0.01193,
+    0.0025,
+    0.00289,
+    0.01951,
+    0.00617,
+    0.02611,
+    0.00271,
+    0.00582,
+    0.00316,
+    0.01119,
+    0.01098,
+    0.01369,
+    0.00212,
+    0.01824,
+    0.00016,
+    0.00194,
+    0.02517,
+    0.001,
+    0.00558,
+    0.00443,
+    0.00203,
+    0.003,
+    0.01752,
+    0.01047,
+    0.01177,
+    0.0072,
+    0.023,
+    0.00504,
+    0.0028,
+    0.00301,
+    0.00914,
+    0.02906,
+    0.0014,
+    0.06052,
+    0.00162,
+    0.00176,
+    0.01377,
+    0.01698,
+    0.00393,
+    0.01971,
+    0.00923,
+    0.56273
+   ],
+   "(c) robustness": {
+    "epsilon": {
+     "runs": 8,
+     "renamed (mean)": 0.0371,
+     "paths more than 5 mm apart (mean)": 0.0152,
+     "A's seeds the run lacks (mean)": 36.1
+    },
+    "fieldonly": {
+     "runs": 8,
+     "renamed (mean)": 0.1434,
+     "paths more than 5 mm apart (mean)": 0.2795,
+     "A's seeds the run lacks (mean)": 1568.8
+    }
+   },
+   "(d) against today": {
+    "tract mix, A: total variation": 0.0719,
+    "focus volume, A: ratio": {
+     "CST": 1.253,
+     "AF": 0.767,
+     "UF": 0.974
+    },
+    "tract mix, 17 runs: total variation": 0.0702,
+    "focus volume, 17 runs: ratio": {
+     "CST": 1.167,
+     "AF": 0.755,
+     "UF": 1.029
+    }
+   },
+   "(b) CST: where renames go and where CST comes from": {
+    "A's CST streamlines a rescan renames, pooled: their new tract (top 5)": {
+     "Other": 0.7981,
+     "CR-F": 0.0533,
+     "TF": 0.0355,
+     "CPC": 0.0258,
+     "CR-P": 0.0226
+    },
+    "against today's A, the seeds both label": 58995,
+    "the variant's CST streamlines: today's tract (top 5)": {
+     "Other": 0.6093,
+     "CST": 0.1834,
+     "CR-F": 0.0395,
+     "Sup-F": 0.0353,
+     "TP": 0.024
+    },
+    "today's CST streamlines the variant keeps CST": 0.2584
+   }
+  }
+ }
+}
