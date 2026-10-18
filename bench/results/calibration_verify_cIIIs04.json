@@ -1,0 +1,22 @@
+{
+ "subject": "cIIIs04",
+ "stored": "ensemble/cIIIs04/retest/cIIIs04-2.1/A.npz",
+ "git": {
+  "commit": "53a0e2e7da6200b79655a020ef8cf20797894cc2",
+  "branch": "robustness",
+  "dirty (src/ and the card's bench modules)": []
+ },
+ "seconds": 86.2,
+ "streamlines (new, stored)": [
+  64378,
+  64378
+ ],
+ "seed keys equal": true,
+ "clusters equal": true,
+ "voxel counts equal": true,
+ "streamline lengths equal": true,
+ "max vertex difference mm": 0.02500152587890625,
+ "quantization bound mm": 0.025,
+ "mask equal": true,
+ "same as stored": true
+}

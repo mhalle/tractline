@@ -227,6 +227,49 @@ next, then a calibration step for single scans, and the tracker benchmark moves 
     bias-free ensemble does.
   A claim says which event it covers. Without the bias term, the product's regional claims are about rescans, not
   anatomy.
+- **Outcome (2026-10-18, NOTES "Robustness step 5"; card refit at 53a0e2e after the review).**
+  - **Data.** MASiVar cohort III, scanner B, one protocol (b1000 ×40 + b2000 ×56, 2.1 × 2.1 × 2.2 mm). Eight healthy
+    subjects, each with A's 17-run ensemble, a same-session rescan (8 in all) and other-session rescans (9, over 5
+    subjects).
+    - 236 files (565.4 MB) were fetched and checked against S3.
+    - cIIIs01 was rebuilt, because its old records hold no streamlines. cIIIs02's 2.2 mm scan was excluded.
+    - cIIIs04's records were reused. Rerun at HEAD, its A is identical to the stored record within the 0.025 mm
+      quantization (`calibration_runs.py verify`).
+    - Every scan passes a stricter protocol check: volumes per shell, matrix, voxel size, phase encoding, one reversed
+      b0.
+  - **The card** (`bench/calibration_card.py`, `results/calibration_card_masivar_cIII.json`, schema 2). Per term (same
+    session, other session):
+    - isotonic maps for the streamline mode and for the main named tract within 8 mm of a point;
+    - the envelope level for a target coverage, and the shapes' expected coverage, precision and size.
+
+    Around the maps: the protocol, a card ID, the pipeline's commit, settings hash, module, statement and
+    labeler-weight hashes, per-subject provenance, R = 17, a machine-checkable validity block, and a provisional
+    phantom term that is recorded but not applied.
+  - **Held out, leaving one subject out:**
+    - streamline ECE falls from 0.070 / 0.097 (same / other session) to 0.008 / 0.008. PAT16's table, handicapped
+      (R = 11, another event), gives 0.019 / 0.027;
+    - point ECE falls from 0.038 / 0.059 to 0.014 / 0.022;
+    - envelopes at targets 0.5 / 0.8 / 0.9 / 0.95 hold 0.501 / 0.803 / 0.904 / 0.954 (same session) and 0.501 / 0.802
+      / 0.902 / 0.952 (other session). As stated they hold 0.535 / 0.777 / 0.869 / 0.921 and 0.529 / 0.760 / 0.852 /
+      0.906.
+    - No subject is badly off, and the stored fold maps are stable.
+    - Coverage is pooled over tracts (large tracts dominate); per-tract statements were not validated.
+  - **The other-session term** adds 2–3 points of stated probability and 0.7–1.5 points of coverage to the
+    same-session correction. The same-session card on other sessions leaves a streamline ECE of 0.028, and it reaches
+    no envelope target on any of the 5 subjects.
+  - **Against pooled sessions.**
+    - The card is as honest as pooling three sessions' ensembles.
+    - At matched held-out coverage, pooling's envelopes are only 2–5 % smaller at 0.9 (5–8 % at 0.95).
+    - The Vorob'ev shape is size-honest (0.99–1.03).
+  - **The level grid starts at 0.2.** This was changed after the held-out results showed a target of 0.5 over-met
+    (0.535 / 0.529), so the 0.5 row is not a blind result. The first card is kept as
+    `calibration_card_masivar_cIII_grid05.json`.
+  - **Not covered:**
+    - anatomy (the phantom term is provisional: one simulated brain at b = 1000, not applied);
+    - other protocols, scanners, patients and pathology;
+    - other pipeline options, another R, another device (only mps was run).
+
+    Without a matching card the product says "run-to-run only".
 
 ### 6. Benchmark against other trackers
 

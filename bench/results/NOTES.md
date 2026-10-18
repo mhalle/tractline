@@ -5347,3 +5347,376 @@ Caveats:
     ground-truth streamlines crosses. It is wider than any run's density presence of a few hundred streamlines, so it
     understated coverage. The count-matched target replaces it; the traversal-mask figures stay in `envelopes`;
   - the levels are ensemble_pooled's mass-based ones, calibrated on cIIIs04 against rescans, not against anatomy.
+
+## 2026-10-18 Robustness step 5: a calibration card learned on eight subjects makes one scan's statements about a rescan honest on a held-out subject; claims about anatomy stay uncalibrated
+
+`calibration_runs.py` (`plan`, `run`, `rescans`, `verify`) → records in `DATA/ensemble/<subject>/card/<pair>/`;
+`calibration_card.py` (`collect`, `fit`, `test`) → `statements_R17.npz` beside them and
+`results/calibration_card_masivar_cIII.json` (keys `card id`, `card version`, `created (UTC)`, `protocol`,
+`pipeline`, `validity`, `terms`, `accuracy (provisional)`, `held-out evaluation (leave one subject out)`,
+`subjects`); `results/calibration_verify_cIIIs04.json`; `fetch_ds003416.py` extended. Code at 53a0e2e.
+docs/robustness-plan.md, step 5.
+
+A single scan cannot calibrate its own confidence. Its bootstrap misses between-session variation, and it is
+somewhat overconfident even within a session (NOTES 2026-10-13, "Pooling sessions"; step 3). The card is learned once
+per protocol from test-retest subjects. It maps a scan's 17-run ensemble statistics to calibrated statements about
+what a rescan shows.
+
+**The data.** MASiVar cohort III on scanner B (Philips Achieva 3T), one protocol: b1000 ×40 + b2000 ×56 (16
+interleaved forward b0s), 2.1 × 2.1 × 2.2 mm (2.1429 × 2.1429 × 2.2 in the headers, a 112 × 112 × 54 matrix), and a
+reversed APA series with one b0.
+- **The download:** the raw DWI (.nii.gz, .bval, .bvec, .json; APP and APA; 2.1 mm only; no T1, no derivatives) of
+  cIIIs02, 03, 05, 06, 07 and 08.
+  - 236 files, 565.4 MB, every size equal to the S3 listing, nothing else fetched.
+  - The fetch takes every scan of the listed sessions. Some are not used: the other sessions' scan 2, and cIIIs02
+    s1Bx5 scan 1's b1000 and APA series. They are kept for later use (the fetcher's docstring says so).
+- **Excluded:** cIIIs02 s1Bx5 scan 1, whose b2000 series is 2.2 mm iso (not fetched); that session's rescan is its
+  scan 2. `_masivar.load` would have returned that scan's b1000 shell alone, without complaint.
+- **The protocol check** (`calibration_runs.PROTOCOL`, `load_checked`). A scan is accepted only if every item holds:
+  - 112 volumes: 16 b0s, 40 at b1000 and 56 at b2000 (b rounded to 100);
+  - the 112 × 112 × 54 matrix, and voxels within 0.01 mm of 2.1429 × 2.1429 × 2.2;
+  - phase encoding j / j-;
+  - exactly one reversed b0, at 0.85–1.05 of the forward b0s' brightness.
+
+  All 26 scans the card uses pass (`plan --check`). cIIIs02 s1Bx5 scan 1 is refused (47 volumes, no b2000). The card
+  lists the same items, machine-readable, under `protocol` → `recognized by` and `validity` → `match`.
+- **The series.** In all 34 new APP series the last volume (stated b = 0) is a real b0 (0.98–1.00 of the others) and
+  is kept, as `_masivar` decides from the data; there is no derived isotropic volume. Every APA series gives one
+  reversed b0 (0.89–0.95; its three b1000s 0.38–0.45, dropped). Every scan has 16 forward b0s and the same series
+  scales.
+- **cIIIs01, rebuilt.** Its 2.1 mm records (retest/cIIIs01-2.1, 2026-10-08) are format 1: no streamlines, so no
+  density presence, and only 8 replicates. Its 2.1 mm scans on disk are s1Bx1 scan 1 and s1Bx3 scans 1–2, so A is s1Bx3
+  scan 1. s1Bx1 scan 3 and s1Bx4–7 exist on OpenNeuro and were not fetched.
+- **cIIIs04, reused, and verified** (`pipeline` → `provenance` in the card).
+  - These records are read from retest/cIIIs04-2.1 and never written: A, its 16 replicates, and the within, session
+    3 and session 5 rescans with their own 16 replicates.
+  - ensemble_retest.py made them on 2026-10-09 (file dates) and recorded no git state. Sessions 2 and 4 are new.
+  - `calibration_runs.py verify` reran A at 53a0e2e (`calibration_verify_cIIIs04.json`):
+    - the same 64,378 streamlines, seed keys, clusters, per-voxel counts, streamline lengths and tracking mask;
+    - every vertex within 0.0250015 mm of the stored one, against the record's 0.025 mm quantization bound (the
+      excess is float32 rounding; verify allows 1e-4 mm).
+  - So the default path reproduces the reused A. Its replicates and rescans were not rerun.
+
+| subject | A | same session | other sessions (rotation °, translation mm, NCC after registration) |
+|---|---|---|---|
+| cIIIs01 | s1Bx3 scan 1 | scan 2 | s1Bx1 scan 1 (3.2, 2.7, 0.918) |
+| cIIIs02 | s1Bx1 scan 1 | scan 2 | s1Bx4 scan 1 (1.8, 10.2, 0.839); s1Bx5 scan 2 (1.5, 15.6, 0.843) |
+| cIIIs03 | s1Bx1 scan 1 | scan 2 | — |
+| cIIIs04 | s1Bx1 scan 1 | scan 2 | s1Bx2–s1Bx5 scan 1 (2.2–6.0, 3.6–14.9, 0.850–0.929) |
+| cIIIs05 | s1Bx1 scan 1 | scan 2 | s1Bx2 scan 1 (4.3, 11.8, 0.931) |
+| cIIIs06 | s1Bx1 scan 1 | scan 2 | — |
+| cIIIs07 | s1Bx1 scan 1 | scan 2 | — |
+| cIIIs08 | s1Bx1 scan 1 | scan 2 | s1Bx2 scan 1 (2.3, 3.7, 0.881) |
+
+The same-session rescans register at 0.07–1.1° and 0.15–0.64 mm (NCC 0.967–0.994). In all: eight same-session
+rescans, and nine other-session rescans over five subjects.
+
+**The runs.** Today's default pipeline: P.correct, P.track at the 2000 shell, RapidParc with draw 0 and index
+grouping, on the M2's GPU (mps).
+- The card folders' runs record bf5dd95 with src/ clean; the bench scripts were uncommitted then. 53a0e2e, the code
+  the card was refit with, adds the review's changes: provenance, the protocol check, and the order in which A's files
+  are written. None of these changes what a run computes; `verify` confirms it for A.
+- A's ensemble is A and 16 replicates (smooth signs, FWHM 4, b0s "added", A's mask): R = 17.
+- Each rescan is corrected on its own grid. Its corrected mean b0 is registered rigidly to A's, and its DWI is
+  resampled onto A's grid with the b-vectors turned and tracked there (`<tag>_onA`, as in ensemble_retest; seed keys
+  match).
+- For the pooled reference, cIIIs02's two other-session rescans also got 16 replicates each (`rescans`).
+- 165 runs in the new folders (4 of them the smoke test), 1.16 GB of compact records.
+- Median times: a replicate 91 s (74–158), A 87 s, an `_onA` run 61 s after 51 s of correction and registration, a
+  rescan's replicate 63 s. `collect` takes about 7 s a run.
+
+**The statements** (`collect`; each on A's grid, against the rescan's single `_onA` run):
+- **streamline:** over the seeds all 17 runs label (35,869–46,778 a subject), the stated P(a rescan gives the
+  ensemble's mode) is the mode's share of the runs. The observed event is the rescan's tract at the seed.
+  - It is conditional on the rescan having a streamline from that seed: 95.4–98.5 % of seeds a rescan (`per rescan`).
+  - The pipeline has never presented a single streamline's name as a finding. This level is kept for diagnosis and
+    for comparison with earlier entries, and the card marks it as diagnostic only.
+- **envelope:** density presence of the 42 named tracts (ensemble_grid_check: ≥ 0.3 streamlines per mm² after a 1 mm
+  smoothing), with votes 0–17 per voxel.
+  - The envelope at stated level L keeps the highest-vote voxels holding L of the tract's vote mass
+    (ensemble_pooled.thresholds).
+  - Coverage is the share of the rescan's presence inside the envelope. It is pooled over tracts and weighted by the
+    rescan's voxels, so large tracts dominate it.
+  - Beside it: the core (≥ 9 runs), the Vorob'ev shape (the closest-volume cut) and the widest outline, each with
+    coverage, precision and size against the rescan.
+  - Stored as per-tract vote histograms, which give every {votes ≥ t} shape exactly (tested against
+    ensemble_pooled's and ensemble_vorobev's code).
+- **point:** the main named tract within 8 mm of a point: per run, the named tract with the most streamlines visiting
+  the sphere's voxels (Other excluded).
+  - The points are a lattice every 4 voxels (about 8.6 × 8.6 × 8.8 mm) in A's tracking mask where A's run has ≥ 5
+    streamlines: 1,275–1,609 a subject.
+  - The stated value is the mode's share, where the mode is a named tract. No FastSurfer anatomy is needed, so these
+    are not the landmark sites of earlier entries.
+
+**The card** (`fit`). Per statement and term (same session; other session), a monotone map from stated to observed.
+Each subject is weighted equally, and its rescans of a term are pooled.
+- **streamline and point:** the observed rate per vote count k = 1..17, made nondecreasing by weighted
+  pool-adjacent-violators (isotonic regression on the 18 stated levels).
+- **envelope:** the mean observed coverage at each stated level on a grid of 0.2–0.995 (the envelopes nest, so it is
+  monotone). Its inverse is the lowest stated level whose training coverage reaches a target, flagged "at floor" if
+  the grid's first level already does.
+- **shapes:** the mean coverage, precision and size of the core, Vorob'ev, widest, A alone and envelopes.
+
+**Leave one subject out.** Fitted on the other subjects, scored on the held-out subject's rescans: 8 folds for the
+same-session term, 5 for the other-session term. Each fold's own map is stored (`fold map`), and a test checks that
+changing the held-out subject leaves it unchanged. The comparators:
+- **as stated** (no card);
+- **PAT16's double-bootstrap vote table** (ensemble_double, smooth signs), applied to the vote fraction. It is
+  handicapped twice:
+  - it is a table for R = 11, interpolated linearly between its eleven levels;
+  - it was fitted for another event: the rescan keeps the scan's own tract, not the ensemble's mode.
+
+  It is also the vote table, not the mixture's isotonic map that gave cIIIs04 an ECE of 0.0066 (NOTES 2026-10-09),
+  because the statements hold no log-probabilities;
+- **pooled sessions as stated**, where rescans have their own ensembles (cIIIs04, cIIIs02).
+
+Means over the held-out subjects, with the range (results/calibration_card_masivar_cIII.json, `summary` and
+`per subject`):
+
+| streamline: P(rescan gives the mode) | same session (8) | other session (5) |
+|---|---|---|
+| ECE as stated | 0.070 (0.061–0.080) | 0.097 (0.089–0.104) |
+| ECE, card | **0.008 (0.005–0.012)** | **0.008 (0.001–0.011)** |
+| ECE, PAT16's vote table | 0.019 (0.017–0.023) | 0.027 (0.021–0.032) |
+| mean stated: as stated / card / PAT16 | 0.763 / 0.693 / 0.690 | 0.763 / 0.666 / 0.690 |
+| observed | 0.693 (0.683–0.708) | 0.666 (0.642–0.679) |
+
+On PAT16's own event (the rescan keeps A's tract), its table gives an ECE of 0.024 and 0.035, against 0.065 and 0.093
+as stated. Its mean of 0.649 matches the same-session keep rate (0.646) and over-states the other-session rate (0.618).
+
+| point: P(rescan's main named tract within 8 mm is the mode) | same session | other session |
+|---|---|---|
+| ECE as stated | 0.038 (0.020–0.053) | 0.059 (0.042–0.076) |
+| ECE, card | **0.014 (0.007–0.018)** | **0.022 (0.012–0.032)** |
+| mean stated: as stated / card | 0.920 / 0.883 | 0.919 / 0.863 |
+| observed | 0.883 (0.861–0.910) | 0.862 (0.838–0.886) |
+
+| target | same session: as stated | same session: card | card's stated level | other session: as stated | other session: card | card's stated level |
+|---|---|---|---|---|---|---|
+| 0.5 | 0.535 (0.525–0.560) | **0.501 (0.481–0.527)** | 0.43–0.445 | 0.529 (0.520–0.541) | **0.501 (0.482–0.519)** | 0.44–0.455 |
+| 0.8 | 0.777 (0.765–0.792) | **0.803 (0.788–0.817)** | 0.825–0.83 | 0.760 (0.752–0.765) | **0.802 (0.794–0.808)** | 0.845–0.85 |
+| 0.9 | 0.869 (0.860–0.881) | **0.904 (0.892–0.915)** | 0.93–0.935 | 0.852 (0.844–0.857) | **0.902 (0.893–0.909)** | 0.945–0.95 |
+| 0.95 | 0.921 (0.913–0.928) | **0.954 (0.943–0.963)** | 0.975–0.98 | 0.906 (0.897–0.909) | **0.952 (0.944–0.955)** | 0.985 |
+
+The envelope entries are coverage of the rescan's tract at each target.
+
+- **No held-out subject is badly off.**
+  - Streamline ECE with the card is at most 0.012, and point ECE at most 0.032 (cIIIs05, other session; 1,277 points
+    that overlap).
+  - At the targets 0.8–0.95, envelope coverage stays between 1.2 points below and 1.7 above the target. At 0.5 it
+    spreads wider: 0.481–0.527.
+- **The grid change followed the held-out results.**
+  - The first fit's grid started at 0.5. The held-out results then showed a target of 0.5 over-met (0.535 and 0.529),
+    because the envelope at stated 0.5 already covers 0.53–0.56 of a rescan's tract: the highest-vote voxels hold
+    more of it than of the vote mass.
+  - The grid was moved to start at 0.2 after seeing that, so the 0.5 row is not a blind test.
+  - The other targets' rows are unchanged. The first card is kept as
+    `results/calibration_card_masivar_cIII_grid05.json`.
+  - The mean over the grid of the card's error in predicted coverage rose from 0.007 and 0.005 (at most 0.016 and
+    0.011) to 0.009 and 0.009 (at most 0.022 and 0.018). That is because the grid now spans 0.2–0.5, where the
+    held-out curves differ more, not because any level's prediction got worse.
+- **The focus tracts** (CST, AF, UF) with the all-tract card at target 0.9: 0.898 and 0.904 held out, against 0.864
+  and 0.855 as stated (a scratch analysis, not in the JSON). Per-tract statements were not validated (caveats).
+
+**The card's maps** (fitted on all subjects; `terms`):
+
+| stated share of the mode (k of 17) | 9 (0.53) | 13 (0.76) | 17 (1.0) |
+|---|---|---|---|
+| streamline, same / other session | 0.497 / 0.475 | 0.679 / 0.649 | 0.934 / 0.905 |
+| point, same / other session | 0.503 / 0.486 | 0.698 / 0.655 | 0.982 / 0.968 |
+
+- 19 % of the same-session rows are unanimous seeds (61,009 of 316,773). A rescan gives their mode 93 % of the time
+  (91 % in another session), so no streamline reaches 0.99.
+- Envelope: the stated level for a target of 0.5, 0.8, 0.9 and 0.95 is 0.435, 0.83, 0.935 and 0.98 (same session) and
+  0.45, 0.845, 0.945 and 0.985 (other session). All are reached, none at the floor. A stated 0.9 covers 0.869 and
+  0.852.
+- **Stable across folds** (`summary` → `fold stability`, from the stored fold maps; 8 and 5 folds):
+  - the streamline map at k = 17 ranges over 0.932–0.936 (other session 0.901–0.910), and at k = 9 over 0.494–0.499
+    (0.474–0.477);
+  - the levels for the targets 0.8–0.95 move by at most 0.005, and for 0.5 by 0.015;
+  - the coverage at stated 0.9 moves by at most 0.003;
+  - the point map moves more at middle shares (k = 13: 0.687–0.703 and 0.621–0.676), where it rests on a few hundred
+    points a subject.
+
+**The other-session term against the same-session one** (`per rescan`, and `the same-session card on other-session
+rescans`):
+- **Per subject** (the five with both), another session gives the mode 1.4–4.1 points less often (cIIIs08 0.693 →
+  0.679, cIIIs02 0.683 → 0.642), and a stated-0.9 envelope covers 0.5–2.8 points less.
+- **The same-session card on other-session rescans**, held out:
+  - streamline ECE 0.028 (0.020–0.036), against the other-session card's 0.008;
+  - point ECE 0.026 (0.012–0.038), against 0.022; it is lower on cIIIs04 (0.012 against 0.020);
+  - envelope coverage 0.785, 0.888 and 0.943 at targets 0.8, 0.9 and 0.95: 0.7–1.5 points short. It reaches none of
+    the three targets on any of the 5 subjects (0.777–0.791, 0.883–0.895, 0.937–0.948).
+
+  The term matters, by a few points. The larger correction is common to both terms: the bootstrap's overconfidence
+  within a session.
+- **Head position does not order the other-session rescans.** cIIIs02's two (10.2 and 15.6 mm, NCC 0.84) give the
+  mode 0.634 and 0.650; cIIIs04's four (3.6–14.9 mm, up to 6.0°) give 0.661–0.674, with no trend in translation.
+
+**Shapes** (fitted on all subjects; coverage / precision / size against the rescan's tract):
+
+| shape | same session | other session | held-out error of the card's coverage, mean (max): same / other |
+|---|---|---|---|
+| A alone | 0.763 / 0.760 / 1.00 | 0.748 / 0.742 / 1.01 | 0.013 (0.030) / 0.013 (0.031) |
+| core (≥ 9 of 17) | 0.767 / 0.835 / 0.92 | 0.751 / 0.813 / 0.92 | 0.014 (0.030) / 0.013 (0.030) |
+| Vorob'ev | 0.802 / 0.801 / 1.00 | 0.785 / 0.780 / 1.01 | 0.011 (0.026) / 0.010 (0.024) |
+| envelope 0.8 | 0.777 / 0.804 / 0.97 | 0.760 / 0.784 / 0.97 | — |
+| envelope 0.9 | 0.869 / 0.692 / 1.26 | 0.852 / 0.678 / 1.26 | — |
+| widest | 0.964 / 0.476 / 2.03 | 0.955 / 0.470 / 2.03 | 0.004 (0.008) / 0.005 (0.012) |
+
+- **The Vorob'ev shape is size-honest on every subject** (held-out size 0.99–1.03), with coverage about equal to
+  precision (0.80 and 0.78).
+  - The core is 8 % too small and more precise, as on cIIIs04 alone (NOTES 2026-10-13, "A volume-matched core").
+  - For a quoted volume or extent the Vorob'ev shape is the one to use; the card gives its expected coverage within
+    about 0.01.
+- A single run covers as much of a rescan's tract as the core does (0.763 against 0.767).
+
+**Pooled sessions, the upper reference** (51 runs: three scans' ensembles, as stated). The card is scored held out on
+the same rescans. `pooled sessions (upper reference, as stated)` and `pooled against the card, like for like` in
+`per subject`:
+
+| subject, rescans (pool) | envelope coverage at 0.8 / 0.9 / 0.95: pooled as stated | the card |
+|---|---|---|
+| cIIIs02, within (A, sessions 4, 5) | 0.794 / 0.892 / 0.943 | 0.805 / 0.909 / 0.961 |
+| cIIIs04, within (A, sessions 3, 5) | 0.811 / 0.905 / 0.951 | 0.817 / 0.915 / 0.963 |
+| cIIIs04, sessions 2–5 (A, within, session 3 or 5) | 0.783 / 0.882 / 0.934 | 0.800 / 0.902 / 0.954 |
+
+Like for like:
+- **Streamlines** are scored on the seeds both label (A's 17-run set intersected with the pool's), each against its
+  own mode, among seeds the rescan labels.
+- **Envelope size** is taken over the rescan's tract at matched held-out coverage: each curve is interpolated to the
+  same observed coverage, not compared at the same target.
+
+| subject, rescans | seeds | streamline ECE: card / pooled | stated / observed: card; pooled | size at coverage 0.8 / 0.9 / 0.95: card's envelopes; pooled |
+|---|---|---|---|---|
+| cIIIs02, within | 32,962 | 0.009 / 0.019 | 0.676 / 0.685; 0.712 / 0.694 | 1.05 / 1.46 / 1.93; 1.05 / 1.43 / 1.84 |
+| cIIIs04, within | 34,631 | 0.011 / 0.006 | 0.696 / 0.707; 0.721 / 0.717 | 0.98 / 1.31 / 1.67; 0.97 / 1.28 / 1.59 |
+| cIIIs04, sessions 2–5 | 143,026 | 0.003 / 0.034 | 0.670 / 0.672; 0.729 / 0.695 | 1.03 / 1.41 / 1.83; 1.00 / 1.34 / 1.69 |
+
+- **The card is as honest as pooling, or more so.**
+  - Pooled sessions as stated come within 0–2 points of the envelope targets (as on cIIIs04 before, NOTES 2026-10-13).
+    The card meets them on these three groups too.
+  - On common seeds, the card's streamline ECE is lower on two of the three groups. Pooling as stated over-states
+    another session's rescan by 3.4 points.
+- **Pooling is only a little sharper.** At matched coverage, three sessions' pooled envelope is 2–5 % smaller than
+  the card's single-scan envelope at 0.9 (1.43 against 1.46, 1.28 against 1.31, 1.34 against 1.41). It is 5–8 %
+  smaller at 0.95, and within 3 % at 0.8.
+  - A first, scratch comparison at equal targets had put the card's envelope at 1.39–1.52 times the rescan's tract,
+    against pooling's 1.26–1.39. That overstated the gap: pooling as stated under-covers, so at equal targets its
+    envelopes were smaller partly because they covered less.
+- **The pools are imperfect references.**
+  - POOL_SCANS takes the first three other scans, A first, so for a within target the pool holds A, from the same
+    session.
+  - For cIIIs04's other-session targets the pool holds A and the within rescan (both session 1) and one of sessions
+    3 and 5: two sessions, not three.
+  - cIIIs02 has no other-session pooled reference, because its within rescan has no ensemble.
+
+**The card's format** (`calibration_card.py`'s docstring; schema `tractline.calibration_card/2`):
+- `card id` (masivar-cIII-scannerB_b1000x40-b2000x56_2.1mm_R17_36756d8b97a9, ending in the settings hash), `card
+  version` 2, `created (UTC)`;
+- `protocol`: scanner, shells and directions, b0s, the nominal readout (0.05 s, not in the sidecars), and
+  `recognized by`: every item load_checked checks, with its tolerances;
+- `pipeline`:
+  - the fit's git state: 53a0e2e, with no dirty file among src/ and the card's bench modules;
+  - the sha256 of the eleven bench modules the runs, collect and fit import;
+  - the settings, read from every subject's card folder and asserted equal, and their sha256;
+  - library versions (numpy 2.5.3, scipy 1.18.1, torch 2.14.1, dipy 1.12.1, nibabel 5.4.2);
+  - the RapidParc weights' sha256 (6a158dad…, verified by the labeler on every load);
+  - R = 17, and the sha256 of each subject's statement file;
+  - `provenance`: per subject and record group, the card folder with its git state at creation, or the reused folder
+    with its file dates and "none recorded";
+- `validity`:
+  - `match`, the machine-checkable fields: PROTOCOL, R, the settings' sha256, the weights' sha256 and the terms;
+  - the domain in words: healthy adults, this protocol, these settings and R, rescans in the same session or in
+    another session on the same scanner. Outside it, the product says "run-to-run only";
+- `terms`: the maps above, per term;
+- `accuracy (provisional)`: below, with `"apply": false`;
+- `held-out evaluation (leave one subject out)`: the summary with fold stability; per subject and term, the fold map,
+  the statements, the pooled reference and the like-for-like comparison; the same-session card on other-session
+  rescans; per rescan, its mode rates and coverage;
+- `subjects`: pairs, rescans, registrations, points and seeds.
+
+After the queue the card was refit three times:
+- the "other session" wording was corrected, since the session interval was not checked;
+- the level grid was moved to start at 0.2 (above);
+- the review's code changes (provenance, hashes, stored fold maps, cross-term, per-rescan rates, like-for-like pooling,
+  the protocol check, the floor flag, the schema) were committed as 53a0e2e. cIIIs02's and cIIIs04's statements were
+  collected again for the pooled seed keys, and the card was refit. No held-out number outside the envelope rows
+  moved.
+
+**The provisional accuracy term** (`accuracy (provisional)`, from step 4's `robust_phantom.json`, count-matched).
+- **The coverage.** Against the ISMRM 2015 phantom's own density presence at each run's streamline count, the labeled
+  17-run envelopes cover 0.650, 0.724, 0.753 and 0.778 at stated 0.8, 0.9, 0.925 and 0.95. A bias-free ensemble of
+  ground-truth subsamples covers 0.818, 0.904, 0.929 and 0.951.
+- **The gaps** are 0.168, 0.180, 0.176 and 0.172. The core's is 0.275, and the widest's 0.151.
+- **Beside it:** a mean F1 of 0.412 under the 2023 ROI scoring (the replicates 0.404–0.413), 20 of 21 bundles valid,
+  and 57.6 % of valid streamlines labeled as their counterpart.
+- **It is recorded, not applied** (`"apply": false`).
+  - The gaps are quoted at the uncalibrated stated levels, not at the card's, so they must not be stacked on the
+    card's maps.
+  - There is one simulated brain at b = 1000 with 32 directions, unlike this protocol (b1000 ×40 + b2000 ×56, tracked
+    at 2000), with its own noise (DW SNR about 7.6), readout and labels.
+  - So it is provisional and protocol-mismatched.
+
+**Reading it.**
+- **What the card makes honest:** a single scan's statements about a rescan on this protocol, for a held-out healthy
+  subject.
+  - Streamline mode: ECE from 0.070 and 0.097 to 0.008.
+  - The main named tract within 8 mm of a point: from 0.038 and 0.059 to 0.014 and 0.022.
+  - Envelope coverage: from 2–5 points short to between 1.2 points below and 1.7 above the target at 0.8–0.95, and
+    0.501 on average at 0.5 (where the grid was adjusted after seeing the results).
+  - The shapes' coverage, within about 0.01.
+  - Two maps per statement do this, and they are stable across folds. The card is as honest as pooling three sessions
+    as stated, with envelopes 2–5 % larger at matched coverage at 0.9.
+- **The scope of "honest":**
+  - Envelope coverage is pooled over the 42 named tracts and weighted by the rescan's voxels, so large tracts dominate
+    it. Per-tract statements were not validated (the focus tracts' 0.898 / 0.904 is a scratch figure).
+  - The streamline event is conditional on the rescan having a streamline from the seed (95–99 % of seeds).
+  - The "rescan" includes its resampling onto A's grid, which A does not undergo.
+  - Everything ran on one device (the M2's GPU, mps).
+- **The other-session term is real but small:** 2–3 points of stated probability, and 0.7–1.5 points of coverage
+  beyond the same-session correction. The same-session card reaches no envelope target on any of the 5 other-session
+  subjects. Most of the correction is the bootstrap's overconfidence within a session.
+- **PAT16's double-bootstrap table transfers in part** (ECE 0.019 and 0.027, with no real rescans), despite its
+  handicaps (R = 11, another event). It cannot know the session term: its mean statement fits a same-session rescan
+  and over-states another session's.
+- **Honest, and nearly as sharp as pooling.** The card widens the envelopes to correct the statement. At matched
+  coverage, three sessions' ensembles are only 2–5 % tighter at 0.9 (5–8 % at 0.95). More sessions add some
+  information, not much here.
+- **What it does not make honest:**
+  - **Claims about the anatomy.** The card's events are rescans. The phantom says the envelopes cover 17–18 points
+    less of a ground truth than a bias-free ensemble would. That term is one simulated brain on another protocol:
+    provisional, not a calibration, and not applied.
+  - **Anything outside its domain:** other protocols, scanners or sites; patients or pathology (a tumor's edema and
+    mass effect are not in eight healthy brains); other pipeline options (denoising, tracker settings, the
+    labeler's grouping); another R; another device.
+- **Streamlines stay diagnostic.** Even a unanimous seed's name holds on 91–93 % of rescans. The product's claims are
+  regional.
+
+Caveats:
+- **One scanner, one protocol, one site:** MASiVar cohort III on scanner B, eight healthy adults.
+- **The other-session term rests on 5 subjects** (9 rescans, 4 of them cIIIs04's, weighted as one subject). The
+  same-session term rests on 8 subjects with one rescan each.
+- **R = 17 fixed.** The stated shares shift with R (NOTES 2026-10-09, "A held-out subject"), so the card belongs to
+  R = 17.
+- **The 0.5 target is not a blind result.** The grid was changed after the held-out 0.5 results were seen.
+- **Pooled over tracts:** per-tract envelope statements were not validated.
+- **The point statements overlap** (spheres of radius 8 mm every 8.6–8.8 mm), so their counts overstate independent
+  evidence. A subject's few hundred points at middle shares make that part of the map the least stable.
+- **Labeler draw 0 and index grouping throughout, on one device (mps).** The card is for today's defaults; an option
+  that becomes a default needs its own card.
+- **Provenance:** cIIIs04's reused replicates and rescans were not rerun. `verify` checked A only.
+- **Not tested:**
+  - the session interval;
+  - a rescan's own resampling against A's: the rescans are resampled onto A's grid and A is not, so the card
+    includes that interpolation in what a "rescan" is (as every earlier rescan entry did);
+  - cIIIs01's further 2.1 mm sessions (not fetched).
+- **The pooled reference** is two to three sessions and one or two subjects (above).
+
+Operational note: the queue ran from 08:31 to 17:00.
+- The 20 GB disk guard stopped it three times: at 09:30 (19.0 GB free), 13:34 (12.5 GB) and 13:43 (15.6 GB, right
+  after a restart).
+- The cause was macOS update staging and Time Machine local snapshots, not these runs (1.16 GB in all). It was
+  resumed each time.
+- The guard stops before a run starts, and records are written under a temporary name and renamed when complete. No
+  partial record was left, and `calibration_runs.py plan` reports no run missing.
