@@ -20,6 +20,8 @@ Defaults to know: device="mps" (pass "cuda" or "cpu" elsewhere); shell=2800.0 (d
 prepare refuses a scan without that shell; pass the scan's own).
 
 Stages, and where they run:
+  denoise   opt-in (run's denoise=; none by default): the diffusion series as acquired, by dipy's MP-PCA or
+            Patch2Self in a process of its own (tractline.denoise; denoise_subject), before the field is estimated
   correct   the susceptibility field from the b0s and their reversed pair (susceptibility.estimate: GPU,
             float32, ~18 s on the M2), then applied to the DWI (susceptibility.apply: CPU, float64, ~1 s);
             residual_left: how much of the pair's difference the field leaves - above RESIDUAL_WARN a
@@ -46,7 +48,7 @@ Conventions at every module boundary (_ds001226, susceptibility, prep, ukf, the 
 """
 from __future__ import annotations
 
-import os, time
+import copy, os, time
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 import numpy as np, torch
@@ -141,6 +143,7 @@ class Correction:
     note: str = ""               # what corrected it, or why nothing did (bids.Pairing.message)
     residual_left: float | None = None   # the pair's mean-b0 difference left after correction (residual_left)
     warnings: list = field(default_factory=list)
+    denoise: dict | None = None  # the opt-in denoising's settings and what it estimated (denoise_subject); None: not denoised
 
 
 RESIDUAL_WARN = 0.5              # residual_left above this: a warning, never a refusal. On 23 judged good pairs
@@ -237,6 +240,61 @@ def correct(s, timer: Timer, device="mps") -> Correction:
                       note=note, residual_left=None if left is None else round(left, 3), warnings=warnings)
 
 
+#: the opt-in denoisers (tractline.denoise; a name may carry a setting, "mppca:r3"), and where they run: "acquired", the
+#: series as acquired, before the field
+DENOISE = ("mppca", "patch2self")
+DENOISE_ORDERS = ("acquired", "corrected")
+
+
+def denoise_subject(s, timer: Timer, method="mppca", workers=None, mask=None):
+    """The diffusion series as acquired, denoised (tractline.denoise: dipy, in a process of its own), before the field
+    is estimated: (a copy of s with dwi denoised, the run's stats). Both methods assume the noise of the volumes as
+    acquired; the correction interpolates along the phase-encoding axis and scales by the Jacobian, which smooths
+    the noise and makes its level vary. The b0s that feed the field estimate and are the DWI's own volumes (found by
+    value: s.b0s's volumes equal to one of the DWI's b0s) are taken from the denoised series, so the estimate's
+    forward b0s are the ones the DWI is corrected as. The other b0s (the reversed series) stay as acquired: one or a
+    few volumes, too few to denoise on their own, and distorted the other way, so they cannot share the forward
+    series' patches (MP-PCA) or voxelwise regressions (Patch2Self). When fewer b0s match than the b0s phase-encoded as
+    the DWI is, a warning (the estimate then mixes denoised and raw forward b0s). method: a name tractline.denoise.parse
+    takes ("mppca", "mppca:r3", "patch2self"); workers: MP-PCA's processes (default one per core); mask: a brain mask
+    on the DWI's grid, if one is known, over which the stats are given too (denoise.summary)."""
+    import warnings
+    from . import denoise as D
+    D.parse(method)                                                        # a ValueError before any work
+    with timer("denoise"):
+        d = D.denoise(s.dwi, s.bval, method, workers)
+    out = copy.copy(s)
+    out.dwi = d.dwi
+    replaced = forward = 0
+    if getattr(s, "b0s", None) is not None:
+        b0s = np.array(s.b0s, np.float64)
+        b0i = np.flatnonzero(np.asarray(s.bval) < 50)
+        for v in range(b0s.shape[-1]):
+            same = [i for i in b0i if np.array_equal(b0s[..., v], np.asarray(s.dwi[..., i], np.float64))]
+            if same:
+                b0s[..., v], replaced = d.dwi[..., same[0]], replaced + 1
+        out.b0s = b0s
+        forward = int((np.sign(np.asarray(s.pe_vectors, float)[:, s.pe_axis]) == np.sign(s.pe_sign)).sum())
+        if replaced < forward:
+            warnings.warn(f"denoise: {replaced} of the {forward} b0s phase-encoded as the DWI matched its own volumes and "
+                          "were denoised; the others feed the field as acquired", stacklevel=2)
+    n_b0s = None if getattr(s, "b0s", None) is None else int(s.b0s.shape[-1])
+    stats = {**D.summary(s.dwi, d, s.bval, mask), "order": "acquired",
+             "b0s denoised (the DWI's own), of those feeding the field": [replaced, n_b0s],
+             "b0s phase-encoded as the DWI": forward}
+    return out, stats
+
+
+def denoise_corrected(dwi, bval, timer: Timer, method="mppca", workers=None, mask=None):
+    """The other order, for comparison: the corrected DWI denoised (its noise interpolated and scaled by the field's
+    Jacobian, against both methods' assumptions): (dwi, the run's stats)."""
+    from . import denoise as D
+    D.parse(method)
+    with timer("denoise"):
+        d = D.denoise(dwi, bval, method, workers)
+    return d.dwi, {**D.summary(dwi, d, bval, mask), "order": "corrected"}
+
+
 #: ukf.track's settings pipeline.track passes on when asked (tracker=); every other keyword is the pipeline's own
 TRACKER_SETTINGS = frozenset({"seeding_threshold", "stopping_fa", "stopping_threshold", "step_length", "record_length",
                               "max_half_length", "Qm", "Ql", "Rs", "tie_angle", "tie_sw2"})
@@ -297,7 +355,7 @@ STAGES = ("field_estimate", "field_apply", "prep", "load", "ukf", "label")
 
 
 def run(s, labeler, timer: Timer, prefix="", trx=None, device="mps", workers=None, release=True, shell=2800.0, tracker=None,
-        **trx_options):
+        denoise=None, denoise_order="acquired", **trx_options):
     """The whole pipeline on a subject: (Correction, Tractogram, Labels). labeler: None for the default
     (default_labeler: RapidParc), or any labeler (labelers.tractcloud.Labeler, ...). Its time is
     timer.total(*pipeline_stages(prefix)). trx: also write the tractogram there as TRX (trx.write;
@@ -307,12 +365,23 @@ def run(s, labeler, timer: Timer, prefix="", trx=None, device="mps", workers=Non
     the estimate and the tracking run ("mps", "cuda" or "cpu"; the labeler has its own); shell: the b-value
     tracked (track); workers: the CPU
     tracker's processes (default one per core as os.cpu_count() sees them - in a container, pass the
-    container's own); tracker: opt-in tracker settings (track), None for today's."""
+    container's own); tracker: opt-in tracker settings (track), None for today's. denoise: opt-in, None for today's,
+    or "mppca" / "patch2self" (denoise_subject; "mppca:r3" with a setting), its settings and estimates in Correction.denoise and its time in
+    timer.seconds["denoise"] (not among pipeline_stages), and `workers` its processes too; denoise_order: "acquired" (before the field; the default)
+    or "corrected" (denoise_corrected, for comparison)."""
+    if denoise is not None and denoise_order not in DENOISE_ORDERS:
+        raise ValueError(f"denoise_order: {denoise_order!r} is not one of {DENOISE_ORDERS}")
     if torch.device(device).type == "cpu" and (workers or os.cpu_count() or 1) > 1:
         U.require_main_guard()                                             # before the 20 s field estimate
     labeler = labeler if labeler is not None else default_labeler(device)
+    if denoise is not None and denoise_order == "acquired":
+        s, dn = denoise_subject(s, timer, denoise, workers)
     with exact_float32(device):
         corr = correct(s, timer, device)
+        if denoise is not None:
+            if denoise_order == "corrected":
+                corr.dwi, dn = denoise_corrected(corr.dwi, s.bval, timer, denoise, workers)
+            corr.denoise = dn
         tg = track(s, corr.dwi, timer, prefix, device, workers, shell, tracker)
         labels = label(tg, labeler, timer, prefix)
     if trx is not None:

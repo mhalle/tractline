@@ -4728,3 +4728,324 @@ Caveats:
   volumes do not show it;
 - one labeler draw (0); 8 epsilon and 8 fieldonly runs per configuration;
 - no ground truth: reproducibility and bias against today only.
+
+## 2026-10-17 Robustness step 3: denoising before tracking; Patch2Self cuts rescan renames by 3.5–4.5 points (2.7–3.9 reweighted); neither bootstrap design is honest
+
+`robust_ukf_score.py` (configurations `denoise=patch2self`; `denoise=patch2self,bootstrap=denoised`, honesty only;
+and the partial ones `denoise=mppca`, `denoise=mppca:r3`, `denoise=patch2self:s1`) → `robust_ukf_score.json`;
+records in `DATA/ensemble/cIIIs04/robustness/denoise/<variant>/`.
+Denoising: `src/tractline/denoise.py`; the pipeline's opt-in `run(denoise=None | "mppca" | "patch2self",
+denoise_order="acquired")`, `denoise_subject`, `denoise_corrected`. A denoiser's name may carry its setting:
+`"mppca:r3"` (patch radius), `"patch2self:s1"` (sketch seed). docs/robustness-plan.md, step 3. Steps 1–2b found
+that the rescans' disagreement is the data's noise reaching the tracker, and that no tracker setting reduced it
+without changing the tractography. Does removing noise from the DWI before tracking reduce it?
+
+Method:
+- **Order: denoise first, on the series as acquired.** Both denoisers assume the noise of the volumes as acquired.
+  The field correction interpolates along the phase-encoding axis and scales by the Jacobian, which smooths the
+  noise and makes its level vary. So the forward series is denoised before the field is estimated, both shells
+  together (112 volumes: b = 0, 1000 and 2000). `denoise_order="corrected"` (denoise the corrected DWI) exists for
+  comparison; it was not scored.
+- **The b0s that feed the field.** The forward b0s are the DWI's own volumes, so they are taken from the denoised
+  series (matched by value: 16 of the 17 b0s; a warning when fewer match than the b0s phase-encoded as the DWI).
+  The reversed series' one b0 stays as acquired. One volume cannot be denoised on its own, and its distortion runs
+  the other way, so it cannot share the forward series' patches (MP-PCA) or its voxelwise regressions (Patch2Self).
+- **dipy in a process of its own** (`python -m tractline.denoise`), since its OpenMP runtime and torch's clash, as in
+  `_register.py`. `test_subprocess_isolation` checks that no `dipy.denoise` module loads in the calling process.
+- **Defaults unchanged.** `P.run` on A (Metal, the full pipeline: correct, track, label) gives the same SHA-256 at
+  HEAD and with the change: fibers b92eed8a… (78,187, the earlier steps' hash), labels 4f6afff4…, corrected DWI
+  da527c1e…. `test_default_has_no_denoising` checks that `Correction.denoise` is None and that no stage is added.
+- **The bootstrap carries the noise into the denoiser.** Each replicate is made from the raw scan's fit and residuals
+  as today (smooth signs, FWHM 4, b0 noise "added", seeded by r), then denoised and corrected as a scan would be.
+  Each rescan is denoised on its own grid, corrected there, and then resampled onto A's.
+- **Epsilon and fieldonly.** Epsilon perturbs A's tracker input as the variant makes it (denoised, then corrected).
+  Fieldonly estimates the field from replicate r denoised, the same field as smooth/r's (reused within the process),
+  and applies it to A's DWI denoised as acquired.
+
+**MP-PCA at radius 2 removes almost nothing here.** dipy's `mppca` (5 × 5 × 5 patches, the Marchenko–Pastur
+classifier, no mask) was run in 8 slabs, one process each. That gives dipy's whole-volume result bit for bit
+(`test_slabs_are_dipys_whole_volume`) in 158 s per scan.
+- **On A** it estimates sigma 0.15 / 0.20 / 0.29 (quartiles) in A's tracking mask (the run log,
+  `denoise/denoise=mppca/runs.json`), against a residual RMS of 5.75 in
+  the bootstrap's noise check. It removes an RMS of 0.24. A sigma of 0.2–0.3 is about the rounding noise of
+  integer-stored values (1/√12 ≈ 0.29), not the scan's noise. In 0.3 % of the mask's voxels it finds no noise edge
+  at all (sigma NaN, the patch left as it was).
+- **The phantom's white noise is found.** On the test phantom (SD 8) its median sigma lies between 6.5 and 9.5
+  (`test_mppca_finds_white_noise`).
+- **Why, as far as it is known.** At radius 2 the patch's 125 voxels barely exceed the 112 volumes, and MP-PCA's
+  noise edge assumes they are independent samples. Here the noise is correlated in-plane: in a check outside the
+  results files, A's DW residuals about the bootstrap's spherical-harmonic fit correlate with their neighbor at
+  lag 1 by 0.42 / 0.24 / 0.08 along the three axes, and by 0.07 / −0.13 / 0.06 at lag 2 (cIIIs01, the same protocol:
+  0.47 / 0.31 / 0.08 at lag 1, ensemble_retest). That leaves fewer effective samples than voxels. The negative lag 2
+  suggests the reconstruction (a k-space filter or interpolation) rather than a smoothing; the sidecars do not say,
+  so the source is unconfirmed.
+- **Strided patches** (2 or 3 voxels apart in-plane, a scratch check) gave a median sigma of 2.6.
+- **Radius 3** (`"mppca:r3"`, 343 voxels) denoises somewhat: 180–185 s per scan, sigma 1.57 / 2.08 / 3.19 in A's mask,
+  an RMS of 1.69 removed (the run log, `denoise/denoise=mppca:r3/runs.json`). Closer to the noise, still well below it.
+  Its smoke test (A and the within rescan; "partial" in the JSON): the rescan renames 35.2 % against 35.4 % today, 70.9
+  % of paths are more than 5 mm apart against 71.6 %, 64,200 streamlines are labeled, and the tract mix moves by a total
+  variation of 0.005. It does not change rescan agreement, yet it keeps only 64.9 % of today's CST streamlines as CST
+  (radius 2: 82.1 %).
+- **The radius-2 smoke test.** On A and the within rescan only (the configuration is marked "partial" in the JSON
+  and was not run in full): the rescan renames 35.5 % against 35.4 % today, 71.5 % of paths are more than 5 mm apart
+  against 71.6 %, 64,364 streamlines are labeled, and the tract mix moves by a total variation of 0.003. It behaves
+  as a small perturbation, not a denoiser. No full-run figure below uses it.
+
+**Patch2Self** (dipy 1.12 `patch2self`): each volume is regressed on the others, voxel by voxel (patch radius 0,
+OLS), and the b0s on the other b0s.
+- **Settings.** dipy's version 3 sketches all the voxels into 30 % as many rows (a count sketch) and fits the
+  regressions on the sketch. Its generator, numpy's global one, is seeded (0), so a run repeats
+  (`test_patch2self_repeats`). Negative values are clipped to 0: dipy's default `shift_intensity` shifts each volume
+  by min − min, which is nothing.
+- **The sketch seed matters.** A denoised with sketch seed 1 instead of 0, then tracked (`denoise=patch2self:s1`, A
+  only, partial; `checks` in the JSON): against seed 0's A, over the 60,624 seeds both label, 8.9 % of streamlines
+  are renamed and 17.1 % of paths move more than 5 mm (median MDF 0.54 mm). Patch2Self's own epsilon arm renames
+  4.07 % and moves 2.99 %: the seed is about twice that in renames and six times in paths. Every denoised scan
+  carries this variation, so it is part of what the rescans and the replicates differ by.
+- **Version 1.** A scratch trial of version 1 took about 6 min and removed an RMS of 15.2 in A's mask (29.8 in the
+  b0s), far more than the noise. It was not pursued.
+- **Speed.** 12.7–13.2 s per scan in the worker (`checks`).
+- **It needs noise independent between volumes, not between voxels,** so the in-plane correlation does not stop it.
+
+What Patch2Self removed (RMS over the bright voxels; all volumes / b0s / DW volumes; the mean is a bias; from the run
+log, in the JSON's `checks`):
+
+| | all / b0s / DW | mean |
+|---|---|---|
+| A | 5.90 / 6.50 / 5.79 | −0.003 |
+| A, in A's tracking mask | 5.92 / 6.05 / 5.89 | 0.002 |
+| the three rescans | 5.95–6.23 / 6.17–7.18 / 5.82–6.06 | −0.003 to 0.003 |
+| the 16 replicates | 7.19–7.23 / 9.28–9.48 / 6.77–6.78 | 0.007–0.009 |
+
+- **What the removed RMS says.** Each output volume is a regression on the other volumes, which carry their own
+  noise; part of that noise is fed back into the output. So the removed RMS is not the noise removed, and 5.89
+  against the bootstrap's 5.75 cannot show that Patch2Self removed the noise and nothing else.
+- **The replicates lose more.** Their DW volumes lose 6.8 against 5.8–6.1 for the real scans, and their b0s 9.3–9.5
+  against 6.2–7.2. "Added" b0 noise doubles the b0s' variance, and each replicate's signal is the shell-wise
+  spherical-harmonic fit, which the other volumes predict exactly; Patch2Self keeps it and strips mostly the flipped
+  residual. Replicates may therefore collapse toward one denoised fit, more than real denoised scans do.
+
+**Scoring: Patch2Self against today, Rs 0.1, step_length 0.6 and the tie-break.** The method is step 2's scoring:
+A, the three rescans on A's grid, a 17-run ensemble, and 8 epsilon and 8 fieldonly runs, with RapidParc at draw 0
+and its index grouping. The three figures per cell are the within, session 3 and session 5 rescans.
+
+| | today | Rs 0.1 | step_length 0.6 | tie_angle 0.5, both swaps | Patch2Self |
+|---|---|---|---|---|---|
+| A: streamlines labeled (≥ 40 mm) | 64,378 | 57,512 | 64,704 | 64,175 | 61,162 |
+| A: length, quartiles (mm) | 67.8 / 96.5 / 130.8 | 62.4 / 91.2 / 120.0 | 70.8 / 99.6 / 128.4 | 67.8 / 96.5 / 132.5 | 67.8 / 93.0 / 125.3 |
+| A's paths more than 5 mm from the rescan's | 71.6 / 75.4 / 77.8 % | 55.7 / 60.1 / 65.5 % | 65.3 / 69.3 / 73.4 % | 71.7 / 75.6 / 77.9 % | 63.7 / 67.6 / 71.8 % |
+| the same: median MDF (mm) | 13.4 / 15.1 / 16.2 | 6.3 / 7.4 / 8.9 | 9.5 / 10.8 / 12.4 | 13.6 / 15.2 / 16.3 | 9.5 / 10.9 / 12.6 |
+| the rescan renames | 35.4 / 38.2 / 39.7 % | 28.8 / 31.4 / 34.1 % | 31.8 / 34.0 / 36.5 % | 35.8 / 38.3 / 39.7 % | **31.3 / 33.7 / 36.2 %** |
+| the same, reweighted to today's tract mix | — | 28.4 / 31.4 / 34.0 % | 32.0 / 34.6 / 37.1 % | 35.8 / 38.3 / 39.7 % | 31.9 / 34.4 / 37.0 % |
+| the same, hash-sorted grouping | 35.5 / 38.0 / 39.8 % | 28.7 / 31.3 / 34.0 % | 31.7 / 33.9 / 36.5 % | 35.8 / 38.3 / 39.7 % | 31.0 / 33.6 / 36.1 % |
+| A's CST streamlines the rescan renames | 73.8 / 70.7 / 68.7 % | 46.3 / 46.7 / 47.4 % | 58.5 / 59.4 / 62.1 % | 75.4 / 70.8 / 69.9 % | 69.5 / 77.1 / 75.5 % |
+| presence Dice, CST | 0.78 / 0.78 / 0.75 | 0.80 / 0.79 / 0.80 | 0.79 / 0.78 / 0.76 | 0.78 / 0.78 / 0.75 | 0.77 / 0.73 / 0.74 |
+| presence Dice, AF | 0.81 / 0.79 / 0.77 | 0.79 / 0.76 / 0.73 | 0.80 / 0.79 / 0.76 | 0.81 / 0.79 / 0.78 | 0.80 / 0.81 / 0.78 |
+| presence Dice, UF | 0.79 / 0.76 / 0.73 | 0.75 / 0.74 / 0.69 | 0.78 / 0.76 / 0.73 | 0.78 / 0.76 / 0.73 | 0.79 / 0.78 / 0.76 |
+| landmark sites with the same main named tract within 8 mm (of 8) | 6 / 6 / 5 | 6 / 7 / 6 | 8 / 6 / 7 | 7 / 7 / 6 | 8 / 8 / 7 |
+| stated: the mode's mean share | 0.764 | 0.812 | 0.791 | 0.763 | 0.794 |
+| a rescan gives the mode | 0.703 / 0.674 / 0.661 | 0.749 / 0.724 / 0.699 | 0.731 / 0.708 / 0.683 | 0.701 / 0.674 / 0.662 | 0.722 / 0.702 / 0.681 |
+| stated minus observed | 0.061 / 0.090 / 0.102 | 0.063 / 0.089 / 0.113 | 0.061 / 0.084 / 0.109 | 0.063 / 0.090 / 0.101 | 0.072 / 0.092 / 0.114 |
+| AUROC, the rescan's change from A's tract | 0.801 / 0.779 / 0.773 | 0.815 / 0.796 / 0.780 | 0.808 / 0.784 / 0.772 | 0.800 / 0.777 / 0.773 | 0.792 / 0.781 / 0.769 |
+| epsilon: renamed / paths > 5 mm | 3.96 / 3.42 % | 3.62 / 0.69 % | 3.71 / 1.52 % | 3.24 / 1.16 % | 4.07 / 2.99 % |
+| epsilon: A's seeds a run lacks (mean) | 83.0 | 12.8 | 36.1 | 22.8 | 76.1 |
+| fieldonly: renamed / paths > 5 mm | 16.4 / 34.6 % | 12.2 / 19.5 % | 14.3 / 28.0 % | 16.8 / 35.3 % | 13.3 / 27.1 % |
+| Other share: A (17 runs) | 0.526 (0.531) | 0.562 (0.568) | 0.562 (0.563) | 0.525 (0.530) | 0.543 (0.538) |
+| RapidParc's mean top tract probability, A | 0.941 | 0.931 | 0.935 | 0.941 | 0.938 |
+| tract mix, total variation against today: A / 17 runs | — | 0.113 / 0.113 | 0.072 / 0.070 | 0.004 / 0.002 | 0.042 / 0.034 |
+| CST volume against today: A (17 runs) | — | ×1.32 (1.22) | ×1.25 (1.17) | ×1.01 (1.00) | ×0.98 (0.95) |
+| AF volume against today | — | ×0.43 (0.43) | ×0.77 (0.76) | ×0.98 (1.00) | ×0.88 (0.84) |
+| UF volume against today | — | ×0.68 (0.72) | ×0.97 (1.03) | ×1.02 (1.01) | ×1.03 (0.99) |
+| today's CST streamlines the variant keeps CST | — | 23.0 % | 25.8 % | 85.2 % | 19.4 % |
+
+- **Seeds.** Renames are over the seeds both runs label: 55,667 / 55,228 / 53,655 for Patch2Self. The honesty rows
+  are over the seeds every run of the configuration labels: 44,597 for Patch2Self, so the configurations are not
+  scored on the same set.
+- **The honesty rows of this table** use the raw bootstrap, denoised per replicate, which may collapse the
+  replicates (above). The bootstrap about the denoised A is below ("Two bootstrap designs").
+- **Replicates.** Patch2Self's replicates label 60,200 streamlines on average, fewer than its A (61,162); today's
+  label 65,040 against 64,378 (`checks`).
+- **Run time.** The full Patch2Self run took about 48 min of runs: A, the three rescans and 16 replicates at 93–113
+  s each, and epsilon and fieldonly at about 57 s each (`checks`, from the run log).
+
+**Shorter paths do not explain the gain.** By the tertile of A's streamline length (today's cut points, 76.7 and
+119.9 mm, for every configuration; `by_length` in the JSON), within rescan:
+
+| A's streamline length | today: share / renamed / paths > 5 mm | Patch2Self | step_length 0.6 | Rs 0.1 |
+|---|---|---|---|---|
+| short (< 76.7 mm) | 31.2 / 29.1 / 48.7 % | 32.1 / 26.0 / 40.6 % | 28.4 / 27.5 / 44.1 % | 34.3 / 24.4 / 38.9 % |
+| middle | 34.2 / 39.4 / 73.7 % | 37.4 / 34.4 / 65.1 % | 38.8 / 33.7 / 64.3 % | 38.8 / 30.2 / 56.5 % |
+| long (> 119.9 mm) | 34.7 / 37.2 / 90.3 % | 30.5 / 33.0 / 86.4 % | 32.8 / 33.3 / 84.9 % | 27.0 / 32.3 / 75.9 % |
+
+- **The gain holds within every length bin, on every rescan.** Patch2Self renames about 2–5 points fewer than today
+  within each bin (session 3: 28.4 / 37.2 / 35.1 % against 32.3 / 41.8 / 40.0 %; session 5: 31.2 / 40.0 / 36.7 % against
+  33.3 / 43.0 / 42.0 %).
+- **Its shift toward shorter streamlines is small.** Today's per-bin rates at Patch2Self's length mix give 35.4 /
+  38.2 / 39.6 % renamed and 70.7 / 74.5 / 77.0 % of paths more than 5 mm apart: the mix explains none of the renames
+  and about 1 of the 6–8 points of the path share.
+- **The path measures favor short streamlines.** Longer paths part more often by more than 5 mm (48.7 % short against
+  90.3 % long, today), so any shift toward shorter streamlines lowers the path share and the median MDF; within bins
+  the gain remains.
+
+**Fieldonly: both the field and the DWI contribute.** Patch2Self's fieldonly (the denoised replicate's field on
+the denoised A) moves 27.1 % of paths more than 5 mm, against today's 34.6 %. Two things changed: the field (from
+denoised b0s) and the DWI it is applied to. They were separated on the denoised A (`fieldonly_rawfield`; the last
+row is in the JSON's `checks`):
+
+| on the denoised A | runs | reference | paths more than 5 mm apart | renamed |
+|---|---|---|---|---|
+| the denoised replicate's field (Patch2Self's fieldonly) | 8 | the denoised A, its own field | 27.1 % | 13.3 % |
+| today's raw replicate's field (float16, ensemble_stages) | 4 | the denoised A, its own field | 36.8 % | 17.7 % |
+| A's own raw field (the raw-against-denoised field offset alone) | 1 | the denoised A, its own field | 30.1 % | 14.8 % |
+| today's raw replicate's field | 4 | the denoised A with A's own raw field | 30.7 % (29.3–32.8) | 14.9 % |
+
+- **The 36.8 % is not comparable with today's 34.6 %.** It carries the raw-against-denoised field offset (30.1 % on
+  its own) on top of the replicate's wobble; today's 34.6 % is wobble only.
+- **The wobble alone** is measured by the last row: the same raw-replicate fields, against the denoised A corrected
+  with A's own raw field, so the offset is in both. It moves 30.7 % of paths, against today's 34.6 % on the raw A.
+- **So both contribute, about equally,** as far as 4 runs show: the denoised DWI is somewhat less sensitive to a
+  raw-sized wobble (34.6 to 30.7 %), and the denoised b0s' fields wobble less (30.7 to 27.1 %).
+
+**The CST: the same bundle, reached from other seeds.** Only 19.4 % of today's CST streamlines stay CST under
+Patch2Self, yet the CST volume barely changes. Is it a different bundle? From the records alone (`cst` in the JSON:
+each configuration's A against today's), presence Dice of the focus tracts:
+
+| | Patch2Self | step_length 0.6 | Rs 0.1 | tie-break (both swaps) | for scale: today's A against the within rescan |
+|---|---|---|---|---|---|
+| CST | 0.76 | 0.73 | 0.68 | 0.92 | 0.78 |
+| AF | 0.73 | 0.68 | 0.48 | 0.94 | 0.81 |
+| UF | 0.78 | 0.70 | 0.61 | 0.92 | 0.79 |
+
+Where the variant's CST streamlines come from, over the seeds both label. "In today's CST" is the mean share of a
+streamline's points inside today's CST presence; for scale, today's own CST streamlines have 0.82 of their points
+there, and today's Other streamlines 0.10.
+
+| | Patch2Self | step_length 0.6 | Rs 0.1 |
+|---|---|---|---|
+| seeds both label | 57,527 | 58,995 | 52,603 |
+| CST streamlines over those seeds: today / the variant | 495 / 498 | 503 / 709 | 473 / 846 |
+| the variant's CST from today's CST seeds: share / median MDF to today's path | 19.3 % / 5.1 mm | 18.3 % / 6.8 mm | 12.9 % / 7.9 mm |
+| from today's Other seeds: share / median MDF | 56.4 % / 21.7 mm | 60.9 % / 20.7 mm | 64.9 % / 24.4 mm |
+| from today's Other seeds: their path in today's CST, today / the variant's | 0.46 / 0.73 | 0.47 / 0.69 | 0.43 / 0.70 |
+| from other tracts' seeds: share / median MDF | 24.3 % / 22.6 mm | 20.7 % / 30.1 mm | 22.2 % / 34.8 mm |
+| today's CST the variant renames: share / median MDF / their new path in today's CST | 80.6 % / 20.3 mm / 0.52 | 74.2 % / 21.1 mm / 0.46 | 77.0 % / 22.5 mm / 0.49 |
+
+- **A seed-identity reshuffle, not a new bundle.** Patch2Self's CST lies where today's does: Dice 0.76, about a
+  rescan's 0.78. Its new streamlines come from seeds whose path moved by a median 21.7 mm into the CST region: 0.73
+  of their points lie in today's CST, against 0.46 for the same seeds' paths today. Today's CST streamlines it
+  renames moved by 20.3 mm, half out of the region (0.52). Seeds near the CST change which side of its edge their
+  path ends on.
+- **A rescan does the same.** It renames 69–74 % of A's CST streamlines today, 78 % of them to Other (step 2). The
+  CST, under 1 % of the labeled streamlines, is the tract whose per-seed identity is least stable under any change
+  of path.
+- **Step 0.6 and Rs 0.1 show the same pattern,** with lower Dice (0.73 and 0.68) and a larger CST (×1.25, ×1.32).
+- **The tie-break** moves few paths (Dice 0.92–0.94), so it keeps 85 % of today's CST.
+- **The AF is where Patch2Self moves most.** Its AF presence has Dice 0.73 with today's, below a rescan's 0.81, and
+  is 12–16 % smaller.
+
+**Two bootstrap designs, neither honest.** The second design, `bootstrap=denoised` (the configuration
+`denoise=patch2self,bootstrap=denoised`), bootstraps from A denoised as acquired instead of the raw A: today's
+bootstrap applied to the denoised series (its own shell-wise fit, its own residuals about that fit, b0 noise
+"added", A's reversed b0 as the extra b0), each replicate corrected and tracked with no second denoising. A and the
+rescans are denoise=patch2self's.
+- **The residuals** are the denoised scan's about its own fit: the noise it keeps (and model error), as today's
+  residuals are the raw scan's. Raw minus denoised was not used: those are the noise removed, and a replicate
+  carrying them undenoised would be a raw scan's noise on a denoised signal, not a denoised scan. Their DW RMS in
+  A's mask is 2.34, against the raw scan's 5.75 (`checks`).
+- **Its first replicate** (`checks`) renames 25.0 % of A's streamlines (51.1 % of paths more than 5 mm apart, median MDF
+  5.3 mm). The raw-bootstrap replicate r001, denoised, renames 28.4 % (58.4 %, 7.5 mm), today's 31.7 % (65.0 %, 10.6
+  mm), and the denoised rescans rename 31.3–36.2 %.
+
+The three figures per cell are the within, session 3 and session 5 rescans:
+
+| 17-run ensemble | today | Patch2Self, raw bootstrap denoised per replicate | Patch2Self, bootstrap about the denoised A |
+|---|---|---|---|
+| seeds every run labels | 44,717 | 44,597 | 49,548 |
+| stated: the mode's mean share | 0.764 | 0.794 | 0.811 |
+| a rescan gives the mode | 0.703 / 0.674 / 0.661 | 0.722 / 0.702 / 0.681 | 0.728 / 0.703 / 0.680 |
+| stated minus observed | 0.061 / 0.090 / 0.102 | 0.072 / 0.092 / 0.114 | 0.083 / 0.108 / 0.131 |
+| AUROC, the rescan's change from A's tract | 0.801 / 0.779 / 0.773 | 0.792 / 0.781 / 0.769 | 0.790 / 0.775 / 0.755 |
+
+- **Both designs state more than the rescans bear out,** and by more than today's ensemble does. The raw bootstrap,
+  denoised per replicate, collapses the replicates toward a common fit. The bootstrap about the denoised A carries
+  residuals of only 2.34 RMS. The second design's gap is the largest, and its AUROC the lowest on every rescan.
+- **Its 17 runs** shift the tract mix by a total variation of 0.042 against today's 17 runs (Other share 0.545;
+  CST / AF / UF ×0.89 / 0.83 / 1.04), a little more than the first design's 0.034.
+
+Reading it:
+- **Agreement with rescans improves; whether as noise removal or as a systematic change is open.**
+  - **Renames.** Patch2Self renames 31.3 / 33.7 / 36.2 % of A's streamlines on the three rescans, against 35.4 /
+    38.2 / 39.7 % today: 3.5–4.5 points fewer. Reweighted to today's tract mix the gain holds but shrinks: 3.6 /
+    3.9 / 2.7 points (31.9 / 34.4 / 37.0 %). With hash-sorted grouping: 31.0 / 33.6 / 36.1 %.
+  - **Within length bins** it holds too (above), so it is not the shift toward shorter streamlines.
+  - **Landmark sites.** The main named tract holds at 8 / 8 / 7 of the eight sites, against 6 / 6 / 5.
+  - **Presence Dice.** The UF's rises (0.79 / 0.78 / 0.76 against 0.79 / 0.76 / 0.73). The AF's is higher on two
+    rescans and lower on the within one (0.80 / 0.81 / 0.78 against 0.81 / 0.79 / 0.77). The CST's falls on all
+    three, most on session 3 (0.73 against 0.78), and the rescans rename A's CST streamlines more often on two (77.1
+    / 75.5 % against 70.7 / 68.7 %).
+  - **Why "open".** A and each rescan are denoised separately, each with its own regression, so this is not one
+    shared fit making them alike. But a denoiser's inductive bias is shared: any systematic change it makes to every
+    scan alike (a smoother signal, a lost component) raises test-retest agreement whether or not it is closer to the
+    truth. Only a ground truth can tell.
+- **Bias: smaller than the tracker settings' in the tract mix, not everywhere.**
+  - **Smaller.** Total variation of the tract mix: 0.042 (A) and 0.034 (17 runs), against 0.072 and 0.070 for
+    step 0.6 and 0.113 for Rs 0.1. The Other share rises from 0.526 to 0.543, against 0.562 for both settings.
+  - **Comparable or worse.**
+    - 5 % fewer labeled streamlines (61,162), against +0.5 % for step 0.6;
+    - the median length 3.5 mm shorter (93.0 against 96.5 mm), against 3.1 mm longer for step 0.6;
+    - it keeps 19.4 % of today's CST streamlines as CST, the lowest of all (a reshuffle of seeds, above);
+    - its AF presence has Dice 0.73 with today's, below a rescan's 0.81, and the AF is 12–16 % smaller (×0.88 for A,
+      ×0.84 over the 17 runs);
+    - RapidParc's mean top probability falls from 0.941 to 0.938.
+- **Robustness.**
+  - **Fieldonly** falls from 34.6 to 27.1 % of paths more than 5 mm apart, and from 16.4 to 13.3 % renamed. About
+    half is a DWI less sensitive to the same wobble (30.7 %, 4 runs, float16 fields), half a calmer field.
+  - **Epsilon.** Its rounding-level divergence barely moves (2.99 against 3.42 % of paths); its renames, 4.07 %, are
+    mostly the index grouping's floor (step 1). Denoising does not address the tracker's own amplification, step 2b's
+    subject.
+- **The sketch seed: a nondeterministic stage.** Patch2Self version 3 draws a random sketch. Denoising A with seed 1
+  instead of 0 (A only, partial) renames 8.9 % of streamlines and moves 17.1 % of paths more than 5 mm: about twice
+  Patch2Self's own rounding-level epsilon in renames (4.07 %) and six times in paths (2.99 %), both with the index
+  grouping. Steps 1–2b brought the floor to 0.58 % renamed with both opt-ins (the tie-break and hash-sorted
+  grouping), which this comparison did not use.
+  Its seed must be pinned and recorded (the pipeline seeds it, 0 by default, and records it), and two seeds give
+  different tractographies. Part of what the rescans differ by under Patch2Self is each scan's own sketch.
+- **Honesty: neither of two bootstrap designs makes Patch2Self's confidence honest.** Under both designs the ensemble
+  states more (0.794 and 0.811 against 0.764) and the gap to what the rescans bear out grows (up to 0.114 and 0.131
+  against 0.102). AUROC is lower on most rescans (0.790–0.792 against 0.801 within). Today's ensemble is overconfident
+  too (a gap of 0.061–0.102); denoising widens it. Denoising makes the scans agree more,
+  and a single-scan bootstrap of a denoised scan underestimates how much denoised rescans still differ. A denoised
+  pipeline therefore needs its own calibration from test-retest data, which a single scan cannot supply: the same
+  conclusion as for between-session variation (NOTES 2026-10-13, "Pooling sessions").
+- **MP-PCA does not change rescan agreement (smoke tests, within rescan only).** At radius 2 it estimates about the
+  integer rounding noise and removes almost nothing. At radius 3 it denoises somewhat (sigma median 2.08 against
+  5.75), renames 35.2 against 35.4 %, and keeps only 64.9 % of today's CST streamlines as CST.
+- **In short.**
+  - Patch2Self improves rescan agreement by 3.5–4.5 points (2.7–3.9 at today's tract mix; step 0.6's reweighted
+    gain is 2.6–3.6) at a modest shift of the tract mix, with the costs listed above; whether that is noise removal
+    or a systematic change is open.
+  - It does not make the ensemble's confidence honest; neither of the two bootstrap designs does, and today's
+    ensemble is overconfident too.
+  - MP-PCA does not change rescan agreement at radius 2 or 3 (smoke tests, within rescan only).
+  - Judging accuracy needs the phantom (step 5); honesty needs a per-protocol calibration from test-retest data.
+
+Caveats:
+- **One subject,** one protocol (Philips, two shells, one reversed b0). The results come with no uncertainty, and the
+  honesty rows are over different seed sets per configuration.
+- **Patch2Self is a learned, self-supervised regression.** It may remove signal as well as noise: a volume's
+  component that the other volumes cannot predict is removed whether it is noise or not.
+- **Patch2Self version 3 is nondeterministic up to its sketch's seed.** Seeds 0 and 1 give A tractographies (A only,
+  partial) that differ by 8.9 % renamed and 17.1 % of paths more than 5 mm apart, about twice and six times
+  Patch2Self's own epsilon (4.07 and 2.99 %). The seed is pinned (0) and recorded; only seeds 0 and 1 were compared.
+- **No ground truth.** Better agreement with rescans can come from removing noise or from removing structure.
+  Again the ISMRM 2015 phantom (docs/validation-datasets.md) is the arbiter, with its b = 1000 shell's caveat
+  (step 2).
+- **The reversed b0 was not denoised,** and the forward and reversed b0s that feed the field differ in noise level.
+- **The denoise-after-correction order** (`denoise_order="corrected"`) exists and is tested, but was not scored.
+- **MP-PCA** was scored only on A and the within rescan, at radius 2 and 3 (smoke tests). The lag correlations, the
+  strided-patch check and the version-1 trial were scratch checks, not in the results files.
+- **Honesty** was measured with two bootstrap designs; a third (for example, a bootstrap that refits the denoiser on
+  draws whose signal is not a fit it predicts exactly) was not tried.
+- **The fieldonly controls** use today's float16-stored fields, 4 runs, and one reference run.
+- **Labels.** One labeler draw (0), index grouping. RapidParc was trained on tractography from undenoised data, so
+  part of the shift in the tract mix may be the labeler's.

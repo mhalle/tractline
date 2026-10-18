@@ -121,13 +121,51 @@ opt-in; no default changes until you decide.
 
 ### 3. Denoising before tracking
 
-- **What:** MP-PCA (dipy, in a subprocess) after the field correction and before tracking, opt-in. Patch2Self too if
-  it is feasible. If step 2's variant helps, test denoising with it as well as without.
+- **What:** MP-PCA (dipy, in a subprocess) before the field correction, on the series as acquired, opt-in.
+  Patch2Self too if it is feasible. If step 2's variant helps, test denoising with it as well as without (not done:
+  denoising was not combined with the tie-break or any tracker setting).
 - **Measure:**
   - A and the three rescans;
-  - a 9-run ensemble whose replicates carry the raw scan's noise into the denoiser;
+  - a 17-run ensemble whose replicates carry the raw scan's noise into the denoiser;
   - the same criteria as above.
 - **Cost:** about 1 hour; a few hundred MB.
+- **Outcome (2026-10-17, NOTES "Robustness step 3").**
+  - **Order.** Denoising was built before the field correction, not after: the forward series as acquired, its
+    own b0s feeding the field from the denoised series, the reversed b0 as acquired. It is opt-in:
+    `pipeline.run(denoise=)`, with dipy in a subprocess. The defaults are unchanged (the same SHA-256 through
+    `P.run`). The after-correction order exists but was not scored.
+  - **MP-PCA does not change rescan agreement at radius 2 or 3 (smoke tests, within rescan only).** At radius 2 its 125-voxel patch barely exceeds the 112 volumes,
+    and the noise is correlated in-plane (source unconfirmed). Its sigma, 0.20, is about the integer rounding noise,
+    against the bootstrap's residual RMS of 5.75, and it removes an RMS of 0.24. Radius 3 denoises somewhat (sigma
+    median 2.08) and keeps only 64.9 % of today's CST streamlines as CST. Smoke tests only (A and the within rescan):
+    35.5 % and 35.2 % renamed, against 35.4 %.
+  - **Patch2Self** (13 s a scan) cuts rescan renames by 3.5–4.5 points (31.3 / 33.7 / 36.2 % against 35.4 / 38.2 /
+    39.7 %). Reweighted to today's tract mix the gain shrinks to 3.6 / 3.9 / 2.7 points, about step 0.6's
+    reweighted 2.6–3.6. It holds within every length tertile, so it is not the shift toward shorter streamlines. The
+    landmark sites hold at 8 / 8 / 7 against 6 / 6 / 5. Fieldonly's paths more than 5 mm apart fall from 34.6 to
+    27.1 %; with the field offset held fixed, a raw-sized wobble on the denoised DWI moves 30.7 % (4 runs), so about
+    half is a less sensitive DWI and half a calmer field.
+  - **Bias: smaller than the tracker settings' in the tract mix and the Other share (over the 17 runs: total
+    variation 0.034, Other 0.538 against 0.531), not elsewhere.**
+    - 5 % fewer labeled streamlines, and the median 3.5 mm shorter.
+    - The AF: Dice 0.73 with today's (a rescan: 0.81), and ×0.84 in volume.
+    - The CST's per-seed labels reshuffle (19 % of today's CST stays CST, the lowest of all), though its presence
+      holds about where a rescan puts it (Dice 0.76; a rescan 0.78). The rescans rename A's CST more often on two
+      of three.
+  - **The sketch seed adds a nondeterministic stage.** Patch2Self version 3's random sketch alone renames 8.9 % and
+    moves 17.1 % of paths more than 5 mm (seed 1 against 0, A only, partial): about twice and six times
+    Patch2Self's own epsilon (4.07 and 2.99 %, index grouping). Steps 1–2b brought the floor to 0.58 % with both
+    opt-ins, which this comparison did not use. The seed is pinned and recorded; only seeds 0 and 1 were compared,
+    and they give different tractographies.
+  - **Neither of two bootstrap designs makes its confidence honest; today's ensemble is overconfident too.** The raw bootstrap denoised per replicate states 0.794 against
+    0.722 / 0.702 / 0.681 observed; the bootstrap about the denoised A states 0.811 against 0.728 / 0.703 / 0.680
+    (gaps 0.07–0.13, today 0.06–0.10). AUROC is 0.792 / 0.781 / 0.769 and 0.790 / 0.775 / 0.755, against today's
+    0.801 / 0.779 / 0.773. A denoised pipeline needs its own calibration from test-retest data, which a single scan
+    cannot supply (as for between-session variation, NOTES 2026-10-13, "Pooling sessions").
+  - **Reading.** Agreement with rescans improves by 3.5–4.5 points (2.7–3.9 at today's tract mix) at a modest
+    tract-mix bias, with the costs above; whether as noise removal or a systematic change is open. A shared inductive bias raises test-retest
+    agreement whether or not it is truth. The phantom (step 5) is needed to judge accuracy, and per-protocol
+    calibration for honesty. The default is unchanged; the decision is yours.
 
 ### 4. Benchmark against other trackers
 
