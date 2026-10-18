@@ -130,6 +130,14 @@ class ShellWildBootstrap:
             self.shells[int(b)] = {"directions": len(idx), "sh_order": L, "coefficients": B.shape[1],
                                    "leverage": round(float(lev.mean()), 3)}
         self.b0 = b0
+        dw = np.setdiff1d(np.arange(S.shape[1]), b0)
+        self.borrowed = len(b0) == 1                     # one b0: no residual of its own (its mean fit is itself)
+        if self.borrowed:
+            # it borrows the first DW volume's residual as its noise pattern, in the modes that scale b0 residuals to the DW
+            # noise (the ISMRM 2015 phantom: one b0 a polarity, its noise white and the same in every volume); before this,
+            # a single b0 gave 0/0 residuals (NaN), so no earlier result depends on it
+            assert b0_noise != "residual", "b0_noise 'residual' needs at least two b0s"
+            self.res[:, b0[0]] = self.res[:, dw[0]]
         self.extra = None
         if extra_b0s is not None:
             E = np.asarray(extra_b0s, np.float32).reshape(-1, extra_b0s.shape[-1])
@@ -140,7 +148,7 @@ class ShellWildBootstrap:
                 # one extra b0 has no residual of its own: in the modes that scale b0 residuals to the DW noise (a
                 # noise pattern, not the b0s' own variability), it borrows the first b0's (MASiVar: one "j-" b0)
                 assert b0_noise != "residual", "b0_noise 'residual' needs at least two extra b0s"
-                res = self.res[:, b0[:1]].copy()
+                res = self.res[:, dw[1:2] if self.borrowed else b0[:1]].copy()   # borrowed b0: the next DW volume's, not the same
             self.extra = (np.repeat(m, E.shape[1], 1), res, extra_b0s.shape)
         self.b0_noise, self.b0_scale = b0_noise, 1.0
         if b0_noise in ("thermal", "added", "flipped"):
@@ -167,7 +175,7 @@ class ShellWildBootstrap:
     def _mean_fit(self, S, idx):
         y = S[:, idx]
         m = y.mean(1, keepdims=True)
-        self.fit[:, idx], self.res[:, idx] = m, (y - m) / np.float32(np.sqrt(1 - 1 / len(idx)))
+        self.fit[:, idx], self.res[:, idx] = m, ((y - m) / np.float32(np.sqrt(1 - 1 / len(idx))) if len(idx) > 1 else 0 * y)
 
     def replicate(self, seed: int):
         """(dwi replicate (X, Y, Z, G) as the input's type, extra b0s replicate (X, Y, Z, V) float64 or None)."""

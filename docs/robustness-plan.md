@@ -188,8 +188,28 @@ next, then a calibration step for single scans, and the tracker benchmark moves 
     phantom has no AF, but streamlines along its SLF may be labeled AF; the scorer's verdict, not the label, decides;
   - if cheap, a 17-run ensemble's presence envelopes against the ground-truth bundle masks: calibration against a
     known truth.
-- **Caveats to keep in view:** b = 1000 with 32 directions, unlike the 2800 shell tracked on cIIIs04, so the effects
-  of Rs and of denoising may not carry over; one simulated brain.
+- **Caveats to keep in view:** b = 1000 with 32 directions, unlike the 2000 shell tracked on cIIIs04 (corrected from
+  "2800": `ensemble_retest.PAIRS` tracks cIIIs04-2.1 at 2000), so the effects of Rs and of denoising may not carry
+  over; one simulated brain.
+- **Outcome (2026-10-17, NOTES "Robustness step 4"; revised after the review).**
+  - The loader, from the data: the gradients' x flipped against FSL's convention (the tensor then follows the
+    ground-truth bundles, a median 6.6° against 38.8°); readout 0.107 s, which matches fmap_Hz's scale within about
+    1 % once the estimate's smoothing is allowed for. The estimated field matches fmap_Hz's shape (r 0.981 in the
+    tracking mask, RMS 0.78 mm).
+  - Today's pipeline under the 2023 ROI scoring (a reconstruction of the wrapper, unverified): 20 of 21 valid bundles,
+    27.5 % valid streamlines, 15.5 % wrong-path, mean F1 0.412 (16 bootstrap replicates: 0.404–0.413), below the best
+    published 58 %.
+  - **Steadier is not truer here.** Step 0.6 and Rs 0.1 lose accuracy in 20 of 21 bundles (mean F1 0.330 and 0.314).
+    Patch2Self loses most (0.278); about a third of that is its fewer streamlines (today subsampled to its count
+    scores 0.365). At this phantom's DW SNR of about 7 with 33 volumes it removes more than the estimated noise and
+    halves the seeds, probably by removing angular contrast, a regime unlike cIIIs04's. The tie-break with
+    hash-sorted grouping is accuracy-neutral (0.411, inside the replicates' band).
+  - RapidParc names 58 % of the valid streamlines as their counterpart. Of the 275 streamlines it calls AF, the scorer
+    calls 147 valid SLF.
+  - **Envelopes against the truth under-cover.** Against the ground truth's own density presence at each run's
+    streamline count, the labeled 0.8, 0.9 and 0.95 envelopes cover 0.65, 0.72 and 0.78, where a bias-free ensemble
+    of ground-truth subsamples covers 0.82, 0.90 and 0.95: 17–18 points short, the pipeline's bias. The envelopes
+    state reproducibility, not accuracy; a claim about the anatomy needs a phantom-calibrated bias term.
 
 ### 5. A calibration card for single scans
 
@@ -200,6 +220,13 @@ next, then a calibration step for single scans, and the tracker benchmark moves 
 - **Measure:** stated against observed on held-out subjects and sessions, for streamlines and for regional claims
   (presence envelopes, the main tract near a point).
 - **Output:** a card format the data product carries; without a matching card, the product says "run-to-run only".
+- **Two parts, after step 4.**
+  - a session term from test-retest data: what a rescan shows;
+  - an accuracy or bias term from phantoms: what the anatomy is. On the ISMRM 2015 phantom, the labeled envelopes
+    cover 17–18 points less of the ground truth (its density presence at the same streamline counts) than a
+    bias-free ensemble does.
+  A claim says which event it covers. Without the bias term, the product's regional claims are about rescans, not
+  anatomy.
 
 ### 6. Benchmark against other trackers
 

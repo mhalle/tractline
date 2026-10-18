@@ -5049,3 +5049,301 @@ Caveats:
 - **The fieldonly controls** use today's float16-stored fields, 4 runs, and one reference run.
 - **Labels.** One labeler draw (0), index grouping. RapidParc was trained on tractography from undenoised data, so
   part of the shift in the tract mix may be the labeler's.
+
+## 2026-10-17 Robustness step 4: on the ISMRM 2015 phantom the tie-break is accuracy-neutral; step 0.6, Rs 0.1 and Patch2Self lose accuracy
+
+`robust_phantom.py` (`check`, `run`, `analyze`, `patch2self`, `ensemble`, and after the review `rescore`, `envelopes`,
+`review_checks`) → `robust_phantom.json` (keys `loader`, `configs`, `patch2self`, `envelopes`, `rescore`,
+`envelopes, count-matched`, `review checks`); the phantom as a subject: `bench/_ismrm2015.py`; records in
+`DATA/ensemble/phantom_ismrm2015/<configuration>/`. docs/robustness-plan.md, step 4. Steps 1–3 judged every option by
+agreement with real rescans. A tracker that agrees with itself can still be wrong the same way every time. The ISMRM
+2015 Tractography Challenge phantom (Zenodo 572345, the version with a reversed phase-encoding b0; Fiberfox; one HCP
+brain's geometry, 2 mm, b = 1000 with 32 directions) has a known ground truth. Here it is scored with the 2023 ROI
+scoring (Renauld et al. 2023).
+
+**The loader** (`_ismrm2015.py`). The DWI is volume 0 (b0) and the 32 directions; the field's b0s are volume 0 and
+volume 1 (the reversed b0, per the archive's README), phase-encoded along the image's y. Three choices the archive does
+not state, decided from the data (`check`; the JSON's `loader`):
+- **The gradients' x sign: flipped against FSL's convention** (`GRADIENT_X = -1`), the convention prep reads every
+  scan in (x flipped when the affine's determinant is positive, as here). The tensor of the corrected DWI against the
+  ground-truth bundles' own directions, in 13,600 voxels one bundle holds (> 95 % of the segments, coherence > 0.9,
+  FA > 0.3): a median 6.6° with x flipped, 38.8° as FSL's convention reads the .bvecs. In the 6,539 voxels oblique
+  in x: 6.7° against 59.0°, and 94.8 % against 0.2 % within 20°. This is the Tractometer's "flipped x" warning.
+- **The phase-encoding sign: +j for volume 0** (`PE_SIGN = +1`). With it the estimated field has fmap_Hz's sign
+  (r 0.965); with −1 the field is the same field negated (r −0.965). The correction does not depend on it. In this
+  LPS-ordered image +j points posterior, while the challenge calls the series posterior-anterior; Fiberfox's sign
+  convention for the field may differ from ours. Not resolved, and it does not matter for the correction.
+- **The readout time: 0.107 s,** (108 phase-encoding lines − 1) × the README's 1 ms dwell, reading Fiberfox's dwell
+  time as the time to read one k-space line. TE = 108 ms = 108 lines × 1 ms fits that reading.
+- **The shell:** 1000 (`shell=1000`; stated 999.998 and 1000).
+
+**The field against fmap_Hz.** fmap_Hz is on the DWI's grid.
+- **Over the tracking mask** (144,467 voxels) the estimated field correlates with it at r = 0.981, slope 0.966
+  (through 0), SD ratio 0.966, RMS difference 3.66 Hz (0.78 mm of displacement). Over the brain (Otsu of the mean
+  b0): r = 0.965, slope 0.956, RMS 5.0 Hz (1.07 mm). The field spans ±52.6 Hz (99th percentile of |fmap|), about
+  ±11 mm of displacement.
+- **The shape:** r 0.98 says the estimate has fmap_Hz's shape, so fmap_Hz behaves like the simulated field.
+- **The scale.** The slope equals the SD ratio (0.966), as a pure scale would. Smoothed by a Gaussian (`review checks`),
+  fmap_Hz matches the estimate best at an SD of 1–1.5 voxels (r 0.987 and 0.986), where the slope is 0.992–1.006.
+  So the low slope is the estimate's smoothing, and the readout of 0.107 s agrees with the data within about 1 %
+  (3–5 % before the smoothing is allowed for).
+- **The readout enters both the estimate and the apply step,** so a wrong value probably cancels in the correction
+  (the displacement is what the pair measures). It sets the field's Hz scale, and through it the regularization's
+  weight.
+- The residual left of the pair's difference is 0.349. The phantom has motion in three volumes, spikes and ghosts,
+  which the pipeline does not correct.
+
+**The scoring, rebuilt from scilpy 1.5.0's scripts** (an isolated environment) and the scoring archive's two config
+files. The tractometer's wrapper `scil_score_ismrm_Renauld2023.sh` was not downloaded; this follows its description,
+and its exact options are **unverified**:
+- **segmentation:** `scil_score_tractogram` (config_file_segmentation.json, 26 bundles: the CC in four sub-bundles, each
+  ICP in two), with `--compute_ic --unique --no_empty`;
+- **merge:** `scil_tractogram_math union` of the sub-bundles into CC, ICP_left and ICP_right;
+- **final:** `scil_score_bundles` (config_file_tractometry.json, 21 bundles) on the merged valid bundles and an IS.trk
+  (no connection and every invalid connection concatenated).
+- **`--unique` does not change VS or F1 here.** Without it (and without `--compute_ic`; `rescore` → `no_unique`) today
+  has the same 16,939 valid streamlines, 20 valid bundles and every bundle's F1 unchanged. No streamline fits two
+  bundles or two sub-bundles. With it, VS, WPC, IC and NC partition the tractogram, one verdict a streamline.
+- **Unverified against the wrapper:** `--unique`, `--compute_ic`, `--remove_invalid`, `--dilate_endpoints` and
+  `--save_wpc_separately`.
+- **A scilpy 1.5.0 bug, worked around.** `scil_score_bundles` counts each `segmented_IB/` file as the size of
+  `ref_sft` (`ib_sft_list.append(ref_sft)`), the first valid bundle it loaded. So the final step gets no
+  `segmented_IB/`, and IB, IC and NC are the segmentation's own.
+- **Wrong-path connections** (WPC: a bundle's endpoint regions joined outside its all_mask). Without
+  `--save_wpc_separately` scilpy empties the WPC list. All five configurations were segmented again with it
+  (`rescore` → `wpc`). The valid streamlines of every bundle are unchanged, so VB, VS and F1 are too. The WPC had been
+  counted as IC, not NC: the endpoint regions overlap between bundles, so a wrong-path streamline of one bundle also
+  joins a pair that is no bundle. With the split, IC falls from 62.9 to 47.4 % today, NC stays 9.6 %, and IB falls
+  from 452 to 423.
+- **Definitions.** An invalid bundle (IB) is any pair of endpoint regions that is not a valid bundle, with at least one
+  streamline; the 2015 scoring clustered them, so IB counts are not comparable with 2015's. scilpy's mean OL, OR and F1
+  are over the bundles found; the means here are over all 21, a missing bundle counting 0. OR is normalized by the
+  bundle's recovered voxels (OR_pct_vs).
+- **Writing the tractogram.** Every streamline (RAS mm, the DWI's world, which t1.nii.gz shares) goes into a .trk with
+  t1.nii.gz's header (affine, dimensions, voxel sizes, LPS voxel order) and its seed-order index as
+  data_per_streamline. Read back and checked: the same points, every point inside the grid.
+- **Time:** the segmentation takes 148–176 s per tractogram (16 s without `--compute_ic`); the merge and final step
+  about 25 s per scoring, run twice (all streamlines, and the labeled ones).
+
+**Results, all streamlines** (`configs`, and `rescore` → `wpc` for the verdicts; the labeled streamlines, ≥ 40 mm,
+give the same picture):
+
+| | today | tie-break + hash-sorted | step_length 0.6 | Rs 0.1 | Patch2Self |
+|---|---|---|---|---|---|
+| streamlines | 61,637 | 61,646 | 63,054 | 63,174 | 28,617 |
+| valid bundles (of 21) | 20 | 20 | 18 | 19 | 19 |
+| missing | CA | CA | CA, CP, Fornix | CA, Fornix | CA, CP |
+| valid streamlines (VS) | 27.5 % | 27.6 % | 24.2 % | 23.7 % | 21.0 % |
+| wrong-path connections (WPC) | 15.5 % | 15.4 % | 19.3 % | 15.2 % | 2.6 % |
+| invalid connections (IC) | 47.4 % | 47.3 % | 45.1 % | 46.7 % | 53.4 % |
+| no connection (NC) | 9.6 % | 9.7 % | 11.4 % | 14.4 % | 23.1 % |
+| invalid bundles (IB) | 423 | 428 | 434 | 430 | 269 |
+| mean overlap (OL, all 21) | 0.444 | 0.444 | 0.358 | 0.336 | 0.193 |
+| mean overreach (OR, all 21) | 0.479 | 0.477 | 0.458 | 0.489 | 0.229 |
+| **mean F1 (all 21)** | **0.412** | **0.411** | **0.330** | **0.314** | **0.278** |
+| mean F1, the 18 bundles every configuration finds | 0.468 | 0.468 | 0.385 | 0.364 | 0.324 |
+| bundles with F1 > today's + 0.01 / < today's − 0.01 | — | 0 / 1 | 0 / 20 | 0 / 20 | 3 / 17 |
+| labeled F1 (labeled streamlines only, all 21) | 0.413 | 0.412 | 0.331 | 0.316 | 0.247 |
+| tracking run, s (UKF) | 51.3 (30.6) | 51.2 (30.5) | 37.1 (16.4) | 48.5 (28.1) | 30.2 (9.1), denoising 4.5 |
+
+F1 per bundle, the focus-like bundles:
+
+| bundle | today | tie-break | step 0.6 | Rs 0.1 | Patch2Self |
+|---|---|---|---|---|---|
+| CC | 0.606 | 0.606 | 0.530 | 0.454 | 0.187 |
+| BPS left / right | 0.572 / 0.594 | 0.572 / 0.595 | 0.526 / 0.563 | 0.544 / 0.572 | 0.445 / 0.452 |
+| SLF left / right | 0.538 / 0.525 | 0.537 / 0.525 | 0.503 / 0.510 | 0.509 / 0.511 | 0.455 / 0.408 |
+| UF left / right | 0.429 / 0.488 | 0.428 / 0.485 | 0.314 / 0.340 | 0.352 / 0.355 | 0.271 / 0.425 |
+| ILF left / right | 0.547 / 0.503 | 0.548 / 0.500 | 0.500 / 0.462 | 0.497 / 0.462 | 0.577 / 0.606 |
+
+- **A band for today's F1** (`rescore` → `replicates`). The 16 bootstrap replicates, scored the same way, give a mean
+  F1 of 0.408 (SD 0.003; 0.404–0.413), 19–20 valid bundles and 25.4–27.0 % valid streamlines; A gives 0.412. The
+  replicates are noisier than the scan (caveats), so this is an upper bound on the noise's spread. The tie-break's
+  0.411 lies inside it; step 0.6, Rs 0.1 and Patch2Self lie far outside.
+- **Against the published range,** for orientation only. Under the 2023 ROI scoring, the ground truth against itself
+  gives F1 92 %, and TractoFlow with topup up to 58 % (the site's erratum; the paper says 64–65 %). Today's mean F1 is
+  0.412 over all 21 bundles and 0.433 over the 20 it finds, below that. The 2015 submissions' figures (54 ± 23 % valid
+  streamlines, overlap 36 ± 16 %, overreach 29 ± 26 %, 21 of 25 valid bundles on average) come from the 2015 scoring
+  and are not comparable. All from docs/validation-datasets.md; nothing was looked up.
+- **The weak bundles.** CA is never found. CP, the Fornix and the optic radiation are found by 3–37 streamlines, at
+  F1 0.11–0.19. Today's strongest are the CC (0.61), the BPS (0.57–0.59), the SLF and the ILF (0.50–0.55), and the
+  MCP (0.54).
+- **Invalid connections dominate** (47.4 %), then wrong-path connections (15.5 %). Most of today's invalid streamlines
+  are labeled Other (72.7 %, over IC and NC with WPC included, as first scored).
+
+**RapidParc against the truth** (today; the mapping is conservative, in `scoring.mapping` in the JSON: the CC to
+CC1–7, the cingulum to CB, the BPS to CST, ICP, MCP, ILF, SLF to SLF-I–III, UF; loosely the BPS also to CR-F, CR-P
+and CPC, and the optic radiation to TO; no counterpart for CA, CP, the Fornix and SCP; AF, EC, EmC, IOFF, MdLF and
+the superficial tracts cannot be in the phantom):
+- **Of the valid streamlines in bundles with a counterpart, 57.6 % carry the counterpart's label.** By bundle:
+  - CC 64 %; cingulum 81 / 69 %;
+  - BPS as CST 43 / 28 %, as CST, CR-F, CR-P or CPC 73 / 72 % (CR-F alone 28 / 44 %);
+  - ICP 60 / 82 %; MCP 89 %;
+  - ILF 58 / 56 %, the rest mostly MdLF (34 / 17 %);
+  - SLF 54 / 40 %, the rest mostly Other (38 / 52 %);
+  - UF 86 / 78 %.
+  The CC's valid streamlines are 35.5 % Other.
+- **Precision of a label** (share of its streamlines valid in its counterpart): SLF-III 96 %, MCP 94 %, CC4 92 %,
+  SLF-II 89 %, CC2 85 %, ICP 81 %, ILF 78 %, UF 70 %, CST 59 %, CB 48 %.
+- **False tracts.** 9.3 % of labeled streamlines carry a tract the phantom cannot hold. MdLF is the largest: 1,328
+  streamlines, most of them valid ILF by the scorer.
+- **The AF.** 275 streamlines are labeled AF (0.5 % of labeled). The scorer calls 147 of them valid SLF (55 left,
+  92 right) and 128 invalid connections, 94 of those joining the right BPS's cortical end to the right ventral CC
+  region. So more than half of what RapidParc calls AF on this phantom is, by the ground truth, SLF. The labeler is
+  not the arbiter, the scorer is. The other configurations: tie-break 298 (167 valid SLF), step 0.6 168 (63), Rs 0.1
+  105 (60), Patch2Self 13 (5).
+- The tie-break gives the same label agreement (57.5 %); step 0.6, Rs 0.1 and Patch2Self 56.6, 55.4 and 56.9 %.
+
+**Why Patch2Self halves the streamlines here** (`patch2self` and `review checks` → `patch2self, bundle voxels` in the
+JSON). The phantom's noise-free DWI (Zenodo's ground-truth DWI) is not on disk, so the noise and the signal are read
+from the data, in the 29,607 voxels one ground-truth bundle holds (both DWIs corrected with today's field):
+- **The noise, two indirect estimates.**
+  - Rayleigh in the background (outside the tracking mask dilated by 4 voxels): sigma 16.1 from the DW volumes'
+    median (15.9 from their mean). The b0 gives 19.7 from its mean and 17.0 from its median; the N/2 ghosts may raise
+    the mean.
+  - In the brain, the bootstrap's leverage-scaled residuals about the shell's order-4 fit: robust SD (1.4826 × the
+    median absolute deviation) 17.9, RMS 18.4. These include the fit's own error.
+  - The README's SNR ≈ 20 against white matter's b0 fits: the median b0 in these voxels is 324, 324 / 16 ≈ 20.
+- **The signal.** The DW mean is 122: a DW SNR of about 7.
+- **The moved volumes.** The challenge lists motion in volumes 6, 12 and 24. Both readings (0- and 1-based: volumes 5,
+  6, 11, 12, 23, 24) were left out, with robust statistics. They do not stand out in what Patch2Self removes: robust
+  SD 19.8–22.2 against the other volumes' median 20.7.
+- **What Patch2Self removes, without those six volumes:**
+  - a robust SD of 21.3 (RMS 22.1), against the noise's 16.1–17.9;
+  - a mean of 0.28 (a bias, all volumes);
+  - a component that correlates at 0.91 with the raw volumes' deviation from the voxel's own DW mean, that is, with
+    what varies with direction.
+- **The spread across directions** falls from 24.8 to 10.1 (median SD per voxel; robust SD 26.1 to 10.5). Without
+  noise it would be about √(24.8² − 17.9²) ≈ 17 (≈ 19 with the background's 16.1). FA falls from 0.29 to 0.12
+  (median), the voxels above FA 0.18 from 78 % to 28 %, and the tracker's seeds from 65,925 to 32,954 (all volumes).
+  The directions barely move: the median angle to the bundle is 10.1° raw, 11.9° denoised.
+- **Reading.** Patch2Self removes more than either noise estimate, and leaves well under the estimated noise-free
+  angular spread. Both point to its removing angular signal along with the noise; neither proves it. The noise
+  estimates are indirect, spikes and ghosts are not excluded, and the noise-free DWI that would settle it was not
+  downloaded.
+- **A likely mechanism, not tested:** dipy regresses each DW volume on the other 31 DW volumes (ordinary least
+  squares, every voxel a sample); the single b0 is not denoised, so the field is the raw one (r 0.981 in both). The
+  predictors carry noise at a DW SNR of about 7, which attenuates the fit toward what the volumes share, the isotropic
+  part (regression dilution).
+- **Fewer, or misplaced?** Today's tractogram subsampled to Patch2Self's 28,617 streamlines (`rescore` →
+  `subsample`, 3 draws) scores F1 0.365 (0.363–0.367), 20 valid bundles, 27.4–27.7 % valid. Patch2Self scores 0.278.
+  So of its 0.134 loss, about 0.05 is having fewer streamlines and about 0.09 is which streamlines they are: fewer of
+  them valid (21.0 %), shorter (17,088 labeled, median 58.8 mm against 94.8 mm), with less overlap (0.19 against
+  0.44) and less overreach (0.23 against 0.48). F1 is better only for both ILFs and the left optic radiation.
+- **Not the regime of cIIIs04.** There Patch2Self had 112 volumes over two shells, removed an RMS of 5.9 against a
+  residual of 5.75 (step 3), and kept 95 % of the labeled streamlines. This phantom has 33 volumes, one shell and a DW
+  SNR of about 7; cIIIs04's DW SNR was not measured on the same footing. **Patch2Self's loss here does not transfer
+  to cIIIs04 as it stands**; nor does its gain there carry over to here. What transfers is the warning: where the
+  predictors are noisy or few, Patch2Self may remove signal, and rescan agreement cannot tell that from noise removal.
+
+**The ensemble's envelopes against the truth** (today only; `ensemble`, then `envelopes` → `envelopes, count-matched`
+in the JSON). The 17-run ensemble is A and 16 replicates, the bootstrap as in step 2: smooth signs, FWHM 4, b0 noise
+"added". The phantom has one b0 per polarity, so each b0 borrows a DW volume's residual (`_bootstrap.py`; before, a
+single b0 gave NaN).
+- **Each replicate** is corrected, tracked and labeled as today, about 79 s a run. Its valid streamlines are assigned
+  by `scil_score_tractogram` alone (`--unique`, no `--compute_ic`: 16 s, and on A the same valid streamlines as the
+  full scoring).
+- **Presence:** for the 14 bundles with a strict label counterpart, density presence on the t1 grid (as
+  ensemble_grid_check: at least 0.3 streamlines per mm² after a 1 mm smoothing). Three sources:
+  - **labeled,** what the product would use: the labeled streamlines whose tract is the bundle's counterpart, on the
+    bundle's side (mean x against the grid's center, x = −89 mm);
+  - **scored, ≥ 40 mm,** truth-assisted: the streamlines the scorer assigns to the bundle, at the labeled lengths. The
+    scorer accepts a valid streamline only inside the bundle's all_mask, which is drawn from the truth;
+  - **scored,** the same at every length.
+- **Shapes:** the votes (0–17) give A alone, the widest outline, the core (at least 9) and the envelopes at
+  ensemble_pooled's stated levels.
+- **The target, like for like.** On cIIIs04 the target was a rescan's own density presence. Here it is the ground
+  truth's density presence at the run's streamline count: for each run and bundle, the ground-truth bundle's
+  streamlines subsampled to that run's count for that source, 3 draws, by the same density rule. Coverage and
+  precision are pooled over runs, draws and the 14 bundles, weighted by the target's voxels.
+- **Baselines:**
+  - **self:** one ground-truth subsample covers 0.928 of another at the same count (labeled counts; 0.936–0.937
+    scored);
+  - **a bias-free ensemble:** 17 ground-truth subsamples, one per run at its count, in place of the runs. What the
+    shapes give with sparsity and no bias.
+
+| shape | labeled: coverage | labeled: precision | labeled: size | scored ≥ 40 mm: coverage | scored ≥ 40 mm: precision | bias-free (labeled counts): coverage / precision |
+|---|---|---|---|---|---|---|
+| A alone | 0.644 | 0.573 | 1.12 | 0.717 | 0.586 | — |
+| core (≥ 9 of 17) | 0.670 | 0.608 | 1.10 | 0.742 | 0.613 | 0.945 / 0.945 |
+| envelope 0.5 | 0.468 | 0.752 | 0.62 | 0.538 | 0.759 | 0.766 / 0.996 |
+| envelope 0.8 | 0.650 | 0.623 | 1.04 | 0.708 | 0.644 | 0.818 / 0.989 |
+| envelope 0.9 | 0.724 | 0.559 | 1.30 | 0.781 | 0.578 | 0.904 / 0.967 |
+| envelope 0.925 | 0.753 | 0.533 | 1.41 | 0.807 | 0.553 | 0.929 / 0.954 |
+| envelope 0.95 | 0.778 | 0.504 | 1.54 | 0.830 | 0.525 | 0.951 / 0.935 |
+| widest (any run) | 0.846 | 0.406 | 2.08 | 0.899 | 0.428 | 0.997 / 0.809 |
+
+- **Without bias the levels hold.** The bias-free ensemble covers 0.818, 0.904 and 0.951 at the stated 0.8, 0.9 and
+  0.95. Sparsity alone costs little there; at 0.5 it covers 0.766, since the levels are shares of vote mass, not of
+  the target.
+- **The labeled envelopes under-cover by 17–18 points** against that baseline: 0.650, 0.724 and 0.778 at 0.8, 0.9 and
+  0.95, 15–18 points below the stated level. What is left after sparsity is the pipeline's bias. The truth-assisted
+  scored envelopes fall 12–13 points short of their own baseline (0.708, 0.781 and 0.830 against 0.839, 0.905 and
+  0.952). Even the widest outline, about
+  twice the target's size, covers 0.846 (scored 0.899).
+- **Sparsity was a small part of the first figures.** Against the traversal masks (`envelopes`, the first analysis)
+  the labeled envelopes covered 0.577, 0.648 and 0.703 at 0.8, 0.9 and 0.95; the like-for-like target raises that by
+  7–8 points at 0.8–0.95 and precision by 3–5. The 0.5 envelope had come within 1.6 points of its level there
+  (0.484, scored); the bias-free baseline's 0.766 shows that was not calibration.
+- **The length cut is not the labels' gap.** Scored presence at ≥ 40 mm and at every length differ by at most 0.002.
+  The labeled shapes' 5.2–7.3 points less coverage than the scored ones (0.644 against 0.717 for A alone) is the
+  label mapping: the BPS labeled CR-F, the ILF labeled MdLF, the CC labeled Other (above).
+- **The unweighted mean over bundles** gives the same picture: labeled, 0.625, 0.631, 0.698 and 0.803 coverage for A,
+  0.8, 0.9 and the widest.
+- **Per bundle at 0.9, labeled:** best ILF right 0.836, ILF left 0.822, CC 0.775; worst ICP left 0.516, cingulum left
+  0.580, cingulum right 0.616. Scored ≥ 40 mm: best ILF left 0.905, ILF right 0.864, SLF left 0.860; worst cingulum
+  left 0.594, cingulum right 0.611, ICP left 0.649.
+- **On cIIIs04,** the same levels held about as stated against a rescan held out from pooled sessions (NOTES
+  2026-10-13, "Pooling sessions"). Against a known anatomy, they do not.
+- **Replicates:** a mean of 65,553 streamlines (65,403–65,732) against A's 61,637 (+6.4 %), and 17,071 valid against
+  A's 16,939. The labeled 0.8 envelope keeps voxels with at least 8–12 votes, the 0.9 envelope at least 4–7,
+  depending on the bundle (scored: 8–14 and 4–9).
+
+**Reading it.**
+- **Steadier is not truer here.**
+  - Step 0.6 and Rs 0.1 agreed better with rescans on cIIIs04 (step 2). On the phantom both lose accuracy in 20 of
+    the 21 bundles: mean F1 0.330 and 0.314 against 0.412 (the replicates' band 0.404–0.413), and they lose bundles
+    (CP, the Fornix).
+  - Patch2Self, which cut rescan renames by 3.5–4.5 points (step 3), loses most here (0.278). About a third of that is
+    having fewer streamlines; the rest is which streamlines they are. It probably removes angular contrast, in a
+    regime unlike cIIIs04's.
+- **The tie-break with hash-sorted grouping is accuracy-neutral:** mean F1 0.411 against 0.412, inside the replicates'
+  band, and every bundle's F1 within 0.01 of today's but the Fornix's (0.094 against 0.107). Its rounding-level gain
+  (steps 1 and 2b) costs nothing measurable in accuracy.
+- **The labeler** names about 58 % of the valid streamlines as their counterpart and labels most invalid ones Other.
+  Its AF on this phantom is mostly SLF by the ground truth.
+- **Envelopes are reproducibility statements, not accuracy statements.** The ensemble captures run-to-run variability,
+  not the pipeline's systematic error. Against the truth's own presence at the same streamline counts, the labeled
+  envelopes cover 17–18 points less than a bias-free ensemble does: a stated 0.9 covers 0.72, against 0.90. For the
+  data product, a claim must say which event it covers, a rescan or the anatomy. A claim about the anatomy needs a
+  bias term that only a ground truth (a phantom) can calibrate, beside the session term that test-retest data supply
+  (step 5).
+
+Caveats:
+- **One simulated brain,** one noise draw, Fiberfox's signal model.
+- **b = 1000 with 32 directions,** against cIIIs04's tracked 2000 shell (112 volumes over two shells). The settings'
+  and the denoiser's effects may differ with the shell and the number of directions.
+- **Patch2Self's regime** (33 volumes, DW SNR about 7) differs from cIIIs04's. Its result here judges the method in
+  this regime, not the step-3 configuration as run on cIIIs04. Whether it removes signal is inferred, not measured.
+- **The scoring is a reconstruction.** The wrapper's options are unverified (above); the scilpy 1.5.0 IB bug was
+  worked around. IB here is any populated invalid endpoint pair, so it is not comparable with 2015's.
+- **The loader's readout** (0.107 s) and the phase-encoding sign are inferred. The fmap comparison supports the readout
+  within about 1 % once the estimate's smoothing is allowed for.
+- **One run per configuration.** The 16 replicates give today's F1 a band (0.404–0.413); the other configurations have
+  no band of their own.
+- **Labels:** RapidParc at draw 0; the mapping is conservative and partly loose (BPS, OR). The ORG tracts have no
+  side; a tract's precision is counted against either side's bundle.
+- **The envelopes:**
+  - one simulated brain and one noise realization, b = 1000;
+  - the scorer's assignment is not the labeler's: the scored presence is truth-assisted (the all_mask), and the
+    labeled presence also carries the mapping's misses;
+  - **the bootstrap is noisier than the scan.** At leverage 0.469 (an order-4 fit, 15 coefficients for 32
+    directions) a DW replicate carries about 1 + 0.469 = 1.47 times the scan's noise variance about the truth, and an
+    "added" b0 twice. That likely explains the replicates' 6.4 % more streamlines, and it widens the envelopes, which
+    flatters their coverage if anything. cIIIs04's tracked 2000 shell has leverage 0.5 (1.5 times), about the same;
+    its 1000 shell 0.375;
+  - the bootstrap's b0 noise is borrowed from DW residuals (one b0 per polarity);
+  - the first analysis's target, the scorer's traversal mask, marks every voxel any of a bundle's thousands of
+    ground-truth streamlines crosses. It is wider than any run's density presence of a few hundred streamlines, so it
+    understated coverage. The count-matched target replaces it; the traversal-mask figures stay in `envelopes`;
+  - the levels are ensemble_pooled's mass-based ones, calibrated on cIIIs04 against rescans, not against anatomy.
