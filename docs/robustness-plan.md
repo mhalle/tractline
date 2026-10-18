@@ -167,7 +167,41 @@ opt-in; no default changes until you decide.
     agreement whether or not it is truth. The phantom (step 5) is needed to judge accuracy, and per-protocol
     calibration for honesty. The default is unchanged; the decision is yours.
 
-### 4. Benchmark against other trackers
+### Reordered on 2026-10-17, after step 3
+
+Every gain in rescan agreement so far (Rs 0.1, step 0.6, Patch2Self) changes what the pipeline finds. Only a ground
+truth can tell better from merely steadier. And a single scan cannot calibrate its own confidence: under denoising,
+neither of two bootstrap designs was honest, and today's ensemble is somewhat overconfident too. So accuracy comes
+next, then a calibration step for single scans, and the tracker benchmark moves to last.
+
+### 4. Accuracy on the ISMRM 2015 phantom
+
+- **What:** the ISMRM 2015 Tractography Challenge data (Zenodo 10.5281/zenodo.572345, CC BY 4.0), the version with
+  the reversed phase-encoding b0, so that the field correction runs as on real scans. Scored with the 2023 ROI scoring
+  (Renauld et al. 2023; `scil_score_ismrm_Renauld2023.sh`, scilpy 1.5.0 in an isolated environment). Details and
+  caveats are in `docs/validation-datasets.md`: the gradient x components need flipping, and the readout time is not
+  stated.
+- **Configurations:** today; the tie-break with hash-sorted grouping; Patch2Self; step 0.6; Rs 0.1.
+- **Measure:**
+  - the scorer's valid and invalid bundles, overlap, overreach and F1, per bundle and overall;
+  - RapidParc's labels against the ground-truth bundles where a counterpart exists (about 8 of the 42 tracts). The
+    phantom has no AF, but streamlines along its SLF may be labeled AF; the scorer's verdict, not the label, decides;
+  - if cheap, a 17-run ensemble's presence envelopes against the ground-truth bundle masks: calibration against a
+    known truth.
+- **Caveats to keep in view:** b = 1000 with 32 directions, unlike the 2800 shell tracked on cIIIs04, so the effects
+  of Rs and of denoising may not carry over; one simulated brain.
+
+### 5. A calibration card for single scans
+
+- **What:** learn, per protocol, the correction that turns a single scan's ensemble agreement into a calibrated
+  probability of what a rescan shows: a session term, as in "Pooling sessions" (NOTES 2026-10-13). Fit it on MASiVar
+  test-retest subjects and check it on held-out subjects, for today's pipeline and for any option that becomes a
+  default (denoising needs its own card).
+- **Measure:** stated against observed on held-out subjects and sessions, for streamlines and for regional claims
+  (presence envelopes, the main tract near a point).
+- **Output:** a card format the data product carries; without a matching card, the product says "run-to-run only".
+
+### 6. Benchmark against other trackers
 
 - **What:**
   - a probabilistic CSD tracker with tissue-based stopping (DIPY PTT + ACT; MRtrix iFOD2 only if it installs
@@ -175,21 +209,14 @@ opt-in; no default changes until you decide.
     UKF;
   - TractSeg's bundle masks for CST, AF and UF, as the no-tracking baseline.
 - **Measure:** regional measures only, since probabilistic streamlines cannot be matched by seed: presence Dice across
-  the four scans, the landmark sites, volumes and run time.
-- **Cost:** DIPY on the CPU, a few hours. TractSeg on Modal, so no local GPU or disk; it could run during an earlier
-  step's queue, since it shares nothing local.
+  the four scans, the landmark sites, volumes and run time; and the phantom score from step 4.
+- **Cost:** DIPY on the CPU, a few hours. TractSeg on Modal, so no local GPU or disk.
 
-### 5. Synthesis, then accuracy
+### 7. Synthesis
 
-- **Synthesis:** what reduces the spread without bias, and what that means for the data product. Update
-  `docs/uncertainty-ensemble.md` and the earlier proposal; settle which options become defaults (your call).
-- **Accuracy:** a phantom with known paths (DiSCo, or the ISMRM 2015 Tractometer data) to check that the winners are
-  not reproducibly wrong. This is planned after step 5, as its own step.
+- What reduces the spread without bias, what is accurate on the phantom, and what that means for the data product.
+  Update `docs/uncertainty-ensemble.md` and the earlier proposal; settle which options become defaults (your call).
 
 ## Order and gates
 
-1 → 2 → 3 → 4 → 5, with your gate after each step. The order can change at a gate:
-- if step 2 shows stopping dominates, tissue-based stopping moves up;
-- if steps 2–3 give large gains, step 4 may matter less.
-
-Steps 1–4 take about a day of machine time.
+1 → 2 → 2b → 3 (done) → 4 → 5 → 6 → 7, with your gate after each step. The order can change at a gate.
