@@ -6,6 +6,12 @@ OpenNeuro ds003416, MASiVar (CC0; Cai et al., MRM 2021, doi:10.1002/mrm.28926; P
 What is read (raw series only, whole, with their .bval/.bvec/.json; no T1, no PreQual derivatives):
   sub-cIIIs01 (scanner B, b1000 x40 + b2000 x56, each shell its own series, plus a reversed "APA" series):
     ses-s1Bx1 scans 2 and 4 (2.5 mm iso) and scan 1 (2.1 x 2.1 x 2.2 mm); ses-s1Bx3 scans 1 and 2 (2.1 mm).
+  sub-cIIIs02, 03, 05, 06, 07 and 08 (scanner B, the same protocol; bench/calibration_runs.py, the calibration card):
+    every scan of the sessions below, 2.1 x 2.1 x 2.2 mm only (GRID). cIIIs02 ses-s1Bx5 scan 1's b2000 series is
+    2.2 mm iso and is not read, so that scan is incomplete here (its rescan is scan 2).
+    WANT fetches every scan of those sessions, more than the card uses (calibration_runs.CARD): the other sessions'
+    scan 2 and cIIIs02 ses-s1Bx5 scan 1's b1000 and APA series are not used. They are kept for completeness, for later
+    use (more rescans, or a second same-session pair), at about 30 MB a scan.
   sub-cIs1 (scanner A, 96 directions a shell; b1000, b2000 and b3000 of its five shells):
     ses-s1Ax1 scans 1 and 2, ses-s1Ax2 scan 1 (consecutive days), 2.5 mm iso.
 A scan is the run's first digit (run-<scan><acquisition>). The file list comes from the dataset's GitHub mirror,
@@ -22,8 +28,12 @@ WANT = {  # (subject, session): {scan: shells}
     ("cIIIs01", "s1Bx3"): {1: (1000, 2000), 2: (1000, 2000)},
     ("cIs1", "s1Ax1"): {1: (1000, 2000, 3000), 2: (1000, 2000, 3000)},
     ("cIs1", "s1Ax2"): {1: (1000, 2000, 3000)},
+    **{(sub, ses): {1: (1000, 2000), 2: (1000, 2000)} for sub, sessions in (
+        ("cIIIs02", ("s1Bx1", "s1Bx4", "s1Bx5")), ("cIIIs03", ("s1Bx1",)), ("cIIIs05", ("s1Bx1", "s1Bx2")),
+        ("cIIIs06", ("s1Bx1",)), ("cIIIs07", ("s1Bx1",)), ("cIIIs08", ("s1Bx1", "s1Bx2"))) for ses in sessions},
 }
-NAME = re.compile(r"sub-(\w+?)/ses-(\w+?)/dwi/sub-\w+?_ses-\w+?_acq-b(\d+)n(\d+)r\w+?pe(APP|APA)_run-(\d)\d\d_dwi\.(nii\.gz|bval|bvec|json)$")
+GRID = {sub: "21x21x22" for sub in ("cIIIs02", "cIIIs03", "cIIIs05", "cIIIs06", "cIIIs07", "cIIIs08")}   # read at this resolution only
+NAME = re.compile(r"sub-(\w+?)/ses-(\w+?)/dwi/sub-\w+?_ses-\w+?_acq-b(\d+)n(\d+)r(\w+?)pe(APP|APA)_run-(\d)\d\d_dwi\.(nii\.gz|bval|bvec|json)$")
 
 
 def get(url):
@@ -35,9 +45,9 @@ def wanted(path):
     m = NAME.match(path)
     if not m:
         return False
-    sub, ses, b, pe, scan = m.group(1), m.group(2), int(m.group(3)), m.group(5), int(m.group(6))
+    sub, ses, b, res, pe, scan = m.group(1), m.group(2), int(m.group(3)), m.group(5), m.group(6), int(m.group(7))
     shells = WANT.get((sub, ses), {}).get(scan)
-    return shells is not None and (pe == "APA" or b in shells)
+    return shells is not None and (pe == "APA" or b in shells) and GRID.get(sub, res) == res
 
 
 if __name__ == "__main__":
