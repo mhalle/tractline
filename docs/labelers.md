@@ -23,7 +23,7 @@ their cluster probabilities. A tractogram with no streamline of 40 mm or more re
 
 ## RapidParc (the default)
 
-von Bornhaupt, Bisten, ..., Schultz, "RapidParc: A Global-Context Transformer for Parallel, Accurate, and
+Bisten, von Bornhaupt, ..., Schultz, "RapidParc: A Global-Context Transformer for Parallel, Accurate, and
 Lesion-Robust Tractogram Parcellation", Imaging Neuroscience 2026; github.com/MedVisBonn/RapidParc (BSD-3).
 Per draw: 15 points per streamline, evenly spaced by index; the set scaled to [-1, 1] per axis; shuffled
 (torch.Generator seeded with the draw) and cut into groups of 2,000, each group re-scaled to [-1, 1]

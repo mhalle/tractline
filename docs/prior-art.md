@@ -80,8 +80,8 @@ a standard LOD and spatial index for tractograms.
   ([2026](https://arxiv.org/abs/2606.09893)), nor the repo's issues discuss run-to-run variability
   or confidence. The inference path does not call the `fix_seed` helper the repo contains. **The
   28 % tract and 69 % cluster change rates have not been reported.**
-- **Closest prior work: PETParc / RapidParc** (von Bornhaupt, Bisten, ... Schultz;
-  [arXiv 2025](https://arxiv.org/abs/2503.07104),
+- **Closest prior work: PETParc / RapidParc** (PETParc: von Bornhaupt, Grün, Bisten, ... Schultz,
+  [arXiv 2025](https://arxiv.org/abs/2503.07104); RapidParc: Bisten, von Bornhaupt, ... Schultz,
   [Imaging Neuroscience 2026](https://doi.org/10.1162/IMAG.a.1168)).
   - The model also uses 1600 clusters mapped to 42 tracts plus outliers, with random context
     from sub-tractograms.

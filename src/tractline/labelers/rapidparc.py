@@ -1,4 +1,4 @@
-"""RapidParc labels for a tractogram (von Bornhaupt, Bisten, ..., Schultz: "RapidParc: A Global-Context
+"""RapidParc labels for a tractogram (Bisten, von Bornhaupt, ..., Schultz: "RapidParc: A Global-Context
 Transformer for Parallel, Accurate, and Lesion-Robust Tractogram Parcellation", Imaging Neuroscience 2026;
 github.com/MedVisBonn/RapidParc, BSD-3), its inference written here from its code (v1.0.4), the trained
 weights its release v1.0.0 publishes (DATA/RapidParc, sha256-checked: model "rapidparc", or "hemiaug",
