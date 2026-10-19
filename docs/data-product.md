@@ -801,3 +801,9 @@ one's.
 - Whether the product pools sessions when a patient has more than one scan.
 - The residual check's threshold, per protocol.
 - Whether the product ships layer C at all, even as a diagnostic.
+- The name of the "card" (logged 2026-10-19, open). It is our shorthand for a protocol-specific recalibration map
+  learned from test-retest scans, packaged with its validity domain, match check, provenance and held-out evaluation.
+  "Calibration card" is not a term in the literature (it borrows loosely from model cards and datasheets); the
+  technique is standard post-hoc (isotonic) and quantile recalibration. The ISMRM 2027 abstract uses "protocol-specific
+  recalibration map". Decide later whether the repository keeps "card" or renames it; the name may suggest itself as the
+  work goes on.
