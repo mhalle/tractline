@@ -1,0 +1,430 @@
+{
+ "what": "95 % percentile bootstrap intervals over held-out subjects (subjects resampled with replacement, 10000 draws, seed 20261019) for the mean over subjects of each subject's leave-one-subject-out value. Each subject's value comes from the card fitted on the other subjects (calibration_card.fit_term), and the folds are not refitted inside the bootstrap. With 8 (same session) and 5 (other session) subjects the intervals are coarse.",
+ "source": "statements_R17.npz of the eight MASiVar cohort III subjects; the refit reproduces results/calibration_card_masivar_cIII.json's held-out summary",
+ "ECE": "streamline statement, P(a rescan gives the ensemble's mode), calibration_card.ECE_BINS bins",
+ "coverage": "share of the rescan's density presence inside the envelope, pooled over the 42 named tracts (weighted by the rescan's voxels); as stated: the envelope at stated level = target; card: at the held-out fold's level for the target",
+ "terms": {
+  "same session": {
+   "subjects": [
+    "cIIIs01",
+    "cIIIs02",
+    "cIIIs03",
+    "cIIIs04",
+    "cIIIs05",
+    "cIIIs06",
+    "cIIIs07",
+    "cIIIs08"
+   ],
+   "n subjects": 8,
+   "ECE": {
+    "as stated": {
+     "mean": 0.0697,
+     "95 % CI": [
+      0.0645,
+      0.0749
+     ],
+     "per subject": {
+      "cIIIs01": 0.08,
+      "cIIIs02": 0.0632,
+      "cIIIs03": 0.0647,
+      "cIIIs04": 0.0614,
+      "cIIIs05": 0.074,
+      "cIIIs06": 0.0737,
+      "cIIIs07": 0.0613,
+      "cIIIs08": 0.0796
+     }
+    },
+    "card": {
+     "mean": 0.0084,
+     "95 % CI": [
+      0.0066,
+      0.0101
+     ],
+     "per subject": {
+      "cIIIs01": 0.0116,
+      "cIIIs02": 0.0095,
+      "cIIIs03": 0.0063,
+      "cIIIs04": 0.0095,
+      "cIIIs05": 0.0047,
+      "cIIIs06": 0.0048,
+      "cIIIs07": 0.01,
+      "cIIIs08": 0.011
+     }
+    },
+    "PAT16 map": {
+     "mean": 0.0188,
+     "95 % CI": [
+      0.0175,
+      0.0202
+     ],
+     "per subject": {
+      "cIIIs01": 0.0172,
+      "cIIIs02": 0.017,
+      "cIIIs03": 0.0173,
+      "cIIIs04": 0.0213,
+      "cIIIs05": 0.0194,
+      "cIIIs06": 0.0169,
+      "cIIIs07": 0.0184,
+      "cIIIs08": 0.0226
+     }
+    }
+   },
+   "coverage": {
+    "0.8": {
+     "as stated": {
+      "mean": 0.7766,
+      "95 % CI": [
+       0.771,
+       0.7825
+      ],
+      "per subject": {
+       "cIIIs01": 0.7755,
+       "cIIIs02": 0.7785,
+       "cIIIs03": 0.7861,
+       "cIIIs04": 0.7916,
+       "cIIIs05": 0.7745,
+       "cIIIs06": 0.7688,
+       "cIIIs07": 0.7733,
+       "cIIIs08": 0.7645
+      }
+     },
+     "card": {
+      "mean": 0.8034,
+      "95 % CI": [
+       0.7974,
+       0.8095
+      ],
+      "per subject": {
+       "cIIIs01": 0.8021,
+       "cIIIs02": 0.8049,
+       "cIIIs03": 0.8156,
+       "cIIIs04": 0.8171,
+       "cIIIs05": 0.8,
+       "cIIIs06": 0.7969,
+       "cIIIs07": 0.8032,
+       "cIIIs08": 0.7877
+      }
+     },
+     "card's stated level (per subject's fold)": {
+      "cIIIs01": 0.83,
+      "cIIIs02": 0.83,
+      "cIIIs03": 0.83,
+      "cIIIs04": 0.83,
+      "cIIIs05": 0.83,
+      "cIIIs06": 0.83,
+      "cIIIs07": 0.83,
+      "cIIIs08": 0.825
+     }
+    },
+    "0.9": {
+     "as stated": {
+      "mean": 0.8692,
+      "95 % CI": [
+       0.8646,
+       0.8743
+      ],
+      "per subject": {
+       "cIIIs01": 0.8646,
+       "cIIIs02": 0.8715,
+       "cIIIs03": 0.8786,
+       "cIIIs04": 0.8814,
+       "cIIIs05": 0.8659,
+       "cIIIs06": 0.8633,
+       "cIIIs07": 0.8677,
+       "cIIIs08": 0.8603
+      }
+     },
+     "card": {
+      "mean": 0.9036,
+      "95 % CI": [
+       0.898,
+       0.9092
+      ],
+      "per subject": {
+       "cIIIs01": 0.8962,
+       "cIIIs02": 0.9094,
+       "cIIIs03": 0.9137,
+       "cIIIs04": 0.9152,
+       "cIIIs05": 0.9027,
+       "cIIIs06": 0.8946,
+       "cIIIs07": 0.9046,
+       "cIIIs08": 0.8924
+      }
+     },
+     "card's stated level (per subject's fold)": {
+      "cIIIs01": 0.93,
+      "cIIIs02": 0.935,
+      "cIIIs03": 0.935,
+      "cIIIs04": 0.935,
+      "cIIIs05": 0.935,
+      "cIIIs06": 0.93,
+      "cIIIs07": 0.935,
+      "cIIIs08": 0.93
+     }
+    },
+    "0.95": {
+     "as stated": {
+      "mean": 0.9205,
+      "95 % CI": [
+       0.9171,
+       0.9241
+      ],
+      "per subject": {
+       "cIIIs01": 0.9192,
+       "cIIIs02": 0.923,
+       "cIIIs03": 0.9274,
+       "cIIIs04": 0.9281,
+       "cIIIs05": 0.9174,
+       "cIIIs06": 0.9154,
+       "cIIIs07": 0.9208,
+       "cIIIs08": 0.913
+      }
+     },
+     "card": {
+      "mean": 0.9539,
+      "95 % CI": [
+       0.949,
+       0.9588
+      ],
+      "per subject": {
+       "cIIIs01": 0.9467,
+       "cIIIs02": 0.9611,
+       "cIIIs03": 0.9611,
+       "cIIIs04": 0.9634,
+       "cIIIs05": 0.9541,
+       "cIIIs06": 0.9463,
+       "cIIIs07": 0.9554,
+       "cIIIs08": 0.9434
+      }
+     },
+     "card's stated level (per subject's fold)": {
+      "cIIIs01": 0.975,
+      "cIIIs02": 0.98,
+      "cIIIs03": 0.98,
+      "cIIIs04": 0.98,
+      "cIIIs05": 0.98,
+      "cIIIs06": 0.975,
+      "cIIIs07": 0.98,
+      "cIIIs08": 0.975
+     }
+    }
+   }
+  },
+  "other session": {
+   "subjects": [
+    "cIIIs01",
+    "cIIIs02",
+    "cIIIs04",
+    "cIIIs05",
+    "cIIIs08"
+   ],
+   "n subjects": 5,
+   "ECE": {
+    "as stated": {
+     "mean": 0.0973,
+     "95 % CI": [
+      0.0924,
+      0.1023
+     ],
+     "per subject": {
+      "cIIIs01": 0.1044,
+      "cIIIs02": 0.1032,
+      "cIIIs04": 0.0964,
+      "cIIIs05": 0.089,
+      "cIIIs08": 0.0937
+     }
+    },
+    "card": {
+     "mean": 0.0081,
+     "95 % CI": [
+      0.0047,
+      0.0101
+     ],
+     "per subject": {
+      "cIIIs01": 0.0097,
+      "cIIIs02": 0.0098,
+      "cIIIs04": 0.0014,
+      "cIIIs05": 0.0106,
+      "cIIIs08": 0.0091
+     }
+    },
+    "PAT16 map": {
+     "mean": 0.0273,
+     "95 % CI": [
+      0.0238,
+      0.0305
+     ],
+     "per subject": {
+      "cIIIs01": 0.0304,
+      "cIIIs02": 0.0322,
+      "cIIIs04": 0.0255,
+      "cIIIs05": 0.021,
+      "cIIIs08": 0.0273
+     }
+    }
+   },
+   "coverage": {
+    "0.8": {
+     "as stated": {
+      "mean": 0.7601,
+      "95 % CI": [
+       0.7555,
+       0.7634
+      ],
+      "per subject": {
+       "cIIIs01": 0.7613,
+       "cIIIs02": 0.7517,
+       "cIIIs04": 0.7617,
+       "cIIIs05": 0.765,
+       "cIIIs08": 0.7606
+      }
+     },
+     "card": {
+      "mean": 0.8016,
+      "95 % CI": [
+       0.7969,
+       0.8063
+      ],
+      "per subject": {
+       "cIIIs01": 0.7988,
+       "cIIIs02": 0.7935,
+       "cIIIs04": 0.8,
+       "cIIIs05": 0.8078,
+       "cIIIs08": 0.808
+      }
+     },
+     "card's stated level (per subject's fold)": {
+      "cIIIs01": 0.845,
+      "cIIIs02": 0.845,
+      "cIIIs04": 0.845,
+      "cIIIs05": 0.85,
+      "cIIIs08": 0.85
+     }
+    },
+    "0.9": {
+     "as stated": {
+      "mean": 0.8523,
+      "95 % CI": [
+       0.8478,
+       0.8558
+      ],
+      "per subject": {
+       "cIIIs01": 0.8508,
+       "cIIIs02": 0.8439,
+       "cIIIs04": 0.855,
+       "cIIIs05": 0.8565,
+       "cIIIs08": 0.8555
+      }
+     },
+     "card": {
+      "mean": 0.9018,
+      "95 % CI": [
+       0.8967,
+       0.9065
+      ],
+      "per subject": {
+       "cIIIs01": 0.9001,
+       "cIIIs02": 0.8929,
+       "cIIIs04": 0.9019,
+       "cIIIs05": 0.9094,
+       "cIIIs08": 0.9047
+      }
+     },
+     "card's stated level (per subject's fold)": {
+      "cIIIs01": 0.945,
+      "cIIIs02": 0.945,
+      "cIIIs04": 0.945,
+      "cIIIs05": 0.95,
+      "cIIIs08": 0.945
+     }
+    },
+    "0.95": {
+     "as stated": {
+      "mean": 0.9056,
+      "95 % CI": [
+       0.901,
+       0.9087
+      ],
+      "per subject": {
+       "cIIIs01": 0.9067,
+       "cIIIs02": 0.8965,
+       "cIIIs04": 0.9064,
+       "cIIIs05": 0.9094,
+       "cIIIs08": 0.909
+      }
+     },
+     "card": {
+      "mean": 0.9515,
+      "95 % CI": [
+       0.9474,
+       0.9541
+      ],
+      "per subject": {
+       "cIIIs01": 0.9518,
+       "cIIIs02": 0.9436,
+       "cIIIs04": 0.9537,
+       "cIIIs05": 0.9539,
+       "cIIIs08": 0.9545
+      }
+     },
+     "card's stated level (per subject's fold)": {
+      "cIIIs01": 0.985,
+      "cIIIs02": 0.985,
+      "cIIIs04": 0.985,
+      "cIIIs05": 0.985,
+      "cIIIs08": 0.985
+     }
+    }
+   }
+  }
+ },
+ "phantom (ISMRM 2015, labeled presence, count-matched truth)": {
+  "0.8": {
+   "pipeline": 0.6504,
+   "bias-free": 0.8184,
+   "gap": 0.168
+  },
+  "0.9": {
+   "pipeline": 0.7239,
+   "bias-free": 0.9039,
+   "gap": 0.18
+  },
+  "0.925": {
+   "pipeline": 0.7531,
+   "bias-free": 0.9289,
+   "gap": 0.1758
+  },
+  "0.95": {
+   "pipeline": 0.7785,
+   "bias-free": 0.9509,
+   "gap": 0.1724
+  }
+ },
+ "phantom note": "one simulated brain and one noise draw: no interval; per-bundle values in robust_phantom.json",
+ "fig5 example": {
+  "subject": "cIIIs04",
+  "tract": "CST",
+  "rescan": "within",
+  "term": "same session",
+  "card's stated levels (held-out fold, without this subject)": {
+   "0.8": 0.83,
+   "0.95": 0.98
+  },
+  "vote cut (of 17)": {
+   "0.8": 8,
+   "0.95": 1
+  },
+  "coverage of the rescan's CST (this tract alone; per-tract statements were not validated)": {
+   "0.8": 0.8046,
+   "0.95": 0.9685
+  },
+  "envelope size over the rescan's CST": {
+   "0.8": 0.944,
+   "0.95": 1.871
+  },
+  "slices (A's voxel indices)": {
+   "axial k": 25,
+   "coronal j": 50
+  }
+ }
+}

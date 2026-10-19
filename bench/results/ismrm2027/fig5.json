@@ -1,0 +1,26 @@
+{
+ "subject": "cIIIs04",
+ "tract": "CST",
+ "rescan": "within",
+ "term": "same session",
+ "card's stated levels (held-out fold, without this subject)": {
+  "0.8": 0.83,
+  "0.95": 0.98
+ },
+ "vote cut (of 17)": {
+  "0.8": 8,
+  "0.95": 1
+ },
+ "coverage of the rescan's CST (this tract alone; per-tract statements were not validated)": {
+  "0.8": 0.8046,
+  "0.95": 0.9685
+ },
+ "envelope size over the rescan's CST": {
+  "0.8": 0.944,
+  "0.95": 1.871
+ },
+ "slices (A's voxel indices)": {
+  "axial k": 25,
+  "coronal j": 50
+ }
+}
