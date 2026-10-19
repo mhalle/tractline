@@ -281,6 +281,46 @@ next, then a calibration step for single scans, and the tracker benchmark moves 
 - **Measure:** regional measures only, since probabilistic streamlines cannot be matched by seed: presence Dice across
   the four scans, the landmark sites, volumes and run time; and the phantom score from step 4.
 - **Cost:** DIPY on the CPU, a few hours. TractSeg on Modal, so no local GPU or disk.
+- **Outcome (2026-10-19, NOTES "Robustness step 6"; revised after the review).**
+  - **As run.**
+    - DIPY's PTT on a single-shell CSD, with ACT stopping and white-matter seeding. The tissue maps come from
+      FastSurfer on cIIIs04 and from an FA/T1 classifier on the phantom, never from its ground truth.
+    - TractSeg 2.10 in an isolated environment, on DIPY's peaks in MNI orientation, on the M2's CPU (not Modal),
+      downloading nothing. No MRtrix.
+    - The four cIIIs04 scans on A's grid, and the phantom. The queue took 36 min (A ran in the smoke test); the
+      review's controls and replicates 36 min more (`queue2.log`'s file times; the count controls ran beside
+      them).
+  - **The phantom: PTT + ACT with white-matter seeding, as a pipeline, is far more accurate than today's UKF.**
+    - Mean F1 0.583 against 0.412, VS 48.9 % against 27.5 %, IB 338 against 452 and half the overreach, with 19
+      against 20 valid bundles (it misses CA and CP). Steps 1–4's options moved F1 by −0.13 to 0.00.
+    - **Not its seeding:** UKF seeded only in PTT's white matter scores 0.398 against 0.390 for UKF at the same count;
+      PTT seeded at UKF's seed points 0.532 against 0.537 for PTT at the same count. Keeping PTT's invalid ends moves VS
+      by half a point. PTT and ACT were not separated.
+    - Dice against the ground truth (14 bundles): PTT's labeled presence 0.635 (0.618 count-matched to UKF), UKF's
+      0.520 (0.521), TractSeg's masks 0.551 (masks and presence are different kinds of object).
+  - **cIIIs04: TractSeg's masks agree best across rescans, on its own terms.** Its rescan Dice for CST, AF and UF is
+    0.89–0.96, against UKF's 0.73–0.81. Its sites agree 8 / 8 / 7 against UKF's 6 / 6 / 5, judged among its 18
+    mapped tracts against RapidParc's 42. It reuses A's registration, is deterministic, and its masks are large (the AF
+    163 mL, three times UKF's): not a like-for-like gain. On the phantom its masks score 0.551 and UKF's presence
+    0.520, but a mask and a density presence cannot be ranked against the same target.
+  - **PTT + ACT on cIIIs04.**
+    - As run, its CST halves on the within rescan: an artifact of ACT's valid-end rule. Resampled onto A's grid, that
+      rescan leaves A's lowest brainstem slice empty, and the paths stop one voxel short of the valid end at the image
+      face.
+    - Counts matched per tract, PTT + ACT agrees with A better than UKF does by 0.01–0.04 (AF) and 0.03–0.07 (UF), as
+      run and with ACT's edge rule alike, and by 0.01–0.06 (CST) only with the edge rule (the scan's own face as a
+      valid end: post hoc, chosen after seeing this; UKF has no such rule and needs none). Unmatched, the CST gap
+      looked like 0.07–0.11 and the UF went the other way: Dice rises with streamline count.
+    - The limits: one subject, one run per scan and method, margins of 0.01–0.07, and PTT + ACT reusing A's tissue
+      maps for seeding and stopping on every rescan (the RNG check varied seeds and RNGs, not the maps), where UKF
+      re-derives its mask and seeds. Its spread between runs on one scan is about its spread between scans, whether or
+      not the RNGs are shared (on the CST the rescans sit just below the reruns).
+  - **RapidParc on PTT's streamlines is off its domain.** The tract mix differs by a total variation of 0.149 (Other
+    0.484 against 0.526, top probability 0.923 against 0.941). On the phantom its labels match the truth more often
+    (64 % against 58 %).
+  - **Not done:** an ensemble (about 1–1.5 h per scan) and a calibration card for PTT; tuning beyond DIPY's defaults;
+    separating PTT from ACT; a TractSeg run on its own domain. A tracker change would need its own card (step 5) and a
+    labeler check.
 
 ### 7. Synthesis
 

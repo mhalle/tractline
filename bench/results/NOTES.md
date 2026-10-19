@@ -3663,7 +3663,7 @@ Consequences:
 - The rescans were still tracked on A's grid (resampled DWI). Tracking each session on its native grid and moving its
   streamlines into T1 space is the next step for clean pooling. It was not tested here.
 
-## 2026-10-13 The ensemble as a duckn store: 18.7 MB for four scans' presence at 1 mm
+## 2026-10-13 The ensemble as a duckn store: 19.6 MB for four scans' presence at 1 mm
 
 `ensemble_store.py` (the new optional `store` group: zarr ≥ 3.3, and duckn at haversack's tag v0.6.2; Python 3.12+)
 → DATA/ensemble/cIIIs04/cIIIs04_ensemble.duckn.zip. The votes are cached beside the records (presence_t1.npz, 15 MB).
@@ -3701,7 +3701,8 @@ layout tried.
 - **The crop is recorded** in the `tractline` block, so FastSurfer's own arrays slice to the same voxels; the old
   route restored its labels onto the original T1 grid. The cache is now presence_conformed.npz, and the original-T1
   version is removed.
-- **The store is 19.6 MB, and every node validates.**
+- **The store is 19.6 MB, and every node validates.** (The heading said 18.7 MB until 2026-10-19, probably the same
+  size in MiB. Measured then, the zip's entries other than the rank fields added below total 19.56 MB, 18.65 MiB.)
 - **Alignment check:** slicing FastSurfer's ranked store (parts/0/ranks, rank 1) with the recorded crop, the CST core
   (at least 9 of 17 runs) falls in cerebral white matter 46 %, brainstem 27 %, ventral DC 9 %, thalamus 5 % and
   outside the brain 4 %.
@@ -5720,3 +5721,313 @@ Operational note: the queue ran from 08:31 to 17:00.
   resumed each time.
 - The guard stops before a run starts, and records are written under a temporary name and renamed when complete. No
   partial record was left, and `calibration_runs.py plan` reports no run missing.
+
+## 2026-10-19 Robustness step 6: on the phantom PTT with ACT stopping is far more accurate than today's UKF (mean F1 0.583 against 0.412), and not through its seeding; TractSeg's masks agree best across rescans; RapidParc on PTT's streamlines is off its domain
+
+`robust_benchmark.py` (`pilot`, `run`, `check`, `analyze`; after the first reading `replicate`; after the review
+`controls` and `diagnose`) → `robust_benchmark.json` (figures quoted below without a table are under `diagnostics`
+unless named; its `logged runs` copies the counts that come from the runs' logs, `runs.json` under the records); DIPY's
+side `bench/_benchmark_dipy.py` (a subprocess: DIPY's OpenMP clashes with torch's), TractSeg's
+`bench/_tractseg_run.py` (its isolated environment); records in `DATA/ensemble/benchmark/<method>/<subject>/` and
+`DATA/ensemble/benchmark/controls/phantom/`. docs/robustness-plan.md, step 6. Steps 1–5 changed today's pipeline at the
+margins. This step compares it with two other methods on the same data: a probabilistic tracker with anatomical
+stopping, labeled by the same RapidParc, and a segmentation with no tracking. Measures are regional, since
+probabilistic streamlines cannot be matched by seed.
+
+**The methods.**
+- **The input, for both:** each scan corrected as today (`P.correct`); the rescans resampled onto A's grid with the
+  stored registration (`ensemble_retest.onto_reference`, the b-vectors turned), exactly as today's `<tag>_onA`; the
+  b0s and the shell UKF tracks (2000 on cIIIs04, 1000 on the phantom); the pipeline's tracking mask.
+- **CSD:** DIPY's single-shell CSD, the response from the data (`auto_response_ssst`, FA > 0.7: on A, eigenvalues
+  1.39 and 0.31 × 10⁻³ mm²/s), SH order 8 (6 on the phantom's 32 directions); peaks over the mask (3 per voxel,
+  relative threshold 0.1, 25° apart).
+- **PTT + ACT** (DIPY 1.12.1 `ptt_tracking`, its defaults: step 0.5 mm, max angle 10, probe length 1.5 mm, quality 7,
+  count 1, pmf threshold 0.1; 20–250 mm; valid streamlines only):
+  - **stopping** (`ActStoppingCriterion`): a valid end in gray matter, outside the brain, or at the image's outer
+    faces (the field of view cuts the brainstem); an invalid end in CSF. Deep gray matter (thalamus, striatum,
+    pallidum, accumbens) is neither, as MRtrix's 5TT keeps it, so paths pass the internal capsule;
+  - **tissue maps, cIIIs04:** FastSurfer's asegdkt labels carried into A's world by `cIIIs04_t1_to_dwi.npz`, as
+    partial volumes on A's grid (4³ samples per voxel). A's maps serve all four scans, which are on A's grid;
+  - **tissue maps, the phantom:** three intensity classes of its `T1.nii.gz` (1D k-means inside the tracking mask).
+    The T1 alone puts 29.7 % of the mask's voxels with FA ≥ 0.2 in gray matter (`diagnostics`; the median FA of its
+    white class is 0.347, of its gray 0.114), where ACT would end paths inside bundles, so a voxel with FA ≥ 0.25 counts
+    as white matter: an FA/T1 classifier. No ground-truth bundle or scoring ROI is used. (An earlier scratch check on
+    the uncorrected DWI gave 36 %; the module's check is on the corrected DWI and the pipeline's mask.);
+  - **seeds:** uniform in white matter (wm ≥ 0.5), the same points for every scan on A's grid (RNG 1), and the
+    tracking's RNG 1 (a seed's path is reproducible). 130,000 on cIIIs04: the pilot gave 0.50 labeled streamlines per
+    seed, so A has about today's UKF count (65,003 against 64,378). 100,000 on the phantom: the pilot's 0.62 streamlines
+    per seed, for about UKF's 61,637 there (the run gave 61,454, 0.61 per seed);
+  - **labels:** RapidParc as today (draw 0, index grouping), on Metal.
+- **TractSeg 2.10** (its isolated environment; weights `best_weights_ep220.npz`, Zenodo 3518348, linked under the name
+  TractSeg looks for; a dead proxy, so nothing downloads):
+  - **input:** the CSD peaks as MRtrix's `sh2peaks` writes them (world RAS directions scaled by amplitude), on
+    TractSeg's MNI FA template's grid (1.25 mm, MNI's axis signs, so TractSeg's own flip is a no-op), by a rigid
+    registration of A's FA to the template (DIPY, mutual information). The rescans reuse A's transform. MRtrix is not
+    needed;
+  - **run:** `run_tractseg`'s defaults (72 bundles, three orientations fused, threshold 0.5, bundle-specific
+    postprocessing) on the CPU; the masks back onto A's grid (or the phantom's 1 mm t1 grid) by trilinear
+    interpolation at 0.5;
+  - **one workaround:** TractSeg imports `dipy.align.imaffine` at module level, which loads DIPY's own libomp beside
+    torch's, and the process aborts (OMP Error #15). The runner stubs that one module (used only by
+    `change_spacing_4D`, not on this path) instead of setting the unsafe `KMP_DUPLICATE_LIB_OK`;
+  - **mapping to RapidParc's names:** 18 tracts (AF, CST, UF, ILF, IOFF from IFO, SLF-I–III, CB from CG, ICP, MCP,
+    CC1–CC7 from CC_1–7), left and right together, of RapidParc's 42 named tracts; on the phantom, its bundles to
+    TractSeg's (BPS = CST + FPT + POPT, SLF = SLF I–III, Fornix = FX; CP has none).
+- **Anatomy check of TractSeg on A** (`check`; `tractseg anatomy check, A`):
+  - **CST:** its lowest 5 % of voxels (by z) are 74–82 % brainstem; its highest 5 % are 84–88 % nearest precentral
+    cortex; each on its side (mean x 20.1 mm left and 23.9 mm right of the midline);
+  - **AF:** from inferior and middle temporal cortex (lowest, most posterior) to caudal and rostral middle frontal and
+    precentral cortex (highest, most anterior);
+  - **UF:** its highest 5 % lie in white matter, 60–71 % with no gray label within 4 mm: z does not find its frontal
+    end, which is anterior, not superior. Its most anterior 5 % are 86–90 % nearest lateral orbitofrontal cortex, its
+    most posterior 5 % nearest superior temporal and insular cortex, the hippocampus and the amygdala. That is the UF's
+    course; the first version of the check (z only) did not show it.
+  - A projection over the mean b0 looked right.
+
+**The phantom: the 2023 ROI scoring, and seeding controls** (`phantom`; the scorer's figures over all streamlines;
+labeled Dice and count-matched Dice: the next table's means). The controls (`controls`, after the review) separate
+the seeds from the tracker. PTT's white-matter seed voxels are 88.7 % inside the union of the 21 ground-truth bundles'
+traversal masks, UKF's seeds (one per voxel, FA > 0.1 in the mask) 72.4 %, the tracking mask 37.4 %. Each seeding
+control comes with the other method's run subsampled at random to the control's count, since F1 depends on the count
+(step 4):
+
+| run | streamlines | VB | VS | IC | NC | IB | mean OL | mean OR | mean F1 | labeled Dice | count-matched Dice: run / UKF |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| UKF (today) | 61,637 | 20 | 27.48 % | 62.88 % | 9.64 % | 452 | 0.444 | 0.479 | 0.412 | 0.520 | — |
+| PTT + ACT | 61,454 | 19 | 48.88 % | 46.08 % | 5.05 % | 338 | 0.532 | 0.244 | 0.583 | 0.635 | 0.618 / 0.521 |
+| UKF, seeded only in PTT's white matter | 41,578 | 20 | 29.81 % | 60.50 % | 9.69 % | 403 | 0.398 | 0.455 | 0.398 | 0.511 | 0.511 / 0.504 |
+| UKF (today) subsampled to that count | 41,578 | 20 | 27.41 % | 62.71 % | 9.88 % | 424 | 0.389 | 0.453 | 0.390 | 0.500 | 0.500 / 0.499 |
+| PTT + ACT, seeded at UKF's seed points | 29,231 | 19 | 48.34 % | 46.47 % | 5.19 % | 298 | 0.442 | 0.209 | 0.532 | 0.590 | 0.589 / 0.501 |
+| PTT + ACT subsampled to that count | 29,231 | 19 | 48.97 % | 45.86 % | 5.17 % | 290 | 0.443 | 0.202 | 0.537 | 0.598 | 0.597 / 0.506 |
+| PTT + ACT, invalid ends kept (return_all) | 80,247 | 19 | 48.44 % | 43.87 % | 7.68 % | 363 | 0.565 | 0.258 | 0.595 | 0.648 | 0.629 / 0.520 |
+
+- **The seeds are not PTT's advantage.**
+  - UKF seeded only where PTT seeds (42,641 of its 65,925 seeds) scores F1 0.398, against 0.390 for UKF subsampled
+    to the same 41,578 streamlines: +0.008, and VS 29.8 against 27.4 %.
+  - PTT seeded at UKF's own seed points (65,925; 0.44 streamlines per seed) scores 0.532, against 0.537 for PTT
+    subsampled to the same 29,231: −0.005.
+  - Across methods: at about equal counts (61,454 against 61,637) PTT leads by 0.17; PTT at 29,231 streamlines
+    (0.532–0.537) still beats UKF at 41,578 (0.390–0.398), though fewer streamlines lower F1.
+- **Dropping invalid ends is not it either.** PTT keeping every streamline (80,247) has VS 48.4 against 48.9 % and F1
+  0.595. What remains is the tracker with its stopping rule: PTT's paths on CSD, with ACT ending them. This step does
+  not separate PTT from ACT (no PTT without ACT, no UKF with ACT).
+- **Per bundle,** PTT's F1 (61,454 streamlines) is higher than UKF's in 19 of 21 bundles, the same in CA (neither finds
+  it), lower in CP (0 against 0.122). The largest gains: the Fornix 0.545 against 0.107, the OR 0.634 / 0.598 against
+  0.153 / 0.188, the UF 0.709 / 0.706 against 0.429 / 0.488, the MCP 0.797 against 0.537. The labeled streamlines
+  (≥ 40 mm) give the same mean F1 (0.583).
+- **Published figures are not comparable.** Our scoring is a reconstruction of the 2023 wrapper (step 4: its options
+  unverified). Renauld 2023's best, TractoFlow with topup, is 58 % by the site's erratum (64–65 % in the paper), from
+  their own scoring run. PTT + ACT's 0.583 here does not show it matches that pipeline.
+- **Labels against the truth:** RapidParc names 64.35 % of PTT's valid streamlines that have a counterpart as it
+  (28,512 streamlines) against 57.59 % of UKF's (16,471). The tracts the phantom cannot hold (AF, EC, EmC, IOFF, MdLF,
+  Sup-*) are 8.6 % of PTT's labeled streamlines against 9.3 % of UKF's. Of PTT's 115 AF, 59 are valid SLF and 56
+  invalid connections.
+
+**The phantom: Dice against the ground-truth bundles' masks** (`phantom: Dice against the ground truth`; the target
+is the scorer's traversal mask, every voxel a ground-truth streamline crosses, on the 1 mm t1 grid). The trackers give
+labeled density presence of the strict counterparts, by side, as step 4; TractSeg gives binary masks, a different kind
+of object, closer to the target's kind. Count-matched: per bundle, both trackers' streamlines subsampled to the smaller
+count (5 draws, mean):
+
+| bundle | UKF | PTT | TractSeg (masks) | count-matched UKF / PTT (n) | labeled streamlines: UKF / PTT |
+|---|---|---|---|---|---|
+| CC | 0.632 | 0.720 | 0.551 | 0.632 / 0.689 (4,024) | 4,024 / 8,571 |
+| Cingulum left | 0.456 | 0.577 | 0.565 | 0.456 / 0.534 (949) | 949 / 1,545 |
+| Cingulum right | 0.443 | 0.617 | 0.576 | 0.443 / 0.562 (992) | 992 / 2,058 |
+| BPS left | 0.538 | 0.594 | 0.553 | 0.538 / 0.585 (812) | 812 / 1,010 |
+| BPS right | 0.487 | 0.462 | 0.609 | 0.467 / 0.462 (581) | 770 / 581 |
+| ICP left | 0.469 | 0.526 | 0.516 | 0.461 / 0.526 (205) | 232 / 205 |
+| ICP right | 0.522 | 0.562 | 0.488 | 0.519 / 0.562 (199) | 250 / 199 |
+| MCP | 0.592 | 0.792 | 0.692 | 0.592 / 0.746 (463) | 463 / 1,248 |
+| ILF left | 0.482 | 0.611 | 0.518 | 0.513 / 0.611 (997) | 1,459 / 997 |
+| ILF right | 0.502 | 0.635 | 0.560 | 0.519 / 0.635 (859) | 1,105 / 859 |
+| SLF left | 0.567 | 0.691 | 0.405 | 0.567 / 0.686 (667) | 667 / 1,231 |
+| SLF right | 0.546 | 0.637 | 0.413 | 0.546 / 0.648 (525) | 525 / 1,113 |
+| UF left | 0.495 | 0.732 | 0.639 | 0.495 / 0.704 (337) | 337 / 587 |
+| UF right | 0.551 | 0.733 | 0.629 | 0.551 / 0.696 (238) | 238 / 453 |
+| **mean (14)** | **0.520** | **0.635** | **0.551** | **0.521 / 0.618** | |
+
+- **Count-matched,** PTT's lead shrinks from 0.115 to 0.096 and holds in 13 of the 14 bundles (not the right BPS). So
+  the streamline count is a small part of it.
+- **TractSeg over all 20 bundles that map** (CA, the Fornix, the OR and the SCP too): mean 0.505. Its worst are the
+  Fornix 0.212, the SCP 0.329 / 0.286 (left / right), CA 0.383 and the SLF 0.405 / 0.413. On the 14 it is above UKF's
+  density presence in 10, at a mean of 0.551 against 0.520: masks against presence, so the comparison mixes the method
+  with the kind of object.
+
+**cIIIs04: A against each rescan** (all on A's grid; UKF's are today's records and reproduce `robust_ukf_score.json`
+exactly):
+
+| | presence Dice CST / AF / UF: within | session 3 | session 5 | landmark sites, the same main tract: within / s3 / s5 |
+|---|---|---|---|---|
+| UKF (today) | 0.775 / 0.811 / 0.788 | 0.783 / 0.789 / 0.763 | 0.750 / 0.770 / 0.734 | 6 / 6 / 5 of 8 |
+| PTT + ACT | 0.662 / 0.822 / 0.735 | 0.855 / 0.811 / 0.732 | 0.843 / 0.805 / 0.684 | 7 / 8 / 7 |
+| PTT + ACT, ACT's edge rule (a post hoc check, below) | 0.853 / 0.822 / 0.726 | 0.855 / 0.811 / 0.732 | 0.862 / 0.806 / 0.677 | not recomputed |
+| TractSeg | 0.959 / 0.955 / 0.925 | 0.939 / 0.943 / 0.924 | 0.943 / 0.934 / 0.893 | 8 / 8 / 7 (18 tracts) |
+
+**Count-matched per tract** (`count-matched per-tract rescan Dice (ukf against ptt)`): per scan and tract, both methods'
+streamlines of the tract subsampled to the smaller of their two counts (5 draws, mean). Presence Dice rises with the
+number of streamlines in a tract, and the methods' counts differ (UKF's UF has about 2.5 times PTT's streamlines, PTT's
+CST 3.3 times UKF's):
+
+| | CST / AF / UF: within | session 3 | session 5 |
+|---|---|---|---|
+| UKF, matched to PTT as run | 0.776 / 0.807 / 0.663 | 0.783 / 0.785 / 0.667 | 0.750 / 0.769 / 0.639 |
+| PTT as run | 0.756 / 0.822 / 0.735 | 0.793 / 0.811 / 0.732 | 0.802 / 0.805 / 0.684 |
+| UKF, matched to PTT with ACT's edge rule | 0.775 / 0.806 / 0.670 | 0.783 / 0.785 / 0.667 | 0.750 / 0.768 / 0.643 |
+| PTT + ACT, ACT's edge rule | 0.807 / 0.822 / 0.726 | 0.793 / 0.811 / 0.732 | 0.814 / 0.806 / 0.677 |
+
+- **At matched counts the CST gap is small:** PTT + ACT with ACT's edge rule leads by 0.010–0.064 (as run, −0.020 to
+  +0.052). The raw table's 0.85–0.86 against 0.75–0.78 was mostly PTT's 3.3 times more CST streamlines.
+- **The UF reverses:** matched, PTT's UF agrees better than UKF's (0.677–0.735 against 0.639–0.670). Raw, it looked
+  worse because UKF has more UF streamlines. The AF: PTT 0.805–0.822 against UKF 0.768–0.807.
+- **The counts per scan and tract** are in the JSON (`counts`): 523–673 for the CST, 727–783 for the AF, 253–341 for
+  the UF.
+
+**What each method reuses across scans** (the comparisons are not symmetric):
+- **PTT** reuses A's tissue maps and seed points on every rescan (same points, same RNGs, unless stated);
+- **TractSeg** reuses A's registration to MNI and is deterministic given its input;
+- **UKF** re-derives its mask and seeds from each scan.
+- **Dice rises with volume:** TractSeg's AF is 163 mL against UKF's 54 mL, and a large mask agrees more easily with
+  itself. Its 0.89–0.96 is not a like-for-like gain over UKF's 0.73–0.81.
+- **TractSeg's sites** are judged among its 18 mapped tracts (the one with the most mask voxels within 8 mm), against
+  RapidParc's 42 for the trackers; its masks overlap (the CST with the FPT, the POPT and the thalamo- and
+  striato-precentral bundles). The two posterior-limb sites both read CST, which UKF reads as TF, CR-F or CST.
+- **PTT's sites:** CST at both posterior-limb sites in every scan; Sup-F at both centrum semiovale sites (UKF: AF and
+  Sup-F); its changes are IOFF to UF at the left temporal stem (session 5) and CC7 to CC6 at the splenium (within).
+
+**Volumes (mL, presence on A's grid):**
+
+| | CST: A / within / s3 / s5 | AF | UF |
+|---|---|---|---|
+| UKF (today) | 51.8 / 56.8 / 59.8 / 58.1 | 53.6 / 54.7 / 57.6 / 54.1 | 41.8 / 40.7 / 39.4 / 35.1 |
+| PTT + ACT | 87.2 / 46.3 / 89.3 / 77.2 | 44.7 / 43.7 / 45.4 / 43.4 | 16.6 / 17.6 / 19.0 / 14.0 |
+| PTT + ACT, ACT's edge rule | 87.2 / 83.1 / 89.3 / 88.0 | 44.7 / 44.4 / 45.4 / 43.5 | 16.6 / 18.6 / 19.0 / 14.1 |
+| TractSeg | 58.6 / 58.7 / 59.3 / 58.9 | 162.8 / 162.7 / 165.8 / 162.3 | 28.6 / 29.1 / 29.0 / 26.7 |
+
+TractSeg's AF is three times UKF's and its UF 0.7 times; PTT's CST is 0.8–1.7 times UKF's and its UF 0.4–0.5 times.
+The atlases define the tracts differently (TractSeg's TractQuerier+ definitions against the ORG atlas's clusters), so
+volumes across methods measure definitions as much as bias; within a method, across scans, they measure stability.
+TractSeg's focus volumes move by at most 3.5 mL across the four scans (its AF, session 3 against session 5).
+
+**The domain check** (A; PTT's Other share on every scan in parentheses):
+
+| | labeled | Other share | tract mix, total variation against UKF | mean top tract probability | labeled length mm (quartiles) | CST / AF / UF share of labeled |
+|---|---|---|---|---|---|---|
+| UKF (today) | 64,378 | 0.526 | — | 0.941 | 67.8 / 96.5 / 130.8 | 0.8 / 1.2 / 1.1 % |
+| PTT + ACT | 65,003 | 0.484 (0.482–0.492) | 0.149 | 0.923 | 59.0 / 83.8 / 117.0 | 2.7 / 1.1 / 0.4 % |
+
+- The largest shifts: Other 52.6 → 48.4 %; the intra-cerebellar parallel tract (Intra-CBLM-PaT) 3.0 → 0.02 % (ACT ends
+  paths at the cerebellar cortex); CC2 1.6 → 4.0 %, CC3 0.8 → 2.5 %, CST 0.8 → 2.7 %, CR-F 1.0 → 2.3 %, CB 1.2 →
+  2.4 %; TF 2.1 → 0.4 %.
+- RapidParc is a little less sure of PTT's streamlines (0.923 against 0.941) and labels fewer of them Other. A total
+  variation of 0.149 is far above the 0.0006 that a change of RapidParc's grouping gives (step 1): the shift is the
+  tracker's, not the labeler's noise. Whether the labels are right on PTT streamlines is not known here beyond the
+  phantom's 64 % (above).
+
+**Run time** (s; UKF on the M2's GPU, PTT and TractSeg on its 8 CPU cores; the correction and mask, shared by the two
+new methods, 31 s for A and 54–58 s for a rescan with its resampling):
+
+| | A | within | session 3 | session 5 |
+|---|---|---|---|---|
+| UKF tracking (Metal) | 50.3 | 50.0 | 50.1 | 48.8 |
+| PTT: CSD fit and peaks / tracking / labeling | 6.4 / 193.5 / 2.2 | 8.3 / 232.9 / 1.9 | 10.4 / 253.5 / 1.9 | 8.7 / 239.3 / 1.7 |
+| TractSeg: CSD and peaks onto MNI / TractSeg | 102.6 / 76.1 | 10.6 / 86.9 | 10.8 / 81.3 | 10.2 / 108.3 |
+
+- A's TractSeg CSD step includes the one-time registration to MNI (94 s); the rescans reuse it.
+- On the phantom: PTT 177 s of tracking and 258 s in all before scoring; TractSeg 153 s in all.
+- PTT's tracking takes 3.8–5.1 times UKF's (CPU against GPU). One PTT run takes 3.5–5.6 min in all; a 17-run
+  ensemble would take about 1–1.5 h per scan.
+- The benchmark's queue took 36 min (A had run in the smoke test; the times of `queue.log` in
+  `DATA/ensemble/benchmark/`, created 22:46, last written 23:22).
+
+**PTT's CST: why its volume halves on the within rescan** (`replicate`; `ptt: run to run (replicates with other RNGs)`
+and `diagnostics`; records in `DATA/ensemble/benchmark/ptt/cIIIs04/replicates/`). Three explanations were checked:
+- **Not the seeding.** Every scan on A's grid gets the same seed points (the seeding RNG and the mask are A's). On A
+  itself, three replicates with other RNGs give 1,660–1,709 CST streamlines and 86.3–87.9 mL, against A's 1,730 and
+  87.2 mL. Within with two other RNGs gives 41.6 and 45.5 mL against 46.3. The low CST belongs to the within scan.
+- **Not the tissue maps' registration.** A's maps serve all four scans, which are on A's grid; there is no per-scan
+  registration. Within's registration to A translates it by 0.25 mm.
+- **The cause: an empty edge slice and a valid end that cannot be reached.**
+  - Resampled onto A's grid, the within rescan leaves A's lowest slice without data in all 54 of its brainstem voxels;
+    session 5 in 48 of 54; A and session 3 in none. The CST volumes follow: 46.3 and 77.2 mL against 87.2 and 89.3.
+  - ACT ends a path validly at the image's faces. Near an empty slice the SH fade to zero, so a descending path stops
+    without a direction a voxel short of the face: an invalid end, and the streamline is dropped (valid ones only). Of
+    the labeled paths reaching above 60 mm and below 20 mm (6,896 in A, 4,570 in within), 3,657 end below z = −10 mm
+    in A against 1,026 in within.
+  - Making the empty voxels a valid end changes nothing (the face already was one).
+  - Making the scan's own face a valid end (ACT's edge rule, `--edge-from-data`) restores them. The rule makes valid the
+    brain's voxels
+    with no data and the voxels with data next to them: 2,028 voxels in within (1,014 empty) and 2,189 in session 5
+    (1,157 empty); none in A and session 3, which are unchanged. Within then has 85,702 streamlines and 64,375 labeled
+    (81,658 and 60,553 before) and a CST of 83.1 mL; session 5 a CST of 88.0 mL.
+  - **The rule is post hoc:** chosen after seeing this result, and UKF gets no similar adjustment (it needs none: it
+    has no valid-end rule and keeps a path wherever it stops; its spanning counts are 3,103–3,294 on all four scans).
+    The benchmark's records keep the original rule; the sites were not recomputed under it.
+- **Like with like, PTT's spread between runs on one scan is about its spread between scans**
+  (`ptt: rescan against run to run, by RNG`; Dice CST / AF / UF, ranges over pairs):
+
+  | pairs | CST | AF | UF |
+  |---|---|---|---|
+  | A against A, other seed and tracking RNGs (3 pairs) | 0.868–0.870 | 0.828–0.833 | 0.736–0.755 |
+  | A against A, the same seed points, another tracking RNG | 0.866 | 0.822 | 0.737 |
+  | rescan (ACT's edge rule) against A, the same RNGs (6 pairs) | 0.850–0.862 | 0.806–0.829 | 0.677–0.732 |
+  | rescan (ACT's edge rule) against A, other RNGs (6 pairs) | 0.851–0.863 | 0.804–0.833 | 0.652–0.745 |
+  | within (as run) against A, other RNGs (2 pairs) | 0.618–0.654 | 0.815–0.822 | 0.719–0.734 |
+
+  - Sharing the RNGs does not inflate rescan agreement: rescan pairs with other RNGs agree as much as those with the
+    same. The review's lower figures (CST 0.618–0.654) are within as run, where the empty slice dominates.
+  - Rescan pairs agree up to 0.02 less than reruns on the CST, up to 0.03 less on the AF and up to 0.10 less on the
+    UF. On the AF and the UF the ranges overlap; on the CST the rescans (0.850–0.863) sit just below the reruns
+    (0.866–0.870). Most of PTT's disagreement between scans is its own sampling; its UF is sparse (0.44 % of the labeled
+    streamlines, about 290, against UKF's 1.13 %, about 730).
+
+**Reading it.**
+- **On this phantom, PTT with ACT stopping is the accuracy lever, not its seeds and not dropping invalid ends.** Steps
+  1–4's options moved mean F1 by −0.13 to 0.00; PTT + ACT with white-matter seeding, as a pipeline, adds 0.17 (0.583
+  against 0.412) with about the same number of streamlines. Swapping the seeds moves either tracker by less than 0.01
+  at matched counts, and keeping PTT's invalid ends moves VS by half a point. The tracker (PTT on CSD) and its
+  stopping (ACT with tissue maps) are not separated here.
+- **TractSeg agrees best across rescans, on its own terms.** Its masks agree at 0.89–0.96 and move by at most 3.5 mL,
+  but it reuses A's registration, is deterministic, uses 18 coarser tracts, and its masks are large (the AF 163 mL).
+  On the phantom, off its domain, its masks score 0.551 and UKF's labeled presence 0.520, but a binary mask and a
+  density presence are different kinds of object and cannot be ranked against the same target; so neither "accuracy
+  traded for reproducibility" nor the opposite is shown. PTT's and UKF's presences can be ranked (0.635 against 0.520;
+  0.618 against 0.521 count-matched). It gives masks for a fixed list of 72 bundles, with no per-streamline claim.
+- **PTT + ACT agrees with A's rescans about as well as UKF on cIIIs04, by small margins better at matched counts.** As
+  run, its CST halves on the within rescan, an artifact of ACT's valid-end rule meeting a rescan's empty edge slice
+  (above). Counts matched per tract, PTT + ACT agrees 0.01–0.04 better on the AF and 0.03–0.07 better on the UF, as run
+  and with ACT's edge rule alike; on the CST it agrees 0.01–0.06 better only with the edge rule (post hoc), −0.02 to
+  +0.05 as run. The limits: one subject, one run per scan and method, margins of 0.01–0.07, and PTT + ACT reusing A's
+  tissue maps for seeding and stopping on every rescan (the RNG check varied the seeds and the RNGs, not the maps),
+  where UKF re-derives its mask and seeds from each scan. Its disagreement between scans is mostly its own sampling.
+- **RapidParc on PTT streamlines is off its training domain.** The tract mix differs from UKF's by 0.149 total
+  variation, with less Other, three times the CST, almost no intra-cerebellar class, and a lower top probability. On
+  the phantom its labels match the truth more often on PTT (64 against 58 %), so the shift is not plainly worse, but a
+  labeler trained on UKF tractograms is being used outside what it was validated on.
+- **For the data product:** the product is already a 17-run UKF ensemble, which averages UKF's run-to-run variation.
+  A PTT pipeline would need its own ensemble (1–1.5 h per scan on this CPU), its own calibration card (step 5), since
+  its spread has another source (its sampling as well as the data), and a labeler check. Its tissue-based stopping
+  brings failure modes UKF does not have (the empty edge slice).
+
+Caveats:
+- **One subject** (cIIIs04, four scans, one protocol) and **one phantom** (one simulated brain, b = 1000 with 32
+  directions, one noise draw).
+- **DIPY's defaults** for PTT and CSD, not tuned; ACT's tissue maps are this step's own (FastSurfer on cIIIs04; an
+  FA/T1 classifier on the phantom, whose threshold, FA 0.25, was chosen after looking at the T1's classes against FA,
+  not against the scores).
+- **The seeding controls** swap seeds but keep each tracker's other parts; there is no PTT without ACT and no UKF with
+  ACT. Each control is one run; the subsampled comparisons are one draw.
+- **TractSeg is off its domain on both:** trained on HCP (multi-shell, 270 directions, 1.25 mm, MRtrix's CSD peaks);
+  here DIPY's single-shell peaks at 2.1 mm (cIIIs04) and a simulated b = 1000 phantom at 2 mm. A's registration to MNI
+  serves all four scans, so that step's variation is not in its rescan agreement; each rescan's registration onto A
+  remains in it, as for every method.
+- **The label mappings** (TractSeg's bundles to RapidParc's names; the phantom's bundles to both) are by name and
+  definition; the AF, the SLF and the BPS differ between the atlases.
+- **PTT's seeds:** the same seed points on every scan (by design), one seed and tracking RNG per scan except the
+  replicates (A three, within two, each rescan one more under the own-face rule); the main count-matching to UKF is by
+  the seed number, and the per-tract matching by subsampling.
+- **The own-face rule is post hoc** and was checked on all four scans (Dice and volumes), not the sites.
+- **No ensemble or calibration for PTT**, and no rescan analysis by streamline (not possible: no seed identity).
+- **The trackers' phantom Dice** compares density presence with a traversal mask; it rewards streamline count (hence
+  the count-matched column). TractSeg's masks are another kind of object.
+- **Hardware:** UKF on the GPU, the others on the CPU; the times are not a like-for-like speed comparison.
