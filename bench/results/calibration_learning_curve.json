@@ -1,0 +1,1648 @@
+{
+ "what": "A learning curve for the calibration card (the protocol-specific recalibration map): how many test-retest\nsubjects does a card need, and does it improve with more?",
+ "method": "Reads only the stored statements (calibration_card.py collect: DATA/ensemble/<subject>/card/<pair>/statements_R17.npz\nof the eight MASiVar cohort III subjects); runs no pipeline and no tracking.\n\nPer term (same session: 8 subjects; other session: the 5 with other-session rescans) and per held-out subject, the\ncard is refitted on training sets of k of the other subjects (k = 1..7 same session, 1..4 other session): every\ncombination when there are at most MAX_DRAWS, else MAX_DRAWS random ones (seed SEED; here every k has at most 35, so\nall combinations are used). The fit is calibration_card.fit_term's streamline, point and envelope maps (fit_votes on\nthe subjects' pooled rescans, each subject weighted equally; the mean of the subjects' coverage curves), without the\nshape summaries, which the held-out scores do not use; at k = all others it reproduces the stored card's held-out\nvalues (checked). Scored on the held-out subject's own rescans of the term, as calibration_card.evaluate does:\n  - streamline ECE and point ECE (calibration_card.ECE_BINS);\n  - envelope coverage error at targets 0.8, 0.9, 0.95: the held-out coverage at the fold's stated level for the\n    target (the widest outline when the training curve never reaches it) minus the target.\nReferences: k = 0, as stated (the vote share; the envelope at stated level = target), and PAT16's double-bootstrap\nvote table (results/ensemble_double_smooth.json; for the point statement it is applied to the point's vote share,\noutside the statement it was fitted for). Spread: the 10th and 90th percentiles over (held-out subject, training\nset) pairs; every held-out subject has the same number of training sets at each k, so each weighs equally.\n\nStatement count against subject count: each training subject's statements thinned to FRACTIONS (10 %, 1 %) of its\nstreamline seeds and points (rows kept at random) and of its envelope voxels (per tract and vote count, the kept\nvoxels Binomial(count, f), and of those the rescan's presence voxels hypergeometric; each rescan thinned on its own,\nso a subject's rescans do not share kept voxels exactly), THIN_REPS independent thinnings per fraction. The held-out\nsubject is scored on all of its statements.\n\nBetween-subject variance: per term and statement, each subject's own observed rate per vote count (and envelope\ncoverage at stated levels); the between-subject variance, the mean within-subject binomial variance (seeds and\npoints treated as independent, which they are not: a lower bound on the within-subject noise), and their\ndifference tau^2 (method of moments). A k-subject map's error about the population is about tau / sqrt(k); a new\nsubject deviates from the population by tau whatever k is, so the held-out error scales as tau * sqrt(1 + 1/k).",
+ "source": "statements_R17.npz of the eight MASiVar cohort III subjects (calibration_card.py collect)",
+ "seed": 20261019,
+ "max draws": 50,
+ "fractions": [
+  1.0,
+  0.1,
+  0.01
+ ],
+ "thinning replicates": 5,
+ "terms": {
+  "same session": {
+   "subjects": [
+    "cIIIs01",
+    "cIIIs02",
+    "cIIIs03",
+    "cIIIs04",
+    "cIIIs05",
+    "cIIIs06",
+    "cIIIs07",
+    "cIIIs08"
+   ],
+   "rescans": {
+    "cIIIs01": [
+     "within"
+    ],
+    "cIIIs02": [
+     "within"
+    ],
+    "cIIIs03": [
+     "within"
+    ],
+    "cIIIs04": [
+     "within"
+    ],
+    "cIIIs05": [
+     "within"
+    ],
+    "cIIIs06": [
+     "within"
+    ],
+    "cIIIs07": [
+     "within"
+    ],
+    "cIIIs08": [
+     "within"
+    ]
+   },
+   "statements per subject": {
+    "cIIIs01": {
+     "streamline seeds": 45388,
+     "points": 1565,
+     "envelope presence voxels (rescans summed)": 190061
+    },
+    "cIIIs02": {
+     "streamline seeds": 41756,
+     "points": 1609,
+     "envelope presence voxels (rescans summed)": 183835
+    },
+    "cIIIs03": {
+     "streamline seeds": 35270,
+     "points": 1275,
+     "envelope presence voxels (rescans summed)": 152879
+    },
+    "cIIIs04": {
+     "streamline seeds": 43950,
+     "points": 1495,
+     "envelope presence voxels (rescans summed)": 189862
+    },
+    "cIIIs05": {
+     "streamline seeds": 35705,
+     "points": 1277,
+     "envelope presence voxels (rescans summed)": 148001
+    },
+    "cIIIs06": {
+     "streamline seeds": 38008,
+     "points": 1455,
+     "envelope presence voxels (rescans summed)": 165774
+    },
+    "cIIIs07": {
+     "streamline seeds": 40298,
+     "points": 1397,
+     "envelope presence voxels (rescans summed)": 166711
+    },
+    "cIIIs08": {
+     "streamline seeds": 36398,
+     "points": 1367,
+     "envelope presence voxels (rescans summed)": 151387
+    }
+   },
+   "references": {
+    "as stated (k = 0)": {
+     "streamline ECE": {
+      "mean": 0.0697,
+      "p10": 0.0614,
+      "p90": 0.0797
+     },
+     "point ECE": {
+      "mean": 0.038,
+      "p10": 0.0267,
+      "p90": 0.0478
+     },
+     "coverage error at 0.8": {
+      "mean": -0.0234,
+      "p10": -0.0325,
+      "p90": -0.0123,
+      "mean |error|": 0.0234
+     },
+     "coverage error at 0.9": {
+      "mean": -0.0308,
+      "p10": -0.0376,
+      "p90": -0.0205,
+      "mean |error|": 0.0308
+     },
+     "coverage error at 0.95": {
+      "mean": -0.0295,
+      "p10": -0.0353,
+      "p90": -0.0224,
+      "mean |error|": 0.0295
+     },
+     "n": 8
+    },
+    "PAT16 map": {
+     "streamline ECE": {
+      "mean": 0.0188,
+      "p10": 0.017,
+      "p90": 0.0217
+     },
+     "point ECE": {
+      "mean": 0.0626,
+      "p10": 0.0563,
+      "p90": 0.0717
+     },
+     "n": 8,
+     "note": "PAT16's streamline vote table; on the point statement applied outside its fit"
+    }
+   },
+   "learning curve (fraction of each training subject's statements -> k)": {
+    "1": {
+     "1": {
+      "streamline ECE": {
+       "mean": 0.011,
+       "p10": 0.0054,
+       "p90": 0.0185
+      },
+      "point ECE": {
+       "mean": 0.0178,
+       "p10": 0.0115,
+       "p90": 0.0269
+      },
+      "coverage error at 0.8": {
+       "mean": 0.0021,
+       "p10": -0.0118,
+       "p90": 0.0171,
+       "mean |error|": 0.0089
+      },
+      "coverage error at 0.9": {
+       "mean": 0.0031,
+       "p10": -0.0112,
+       "p90": 0.0152,
+       "mean |error|": 0.0091
+      },
+      "coverage error at 0.95": {
+       "mean": 0.0035,
+       "p10": -0.0037,
+       "p90": 0.0133,
+       "mean |error|": 0.006
+      },
+      "n": 56,
+      "training sets per held-out subject": 7
+     },
+     "2": {
+      "streamline ECE": {
+       "mean": 0.0094,
+       "p10": 0.0046,
+       "p90": 0.0156
+      },
+      "point ECE": {
+       "mean": 0.0163,
+       "p10": 0.0101,
+       "p90": 0.0226
+      },
+      "coverage error at 0.8": {
+       "mean": 0.0024,
+       "p10": -0.0089,
+       "p90": 0.0171,
+       "mean |error|": 0.0079
+      },
+      "coverage error at 0.9": {
+       "mean": 0.0027,
+       "p10": -0.0076,
+       "p90": 0.0152,
+       "mean |error|": 0.0067
+      },
+      "coverage error at 0.95": {
+       "mean": 0.0026,
+       "p10": -0.0037,
+       "p90": 0.0111,
+       "mean |error|": 0.0053
+      },
+      "n": 168,
+      "training sets per held-out subject": 21
+     },
+     "3": {
+      "streamline ECE": {
+       "mean": 0.0089,
+       "p10": 0.0039,
+       "p90": 0.0135
+      },
+      "point ECE": {
+       "mean": 0.0156,
+       "p10": 0.0097,
+       "p90": 0.0218
+      },
+      "coverage error at 0.8": {
+       "mean": 0.0025,
+       "p10": -0.0076,
+       "p90": 0.0171,
+       "mean |error|": 0.0077
+      },
+      "coverage error at 0.9": {
+       "mean": 0.0027,
+       "p10": -0.0074,
+       "p90": 0.0152,
+       "mean |error|": 0.0062
+      },
+      "coverage error at 0.95": {
+       "mean": 0.0032,
+       "p10": -0.0037,
+       "p90": 0.0111,
+       "mean |error|": 0.0057
+      },
+      "n": 280,
+      "training sets per held-out subject": 35
+     },
+     "4": {
+      "streamline ECE": {
+       "mean": 0.0087,
+       "p10": 0.0041,
+       "p90": 0.0131
+      },
+      "point ECE": {
+       "mean": 0.0153,
+       "p10": 0.0093,
+       "p90": 0.0207
+      },
+      "coverage error at 0.8": {
+       "mean": 0.0026,
+       "p10": -0.0076,
+       "p90": 0.0171,
+       "mean |error|": 0.0076
+      },
+      "coverage error at 0.9": {
+       "mean": 0.0029,
+       "p10": -0.0054,
+       "p90": 0.0152,
+       "mean |error|": 0.0061
+      },
+      "coverage error at 0.95": {
+       "mean": 0.0037,
+       "p10": -0.0037,
+       "p90": 0.0114,
+       "mean |error|": 0.006
+      },
+      "n": 280,
+      "training sets per held-out subject": 35
+     },
+     "5": {
+      "streamline ECE": {
+       "mean": 0.0085,
+       "p10": 0.0044,
+       "p90": 0.0124
+      },
+      "point ECE": {
+       "mean": 0.0148,
+       "p10": 0.0096,
+       "p90": 0.0198
+      },
+      "coverage error at 0.8": {
+       "mean": 0.0026,
+       "p10": -0.0076,
+       "p90": 0.0171,
+       "mean |error|": 0.0076
+      },
+      "coverage error at 0.9": {
+       "mean": 0.0032,
+       "p10": -0.0054,
+       "p90": 0.0152,
+       "mean |error|": 0.0063
+      },
+      "coverage error at 0.95": {
+       "mean": 0.0038,
+       "p10": -0.0037,
+       "p90": 0.0118,
+       "mean |error|": 0.0062
+      },
+      "n": 168,
+      "training sets per held-out subject": 21
+     },
+     "6": {
+      "streamline ECE": {
+       "mean": 0.0085,
+       "p10": 0.004,
+       "p90": 0.0118
+      },
+      "point ECE": {
+       "mean": 0.0145,
+       "p10": 0.0089,
+       "p90": 0.0192
+      },
+      "coverage error at 0.8": {
+       "mean": 0.0026,
+       "p10": -0.0076,
+       "p90": 0.0171,
+       "mean |error|": 0.0077
+      },
+      "coverage error at 0.9": {
+       "mean": 0.0028,
+       "p10": -0.0054,
+       "p90": 0.0152,
+       "mean |error|": 0.0065
+      },
+      "coverage error at 0.95": {
+       "mean": 0.0045,
+       "p10": -0.0037,
+       "p90": 0.0134,
+       "mean |error|": 0.0067
+      },
+      "n": 56,
+      "training sets per held-out subject": 7
+     },
+     "7": {
+      "streamline ECE": {
+       "mean": 0.0084,
+       "p10": 0.0048,
+       "p90": 0.0112
+      },
+      "point ECE": {
+       "mean": 0.0143,
+       "p10": 0.0099,
+       "p90": 0.0178
+      },
+      "coverage error at 0.8": {
+       "mean": 0.0034,
+       "p10": -0.0058,
+       "p90": 0.016,
+       "mean |error|": 0.0073
+      },
+      "coverage error at 0.9": {
+       "mean": 0.0036,
+       "p10": -0.0061,
+       "p90": 0.0142,
+       "mean |error|": 0.0078
+      },
+      "coverage error at 0.95": {
+       "mean": 0.0039,
+       "p10": -0.0046,
+       "p90": 0.0118,
+       "mean |error|": 0.0073
+      },
+      "n": 8,
+      "training sets per held-out subject": 1
+     }
+    },
+    "0.1": {
+     "1": {
+      "streamline ECE": {
+       "mean": 0.0149,
+       "p10": 0.0084,
+       "p90": 0.0228
+      },
+      "point ECE": {
+       "mean": 0.0364,
+       "p10": 0.0187,
+       "p90": 0.0569
+      },
+      "coverage error at 0.8": {
+       "mean": 0.001,
+       "p10": -0.0129,
+       "p90": 0.0171,
+       "mean |error|": 0.0089
+      },
+      "coverage error at 0.9": {
+       "mean": 0.0024,
+       "p10": -0.0119,
+       "p90": 0.0152,
+       "mean |error|": 0.0083
+      },
+      "coverage error at 0.95": {
+       "mean": 0.0027,
+       "p10": -0.0066,
+       "p90": 0.0134,
+       "mean |error|": 0.0066
+      },
+      "n": 280,
+      "training sets per held-out subject": 35
+     },
+     "2": {
+      "streamline ECE": {
+       "mean": 0.012,
+       "p10": 0.0068,
+       "p90": 0.0177
+      },
+      "point ECE": {
+       "mean": 0.028,
+       "p10": 0.0143,
+       "p90": 0.0429
+      },
+      "coverage error at 0.8": {
+       "mean": 0.0015,
+       "p10": -0.0091,
+       "p90": 0.0171,
+       "mean |error|": 0.0078
+      },
+      "coverage error at 0.9": {
+       "mean": 0.0023,
+       "p10": -0.0076,
+       "p90": 0.014,
+       "mean |error|": 0.0067
+      },
+      "coverage error at 0.95": {
+       "mean": 0.0032,
+       "p10": -0.0037,
+       "p90": 0.0111,
+       "mean |error|": 0.0058
+      },
+      "n": 840,
+      "training sets per held-out subject": 105
+     },
+     "3": {
+      "streamline ECE": {
+       "mean": 0.0107,
+       "p10": 0.006,
+       "p90": 0.0158
+      },
+      "point ECE": {
+       "mean": 0.0248,
+       "p10": 0.0128,
+       "p90": 0.0381
+      },
+      "coverage error at 0.8": {
+       "mean": 0.0014,
+       "p10": -0.009,
+       "p90": 0.0171,
+       "mean |error|": 0.0075
+      },
+      "coverage error at 0.9": {
+       "mean": 0.0023,
+       "p10": -0.0076,
+       "p90": 0.0137,
+       "mean |error|": 0.0063
+      },
+      "coverage error at 0.95": {
+       "mean": 0.0032,
+       "p10": -0.0037,
+       "p90": 0.0111,
+       "mean |error|": 0.0057
+      },
+      "n": 1400,
+      "training sets per held-out subject": 175
+     },
+     "4": {
+      "streamline ECE": {
+       "mean": 0.0101,
+       "p10": 0.0057,
+       "p90": 0.0145
+      },
+      "point ECE": {
+       "mean": 0.0229,
+       "p10": 0.0119,
+       "p90": 0.0356
+      },
+      "coverage error at 0.8": {
+       "mean": 0.0013,
+       "p10": -0.0091,
+       "p90": 0.0171,
+       "mean |error|": 0.0074
+      },
+      "coverage error at 0.9": {
+       "mean": 0.0027,
+       "p10": -0.0054,
+       "p90": 0.014,
+       "mean |error|": 0.0061
+      },
+      "coverage error at 0.95": {
+       "mean": 0.0034,
+       "p10": -0.0037,
+       "p90": 0.0111,
+       "mean |error|": 0.0058
+      },
+      "n": 1400,
+      "training sets per held-out subject": 175
+     },
+     "5": {
+      "streamline ECE": {
+       "mean": 0.0097,
+       "p10": 0.0056,
+       "p90": 0.0137
+      },
+      "point ECE": {
+       "mean": 0.022,
+       "p10": 0.0116,
+       "p90": 0.0345
+      },
+      "coverage error at 0.8": {
+       "mean": 0.0015,
+       "p10": -0.0087,
+       "p90": 0.0171,
+       "mean |error|": 0.0074
+      },
+      "coverage error at 0.9": {
+       "mean": 0.0025,
+       "p10": -0.0054,
+       "p90": 0.0141,
+       "mean |error|": 0.0061
+      },
+      "coverage error at 0.95": {
+       "mean": 0.0036,
+       "p10": -0.0037,
+       "p90": 0.0134,
+       "mean |error|": 0.0061
+      },
+      "n": 840,
+      "training sets per held-out subject": 105
+     },
+     "6": {
+      "streamline ECE": {
+       "mean": 0.0095,
+       "p10": 0.0055,
+       "p90": 0.013
+      },
+      "point ECE": {
+       "mean": 0.0215,
+       "p10": 0.0117,
+       "p90": 0.0341
+      },
+      "coverage error at 0.8": {
+       "mean": 0.0014,
+       "p10": -0.0123,
+       "p90": 0.0171,
+       "mean |error|": 0.0075
+      },
+      "coverage error at 0.9": {
+       "mean": 0.0026,
+       "p10": -0.0056,
+       "p90": 0.0152,
+       "mean |error|": 0.0062
+      },
+      "coverage error at 0.95": {
+       "mean": 0.0037,
+       "p10": -0.0037,
+       "p90": 0.0134,
+       "mean |error|": 0.0063
+      },
+      "n": 280,
+      "training sets per held-out subject": 35
+     },
+     "7": {
+      "streamline ECE": {
+       "mean": 0.0094,
+       "p10": 0.0053,
+       "p90": 0.0122
+      },
+      "point ECE": {
+       "mean": 0.0207,
+       "p10": 0.0118,
+       "p90": 0.0326
+      },
+      "coverage error at 0.8": {
+       "mean": 0.0013,
+       "p10": -0.0081,
+       "p90": 0.0171,
+       "mean |error|": 0.008
+      },
+      "coverage error at 0.9": {
+       "mean": 0.0028,
+       "p10": -0.0056,
+       "p90": 0.0152,
+       "mean |error|": 0.0066
+      },
+      "coverage error at 0.95": {
+       "mean": 0.0041,
+       "p10": -0.0066,
+       "p90": 0.0134,
+       "mean |error|": 0.0071
+      },
+      "n": 40,
+      "training sets per held-out subject": 5
+     }
+    },
+    "0.01": {
+     "1": {
+      "streamline ECE": {
+       "mean": 0.0362,
+       "p10": 0.0211,
+       "p90": 0.0535
+      },
+      "point ECE": {
+       "mean": 0.091,
+       "p10": 0.037,
+       "p90": 0.1341
+      },
+      "coverage error at 0.8": {
+       "mean": 0.0009,
+       "p10": -0.0174,
+       "p90": 0.0189,
+       "mean |error|": 0.0113
+      },
+      "coverage error at 0.9": {
+       "mean": 0.0025,
+       "p10": -0.0139,
+       "p90": 0.0185,
+       "mean |error|": 0.0099
+      },
+      "coverage error at 0.95": {
+       "mean": 0.0041,
+       "p10": -0.0066,
+       "p90": 0.0137,
+       "mean |error|": 0.0076
+      },
+      "n": 280,
+      "training sets per held-out subject": 35
+     },
+     "2": {
+      "streamline ECE": {
+       "mean": 0.0269,
+       "p10": 0.0153,
+       "p90": 0.0408
+      },
+      "point ECE": {
+       "mean": 0.0737,
+       "p10": 0.0335,
+       "p90": 0.1176
+      },
+      "coverage error at 0.8": {
+       "mean": 0.0009,
+       "p10": -0.0132,
+       "p90": 0.0172,
+       "mean |error|": 0.0091
+      },
+      "coverage error at 0.9": {
+       "mean": 0.0026,
+       "p10": -0.0076,
+       "p90": 0.0152,
+       "mean |error|": 0.0076
+      },
+      "coverage error at 0.95": {
+       "mean": 0.0045,
+       "p10": -0.0037,
+       "p90": 0.0134,
+       "mean |error|": 0.0068
+      },
+      "n": 840,
+      "training sets per held-out subject": 105
+     },
+     "3": {
+      "streamline ECE": {
+       "mean": 0.0227,
+       "p10": 0.0125,
+       "p90": 0.0343
+      },
+      "point ECE": {
+       "mean": 0.0644,
+       "p10": 0.0277,
+       "p90": 0.1036
+      },
+      "coverage error at 0.8": {
+       "mean": 0.0011,
+       "p10": -0.0126,
+       "p90": 0.0171,
+       "mean |error|": 0.0084
+      },
+      "coverage error at 0.9": {
+       "mean": 0.0025,
+       "p10": -0.0076,
+       "p90": 0.0152,
+       "mean |error|": 0.0068
+      },
+      "coverage error at 0.95": {
+       "mean": 0.0046,
+       "p10": -0.0037,
+       "p90": 0.0134,
+       "mean |error|": 0.0065
+      },
+      "n": 1400,
+      "training sets per held-out subject": 175
+     },
+     "4": {
+      "streamline ECE": {
+       "mean": 0.0201,
+       "p10": 0.0108,
+       "p90": 0.0304
+      },
+      "point ECE": {
+       "mean": 0.0588,
+       "p10": 0.0246,
+       "p90": 0.094
+      },
+      "coverage error at 0.8": {
+       "mean": 0.0012,
+       "p10": -0.0123,
+       "p90": 0.0171,
+       "mean |error|": 0.0081
+      },
+      "coverage error at 0.9": {
+       "mean": 0.0024,
+       "p10": -0.0076,
+       "p90": 0.014,
+       "mean |error|": 0.0064
+      },
+      "coverage error at 0.95": {
+       "mean": 0.0044,
+       "p10": -0.0037,
+       "p90": 0.0134,
+       "mean |error|": 0.0062
+      },
+      "n": 1400,
+      "training sets per held-out subject": 175
+     },
+     "5": {
+      "streamline ECE": {
+       "mean": 0.0183,
+       "p10": 0.0095,
+       "p90": 0.0284
+      },
+      "point ECE": {
+       "mean": 0.0551,
+       "p10": 0.0236,
+       "p90": 0.0862
+      },
+      "coverage error at 0.8": {
+       "mean": 0.0013,
+       "p10": -0.0091,
+       "p90": 0.0171,
+       "mean |error|": 0.0079
+      },
+      "coverage error at 0.9": {
+       "mean": 0.0027,
+       "p10": -0.0074,
+       "p90": 0.0152,
+       "mean |error|": 0.0063
+      },
+      "coverage error at 0.95": {
+       "mean": 0.0044,
+       "p10": -0.0037,
+       "p90": 0.0134,
+       "mean |error|": 0.0061
+      },
+      "n": 840,
+      "training sets per held-out subject": 105
+     },
+     "6": {
+      "streamline ECE": {
+       "mean": 0.0171,
+       "p10": 0.0085,
+       "p90": 0.0275
+      },
+      "point ECE": {
+       "mean": 0.0527,
+       "p10": 0.0252,
+       "p90": 0.08
+      },
+      "coverage error at 0.8": {
+       "mean": 0.0012,
+       "p10": -0.0091,
+       "p90": 0.0171,
+       "mean |error|": 0.0077
+      },
+      "coverage error at 0.9": {
+       "mean": 0.0026,
+       "p10": -0.0056,
+       "p90": 0.0152,
+       "mean |error|": 0.0064
+      },
+      "coverage error at 0.95": {
+       "mean": 0.0044,
+       "p10": -0.0033,
+       "p90": 0.0134,
+       "mean |error|": 0.0061
+      },
+      "n": 280,
+      "training sets per held-out subject": 35
+     },
+     "7": {
+      "streamline ECE": {
+       "mean": 0.0161,
+       "p10": 0.0073,
+       "p90": 0.0235
+      },
+      "point ECE": {
+       "mean": 0.051,
+       "p10": 0.0292,
+       "p90": 0.0775
+      },
+      "coverage error at 0.8": {
+       "mean": 0.0009,
+       "p10": -0.0087,
+       "p90": 0.0171,
+       "mean |error|": 0.0071
+      },
+      "coverage error at 0.9": {
+       "mean": 0.0029,
+       "p10": -0.0054,
+       "p90": 0.0139,
+       "mean |error|": 0.0063
+      },
+      "coverage error at 0.95": {
+       "mean": 0.0044,
+       "p10": -0.0033,
+       "p90": 0.0114,
+       "mean |error|": 0.006
+      },
+      "n": 40,
+      "training sets per held-out subject": 5
+     }
+    }
+   },
+   "between-subject variance": {
+    "streamline": {
+     "per vote count": {
+      "9": {
+       "mean observed": 0.4966,
+       "between-subject SD": 0.0117,
+       "within-subject binomial SE": 0.0086,
+       "tau": 0.008,
+       "per subject": {
+        "cIIIs01": 0.4861,
+        "cIIIs02": 0.498,
+        "cIIIs03": 0.5077,
+        "cIIIs04": 0.5161,
+        "cIIIs05": 0.4877,
+        "cIIIs06": 0.4906,
+        "cIIIs07": 0.5038,
+        "cIIIs08": 0.4831
+       }
+      },
+      "13": {
+       "mean observed": 0.679,
+       "between-subject SD": 0.0186,
+       "within-subject binomial SE": 0.0081,
+       "tau": 0.0167,
+       "per subject": {
+        "cIIIs01": 0.6551,
+        "cIIIs02": 0.6971,
+        "cIIIs03": 0.707,
+        "cIIIs04": 0.6862,
+        "cIIIs05": 0.6703,
+        "cIIIs06": 0.6758,
+        "cIIIs07": 0.6849,
+        "cIIIs08": 0.6553
+       }
+      },
+      "17": {
+       "mean observed": 0.9335,
+       "between-subject SD": 0.0075,
+       "within-subject binomial SE": 0.0029,
+       "tau": 0.0069,
+       "per subject": {
+        "cIIIs01": 0.92,
+        "cIIIs02": 0.9278,
+        "cIIIs03": 0.9368,
+        "cIIIs04": 0.9446,
+        "cIIIs05": 0.9322,
+        "cIIIs06": 0.9332,
+        "cIIIs07": 0.9397,
+        "cIIIs08": 0.9333
+       }
+      }
+     },
+     "tau, statement-weighted over vote counts (>= 30 statements in every subject)": 0.0085,
+     "within-subject binomial SE, statement-weighted": 0.0082,
+     "between-subject SD, statement-weighted": 0.0116
+    },
+    "point": {
+     "per vote count": {
+      "13": {
+       "mean observed": 0.6989,
+       "between-subject SD": 0.0422,
+       "within-subject binomial SE": 0.0654,
+       "tau": 0.0,
+       "per subject": {
+        "cIIIs01": 0.6604,
+        "cIIIs02": 0.6949,
+        "cIIIs03": 0.7292,
+        "cIIIs04": 0.6596,
+        "cIIIs05": 0.6735,
+        "cIIIs06": 0.7059,
+        "cIIIs07": 0.7857,
+        "cIIIs08": 0.6818
+       }
+      },
+      "17": {
+       "mean observed": 0.982,
+       "between-subject SD": 0.007,
+       "within-subject binomial SE": 0.0043,
+       "tau": 0.0055,
+       "per subject": {
+        "cIIIs01": 0.981,
+        "cIIIs02": 0.9748,
+        "cIIIs03": 0.9828,
+        "cIIIs04": 0.9953,
+        "cIIIs05": 0.9894,
+        "cIIIs06": 0.9784,
+        "cIIIs07": 0.9772,
+        "cIIIs08": 0.9771
+       }
+      }
+     },
+     "tau, statement-weighted over vote counts (>= 30 statements in every subject)": 0.0116,
+     "within-subject binomial SE, statement-weighted": 0.0303,
+     "between-subject SD, statement-weighted": 0.0287
+    },
+    "envelope": {
+     "coverage at stated level": {
+      "0.8": {
+       "mean coverage at stated level": 0.7766,
+       "between-subject SD": 0.0088,
+       "per subject": {
+        "cIIIs01": 0.7755,
+        "cIIIs02": 0.7785,
+        "cIIIs03": 0.7861,
+        "cIIIs04": 0.7916,
+        "cIIIs05": 0.7745,
+        "cIIIs06": 0.7688,
+        "cIIIs07": 0.7733,
+        "cIIIs08": 0.7645
+       }
+      },
+      "0.9": {
+       "mean coverage at stated level": 0.8692,
+       "between-subject SD": 0.0075,
+       "per subject": {
+        "cIIIs01": 0.8646,
+        "cIIIs02": 0.8715,
+        "cIIIs03": 0.8786,
+        "cIIIs04": 0.8814,
+        "cIIIs05": 0.8659,
+        "cIIIs06": 0.8633,
+        "cIIIs07": 0.8677,
+        "cIIIs08": 0.8603
+       }
+      },
+      "0.95": {
+       "mean coverage at stated level": 0.9205,
+       "between-subject SD": 0.0054,
+       "per subject": {
+        "cIIIs01": 0.9192,
+        "cIIIs02": 0.923,
+        "cIIIs03": 0.9274,
+        "cIIIs04": 0.9281,
+        "cIIIs05": 0.9174,
+        "cIIIs06": 0.9154,
+        "cIIIs07": 0.9208,
+        "cIIIs08": 0.913
+       }
+      }
+     },
+     "the subject's own stated level for target": {
+      "0.8": {
+       "cIIIs01": 0.83,
+       "cIIIs02": 0.825,
+       "cIIIs03": 0.82,
+       "cIIIs04": 0.815,
+       "cIIIs05": 0.83,
+       "cIIIs06": 0.835,
+       "cIIIs07": 0.83,
+       "cIIIs08": 0.84
+      },
+      "0.9": {
+       "cIIIs01": 0.935,
+       "cIIIs02": 0.935,
+       "cIIIs03": 0.925,
+       "cIIIs04": 0.92,
+       "cIIIs05": 0.935,
+       "cIIIs06": 0.94,
+       "cIIIs07": 0.93,
+       "cIIIs08": 0.945
+      },
+      "0.95": {
+       "cIIIs01": 0.98,
+       "cIIIs02": 0.975,
+       "cIIIs03": 0.975,
+       "cIIIs04": 0.975,
+       "cIIIs05": 0.98,
+       "cIIIs06": 0.98,
+       "cIIIs07": 0.975,
+       "cIIIs08": 0.985
+      }
+     },
+     "note": "within-subject voxel noise not separated: voxels are spatially correlated"
+    }
+   }
+  },
+  "other session": {
+   "subjects": [
+    "cIIIs01",
+    "cIIIs02",
+    "cIIIs04",
+    "cIIIs05",
+    "cIIIs08"
+   ],
+   "rescans": {
+    "cIIIs01": [
+     "session1"
+    ],
+    "cIIIs02": [
+     "session4",
+     "session5"
+    ],
+    "cIIIs04": [
+     "session2",
+     "session3",
+     "session4",
+     "session5"
+    ],
+    "cIIIs05": [
+     "session2"
+    ],
+    "cIIIs08": [
+     "session2"
+    ]
+   },
+   "statements per subject": {
+    "cIIIs01": {
+     "streamline seeds": 45278,
+     "points": 1565,
+     "envelope presence voxels (rescans summed)": 189205
+    },
+    "cIIIs02": {
+     "streamline seeds": 81001,
+     "points": 3218,
+     "envelope presence voxels (rescans summed)": 360344
+    },
+    "cIIIs04": {
+     "streamline seeds": 173737,
+     "points": 5980,
+     "envelope presence voxels (rescans summed)": 775494
+    },
+    "cIIIs05": {
+     "streamline seeds": 35469,
+     "points": 1277,
+     "envelope presence voxels (rescans summed)": 147894
+    },
+    "cIIIs08": {
+     "streamline seeds": 36250,
+     "points": 1367,
+     "envelope presence voxels (rescans summed)": 147879
+    }
+   },
+   "references": {
+    "as stated (k = 0)": {
+     "streamline ECE": {
+      "mean": 0.0973,
+      "p10": 0.0909,
+      "p90": 0.1039
+     },
+     "point ECE": {
+      "mean": 0.0585,
+      "p10": 0.0441,
+      "p90": 0.0747
+     },
+     "coverage error at 0.8": {
+      "mean": -0.0399,
+      "p10": -0.0447,
+      "p90": -0.0363,
+      "mean |error|": 0.0399
+     },
+     "coverage error at 0.9": {
+      "mean": -0.0477,
+      "p10": -0.0533,
+      "p90": -0.0439,
+      "mean |error|": 0.0477
+     },
+     "coverage error at 0.95": {
+      "mean": -0.0444,
+      "p10": -0.0495,
+      "p90": -0.0408,
+      "mean |error|": 0.0444
+     },
+     "n": 5
+    },
+    "PAT16 map": {
+     "streamline ECE": {
+      "mean": 0.0273,
+      "p10": 0.0228,
+      "p90": 0.0315
+     },
+     "point ECE": {
+      "mean": 0.0584,
+      "p10": 0.0479,
+      "p90": 0.0652
+     },
+     "n": 5,
+     "note": "PAT16's streamline vote table; on the point statement applied outside its fit"
+    }
+   },
+   "learning curve (fraction of each training subject's statements -> k)": {
+    "1": {
+     "1": {
+      "streamline ECE": {
+       "mean": 0.011,
+       "p10": 0.0076,
+       "p90": 0.0155
+      },
+      "point ECE": {
+       "mean": 0.0267,
+       "p10": 0.0168,
+       "p90": 0.0417
+      },
+      "coverage error at 0.8": {
+       "mean": 0.0031,
+       "p10": -0.0065,
+       "p90": 0.0105,
+       "mean |error|": 0.0057
+      },
+      "coverage error at 0.9": {
+       "mean": 0.002,
+       "p10": -0.0071,
+       "p90": 0.0138,
+       "mean |error|": 0.0068
+      },
+      "coverage error at 0.95": {
+       "mean": 0.0022,
+       "p10": -0.0064,
+       "p90": 0.0069,
+       "mean |error|": 0.0048
+      },
+      "n": 20,
+      "training sets per held-out subject": 4
+     },
+     "2": {
+      "streamline ECE": {
+       "mean": 0.0091,
+       "p10": 0.0048,
+       "p90": 0.0119
+      },
+      "point ECE": {
+       "mean": 0.0236,
+       "p10": 0.0145,
+       "p90": 0.033
+      },
+      "coverage error at 0.8": {
+       "mean": 0.0025,
+       "p10": -0.0065,
+       "p90": 0.008,
+       "mean |error|": 0.0051
+      },
+      "coverage error at 0.9": {
+       "mean": 0.003,
+       "p10": -0.0071,
+       "p90": 0.009,
+       "mean |error|": 0.0058
+      },
+      "coverage error at 0.95": {
+       "mean": 0.0028,
+       "p10": -0.0064,
+       "p90": 0.0075,
+       "mean |error|": 0.0053
+      },
+      "n": 30,
+      "training sets per held-out subject": 6
+     },
+     "3": {
+      "streamline ECE": {
+       "mean": 0.0084,
+       "p10": 0.0027,
+       "p90": 0.0116
+      },
+      "point ECE": {
+       "mean": 0.0228,
+       "p10": 0.0163,
+       "p90": 0.0321
+      },
+      "coverage error at 0.8": {
+       "mean": 0.0025,
+       "p10": -0.0065,
+       "p90": 0.008,
+       "mean |error|": 0.0053
+      },
+      "coverage error at 0.9": {
+       "mean": 0.0028,
+       "p10": -0.0071,
+       "p90": 0.0094,
+       "mean |error|": 0.0057
+      },
+      "coverage error at 0.95": {
+       "mean": 0.002,
+       "p10": -0.0064,
+       "p90": 0.0056,
+       "mean |error|": 0.0046
+      },
+      "n": 20,
+      "training sets per held-out subject": 4
+     },
+     "4": {
+      "streamline ECE": {
+       "mean": 0.0081,
+       "p10": 0.0045,
+       "p90": 0.0103
+      },
+      "point ECE": {
+       "mean": 0.0218,
+       "p10": 0.0152,
+       "p90": 0.0287
+      },
+      "coverage error at 0.8": {
+       "mean": 0.0016,
+       "p10": -0.0044,
+       "p90": 0.0079,
+       "mean |error|": 0.0047
+      },
+      "coverage error at 0.9": {
+       "mean": 0.0018,
+       "p10": -0.0042,
+       "p90": 0.0075,
+       "mean |error|": 0.0046
+      },
+      "coverage error at 0.95": {
+       "mean": 0.0015,
+       "p10": -0.0031,
+       "p90": 0.0043,
+       "mean |error|": 0.0041
+      },
+      "n": 5,
+      "training sets per held-out subject": 1
+     }
+    },
+    "0.1": {
+     "1": {
+      "streamline ECE": {
+       "mean": 0.0126,
+       "p10": 0.0065,
+       "p90": 0.0194
+      },
+      "point ECE": {
+       "mean": 0.042,
+       "p10": 0.0196,
+       "p90": 0.0674
+      },
+      "coverage error at 0.8": {
+       "mean": 0.0021,
+       "p10": -0.0065,
+       "p90": 0.0121,
+       "mean |error|": 0.0064
+      },
+      "coverage error at 0.9": {
+       "mean": 0.0031,
+       "p10": -0.0071,
+       "p90": 0.0138,
+       "mean |error|": 0.0071
+      },
+      "coverage error at 0.95": {
+       "mean": 0.0023,
+       "p10": -0.0064,
+       "p90": 0.0069,
+       "mean |error|": 0.0048
+      },
+      "n": 100,
+      "training sets per held-out subject": 20
+     },
+     "2": {
+      "streamline ECE": {
+       "mean": 0.011,
+       "p10": 0.0061,
+       "p90": 0.0156
+      },
+      "point ECE": {
+       "mean": 0.0343,
+       "p10": 0.0189,
+       "p90": 0.0565
+      },
+      "coverage error at 0.8": {
+       "mean": 0.0022,
+       "p10": -0.0065,
+       "p90": 0.008,
+       "mean |error|": 0.0057
+      },
+      "coverage error at 0.9": {
+       "mean": 0.0031,
+       "p10": -0.0071,
+       "p90": 0.0094,
+       "mean |error|": 0.0063
+      },
+      "coverage error at 0.95": {
+       "mean": 0.0026,
+       "p10": -0.0064,
+       "p90": 0.0069,
+       "mean |error|": 0.0052
+      },
+      "n": 150,
+      "training sets per held-out subject": 30
+     },
+     "3": {
+      "streamline ECE": {
+       "mean": 0.0104,
+       "p10": 0.006,
+       "p90": 0.0145
+      },
+      "point ECE": {
+       "mean": 0.03,
+       "p10": 0.0144,
+       "p90": 0.0472
+      },
+      "coverage error at 0.8": {
+       "mean": 0.0022,
+       "p10": -0.0065,
+       "p90": 0.008,
+       "mean |error|": 0.0056
+      },
+      "coverage error at 0.9": {
+       "mean": 0.0036,
+       "p10": -0.0071,
+       "p90": 0.0094,
+       "mean |error|": 0.0063
+      },
+      "coverage error at 0.95": {
+       "mean": 0.002,
+       "p10": -0.0064,
+       "p90": 0.0055,
+       "mean |error|": 0.0045
+      },
+      "n": 100,
+      "training sets per held-out subject": 20
+     },
+     "4": {
+      "streamline ECE": {
+       "mean": 0.0098,
+       "p10": 0.0051,
+       "p90": 0.0131
+      },
+      "point ECE": {
+       "mean": 0.0273,
+       "p10": 0.0147,
+       "p90": 0.0458
+      },
+      "coverage error at 0.8": {
+       "mean": 0.0026,
+       "p10": -0.0065,
+       "p90": 0.008,
+       "mean |error|": 0.0059
+      },
+      "coverage error at 0.9": {
+       "mean": 0.004,
+       "p10": -0.0071,
+       "p90": 0.0094,
+       "mean |error|": 0.0065
+      },
+      "coverage error at 0.95": {
+       "mean": 0.0017,
+       "p10": -0.0064,
+       "p90": 0.0051,
+       "mean |error|": 0.0043
+      },
+      "n": 25,
+      "training sets per held-out subject": 5
+     }
+    },
+    "0.01": {
+     "1": {
+      "streamline ECE": {
+       "mean": 0.0255,
+       "p10": 0.0127,
+       "p90": 0.0426
+      },
+      "point ECE": {
+       "mean": 0.0873,
+       "p10": 0.0429,
+       "p90": 0.15
+      },
+      "coverage error at 0.8": {
+       "mean": -0.0025,
+       "p10": -0.0144,
+       "p90": 0.0082,
+       "mean |error|": 0.0083
+      },
+      "coverage error at 0.9": {
+       "mean": 0.0,
+       "p10": -0.0125,
+       "p90": 0.011,
+       "mean |error|": 0.008
+      },
+      "coverage error at 0.95": {
+       "mean": 0.0014,
+       "p10": -0.0064,
+       "p90": 0.0075,
+       "mean |error|": 0.0052
+      },
+      "n": 100,
+      "training sets per held-out subject": 20
+     },
+     "2": {
+      "streamline ECE": {
+       "mean": 0.0182,
+       "p10": 0.0102,
+       "p90": 0.0269
+      },
+      "point ECE": {
+       "mean": 0.0702,
+       "p10": 0.0332,
+       "p90": 0.108
+      },
+      "coverage error at 0.8": {
+       "mean": -0.0026,
+       "p10": -0.0139,
+       "p90": 0.0078,
+       "mean |error|": 0.0068
+      },
+      "coverage error at 0.9": {
+       "mean": 0.0001,
+       "p10": -0.0119,
+       "p90": 0.0094,
+       "mean |error|": 0.0067
+      },
+      "coverage error at 0.95": {
+       "mean": 0.0019,
+       "p10": -0.0064,
+       "p90": 0.0075,
+       "mean |error|": 0.0054
+      },
+      "n": 150,
+      "training sets per held-out subject": 30
+     },
+     "3": {
+      "streamline ECE": {
+       "mean": 0.0154,
+       "p10": 0.0103,
+       "p90": 0.0214
+      },
+      "point ECE": {
+       "mean": 0.0637,
+       "p10": 0.0336,
+       "p90": 0.0984
+      },
+      "coverage error at 0.8": {
+       "mean": -0.0028,
+       "p10": -0.0139,
+       "p90": 0.0062,
+       "mean |error|": 0.006
+      },
+      "coverage error at 0.9": {
+       "mean": 0.0002,
+       "p10": -0.0091,
+       "p90": 0.0069,
+       "mean |error|": 0.0061
+      },
+      "coverage error at 0.95": {
+       "mean": 0.0023,
+       "p10": -0.0064,
+       "p90": 0.0062,
+       "mean |error|": 0.0054
+      },
+      "n": 100,
+      "training sets per held-out subject": 20
+     },
+     "4": {
+      "streamline ECE": {
+       "mean": 0.0138,
+       "p10": 0.0083,
+       "p90": 0.0181
+      },
+      "point ECE": {
+       "mean": 0.0583,
+       "p10": 0.0316,
+       "p90": 0.0867
+      },
+      "coverage error at 0.8": {
+       "mean": -0.0029,
+       "p10": -0.0139,
+       "p90": 0.0062,
+       "mean |error|": 0.0057
+      },
+      "coverage error at 0.9": {
+       "mean": 0.0004,
+       "p10": -0.0071,
+       "p90": 0.0066,
+       "mean |error|": 0.0057
+      },
+      "coverage error at 0.95": {
+       "mean": 0.0023,
+       "p10": -0.0064,
+       "p90": 0.0062,
+       "mean |error|": 0.0054
+      },
+      "n": 25,
+      "training sets per held-out subject": 5
+     }
+    }
+   },
+   "between-subject variance": {
+    "streamline": {
+     "per vote count": {
+      "9": {
+       "mean observed": 0.4748,
+       "between-subject SD": 0.0049,
+       "within-subject binomial SE": 0.0076,
+       "tau": 0.0,
+       "per subject": {
+        "cIIIs01": 0.4782,
+        "cIIIs02": 0.4664,
+        "cIIIs04": 0.4743,
+        "cIIIs05": 0.4783,
+        "cIIIs08": 0.4766
+       }
+      },
+      "13": {
+       "mean observed": 0.6493,
+       "between-subject SD": 0.0071,
+       "within-subject binomial SE": 0.0072,
+       "tau": 0.0,
+       "per subject": {
+        "cIIIs01": 0.6401,
+        "cIIIs02": 0.646,
+        "cIIIs04": 0.6514,
+        "cIIIs05": 0.6594,
+        "cIIIs08": 0.6497
+       }
+      },
+      "17": {
+       "mean observed": 0.9035,
+       "between-subject SD": 0.0163,
+       "within-subject binomial SE": 0.0029,
+       "tau": 0.0161,
+       "per subject": {
+        "cIIIs01": 0.8974,
+        "cIIIs02": 0.8785,
+        "cIIIs04": 0.907,
+        "cIIIs05": 0.9154,
+        "cIIIs08": 0.9193
+       }
+      }
+     },
+     "tau, statement-weighted over vote counts (>= 30 statements in every subject)": 0.0097,
+     "within-subject binomial SE, statement-weighted": 0.0073,
+     "between-subject SD, statement-weighted": 0.0118
+    },
+    "point": {
+     "per vote count": {
+      "9": {
+       "mean observed": 0.4826,
+       "between-subject SD": 0.0647,
+       "within-subject binomial SE": 0.0658,
+       "tau": 0.0,
+       "per subject": {
+        "cIIIs01": 0.439,
+        "cIIIs02": 0.4457,
+        "cIIIs04": 0.4295,
+        "cIIIs05": 0.52,
+        "cIIIs08": 0.5789
+       }
+      },
+      "13": {
+       "mean observed": 0.6506,
+       "between-subject SD": 0.0804,
+       "within-subject binomial SE": 0.0579,
+       "tau": 0.0558,
+       "per subject": {
+        "cIIIs01": 0.6038,
+        "cIIIs02": 0.678,
+        "cIIIs04": 0.6277,
+        "cIIIs05": 0.7755,
+        "cIIIs08": 0.5682
+       }
+      },
+      "17": {
+       "mean observed": 0.9673,
+       "between-subject SD": 0.014,
+       "within-subject binomial SE": 0.0049,
+       "tau": 0.0131,
+       "per subject": {
+        "cIIIs01": 0.9753,
+        "cIIIs02": 0.9467,
+        "cIIIs04": 0.9769,
+        "cIIIs05": 0.9787,
+        "cIIIs08": 0.9589
+       }
+      }
+     },
+     "tau, statement-weighted over vote counts (>= 30 statements in every subject)": 0.0215,
+     "within-subject binomial SE, statement-weighted": 0.03,
+     "between-subject SD, statement-weighted": 0.0344
+    },
+    "envelope": {
+     "coverage at stated level": {
+      "0.8": {
+       "mean coverage at stated level": 0.7601,
+       "between-subject SD": 0.005,
+       "per subject": {
+        "cIIIs01": 0.7613,
+        "cIIIs02": 0.7517,
+        "cIIIs04": 0.7617,
+        "cIIIs05": 0.765,
+        "cIIIs08": 0.7606
+       }
+      },
+      "0.9": {
+       "mean coverage at stated level": 0.8523,
+       "between-subject SD": 0.0052,
+       "per subject": {
+        "cIIIs01": 0.8508,
+        "cIIIs02": 0.8439,
+        "cIIIs04": 0.855,
+        "cIIIs05": 0.8565,
+        "cIIIs08": 0.8555
+       }
+      },
+      "0.95": {
+       "mean coverage at stated level": 0.9056,
+       "between-subject SD": 0.0053,
+       "per subject": {
+        "cIIIs01": 0.9067,
+        "cIIIs02": 0.8965,
+        "cIIIs04": 0.9064,
+        "cIIIs05": 0.9094,
+        "cIIIs08": 0.909
+       }
+      }
+     },
+     "the subject's own stated level for target": {
+      "0.8": {
+       "cIIIs01": 0.85,
+       "cIIIs02": 0.855,
+       "cIIIs04": 0.845,
+       "cIIIs05": 0.845,
+       "cIIIs08": 0.845
+      },
+      "0.9": {
+       "cIIIs01": 0.945,
+       "cIIIs02": 0.955,
+       "cIIIs04": 0.945,
+       "cIIIs05": 0.94,
+       "cIIIs08": 0.945
+      },
+      "0.95": {
+       "cIIIs01": 0.985,
+       "cIIIs02": 1.0,
+       "cIIIs04": 0.985,
+       "cIIIs05": 0.985,
+       "cIIIs08": 0.985
+      }
+     },
+     "note": "within-subject voxel noise not separated: voxels are spatially correlated"
+    }
+   }
+  }
+ }
+}

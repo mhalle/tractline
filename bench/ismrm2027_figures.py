@@ -218,11 +218,11 @@ def fig1():
     dx, dy = 46, y2 + h2 / 2
     ax.add_patch(Polygon([[dx - 7.5, dy], [dx, dy + 7.4], [dx + 7.5, dy], [dx, dy - 7.4]], closed=True, fc="#FFFFFF",
                          ec=C["black"], lw=1.0, zorder=2))
-    ax.text(dx, dy + 1.2, "Card for this", ha="center", va="center", fontsize=7, weight="bold", zorder=3)
+    ax.text(dx, dy + 1.2, "Map for this", ha="center", va="center", fontsize=7, weight="bold", zorder=3)
     ax.text(dx, dy - 1.4, "protocol?", ha="center", va="center", fontsize=7, weight="bold", zorder=3)
     arrow((35.6, dy), (dx - 7.6, dy))
     yc = y2 + 7.2
-    box(59, yc, 18, 8.6, "Calibration card", "8 test-retest subjects\n(MASiVar cIII), held out", fc="#E6F0F8", ec=C["card"])
+    box(59, yc, 18, 8.6, "Recalibration map", "8 test-retest subjects\n(MASiVar cIII), held out", fc="#E6F0F8", ec=C["card"])
     box(80.3, yc, 19.2, 8.6, "Calibrated", "P(rescan, same session)\nP(rescan, other session)", fc="#E6F0F8", ec=C["card"])
     box(59, y2 - 2.6, 40, 5.4, "Run-to-run only: levels, not probabilities", fc="#FBEFE6", ec=C["stated"], tc=C["stated"])
     arrow((dx + 3.75, dy + 3.7), (58.4, yc + 4.3), text="yes", tpos=(52.5, yc + 6.6))
@@ -235,7 +235,7 @@ def fig1():
 def reliability_panel(ax, rows, title, min_n=300, legend=True, thin=True, big=False):
     lw_main, lw_thin, ms = (3.0, 0.0, 0) if big else (1.8, 0.6, 3)
     ax.plot([0, 1], [0, 1], color=C["gray"], lw=0.8 if not big else 1.5, ls=":", zorder=1)
-    methods = [("as stated", "stated", C["stated"], "As stated"), ("card", "card", C["card"], "With card")]
+    methods = [("as stated", "stated", C["stated"], "As stated"), ("card", "card", C["card"], "With map")]
     if not big:
         methods.append(("PAT16 map", "pat16", C["pat16"], "PAT16 map"))
     for m, key, col, label in methods:
@@ -290,7 +290,7 @@ def fig3(ho):
         ax.plot(g[sel], stated[sel], color=C["stated"], lw=1.8, zorder=3,
                 label="As stated (" + ", ".join(f"{c:.3f}" for c in cov["as stated"]) + ")")
         ax.plot(t, card, color=C["card"], lw=1.8, zorder=3,
-                label="With card (" + ", ".join(f"{c:.3f}" for c in cov["card"]) + ")")
+                label="With map (" + ", ".join(f"{c:.3f}" for c in cov["card"]) + ")")
         for j, q in enumerate(TARGETS):
             for m, col, dx in (("as stated", C["stated"], -0.006), ("card", C["card"], 0.006)):
                 y = [r["coverage"][f"{q:g}"][m] for r in rows.values()]
@@ -439,7 +439,7 @@ def fig5(ho):
                Line2D([], [], color=C["yellow"], lw=1.6, label="Same-session rescan's CST")]
     fig.legend(handles=handles, loc="lower center", ncol=3, frameon=False, fontsize=8, bbox_to_anchor=(0.5, 0.0),
                handlelength=1.4, columnspacing=1.2)
-    fig.suptitle(f"{EXAMPLE}, corticospinal tract: card-calibrated envelopes from one scan", fontsize=10)
+    fig.suptitle(f"{EXAMPLE}, corticospinal tract: recalibrated envelopes from one scan", fontsize=10)
     fig.tight_layout(rect=(0, 0.07, 1, 1))
     save(fig, "fig5_cst_envelopes")
     plt.close(fig)
@@ -463,7 +463,7 @@ def preview(ho):
     ax.set_xlabel("Stated confidence")
     ax.set_ylabel("Observed on a rescan")
     ax.text(0.63, 0.40, "As stated", color=C["stated"], fontsize=20, weight="bold", ha="left")
-    ax.text(0.22, 0.78, "With card", color=C["card"], fontsize=20, weight="bold", ha="left")
+    ax.text(0.22, 0.78, "With map", color=C["card"], fontsize=20, weight="bold", ha="left")
     ax.spines["left"].set_linewidth(1.5); ax.spines["bottom"].set_linewidth(1.5)
     fig.tight_layout()
     save(fig, "preview")
