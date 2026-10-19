@@ -15,7 +15,7 @@ Reads only existing results and records; runs no pipeline:
     statements' vote histograms).
 
 Writes bench/results/ismrm2027/: fig1_pipeline, fig2_streamline_calibration, fig3_envelope_coverage,
-fig4_phantom_gap, fig5_cst_envelopes, preview (each .pdf and .png at 300 dpi) and stats.json (95 % intervals by
+fig4_phantom_gap, fig5_cst_envelopes, preview_streamline, preview_coverage (each .pdf and .png at 300 dpi) and stats.json (95 % intervals by
 resampling held-out subjects).
 """
 import argparse, json, sys
@@ -33,8 +33,10 @@ BOOT, SEED = 10000, 20261019
 EXAMPLE, TRACT, RESCAN = "cIIIs04", "CST", "within"        # Fig 5: the subject, the tract and the rescan shown
 
 # Okabe-Ito, colorblind-safe
-C = {"stated": "#D55E00", "card": "#0072B2", "pat16": "#E69F00", "biasfree": "#009E73", "gray": "#6E6E6E",
-     "sky": "#56B4E9", "yellow": "#F0E442", "black": "#000000"}
+# (one palette for every abstract figure: orange uncorrected, blue the recalibration map, green bias-free, dark gray
+# PAT16's map; "card" is the map's internal name, never a label)
+C = {"stated": "#D55E00", "card": "#0072B2", "map": "#0072B2", "pat16": "#4D4D4D", "biasfree": "#009E73",
+     "gray": "#8C8C8C", "sky": "#56B4E9", "yellow": "#F0E442", "black": "#000000"}
 
 
 def mpl():
@@ -201,7 +203,7 @@ def fig1():
                                 fc="#F2F7FB", ec=C["card"], lw=0.8, ls=(0, (3, 2)), zorder=0))
     ax.text(57, y1 + h1 + 4.3, "× 17: the scan and 16 bootstrap replicates, each through the whole pipeline",
             ha="center", va="center", fontsize=7.5, color=C["card"], weight="bold")
-    xs = [(16, 19, "Bootstrap replicate", "wild bootstrap,\nsmooth signs (FWHM 4)"),
+    xs = [(16, 19, "Bootstrap replicate", "wild bootstrap, smooth\nsigns (FWHM 4 voxels)"),
           (39, 17.5, "Field re-estimated", "susceptibility field\nfrom the b0 pair"),
           (60.5, 14, "UKF tracking", "b = 2000 shell"),
           (78.5, 16, "RapidParc", "42 named tracts\n+ Other")]
@@ -221,13 +223,14 @@ def fig1():
     ax.text(dx, dy + 1.2, "Map for this", ha="center", va="center", fontsize=7, weight="bold", zorder=3)
     ax.text(dx, dy - 1.4, "protocol?", ha="center", va="center", fontsize=7, weight="bold", zorder=3)
     arrow((35.6, dy), (dx - 7.6, dy))
-    yc = y2 + 7.2
-    box(59, yc, 18, 8.6, "Recalibration map", "8 test-retest subjects\n(MASiVar cIII), held out", fc="#E6F0F8", ec=C["card"])
-    box(80.3, yc, 19.2, 8.6, "Calibrated", "P(rescan, same session)\nP(rescan, other session)", fc="#E6F0F8", ec=C["card"])
+    yc, hc = y2 + 5.6, 11.2
+    box(59, yc, 18, hc, "Recalibration map", "8 test-retest subjects\n(MASiVar cIII); validated\nleave-one-subject-out",
+        fc="#E6F0F8", ec=C["card"])
+    box(80.3, yc, 19.2, hc, "Calibrated", "P(rescan, same session)\nP(rescan, other session)", fc="#E6F0F8", ec=C["card"])
     box(59, y2 - 2.6, 40, 5.4, "Run-to-run only: levels, not probabilities", fc="#FBEFE6", ec=C["stated"], tc=C["stated"])
-    arrow((dx + 3.75, dy + 3.7), (58.4, yc + 4.3), text="yes", tpos=(52.5, yc + 6.6))
+    arrow((dx + 3.75, dy + 3.7), (58.4, yc + hc / 2), text="yes", tpos=(52.5, yc + hc / 2 + 2.6))
     arrow((dx + 3.75, dy - 3.7), (58.4, y2 + 0.1), color=C["stated"], text="no", tpos=(54.5, y2 - 0.6))
-    arrow((77.6, yc + 4.3), (79.7, yc + 4.3))
+    arrow((77.6, yc + hc / 2), (79.7, yc + hc / 2))
     save(fig, "fig1_pipeline")
     plt.close(fig)
 
@@ -261,7 +264,7 @@ def reliability_panel(ax, rows, title, min_n=300, legend=True, thin=True, big=Fa
 
 def fig2(ho):
     plt = mpl()
-    fig, axs = plt.subplots(1, 2, figsize=(7.0, 3.5))
+    fig, axs = plt.subplots(1, 2, figsize=(7.0, 3.8))
     for ax, term in zip(axs, TERMS):
         rows = ho[term]
         reliability_panel(ax, rows, f"{term.capitalize().replace(' ', '-')} rescan ({len(rows)} subjects)")
@@ -269,7 +272,9 @@ def fig2(ho):
     axs[0].set_ylabel("Observed rate, held-out subject")
     for ax, lab in zip(axs, "ab"):
         ax.text(-0.16, 1.04, lab, transform=ax.transAxes, fontsize=11, weight="bold")
-    fig.tight_layout()
+    fig.suptitle("A diagnostic statement: the tract name of a single streamline (seed), not a product claim",
+                 fontsize=9.5, color=C["pat16"], style="italic")
+    fig.tight_layout(rect=(0, 0, 1, 0.97))
     save(fig, "fig2_streamline_calibration")
     plt.close(fig)
 
@@ -288,9 +293,9 @@ def fig3(ho):
         t = next(iter(rows.values()))["targets"]
         cov = {m: np.mean([[r["coverage"][f"{q:g}"][m] for q in TARGETS] for r in rows.values()], 0) for m in ("as stated", "card")}
         ax.plot(g[sel], stated[sel], color=C["stated"], lw=1.8, zorder=3,
-                label="As stated (" + ", ".join(f"{c:.3f}" for c in cov["as stated"]) + ")")
+                label="As stated: envelope at level = target\n(" + ", ".join(f"{c:.3f}" for c in cov["as stated"]) + ")")
         ax.plot(t, card, color=C["card"], lw=1.8, zorder=3,
-                label="With map (" + ", ".join(f"{c:.3f}" for c in cov["card"]) + ")")
+                label="With map: envelope at the map's level\n(" + ", ".join(f"{c:.3f}" for c in cov["card"]) + ")")
         for j, q in enumerate(TARGETS):
             for m, col, dx in (("as stated", C["stated"], -0.006), ("card", C["card"], 0.006)):
                 y = [r["coverage"][f"{q:g}"][m] for r in rows.values()]
@@ -300,9 +305,9 @@ def fig3(ho):
         ax.set_aspect("equal")
         ax.set_xticks([0.7, 0.8, 0.9, 0.95]); ax.set_yticks([0.7, 0.8, 0.9, 0.95])
         ax.set_title(f"{term.capitalize().replace(' ', '-')} rescan ({len(rows)} subjects)")
-        ax.set_xlabel("Stated envelope level (target coverage)")
-        ax.legend(loc="upper left", frameon=False, title="coverage at 0.8, 0.9, 0.95", title_fontsize=7.5,
-                  alignment="left", handlelength=1.6)
+        ax.set_xlabel("Target coverage")
+        ax.legend(loc="upper left", frameon=False, title="Held-out coverage at targets 0.8, 0.9, 0.95", title_fontsize=7.5,
+                  alignment="left", handlelength=1.6, fontsize=7.5)
     axs[0].set_ylabel("Observed coverage of the rescan's tract")
     for ax, lab in zip(axs, "ab"):
         ax.text(-0.16, 1.04, lab, transform=ax.transAxes, fontsize=11, weight="bold")
@@ -322,7 +327,7 @@ def fig4():
     lv = np.array([0.8, 0.9, 0.925, 0.95])
     runs = np.array([pool["runs"][f"envelope {x:g}"]["coverage"] for x in lv])
     free = np.array([pool["perfect ensemble"][f"envelope {x:g}"]["coverage"] for x in lv])
-    fig, ax = plt.subplots(figsize=(3.6, 3.5))
+    fig, ax = plt.subplots(figsize=(3.9, 3.9))
     ax.plot([0, 1], [0, 1], color=C["gray"], lw=0.8, ls=":", zorder=1)
     rng = np.random.default_rng(2)
     for b in per.values():
@@ -334,18 +339,20 @@ def fig4():
             ax.scatter(x - 0.004 + j, e["runs"]["coverage"], s=7, color=C["stated"], alpha=0.35, lw=0, zorder=2)
             ax.scatter(x + 0.004 + j, e["perfect ensemble"]["coverage"], s=7, color=C["biasfree"], alpha=0.35, lw=0, zorder=2)
     ax.plot(lv, free, color=C["biasfree"], lw=1.8, marker="o", ms=4, zorder=3, label="Bias-free ensemble\n(ground-truth subsamples)")
-    ax.plot(lv, runs, color=C["stated"], lw=1.8, marker="o", ms=4, zorder=3, label="Pipeline, 17 runs\n(labeled presence)")
+    ax.plot(lv, runs, color=C["stated"], lw=1.8, marker="o", ms=4, zorder=3,
+            label="Pipeline, 17 runs, as stated\n(no map; labeled presence)")
     for x, a, b in zip(lv, runs, free):
         if x in (0.8, 0.9, 0.95):
             ax.annotate("", xy=(x, a + 0.008), xytext=(x, b - 0.008),
                         arrowprops=dict(arrowstyle="<->", color=C["black"], lw=0.8, shrinkA=0, shrinkB=0))
             ax.text(x + 0.005, (a + b) / 2, f"−{100 * (b - a):.0f}\npts", fontsize=8, va="center", ha="left", linespacing=1.0)
-    ax.set_xlim(0.77, 0.98); ax.set_ylim(0.25, 1.0)
+    ax.set_xlim(0.77, 0.98); ax.set_ylim(0.40, 1.0)
     ax.set_xticks([0.8, 0.9, 0.95])
-    ax.set_xlabel("Stated envelope level")
+    ax.set_xlabel("Stated envelope level (no map applied)")
     ax.set_ylabel("Coverage of the count-matched truth")
     ax.set_title("ISMRM 2015 phantom, 14 bundles")
-    ax.legend(loc="lower right", frameon=False, handlelength=1.6)
+    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.17), ncol=2, frameon=False, handlelength=1.6, fontsize=7.5,
+              columnspacing=1.0)                                     # below the axes: no bundle point hidden
     fig.tight_layout()
     save(fig, "fig4_phantom_gap")
     plt.close(fig)
@@ -453,8 +460,33 @@ def fig5(ho):
     print(json.dumps(info), flush=True)
 
 
+def preview_coverage(ho):
+    """The headline, simply: same-session envelope coverage against the target, as stated and with the map."""
+    plt = mpl()
+    plt.rcParams.update({"font.size": 18, "axes.labelsize": 20, "xtick.labelsize": 16, "ytick.labelsize": 16})
+    fig, ax = plt.subplots(figsize=(5.2, 5.2))
+    rows = ho["same session"]
+    r0 = next(iter(rows.values()))
+    g, t = r0["grid"], r0["targets"]
+    sel = (g >= 0.70) & (g <= 0.96)
+    ax.plot([0, 1], [0, 1], color=C["gray"], lw=1.5, ls=":", zorder=1)
+    ax.plot(g[sel], np.mean([r["curve"] for r in rows.values()], 0)[sel], color=C["stated"], lw=3.5, zorder=3)
+    ax.plot(t, np.mean([r["card curve"] for r in rows.values()], 0), color=C["map"], lw=3.5, zorder=3)
+    ax.set_xlim(0.70, 0.96); ax.set_ylim(0.70, 0.96)
+    ax.set_aspect("equal")
+    ax.set_xticks([0.7, 0.8, 0.9]); ax.set_yticks([0.7, 0.8, 0.9])
+    ax.set_xlabel("Target coverage")
+    ax.set_ylabel("Covered on a rescan")
+    ax.text(0.715, 0.90, "With map", color=C["map"], fontsize=20, weight="bold", ha="left")
+    ax.text(0.83, 0.735, "As stated", color=C["stated"], fontsize=20, weight="bold", ha="left")
+    ax.spines["left"].set_linewidth(1.5); ax.spines["bottom"].set_linewidth(1.5)
+    fig.tight_layout()
+    save(fig, "preview_coverage")
+    plt.close(fig)
+
+
 def preview(ho):
-    """A simple, legible reliability diagram: same-session rescans, as stated against with the card."""
+    """A simple, legible reliability diagram: same-session rescans, as stated against with the map."""
     plt = mpl()
     plt.rcParams.update({"font.size": 18, "axes.labelsize": 20, "xtick.labelsize": 16, "ytick.labelsize": 16, "legend.fontsize": 18})
     fig, ax = plt.subplots(figsize=(5.2, 5.2))
@@ -466,7 +498,7 @@ def preview(ho):
     ax.text(0.22, 0.78, "With map", color=C["card"], fontsize=20, weight="bold", ha="left")
     ax.spines["left"].set_linewidth(1.5); ax.spines["bottom"].set_linewidth(1.5)
     fig.tight_layout()
-    save(fig, "preview")
+    save(fig, "preview_streamline")
     plt.close(fig)
 
 
@@ -486,6 +518,7 @@ if __name__ == "__main__":
             fig3(ho)
         if a in ("all", "preview"):
             preview(ho)
+            preview_coverage(ho)
         if a in ("all", "fig5"):
             fig5(ho)
         if a in ("all", "stats"):

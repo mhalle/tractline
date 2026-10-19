@@ -1,139 +1,112 @@
-<!-- ISMRM 2027 abstract draft (due 2026-10-28, 23:59 UTC), written 2026-10-19 on branch ismrm2027.
-Sources for every number: bench/results/ismrm2027/stats.json (held-out ECE and coverage, 95 % intervals over
+<!-- ISMRM 2027 abstract draft (due 2026-10-28, 23:59 UTC), branch ismrm2027; revised 2026-10-19 after an independent
+review. Sources for every number: bench/results/ismrm2027/stats.json (held-out ECE and coverage, 95 % intervals over
 subjects), bench/results/calibration_card_masivar_cIII.json, bench/results/calibration_transfer_cIs1.json,
-bench/results/NOTES.md (2026-10-07, 2026-10-08, 2026-10-13 "Pooling sessions", Robustness steps 4 and 5),
-docs/data-product.md. References and novelty wording: docs/ismrm2027-references.md.
-Word counts (script, superscripts and Markdown removed) are at the end of this file. -->
+bench/results/calibration_learning_curve.json, bench/results/NOTES.md (2026-10-07, 2026-10-08, 2026-10-13 "Pooling
+sessions", Robustness steps 4 and 5), docs/data-product.md. References and novelty wording:
+docs/ismrm2027-references.md. Word counts (script; superscripts, figure tags and Markdown removed) are at the end. -->
 
-# Calibrated uncertainty for automated tract identification from one diffusion scan, tested on rescans and a phantom
+**Open choices for the user and co-authors:** (1) the final title (the one below is the reviewer's first alternative);
+(2) which 5 figures to take from the figure pool at the end, then numbering the [F-…] tags in the body; (3) the
+preview figure (preview_coverage or preview_streamline); (4) the categories, proposed 710 Diffusion: Tractography (primary) and 709 Diffusion:
+Simulation/Validation (secondary); (5) the code and data link in the Acknowledgements.
+
+# Rescan-calibrated uncertainty for automated tract identification from one diffusion scan, and its limits on a phantom
 
 ## Impact statement
 
-Tract maps from one diffusion scan can carry probabilities that hold on a real rescan once a protocol-specific
-recalibration map, learned from test-retest data, is applied. These probabilities describe reproducibility; anatomical
-accuracy needs its own term.
+From one diffusion scan, tract envelopes can state how much of a rescan's tract they will cover, once a
+protocol-specific recalibration map learned from test-retest data is applied. This calibrates reproducibility only;
+anatomical accuracy needs a separate term.
 
 ## Synopsis
 
-**Motivation:** Automated tractography reports white matter tracts without saying how they would change on a rescan.
+**Motivation:** Automated tractography does not state how tracts change on rescans.
 
-**Goals:** Calibrated uncertainty for tract identification from one diffusion MRI scan.
+**Goals:** One-scan tract identification with uncertainty calibrated for a rescan.
 
-**Approach:** We ran the whole pipeline (distortion correction, UKF tractography, RapidParc labeling) on 17 bootstrap
-replicates, learned a protocol-specific recalibration map from MASiVar test-retest subjects, and tested it
-leave-one-subject-out, on another protocol, and on the ISMRM 2015 phantom.
+**Approach:** We ran UKF tractography and RapidParc labeling on the scan and 16 bootstrap replicates (R = 17), fitted a
+protocol-specific recalibration map on MASiVar test-retest data, and tested it leave-one-subject-out, on another
+protocol and a phantom.
 
-**Results:** The map lowered expected calibration error from 0.07–0.10 to 0.008 and brought tract-envelope coverage to
-target. It failed on another protocol; envelopes missed 17–18 points of phantom ground truth.
+**Results:** Held out by subject, mapped tract envelopes met their rescan coverage targets within 0.5 points but did not
+transfer across protocols. On a phantom, unmapped envelopes covered 17–18 points less count-matched truth than a
+bias-free ensemble.
 
 ## Introduction
 
-Automated tract identification from diffusion MRI is read as a measurement, yet on our test-retest protocol a rescan
-renames about 35–40 % of streamlines. Bootstrap tractography resamples preprocessed data and refits the local
-model;<sup>1–4</sup> whole pipelines have been perturbed numerically.<sup>5,6</sup> To our knowledge, tract-label
-probabilities have not been calibrated against real rescans: earlier checks used same-session repeats at the
-orientation level<sup>7</sup> or simulated truth.<sup>8,9</sup> We ask whether a whole-pipeline bootstrap is
-calibrated for rescans, whether a protocol-specific recalibration map makes it so, and what it says about accuracy.
+Automated tract identification is read as a measurement, yet on this protocol a rescan renames 35–40% of streamlines.
+Bootstrap tractography resamples preprocessed data and refits the local model;<sup>1–4</sup> whole pipelines have been
+perturbed numerically.<sup>5,6</sup> To our knowledge, no study has propagated data-noise resampling through field
+re-estimation, tracking and labeling, or calibrated tract labels against real rescans; earlier checks used same-session
+repeats at the orientation level<sup>7</sup> or simulated truth.<sup>8,9</sup> We do both and test on a phantom.
 
 ## Methods
 
-**Data.** MASiVar cohort III (OpenNeuro ds003416):<sup>10</sup> eight healthy adults, one Philips Achieva 3T,
-b = 1000 ×40 and 2000 ×56 s/mm², 2.1 × 2.1 × 2.2 mm, 16 b0s, one reversed-phase-encoding b0. All subjects have a
-same-session rescan; five have nine other-session rescans. Rescans were registered rigidly to the reference and
-tracked on its grid.
+**Data.** MASiVar cohort III (OpenNeuro ds003416):<sup>10</sup> eight healthy adults on one Philips Achieva 3T; b = 1000
+×40 and 2000 ×56 s/mm²; 2.1×2.1×2.2 mm; 16 b0s and one reversed-phase-encoding b0. All have same-session rescans; five
+have nine other-session rescans.
 
-**Pipeline.** Per run: the susceptibility field from the b0 pair (topup's model<sup>11</sup>), two-tensor
-UKF<sup>12</sup> with ORG-atlas settings<sup>13</sup> at b = 2000, and RapidParc<sup>14</sup> labels (TractCloud's<sup>15</sup>
-42 tracts plus Other). The ensemble is the scan plus 16 wild-bootstrap replicates (R = 17), each through the whole
-pipeline. Because residuals are correlated within slices, signs are drawn as smooth in-plane patches
-(FWHM 4 voxels), after spatially dependent wild bootstraps.<sup>16,17</sup>
+**Pipeline.** Each run estimates the susceptibility field from the b0 pair (topup's model<sup>11</sup>), tracks with
+two-tensor UKF<sup>12</sup> (ORG-atlas settings<sup>13</sup>) at b = 2000, and labels with RapidParc<sup>14</sup> into
+TractCloud's<sup>15</sup> 42 tracts plus Other. The ensemble runs the whole pipeline on the scan and 16 wild-bootstrap
+replicates (R = 17). Residuals are correlated within slices, so signs are smooth in-plane patches (FWHM 4 voxels),
+following the spatially dependent wild bootstrap.<sup>16,17</sup>
 
-**Statements.** Streamline: P(a rescan gives the seed the ensemble's modal tract), stated as its vote share. Presence
-envelope: per tract, the highest-vote voxels holding a stated share of the vote mass; coverage is the share of the
-rescan's tract inside, pooled over tracts. Point: the main named tract within 8 mm.
+**Ensemble statements.** The primary statement is a presence envelope: per tract, the highest-vote voxels holding a
+stated share of the vote mass (presence: ≥0.3 streamlines per mm²). Its coverage is the share of the rescan's tract
+inside, pooled over tracts. Two diagnostics: the probability that a rescan gives a seed the ensemble's modal tract, and
+the main named tract within 8 mm of points on a 4-voxel lattice. "As stated" means the raw vote share.
 
-**Recalibration map.** Monotone maps (isotonic for vote shares; an inverted coverage curve for envelopes), with
-separate same- and other-session terms, evaluated leave-one-subject-out by expected calibration error
-(ECE)<sup>18</sup> and coverage at targets 0.8, 0.9 and 0.95; 95 % intervals are bootstrapped over held-out subjects.
-Comparators: as stated, and a double-bootstrap map fitted without rescans on a patient scan (PAT16).
+**Recalibration map.** Monotone stated-to-observed maps, separate for same- and other-session rescans, were evaluated
+leave-one-subject-out by coverage at targets 0.8, 0.9 and 0.95 and by expected calibration error<sup>18</sup> (ECE;
+seven stated-probability bins). 95% intervals resample held-out subjects, without refitting folds. A learning curve
+refits it on k training subjects.
 
-**Transfer.** The map was applied to MASiVar cIs1: one subject, another scanner, 2.5 mm,
-b = 1000/2000/3000 ×96, 3 forward b0s, with same-session and next-day rescans.
+**Transfer.** MASiVar cIs1: one subject, another scanner, 2.5 mm, b = 1000/2000/3000 ×96, 3 forward b0s, tracked at b =
+3000; same-session and next-day rescans.
 
-**Phantom.** ISMRM 2015 phantom<sup>19</sup> (b = 1000 ×32), 2023 ROI scoring<sup>20</sup> rebuilt with scilpy 1.5.0:
-envelopes of 14 bundles against the ground truth's presence subsampled to each run's streamline count, beside a
-bias-free ensemble of 17 ground-truth subsamples.
+**Phantom.** ISMRM 2015 phantom<sup>19</sup> (b = 1000 ×32), 2023 ROI scoring<sup>20</sup> rebuilt from scilpy 1.5.0.
+Envelopes of 14 bundles at stated levels (no map exists for this protocol) were compared with ground-truth presence at
+each run's streamline count and with a bias-free ensemble of 17 ground-truth subsamples.
 
 ## Results
 
-The ensemble was overconfident against rescans (Fig. 2). Held out, streamline ECE fell from 0.070 [0.065, 0.075] to
-0.008 [0.007, 0.010] (same session) and from 0.097 [0.092, 0.102] to 0.008 [0.005, 0.010] (other session); PAT16's
-map gave 0.019 and 0.027. Point ECE fell from 0.038 and 0.059 to 0.014 and 0.022.
+As stated, envelopes fell 2–5 points short. Held out by subject, the map brought coverage at 0.8/0.9/0.95 to 0.803
+[0.797, 0.810], 0.904 [0.898, 0.909], 0.954 [0.949, 0.959] (same session) and 0.802 [0.797, 0.806], 0.902 [0.897,
+0.907], 0.952 [0.947, 0.954] (other session), every subject within −1.2 to +1.7 points [F-coverage, F-cst]. From k = 1,
+coverage error was +0.002 to +0.005 (as stated, −0.023 to −0.048) [F-learning].
 
-As stated, envelopes covered 2–5 points less than their level. With the map, coverage at 0.8/0.9/0.95 was 0.803
-[0.797, 0.810], 0.904 [0.898, 0.909], 0.954 [0.949, 0.959] (same session) and 0.802 [0.797, 0.806], 0.902
-[0.897, 0.907], 0.952 [0.947, 0.954] (other session); every subject was within 1.2 points below to 1.7 above target
-(Figs. 3, 5).
+Diagnostics: streamline ECE fell from 0.070 [0.065, 0.075] to 0.008 [0.007, 0.010] (same session) and from 0.097 [0.092,
+0.102] to 0.008 [0.005, 0.010] (other session) [F-streamline]; point ECE fell from 0.038 and 0.059 to 0.014 and 0.022.
+Unanimous streamlines kept their label on only 91–93% of rescans.
 
-On cIs1 the protocol match refused the map. Applied anyway, it lowered streamline ECE (0.165/0.138 to 0.096/0.043),
-but envelopes fell 6–12 points short.
+On cIs1, the map partly improved streamline ECE (0.165 → 0.096, 0.138 → 0.043), but envelopes stayed 6–12 points short.
 
-On the phantom, envelopes covered 0.650, 0.724 and 0.778 of the truth at 0.8, 0.9 and 0.95, against 0.818, 0.904 and
-0.951 for the bias-free ensemble: 17–18 points short (Fig. 4).
+On the phantom, envelopes at 0.8/0.9/0.95 covered 0.650/0.724/0.778 of the truth, 17–18 points below the bias-free
+ensemble's 0.818/0.904/0.951 [F-phantom]. Truth-assisted, scorer-assigned envelopes fell 12–13 points short of their own baseline, so part of the gap is label mapping.
 
 ## Discussion
 
-**Precision and accuracy need separate terms.** The map adds a few points of coverage; the phantom's
-systematic error is several times larger, and no rescan reveals it. Tractography's systematic errors are
-well documented;<sup>19,21,22</sup> here they appear as a coverage gap against ground truth. Each statement must name its
-event, a rescan or the anatomy; our accuracy term is provisional and not combined with the map.
+**Precision and accuracy need separate terms.** The phantom's systematic error, invisible to rescans, is several times
+the map's few-point correction. Such errors are well documented;<sup>19,21,22</sup> we measure them as a coverage gap,
+kept separate from the map. Each statement names its event: rescan or anatomy.
 
-**Maps are per protocol.** Most of the correction is within-session overconfidence; the other-session term adds
-0.7–1.5 points of coverage, consistent with MASiVar's variability ordering.<sup>10</sup> cIs1 stayed miscalibrated, so
-each protocol needs its own test-retest data, and scans without a matching map report run-to-run variability only.
+**Maps are per protocol.** Most correction is within-session; the other-session term adds 0.7–1.5 points, consistent
+with MASiVar.<sup>10</sup> On cIs1 (one subject, no interval), protocol, scanner and tracked shell are confounded. One
+training subject removes most miscalibration, so on this protocol a handful of volunteers suffices.
 
-**Limits.** One scanner protocol, healthy adults, eight subjects (five for other sessions), one phantom at b = 1000,
-R fixed at 17, statements pooled over tracts.
+**Limits.** One protocol; healthy adults; 5–8 subjects per interval; one phantom at b = 1000; R fixed; only rescans are
+resampled; streamline events need a rescan streamline from the seed (95–99%); large tracts dominate coverage; replicates
+carry ~1.5× the scan's noise variance.
 
 ## Conclusion
 
-A protocol-specific recalibration map learned from eight test-retest subjects makes single-scan tract statements
-calibrated for held-out rescans on that protocol. Claims about anatomy need a separate accuracy term.
+Held out by subject, a protocol-specific recalibration map makes single-scan tract envelopes cover a rescan's tract at
+their stated levels on this protocol. Anatomical claims need a separate accuracy term.
 
 ## Acknowledgements
 
-[PLACEHOLDER: grants, code and data links.] MASiVar data: OpenNeuro ds003416 (CC0).
-
-## Figures
-
-**Preview figure** (no caption): `bench/results/ismrm2027/preview.png`.
-
-**Figure 1** (`fig1_pipeline.png`). Whole-pipeline bootstrap ensemble. One scan and 16 wild-bootstrap replicates with
-spatially smooth sign patterns each pass through susceptibility-field estimation, UKF tractography (b = 2000) and
-RapidParc labeling (42 tracts plus Other), giving 17 votes per seed, voxel and point. If a protocol-specific
-recalibration map matches the scan's protocol, the votes become probabilities for a same-session or other-session
-rescan; otherwise the output is labeled run-to-run only.
-
-**Figure 2** (`fig2_streamline_calibration.png`). Held-out reliability of the streamline statement, P(a rescan gives the
-ensemble's tract), leave-one-subject-out: (a) same-session rescans, 8 subjects; (b) other-session rescans, 5 subjects.
-Thin lines: subjects. As stated (orange): ECE 0.070 and 0.097. With the protocol-specific recalibration map (blue):
-0.008 in both. PAT16's double-bootstrap map, fitted without rescans (dashed): 0.019 and 0.027. Dotted: identity.
-
-**Figure 3** (`fig3_envelope_coverage.png`). Presence-envelope coverage of the rescan's tract, pooled over 42 tracts,
-held out: (a) same session; (b) other session. Circles: subjects at targets 0.8, 0.9 and 0.95. As stated, envelopes
-cover 2–5 points less than their level (0.777/0.869/0.921 and 0.760/0.852/0.906). At the map's levels, coverage is
-0.803/0.904/0.954 and 0.802/0.902/0.952, every subject within 1.2 points below to 1.7 above target.
-
-**Figure 4** (`fig4_phantom_gap.png`). ISMRM 2015 phantom, 14 bundles with a label counterpart, 2023 ROI scoring.
-Coverage of the ground truth's presence, subsampled to each run's streamline count. The pipeline's 17-run labeled
-envelopes (orange) cover 0.650, 0.724 and 0.778 at stated 0.8, 0.9 and 0.95; a bias-free ensemble of ground-truth
-subsamples (green) holds its levels (0.818, 0.904, 0.951). Gap: 17–18 points. Dots: bundles. One simulated brain; no
-interval.
-
-**Figure 5** (`fig5_cst_envelopes.png`). One subject's corticospinal tract (cIIIs04), from a single scan. Envelopes at
-the recalibrated levels for targets 0.8 and 0.95 (stated 0.83 and 0.98, from the fold that excludes this subject)
-cover 0.80 and 0.97 of the same-session rescan's tract (yellow outline). Axial and coronal slices. Per-tract coverage
-was not validated; shown for illustration.
+[PLACEHOLDER: grants; code and data links.] MASiVar data: OpenNeuro ds003416 (CC0).
 
 ## References
 
@@ -160,28 +133,68 @@ was not validated; shown for illustration.
 21. Thomas C, Ye FQ, Irfanoglu MO, et al. Anatomical accuracy of brain connections derived from diffusion MRI tractography is inherently limited. Proc Natl Acad Sci U S A. 2014;111(46):16574-16579.
 22. Schilling KG, Nath V, Hansen C, et al. Limits to anatomical accuracy of diffusion tractography using modern approaches. NeuroImage. 2019;185:1-11.
 
+## Figure pool
+
+Up to five are chosen from these, plus the preview. Each caption is at most 500 characters. Files are in
+bench/results/ismrm2027/; the captions describe the figures as being relabeled.
+
+**[F-pipeline]** (`fig1_pipeline.png`). The scan and 16 wild-bootstrap replicates (smooth sign patches, FWHM 4 voxels)
+each pass through susceptibility-field estimation, UKF tractography at b = 2000 and RapidParc labeling (42 tracts plus
+Other): R = 17 votes per seed, voxel and point. If a protocol-specific recalibration map, validated leave-one-subject-out
+on 8 test-retest subjects, matches the scan's protocol, votes become rescan probabilities; otherwise the output is
+run-to-run only.
+
+**[F-streamline]** (`fig2_streamline_calibration.png`). A diagnostic: held-out reliability of P(a rescan gives the seed
+the ensemble's tract), leave-one-subject-out, for (a) same-session rescans, 8 subjects, and (b) other-session rescans, 5
+subjects. Thin lines: subjects. As stated (orange): ECE 0.070 and 0.097. With the map (blue): 0.008 in both. Gray: a
+double-bootstrap map fitted on a patient scan with no rescan (PAT16), 0.019 and 0.027. Dotted: identity.
+
+**[F-coverage]** (`fig3_envelope_coverage.png`). Held-out coverage of the rescan's tract by presence envelopes, pooled
+over 42 tracts, against target coverage: (a) same session; (b) other session. Circles: subjects at targets 0.8, 0.9
+and 0.95. As stated, envelopes cover 2–5 points less than their target (0.777/0.869/0.921 and 0.760/0.852/0.906). At
+the map's levels, coverage is 0.803/0.904/0.954 and 0.802/0.902/0.952, every subject within −1.2 to +1.7 points.
+
+**[F-phantom]** (`fig4_phantom_gap.png`). ISMRM 2015 phantom, 14 bundles, 2023 ROI scoring. Coverage of ground-truth
+presence subsampled to each run's streamline count. Envelopes at stated levels (no map applies to this protocol;
+orange) cover 0.650, 0.724 and 0.778 at 0.8, 0.9 and 0.95; a bias-free ensemble of ground-truth subsamples (green)
+holds its levels (0.818, 0.904, 0.951). Part of the 17–18-point gap is label mapping. Dots: bundles. One simulated
+brain; no interval.
+
+**[F-cst]** (`fig5_cst_envelopes.png`). One subject's corticospinal tract (cIIIs04), from a single scan, axial and
+coronal. Envelopes at the map's levels for targets 0.8 and 0.95 (stated 0.83 and 0.98, from the fold that excludes this
+subject) cover 0.80 and 0.97 of the same-session rescan's tract (yellow outline). One tract, for illustration;
+per-tract coverage was not validated.
+
+**[F-learning]** (`learning_curve.png`). Held-out calibration against the number of training subjects k, the map
+refitted on every set of k of the other subjects; k = 0 is as stated. Same session, k = 1 to 7; other session, k = 1 to
+4. Envelope coverage error at targets 0.8, 0.9 and 0.95 is +0.002 to +0.005 from k = 1 on (as stated, −0.023 to
+−0.048). Streamline ECE falls from 0.011 at k = 1 to 0.008. Lines: means; bands: 10th–90th percentiles over held-out
+subjects and training sets.
+
+**[F-preview]** (`preview_coverage.png` or `preview_streamline.png`; ISMRM previews carry no caption). Held-out
+envelope coverage of a rescan's tract (the headline), or the streamline reliability diagnostic, as stated and with
+the protocol-specific recalibration map.
+
 ## Counts
 
-Counted with a script (Markdown, comments and superscript numbers removed; words are whitespace-separated tokens, so
-numbers and intervals count as words). Limits from the 2027 call, with a margin of about 5 %:
+Counted with a script (Markdown, comments, superscript numbers and [F-…] tags removed; words are whitespace-separated
+tokens, so numbers and intervals count as words). Limits from the 2027 call; target margin about 5 %:
 
 | part | count | limit |
 |---|---|---|
-| title | 114 characters | about 125 |
-| impact statement | 36 words | 40 |
+| title | 117 characters | about 125 |
+| impact statement | 38 words | 40 |
 | synopsis (with its four labels) | 95 words | 100 |
-| body (Introduction 88, Methods 295, Results 159, Discussion 136, Conclusion 28) | 706 words (711 with the five headings) | 750 |
-| Figure 1 caption | 475 characters | 500 |
-| Figure 2 caption | 418 characters | 500 |
-| Figure 3 caption | 403 characters | 500 |
-| Figure 4 caption | 429 characters | 500 |
-| Figure 5 caption | 352 characters | 500 |
+| body (Introduction 76, Methods 303, Results 166, Discussion 132, Conclusion 30) | 707 words (712 with the five headings) | 750 |
+| captions: F-pipeline 451, F-streamline 406, F-coverage 415, F-phantom 437, F-cst 343, F-learning 448, F-preview 164 characters | | 500 each |
 
-Notes for submission:
-- The figure files still say "card" (Fig. 1 box "Calibration card"; Figs. 2, 3 and the preview legend "With card";
-  Fig. 5 title "card-calibrated"). The text says "protocol-specific recalibration map"; the figures need relabeling.
-- The other-session rescans are not all later than the reference (cIIIs01's is an earlier session), so the text says
-  "other-session", not "later-session".
-- The phantom envelopes are at the stated levels (no map exists for the phantom's protocol); the gap is quoted against
-  the bias-free ensemble, as in NOTES step 4.
-- Point ECE, the cIs1 figures and the phantom figures have no intervals (ranges or single point estimates only).
+Notes:
+- ECE uses seven bins of stated probability (edges 0, 0.5, 0.7, 0.8, 0.9, 0.95, 0.99, 1; calibration_card.ECE_BINS),
+  not bins by vote count; the map itself is fitted per vote count (k = 1–17).
+- The learning-curve coverage error with the map is +0.0015 to +0.0045 over every k, term and target (written +0.002 to
+  +0.005); its point ECE eases from 0.018 to 0.014 (same session), not quoted for space.
+- "Other-session", not "later-session": cIIIs01's other-session rescan is from an earlier session.
+- The cIs1 refusal is not reported as a finding: it follows from the protocol check by construction.
+- PAT16's double-bootstrap map (an R = 11 vote table, fitted on a patient with no rescan) is now only in the
+  F-streamline caption.
+- No 95 % intervals for point ECE, the learning curve, cIs1 or the phantom (single estimates or ranges only).

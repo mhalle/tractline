@@ -33,7 +33,8 @@ points treated as independent, which they are not: a lower bound on the within-s
 difference tau^2 (method of moments). A k-subject map's error about the population is about tau / sqrt(k); a new
 subject deviates from the population by tau whatever k is, so the held-out error scales as tau * sqrt(1 + 1/k).
 
-Writes results/calibration_learning_curve.json and results/ismrm2027/learning_curve.{png,pdf}.
+Writes results/calibration_learning_curve.json, results/ismrm2027/learning_curve.{png,pdf} (two panels, for the
+abstract) and results/ismrm2027/learning_curve_full.{png,pdf} (six panels).
 """
 import argparse, itertools, json, sys
 from pathlib import Path
@@ -245,9 +246,10 @@ def run():
 def figure(res):
     from ismrm2027_figures import mpl, save, C
     plt = mpl()
-    tc = {0.8: "#009E73", 0.9: C["card"], 0.95: "#CC79A7"}               # Okabe-Ito green, blue, reddish purple
-    fc = {"1": (C["card"], "-", "all statements"), "0.1": (C["sky"], "--", "10 % of statements"),
-          "0.01": (C["gray"], ":", "1 % of statements")}
+    # the abstract's palette: map blue, as stated orange, PAT16 dark gray; targets told apart by marker and line
+    tm = {0.8: ("o", "-"), 0.9: ("s", "--"), 0.95: ("^", ":")}
+    fc = {"1": (C["map"], "-", "all statements"), "0.1": (C["sky"], "--", "10 % of statements"),
+          "0.01": (C["sky"], ":", "1 % of statements")}
     fig, axes = plt.subplots(3, 2, figsize=(7.2, 7.4), sharex=True)
     for col, term in enumerate(TERMS):
         t = res["terms"][term]
@@ -271,7 +273,7 @@ def figure(res):
                 if f == "1":
                     ax.fill_between(ks, lo, hi, color=colr, alpha=0.18, lw=0, zorder=1)
                 ax.plot(ks, y, color=colr, ls=ls, lw=1.8 if f == "1" else 1.2, marker="o" if f == "1" else None, ms=3.5,
-                        zorder=4 if f == "1" else 2, label=f"card, {lab}")
+                        zorder=4 if f == "1" else 2, label=f"map, {lab}")
             top = max([st["p90"], pt["mean"]] + [lc[f][k][m]["mean"] for f in lc for k in lc[f]])
             ax.set_ylim(0, top * 1.08)
             ax.set_ylabel(m)
@@ -280,7 +282,7 @@ def figure(res):
             if col == 0 and row == 0:
                 ax.legend(frameon=False, loc="upper right", bbox_to_anchor=(1.0, 0.74), fontsize=7, handlelength=1.8)
             if col == 0 and row == 1:
-                ax.text(kmax + 0.3, pt["mean"] + 0.0015, "PAT16 map, applied off its fit", ha="right", va="bottom", fontsize=6.5, color=C["gray"])
+                ax.text(kmax + 0.3, pt["mean"] + 0.0015, "PAT16 map, applied off its fit", ha="right", va="bottom", fontsize=6.5, color=C["pat16"])
         ax = axes[2, col]
         hline(ax, 0, color=C["black"], lw=0.6, zorder=1)
         f = lc["1"]
@@ -291,24 +293,77 @@ def figure(res):
             st = refs["as stated (k = 0)"][m]
             y = np.array([f[str(k)][m]["mean"] for k in ks])
             lo = np.array([f[str(k)][m]["p10"] for k in ks]); hi = np.array([f[str(k)][m]["p90"] for k in ks])
-            ax.errorbar(np.array(ks) + dx, y, yerr=[y - lo, hi - y], color=tc[q], lw=1.5, marker="o", ms=3.5, capsize=1.5,
-                        elinewidth=0.8, zorder=4, label=f"card, target {q:g}")
-            hline(ax, st["mean"], color=tc[q], lw=0.8, ls="--", zorder=1)
-            ax.errorbar([dx], [st["mean"]], yerr=[[st["mean"] - st["p10"]], [st["p90"] - st["mean"]]], fmt="s", ms=4,
-                        color=tc[q], capsize=2, lw=1, zorder=3)
+            mk, ls = tm[q]
+            ax.errorbar(np.array(ks) + dx, y, yerr=[y - lo, hi - y], color=C["map"], ls=ls, lw=1.3, marker=mk, ms=3.5,
+                        capsize=1.5, elinewidth=0.8, zorder=4, label=f"map, target {q:g}")
+            hline(ax, st["mean"], color=C["stated"], lw=0.8, ls=ls, zorder=1)
+            ax.errorbar([dx], [st["mean"]], yerr=[[st["mean"] - st["p10"]], [st["p90"] - st["mean"]]], fmt=mk, ms=4,
+                        color=C["stated"], capsize=2, lw=1, zorder=3)
         ax.set_ylabel("envelope coverage − target")
         ax.set_xlabel("training subjects, k")
         if col == 1:
-            ax.plot([], [], color=C["gray"], lw=0.8, ls="--", label="as stated (k = 0, dashed)")
+            ax.plot([], [], color=C["stated"], lw=0.8, ls="--", label="as stated (k = 0; same markers)")
             ax.legend(frameon=False, loc="center right", fontsize=7)
     for ax in axes.ravel():
         ax.set_xticks(range(0, 8))
         ax.set_xticklabels(["0\nas stated"] + [str(k) for k in range(1, 8)])
         ax.set_xlim(-0.4, 7.4)
         ax.grid(axis="y", color="#E5E5E5", lw=0.5, zorder=0)
-    fig.text(0.5, -0.005, "Held out one subject at a time; card fitted on every set of k of the others. Lines: mean; "
+    fig.text(0.5, -0.005, "Held out one subject at a time; map fitted on every set of k of the others. Lines: mean; "
              "bands and bars: 10th–90th percentile over held-out subjects and training sets.", ha="center", fontsize=7, color=C["gray"])
     fig.tight_layout(h_pad=0.8)
+    save(fig, "learning_curve_full")
+    plt.close(fig)
+
+
+def figure_simple(res):
+    """For the abstract: held-out streamline ECE and envelope coverage error against the number of training subjects,
+    both terms, all statements, with the as-stated and PAT16 references."""
+    from ismrm2027_figures import mpl, save, C
+    plt = mpl()
+    plt.rcParams.update({"font.size": 10, "axes.labelsize": 10.5, "xtick.labelsize": 9.5, "ytick.labelsize": 9.5,
+                         "legend.fontsize": 8.5, "axes.titlesize": 11})
+    fig, axs = plt.subplots(1, 2, figsize=(7.0, 3.2))
+    style = {"same session": ("-", "o"), "other session": ("--", "s")}
+    for term in TERMS:
+        t = res["terms"][term]
+        lc = t["learning curve (fraction of each training subject's statements -> k)"]["1"]
+        refs = t["references"]
+        ks = sorted(int(k) for k in lc)
+        ls, mk = style[term]
+        lab = f"{term} ({len(t['subjects'])})"
+        # a: streamline ECE
+        ax = axs[0]
+        y = [lc[str(k)]["streamline ECE"]["mean"] for k in ks]
+        lo = [lc[str(k)]["streamline ECE"]["p10"] for k in ks]; hi = [lc[str(k)]["streamline ECE"]["p90"] for k in ks]
+        ax.fill_between(ks, lo, hi, color=C["map"], alpha=0.12, lw=0)
+        ax.plot(ks, y, color=C["map"], ls=ls, marker=mk, ms=4, lw=1.8)
+        ax.axhline(refs["as stated (k = 0)"]["streamline ECE"]["mean"], color=C["stated"], ls=ls, lw=1.3)
+        ax.axhline(refs["PAT16 map"]["streamline ECE"]["mean"], color=C["pat16"], ls=ls, lw=1.3)
+        # b: envelope coverage error, mean |coverage - target| over the targets 0.8, 0.9, 0.95
+        ax = axs[1]
+        err = lambda d: float(np.mean([d[f"coverage error at {q:g}"]["mean |error|"] for q in TARGETS]))  # noqa: E731
+        ax.plot(ks, [err(lc[str(k)]) for k in ks], color=C["map"], ls=ls, marker=mk, ms=4, lw=1.8)
+        ax.axhline(err(refs["as stated (k = 0)"]), color=C["stated"], ls=ls, lw=1.3)
+    axs[0].set_ylabel("Streamline ECE (diagnostic)")
+    axs[1].set_ylabel("Envelope coverage error\n(mean |coverage − target|)")
+    axs[0].set_title("Streamline statement")
+    axs[1].set_title("Envelopes, targets 0.8–0.95")
+    for ax, lab in zip(axs, "ab"):
+        ax.set_xlabel("Training subjects")
+        ax.set_xticks(range(1, 8))
+        ax.set_xlim(0.6, 7.4)
+        ax.set_ylim(0, None)
+        ax.text(-0.18, 1.04, lab, transform=ax.transAxes, fontsize=12, weight="bold")
+    from matplotlib.lines import Line2D
+    handles = [Line2D([], [], color=C["map"], lw=1.8, label="Map, held out"),
+               Line2D([], [], color=C["stated"], lw=1.3, label="As stated"),
+               Line2D([], [], color=C["pat16"], lw=1.3, label="PAT16 map (streamline only)"),
+               Line2D([], [], color="black", ls="-", marker="o", ms=4, lw=1, label="Same session (8)"),
+               Line2D([], [], color="black", ls="--", marker="s", ms=4, lw=1, label="Other session (5)")]
+    fig.legend(handles=handles, loc="lower center", ncol=5, frameon=False, bbox_to_anchor=(0.5, -0.01),
+               handlelength=2.0, columnspacing=1.0, fontsize=8)
+    fig.tight_layout(rect=(0, 0.08, 1, 1))
     save(fig, "learning_curve")
     plt.close(fig)
 
@@ -320,6 +375,7 @@ def main():
     res = run() if a.what in ("all", "run") else json.loads(OUT.read_text())
     if a.what in ("all", "figure"):
         figure(res)
+        figure_simple(res)
 
 
 if __name__ == "__main__":
