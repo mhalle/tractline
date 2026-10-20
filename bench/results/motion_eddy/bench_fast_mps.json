@@ -1,0 +1,15 @@
+{
+ "device": "mps",
+ "sizes": {
+  "96x96x50x100": {
+   "moments_v2_ms": 149.5,
+   "final_cubic_8fetch_ms": 2924.9,
+   "mps_driver_mb": 3149
+  },
+  "104x104x72x105": {
+   "moments_v2_ms": 261.8,
+   "final_cubic_8fetch_ms": 5210.0,
+   "mps_driver_mb": 5381
+  }
+ }
+}
