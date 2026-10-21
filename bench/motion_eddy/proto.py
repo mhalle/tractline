@@ -29,6 +29,11 @@ ap.add_argument("--outer", type=int, default=5)
 ap.add_argument("--eddy-scale", type=float, default=1.0, help="multiplies the simulated eddy only")
 ap.add_argument("--inner", type=int, default=3)
 ap.add_argument("--seed", type=int, default=0)
+ap.add_argument("--grad", default="autograd", choices=["autograd", "taps"], help="with --fast: the cubic gradient by autograd through the 8 fetches, or the one-pass 64 taps")
+ap.add_argument("--selftest", action="store_true", help="check the fast path's pieces against the originals, then exit")
+ap.add_argument("--fast", action="store_true", help="the final form (acquisition-space residual, cubic, one step per prediction) with the profile's fixes")
+ap.add_argument("--coarse", type=int, default=12, help="with --fast: the first steps on every other voxel per axis")
+ap.add_argument("--trial-vox", type=float, default=0.3, help="with --fast: an LM trial only when a step moves an edge point more than this (voxels)")
 ap.add_argument("--profile", action="store_true", help="time the acquisition-cost loop's parts (device-synchronized)")
 ap.add_argument("--cubic", action="store_true", help="with --acq-cost: the prediction sampled by cubic B-splines (8 fetches), its gradient exact")
 ap.add_argument("--acq-cost", action="store_true", help="residual in acquisition space: the prediction moved into each volume's acquired grid and compared with the raw data there (no interpolation of noisy data)")
@@ -306,6 +311,186 @@ def tick(name=None):                                                            
 
 
 ntrials = 0
+
+# ---------------------------------------------------------------- the fast path (--fast): the final form with the profile's fixes
+E_PE = torch.eye(3, dtype=dt, device=dev)[PE]
+
+
+def eddy_poly(te, x):
+    """The eddy displacement (voxels along PE) of coefficients te (G, NMON) at points x ((N, 3) shared or (G, N, 3)),
+    written out: no (G, N, NMON) monomial array."""
+    u = (x - cen) / half
+    a, b, c = u.unbind(-1)
+    k = lambda i: te[:, i, None]                                                          # (G, 1): broadcasts over (N,) or (G, N)
+    e = k(0) + k(1) * a + k(2) * b + k(3) * c
+    if NMON == 10:
+        e = e + k(4) * a * a + k(5) * b * b + k(6) * c * c + k(7) * a * b + k(8) * a * c + k(9) * b * c
+    return e                                                                              # (G, N)
+
+
+def phi_fast(theta, x):
+    R = rot(theta[:, 3:6])
+    xm = (x - cen) * vox_t
+    p = (torch.einsum("gij,nj->gni" if x.dim() == 2 else "gij,gnj->gni", R, xm) + theta[:, None, :3]) / vox_t + cen
+    return p + eddy_poly(theta[:, 6:], x)[..., None] * E_PE
+
+
+def phi_inv_fast(theta, y, n=2):
+    """x with phi(x) = y: the rigid part inverted in closed form, x = c + R^T((y - e(x) e_pe - c) vox - t) / vox, with the
+    eddy displacement e taken at the previous x (from e(y)); n passes."""
+    R = rot(theta[:, 3:6])
+    te, t = theta[:, 6:], theta[:, None, :3]
+    e = eddy_poly(te, y)
+    for _ in range(n):
+        q = (y - cen) * vox_t - e[..., None] * (E_PE * vox_t) - t                         # (G, N, 3) mm
+        x = torch.einsum("gji,gnj->gni", R, q) / vox_t + cen                              # R^T q
+        e = eddy_poly(te, x)
+    return x
+
+
+def sample_vec(vols, p):                                                                  # vols (G, C, X, Y, Z), p (G, N, 3) -> (G, N, C) trilinear
+    sizes = torch.tensor([X, Y, Z], dtype=dt, device=dev)
+    s = F.grid_sample(vols, (2 * p / (sizes - 1) - 1)[..., [2, 1, 0]][:, None, None], mode="bilinear",
+                      padding_mode="border", align_corners=True)                         # (G, C, 1, 1, N)
+    return s[:, :, 0, 0].transpose(1, 2)
+
+
+def cubic_value_grad(coef, p):
+    """The cubic B-spline of coef (G, X, Y, Z) at p (G, N, 3) and its exact gradient (voxels): one pass over the 64 taps,
+    each coefficient gathered once and accumulated into the value and the three derivatives (no autograd). Edges clamped."""
+    Gn = coef.shape[0]
+    i0 = torch.floor(p); t = p - i0; i0 = i0.long()
+    w = [(1 - t) ** 3 / 6, (3 * t ** 3 - 6 * t ** 2 + 4) / 6, (-3 * t ** 3 + 3 * t ** 2 + 3 * t + 1) / 6, t ** 3 / 6]
+    dw = [-(1 - t) ** 2 / 2, (3 * t ** 2 - 4 * t) / 2, (-3 * t ** 2 + 2 * t + 1) / 2, t ** 2 / 2]
+    flat = coef.reshape(Gn, -1)
+    val = torch.zeros(p.shape[:2], dtype=coef.dtype, device=coef.device)
+    gx, gy, gz = torch.zeros_like(val), torch.zeros_like(val), torch.zeros_like(val)
+    for a in range(4):
+        ia = (i0[..., 0] + a - 1).clamp(0, X - 1)
+        for b in range(4):
+            ib = (i0[..., 1] + b - 1).clamp(0, Y - 1)
+            wab, dab_x, dab_y = w[a][..., 0] * w[b][..., 1], dw[a][..., 0] * w[b][..., 1], w[a][..., 0] * dw[b][..., 1]
+            base = (ia * Y + ib) * Z
+            for c in range(4):
+                ic = (i0[..., 2] + c - 1).clamp(0, Z - 1)
+                v = torch.gather(flat, 1, base + ic)
+                wc, dc = w[c][..., 2], dw[c][..., 2]
+                val = val + wab * wc * v
+                gx = gx + dab_x * wc * v
+                gy = gy + dab_y * wc * v
+                gz = gz + wab * dc * v
+    return val, torch.stack([gx, gy, gz], -1)
+
+
+if args.selftest:
+    with torch.no_grad():
+        tt = th_true_t.clone()
+        y = xe[:5000]
+        e1 = eddy_poly(tt[:, 6:], y); e2 = tt[:, 6:] @ monomials(y).T
+        print("eddy_poly vs monomials:", float((e1 - e2).abs().max()))
+        print("phi_fast vs phi:", float((phi_fast(tt, y) - phi(tt, y)).abs().max()))
+        xi = phi_inv_fast(tt, y); xo = phi_inv(tt, y)
+        print("phi(phi_inv_fast(y)) - y:", float((phi(tt, xi) - y).abs().max()), " vs phi_inv:", float((phi(tt, xo) - y).abs().max()))
+        pv_ = truth_t[:, :, :, :]
+        gv_ = torch.stack(torch.gradient(pv_, dim=(1, 2, 3)), 1)
+        co_ = prefilter(pv_)
+    xq = phi_inv(tt, xe[:20000]).detach().requires_grad_(True)
+    v_ = sample_cubic(co_, xq); ga, = torch.autograd.grad(v_.sum(), xq)
+    gb = sample_vec(gv_, xq.detach())
+    vv, gc = cubic_value_grad(co_, xq.detach())
+    print("64-tap value vs 8-fetch:", float((vv - v_.detach()).abs().max() / v_.detach().abs().max()),
+          " gradient vs autograd:", float((gc - ga).abs().max() / ga.abs().max()))
+    cc = [float(torch.corrcoef(torch.stack([ga[..., i].reshape(-1), gb[..., i].reshape(-1)]))[0, 1]) for i in range(3)]
+    print("gradient: autograd cubic vs sampled gradient volume, corr per axis:", [round(c, 4) for c in cc],
+          "ratio of norms:", round(float(gb.norm() / ga.norm()), 4))
+    sys.exit(0)
+if args.fast:
+    fw_steps = [2.0, 1.0] + [0.0] * (args.outer - 2)                                      # the 15 x 1 schedule's smoothing
+    coarse = args.coarse                                                                  # the first steps on 1/8 of the points
+    sub = torch.tensor(np.flatnonzero((np.argwhere(emask) % 2 == 0).all(1)), device=dev)  # every other voxel per axis
+    ye_full = xe
+    mon_full = monomials(xe)                                                              # (N, NMON), the Jacobian's (at y, not x)
+    ym_full = (xe - cen) * vox_t
+    rng_t = torch.Generator(device="cpu").manual_seed(1)
+    probe = xedge[torch.randperm(len(xedge), generator=rng_t)[:2000].to(dev)]            # edge points for the step size
+    smooth_cache = {}
+    for it, fw in enumerate(fw_steps):
+        tick()
+        if fw not in smooth_cache:
+            smooth_cache[fw] = smooth(acq, fw)
+        vols = smooth_cache[fw]
+        obs_full = vols.reshape(G, -1)[:, lin_e]                                          # the raw data at the grid: never interpolated
+        tick("smooth")
+        with torch.no_grad():
+            u = sample_lin(vols, phi_fast(th, xp))
+            pv = torch.zeros(G, X * Y * Z, dtype=dt, device=dev)
+            pv[:, lin_p] = W @ u
+            pv = pv.reshape(G, X, Y, Z)
+            coef = prefilter(pv)
+        tick("predict (resample, matmul, prefilter)")
+        c_ = it < coarse
+        ys, obs = (ye_full[sub], obs_full[:, sub]) if c_ else (ye_full, obs_full)
+        mon, ym = (mon_full[sub], ym_full[sub]) if c_ else (mon_full, ym_full)
+        with torch.no_grad():
+            x = phi_inv_fast(th, ys)
+            tick("phi_inv (step)")
+            if args.grad == "taps":
+                Pm, gp = cubic_value_grad(coef, x)                                        # value and exact gradient, one 64-tap pass
+            else:
+                with torch.enable_grad():
+                    xq = x.detach().requires_grad_(True)
+                    Pm = sample_cubic(coef, xq)                                           # 8 fetches; gradient exact to ~1e-4
+                    gp, = torch.autograd.grad(Pm.sum(), xq)
+                Pm = Pm.detach()
+            tick("sample + gradient")
+            r = Pm - obs
+            w = th[:, 3:6]
+            rc = []
+            for j in range(3):
+                dw = torch.zeros_like(w); dw[:, j] = 1e-4
+                dR = (rot(w + dw) - rot(w - dw)) / 2e-4
+                rc.append(((torch.einsum("gij,nj->gni", dR, ym) / vox_t) * gp).sum(-1))
+            J = -torch.cat([gp / vox_t, torch.stack(rc, -1), gp[..., PE:PE + 1] * mon[None]], -1) * scale
+            H = torch.bmm(J.transpose(1, 2), J)
+            b = torch.bmm(J.transpose(1, 2), r[..., None])[..., 0]
+            f0 = (r ** 2).sum(1)
+            Hd = torch.diagonal(H, dim1=1, dim2=2)
+            tick("jacobian + H, b")
+            accept = torch.zeros(G, dtype=torch.bool, device=dev)
+            th_new = th.clone()
+            for _ls in range(6):
+                todo = ~accept
+                if not bool(todo.any()):
+                    break
+                A_ = H + torch.diag_embed(mu[:, None] * Hd)
+                step = -torch.linalg.solve(A_.cpu(), b.cpu()[..., None])[..., 0].to(dev) * scale
+                cand = th + step
+                big = (phi_fast(cand, probe) - phi_fast(th, probe)).norm(dim=-1).amax(1) > args.trial_vox
+                need = todo & (big | (it < 2))                                            # a trial only for large steps (and the first two)
+                free = todo & ~need
+                th_new[free] = cand[free]; accept |= free
+                mu = torch.where(free, (mu / 3).clamp_min(1e-7), mu)
+                if bool(need.any()):
+                    k = torch.nonzero(need)[:, 0]
+                    f1 = ((sample_cubic(coef[k], phi_inv_fast(cand[k], ys)) - obs[k]) ** 2).sum(1)
+                    ntrials += 1
+                    ok = torch.zeros(G, dtype=torch.bool, device=dev); ok[k] = f1 < f0[k]
+                    th_new[ok] = cand[ok]; accept |= ok
+                    bad = need & ~ok
+                    mu = torch.where(ok, (mu / 3).clamp_min(1e-7), torch.where(bad, mu * 8, mu))
+                    if not bool(bad.any()):
+                        break
+                else:
+                    break
+            th = th_new
+            tick("LM trials (solve, inverse, sample)")
+        if args.profile or it == len(fw_steps) - 1 or it % 5 == 0:
+            history.append({"step": it, "fwhm": fw, "coarse": bool(c_), "accepted": int(accept.sum()),
+                            "edge_err_rms_p95": [round(v, 3) for v in edge_err(th)]})
+            print(history[-1], flush=True)
+        tick("diagnostics (edge error)")
+    fwhms = []
+    args.acq_cost = False                                                                 # skip the other paths below
 if args.acq_cost:
     for it, fw in enumerate(fwhms):
         tick()
@@ -413,6 +598,6 @@ info.update({"true_edge_displacement_rms_p95_vox": [round(v, 3) for v in disp_tr
              "gn_iterations": args.outer * args.inner, **timings, "history": history,
              **({"profile_s": {k: round(v, 2) for k, v in prof.items()}, "lm_trials": ntrials} if args.profile else {}),
              "device": args.device})
-tag = f"_{args.device}_o{args.order}" + ("_noloo" if args.no_loo else "") + (f"_s{args.scale}" if args.scale != 1 else "") + (f"_e{args.eddy_scale}" if args.eddy_scale != 1 else "") + f"_n{args.outer}" + (f"_f{args.final_fwhm}" if args.final_fwhm else "") + ("_slm" if args.slm else "") + ("_acq" if args.acq_cost else "") + ("_cubic" if args.cubic else "") + ("_prof" if args.profile else "")
+tag = f"_{args.device}_o{args.order}" + ("_noloo" if args.no_loo else "") + (f"_s{args.scale}" if args.scale != 1 else "") + (f"_e{args.eddy_scale}" if args.eddy_scale != 1 else "") + f"_n{args.outer}" + (f"_f{args.final_fwhm}" if args.final_fwhm else "") + ("_slm" if args.slm else "") + ("_acq" if args.acq_cost else "") + ("_cubic" if args.cubic else "") + (f"_fast_c{args.coarse}_{args.grad}" if args.fast else "") + ("_prof" if args.profile else "")
 json.dump(info, open(OUT / f"proto{tag}.json", "w"), indent=1)
 print(json.dumps({k: v for k, v in info.items() if k != "history"}))

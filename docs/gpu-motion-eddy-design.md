@@ -29,12 +29,13 @@ Levenberg-Marquardt Gauss-Newton fit over all volumes at once, in PyTorch, on MP
   - the prototype's whole estimate takes 14 s for 50 volumes;
   - the final cubic resample takes 2.9 s / 5.2 s, as eight trilinear fetches.
 
-  The final form (below) is slower: 103 s unoptimized. Section 3 lists where that time goes and what removes it. A
-  fused sample-and-moments kernel is in phase 1's scope.
+  The final form (below) took 103 s at first. Plain-torch fixes cut it to **20 s for 50 volumes** at the same
+  accuracy (section 3): about 40 s for a 105-volume scan, twice the field estimate. A fused sample-and-gradient
+  kernel is in phase 1's scope.
 - **Prototype against eddy, on one synthetic scan with known motion and eddy** (section 2.1). FSL eddy (`eddy_cpu`
   2602.0, installed natively) gets the edge displacement from 1.52 voxels RMS to 0.105, with b-vector rotation error
   0.13 deg, in 36 min on 6 CPU threads. The prototype's first form stopped at 0.24-0.28 voxels. Three changes bring it
-  to **0.103 voxels and 0.12 deg in 103 s on MPS**, matching eddy:
+  to **0.103 voxels and 0.12 deg on MPS** (20 s after the section 3 fixes, at 0.107 voxels), matching eddy:
   1. The residual is taken in acquisition space: the smooth prediction is moved into each volume's grid and compared
      with the raw data, so noisy data is never interpolated.
   2. The prediction is sampled with cubic B-splines, so its gradient is continuous.
@@ -365,6 +366,9 @@ The predictions are recomputed after every resampling.
 | **+ cubic, 15 x 1 (prediction rebuilt every step)** | **0.103 / 0.181** | **103 s; rotation error 0.117 deg RMS** |
 | **eddy, `--slm=none`** | **0.105 / 0.186** | **36 min on 6 CPU threads; rotation error 0.129 deg** |
 | eddy, `--slm=linear` | 0.098 / 0.168 | 35 min; rotation error 0.104 deg |
+| final form with the section 3 fixes, 8 of 15 steps coarse (`--fast --coarse 8`) | 0.104 / 0.185 | 31 s; rotation error 0.118 deg |
+| **the same, 12 of 15 steps coarse (`--fast`, the default)** | **0.107 / 0.191** | **20 s; rotation error 0.123 deg** |
+| the same, all 15 steps coarse | 0.115 / 0.207 | 13 s; rotation error 0.134 deg |
 
 The rotation errors are those of the rotated b-vectors against the truth's, as `F R^T F` (section 1.3). eddy's
 `eddy_rotated_bvecs` match that convention.
@@ -436,29 +440,51 @@ The GPU was shared with text and image generation, so these are upper bounds. Th
 | final cubic resample, 8 trilinear fetches | 2.9 s | 5.2 s |
 | prototype, first form (reference-space residual, trilinear; 50 volumes, 104 x 104 x 72, 15 steps) | | 14 s |
 | prototype, final form (acquisition-space residual, cubic, 15 x 1) | | 103 s |
+| the same with the fixes below (`--fast`: 12 coarse steps, then 3 at full resolution) | | 20 s |
 
-The final form is 7x the first form's time, for the same 15 steps. The causes, each with its fix:
-- Every LM trial and step runs the 4-step fixed-point inverse over all volumes. The fix: the rigid part's inverse is
-  closed form, so only the eddy part needs one or two fixed-point steps.
-- The cubic sample is 8 trilinear fetches. The fix: use it only at full resolution, trilinear on the coarse levels.
-- All 15 steps run at full resolution. The fix: subsample the first few.
-- There are up to 6 LM trials per step. The fix: cap at 2, since the steps are small once the prediction is fresh.
-- The explicit (G, N, 16) Jacobian. The fix: the moments, or the fused kernel.
+**The final form, profiled and fixed** (`proto.py --profile`; 50 volumes, 104 x 104 x 72, 15 steps, MPS;
+device-synchronized). Each fix was checked against the synthetic truth, and against eddy's 0.105 voxels:
 
-Projected totals in plain torch, from the piece timings above (they assume those fixes):
-- the estimate: about 15 full-resolution iterations plus LM trials, coarse levels on the CPU;
-- the final resample: the 8-fetch form.
+| part | before | after | the fix |
+|---|---|---|---|
+| LM trials | 33 s (one per step, all accepted) | 0.9-2.5 s (7 trials) | a trial only in the first two steps and when a step moves an edge point more than 0.3 voxel; otherwise the step is taken |
+| the inverse `phi^-1` | 23 s | 0.9-5.6 s | the rigid part in closed form (`x = c + R^T((y - e e_pe - c) vox - t) / vox`), 2 passes for the eddy term, which is evaluated as a written-out polynomial (no (G, N, 10) monomial array) |
+| cubic sample + gradient | 32 s | 3.5-23 s | most steps on every other voxel per axis (1/8 of the points); autograd through the 8 fetches kept |
+| Jacobian, H, b | 13 s | 1-7 s | the rotation and eddy columns at the acquired points `y` (fixed), not at `phi^-1(y)`; `bmm` |
+| predictions, smoothing | 7 s | 6 s | smoothed volumes cached per FWHM |
+| **total** | **109 s** | **20 s (12 coarse steps) / 31 s (8)** | accuracy 0.107 / 0.104 voxels, against 0.103 before and eddy's 0.105 |
+
+Two planned fixes did not work as planned:
+- **A gradient sampled from a finite-difference gradient volume** of the prediction. Its gradient came out 62 % as
+  large as the cubic's true gradient, with a correlation of 0.86. Gauss-Newton converges to where the Jacobian it is
+  given says the cost is flat, so that bias moved the answer: 0.70 voxels. The gradient must be the exact one.
+  - A one-pass 64-tap form that accumulates the value and the exact gradient from each gathered coefficient
+    (`cubic_value_grad`) matches autograd to 1e-4.
+  - On MPS it is slower than autograd through the 8 fetches (35 s against 23 s), because MPS gathers are slow.
+  - It is the natural shape for the fused kernel.
+- **Moments in place of the Jacobian.** With 16 parameters, the per-voxel basis the moments need (g times
+  [1, x, y, z], plus `g_pe` times the 6 quadratic monomials) has 18 terms, more than the parameters. So moments save
+  nothing here.
+
+What remains, at 20 s:
+- The predictions take 4 s. A prediction is rebuilt every step, from all volumes resampled on the mask dilated 4
+  voxels.
+- Each full-resolution step costs about 2 s. Most of that is the 8-fetch cubic with its backward pass.
+
+Scaled to 105 volumes, plain torch gives about 40 s on the M2. The fused kernel gathers the 64 coefficients once and
+accumulates value, gradient and the H, b moments per voxel, with no (G, N, 16) array. It is the remaining lever; it is
+estimated at 3-5x on the steps, which would bring a 105-volume scan to about 10-15 s.
 
 | | 2.5 mm, 100 vol | 2 mm, 105 vol |
 |---|---|---|
-| estimate, plain torch | 8-12 s | 15-22 s |
-| + final resample | 3 s | 5 s |
-| **total, M2, plain torch** | **11-15 s** | **20-27 s** |
-| **total, M2, fused kernel** (sample + gradient + moments, estimated 3x on the iteration) | **5-8 s** | **9-13 s** |
-| CUDA (A10 / L40S): not measured; 3-5x the M2 by the field estimate's ratio | 3-5 s | 5-9 s |
+| estimate, plain torch, fixed (measured at 50 volumes, scaled by volumes x points) | 25-30 s | 40-45 s |
+| + final resample (8-fetch form, measured) | 3 s | 5 s |
+| **total, M2, plain torch** | **about 30 s** | **about 45-50 s** |
+| **total, M2, fused kernel** (estimated) | **8-12 s** | **12-18 s** |
+| CUDA (A10 / L40S): not measured; 3-5x the M2 by the field estimate's ratio | 3-8 s | 4-12 s |
 
-For scale: the field estimate takes 18 s on the M2 and the UKF 27 s. The earlier estimate (3-6 s and 5-12 s) holds
-only with the fused kernel, which is therefore in phase 1.
+For scale: the field estimate takes 18 s on the M2 and the UKF 27 s. The step reaches the field estimate's time only
+with the fused kernel, which is therefore in phase 1.
 
 eddy's own CUDA version took 13 min for 128 volumes of 96 x 96 x 64 (quadratic model, a GeForce 750M; Andersson &
 Sotiropoulos 2016). Its CPU version is "noticeably slower" (FSL user guide). Most of this design's advantage over eddy
@@ -669,7 +695,7 @@ GPU budget: phase 0 about 150 tracking runs; phase 1 one arm over all pairs. Bot
 | phase | scope | effort (focused) | main risks |
 |---|---|---|---|
 | 0 | a direct test with eddy: install fsl-eddy (**done 2026-10-20**; validated on the synthetic scan, section 2.1); eddy on tractline's field for A and the rescan of about 8 extreme pairs (section 6.3); the import loader; arm E-fixed; the accuracy measures. **Gate**: the gap verdict settles the paper's question; the accuracy verdict decides phase 1 | 3-4 days of work, 16 eddy runs (36 min each for 55 volumes on 6 M2 threads, measured: about 10 h locally, or in parallel on Modal), about 150 tracking runs (5-8 GPU hours) | (resolved: eddy installed natively, 2026-10-20) FSL's channel has `fsl-eddy` 2602.0 for osx-arm64 (about 1 MB), and every dependency it lists is already in `DATA/fsl-env` from the topup install, so it adds one package through the same standalone micromamba, no conda; `eddy_cpu` is threaded (`--nthr`); eddy's `--field` input behaving as documented; few pairs, so the gap verdict is only coarse (it only needs to tell under 1 point from more) |
-| 1 | rigid + quadratic eddy, acquisition-space residual (shared with R1's forward model), cubic prediction rebuilt every step, LOO-SH predictor, the joint second-level model as an option, shell anchors, b-vector rotation, the fused sample-and-moments kernel (Metal and Triton), `apply_volumes` (one cubic resample, 8 fetches), forward-model bootstrap (R1), flag and provenance, synthetic tests (starting from `bench/motion_eddy/proto.py`), CPU / MPS / CUDA | 4-5 weeks | the prototype matching eddy on one synthetic scan only (section 2.1), and its 103 s not falling to the projected 20-30 s; gauge and confounds (c0 against PE translation; one-b0 protocols); registration of noisy high-b volumes (b = 2000-2500 at 2.5 mm; Ben-Amitay et al. 2012, Nilsson et al. 2015); b-vector sign conventions; float32 rounding at small steps on MPS; GPU time contended by the queue |
+| 1 | rigid + quadratic eddy, acquisition-space residual (shared with R1's forward model), cubic prediction rebuilt every step, LOO-SH predictor, the joint second-level model as an option, shell anchors, b-vector rotation, the fused sample-and-moments kernel (Metal and Triton), `apply_volumes` (one cubic resample, 8 fetches), forward-model bootstrap (R1), flag and provenance, synthetic tests (starting from `bench/motion_eddy/proto.py`), CPU / MPS / CUDA | 4-5 weeks | the prototype matching eddy on one synthetic scan only (section 2.1), and the fused kernel not bringing a 105-volume scan from about 45 s (plain torch, measured at 50 volumes and scaled) to the field estimate's 18 s; gauge and confounds (c0 against PE translation; one-b0 protocols); registration of noisy high-b volumes (b = 2000-2500 at 2.5 mm; Ben-Amitay et al. 2012, Nilsson et al. 2015); b-vector sign conventions; float32 rounding at small steps on MPS; GPU time contended by the queue |
 | 2 | slice outliers and replacement, GP predictor (multi-shell, if decision 1's test passes), the full eddy comparison of section 6.1 | about 2 weeks | the GP's hyperparameter fit; outlier thresholds tuned on few protocols; the bootstrap's change moves every committed ensemble result (a new arm, not a replacement) |
 | 3 | slice-to-volume, susceptibility-by-movement | 4-8 weeks | needs slice timing (absent for cohort II); identifiability per slice group; research-grade |
 

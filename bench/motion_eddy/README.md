@@ -16,6 +16,8 @@ synthetic scan with its eddy runs is in `derived/motion_eddy_synth/`.
 Reproduce (MPS; the GPU should be otherwise idle for timings):
 
     uv run --group dipy bench/motion_eddy/proto.py --device mps --acq-cost --cubic --outer 15 --inner 1   # final form: 0.103 voxels
+    uv run --group dipy bench/motion_eddy/proto.py --device mps --fast --outer 15 [--profile]             # final form with the fixes: 0.107 voxels, 20 s
+    uv run --group dipy bench/motion_eddy/proto.py --device mps --selftest                                # the fast path's pieces against the originals
     uv run --group dipy bench/motion_eddy/proto.py --device mps                                           # first form: 0.284
     uv run --group dipy bench/motion_eddy/proto.py --device mps --save-synth $TRACTOGRAPHY_DATA/derived/motion_eddy_synth
 
