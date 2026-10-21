@@ -60,11 +60,23 @@ def _mi(Wf, Wm):
     return (P[nz] * torch.log(P[nz] / (pf @ pm)[nz])).sum()
 
 
-def register(mov, fixed, mask, vox, bins=32, levels=((4, 2.0, 200), (2, 1.0, 100), (1, 1.5, 100)), d0=None, tol=1e-5):
+def _mono(u, nmon):
+    a, b, c = u.unbind(-1)
+    cols = [torch.ones_like(a), a, b, c] + ([a * a, b * b, c * c, a * b, a * c, b * c] if nmon == 10 else [])
+    return torch.stack(cols, -1)
+
+
+def register(mov, fixed, mask, vox, bins=32, levels=((4, 2.0, 200), (2, 1.0, 100), (1, 1.5, 100)), d0=None, tol=1e-5,
+             pe_axis=None, nmon=0):
+    """pe_axis, nmon > 0: also an eddy-like displacement along pe_axis, a polynomial (nmon 4 or 10 terms) of the
+    coordinates scaled to [-1, 1] on the full grid, in voxels of the full grid, as proto.py's eddy terms: d then has
+    6 + nmon entries, mov(phi_d(x) + e(x) e_pe) ~ fixed(x)."""
     dev, dt = fixed.device, torch.float32
     mov, fixed = mov.to(dt), fixed.to(dt)
     vox = torch.as_tensor(vox, dtype=dt, device=dev)
-    d = torch.zeros(6, dtype=dt, device=dev) if d0 is None else d0.clone().to(dt)
+    P = 6 + nmon
+    d = torch.zeros(P, dtype=dt, device=dev) if d0 is None else d0.clone().to(dt)
+    full_cen = (torch.tensor(mov.shape, dtype=dt, device=dev) - 1) / 2
     q = torch.tensor([0.02, 0.98], dtype=dt, device=dev)
     for f, sd, iters in levels:
         m_l = _gauss(mov, sd); f_l = _gauss(fixed, sd)
@@ -84,10 +96,16 @@ def register(mov, fixed, mask, vox, bins=32, levels=((4, 2.0, 200), (2, 1.0, 100
         mlo, mhi = torch.quantile(mv_all.reshape(-1)[:2 ** 24], q)
         Wf = _parzen(fv, flo, fhi, bins)
         xm = (pts - cen) * vl
+        if nmon:
+            xfull = pts * f + (f - 1) / 2                                                 # these points on the full grid
+            mon = _mono((xfull - full_cen) / full_cen, nmon)                              # (N, nmon)
 
         def cost(d):
-            R = _rot(d[3:] * 0.01)
+            R = _rot(d[3:6] * 0.01)
             p = (xm @ R.T + d[:3]) / vl + cen
+            if nmon:
+                e = (mon @ d[6:]) / f                                                     # full-grid voxels -> this level's
+                p = p + e[:, None] * torch.eye(3, dtype=dt, device=dev)[pe_axis]
             s = F.grid_sample(m_l[None, None], (2 * p / (sizes - 1) - 1)[:, [2, 1, 0]][None, None, None], mode="bilinear",
                               padding_mode="border", align_corners=True).reshape(-1)
             return -_mi(Wf, _parzen(s, mlo, mhi, bins))
@@ -100,11 +118,11 @@ def register(mov, fixed, mask, vox, bins=32, levels=((4, 2.0, 200), (2, 1.0, 100
             return float(c), g.detach()
 
         c, g = fg(d)
-        Hinv = torch.eye(6, dtype=dt, device=dev) * 0.1 / max(float(g.abs().max()), 1e-12)
+        Hinv = torch.eye(P, dtype=dt, device=dev) * 0.1 / max(float(g.abs().max()), 1e-12)
         for _ in range(iters):
             p_ = -Hinv @ g
             if float(p_ @ g) >= 0:                                                        # not a descent direction: reset
-                Hinv = torch.eye(6, dtype=dt, device=dev) * 0.1 / max(float(g.abs().max()), 1e-12); p_ = -Hinv @ g
+                Hinv = torch.eye(P, dtype=dt, device=dev) * 0.1 / max(float(g.abs().max()), 1e-12); p_ = -Hinv @ g
             a = 1.0
             while True:
                 c1, g1 = fg(d + a * p_)
@@ -116,7 +134,7 @@ def register(mov, fixed, mask, vox, bins=32, levels=((4, 2.0, 200), (2, 1.0, 100
             sy = float(s_ @ y_)
             if sy > 1e-12:                                                                # BFGS inverse-Hessian update
                 rho = 1.0 / sy
-                I = torch.eye(6, dtype=dt, device=dev)
+                I = torch.eye(P, dtype=dt, device=dev)
                 Hinv = (I - rho * s_[:, None] @ y_[None]) @ Hinv @ (I - rho * y_[:, None] @ s_[None]) + rho * s_[:, None] @ s_[None]
             if float(s_.abs().max()) < tol:
                 break

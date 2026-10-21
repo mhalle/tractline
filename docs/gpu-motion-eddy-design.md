@@ -33,11 +33,13 @@ Levenberg-Marquardt Gauss-Newton fit over all volumes at once, in PyTorch, on MP
   (`bench/motion_eddy/metal_step.py`) cut it to 2.4 s for 15 steps, or 4.0 s run to convergence, at eddy's accuracy**
   (section 3). **Measured on the full 105-volume scan (5 b0s, b1000, b2000): 6.9 s for 20 steps, including the final
   resample (0.32 s, also a Metal kernel)**, under the field estimate's 18 s. The CUDA (Triton) port is still to write.
-- **The shells need tying together** (section 2.2). On 105 volumes the within-shell error is eddy's (0.093 voxels),
-  but each shell's common position is unobservable from its own leave-one-out prediction. The shells sit 0.17-0.20
-  voxels RMS apart against the truth, and drift further with more steps. Decision 5's anchor is needed and does not
-  yet work in the prototype. eddy's multi-shell Gaussian process and its post-eddy alignment of shells are the
-  references for the fix.
+- **The shells need tying together, and now are** (sections 2.2-2.3). Each shell's common transform is
+  unobservable from its own leave-one-out prediction: its rigid position and its common eddy field along PE. An MI
+  registration of each shell's corrected mean to the corrected mean b0 (`mi_torch.py`, on the GPU) with those 16
+  parameters brings the between-shell error to eddy's level: 0.013 against 0.015 voxels on an aligned 105-volume
+  synthetic scan. The fit plus anchor takes 11.7 s on the M2, against eddy's 78 min.
+- **What remains is within-shell precision**: 0.086 voxels against eddy's 0.051 on that scan. eddy's predictor
+  draws on all shells at once; ours uses each shell alone (decision 1).
 - **Prototype against eddy, on one synthetic scan with known motion and eddy** (section 2.1). FSL eddy (`eddy_cpu`
   2602.0, installed natively) gets the edge displacement from 1.52 voxels RMS to 0.105, with b-vector rotation error
   0.13 deg, in 36 min on 6 CPU threads. The prototype's first form stopped at 0.24-0.28 voxels. Three changes bring it
@@ -111,9 +113,12 @@ that would reverse it. None of them changes the default pipeline: everything her
    - *How*: normalized gradient fields as the cost, since the mean DW image's CSF is dark where the b0's is bright and
      NGF ignores contrast sign. Mutual information is the fallback if NGF fails the synthetic test.
    - *Applies to*: every protocol, including one-b0 ones (MASiVar cohort II).
-   - *Status (prototype, section 2.2)*: needed, measured as 0.17-0.20 voxels between shells, and not yet working. The
-     first NGF implementation (Adam on 6 parameters) recovers 0.51 of a 0.7 mm test shift and almost none of a 0.29
-     deg rotation.
+   - *Status (prototype, sections 2.2-2.3)*: needed, and working.
+     - The cost is mutual information, as eddy's PEAS, not NGF. NGF on the shell means was off by up to 0.5 mm
+       across the contrast.
+     - The anchor fits 16 parameters per shell: the rigid 6 plus the shell's common eddy polynomial along PE. With the
+       rigid 6 alone, the between-shell error was 0.105 voxels; with all 16, 0.013 (eddy: 0.015).
+     - It runs once, after the fit (eddy's design). Running it every few steps did no better.
    - *Also considered*: a predictor that couples the shells (eddy's multi-shell GP, or a joint model across b), which
      makes the shells' relative position observable inside the fit itself. That would strengthen decision 1's case
      for the GP on multi-shell scans.
@@ -428,10 +433,7 @@ What it shows:
   confound), but not across shells.
 - The images confirm it: corrected volumes are 111 against 288 as acquired (noise 84) at 20 steps, and worse at 40
   (137).
-- **The fix** is decision 5's anchor, or a predictor that couples the shells (section 1.4). The first anchor attempt,
-  NGF on the shell means optimized by Adam (`--anchor`), recovered 0.51 of a 0.7 mm test shift and almost none of a
-  0.29 deg rotation (`--anchor-selftest`). It is not usable yet. A Gauss-Newton NGF or LNCC registration, or the
-  coupled predictor, comes next.
+- **The fix** is decision 5's anchor, now working (section 2.3).
 - The 50-volume comparison with eddy (section 2.1) scored the DW shell alone. There the shell's own common transform
   was removed with the gauge, so that comparison stands.
 
@@ -489,6 +491,51 @@ Marquardt loop, the stopping rules, the `coarse_device` split, the autograd-thro
 rule and the `exact_float32` context on CUDA. **What does not**: the per-volume Python loops (`for v in range(V -
 1)`, `autograd.functional.jacobian` per volume). They are fine for 8 b0s and not for 105 volumes. Phase 1 replaces
 them with batched (G, 3, 3) rotations and an analytic derivative.
+
+### 2.3 The shell anchor: MI with the shell's eddy field, on a truth aligned across shells (2026-10-21)
+
+**The truth had to change first.** The SH-fit truth of section 2.2 inherits the real scan's own offsets between its
+groups. Registered by dipy's MI, the real b1000 and b2000 means sit (0.04, -0.22, -0.32) and (0.05, -0.27, -0.18) mm
+from the real b0 mean, and single real b0s move by up to 0.2 mm. That is a floor of about 0.15 voxel under any
+between-shell score, the size of the errors being chased.
+
+`proto.py --tensor-truth` instead builds every volume from one tensor model on the b0 mean, `S0 exp(-b g'Dg)`, with D a
+log-linear fit to the real data. Every shell then has the b0's edges exactly.
+
+**The registration.** `mi_torch.py`, a Mattes-style MI in torch:
+- a cubic B-spline Parzen joint histogram, built as a matmul, so it is differentiable;
+- three levels; BFGS with backtracking;
+- optionally the eddy polynomial along PE as 10 more parameters.
+
+It was checked against dipy's MI (`mi_dipy.py`, in its own process, since dipy and torch clash over OpenMP):
+- **known same-contrast shifts**: recovered to 0.01 mm and 0.007 deg (`mi_torch_check.py`);
+- **the full-resolution level keeps sigma 1.5 voxels**: unsmoothed, trilinear sampling's shift-dependent blur moved
+  MI's optimum by up to 0.15 mm (the known artifact of interpolation in MI).
+
+**Results** (`--all-shells --tensor-truth --fast --metal --coarse 0 --outer 20`, 105 volumes unless noted):
+
+| anchor | edge error, RMS | within shells | between shells | fit + anchor |
+|---|---|---|---|---|
+| none | 0.138 | 0.086 | 0.204 | 6.7 s |
+| NGF (Gauss-Newton), every 5 steps | 0.119 | 0.103 | 0.111 | 12.9 s |
+| dipy MI, rigid, at the end | 0.106 | 0.086 | 0.101 | 18.6 s |
+| GPU MI, rigid, at the end | 0.107 | 0.086 | 0.105 | 10.6 s |
+| **GPU MI, rigid + the shell's eddy field (16), at the end** | **0.086** | **0.086** | **0.013** | **11.7 s** |
+| the same, 40 steps | 0.088 | 0.086 | 0.032 | 17.6 s |
+| 55 volumes (b0s + b2000), GPU MI with eddy | 0.094 | 0.094 | 0.012 | 5.6 s |
+| **eddy** (`eddy_cpu`, `--flm=quadratic --slm=none`, PEAS on) | **0.053** | **0.051** | **0.015** | **78 min, 6 threads** |
+
+What it shows:
+- **Between shells, the design now matches eddy** (0.013 against 0.015), in seconds.
+- **The rigid anchor alone is not enough.** The shells' remaining error was in their common eddy terms (xy and z^2
+  about +/-0.1-0.2 voxel, and a shared PE scale and curvature against the b0s). Those terms are as unobservable
+  within a shell as its rigid position. Only the b0s, which have no eddy currents, can pin them.
+- **Within shells eddy is better**: 0.051 against 0.086 voxels. More steps do not close it, since the within-shell
+  error stays at 0.086.
+- eddy's predictor is a GP across all shells, so each prediction draws on about twice the data ours does. The next
+  test is decision 1's multi-shell predictor: an SH model per shell with the shells coupled, or eddy's GP.
+- Its PEAS output on this scan applied (0.05, 1.41, 0.29) mm and (-1.09, 1.47, 0.59) deg to the b1000 shell. Its
+  shells too drift far from the b0s during the fit; the alignment at the end is what fixes them.
 
 ## 3. GPU mapping
 

@@ -33,6 +33,7 @@ ap.add_argument("--anchor", action="store_true", help="with --all-shells --fast 
 ap.add_argument("--anchor-selftest", action="store_true")
 ap.add_argument("--anchor-method", default="ngf", choices=["ngf", "mi", "gpumi"], help="with --anchor: Gauss-Newton NGF on the GPU, dipy's rigid mutual information on the CPU (eddy's PEAS uses MI), or mi_torch's MI on the device")
 ap.add_argument("--anchor-truthtest", action="store_true", help="a mechanical check: each group's corrected mean registered (NGF, same contrast) to the truth's mean of that group in the estimate's frame; found against needed, printed")
+ap.add_argument("--anchor-eddy", action="store_true", help="with --anchor-method gpumi: the anchor also fits each shell's common eddy polynomial along PE (16 parameters, as the step's), not only its rigid position")
 ap.add_argument("--anchor-iters", type=int, default=30, help="with --anchor: Gauss-Newton iterations")
 ap.add_argument("--anchor-every", type=int, default=0, help="with --anchor: also every this many steps (0: only at the end)")
 ap.add_argument("--shells", default=None, help="with --all-shells: only these b-values, e.g. 0,2000 (b0s as 0)")
@@ -586,7 +587,7 @@ def shell_anchor(th):
         fixed_n = fixed / eps_f; mov_n = mov / eps_m                                     # gradients scaled to ~1
         if args.anchor_method == "gpumi":
             from mi_torch import register as mi_register
-            dd = mi_register(mov, fixed, mk, vox)
+            dd = mi_register(mov, fixed, mk, vox, pe_axis=PE, nmon=NMON if args.anchor_eddy else 0)
         else:
             dd = mi_rigid(mov, fixed, mk) if args.anchor_method == "mi" else gn_ngf(mov_n, fixed_n, mk)
         if label is not None:
@@ -599,9 +600,11 @@ def shell_anchor(th):
             print("anchor found:", [round(v, 3) for v in dd[:3].tolist()], [round(float(v) * 0.01 * 57.2958, 3) for v in dd[3:]],
                   " truth needs:", [round(v, 3) for v in need[:3].tolist()], [round(float(v) * 57.2958, 3) for v in need[3:6]], flush=True)
         th[torch.tensor(idx, device=dev), :3] += dd[:3]
-        th[torch.tensor(idx, device=dev), 3:6] += dd[3:] * 0.01
+        th[torch.tensor(idx, device=dev), 3:6] += dd[3:6] * 0.01
+        if dd.shape[0] > 6:
+            th[torch.tensor(idx, device=dev), 6:] += dd[6:]                               # the shell's common eddy field, first order
         out[f"b{int(round(float(bsel[idx[0]]) / 100) * 100)}"] = [round(float(v), 3) for v in dd[:3]] + \
-            [round(float(v) * 0.01 * 180 / math.pi, 3) for v in dd[3:]]
+            [round(float(v) * 0.01 * 180 / math.pi, 3) for v in dd[3:6]] + [round(float(v), 3) for v in dd[6:]]
     return th, out
 
 
@@ -883,6 +886,6 @@ info.update({"true_edge_displacement_rms_p95_vox": [round(v, 3) for v in disp_tr
              **({"profile_s": {k: round(v, 2) for k, v in prof.items()}, "lm_trials": ntrials} if args.profile else {}),
              **({"steps_run": steps_run, "tol_vox": args.tol} if args.fast else {}),
              "device": args.device})
-tag = f"_{args.device}_o{args.order}" + ("_noloo" if args.no_loo else "") + (f"_s{args.scale}" if args.scale != 1 else "") + (f"_e{args.eddy_scale}" if args.eddy_scale != 1 else "") + f"_n{args.outer}" + (f"_f{args.final_fwhm}" if args.final_fwhm else "") + ("_slm" if args.slm else "") + ("_acq" if args.acq_cost else "") + ("_cubic" if args.cubic else "") + ("_all" if args.all_shells else "") + ("_tt" if args.tensor_truth else "") + (f"_b{args.shells.replace(',', '-')}" if args.shells else "") + (f"_anchor{args.anchor_every}{args.anchor_method}" if args.anchor else "") + (f"_fast_c{args.coarse}_" + ("metal" if args.metal else args.grad) + (f"_sm{args.smooth_steps}" if args.smooth_steps != 2 else "") + (f"_tol{args.tol}" if args.tol else "") if args.fast else "") + ("_prof" if args.profile else "")
+tag = f"_{args.device}_o{args.order}" + ("_noloo" if args.no_loo else "") + (f"_s{args.scale}" if args.scale != 1 else "") + (f"_e{args.eddy_scale}" if args.eddy_scale != 1 else "") + f"_n{args.outer}" + (f"_f{args.final_fwhm}" if args.final_fwhm else "") + ("_slm" if args.slm else "") + ("_acq" if args.acq_cost else "") + ("_cubic" if args.cubic else "") + ("_all" if args.all_shells else "") + ("_tt" if args.tensor_truth else "") + (f"_b{args.shells.replace(',', '-')}" if args.shells else "") + (f"_anchor{args.anchor_every}{args.anchor_method}" + ("e" if args.anchor_eddy else "") if args.anchor else "") + (f"_fast_c{args.coarse}_" + ("metal" if args.metal else args.grad) + (f"_sm{args.smooth_steps}" if args.smooth_steps != 2 else "") + (f"_tol{args.tol}" if args.tol else "") if args.fast else "") + ("_prof" if args.profile else "")
 json.dump(info, open(OUT / f"proto{tag}.json", "w"), indent=1)
 print(json.dumps({k: v for k, v in info.items() if k != "history"}))

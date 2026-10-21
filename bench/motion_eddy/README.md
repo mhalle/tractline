@@ -10,6 +10,8 @@ synthetic scan with its eddy runs is in `derived/motion_eddy_synth/`.
 | `compare_eddy.py` | eddy's `--dfields` and rotated b-vectors scored against the truth, as `proto.py` scores itself | 2.1 |
 | `bench_pieces.py` | the time of one Gauss-Newton iteration's pieces on a device, at 96 x 96 x 50 x 100 and 104 x 104 x 72 x 105 | 3 |
 | `bench_fast.py` | faster moments, and the cubic resample as 8 trilinear fetches (checked against the 64-tap sum) | 3 |
+| `mi_torch.py`, `mi_torch_check.py`, `mi_dipy.py` | the shell anchor: Mattes-style MI on the device (rigid, optionally the eddy polynomial), its self-test, and dipy's MI in a process of its own | 2.3 |
+| `compare_eddy_all.py` | eddy's displacement fields on the full synthetic scan, scored within and between shells | 2.3 |
 | `metal_step.py`, `metal_check.py` | the fused Metal kernels (inverse, cubic value and exact gradient, Jacobian, H, b; cost; resample; prefilter; Gaussian) and their checks | 3 |
 | `bench_moments.py` | moment layouts on MPS | 3 |
 | `cpu_timing.py`, `headers.py` | the first CPU-only timing; the data headers | 3, 6.3 |
@@ -22,6 +24,7 @@ Reproduce (MPS; the GPU should be otherwise idle for timings):
     uv run --group dipy bench/motion_eddy/proto.py --device mps --fast --metal --coarse 0 --outer 40 --tol 0.05   # fused Metal kernels: 0.099 voxels, 4.0 s
     uv run bench/motion_eddy/metal_check.py                                                               # the kernels against float64 references
     uv run --group dipy bench/motion_eddy/proto.py --device mps --all-shells --fast --metal --coarse 0 --outer 20   # all 105 volumes: 6.9 s end to end
+    uv run --group dipy bench/motion_eddy/proto.py --device mps --all-shells --tensor-truth --fast --metal --coarse 0 --outer 20 --anchor --anchor-method gpumi --anchor-eddy   # shells tied: 0.013 between
     uv run --group dipy bench/motion_eddy/proto.py --device mps                                           # first form: 0.284
     uv run --group dipy bench/motion_eddy/proto.py --device mps --save-synth $TRACTOGRAPHY_DATA/derived/motion_eddy_synth
 
