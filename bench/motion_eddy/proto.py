@@ -31,8 +31,10 @@ ap.add_argument("--inner", type=int, default=3)
 ap.add_argument("--seed", type=int, default=0)
 ap.add_argument("--anchor", action="store_true", help="with --all-shells --fast --metal: after the fit, each DW shell's corrected mean registered rigidly to the corrected mean b0 (normalized gradient fields), the shift added to the shell's volumes (decision 5)")
 ap.add_argument("--anchor-selftest", action="store_true")
-ap.add_argument("--anchor-iters", type=int, default=60, help="with --anchor: Adam iterations")
+ap.add_argument("--anchor-method", default="ngf", choices=["ngf", "mi"], help="with --anchor: Gauss-Newton NGF on the GPU, or dipy's rigid mutual information on the CPU (eddy's PEAS uses MI)")
+ap.add_argument("--anchor-iters", type=int, default=30, help="with --anchor: Gauss-Newton iterations")
 ap.add_argument("--anchor-every", type=int, default=0, help="with --anchor: also every this many steps (0: only at the end)")
+ap.add_argument("--shells", default=None, help="with --all-shells: only these b-values, e.g. 0,2000 (b0s as 0)")
 ap.add_argument("--all-shells", action="store_true", help="every volume of the scan (5 b0s, b1000, b2000: 105 on ON-Harmony), each shell its own LOO-SH predictor, the b0s the mean of the others; eddy scaled by sqrt(b / 2000) and zero for b0s")
 ap.add_argument("--tol", type=float, default=0.0, help="with --fast: stop when no volume's step moves an edge point more than this (voxels) two steps running; --outer is then the cap")
 ap.add_argument("--smooth-steps", type=int, default=2, help="with --fast: the first steps smoothed (FWHM 2, then 1 voxel)")
@@ -62,6 +64,9 @@ data = np.asarray(img.dataobj, dtype=np.float32)
 bval = np.loadtxt(D + ".bval"); bvec = np.loadtxt(D + ".bvec")
 vox = np.array(img.header.get_zooms()[:3], float)
 shell = np.arange(len(bval)) if args.all_shells else np.flatnonzero(np.abs(bval - 2000) < 100)
+if args.all_shells and args.shells:
+    want = [float(v) for v in args.shells.split(",")]
+    shell = np.array([i for i in shell if any((bval[i] < 50) if w == 0 else abs(bval[i] - w) < 100 for w in want)])
 b0 = data[..., bval < 50].mean(-1)
 from tractline.mask import median_otsu
 _, mask = median_otsu(b0, median_radius=4, numpass=4)
@@ -436,6 +441,63 @@ def ngf_cost(a, b, mk, eps):
     return (1 - d * d)[mk].mean()
 
 
+
+def ngf_field(v, eps=1.0):
+    """The normalized gradient field of v (X, Y, Z): grad / sqrt(|grad|^2 + eps^2), (3, X, Y, Z)."""
+    g_ = torch.stack(torch.gradient(v, dim=(0, 1, 2)))
+    return g_ / torch.sqrt((g_ * g_).sum(0, keepdim=True) + eps * eps)
+
+
+def gn_ngf(mov, fixed, mk, iters=None):
+    """The rigid d (3 mm, 3 x 0.01 rad, as phi's) with mov(phi_d(x)) aligned to fixed(x): Gauss-Newton on the residual
+    n_mov(phi_d(x)) x n_fixed(x) (3 components; |a x b|^2 = |a|^2 |b|^2 - (a . b)^2, so it ignores the contrast's
+    sign as NGF does), the Jacobian by central differences in d, Levenberg-Marquardt damping. Returns d (6,)."""
+    iters = iters or args.anchor_iters
+    nm, nf = ngf_field(mov), ngf_field(fixed)
+    pts = full[mk.reshape(-1)]
+    nf_m = nf.reshape(3, -1)[:, mk.reshape(-1)].T                                         # (M, 3)
+    sizes = torch.tensor([X, Y, Z], dtype=dt, device=dev)
+
+    def res(d):
+        q = torch.cat([d[:3], d[3:] * 0.01, torch.zeros(NMON, dtype=dt, device=dev)])[None]
+        pp = phi_fast(q, pts)[0]
+        s_ = F.grid_sample(nm[None], (2 * pp / (sizes - 1) - 1)[..., [2, 1, 0]][None, None, None], mode="bilinear",
+                           padding_mode="border", align_corners=True)[0, :, 0, 0].T     # (M, 3)
+        return torch.linalg.cross(s_, nf_m).reshape(-1)
+    d = torch.zeros(6, dtype=dt, device=dev)
+    lam_ = 1e-3
+    with torch.no_grad():
+        r = res(d); f = float((r * r).sum())
+        for _ in range(iters):
+            J = torch.stack([(res(d + h) - res(d - h)) / (2 * 0.05) for h in torch.eye(6, dtype=dt, device=dev) * 0.05], 1)
+            H_ = J.T @ J; b_ = J.T @ r
+            while True:
+                step = -torch.linalg.solve(H_ + lam_ * torch.diag(torch.diagonal(H_)), b_)
+                r1 = res(d + step); f1 = float((r1 * r1).sum())
+                if f1 < f:
+                    d, r, f = d + step, r1, f1; lam_ = max(lam_ / 3, 1e-7); break
+                lam_ *= 8
+                if lam_ > 1e6:
+                    break
+            if float(step.abs().max()) < 1e-3 or lam_ > 1e6:
+                break
+    return d
+
+
+def mi_rigid(mov, fixed, mk):
+    """dipy's rigid registration by mutual information (CPU), mov onto fixed, both (X, Y, Z) on the reference grid; in
+    phi's parameterization: d (3 mm, 3 x 0.01 rad) with mov(phi_d(x)) ~ fixed(x)."""
+    from dipy.align import affine_registration
+    A = np.diag(list(vox) + [1.0]); A[:3, 3] = -np.asarray(cen.cpu()) * vox               # world = (x - c) vox, phi's frame
+    m_, f_ = mov.cpu().double().numpy(), fixed.cpu().double().numpy()
+    _, M_ = affine_registration(m_, f_, moving_affine=A, static_affine=A, pipeline=["rigid"], nbins=32,
+                                level_iters=[200, 100, 50], sigmas=[2.0, 1.0, 0.0], factors=[4, 2, 1],
+                                static_mask=binary_dilation(mask, iterations=2).astype(np.int32))
+    R_, t_ = M_[:3, :3], M_[:3, 3]                                                         # moving world = R static world + t
+    beta = -math.asin(max(-1.0, min(1.0, R_[2, 0])))
+    alpha, gamma = math.atan2(R_[2, 1], R_[2, 2]), math.atan2(R_[1, 0], R_[0, 0])           # R = Rz(gamma) Ry(beta) Rx(alpha)
+    return torch.tensor([t_[0], t_[1], t_[2], alpha / 0.01, beta / 0.01, gamma / 0.01], dtype=dt, device=dev)
+
 def shell_anchor(th):
     """Each DW shell's corrected mean, registered rigidly to the corrected mean b0 by NGF (L-BFGS through grid_sample,
     smoothed 1 voxel); the 6 rigid parameters added to the shell's volumes (first order: small shifts compose additively).
@@ -469,33 +531,16 @@ def shell_anchor(th):
         eps_m = float(torch.stack(torch.gradient(mov)).norm(dim=0)[mk].mean()) * 0.5
         eps_f = float(torch.stack(torch.gradient(fixed)).norm(dim=0)[mk].mean()) * 0.5
         fixed_n = fixed / eps_f; mov_n = mov / eps_m                                     # gradients scaled to ~1
-        d = torch.zeros(1, 6, dtype=dt, device=dev, requires_grad=True)
-        opt = torch.optim.Adam([d], lr=0.05)
-        sizes = torch.tensor([X, Y, Z], dtype=dt, device=dev)
-
-        def closure():
-            opt.zero_grad()
-            q = torch.cat([d[:, :3], d[:, 3:] * 0.01, torch.zeros(1, NMON, dtype=dt, device=dev)], 1)
-            pts = phi_fast(q, full)[0]
-            w = F.grid_sample(mov_n[None, None], (2 * pts / (sizes - 1) - 1)[..., [2, 1, 0]][None, None, None],
-                              mode="bilinear", padding_mode="border", align_corners=True).reshape(X, Y, Z)
-            c = ngf_cost(w, fixed_n, mk, 1.0)
-            c.backward()
-            return c
-        with torch.enable_grad():
-            c_first = None
-            for k in range(args.anchor_iters):
-                c = closure(); opt.step()
-                c_first = float(c) if c_first is None else c_first
-                if k == args.anchor_iters // 2:
-                    for pg in opt.param_groups:
-                        pg["lr"] = 0.01
-        dd = d.detach()[0]
+        dd = mi_rigid(mov, fixed, mk) if args.anchor_method == "mi" else gn_ngf(mov_n, fixed_n, mk)
         if label is not None:
             print(label, "-> recovered", [round(v, 3) for v in dd[:3].tolist()], "mm", [round(float(v) * 0.01 * 180 / math.pi, 3) for v in dd[3:]], "deg", flush=True)
             continue
         if args.profile:
-            print("anchor:", f"cost {c_first:.4f} -> {float(c):.4f}", [round(v, 3) for v in dd.tolist()], flush=True)
+            # what the truth needs: the shell's mean rigid error against the b0 group's (the b0s are the frame)
+            b0i_ = torch.tensor(b0g[0], device=dev); gi_ = torch.tensor(idx, device=dev)
+            need = (th_true_t[gi_, :6] - th[gi_, :6]).mean(0) - (th_true_t[b0i_, :6] - th[b0i_, :6]).mean(0)
+            print("anchor found:", [round(v, 3) for v in dd[:3].tolist()], [round(float(v) * 0.01 * 57.2958, 3) for v in dd[3:]],
+                  " truth needs:", [round(v, 3) for v in need[:3].tolist()], [round(float(v) * 57.2958, 3) for v in need[3:6]], flush=True)
         th[torch.tensor(idx, device=dev), :3] += dd[:3]
         th[torch.tensor(idx, device=dev), 3:6] += dd[3:] * 0.01
         out[f"b{int(round(float(bsel[idx[0]]) / 100) * 100)}"] = [round(float(v), 3) for v in dd[:3]] + \
@@ -779,6 +824,6 @@ info.update({"true_edge_displacement_rms_p95_vox": [round(v, 3) for v in disp_tr
              **({"profile_s": {k: round(v, 2) for k, v in prof.items()}, "lm_trials": ntrials} if args.profile else {}),
              **({"steps_run": steps_run, "tol_vox": args.tol} if args.fast else {}),
              "device": args.device})
-tag = f"_{args.device}_o{args.order}" + ("_noloo" if args.no_loo else "") + (f"_s{args.scale}" if args.scale != 1 else "") + (f"_e{args.eddy_scale}" if args.eddy_scale != 1 else "") + f"_n{args.outer}" + (f"_f{args.final_fwhm}" if args.final_fwhm else "") + ("_slm" if args.slm else "") + ("_acq" if args.acq_cost else "") + ("_cubic" if args.cubic else "") + ("_all" if args.all_shells else "") + (f"_anchor{args.anchor_every}" if args.anchor else "") + (f"_fast_c{args.coarse}_" + ("metal" if args.metal else args.grad) + (f"_sm{args.smooth_steps}" if args.smooth_steps != 2 else "") + (f"_tol{args.tol}" if args.tol else "") if args.fast else "") + ("_prof" if args.profile else "")
+tag = f"_{args.device}_o{args.order}" + ("_noloo" if args.no_loo else "") + (f"_s{args.scale}" if args.scale != 1 else "") + (f"_e{args.eddy_scale}" if args.eddy_scale != 1 else "") + f"_n{args.outer}" + (f"_f{args.final_fwhm}" if args.final_fwhm else "") + ("_slm" if args.slm else "") + ("_acq" if args.acq_cost else "") + ("_cubic" if args.cubic else "") + ("_all" if args.all_shells else "") + (f"_b{args.shells.replace(',', '-')}" if args.shells else "") + (f"_anchor{args.anchor_every}{args.anchor_method}" if args.anchor else "") + (f"_fast_c{args.coarse}_" + ("metal" if args.metal else args.grad) + (f"_sm{args.smooth_steps}" if args.smooth_steps != 2 else "") + (f"_tol{args.tol}" if args.tol else "") if args.fast else "") + ("_prof" if args.profile else "")
 json.dump(info, open(OUT / f"proto{tag}.json", "w"), indent=1)
 print(json.dumps({k: v for k, v in info.items() if k != "history"}))

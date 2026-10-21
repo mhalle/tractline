@@ -70,6 +70,32 @@ for base in sys.argv[1:]:
             if best is None or sc[0] < best[1][0]:
                 best = ((sx, sg), sc)
     res = {"edge_error_rms_p95_vox": best[1], "sign_convention (x, field)": best[0], "fields_files": len(files)}
+    # the b0s too: the error by group (b0s, DW shell) after the common transform of all volumes is removed, as
+    # proto.py --all-shells scores itself; the b0s' truth from th_b0 (rigid only)
+    sx, sg = best[0]
+    b0pos = np.flatnonzero(~np.isin(order, shell))
+    th_b0 = T["th_b0"]
+
+    def disp_b0(k):
+        t = th_b0[k]
+        p_ = ((xe - cen) * vox) @ rot(t[3:6]).T + t[:3]
+        return p_ / vox + cen - xe
+    truth_all = np.concatenate([np.stack([disp_b0(k) for k in range(len(b0pos))]), truth])
+    est_b0 = np.stack([fields[k][idx] / vox for k in b0pos]) * sg * np.array([sx, 1, 1])
+    est_all = np.concatenate([est_b0, sg * est * np.array([sx, 1, 1])])
+    d = est_all - truth_all
+    d = d - d.mean(0, keepdims=True)
+    groups = [np.arange(len(b0pos)), np.arange(len(b0pos), len(b0pos) + len(pos))]
+    within, means = [], []
+    for gi in groups:
+        m = d[gi].mean(0, keepdims=True); means.append(m)
+        within.append(np.linalg.norm(d[gi] - m, axis=-1).ravel())
+    mm_ = np.concatenate(means)
+    n_all = np.linalg.norm(d, axis=-1)
+    res["with_b0s"] = {"edge_error_rms": round(float(np.sqrt((n_all ** 2).mean())), 3),
+                       "within_group_rms": round(float(np.sqrt((np.concatenate(within) ** 2).mean())), 3),
+                       "between_group_rms": round(float(np.sqrt((np.linalg.norm(mm_ - mm_.mean(0, keepdims=True), axis=-1) ** 2).mean())), 3),
+                       "groups": [len(g_) for g_ in groups]}
     try:
         rb = np.loadtxt(f"{base}.eddy_rotated_bvecs")[:, pos]
         b0v = np.loadtxt(f"{D}/bvecs")[:, pos]

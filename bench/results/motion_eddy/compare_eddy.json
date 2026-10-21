@@ -13,27 +13,19 @@
    1
   ],
   "fields_files": 55,
+  "with_b0s": {
+   "edge_error_rms": 0.108,
+   "within_group_rms": 0.101,
+   "between_group_rms": 0.062,
+   "groups": [
+    5,
+    50
+   ]
+  },
   "bvec_rotation_error_deg (convention, rms, median)": [
    "RT",
    0.129,
    0.117
-  ],
-  "bvec_rotation_true_deg_rms": 1.859
- },
- "eddy_slm_linear": {
-  "edge_error_rms_p95_vox": [
-   0.098,
-   0.168
-  ],
-  "sign_convention (x, field)": [
-   1,
-   1
-  ],
-  "fields_files": 55,
-  "bvec_rotation_error_deg (convention, rms, median)": [
-   "RT",
-   0.104,
-   0.084
   ],
   "bvec_rotation_true_deg_rms": 1.859
  }

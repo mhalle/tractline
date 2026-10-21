@@ -435,6 +435,44 @@ What it shows:
 - The 50-volume comparison with eddy (section 2.1) scored the DW shell alone. There the shell's own common transform
   was removed with the gauge, so that comparison stands.
 
+**What upstream does, and how the prototype compares** (2026-10-20):
+
+- **eddy**, from its outputs on our synthetic scan (`*.eddy_post_eddy_shell_alignment_parameters`) and its user guide:
+  - "between shell parameters ... calculated using MI between shell means", each shell registered rigidly to the mean
+    b0 and applied (PEAS, on by default);
+  - the same estimated from "interspersed b0-volumes", reported only;
+  - a PE translation by MI, "calculated but not used";
+  - "no movement is estimated between the first b=0 and the first DWI volume", which are assumed close in time;
+  - the guide puts PEAS at about 0.2-0.3 mm.
+- **eddy's result on our synthetic scan** (5 b0s + b2000, scored with its b0s): between groups 0.062 voxels, within
+  0.101, overall 0.108.
+- **TORTOISE (DIFFPREP)** sidesteps the gauge by registering every volume to the b0 by MI. **QSIPrep's SHORELine**
+  fits one 3dSHORE model across all shells, which couples them inside the fit.
+
+| shell anchor (105 volumes, 20 steps unless noted) | between shells | images (RMSE) | note |
+|---|---|---|---|
+| none | 0.202 | 111 | |
+| NGF, Gauss-Newton (GPU), at the end | 0.255 | 110 | self-test: 94 % of a 0.7 mm shift, 84 % of a 0.29 deg rotation |
+| NGF, Gauss-Newton, every 5 steps | 0.157 | 97 | the best images; 30 steps: 0.200, 104 |
+| NGF on 5 b0s + b2000 (eddy's volumes), every 5 steps | 0.254 (none: 0.208) | | eddy: 0.062 |
+| dipy rigid MI (CPU), at the end | 0.217 | 114 | self-test failed (no translation recovered); torch and dipy's OpenMP clash in one process |
+
+The registrations' own errors, against what the truth needs: NGF on the shell means is off by up to 0.5 mm and 0.4
+deg. Cross-contrast registration of a b2000 mean to a b0 mean is the weak link, and the prototype does not yet match
+eddy's MI.
+
+**Next, in order of expected payoff:**
+1. **A same-contrast reference** (Nilsson et al. 2015). Extrapolate a b0-like image from the DW shells per voxel
+   (mono-exponential: `S0 ~ S1000^2 / S2000`, from directional means). Register the DW group to the b0 mean by NGF or
+   SSD, same contrast, where the self-test reaches 94 %. Register b1000 and b2000 to each other directly; their
+   contrasts are close.
+2. **A GPU MI registration** (Parzen-window histogram, as eddy's PEAS), if the extrapolation is not accurate enough.
+3. **A predictor coupling the DW shells** (eddy's multi-shell GP; SHORELine's joint model). It fixes the
+   b1000-b2000 offset inside the fit, but not the b0s', whose voxel-wise relation to the DW signal (the ADC) absorbs
+   any shift under a predictor with weights shared across voxels.
+4. **eddy's time assumption** as a fallback anchor: the first DW volume shares the adjacent b0's motion. Real scans
+   have temporally smooth motion; the synthetic one does not.
+
 **What carries over from `susceptibility.py`**: `rigid`, `smooth`, `subsample`, the `MS`-style scaling, the
 Marquardt loop, the stopping rules, the `coarse_device` split, the autograd-through-`grid_sample` gradient,
 `prefilter`/`sample_pe` (the cubic final resample, generalized to 3D), the float32-on-MPS / float64-on-CPU dtype
