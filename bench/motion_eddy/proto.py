@@ -32,6 +32,7 @@ ap.add_argument("--seed", type=int, default=0)
 ap.add_argument("--anchor", action="store_true", help="with --all-shells --fast --metal: after the fit, each DW shell's corrected mean registered rigidly to the corrected mean b0 (normalized gradient fields), the shift added to the shell's volumes (decision 5)")
 ap.add_argument("--anchor-selftest", action="store_true")
 ap.add_argument("--anchor-method", default="ngf", choices=["ngf", "mi"], help="with --anchor: Gauss-Newton NGF on the GPU, or dipy's rigid mutual information on the CPU (eddy's PEAS uses MI)")
+ap.add_argument("--anchor-truthtest", action="store_true", help="a mechanical check: each group's corrected mean registered (NGF, same contrast) to the truth's mean of that group in the estimate's frame; found against needed, printed")
 ap.add_argument("--anchor-iters", type=int, default=30, help="with --anchor: Gauss-Newton iterations")
 ap.add_argument("--anchor-every", type=int, default=0, help="with --anchor: also every this many steps (0: only at the end)")
 ap.add_argument("--shells", default=None, help="with --all-shells: only these b-values, e.g. 0,2000 (b0s as 0)")
@@ -498,6 +499,28 @@ def mi_rigid(mov, fixed, mk):
     alpha, gamma = math.atan2(R_[2, 1], R_[2, 2]), math.atan2(R_[1, 0], R_[0, 0])           # R = Rz(gamma) Ry(beta) Rx(alpha)
     return torch.tensor([t_[0], t_[1], t_[2], alpha / 0.01, beta / 0.01, gamma / 0.01], dtype=dt, device=dev)
 
+
+def anchor_truthtest(th):
+    """Same-contrast check of the anchor's machinery: per group, the corrected mean (apply_volumes with th) against the
+    noise-free truth's mean, the truth moved into the estimate's frame by the transform common to all volumes. The shift
+    gn_ngf finds should equal the group's mean error less the common one: need = mean_g(th_true - th) - mean(th_true - th)."""
+    ipA, fpA = M.consts(G, 1, X, Y, Z, PE, NMON, 2, cen, half, vox_t, scale, dev)[1:]
+    mk = torch.tensor(binary_dilation(mask, iterations=2), device=dev)
+    with torch.no_grad():
+        corr = M.apply_volumes(acq.contiguous(), M.pack(th, rot), ipA, fpA)
+        thm = th_true_t.clone(); thm[:] = (th - th_true_t).mean(0, keepdim=True)
+        tru = M.apply_volumes(truth_t.contiguous(), M.pack(thm, rot), ipA, fpA)
+    for idx in groups:
+        gi = torch.tensor(idx, device=dev)
+        mov = smooth(corr[gi].mean(0, keepdim=True), 1.0)[0]
+        fix = smooth(tru[gi].mean(0, keepdim=True), 1.0)[0]
+        e = float(torch.stack(torch.gradient(fix)).norm(dim=0)[mk].mean()) * 0.5
+        dd = gn_ngf(mov / e, fix / e, mk)
+        need = (th_true_t[gi, :6] - th[gi, :6]).mean(0) - (th_true_t[:, :6] - th[:, :6]).mean(0)
+        print(f"truthtest group b{int(round(float(bsel[idx[0]]) / 100) * 100)} (n={len(idx)}): found",
+              [round(v, 3) for v in dd[:3].tolist()], [round(float(v) * 0.01 * 57.2958, 3) for v in dd[3:]],
+              " needed", [round(v, 3) for v in need[:3].tolist()], [round(float(v) * 57.2958, 3) for v in need[3:6]], flush=True)
+
 def shell_anchor(th):
     """Each DW shell's corrected mean, registered rigidly to the corrected mean b0 by NGF (L-BFGS through grid_sample,
     smoothed 1 voxel); the 6 rigid parameters added to the shell's volumes (first order: small shifts compose additively).
@@ -764,6 +787,8 @@ for it, fw in enumerate(fwhms):
             th = torch.cat([th[:, :6], Xg @ coefs], 1)
         history.append({"outer": it, "fwhm": fw, "accepted": int(accept.sum()), "edge_err_rms_p95": [round(v, 3) for v in edge_err(th)]})
         print(history[-1], flush=True)
+if args.fast and args.anchor_truthtest:
+    anchor_truthtest(th)
 if args.fast and args.anchor:
     th, a_ = shell_anchor(th); anchors.append({"step": "end", **a_})
 sync(); timings["estimate_s"] = round(time.perf_counter() - t_start, 2)

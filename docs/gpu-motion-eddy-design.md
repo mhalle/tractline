@@ -458,7 +458,17 @@ What it shows:
 | dipy rigid MI (CPU), at the end | 0.217 | 114 | self-test failed (no translation recovered); torch and dipy's OpenMP clash in one process |
 
 The registrations' own errors, against what the truth needs: NGF on the shell means is off by up to 0.5 mm and 0.4
-deg. Cross-contrast registration of a b2000 mean to a b0 mean is the weak link, and the prototype does not yet match
+deg.
+
+**A mechanical check** (`--anchor-truthtest`) rules out a convention or composition error in the anchor path:
+- Each group's corrected mean is registered by the same NGF code to the noise-free truth's mean of that group,
+  which has the same contrast.
+- For the b0s it finds (-0.29, -0.67, 0.00) mm and 0.24 deg, against (-0.27, -0.64, 0.02) mm and 0.19 deg needed.
+- For the DW shells, x, z and the rotations agree to about 0.02 mm and 0.02 deg. Along PE (y) the image shift agrees
+  once the eddy constant is counted with the PE translation, because the two are confounded. The earlier "needed"
+  printout counted the translation alone.
+
+So the remaining error is the cross-contrast registration itself, in x and z (0.5-0.65 mm), not voxel conventions. Cross-contrast registration of a b2000 mean to a b0 mean is the weak link, and the prototype does not yet match
 eddy's MI.
 
 **Next, in order of expected payoff:**
