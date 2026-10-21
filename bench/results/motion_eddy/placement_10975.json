@@ -1,0 +1,112 @@
+{
+ "as acquired": {
+  "b0 placement vs eddy's, relative to the DW shells: edge rms, p95 (voxels)": [
+   0.198,
+   0.262
+  ],
+  "b0 mean vs eddy's (mm, deg)": [
+   -0.031,
+   -0.714,
+   -0.726,
+   1.686,
+   0.025,
+   -0.181
+  ],
+  "DW mean vs eddy's (mm, deg)": [
+   -0.064,
+   -1.069,
+   -0.892,
+   1.82,
+   -0.024,
+   -0.195
+  ]
+ },
+ "TORTOISE": {
+  "b0 placement vs eddy's, relative to the DW shells: edge rms, p95 (voxels)": [
+   0.22,
+   0.324
+  ],
+  "b0 mean vs eddy's (mm, deg)": [
+   0.067,
+   -1.487,
+   -1.401,
+   3.16,
+   0.007,
+   -0.493
+  ],
+  "DW mean vs eddy's (mm, deg)": [
+   0.082,
+   -1.124,
+   -1.255,
+   2.897,
+   -0.006,
+   -0.458
+  ]
+ },
+ "ours, no anchor": {
+  "b0 placement vs eddy's, relative to the DW shells: edge rms, p95 (voxels)": [
+   0.153,
+   0.177
+  ],
+  "b0 mean vs eddy's (mm, deg)": [
+   -0.038,
+   -0.754,
+   -0.783,
+   1.774,
+   0.011,
+   -0.19
+  ],
+  "DW mean vs eddy's (mm, deg)": [
+   -0.061,
+   -1.044,
+   -0.893,
+   1.818,
+   -0.028,
+   -0.195
+  ]
+ },
+ "ours, MI anchor": {
+  "b0 placement vs eddy's, relative to the DW shells: edge rms, p95 (voxels)": [
+   0.115,
+   0.169
+  ],
+  "b0 mean vs eddy's (mm, deg)": [
+   -0.038,
+   -0.754,
+   -0.783,
+   1.774,
+   0.011,
+   -0.19
+  ],
+  "DW mean vs eddy's (mm, deg)": [
+   -0.004,
+   -0.848,
+   -0.714,
+   1.639,
+   0.009,
+   -0.286
+  ]
+ },
+ "ours, MI anchor, b0 polynomial": {
+  "b0 placement vs eddy's, relative to the DW shells: edge rms, p95 (voxels)": [
+   0.107,
+   0.155
+  ],
+  "b0 mean vs eddy's (mm, deg)": [
+   -0.037,
+   -0.753,
+   -0.781,
+   1.78,
+   0.01,
+   -0.191
+  ],
+  "DW mean vs eddy's (mm, deg)": [
+   0.001,
+   -0.845,
+   -0.718,
+   1.659,
+   0.009,
+   -0.282
+  ]
+ }
+}

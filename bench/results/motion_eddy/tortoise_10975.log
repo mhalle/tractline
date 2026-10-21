@@ -1,0 +1,45 @@
+1792592438
+TORTOISE version: TORTOISE V4.1.1
+TORTOISEProcess_cuda -u dwi.nii.gz --up_json dwi.json --ub dwi.bval --uv dwi.bvec -c quadratic --epi off --denoising off --gibbs 0 --s2v 0 --repol 0 --drift off --do_QC 0 -o tortoise.nii 
+
+Using up to 24 CPU cores.
+Importing and copying data...
+Estimating noise levels...
+Denosing window radius: 2
+Total denoising time: 0mins
+Total gibbs time: 0mins
+Starting DIFFPREP correction for data:0
+Selecting the best b=0 image.
+Selected b=0 volume id: 63
+Performing FIRST PASS of iterative correction...
+
+Registering DWIs...
+NGPUs: 1
+Done registering vol: , 0, 1, 2, 3, 4, 5, 6, 7, 22, 30, 15, 36, 8, 32, 24, 26, 63, 31, 29, 23, 16, 28, 17, 33, 19, 34, 9, 18, 27, 25, 21, 35, 10, 20, 11, 12, 13, 14, 37, 59, 38, 71, 60, 52, 39, 73, 61, 68, 69, 67, 62, 40, 100, 53, 65, 72, 66, 41, 54, 55, 70, 57, 64, 58, 56, 42, 97, 43, 99, 104, 98, 44, 90, 94, 45, 103, 46, 96, 47, 89, 48, 49, 91, 102, 92, 50, 95, 101, 93, 51, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88
+
+EPOCH: 1
+Computing Tensors WLLS...
+Computing MAPMRI with degree: 4
+Synthesizing volumes... 
+
+
+NGPUs: 1
+Done registering vol: , 0, 1, 2, 3, 4, 5, 28, 6, 35, 25, 15, 29, 16, 31, 20, 7, 17, 27, 24, 22, 21, 18, 23, 32, 36, 33, 34, 30, 8, 19, 26, 63, 9, 10, 11, 12, 65, 62, 13, 57, 55, 59, 58, 14, 53, 52, 72, 54, 66, 37, 64, 68, 60, 56, 73, 67, 38, 70, 61, 69, 71, 100, 39, 40, 91, 41, 104, 99, 102, 42, 90, 43, 95, 97, 44, 94, 92, 96, 89, 103, 98, 45, 46, 101, 93, 47, 48, 49, 50, 51, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88
+
+Writing Motion eddy corrected temp NIFTI file
+Transforming volumes ...
+Total DIFFPREP time: 12mins
+Starting EPI distortion correction...
+TOTAL EPI time: 0mins
+Starting b=0 to structural registration...
+TOTAL Rigid to Str time: 0mins
+Writing final outputs...
+
+Transforming Volume done: 5, 35, 30, 25, 55, 20, 50, 15, 97, 89, 40, 60, 10, 69, 45, 65, 73, 101, 93, 0, 85, 77, 81, 6, 36, 26, 11, 98, 21, 31, 90, 51, 61, 1, 16, 41, 56, 66, 46, 74, 70, 86, 102, 94, 78, 82, 7, 37, 12, 27, 22, 99, 32, 2, 52, 75, 62, 17, 42, 57, 47, 71, 91, 79, 103, 87, 83, 95, 67, 8, 38, 13, 28, 33, 3, 23, 53, 100, 18, 63, 76, 43, 92, 58, 72, 80, 104, 88, 84, 96, 68, 48, 9, 14, 39, 4, 29, 24, 54, 34, 19, 64, 44, 59, 49, 
+Writing final data...
+TOTAL Final data generation time: 0mins
+Done with TORTOISE processing...Congratulations....
+Your final data is: tortoise.nii
+TOTAL runtime: 12mins
+exit 0
+1792593194

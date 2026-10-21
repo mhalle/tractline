@@ -78,7 +78,8 @@ def compare(a, b):
             "tract count difference": round(float(np.abs(ca - cb).sum() / ca.sum()), 4)}
 
 
-pairs = [("as acquired", "as acquired, moved 0.05 voxel")] if "--floor" in sys.argv else [("ours, GPU MI anchor", "ours, no anchor"), ("eddy", "TORTOISE"), ("eddy", "ours, no anchor"),
+import itertools
+pairs = [("as acquired", "as acquired, moved 0.05 voxel")] if "--floor" in sys.argv else list(itertools.combinations(sets, 2)) if "--sets" in sys.argv else [("ours, GPU MI anchor", "ours, no anchor"), ("eddy", "TORTOISE"), ("eddy", "ours, no anchor"),
          ("eddy", "ours, GPU MI anchor"), ("TORTOISE", "ours, no anchor"), ("as acquired", "eddy"), ("as acquired", "ours, no anchor")]
 out = {"per set": {k: {kk: vv for kk, vv in v.items() if kk not in ("dens", "counts")} for k, v in res.items()},
        "pairs": {f"{a} vs {b}": compare(a, b) for a, b in pairs}}

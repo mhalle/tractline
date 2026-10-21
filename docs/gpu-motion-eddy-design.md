@@ -40,6 +40,15 @@ Levenberg-Marquardt Gauss-Newton fit over all volumes at once, in PyTorch, on MP
   synthetic scan. The fit plus anchor takes 11.7 s on the M2, against eddy's 78 min.
 - **What remains is within-shell precision**: 0.086 voxels against eddy's 0.051 on that scan. eddy's predictor
   draws on all shells at once; ours uses each shell alone (decision 1).
+- **A high-motion scan (6.6 mm, 3.1 deg) showed the fit was not converging, and three gauges now fix it** (section
+  2.10). The eddy constant is held out of the solve (it is the PE translation by another name), each shell's
+  direction-independent eddy field is removed, and each group's mean pose is held. Then 40 steps converge (about
+  40 s with the anchor).
+  - Synthetic: 0.089 voxels overall, and between shells 0.005 with the rigid anchor alone (eddy 0.015).
+  - On the high-motion scan our DW shells fit within 0.3-0.6 % of eddy's (TORTOISE 0.9-1.5 %), and our motion agrees
+    with eddy's to 0.11 voxel for 0.75 voxel of motion.
+  - With the b0s fitting the PE polynomial too (`--b0-ec`, for motion-by-susceptibility), our b0s fit each other
+    21 % better than eddy's and 15 % better than TORTOISE's.
 - **On a real scan** (ON-Harmony sub-16974, 105 volumes, no field for either method; section 2.4), the fit agrees
   with eddy to 0.075 voxels RMS at the edge, in 18 s against eddy's 79 min. A rigid shell anchor by dipy's MI gives
   eddy's model-fit numbers almost exactly.
@@ -863,6 +872,143 @@ The cause is how each tool fills voxels that a volume's motion carries out of th
 - **The DW shells were never affected by the edges.** There eddy stays 1.5-2 % lower than ours and TORTOISE (79.1
   / 72.5 against 80.3 / 74.1), consistent with its better within-shell precision on the synthetic scan
   (section 2.3): the predictor that draws on all shells (decision 1).
+
+### 2.10 A high-motion scan: three gauges the fit was missing, and motion-by-susceptibility (2026-10-21)
+
+**The scan.** ON-Harmony sub-10975 OXF2PRI001 (dir-AP, 105 volumes, 5 b0s), the cohort's highest-motion scan in
+`calibration_motion_check.json`: the b0s move up to 6.6 mm and 3.1 deg, the DW volumes up to 3.9 mm. The scan used
+so far moved 0.8 mm. `proto.py --scan` picks the scan.
+
+**What it showed: the fit did not converge.** Run longer, the unanchored fit got worse, and the corrected images kept
+changing (RMS change per volume in the brain, against the noise sigma of 322):
+
+| steps | image change vs 20 steps | largest eddy constant (voxels) | b0 volume 0, z (mm) |
+|---|---|---|---|
+| 10 | 49.5 | 3.1 | 0.64 |
+| 20 | | 3.1 | 0.53 |
+| 40 | 61.5 | 3.3 | 0.40 |
+| 60 | 111.0 | 3.4 | 0.32 |
+
+The synthetic scores remove the mean transform, so they could not see this, and every earlier run stopped at 20 steps.
+On the low-motion scan the same fit's largest eddy constant went from 0.23 voxel at 10 steps to 18.4 at 40. There were
+three causes. Each is a direction the data cannot see, which the steps moved along:
+
+1. **The eddy constant is the PE translation by another name.** In the composed map, a translation of `t` mm along
+   PE and an eddy constant of `-t / voxel` cancel exactly, so the system is singular in that direction. Marquardt
+   damping scales with the diagonal and does not regularize it, so single volumes walked to pairs of +-3 voxels
+   (+-18 on the low-motion scan). The map hardly changed, but the inverse's two fixed-point passes start from the
+   rigid inverse, which a 9-voxel offset defeats.
+   - **Fix**: the constant is held out of the solve. The translation carries the whole PE offset during the fit.
+   - Afterwards the offset is split as eddy splits it (`SeparateFieldOffsetFromMovement`, read for method): the part
+     a demeaned linear model in (b / 1000) g explains is the field offset, and the rest is movement. The map is
+     unchanged; only the reported parameters move.
+2. **Each shell's common eddy field drifts.** A field common to all of a shell's directions is invisible to the shell's
+   leave-one-out predictor (section 2.2), and nothing held it. On this scan the b2000 shell's y^2 and y z terms went
+   -0.4, -0.76, -1.15 voxels at 20, 40, 60 steps.
+   - **Fix**: after each step, each eddy term's intercept in a per-shell linear model in g is removed. Eddy fields
+     scale with the gradient, so their direction-independent part is zero; eddy's second-level model (linear in
+     (b / 1000) g, no intercept) assumes the same.
+   - The synthetic truth meets this assumption exactly.
+3. **Each group's mean pose drifts.** Under large motion the b0s moved together, 0.08 mm in z per 10 steps, and the
+   shells' mean poses crept the same way. That is the gauge of section 1.4 inside the fit, not only between shells.
+   - **Fix**: each group's mean rigid pose is held at 0 during the fit. The b0s' mean pose is the location reference
+     (where the corrected scan sits), and the shells' are set by the anchor at the end.
+   - eddy's own reference, its first b0 held fixed (`--ref-pin`), left that volume 0.065 voxel off the other b0s on
+     the low-motion scan, against 0.023 with the mean pose: a pinned volume is the one volume never interpolated, and
+     the others settle around a consensus slightly off it.
+
+With the three fixes, the 40-step images are within 0.4 RMS of the 60-step ones (20 steps: 7.3), and the b0s'
+positions are fixed from 20 steps on. **The fit now runs 40 steps** (about 40-47 s with the anchor, against 27 s at 20).
+
+| | before | after |
+|---|---|---|
+| synthetic, 105 volumes: overall / within / between shells (voxels) | 0.105 / 0.086 / 0.100 | 0.089 / 0.089 / **0.005** |
+| low-motion scan: agreement with eddy (voxels) | 0.080 | **0.068** |
+| low-motion scan: LOO residual b0 / b1000 / b2000 | 139.3 / 80.3 / 74.1 | 139.4 / 80.1 / 73.8 (eddy 139.9 / 79.1 / 72.4) |
+| low-motion scan: tensor residual, FA | 77.0, 0.4752 | 76.9, 0.4744 (eddy 75.7, 0.4713) |
+
+- **The between-shell gap on the synthetic scan is closed by the rigid anchor alone** (0.005 voxel, eddy 0.015). It
+  had needed the eddy-term anchor (section 2.3) because the shells' common eddy fields were drifting, not because the
+  anchor must estimate them.
+- The flags `--offset-in-solve`, `--no-ec-gauge`, `--no-ref` and `--shell-pose-free` reproduce the earlier fit.
+
+**Motion-by-susceptibility: the b0s need the PE polynomial under large motion.** With the gauges fixed, our b0s were
+better aligned with each other than TORTOISE's (0.024-0.084 voxel left, against 0.03-0.12) but fit each other 4-17 %
+worse, in the middle of the brain as much as at the edges, and not through a smooth intensity ratio.
+- TORTOISE fits its b0s with its full model. Its b0 transforms carry PE scales of 0.984-0.996 and shears; only its
+  reference b0 is the identity.
+- Physically, b = 0 has no eddy currents, but the susceptibility field moves with the head. A 3-deg rotation changes the
+  distortion along PE from one b0 to the next. eddy models this as `--estimate_move_by_susceptibility`, off by default.
+- **`--b0-ec`**: the b0s fit the PE polynomial too, without the constant, with their mean shape held at 0.
+
+| b0 volume | 0 | 21 | 42 | 63 | 84 |
+|---|---|---|---|---|---|
+| LOO residual, ours, rigid b0s | 630 | 480 | 405 | 535 | 572 |
+| **ours, `--b0-ec`** | **438** | **399** | 389 | **425** | **439** |
+| TORTOISE | 538 | 455 | 380 | 516 | 554 |
+
+- The b0 residuals drop 15-30 %, most in the b0s that moved most. On the low-motion scan they drop 5 % (139.4 to 132.7;
+  eddy 139.9), with the DW fit and the agreement with eddy unchanged.
+- Design: **the b0s fit the PE polynomial** whenever the scan has three or more b0s. The DW volumes' polynomial
+  already absorbs this to second order.
+
+**Against eddy and TORTOISE on the high-motion scan.**
+- eddy: `eddy_cpu`, as for the low-motion scan (`--flm=quadratic --slm=none --data_is_shelled`, no
+  `--estimate_move_by_susceptibility`, no slice-to-volume, no outlier replacement), 104 min on 6 threads.
+- TORTOISE: as section 2.5, 12.6 min on an A10.
+- Ours: 40 steps, `--mask-output`, 39 s with the anchor.
+
+| (`score_sets.py`, `compare_real.py`) | LOO residual b0 / b1000 / b2000 | tensor residual | b0 placement vs eddy's (`placement.py`, voxels) |
+|---|---|---|---|
+| as acquired | 1434 / 453.3 / 297.7 | 335.4 | 0.198 |
+| eddy | 529.9 / **193.6** / **166.7** | **173.3** | |
+| TORTOISE | 492.8 / 195.3 / 169.2 | 178.4 | 0.220 |
+| ours, no anchor | 530.1 / 194.7 / 167.8 | 176.8 | 0.153 |
+| ours, MI anchor | 525.6 / 194.1 / 167.6 | 176.8 | 0.115 |
+| **ours, MI anchor, `--b0-ec`** | **418.7** / 194.1 / 167.8 | 176.9 | **0.107** |
+
+- **The DW shells fit within 0.3-0.6 % of eddy's** (on the low-motion scan, 1.5-2 %). TORTOISE is 0.9-1.5 % above
+  eddy. The tensor residual is 2 % above eddy's, as on the low-motion scan.
+- **Our motion agrees with eddy's to 0.109-0.115 voxel RMS at the edge**, for motion of 0.75 voxel RMS. The DW shells
+  agree to 0.104-0.111, the b0s to 0.13-0.20.
+- **The anchor earns its place here.** It brings the b0 placement from 0.153 to 0.115 voxel of eddy's (TORTOISE
+  0.220, as acquired 0.198). Its moves were up to 0.3 mm and 0.19 deg, the size of drift MI can see. On the low-motion
+  scan it had nothing to correct (section 2.7).
+- **eddy's pinned reference b0 is its worst-aligned b0**: 0.101 voxel from the other b0s, against 0.017-0.051 for
+  the rest (`b0_check.py`). This is the effect that made us keep the mean pose as the reference.
+- **The corrected scans sit in different frames.** eddy's frame is its first b0. TORTOISE's is the b0 it picks
+  (volume 63 here). Ours is the b0s' mean pose. eddy's b0s average -1.77 deg about x from its first b0, so our
+  b-vectors differ from eddy's by 1.4 deg RMS, and our images are rotated by the same amount: consistent, not an
+  error. Two of our measures were frame-bound and have to be read that way:
+  - **FA in a fixed mask.** "Mean FA where FA > 0.25 as acquired" read 0.461 for eddy and 0.484 for ours. In each
+    method's own FA > 0.25 region the three agree to 0.0001 (eddy 0.4863, TORTOISE 0.4862, ours 0.4863).
+  - **Tract density maps compared voxel by voxel.** eddy against TORTOISE, the two frames furthest apart (3.3 deg),
+    correlates least (0.886). Tract counts do not depend on the frame.
+  - Rotating the b-vectors at all changes mean FA by 0.0002 on this scan, so the frame's effect on the tensor is
+    nil.
+
+| tracking (`track_compare.py`, b = 2000 and the b0s) | tract count difference | density correlation (frame-bound) |
+|---|---|---|
+| floor: the scan moved 0.05 voxel | 1.5 % | 0.991 |
+| ours with and without `--b0-ec` | 1.2 % | 0.996 |
+| TORTOISE vs ours | 2.5-2.7 % | 0.957 |
+| eddy vs ours | 3.6-3.9 % | 0.935 |
+| eddy vs TORTOISE | 4.7 % | 0.886 |
+| as acquired vs any correction | 7.1-8.3 % | 0.915-0.960 |
+
+- On the high-motion scan correcting matters: 7-8 % of tract counts against a 1.5 % floor (3.2 % on the low-motion
+  scan). The three methods differ from each other by about half that. Ours sits between eddy and TORTOISE.
+- Not yet compared: eddy in its high-motion configuration (`--mporder` slice-to-volume, `--repol`,
+  `--estimate_move_by_susceptibility`). None of the three methods here models motion within a volume, which this scan
+  likely has.
+
+**Where this leaves the comparison with the state of the art.**
+- At low and high motion, our corrected DW data fits as well as TORTOISE's and within 0.3-2 % of eddy's, and our
+  b0s fit better than both with `--b0-ec`.
+- The motion estimates agree with eddy's to 15 % of the motion.
+- The known deficit is still within-shell precision on the synthetic scan (0.089 voxel against eddy's 0.051).
+- Each new scan so far has exposed a defect, so the next scans are the test. Candidates: the published simulation
+  sets with known motion (DW-POSSUM; the SHORELine phantoms of Cieslak et al.) and the extreme rescan pairs.
 
 ## 3. GPU mapping
 

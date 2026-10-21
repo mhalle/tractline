@@ -1,0 +1,74 @@
+{
+ "eddy": [
+  {
+   "volume": 0,
+   "LOO residual rms": 652.8,
+   "misalignment at the edge (voxels)": 0.101,
+   "rigid (mm, deg)": [
+    -0.023,
+    0.084,
+    0.09,
+    0.135,
+    0.039,
+    0.009
+   ],
+   "mean in mask / b0s' mean": 1.0168
+  },
+  {
+   "volume": 21,
+   "LOO residual rms": 481.7,
+   "misalignment at the edge (voxels)": 0.017,
+   "rigid (mm, deg)": [
+    -0.011,
+    0.005,
+    0.016,
+    -0.016,
+    0.02,
+    0.004
+   ],
+   "mean in mask / b0s' mean": 1.0144
+  },
+  {
+   "volume": 42,
+   "LOO residual rms": 370.1,
+   "misalignment at the edge (voxels)": 0.021,
+   "rigid (mm, deg)": [
+    -0.0,
+    -0.001,
+    -0.015,
+    -0.031,
+    0.007,
+    0.02
+   ],
+   "mean in mask / b0s' mean": 0.9988
+  },
+  {
+   "volume": 63,
+   "LOO residual rms": 531.0,
+   "misalignment at the edge (voxels)": 0.037,
+   "rigid (mm, deg)": [
+    0.024,
+    -0.023,
+    -0.042,
+    -0.022,
+    -0.023,
+    -0.034
+   ],
+   "mean in mask / b0s' mean": 0.9864
+  },
+  {
+   "volume": 84,
+   "LOO residual rms": 571.8,
+   "misalignment at the edge (voxels)": 0.051,
+   "rigid (mm, deg)": [
+    0.015,
+    -0.058,
+    -0.048,
+    -0.046,
+    -0.039,
+    0.0
+   ],
+   "mean in mask / b0s' mean": 0.9837
+  }
+ ]
+}

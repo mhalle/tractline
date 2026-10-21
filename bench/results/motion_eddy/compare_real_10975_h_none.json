@@ -1,0 +1,56 @@
+{
+ "agreement at the edge (voxels)": {
+  "rms": 0.109,
+  "p95": 0.186,
+  "ours motion rms": 0.752,
+  "eddy motion rms": 0.74
+ },
+ "agreement by group": {
+  "group 1 (n=5, b=0)": {
+   "rms": 0.162,
+   "group mean difference rms": 0.159
+  },
+  "group 2 (n=50, b=1000)": {
+   "rms": 0.108,
+   "group mean difference rms": 0.031
+  },
+  "group 3 (n=50, b=2005)": {
+   "rms": 0.104,
+   "group mean difference rms": 0.043
+  }
+ },
+ "rotated b-vectors, ours against eddy's (deg)": {
+  "rms": 1.496,
+  "max": 1.931,
+  "eddy's rotation from the input, rms": 1.784
+ },
+ "model fit": {
+  "as acquired": {
+   "LOO prediction residual rms, by group": {
+    "b0": 1433.75,
+    "b1000": 453.34,
+    "b2005": 297.68
+   },
+   "tensor fit residual rms (DW)": 335.37,
+   "mean FA where FA > 0.25 as acquired": 0.4723
+  },
+  "eddy": {
+   "LOO prediction residual rms, by group": {
+    "b0": 529.93,
+    "b1000": 193.59,
+    "b2005": 166.68
+   },
+   "tensor fit residual rms (DW)": 173.28,
+   "mean FA where FA > 0.25 as acquired": 0.4611
+  },
+  "ours": {
+   "LOO prediction residual rms, by group": {
+    "b0": 530.09,
+    "b1000": 194.65,
+    "b2005": 167.79
+   },
+   "tensor fit residual rms (DW)": 176.77,
+   "mean FA where FA > 0.25 as acquired": 0.4856
+  }
+ }
+}

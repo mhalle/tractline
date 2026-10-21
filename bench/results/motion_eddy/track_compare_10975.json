@@ -1,0 +1,111 @@
+{
+ "per set": {
+  "as acquired": {
+   "fibers": 107053,
+   "labeled": 89413,
+   "other_share": 0.5371,
+   "seconds": {
+    "prep": 4.54,
+    "load": 0.39,
+    "ukf": 70.05,
+    "label": 2.02
+   }
+  },
+  "eddy": {
+   "fibers": 106644,
+   "labeled": 90293,
+   "other_share": 0.5414,
+   "seconds": {
+    "prep": 4.55,
+    "load": 0.43,
+    "ukf": 70.63,
+    "label": 1.88
+   }
+  },
+  "TORTOISE": {
+   "fibers": 108187,
+   "labeled": 91166,
+   "other_share": 0.5342,
+   "seconds": {
+    "prep": 4.58,
+    "load": 0.39,
+    "ukf": 71.31,
+    "label": 1.87
+   }
+  },
+  "ours, MI anchor": {
+   "fibers": 107098,
+   "labeled": 90630,
+   "other_share": 0.5336,
+   "seconds": {
+    "prep": 4.37,
+    "load": 0.41,
+    "ukf": 70.68,
+    "label": 1.9
+   }
+  },
+  "ours, b0 polynomial": {
+   "fibers": 107142,
+   "labeled": 90708,
+   "other_share": 0.5344,
+   "seconds": {
+    "prep": 4.36,
+    "load": 0.5,
+    "ukf": 70.96,
+    "label": 1.87
+   }
+  }
+ },
+ "pairs": {
+  "as acquired vs eddy": {
+   "density correlation": 0.915,
+   "support Dice (>= 5 streamlines)": 0.8838,
+   "tract count difference": 0.0831
+  },
+  "as acquired vs TORTOISE": {
+   "density correlation": 0.9499,
+   "support Dice (>= 5 streamlines)": 0.9103,
+   "tract count difference": 0.0707
+  },
+  "as acquired vs ours, MI anchor": {
+   "density correlation": 0.9604,
+   "support Dice (>= 5 streamlines)": 0.9217,
+   "tract count difference": 0.074
+  },
+  "as acquired vs ours, b0 polynomial": {
+   "density correlation": 0.9604,
+   "support Dice (>= 5 streamlines)": 0.9214,
+   "tract count difference": 0.0746
+  },
+  "eddy vs TORTOISE": {
+   "density correlation": 0.8859,
+   "support Dice (>= 5 streamlines)": 0.8618,
+   "tract count difference": 0.0472
+  },
+  "eddy vs ours, MI anchor": {
+   "density correlation": 0.9363,
+   "support Dice (>= 5 streamlines)": 0.8937,
+   "tract count difference": 0.0388
+  },
+  "eddy vs ours, b0 polynomial": {
+   "density correlation": 0.9348,
+   "support Dice (>= 5 streamlines)": 0.8926,
+   "tract count difference": 0.036
+  },
+  "TORTOISE vs ours, MI anchor": {
+   "density correlation": 0.957,
+   "support Dice (>= 5 streamlines)": 0.9146,
+   "tract count difference": 0.0268
+  },
+  "TORTOISE vs ours, b0 polynomial": {
+   "density correlation": 0.9578,
+   "support Dice (>= 5 streamlines)": 0.9153,
+   "tract count difference": 0.0252
+  },
+  "ours, MI anchor vs ours, b0 polynomial": {
+   "density correlation": 0.9955,
+   "support Dice (>= 5 streamlines)": 0.9601,
+   "tract count difference": 0.0118
+  }
+ }
+}
