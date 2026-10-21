@@ -42,6 +42,7 @@ ap.add_argument("--offset-in-solve", action="store_true", help="the earlier step
 ap.add_argument("--no-ec-gauge", action="store_true", help="the earlier step: each shell's common eddy field left free (its leave-one-out predictor cannot see it; it drifts with the steps)")
 ap.add_argument("--no-ref", action="store_true", help="the earlier step: no location reference (the scan's overall position unpinned; it drifts under large motion)")
 ap.add_argument("--shell-pose-free", action="store_true", help="the earlier step: each DW shell's mean pose left free during the fit (its predictor cannot see it; it drifts slowly with the steps)")
+ap.add_argument("--b0-ec", action="store_true", help="the b0s fit the PE polynomial too (not the constant), their mean shape held at 0: for motion-by-susceptibility, the distortion changing as the head moves in the field (TORTOISE fits its b0s with its full model)")
 ap.add_argument("--ref-pin", action="store_true", help="the location reference as eddy's: the first b0 held fixed (default: the b0s' mean rigid parameters held at 0)")
 ap.add_argument("--b0-bug", action="store_true", help="reproduce the earlier b0 step: the 16-parameter system solved, then the eddy part dropped")
 ap.add_argument("--mask-output", action="store_true", help="with --metal: the final resample zeroes voxels not inside the field of view for every volume, as eddy's output mask")
@@ -660,7 +661,7 @@ if args.fast:
     # reference). By default the location reference is the b0s' mean pose instead (gauge() below): a pinned volume is
     # the one volume never interpolated, and the others settle around a consensus slightly off it
     frozen = torch.zeros(G, P, dtype=torch.bool, device=dev)
-    if no_eddy_b0 is not None and not args.b0_bug:
+    if no_eddy_b0 is not None and not args.b0_bug and not args.b0_ec:
         frozen[no_eddy_b0, 6:] = True
     if not args.offset_in_solve:
         frozen[:, 6] = True
@@ -692,6 +693,8 @@ if args.fast:
             th[idx, 7:] -= w0 @ th[idx, 7:]
         for idx in pose_groups:                                                           # each group's mean pose
             th[idx, :6] -= th[idx, :6].mean(0)
+        if args.b0_ec and no_eddy_b0 is not None and int(no_eddy_b0.sum()) > 1:          # the b0s' mean shape
+            th[no_eddy_b0, 7:] -= th[no_eddy_b0, 7:].mean(0)
         return th
     if args.metal:
         import metal_step as M
@@ -778,7 +781,7 @@ if args.fast:
               A_ = A_ * keep[:, :, None] * keep[:, None, :] + torch.diag_embed(frozen.to(dt))
               bb = b * keep
               step = -torch.linalg.solve(A_.cpu(), bb.cpu()[..., None])[..., 0].to(dev) * scale
-              if no_eddy_b0 is not None:
+              if no_eddy_b0 is not None and not args.b0_ec:
                   step[no_eddy_b0, 6:] = 0                                                 # eddy currents are zero at b = 0
               step = step * keep
               cand = th + step
