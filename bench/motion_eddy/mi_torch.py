@@ -40,6 +40,39 @@ def _gauss(v, sd):
     return out[0, 0]
 
 
+def _prefilter(v):
+    """Cubic B-spline coefficients of v (X, Y, Z), whole-sample mirrored edges (proto.prefilter's dense solve)."""
+    for ax in range(3):
+        n = v.shape[ax]
+        M = torch.zeros(n, n, dtype=torch.float64)
+        for i in range(n):
+            M[i, i] = 4 / 6
+            for j in (i - 1, i + 1):
+                jj = -j if j < 0 else (2 * (n - 1) - j if j > n - 1 else j)
+                M[i, jj] += 1 / 6
+        Minv = torch.linalg.inv(M).to(v.device, v.dtype)
+        v = torch.movedim(torch.movedim(v, ax, -1) @ Minv.T, -1, ax)
+    return v
+
+
+def _cubic(coef, p, sizes):
+    """The cubic B-spline of coef (X, Y, Z) at p (N, 3) voxels, as 8 trilinear fetches (Sigg & Hadwiger 2005), edges
+    clamped; differentiable in p, its gradient the spline's (continuous)."""
+    i0 = torch.floor(p); t = p - i0
+    w0, w1, w2, w3 = (1 - t) ** 3 / 6, (3 * t ** 3 - 6 * t ** 2 + 4) / 6, (-3 * t ** 3 + 3 * t ** 2 + 3 * t + 1) / 6, t ** 3 / 6
+    g0, g1 = w0 + w1, w2 + w3
+    h = (i0 - 1 + w1 / g0, i0 + 1 + w3 / g1); gw = (g0, g1)
+    out = 0
+    for a in (0, 1):
+        for b in (0, 1):
+            for c in (0, 1):
+                q = torch.stack([h[a][:, 0], h[b][:, 1], h[c][:, 2]], -1)
+                s = F.grid_sample(coef[None, None], (2 * q / (sizes - 1) - 1)[:, [2, 1, 0]][None, None, None], mode="bilinear",
+                                  padding_mode="border", align_corners=True).reshape(-1)
+                out = out + gw[a][:, 0] * gw[b][:, 1] * gw[c][:, 2] * s
+    return out
+
+
 def _parzen(v, lo, hi, bins):
     """Cubic B-spline Parzen weights (N, bins) of intensities v scaled to [1, bins - 3] (2 bins of margin each side)."""
     u = (v - lo) / (hi - lo) * (bins - 5) + 2
@@ -66,18 +99,19 @@ def _mono(u, nmon):
     return torch.stack(cols, -1)
 
 
-def register(mov, fixed, mask, vox, bins=32, levels=((4, 2.0, 200), (2, 1.0, 100), (1, 1.5, 100)), d0=None, tol=1e-5,
-             pe_axis=None, nmon=0):
+def register(mov, fixed, mask, vox, bins=32, levels=None, d0=None, tol=1e-5, pe_axis=None, nmon=0, interp="cubic", qrange=(0.0, 1.0)):
     """pe_axis, nmon > 0: also an eddy-like displacement along pe_axis, a polynomial (nmon 4 or 10 terms) of the
     coordinates scaled to [-1, 1] on the full grid, in voxels of the full grid, as proto.py's eddy terms: d then has
     6 + nmon entries, mov(phi_d(x) + e(x) e_pe) ~ fixed(x)."""
     dev, dt = fixed.device, torch.float32
     mov, fixed = mov.to(dt), fixed.to(dt)
     vox = torch.as_tensor(vox, dtype=dt, device=dev)
+    if levels is None:                                                                    # dipy's schedule with cubic sampling;
+        levels = ((4, 2.0, 200), (2, 1.0, 100), (1, 0.0, 100)) if interp == "cubic" else ((4, 2.0, 200), (2, 1.0, 100), (1, 1.5, 100))
     P = 6 + nmon
     d = torch.zeros(P, dtype=dt, device=dev) if d0 is None else d0.clone().to(dt)
     full_cen = (torch.tensor(mov.shape, dtype=dt, device=dev) - 1) / 2
-    q = torch.tensor([0.02, 0.98], dtype=dt, device=dev)
+    q = torch.tensor(list(qrange), dtype=dt, device=dev)
     for f, sd, iters in levels:
         m_l = _gauss(mov, sd); f_l = _gauss(fixed, sd)
         if f > 1:
@@ -92,8 +126,10 @@ def register(mov, fixed, mask, vox, bins=32, levels=((4, 2.0, 200), (2, 1.0, 100
         sizes = torch.tensor([X, Y, Z], dtype=dt, device=dev)
         pts = torch.nonzero(mk).to(dt)                                                    # (N, 3) the fixed image's mask
         fv = f_l[mk]
-        flo, fhi = torch.quantile(fv, q); mv_all = m_l[m_l > 0] if (m_l > 0).any() else m_l.reshape(-1)
-        mlo, mhi = torch.quantile(mv_all.reshape(-1)[:2 ** 24], q)
+        flo, fhi = torch.quantile(fv, q)
+        mmk = F.max_pool3d(mk.to(dt)[None, None], 5, 1, 2)[0, 0] > 0                       # the moving range over the mask, dilated
+        mlo, mhi = torch.quantile(m_l[mmk].reshape(-1)[:2 ** 24], q)
+        coef_m = _prefilter(m_l) if interp == "cubic" else None
         Wf = _parzen(fv, flo, fhi, bins)
         xm = (pts - cen) * vl
         if nmon:
@@ -106,8 +142,11 @@ def register(mov, fixed, mask, vox, bins=32, levels=((4, 2.0, 200), (2, 1.0, 100
             if nmon:
                 e = (mon @ d[6:]) / f                                                     # full-grid voxels -> this level's
                 p = p + e[:, None] * torch.eye(3, dtype=dt, device=dev)[pe_axis]
-            s = F.grid_sample(m_l[None, None], (2 * p / (sizes - 1) - 1)[:, [2, 1, 0]][None, None, None], mode="bilinear",
-                              padding_mode="border", align_corners=True).reshape(-1)
+            if interp == "cubic":
+                s = _cubic(coef_m, p, sizes)
+            else:
+                s = F.grid_sample(m_l[None, None], (2 * p / (sizes - 1) - 1)[:, [2, 1, 0]][None, None, None], mode="bilinear",
+                                  padding_mode="border", align_corners=True).reshape(-1)
             return -_mi(Wf, _parzen(s, mlo, mhi, bins))
 
         def fg(d):

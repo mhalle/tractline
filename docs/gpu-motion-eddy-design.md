@@ -42,11 +42,13 @@ Levenberg-Marquardt Gauss-Newton fit over all volumes at once, in PyTorch, on MP
   draws on all shells at once; ours uses each shell alone (decision 1).
 - **On a real scan** (ON-Harmony sub-16974, 105 volumes, no field for either method; section 2.4), the fit agrees
   with eddy to 0.075 voxels RMS at the edge, in 18 s against eddy's 79 min. A rigid shell anchor by dipy's MI gives
-  eddy's model-fit numbers almost exactly. Two cautions:
-  - **The GPU MI is biased on real cross-contrast images.** It moved the b0s about 1.1 voxels off eddy's and lowered
-    FA by 0.05. It is not usable until it matches dipy's MI there.
-  - **The eddy-term anchor**, which fixed the synthetic scan, has no support on real data. There the rigid anchor is
-    the evidence-backed choice, as in eddy.
+  eddy's model-fit numbers almost exactly.
+  - **The GPU MI, now fixed** (cubic sampling, an unsmoothed final level, the full intensity range), matches dipy's
+    MI on real images to 0.08 mm and 0.02 deg.
+  - As the rigid anchor it slightly beats eddy on every model-fit measure: DW LOO residuals 77.1 / 70.6 against
+    79.1 / 72.4, tensor residual 74.9 against 75.7, FA 0.4715 against 0.471.
+  - **The eddy-term anchor**, which fixed the synthetic scan, does slightly worse on real data (tensor residual 75.3,
+    FA 0.464). The rigid anchor is the default, as in eddy.
 - **Prototype against eddy, on one synthetic scan with known motion and eddy** (section 2.1). FSL eddy (`eddy_cpu`
   2602.0, installed natively) gets the edge displacement from 1.52 voxels RMS to 0.105, with b-vector rotation error
   0.13 deg, in 36 min on 6 CPU threads. The prototype's first form stopped at 0.24-0.28 voxels. Three changes bring it
@@ -569,6 +571,8 @@ There is no truth, so `compare_real.py` measures:
 | **ours, rigid anchor by dipy's MI** | 0.101 (0.194 / 0.068 / 0.082) | 146.4 / **79.1 / 72.6** | 76.2 | 0.476 |
 | ours, rigid anchor by the GPU MI | 0.317 (1.10 / 0.145 / 0.250) | 146.4 / 79.2 / 68.7 | 80.2 | 0.421 |
 | ours, GPU MI with the eddy terms | 0.328 (1.15 / 0.158 / 0.251) | 146.4 / 71.3 / 67.3 | 76.8 | 0.427 |
+| **ours, rigid anchor by the GPU MI, fixed** (cubic sampling) | 0.095 (0.250 / 0.047 / 0.064) | 146.4 / **77.1 / 70.6** | **74.9** | **0.4715** |
+| ours, fixed GPU MI with the eddy terms | 0.136 (0.431 / 0.065 / 0.098) | 146.4 / 76.2 / 69.7 | 75.3 | 0.464 |
 
 What it shows:
 - **The fit agrees with eddy on real data.** Volume by volume within each shell, it differs from eddy by about 0.04
@@ -577,15 +581,26 @@ What it shows:
 - **With a rigid dipy-MI anchor, our corrected images fit the models as well as eddy's.** The DW residuals are equal
   to 0.2 %, and the tensor residual and FA are within 1 %. The b0 residual is 4.6 % higher; our b0s are anchored, not
   refitted, so that is expected.
-- **The GPU MI is wrong here.** It moves the shells about a voxel against the b0s, and FA drops by 0.05, the
-  signature of a b0-to-DW mismatch. Its self-test had warned: on this pair it disagreed with dipy by up to 0.6 mm. It
-  was accurate on the synthetic scan, whose shells are the b0 times a smooth attenuation. Real b0 and DW means differ
-  in contrast in ways the synthetic scan does not. The likely causes to examine are full-resolution smoothing
-  (sigma 1.5), the Parzen intensity ranges, and masking of the moving image. **Until it matches dipy on real data,
-  dipy's MI (CPU, its own process, about 10 s) is the anchor.**
-- **The eddy-term anchor overfits on real data.** It wins the synthetic scan's between-shell score, but on real data
-  it bends the shells to match real contrast differences. On real data the rigid anchor is the one with support,
-  as in eddy's PEAS.
+- **The first GPU MI was wrong here.** It moved the shells about a voxel against the b0s, and FA dropped by 0.05,
+  the signature of a b0-to-DW mismatch. On this pair it disagreed with dipy by up to 0.6 mm. **Fixed**, by following
+  dipy more closely:
+  - *The moving image is sampled by cubic B-splines (8 fetches), not trilinear.* Its gradient (autograd) is then
+    continuous. Autograd through trilinear interpolation gives a gradient that jumps at voxel boundaries and pulls the
+    optimizer to grid-locked points. dipy instead uses the image's spatial gradient.
+  - *The final level is unsmoothed*, as dipy's. The 1.5-voxel smoothing that had hidden the trilinear artifact also
+    moves the cross-contrast optimum, because the two contrasts blur differently.
+  - *The histograms span each image's full range in the mask*, not the 2-98 % quantiles, which cut off the b0s'
+    bright CSF.
+
+  After the fix, on this pair:
+  - b2000 mean to b0 mean: (0.018, -0.248, -0.243) mm and (0.09, -0.08, 0.00) deg, against dipy's (0.026, -0.227,
+    -0.163) mm and (0.09, -0.06, 0.00) deg;
+  - known shifts to 0.03 mm, and cross-contrast consistency to 0.05 mm (`mi_torch_check.py --dipy`).
+
+  On the synthetic scan it is unchanged: 0.100 between shells with the rigid anchor, and 0.008 with the eddy terms.
+- **The eddy-term anchor does not help on real data,** even with the fixed MI: tensor residual 75.3 against 74.9,
+  FA 0.464 against 0.4715. It wins the synthetic scan's between-shell score, but on real data its extra terms partly
+  fit real contrast differences. The rigid anchor is the default, as eddy's PEAS; the eddy terms stay an option.
 - **The between-shell checks** (`between_shells_16974.json`): b2000 against b1000 leaves 0.26 voxels as acquired
   and 0.24 with the eddy-term anchor. The extrapolated b0 against the b0 mean leaves 1.1 and 0.7. That check
   assumes mono-exponential decay, so it cannot separate misalignment from kurtosis. It was not rerun on eddy's or on
