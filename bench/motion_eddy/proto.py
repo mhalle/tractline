@@ -36,6 +36,7 @@ ap.add_argument("--anchor-truthtest", action="store_true", help="a mechanical ch
 ap.add_argument("--anchor-eddy", action="store_true", help="with --anchor-method gpumi: the anchor also fits each shell's common eddy polynomial along PE (16 parameters, as the step's), not only its rigid position")
 ap.add_argument("--anchor-flatten", type=float, default=0.0, help="with --anchor: divide each mean by a Gaussian-smoothed copy (sigma voxels) within the head before the registration: removes the slowly varying DW/b0 intensity relation that biases cross-contrast MI along z")
 ap.add_argument("--anchor-no-pe", action="store_true", help="with --anchor: do not apply the anchor's translation along PE (eddy: its PE translations are calculated but not used)")
+ap.add_argument("--anchor-bins", type=int, default=256, help="with --anchor-method gpumi: the MI histogram's bins (eddy's PEAS: 256; 32 biased the real scan's z by 0.3 mm)")
 ap.add_argument("--anchor-iters", type=int, default=30, help="with --anchor: Gauss-Newton iterations")
 ap.add_argument("--anchor-every", type=int, default=0, help="with --anchor: also every this many steps (0: only at the end)")
 ap.add_argument("--shells", default=None, help="with --all-shells: only these b-values, e.g. 0,2000 (b0s as 0)")
@@ -606,7 +607,7 @@ def shell_anchor(th):
             fixed_use = fixed
         if args.anchor_method == "gpumi":
             from mi_torch import register as mi_register
-            dd = mi_register(mov, fixed_use, mk, vox, pe_axis=PE, nmon=NMON if args.anchor_eddy else 0)
+            dd = mi_register(mov, fixed_use, mk, vox, pe_axis=PE, nmon=NMON if args.anchor_eddy else 0, bins=args.anchor_bins)
         else:
             dd = mi_rigid(mov, fixed_use, mk) if args.anchor_method == "mi" else gn_ngf(mov_n, fixed_n, mk)
         if label is not None:
@@ -921,6 +922,6 @@ info.update({"true_edge_displacement_rms_p95_vox": [round(v, 3) for v in disp_tr
              **({"profile_s": {k: round(v, 2) for k, v in prof.items()}, "lm_trials": ntrials} if args.profile else {}),
              **({"steps_run": steps_run, "tol_vox": args.tol} if args.fast else {}),
              "device": args.device})
-tag = f"_{args.device}_o{args.order}" + ("_noloo" if args.no_loo else "") + (f"_s{args.scale}" if args.scale != 1 else "") + (f"_e{args.eddy_scale}" if args.eddy_scale != 1 else "") + f"_n{args.outer}" + (f"_f{args.final_fwhm}" if args.final_fwhm else "") + ("_slm" if args.slm else "") + ("_acq" if args.acq_cost else "") + ("_cubic" if args.cubic else "") + ("_real" if args.real else "") + ("_all" if args.all_shells else "") + ("_tt" if args.tensor_truth else "") + (f"_b{args.shells.replace(',', '-')}" if args.shells else "") + (f"_anchor{args.anchor_every}{args.anchor_method}" + ("e" if args.anchor_eddy else "") + (f"f{args.anchor_flatten:g}" if args.anchor_flatten else "") + ("nope" if args.anchor_no_pe else "") if args.anchor else "") + (f"_fast_c{args.coarse}_" + ("metal" if args.metal else args.grad) + (f"_sm{args.smooth_steps}" if args.smooth_steps != 2 else "") + (f"_tol{args.tol}" if args.tol else "") if args.fast else "") + ("_prof" if args.profile else "")
+tag = f"_{args.device}_o{args.order}" + ("_noloo" if args.no_loo else "") + (f"_s{args.scale}" if args.scale != 1 else "") + (f"_e{args.eddy_scale}" if args.eddy_scale != 1 else "") + f"_n{args.outer}" + (f"_f{args.final_fwhm}" if args.final_fwhm else "") + ("_slm" if args.slm else "") + ("_acq" if args.acq_cost else "") + ("_cubic" if args.cubic else "") + ("_real" if args.real else "") + ("_all" if args.all_shells else "") + ("_tt" if args.tensor_truth else "") + (f"_b{args.shells.replace(',', '-')}" if args.shells else "") + (f"_anchor{args.anchor_every}{args.anchor_method}" + ("e" if args.anchor_eddy else "") + (f"f{args.anchor_flatten:g}" if args.anchor_flatten else "") + (f"b{args.anchor_bins}" if args.anchor_bins != 256 else "") + ("nope" if args.anchor_no_pe else "") if args.anchor else "") + (f"_fast_c{args.coarse}_" + ("metal" if args.metal else args.grad) + (f"_sm{args.smooth_steps}" if args.smooth_steps != 2 else "") + (f"_tol{args.tol}" if args.tol else "") if args.fast else "") + ("_prof" if args.profile else "")
 json.dump(info, open(OUT / f"proto{tag}.json", "w"), indent=1)
 print(json.dumps({k: v for k, v in info.items() if k != "history"}))

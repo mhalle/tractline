@@ -109,6 +109,28 @@
    0.012
   ]
  },
+ "ours, GPU MI anchor, 256 bins": {
+  "b0 placement vs eddy's, relative to the DW shells: edge rms, p95 (voxels)": [
+   0.084,
+   0.122
+  ],
+  "b0 mean vs eddy's (mm, deg)": [
+   -0.004,
+   0.011,
+   0.063,
+   0.142,
+   -0.211,
+   0.027
+  ],
+  "DW mean vs eddy's (mm, deg)": [
+   -0.007,
+   -0.095,
+   0.126,
+   0.073,
+   -0.284,
+   -0.006
+  ]
+ },
  "TORTOISE": {
   "b0 placement vs eddy's, relative to the DW shells: edge rms, p95 (voxels)": [
    0.082,

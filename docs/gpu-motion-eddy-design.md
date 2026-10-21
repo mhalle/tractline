@@ -57,9 +57,10 @@ Levenberg-Marquardt Gauss-Newton fit over all volumes at once, in PyTorch, on MP
     but measurable, and the same size as correcting this low-motion scan at all.
   - The anchor should apply only when the fit has drifted beyond MI's precision, or use the interspersed b0s as eddy
     does.
-  - **The anchor's z bias had a cause** (section 2.6): MI's single histogram meets a DW/b0 intensity relation that
-    varies along z, strongly in this head-truncated slab. Registering flattened means halves the disagreement (0.218
-    to 0.111 voxel), and the result sits with eddy and TORTOISE.
+  - **The anchor's z bias had a cause** (sections 2.6-2.7): a joint histogram too coarse (32 bins, cubic Parzen) for
+    a DW/b0 intensity relation that varies along z. eddy's source shows 256 bins. With 256, our anchor's b0
+    placement agrees with eddy's to 0.084 voxel, as TORTOISE's (0.082). Flattening the intensities (0.111) is not
+    needed.
 - **Prototype against eddy, on one synthetic scan with known motion and eddy** (section 2.1). FSL eddy (`eddy_cpu`
   2602.0, installed natively) gets the edge displacement from 1.52 voxels RMS to 0.105, with b-vector rotation error
   0.13 deg, in 36 min on 6 CPU threads. The prototype's first form stopped at 0.24-0.28 voxels. Three changes bring it
@@ -743,6 +744,53 @@ b2000 mean registered to the raw b0 mean (`z_ends.py`), the pair eddy's PEAS mea
   MI's precision, and prefers interspersed b0s where the protocol has them (section 2.5).
 - Not yet examined: what FSL does differently (its masks, histogram, smoothing), and our b0s' own mutual alignment
   (their LOO residual is 4-6 % above eddy's and TORTOISE's).
+
+### 2.7 eddy's MI, read: the cause was the histogram's resolution (2026-10-21)
+
+**Source.** eddy's source ships in the FSL conda package (`fsl-env/src/fsl-eddy`), read for method only.
+`PostEddyAlignShellsFunctions.cpp` and `PostEddyCF.cpp` show the post-eddy alignment of shells:
+- **Images**: the mean of each shell's corrected volumes and the mean b0, unsmoothed.
+- **Mask**: not a brain mask. It is the volumes' common field of view (the product of each corrected volume's
+  validity mask). In the cost, the mask is moved with the image and multiplied by a validity mask, so voxels that
+  leave the slab drop out instead of being padded.
+- **Cost**: symmetric, the mean of the forward MI and the backward MI (the reference moved by the inverse).
+- **Histogram** (`MutualInfoHelper::SoftMI`): 256 bins over each image's robust range, each intensity split
+  linearly over its two nearest bins. A comment calls 256 "MJ's recommendation, and also looks the smoothest".
+- **Optimizer**: Nelder-Mead on 6 rigid parameters, plus a 1-parameter PE-only variant that is calculated but not
+  applied.
+
+**Which choice matters** (`fsl_mi_test.py`, `mi_torch.register_fsl`; raw b2000 mean to raw b0 mean):
+
+| | z (mm) | y, PE (mm) | rotation about x |
+|---|---|---|---|
+| ours: brain mask, 32 bins, cubic Parzen (4 bins wide), one-way, full range | -0.32 | -0.22 | 0.20 deg |
+| ours with only eddy's field-of-view mask | -0.24 | -0.24 | 0.05 deg |
+| **eddy's choices together** (FOV mask, 256 bins, linear, symmetric, robust range) | **+0.02** | -0.17 | 0.03 deg |
+| eddy's, with the brain mask | -0.02 | +0.02 | 0.04 deg |
+| eddy's, with 32 bins / cubic Parzen / one-way / full range (one at a time) | +0.03 to +0.06 | -0.14 to -0.35 | 0.03-0.09 deg |
+| **ours with 256 bins** (64 / 128) | **-0.02** (-0.12 / -0.05) | -0.02 (-0.09 / -0.04) | 0.08 deg (0.15 / 0.12) |
+| FSL itself (eddy's MI; its interspersed b0s) | +0.03 to +0.08 | | under 0.03 deg |
+
+**The cause is the histogram's resolution.**
+- 32 bins, each value spread over 4 by the cubic Parzen window, is a joint histogram of roughly 8-10 levels. That
+  is too coarse to hold the b0-to-DW relation, which here varies in space, most strongly along z.
+- MI then gains more by sliding and tilting the images along z than by matching intensities.
+- At 256 bins the relation is resolved and the z bias goes (-0.32 to -0.02 mm), with most of the tilt. So does the
+  PE (y) difference that had looked separate (-0.22 to -0.02 mm).
+- Section 2.6's intensity flattening worked by making the relation simpler for a coarse histogram. It is not needed
+  at 256 bins.
+
+**The anchor with 256 bins** (now `mi_torch.register`'s and `--anchor-bins`'s default), real scan:
+- **b0 placement against eddy's: 0.084 voxel**, as TORTOISE (0.082) and the unanchored fit (0.084). It was 0.218
+  at 32 bins and 0.111 with flattening.
+- Agreement with eddy 0.086 (b0s 0.137, shells 0.055 / 0.066); FA 0.477; tensor residual 77.1 (TORTOISE 77.2).
+- The anchor now applies at most 0.07 mm and 0.12 deg here, as a fit that has not drifted should.
+- **Synthetic scan unchanged**: between shells 0.101 (rigid) and 0.005 (with the eddy terms).
+- **Self-test**: known shifts to 0.04 mm; cross-contrast consistency to 0.04 mm. The raw pair's offset is now
+  (0.04, -0.13, 0.04) mm, with z inside FSL's range.
+
+**Design**: the anchor is MI with 256 bins. The safeguards of section 2.5 stay (apply beyond MI's precision; prefer
+interspersed b0s). Untested: a high-motion scan, where the anchor has real drift to correct.
 
 ## 3. GPU mapping
 

@@ -1,6 +1,9 @@
 """Rigid mutual-information registration in torch (any device), for the shell anchor: dipy's approach on the GPU.
 
-Mattes-style MI: a joint histogram with cubic B-spline Parzen windows for both images, built as W_fixed' W_moving (dense
+Mattes-style MI with 256 bins (eddy's PEAS choice; with 32 bins and cubic Parzen windows the histogram was too coarse
+to hold a cross-contrast relation that varies in space, and on a real b2000-to-b0 pair it biased z by -0.32 mm and
+tilted 0.2 deg about x, against -0.02 mm at 256: fsl_mi_test.py, docs/gpu-motion-eddy-design.md 2.7): a joint
+histogram with cubic B-spline Parzen windows for both images, built as W_fixed' W_moving (dense
 (N, bins) weights, so it is differentiable through the moving intensities); three levels (Gaussian smoothing 2, 1, 1.5
 voxels, subsampling 4, 2, 1). The full-resolution level keeps sigma 1.5 voxels: unsmoothed, trilinear sampling's
 shift-dependent blur biases MI's optimum (a known 0.5, -0.3, 0.4 mm shift came back as 0.40, -0.23, 0.26; at 1.5
@@ -99,7 +102,7 @@ def _mono(u, nmon):
     return torch.stack(cols, -1)
 
 
-def register(mov, fixed, mask, vox, bins=32, levels=None, d0=None, tol=1e-5, pe_axis=None, nmon=0, interp="cubic", qrange=(0.0, 1.0)):
+def register(mov, fixed, mask, vox, bins=256, levels=None, d0=None, tol=1e-5, pe_axis=None, nmon=0, interp="cubic", qrange=(0.0, 1.0)):
     """pe_axis, nmon > 0: also an eddy-like displacement along pe_axis, a polynomial (nmon 4 or 10 terms) of the
     coordinates scaled to [-1, 1] on the full grid, in voxels of the full grid, as proto.py's eddy terms: d then has
     6 + nmon entries, mov(phi_d(x) + e(x) e_pe) ~ fixed(x)."""
@@ -174,6 +177,107 @@ def register(mov, fixed, mask, vox, bins=32, levels=None, d0=None, tol=1e-5, pe_
             if sy > 1e-12:                                                                # BFGS inverse-Hessian update
                 rho = 1.0 / sy
                 I = torch.eye(P, dtype=dt, device=dev)
+                Hinv = (I - rho * s_[:, None] @ y_[None]) @ Hinv @ (I - rho * y_[:, None] @ s_[None]) + rho * s_[:, None] @ s_[None]
+            if float(s_.abs().max()) < tol:
+                break
+    return d
+
+
+def _parzen_linear(v, lo, hi, bins):
+    """Linear (two-bin) soft-histogram weights (N, bins), the scheme eddy's MutualInfoHelper::SoftMI uses."""
+    x = ((v - lo) / (hi - lo) * bins).clamp(0.0, bins - 1.0)
+    i0 = torch.floor(x).clamp(max=bins - 2); t = x - i0
+    W = torch.zeros(v.shape[0], bins, dtype=v.dtype, device=v.device)
+    W = W.scatter_add(1, i0.long()[:, None], (1 - t)[:, None])
+    return W.scatter_add(1, (i0.long() + 1)[:, None], t[:, None])
+
+
+def _mi_w(Wf, Wm, w):
+    P = Wf.T @ (Wm * w[:, None])
+    P = P / P.sum()
+    pf, pm = P.sum(1, keepdim=True), P.sum(0, keepdim=True)
+    nz = P > 1e-12
+    return (P[nz] * torch.log(P[nz] / (pf @ pm)[nz])).sum()
+
+
+def register_fsl(mov, fixed, mask, vox, bins=256, mask_mode="fov", parzen="linear", symmetric=True, robust=(0.02, 0.98),
+                 levels=((4, 2.0, 200), (2, 1.0, 100), (1, 0.0, 100)), tol=1e-5):
+    """register() with eddy's PEAS choices, each switchable (PostEddyCF / MutualInfoHelper::SoftMI, read for method):
+    mask_mode "fov" - every voxel counts where the moved image is inside the field of view (eddy multiplies the moved
+    mask by a validity mask; its PEAS mask is the volumes' common field of view, not a brain mask), "brain" - mask's
+    voxels as register(); bins 256 over robust ranges (2-98 %); parzen "linear" (two-bin) or "cubic"; symmetric - the
+    mean of MI(fixed, mov o phi) and MI(mov, fixed o phi^-1). Sampling stays cubic, the optimizer BFGS (eddy: trilinear,
+    Nelder-Mead). Returns d (6,) as register()."""
+    dev, dt = fixed.device, torch.float32
+    mov, fixed = mov.to(dt), fixed.to(dt)
+    vox = torch.as_tensor(vox, dtype=dt, device=dev)
+    d = torch.zeros(6, dtype=dt, device=dev)
+    pz = _parzen_linear if parzen == "linear" else _parzen
+    for f, sd, iters in levels:
+        m_l = _gauss(mov, sd); f_l = _gauss(fixed, sd)
+        if f > 1:
+            m_l = F.avg_pool3d(m_l[None, None], f, f, ceil_mode=True)[0, 0]; f_l = F.avg_pool3d(f_l[None, None], f, f, ceil_mode=True)[0, 0]
+            mk = F.max_pool3d(mask.to(dt)[None, None], f, f, ceil_mode=True)[0, 0] > 0
+        else:
+            mk = mask.bool()
+        X, Y, Z = f_l.shape
+        vl = vox * f
+        cen = (torch.tensor([X, Y, Z], dtype=dt, device=dev) - 1) / 2
+        sizes = torch.tensor([X, Y, Z], dtype=dt, device=dev)
+        grid = torch.stack(torch.meshgrid(*[torch.arange(n, dtype=dt, device=dev) for n in (X, Y, Z)], indexing="ij"), -1).reshape(-1, 3)
+        sel = torch.ones(grid.shape[0], dtype=torch.bool, device=dev) if mask_mode == "fov" else mk.reshape(-1)
+        pts = grid[sel]
+        q = torch.tensor(list(robust), dtype=dt, device=dev)
+        flo, fhi = torch.quantile(f_l.reshape(-1)[:2 ** 24], q); mlo, mhi = torch.quantile(m_l.reshape(-1)[:2 ** 24], q)
+        cf_, cm_ = _prefilter(f_l), _prefilter(m_l)
+        Wf = pz(f_l.reshape(-1)[sel], flo, fhi, bins); Wm0 = pz(m_l.reshape(-1)[sel], mlo, mhi, bins)
+        mkf = mk.to(dt)
+        xm = (pts - cen) * vl
+
+        def inside(p):
+            return ((p >= 0) & (p <= sizes - 1)).all(1).to(dt)
+
+        def cost(d):
+            R = _rot(d[3:6] * 0.01)
+            p = (xm @ R.T + d[:3]) / vl + cen                                             # fixed's points into mov
+            w = inside(p)
+            if mask_mode == "brain":
+                w = w * F.grid_sample(mkf[None, None], (2 * p / (sizes - 1) - 1)[:, [2, 1, 0]][None, None, None], mode="bilinear",
+                                      padding_mode="zeros", align_corners=True).reshape(-1)
+            c = -_mi_w(Wf, pz(_cubic(cm_, p, sizes), mlo, mhi, bins), w)
+            if symmetric:
+                pb = ((xm - d[:3]) @ R) / vl + cen                                        # mov's points into fixed: R^T (x - t)
+                wb = inside(pb)
+                if mask_mode == "brain":
+                    wb = wb * F.grid_sample(mkf[None, None], (2 * pb / (sizes - 1) - 1)[:, [2, 1, 0]][None, None, None], mode="bilinear",
+                                            padding_mode="zeros", align_corners=True).reshape(-1)
+                c = 0.5 * (c - _mi_w(Wm0, pz(_cubic(cf_, pb, sizes), flo, fhi, bins), wb))
+            return c
+
+        def fg(d):
+            d = d.detach().requires_grad_(True)
+            with torch.enable_grad():
+                c = cost(d)
+                g, = torch.autograd.grad(c, d)
+            return float(c), g.detach()
+
+        c, g = fg(d)
+        Hinv = torch.eye(6, dtype=dt, device=dev) * 0.1 / max(float(g.abs().max()), 1e-12)
+        for _ in range(iters):
+            p_ = -Hinv @ g
+            if float(p_ @ g) >= 0:
+                Hinv = torch.eye(6, dtype=dt, device=dev) * 0.1 / max(float(g.abs().max()), 1e-12); p_ = -Hinv @ g
+            a = 1.0
+            while True:
+                c1, g1 = fg(d + a * p_)
+                if c1 <= c + 1e-4 * a * float(p_ @ g) or a < 1e-6:
+                    break
+                a *= 0.5
+            s_ = a * p_; y_ = g1 - g
+            d, c, g = d + s_, c1, g1
+            sy = float(s_ @ y_)
+            if sy > 1e-12:
+                rho = 1.0 / sy; I = torch.eye(6, dtype=dt, device=dev)
                 Hinv = (I - rho * s_[:, None] @ y_[None]) @ Hinv @ (I - rho * y_[:, None] @ s_[None]) + rho * s_[:, None] @ s_[None]
             if float(s_.abs().max()) < tol:
                 break
