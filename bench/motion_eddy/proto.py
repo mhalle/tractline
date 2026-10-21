@@ -37,6 +37,8 @@ ap.add_argument("--anchor-eddy", action="store_true", help="with --anchor-method
 ap.add_argument("--anchor-flatten", type=float, default=0.0, help="with --anchor: divide each mean by a Gaussian-smoothed copy (sigma voxels) within the head before the registration: removes the slowly varying DW/b0 intensity relation that biases cross-contrast MI along z")
 ap.add_argument("--anchor-no-pe", action="store_true", help="with --anchor: do not apply the anchor's translation along PE (eddy: its PE translations are calculated but not used)")
 ap.add_argument("--anchor-bins", type=int, default=256, help="with --anchor-method gpumi: the MI histogram's bins (eddy's PEAS: 256; 32 biased the real scan's z by 0.3 mm)")
+ap.add_argument("--gain", action="store_true", help="with --fast --metal: a per-volume intensity gain, each step: the observations divided by (their sum / the prediction's sum) over the estimate's voxels (signal drift; SSD otherwise trades it for position)")
+ap.add_argument("--b0-bug", action="store_true", help="reproduce the earlier b0 step: the 16-parameter system solved, then the eddy part dropped")
 ap.add_argument("--anchor-iters", type=int, default=30, help="with --anchor: Gauss-Newton iterations")
 ap.add_argument("--anchor-every", type=int, default=0, help="with --anchor: also every this many steps (0: only at the end)")
 ap.add_argument("--shells", default=None, help="with --all-shells: only these b-values, e.g. 0,2000 (b0s as 0)")
@@ -642,6 +644,7 @@ if args.fast:
     probe = xedge[torch.randperm(len(xedge), generator=rng_t)[:2000].to(dev)]            # edge points for the step size
     smooth_cache, mcache = {}, {}
     quiet, steps_run = 0, 0
+    gains_last = None
     no_eddy_b0 = torch.tensor(isb0, device=dev) if (args.all_shells and isb0.any()) else None
     if args.metal:
         import metal_step as M
@@ -679,6 +682,11 @@ if args.fast:
                 mcache[key] = M.consts(G, len(ys), Xc, Yc, Zc, PE, NMON, 2, cen, half, vox_t, scale, dev, offset=tuple(float(a) for a in lo))
             nch, ipk, fpk = mcache[key]
             ys_c, obs_c, coef_c = ys.contiguous(), obs.contiguous(), coef.contiguous()
+            if args.gain:
+                psum = pv.reshape(G, -1)[:, lin_e].sum(1) if not c_ else pv.reshape(G, -1)[:, lin_e][:, sub].sum(1)
+                gain = (obs_c.sum(1) / psum.clamp_min(1e-6))                               # (G,): observed over predicted
+                obs_c = (obs_c / gain[:, None]).contiguous()
+                gains_last = gain
         with torch.no_grad():
           if args.metal:
             H, b, f0 = M.step_moments(coef_c, obs_c, ys_c, M.pack(th, rot), nch, ipk, fpk, P)
@@ -716,7 +724,13 @@ if args.fast:
               if not bool(todo.any()):
                   break
               A_ = H + torch.diag_embed(mu[:, None] * Hd)
-              step = -torch.linalg.solve(A_.cpu(), b.cpu()[..., None])[..., 0].to(dev) * scale
+              bb = b
+              if no_eddy_b0 is not None and not args.b0_bug:                          # b0s: the rigid 6 alone (eddy terms fixed at 0),
+                  A_ = A_.clone(); bb = b.clone()                                      # not the 16 solved and the eddy part dropped: the
+                  A_[no_eddy_b0, :6, 6:] = 0; A_[no_eddy_b0, 6:, :6] = 0               # PE translation and the eddy constant are confounded,
+                  A_[no_eddy_b0, 6:, 6:] = torch.eye(P - 6, dtype=dt, device=dev)       # so dropping the latter lost most of the b0s' PE step
+                  bb[no_eddy_b0, 6:] = 0
+              step = -torch.linalg.solve(A_.cpu(), bb.cpu()[..., None])[..., 0].to(dev) * scale
               if no_eddy_b0 is not None:
                   step[no_eddy_b0, 6:] = 0                                                 # eddy currents are zero at b = 0
               cand = th + step
@@ -921,7 +935,8 @@ info.update({"true_edge_displacement_rms_p95_vox": [round(v, 3) for v in disp_tr
              "gn_iterations": args.outer * args.inner, **timings, "history": history,
              **({"profile_s": {k: round(v, 2) for k, v in prof.items()}, "lm_trials": ntrials} if args.profile else {}),
              **({"steps_run": steps_run, "tol_vox": args.tol} if args.fast else {}),
+             **({"gains (b0s first)": [round(float(v), 4) for v in torch.cat([gains_last[torch.tensor(np.flatnonzero(isb0), device=dev)], gains_last[torch.tensor(np.flatnonzero(~isb0)[:5], device=dev)]])]} if (args.fast and args.gain and gains_last is not None and args.all_shells) else {}),
              "device": args.device})
-tag = f"_{args.device}_o{args.order}" + ("_noloo" if args.no_loo else "") + (f"_s{args.scale}" if args.scale != 1 else "") + (f"_e{args.eddy_scale}" if args.eddy_scale != 1 else "") + f"_n{args.outer}" + (f"_f{args.final_fwhm}" if args.final_fwhm else "") + ("_slm" if args.slm else "") + ("_acq" if args.acq_cost else "") + ("_cubic" if args.cubic else "") + ("_real" if args.real else "") + ("_all" if args.all_shells else "") + ("_tt" if args.tensor_truth else "") + (f"_b{args.shells.replace(',', '-')}" if args.shells else "") + (f"_anchor{args.anchor_every}{args.anchor_method}" + ("e" if args.anchor_eddy else "") + (f"f{args.anchor_flatten:g}" if args.anchor_flatten else "") + (f"b{args.anchor_bins}" if args.anchor_bins != 256 else "") + ("nope" if args.anchor_no_pe else "") if args.anchor else "") + (f"_fast_c{args.coarse}_" + ("metal" if args.metal else args.grad) + (f"_sm{args.smooth_steps}" if args.smooth_steps != 2 else "") + (f"_tol{args.tol}" if args.tol else "") if args.fast else "") + ("_prof" if args.profile else "")
+tag = f"_{args.device}_o{args.order}" + ("_noloo" if args.no_loo else "") + (f"_s{args.scale}" if args.scale != 1 else "") + (f"_e{args.eddy_scale}" if args.eddy_scale != 1 else "") + f"_n{args.outer}" + (f"_f{args.final_fwhm}" if args.final_fwhm else "") + ("_slm" if args.slm else "") + ("_acq" if args.acq_cost else "") + ("_cubic" if args.cubic else "") + ("_real" if args.real else "") + ("_gain" if args.gain else "") + ("_all" if args.all_shells else "") + ("_tt" if args.tensor_truth else "") + (f"_b{args.shells.replace(',', '-')}" if args.shells else "") + (f"_anchor{args.anchor_every}{args.anchor_method}" + ("e" if args.anchor_eddy else "") + (f"f{args.anchor_flatten:g}" if args.anchor_flatten else "") + (f"b{args.anchor_bins}" if args.anchor_bins != 256 else "") + ("nope" if args.anchor_no_pe else "") if args.anchor else "") + (f"_fast_c{args.coarse}_" + ("metal" if args.metal else args.grad) + (f"_sm{args.smooth_steps}" if args.smooth_steps != 2 else "") + (f"_tol{args.tol}" if args.tol else "") if args.fast else "") + ("_prof" if args.profile else "")
 json.dump(info, open(OUT / f"proto{tag}.json", "w"), indent=1)
 print(json.dumps({k: v for k, v in info.items() if k != "history"}))

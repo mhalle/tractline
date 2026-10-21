@@ -792,6 +792,47 @@ b2000 mean registered to the raw b0 mean (`z_ends.py`), the pair eddy's PEAS mea
 **Design**: the anchor is MI with 256 bins. The safeguards of section 2.5 stay (apply beyond MI's precision; prefer
 interspersed b0s). Untested: a high-motion scan, where the anchor has real drift to correct.
 
+### 2.8 The b0s' fit to each other: a bug in the b0 step (2026-10-21)
+
+**The symptom.** Our b0s' leave-one-out residual was 146.4 against eddy's 139.9 and TORTOISE's 137.5, in every
+variant of ours (the anchor never moves the b0s).
+
+**The evidence.** `b0_check.py`, per b0: its residual against the mean of the other corrected b0s, and the
+misalignment left, from registering it to that mean at the same contrast.
+- eddy and TORTOISE leave at most 0.026 and 0.028 voxel.
+- Ours left 0.057 voxel at volume 0 (0.11 mm along y, the PE axis) and 0.037 at volume 63.
+- eddy's corrected b0s sit at their own SSD optimum along y, within 0.007 voxel. Ours did not: volume 0's optimum
+  was 0.045 voxel away. So our optimizer was stopping short of its own optimum.
+
+**Two causes ruled out.**
+- eddy treats b0s as we do: motion only (`--b0_flm=movement` is its default), with one global intensity scale.
+- A per-volume intensity gain (`--gain`; the b0s' means drift 0.995-1.005) changed nothing. A uniform gain moves an
+  SSD optimum only through edge terms.
+
+**The cause.** For b0s the step solved the full 16-parameter system and then zeroed the eddy part. The PE
+translation and the eddy constant are confounded, so the solver put much of each b0's PE shift into the constant,
+and zeroing it lost that part of every step. **The fix**: the b0s solve the rigid 6 alone (the eddy rows and columns
+taken out of their system). `--b0-bug` reproduces the old step.
+
+| b0 volume | misalignment left, ours before -> after (eddy, TORTOISE) | LOO residual, ours before -> after (eddy, TORTOISE) |
+|---|---|---|
+| 0 | 0.057 -> **0.023** (0.006, 0.028) | 153.7 -> **149.3** (149.3, 149.3) |
+| 21 | 0.011 -> 0.017 (0.019, 0.021) | 132.0 -> 130.2 (127.9, 129.2) |
+| 42 | 0.023 -> 0.011 (0.026, 0.014) | 129.9 -> 128.0 (120.5, 124.6) |
+| 63 | 0.037 -> 0.015 (0.024, 0.025) | 141.9 -> 140.9 (136.0, 138.7) |
+| 84 | 0.023 -> 0.030 (0.012, 0.020) | 170.6 -> 166.8 (161.7, 157.1) |
+
+After the fix:
+- The b0s are aligned with each other as well as eddy's and TORTOISE's.
+- The b0 group's residual is 143.7 (from 146.4).
+- Agreement with eddy is 0.081 voxel (b0s 0.134, shells 0.046 / 0.058), and FA 0.477.
+- Our rotated b-vectors are 0.26 deg RMS from eddy's (was 0.29).
+- The synthetic scan is unchanged (0.105 overall, 0.100 between shells).
+
+**What remains**: a 2-6 % higher b0 residual (volume 42 the most) with the misalignment at eddy's level, so not
+alignment. Likely the interpolation or intensity handling of the final resample: eddy resamples with splines and
+Jacobian modulation, TORTOISE with its own. Not examined.
+
 ## 3. GPU mapping
 
 **Targets**: MPS on the M2 and CUDA, both through plain PyTorch in phase 1, with one code path and the device as an
