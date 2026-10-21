@@ -29,6 +29,7 @@ ap.add_argument("--outer", type=int, default=5)
 ap.add_argument("--eddy-scale", type=float, default=1.0, help="multiplies the simulated eddy only")
 ap.add_argument("--inner", type=int, default=3)
 ap.add_argument("--seed", type=int, default=0)
+ap.add_argument("--profile", action="store_true", help="time the acquisition-cost loop's parts (device-synchronized)")
 ap.add_argument("--cubic", action="store_true", help="with --acq-cost: the prediction sampled by cubic B-splines (8 fetches), its gradient exact")
 ap.add_argument("--acq-cost", action="store_true", help="residual in acquisition space: the prediction moved into each volume's acquired grid and compared with the raw data there (no interpolation of noisy data)")
 ap.add_argument("--save-synth", default=None, help="write the synthetic scan (5 b0s with rigid motion, b0 0 fixed, + the DW volumes) for eddy, then exit")
@@ -292,9 +293,24 @@ def phi_inv(theta, y, n=4):                                                     
     return x
 
 
+prof, _t = {}, [None]
+
+
+def tick(name=None):                                                                      # --profile: time since the last tick, charged to name
+    if not args.profile:
+        return
+    sync(); now = time.perf_counter()
+    if name is not None and _t[0] is not None:
+        prof[name] = prof.get(name, 0.0) + now - _t[0]
+    _t[0] = now
+
+
+ntrials = 0
 if args.acq_cost:
     for it, fw in enumerate(fwhms):
+        tick()
         vols = smooth(acq, fw)
+        tick("smooth")
         obs = vols.reshape(G, -1)[:, lin_e]                                               # raw (smoothed) data at the grid: no interpolation
         with torch.no_grad():
             u = sample_lin(vols, phi(th, xp))                                             # corrected, on the wider mask
@@ -303,21 +319,25 @@ if args.acq_cost:
             pv = pv.reshape(G, X, Y, Z)                                                   # LOO predictions as volumes, reference space
             if args.cubic:
                 pv = prefilter(pv)
+        tick("predict (resample, matmul, prefilter)")
         for _ in range(args.inner):
             with torch.no_grad():
                 x = phi_inv(th, xe)
+            tick("phi_inv (step)")
             if args.cubic:
                 xq = x.detach().requires_grad_(True)
                 Pm = sample_cubic(pv, xq)
                 gp, = torch.autograd.grad(Pm.sum(), xq); Pm = Pm.detach()
             else:
                 Pm, gp = sample_lin(pv, x, grad=True)                                     # prediction at phi^-1(y)
+            tick("sample + gradient")
             r = Pm - obs
             J = -jacobian_cols(th, x, gp) * scale                                         # d/dtheta P(phi^-1(y)) ~ -grad P . dphi/dtheta
             H = torch.einsum("gnp,gnq->gpq", J, J)
             b = torch.einsum("gnp,gn->gp", J, r)
             f0 = (r ** 2).sum(1)
             Hd = torch.diagonal(H, dim1=1, dim2=2)
+            tick("jacobian + H, b")
             accept = torch.zeros(G, dtype=torch.bool, device=dev)
             th_new = th.clone()
             for _ls in range(6):
@@ -329,13 +349,16 @@ if args.acq_cost:
                 cand = th + step
                 with torch.no_grad():
                     f1 = (((sample_cubic(pv, phi_inv(cand, xe)) if args.cubic else sample_lin(pv, phi_inv(cand, xe))) - obs) ** 2).sum(1)
+                ntrials += 1
                 ok = (f1 < f0) & todo
                 th_new[ok] = cand[ok]
                 accept |= ok
                 mu = torch.where(ok, (mu / 3).clamp_min(1e-7), torch.where(todo, mu * 8, mu))
             th = th_new
+            tick("LM trials (solve, inverse, sample)")
             history.append({"outer": it, "fwhm": fw, "accepted": int(accept.sum()), "edge_err_rms_p95": [round(v, 3) for v in edge_err(th)]})
             print(history[-1], flush=True)
+            tick("diagnostics (edge error)")
     fwhms = []                                                                            # skip the reference-space loop below
 for it, fw in enumerate(fwhms):
     vols = smooth(acq, fw)
@@ -388,7 +411,8 @@ info.update({"error_split_rms_p95_vox": split_err(th), "gradient_set": hemi})
 info.update({"true_edge_displacement_rms_p95_vox": [round(v, 3) for v in disp_true()],
              "final_edge_error_rms_p95_vox": [round(v, 3) for v in edge_err(th)],
              "gn_iterations": args.outer * args.inner, **timings, "history": history,
+             **({"profile_s": {k: round(v, 2) for k, v in prof.items()}, "lm_trials": ntrials} if args.profile else {}),
              "device": args.device})
-tag = f"_{args.device}_o{args.order}" + ("_noloo" if args.no_loo else "") + (f"_s{args.scale}" if args.scale != 1 else "") + (f"_e{args.eddy_scale}" if args.eddy_scale != 1 else "") + f"_n{args.outer}" + (f"_f{args.final_fwhm}" if args.final_fwhm else "") + ("_slm" if args.slm else "") + ("_acq" if args.acq_cost else "") + ("_cubic" if args.cubic else "")
+tag = f"_{args.device}_o{args.order}" + ("_noloo" if args.no_loo else "") + (f"_s{args.scale}" if args.scale != 1 else "") + (f"_e{args.eddy_scale}" if args.eddy_scale != 1 else "") + f"_n{args.outer}" + (f"_f{args.final_fwhm}" if args.final_fwhm else "") + ("_slm" if args.slm else "") + ("_acq" if args.acq_cost else "") + ("_cubic" if args.cubic else "") + ("_prof" if args.profile else "")
 json.dump(info, open(OUT / f"proto{tag}.json", "w"), indent=1)
 print(json.dumps({k: v for k, v in info.items() if k != "history"}))
