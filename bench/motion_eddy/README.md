@@ -21,6 +21,7 @@ Reproduce (MPS; the GPU should be otherwise idle for timings):
     uv run --group dipy bench/motion_eddy/proto.py --device mps --selftest                                # the fast path's pieces against the originals
     uv run --group dipy bench/motion_eddy/proto.py --device mps --fast --metal --coarse 0 --outer 40 --tol 0.05   # fused Metal kernels: 0.099 voxels, 4.0 s
     uv run bench/motion_eddy/metal_check.py                                                               # the kernels against float64 references
+    uv run --group dipy bench/motion_eddy/proto.py --device mps --all-shells --fast --metal --coarse 0 --outer 20   # all 105 volumes: 6.9 s end to end
     uv run --group dipy bench/motion_eddy/proto.py --device mps                                           # first form: 0.284
     uv run --group dipy bench/motion_eddy/proto.py --device mps --save-synth $TRACTOGRAPHY_DATA/derived/motion_eddy_synth
 

@@ -286,6 +286,41 @@ kernel void gauss_axis(
     for (int k = -r; k <= r; k++) acc += w[k + r] * src[base + long(clamp(i + k, 0, n - 1)) * stride];
     dst[tid] = acc;
 }
+
+// the final resample: every voxel x of the reference grid, each volume sampled once at phi(x) by its cubic B-spline,
+// times the eddy field's Jacobian along PE (1 + de/dx_pe), clipped at 0 (susceptibility.apply's clip); edges clamped
+kernel void apply_volumes(
+    device const float* coef  [[buffer(0)]],    // (G, X, Y, Z) prefiltered acquired volumes
+    device const float* pvol  [[buffer(1)]],    // (G, NPV)
+    device float*       out   [[buffer(2)]],    // (G, X, Y, Z)
+    device const int*   ip    [[buffer(3)]],    // G, -, -, X, Y, Z, PE, NMON
+    device const float* fp    [[buffer(4)]],
+    uint tid [[thread_position_in_grid]])
+{
+    int G = ip[0], X = ip[3], Y = ip[4], Z = ip[5], pe = ip[6], nmon = ip[7];
+    long nv = long(X) * Y * Z;
+    if (long(tid) >= long(G) * nv) return;
+    int g = int(long(tid) / nv); long v = long(tid) % nv;
+    float3 x = float3(float(v / (long(Y) * Z)), float((v / Z) % Y), float(v % Z));
+    device const float* pv = pvol + long(g) * NPV;
+    float3 cen = float3(fp[0], fp[1], fp[2]), hlf = float3(fp[3], fp[4], fp[5]), vox = float3(fp[6], fp[7], fp[8]);
+    float3 xm = (x - cen) * vox;
+    float3 p = float3(pv[0] * xm.x + pv[1] * xm.y + pv[2] * xm.z, pv[3] * xm.x + pv[4] * xm.y + pv[5] * xm.z,
+                      pv[6] * xm.x + pv[7] * xm.y + pv[8] * xm.z);
+    p = (p + float3(pv[9], pv[10], pv[11])) / vox + cen;
+    float3 u = (x - cen) / hlf;
+    device const float* te = pv + 12;
+    p[pe] += eddy_at(te, u, nmon);
+    // de/du along pe: the polynomial's derivative, then / half (u = (x - cen) / half)
+    float d;
+    if (pe == 0) d = te[1] + (nmon == 10 ? 2 * te[4] * u.x + te[7] * u.y + te[8] * u.z : 0);
+    else if (pe == 1) d = te[2] + (nmon == 10 ? 2 * te[5] * u.y + te[7] * u.x + te[9] * u.z : 0);
+    else d = te[3] + (nmon == 10 ? 2 * te[6] * u.z + te[8] * u.x + te[9] * u.y : 0);
+    float jac = 1.0f + d / hlf[pe];
+    float3 gr;
+    float val = cubic_vg(coef + long(g) * nv, p, X, Y, Z, gr, false);
+    out[tid] = max(val * jac, 0.0f);
+}
 """
 
 _LIB = None
@@ -362,6 +397,17 @@ def smooth(vols, fwhm_vox):
         lib.gauss_axis(a, b, k, ip, threads=((nv + TG - 1) // TG) * TG, group_size=TG)
         a, b = b, (a if a is not vols else torch.empty_like(vols))
     return a
+
+
+def apply_volumes(vols, pvol, ip, fp):
+    """The corrected volumes (G, X, Y, Z): each acquired volume prefiltered and sampled once at phi(x) for every voxel x,
+    times the eddy Jacobian, clipped at 0. ip, fp from consts() on vols' grid."""
+    coef = prefilter(vols)
+    G, X, Y, Z = vols.shape
+    out = torch.empty_like(coef)
+    n = G * X * Y * Z
+    library().apply_volumes(coef, pvol, out, ip, fp, threads=((n + TG - 1) // TG) * TG, group_size=TG)
+    return out
 
 
 def resample(vols, pts, pvol, ip, fp):

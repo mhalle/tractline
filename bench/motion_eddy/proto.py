@@ -29,6 +29,11 @@ ap.add_argument("--outer", type=int, default=5)
 ap.add_argument("--eddy-scale", type=float, default=1.0, help="multiplies the simulated eddy only")
 ap.add_argument("--inner", type=int, default=3)
 ap.add_argument("--seed", type=int, default=0)
+ap.add_argument("--anchor", action="store_true", help="with --all-shells --fast --metal: after the fit, each DW shell's corrected mean registered rigidly to the corrected mean b0 (normalized gradient fields), the shift added to the shell's volumes (decision 5)")
+ap.add_argument("--anchor-selftest", action="store_true")
+ap.add_argument("--anchor-iters", type=int, default=60, help="with --anchor: Adam iterations")
+ap.add_argument("--anchor-every", type=int, default=0, help="with --anchor: also every this many steps (0: only at the end)")
+ap.add_argument("--all-shells", action="store_true", help="every volume of the scan (5 b0s, b1000, b2000: 105 on ON-Harmony), each shell its own LOO-SH predictor, the b0s the mean of the others; eddy scaled by sqrt(b / 2000) and zero for b0s")
 ap.add_argument("--tol", type=float, default=0.0, help="with --fast: stop when no volume's step moves an edge point more than this (voxels) two steps running; --outer is then the cap")
 ap.add_argument("--smooth-steps", type=int, default=2, help="with --fast: the first steps smoothed (FWHM 2, then 1 voxel)")
 ap.add_argument("--metal", action="store_true", help="with --fast on mps: the inverse, cubic value and gradient, Jacobian and H, b, cost in the fused Metal kernels (metal_step.py)")
@@ -56,7 +61,7 @@ img = nib.load(D + ".nii.gz")
 data = np.asarray(img.dataobj, dtype=np.float32)
 bval = np.loadtxt(D + ".bval"); bvec = np.loadtxt(D + ".bvec")
 vox = np.array(img.header.get_zooms()[:3], float)
-shell = np.flatnonzero(np.abs(bval - 2000) < 100)
+shell = np.arange(len(bval)) if args.all_shells else np.flatnonzero(np.abs(bval - 2000) < 100)
 b0 = data[..., bval < 50].mean(-1)
 from tractline.mask import median_otsu
 _, mask = median_otsu(b0, median_radius=4, numpass=4)
@@ -66,20 +71,33 @@ emask = binary_dilation(mask, iterations=2)
 edge = mask & ~binary_erosion(mask, iterations=1)
 X, Y, Z = mask.shape
 PE = 1                                                                                   # j
-g = bvec[:, shell].T; g = g / np.linalg.norm(g, axis=1, keepdims=True)
 G = len(shell)
 from dipy.reconst.shm import real_sh_descoteaux
-theta, phi = np.arccos(np.clip(g[:, 2], -1, 1)), np.arctan2(g[:, 1], g[:, 0])
-B, m_, l_ = real_sh_descoteaux(6, theta, phi, legacy=False)
+bsel = bval[shell]
+isb0 = bsel < 50
+g = np.zeros((G, 3))
+g[~isb0] = (bvec[:, shell].T / np.linalg.norm(bvec[:, shell].T, axis=1, keepdims=True).clip(1e-9))[~isb0]
 lam = 0.006
-L = np.diag((l_ * (l_ + 1)) ** 2)
-Hhat = B @ np.linalg.solve(B.T @ B + lam * L, B.T)                                       # (G, G) hat matrix
+Hhat = np.zeros((G, G))
+groups = [np.flatnonzero(isb0)] if isb0.any() else []
+for b in sorted(set(np.round(bsel[~isb0] / 100) * 100)):
+    groups.append(np.flatnonzero((~isb0) & (np.abs(bsel - b) < 100)))
+for idx in groups:                                                                        # block-diagonal: one predictor per shell
+    if isb0[idx[0]]:
+        Hhat[np.ix_(idx, idx)] = 1.0 / len(idx)                                           # b0s: their mean
+        continue
+    gg = g[idx]
+    theta, phi = np.arccos(np.clip(gg[:, 2], -1, 1)), np.arctan2(gg[:, 1], gg[:, 0])
+    B, m_, l_ = real_sh_descoteaux(6, theta, phi, legacy=False)
+    L = np.diag((l_ * (l_ + 1)) ** 2)
+    Hhat[np.ix_(idx, idx)] = B @ np.linalg.solve(B.T @ B + lam * L, B.T)
 dH = np.diag(Hhat)
 W_loo = (Hhat - np.diag(dH)) / (1 - dH)[:, None]                                         # row v: LOO prediction of v
 W_all = Hhat
 S = data[..., shell].reshape(-1, G)
 truth = (S @ Hhat.T).reshape(X, Y, Z, G)                                                 # the SH fit: the truth
-sigma = float(np.sqrt(((S - S @ Hhat.T)[mask.reshape(-1)] ** 2).mean() / (1 - dH.mean())))
+dwv = ~isb0                                                                               # the noise from the DW fits only
+sigma = float(np.sqrt(((S - S @ Hhat.T)[mask.reshape(-1)][:, dwv] ** 2).mean() / (1 - dH[dwv].mean())))
 info = {"data": D.split("/")[-1], "grid": [X, Y, Z], "vox_mm": vox.tolist(), "volumes": int(G), "mask_voxels": int(mask.sum()),
         "estimate_voxels (mask dilated 2)": int(emask.sum()), "noise_sigma": round(sigma, 2),
         "mean_leverage": round(float(dH.mean()), 3), "eddy_order": args.order, "loo": not args.no_loo, "scale": args.scale}
@@ -190,7 +208,7 @@ A = rng.normal(0, 1, (NMON, 3))                                                 
 A[0] *= 0.5; A[1:4] *= 0.8                                                                # constant, linear terms: voxels at the edge
 if NMON == 10:
     A[4:] *= 0.3
-th_true[:, 6:] = (g @ A.T) * args.scale * args.eddy_scale
+th_true[:, 6:] = ((g * np.sqrt(np.clip(bsel, 0, None) / 2000.0)[:, None]) @ A.T) * args.scale * args.eddy_scale   # eddy ~ gradient amplitude
 th_true_t = torch.tensor(th_true, dtype=dt, device=dev)
 full = torch.stack(torch.meshgrid(*[torch.arange(n, dtype=dt, device=dev) for n in (X, Y, Z)], indexing="ij"), -1).reshape(-1, 3)
 truth_t = torch.tensor(np.moveaxis(truth, -1, 0).copy(), dtype=dt, device=dev)
@@ -407,6 +425,85 @@ if args.selftest:
     print("gradient: autograd cubic vs sampled gradient volume, corr per axis:", [round(c, 4) for c in cc],
           "ratio of norms:", round(float(gb.norm() / ga.norm()), 4))
     sys.exit(0)
+def ngf_cost(a, b, mk, eps):
+    """1 - (n_a . n_b)^2 averaged over mk, n the normalized gradient field |grad| -> grad / sqrt(|grad|^2 + eps^2)."""
+    def n(v):
+        gx, gy, gz = torch.gradient(v, dim=(0, 1, 2))
+        nn = torch.sqrt(gx * gx + gy * gy + gz * gz + eps * eps)
+        return gx / nn, gy / nn, gz / nn
+    ax_, ay_, az_ = n(a); bx_, by_, bz_ = n(b)
+    d = ax_ * bx_ + ay_ * by_ + az_ * bz_
+    return (1 - d * d)[mk].mean()
+
+
+def shell_anchor(th):
+    """Each DW shell's corrected mean, registered rigidly to the corrected mean b0 by NGF (L-BFGS through grid_sample,
+    smoothed 1 voxel); the 6 rigid parameters added to the shell's volumes (first order: small shifts compose additively).
+    Returns (theta, {shell: [mm, mm, mm, deg, deg, deg]})."""
+    ipA, fpA = M.consts(G, 1, X, Y, Z, PE, NMON, 2, cen, half, vox_t, scale, dev)[1:]
+    with torch.no_grad():
+        corr = M.apply_volumes(acq.contiguous(), M.pack(th, rot), ipA, fpA)
+    b0g = [i for i in groups if isb0[i[0]]]
+    if not b0g:
+        return th, {}
+    fixed = smooth(corr[torch.tensor(b0g[0], device=dev)].mean(0, keepdim=True), 1.0)[0]
+    if args.anchor_selftest:                                                              # the registration on a known shift of the b0 mean itself
+        sizes_ = torch.tensor([X, Y, Z], dtype=dt, device=dev)
+        q0 = torch.zeros(1, 6 + NMON, dtype=dt, device=dev); q0[0, 1] = 0.7; q0[0, 3] = 0.005
+        pts0 = phi_fast(q0, full)[0]
+        shifted = F.grid_sample(fixed[None, None], (2 * pts0 / (sizes_ - 1) - 1)[..., [2, 1, 0]][None, None, None],
+                                mode="bilinear", padding_mode="border", align_corners=True).reshape(X, Y, Z)
+        groups_test = [("self-test: b0 mean moved by ty 0.7 mm, rx 0.29 deg", shifted)]
+    else:
+        groups_test = []
+    mk = torch.tensor(binary_dilation(mask, iterations=2), device=dev)
+    th = th.clone(); out = {}
+    for idx in groups_test + list(groups):
+        if isinstance(idx, tuple):
+            label, mov = idx
+        else:
+            if isb0[idx[0]]:
+                continue
+            label = None
+            mov = smooth(corr[torch.tensor(idx, device=dev)].mean(0, keepdim=True), 1.0)[0]
+        eps_m = float(torch.stack(torch.gradient(mov)).norm(dim=0)[mk].mean()) * 0.5
+        eps_f = float(torch.stack(torch.gradient(fixed)).norm(dim=0)[mk].mean()) * 0.5
+        fixed_n = fixed / eps_f; mov_n = mov / eps_m                                     # gradients scaled to ~1
+        d = torch.zeros(1, 6, dtype=dt, device=dev, requires_grad=True)
+        opt = torch.optim.Adam([d], lr=0.05)
+        sizes = torch.tensor([X, Y, Z], dtype=dt, device=dev)
+
+        def closure():
+            opt.zero_grad()
+            q = torch.cat([d[:, :3], d[:, 3:] * 0.01, torch.zeros(1, NMON, dtype=dt, device=dev)], 1)
+            pts = phi_fast(q, full)[0]
+            w = F.grid_sample(mov_n[None, None], (2 * pts / (sizes - 1) - 1)[..., [2, 1, 0]][None, None, None],
+                              mode="bilinear", padding_mode="border", align_corners=True).reshape(X, Y, Z)
+            c = ngf_cost(w, fixed_n, mk, 1.0)
+            c.backward()
+            return c
+        with torch.enable_grad():
+            c_first = None
+            for k in range(args.anchor_iters):
+                c = closure(); opt.step()
+                c_first = float(c) if c_first is None else c_first
+                if k == args.anchor_iters // 2:
+                    for pg in opt.param_groups:
+                        pg["lr"] = 0.01
+        dd = d.detach()[0]
+        if label is not None:
+            print(label, "-> recovered", [round(v, 3) for v in dd[:3].tolist()], "mm", [round(float(v) * 0.01 * 180 / math.pi, 3) for v in dd[3:]], "deg", flush=True)
+            continue
+        if args.profile:
+            print("anchor:", f"cost {c_first:.4f} -> {float(c):.4f}", [round(v, 3) for v in dd.tolist()], flush=True)
+        th[torch.tensor(idx, device=dev), :3] += dd[:3]
+        th[torch.tensor(idx, device=dev), 3:6] += dd[3:] * 0.01
+        out[f"b{int(round(float(bsel[idx[0]]) / 100) * 100)}"] = [round(float(v), 3) for v in dd[:3]] + \
+            [round(float(v) * 0.01 * 180 / math.pi, 3) for v in dd[3:]]
+    return th, out
+
+
+anchors = []
 if args.fast:
     fw_steps = ([2.0, 1.0][:args.smooth_steps] + [0.0] * args.outer)[:args.outer]          # the 15 x 1 schedule's smoothing
     coarse = args.coarse                                                                  # the first steps on 1/8 of the points
@@ -418,6 +515,7 @@ if args.fast:
     probe = xedge[torch.randperm(len(xedge), generator=rng_t)[:2000].to(dev)]            # edge points for the step size
     smooth_cache, mcache = {}, {}
     quiet, steps_run = 0, 0
+    no_eddy_b0 = torch.tensor(isb0, device=dev) if (args.all_shells and isb0.any()) else None
     if args.metal:
         import metal_step as M
         nz = np.argwhere(emask4)                                                          # the coefficients' crop: the predictions'
@@ -492,6 +590,8 @@ if args.fast:
                   break
               A_ = H + torch.diag_embed(mu[:, None] * Hd)
               step = -torch.linalg.solve(A_.cpu(), b.cpu()[..., None])[..., 0].to(dev) * scale
+              if no_eddy_b0 is not None:
+                  step[no_eddy_b0, 6:] = 0                                                 # eddy currents are zero at b = 0
               cand = th + step
               big = (phi_fast(cand, probe) - phi_fast(th, probe)).norm(dim=-1).amax(1) > args.trial_vox
               need = todo & (big | (it < 2))                                            # a trial only for large steps (and the first two)
@@ -516,6 +616,8 @@ if args.fast:
           moved = float((phi_fast(th_new, probe) - phi_fast(th, probe)).norm(dim=-1).amax()) if args.tol else 1.0
           th = th_new
           tick("LM trials (solve, inverse, sample)")
+        if args.anchor and args.anchor_every and (it + 1) % args.anchor_every == 0:
+            th, a_ = shell_anchor(th); anchors.append({"step": it, **a_})
         quiet = quiet + 1 if (args.tol and fw == 0 and moved < args.tol) else 0
         done = quiet >= 2
         if args.profile or it == len(fw_steps) - 1 or it % 5 == 0 or done:
@@ -617,7 +719,25 @@ for it, fw in enumerate(fwhms):
             th = torch.cat([th[:, :6], Xg @ coefs], 1)
         history.append({"outer": it, "fwhm": fw, "accepted": int(accept.sum()), "edge_err_rms_p95": [round(v, 3) for v in edge_err(th)]})
         print(history[-1], flush=True)
+if args.fast and args.anchor:
+    th, a_ = shell_anchor(th); anchors.append({"step": "end", **a_})
 sync(); timings["estimate_s"] = round(time.perf_counter() - t_start, 2)
+if anchors:
+    timings["shell_anchors (mm, deg)"] = anchors
+if args.fast and args.metal:
+    with torch.no_grad():
+        t0 = time.perf_counter()
+        ipA, fpA = M.consts(G, 1, X, Y, Z, PE, NMON, 2, cen, half, vox_t, scale, dev)[1:]
+        corr = M.apply_volumes(acq.contiguous(), M.pack(th, rot), ipA, fpA)
+        sync(); timings["final_resample_s"] = round(time.perf_counter() - t0, 2)
+        timings["total_s"] = round(timings["estimate_s"] + timings["final_resample_s"], 2)
+        mk = torch.tensor(mask, device=dev)
+        # against the truth, after the gauge: the truth moved by the mean transform the estimate cannot see
+        thm = th_true_t.clone(); thm[:] = (th - th_true_t).mean(0, keepdim=True)
+        truth_g = M.apply_volumes(truth_t.contiguous(), M.pack(thm, rot), ipA, fpA)
+        err_c = float(((corr - truth_g)[:, mk] ** 2).mean().sqrt())
+        err_a = float(((acq - truth_t)[:, mk] ** 2).mean().sqrt())
+        timings["image_rmse_in_mask"] = {"corrected": round(err_c, 2), "as_acquired": round(err_a, 2), "noise_sigma": round(sigma, 2)}
 def split_err(th):
     tr = th.clone(); tr[:, 6:] = th_true_t[:, 6:]                                         # estimated rigid, true eddy
     te = th.clone(); te[:, :6] = th_true_t[:, :6]                                         # true rigid, estimated eddy
@@ -630,12 +750,35 @@ gz = g.copy()
 hemi = {"directions": int(G), "max |mean g|": round(float(np.linalg.norm(g.mean(0))), 3),
         "fraction with g_z > 0": round(float((g[:, 2] > 0).mean()), 2)}
 info.update({"error_split_rms_p95_vox": split_err(th), "gradient_set": hemi})
+if args.all_shells:
+    def edge_err_by_group(th):
+        """The edge error with each shell's own common transform removed (within-shell accuracy), and the shells' common
+        transforms' spread against each other (between-shell drift), voxels RMS."""
+        d = phi(th, xedge) - phi(th_true_t, xedge)
+        d = d - d.mean(0, keepdim=True)
+        within, means = [], []
+        for idx in groups:
+            dg = d[torch.tensor(idx, device=dev)]
+            m = dg.mean(0, keepdim=True); means.append(m)
+            within.append((dg - m).norm(dim=-1).reshape(-1))
+        w = torch.cat(within)
+        mm = torch.cat(means)
+        return {"within_shell_rms": round(float(w.pow(2).mean().sqrt()), 3),
+                "between_shell_rms": round(float((mm - mm.mean(0, keepdim=True)).norm(dim=-1).pow(2).mean().sqrt()), 3),
+                "shells": [int(len(i)) for i in groups]}
+    info["edge_error_by_shell"] = edge_err_by_group(th)
+    dth = (th - th_true_t); dth = dth - dth.mean(0, keepdim=True)
+    info["mean_param_error_by_shell (mm, deg, eddy vox)"] = {
+        f"group{k} (n={len(idx)})": [round(float(v), 3) for v in torch.cat([dth[torch.tensor(idx, device=dev)].mean(0)[:3],
+                                                                              torch.rad2deg(dth[torch.tensor(idx, device=dev)].mean(0)[3:6]),
+                                                                              dth[torch.tensor(idx, device=dev)].mean(0)[6:]])]
+        for k, idx in enumerate(groups)}
 info.update({"true_edge_displacement_rms_p95_vox": [round(v, 3) for v in disp_true()],
              "final_edge_error_rms_p95_vox": [round(v, 3) for v in edge_err(th)],
              "gn_iterations": args.outer * args.inner, **timings, "history": history,
              **({"profile_s": {k: round(v, 2) for k, v in prof.items()}, "lm_trials": ntrials} if args.profile else {}),
              **({"steps_run": steps_run, "tol_vox": args.tol} if args.fast else {}),
              "device": args.device})
-tag = f"_{args.device}_o{args.order}" + ("_noloo" if args.no_loo else "") + (f"_s{args.scale}" if args.scale != 1 else "") + (f"_e{args.eddy_scale}" if args.eddy_scale != 1 else "") + f"_n{args.outer}" + (f"_f{args.final_fwhm}" if args.final_fwhm else "") + ("_slm" if args.slm else "") + ("_acq" if args.acq_cost else "") + ("_cubic" if args.cubic else "") + (f"_fast_c{args.coarse}_" + ("metal" if args.metal else args.grad) + (f"_sm{args.smooth_steps}" if args.smooth_steps != 2 else "") + (f"_tol{args.tol}" if args.tol else "") if args.fast else "") + ("_prof" if args.profile else "")
+tag = f"_{args.device}_o{args.order}" + ("_noloo" if args.no_loo else "") + (f"_s{args.scale}" if args.scale != 1 else "") + (f"_e{args.eddy_scale}" if args.eddy_scale != 1 else "") + f"_n{args.outer}" + (f"_f{args.final_fwhm}" if args.final_fwhm else "") + ("_slm" if args.slm else "") + ("_acq" if args.acq_cost else "") + ("_cubic" if args.cubic else "") + ("_all" if args.all_shells else "") + (f"_anchor{args.anchor_every}" if args.anchor else "") + (f"_fast_c{args.coarse}_" + ("metal" if args.metal else args.grad) + (f"_sm{args.smooth_steps}" if args.smooth_steps != 2 else "") + (f"_tol{args.tol}" if args.tol else "") if args.fast else "") + ("_prof" if args.profile else "")
 json.dump(info, open(OUT / f"proto{tag}.json", "w"), indent=1)
 print(json.dumps({k: v for k, v in info.items() if k != "history"}))

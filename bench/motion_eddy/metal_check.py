@@ -100,3 +100,30 @@ def smooth_ref(vols, fwhm_vox):
 for fw in (2.0, 1.0):
     a_, b_ = smooth_ref(coef, fw), M.smooth(coef, fw)
     print("smooth", fw, "rel err", float((a_ - b_).abs().max() / a_.abs().max()))
+# apply_volumes: the final resample, against a float64 64-tap cubic of the dense-prefiltered volumes at phi(x), times
+# the eddy Jacobian, clipped at 0
+vols_ = coef.abs() + 0.5
+full = torch.stack(torch.meshgrid(*[torch.arange(n, dtype=torch.float64) for n in (X, Y, Z)], indexing="ij"), -1).reshape(-1, 3)
+c64 = dense_prefilter(vols_.cpu().double())
+th64 = th.cpu().double(); cen64, half64, vox64 = cen.cpu().double(), half.cpu().double(), vox.cpu().double()
+R64 = rot(th64[:, 3:6].float()).double()
+p_ = (torch.einsum("gij,nj->gni", R64, (full - cen64) * vox64) + th64[:, None, :3]) / vox64 + cen64
+u_ = (full - cen64) / half64; a, b, c = u_.unbind(-1)
+mon64 = torch.stack([torch.ones_like(a), a, b, c, a*a, b*b, c*c, a*b, a*c, b*c], -1)
+p_[..., PE] += th64[:, 6:] @ mon64.T
+dmon = torch.stack([torch.zeros_like(a), torch.zeros_like(a), torch.ones_like(a), torch.zeros_like(a), 0*a, 2*b, 0*a, a, 0*a, c], -1)  # d/du_y (PE = 1)
+jac = 1 + (th64[:, 6:] @ dmon.T) / half64[PE]
+i0 = torch.floor(p_); tt = p_ - i0; i0 = i0.long()
+w = [(1-tt)**3/6, (3*tt**3-6*tt**2+4)/6, (-3*tt**3+3*tt**2+3*tt+1)/6, tt**3/6]
+flat = c64.reshape(G, -1); val = torch.zeros(G, full.shape[0], dtype=torch.float64)
+for a_ in range(4):
+    ia = (i0[..., 0] + a_ - 1).clamp(0, X - 1)
+    for b_ in range(4):
+        ib = (i0[..., 1] + b_ - 1).clamp(0, Y - 1)
+        for c_ in range(4):
+            ic = (i0[..., 2] + c_ - 1).clamp(0, Z - 1)
+            val += w[a_][..., 0]*w[b_][..., 1]*w[c_][..., 2]*torch.gather(flat, 1, (ia * Y + ib) * Z + ic)
+ref = (val * jac).clamp_min(0).reshape(G, X, Y, Z)
+nchA, ipA, fpA = M.consts(G, 1, X, Y, Z, PE, NMON, 2, cen, half, vox, scale, dev)
+got = M.apply_volumes(vols_.contiguous(), M.pack(th, rot), ipA, fpA)
+print("apply_volumes rel err", float((got.cpu().double() - ref).abs().max() / ref.abs().max()))

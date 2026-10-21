@@ -31,8 +31,13 @@ Levenberg-Marquardt Gauss-Newton fit over all volumes at once, in PyTorch, on MP
 
   The final form (below) took 103 s at first. Plain-torch fixes cut it to 20 s for 50 volumes. **Fused Metal kernels
   (`bench/motion_eddy/metal_step.py`) cut it to 2.4 s for 15 steps, or 4.0 s run to convergence, at eddy's accuracy**
-  (section 3). Projected: about 5-9 s for a 105-volume 2 mm scan, under the field estimate's 18 s. The CUDA (Triton)
-  port is still to write.
+  (section 3). **Measured on the full 105-volume scan (5 b0s, b1000, b2000): 6.9 s for 20 steps, including the final
+  resample (0.32 s, also a Metal kernel)**, under the field estimate's 18 s. The CUDA (Triton) port is still to write.
+- **The shells need tying together** (section 2.2). On 105 volumes the within-shell error is eddy's (0.093 voxels),
+  but each shell's common position is unobservable from its own leave-one-out prediction. The shells sit 0.17-0.20
+  voxels RMS apart against the truth, and drift further with more steps. Decision 5's anchor is needed and does not
+  yet work in the prototype. eddy's multi-shell Gaussian process and its post-eddy alignment of shells are the
+  references for the fix.
 - **Prototype against eddy, on one synthetic scan with known motion and eddy** (section 2.1). FSL eddy (`eddy_cpu`
   2602.0, installed natively) gets the edge displacement from 1.52 voxels RMS to 0.105, with b-vector rotation error
   0.13 deg, in 36 min on 6 CPU threads. The prototype's first form stopped at 0.24-0.28 voxels. Three changes bring it
@@ -106,6 +111,12 @@ that would reverse it. None of them changes the default pipeline: everything her
    - *How*: normalized gradient fields as the cost, since the mean DW image's CSF is dark where the b0's is bright and
      NGF ignores contrast sign. Mutual information is the fallback if NGF fails the synthetic test.
    - *Applies to*: every protocol, including one-b0 ones (MASiVar cohort II).
+   - *Status (prototype, section 2.2)*: needed, measured as 0.17-0.20 voxels between shells, and not yet working. The
+     first NGF implementation (Adam on 6 parameters) recovers 0.51 of a 0.7 mm test shift and almost none of a 0.29
+     deg rotation.
+   - *Also considered*: a predictor that couples the shells (eddy's multi-shell GP, or a joint model across b), which
+     makes the shells' relative position observable inside the fit itself. That would strengthen decision 1's case
+     for the GP on multi-shell scans.
 6. **Recalibration maps: relearned with the flag on, and the protocol descriptor gains a `motion_eddy` item.** A map
    learned without the flag refuses runs made with it, and the reverse.
 7. **Eddy order: quadratic, per volume; the second-level model is an option, fitted jointly when used.**
@@ -387,8 +398,42 @@ What it shows:
 - In the final form the rigid and eddy parts still trade off (each 0.48 voxels off). That is the c0-against-PE-
   translation confound of section 1.2: harmless to the images and to the b-vectors, but the per-part numbers should
   not be read on their own.
-- Not yet tested: the static field (`h = 0` here), the b0s in the prototype and the shell anchor, real motion
-  statistics, a half-sphere gradient set, cohort II's 2.5 mm and 96 directions, and outliers.
+- Not yet tested: the static field (`h = 0` here), real motion statistics, a half-sphere gradient set, cohort II's
+  2.5 mm and 96 directions, and outliers.
+
+### 2.2 The full scan: 105 volumes, three shells (2026-10-20)
+
+**Setup**: `proto.py --all-shells`.
+- All 105 volumes of the same ON-Harmony scan: 5 b0s, 50 at b1000, 50 at b2000.
+- Each DW shell gets its own LOO-SH predictor (order 6); the b0s are predicted by the mean of the other b0s. The
+  predictor matrix is block-diagonal.
+- Eddy is simulated in proportion to the gradient amplitude (sqrt(b / 2000)) and is zero for the b0s. In the fit
+  the b0s' eddy terms are fixed at 0, because eddy currents are zero at b = 0. Leaving them free cost 0.3 voxels in
+  the b0 group.
+- The fit is the Metal fast path, all steps at full resolution.
+- The images are also checked: the corrected volumes (`apply_volumes`) against the truth inside the brain mask,
+  with the truth moved by the estimate's common transform.
+
+| steps | edge error, RMS / p95 | within shell | between shells | rotation | images: RMSE corrected / as acquired / noise | time, estimate + final resample |
+|---|---|---|---|---|---|---|
+| 20 | 0.139 / 0.252 | 0.093 | 0.202 | 0.095 deg | 111 / 288 / 84 | 6.6 + 0.32 = 6.9 s |
+| 40 | 0.190 / 0.271 | 0.095 | 0.340 | 0.116 deg | 137 / 288 / 84 | 12.7 + 0.32 = 13.0 s |
+
+What it shows:
+- **Speed**: a full 105-volume, 2 mm scan takes 6.9 s on the M2 for 20 steps, with the final resample included.
+- **Within each shell the fit is at eddy's level** (0.093 voxels).
+- **Between shells it is not**, and more steps make it worse. Each shell's common transform is invisible to its own
+  leave-one-out prediction, so it drifts with the noise. The shell means move apart along PE (b1000 +0.58 mm, b2000
+  -0.71 mm after 40 steps); the eddy constants compensate within each shell (the c0-against-PE-translation
+  confound), but not across shells.
+- The images confirm it: corrected volumes are 111 against 288 as acquired (noise 84) at 20 steps, and worse at 40
+  (137).
+- **The fix** is decision 5's anchor, or a predictor that couples the shells (section 1.4). The first anchor attempt,
+  NGF on the shell means optimized by Adam (`--anchor`), recovered 0.51 of a 0.7 mm test shift and almost none of a
+  0.29 deg rotation (`--anchor-selftest`). It is not usable yet. A Gauss-Newton NGF or LNCC registration, or the
+  coupled predictor, comes next.
+- The 50-volume comparison with eddy (section 2.1) scored the DW shell alone. There the shell's own common transform
+  was removed with the gauge, so that comparison stands.
 
 **What carries over from `susceptibility.py`**: `rigid`, `smooth`, `subsample`, the `MS`-style scaling, the
 Marquardt loop, the stopping rules, the `coarse_device` split, the autograd-through-`grid_sample` gradient,
@@ -509,9 +554,9 @@ steps, FWHM 2 and 1 voxels) made no difference on this scan, but stays for captu
 | | 2.5 mm, 100 vol | 2 mm, 105 vol |
 |---|---|---|
 | estimate, plain torch, fixed (measured at 50 volumes, scaled by volumes x points) | 25-30 s | 40-45 s |
-| **estimate, Metal, to convergence** (measured 4.0-4.6 s at 50 volumes; scaled) | **about 5 s** | **about 9 s** |
-| + final resample (8-fetch torch form, measured; a Metal value-only kernel would take a fraction) | 3 s | 5 s |
-| **total, M2, Metal** | **about 8 s** | **about 14 s** |
+| **estimate, Metal** (2 mm: measured on the 105-volume scan, 20 steps; 2.5 mm scaled) | **about 3-4 s** | **6.6 s** |
+| + final resample (Metal `apply_volumes`, measured at 2 mm: 0.32 s, against 5.2 s in torch) | 0.2 s | 0.32 s |
+| **total, M2, Metal** | **about 4 s** | **6.9 s (measured)** |
 | CUDA (A10 / L40S): Triton port not written; 3-5x the M2 by the field estimate's ratio | 2-3 s | 3-5 s |
 
 For scale: the field estimate takes 18 s on the M2 and the UKF 27 s. With the Metal kernels the step costs less than
