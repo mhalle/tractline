@@ -7,14 +7,16 @@ registers every volume to the b0 by MI (DIFFPREP), so it has no shell gauge.
     modal run bench/motion_eddy/modal_tortoise.py::run --both --args "..."              # out_gpu (CUDA, A10) and out_cpu (32 CPUs)
     modal volume get tractography-bench motion_eddy/real16974/out_gpu <dir>/tortoise_out_gpu
 
-Inputs and outputs go through the tractography-bench Volume (the data is ON-Harmony, CC0).
+Inputs and outputs go through the tractography-bench Volume (the data is ON-Harmony, CC0). TORTOISE_CASE=<folder> (default
+real16974) picks the case folder under motion_eddy/ on the Volume.
 """
 import modal
 
 image = modal.Image.from_registry("eurotomania/tortoise:latest", add_python="3.11")
 app = modal.App("tractline-tortoise", image=image)
 vol = modal.Volume.from_name("tractography-bench")
-ROOT = "/vol/motion_eddy/real16974"
+import os
+ROOT = "/vol/motion_eddy/" + os.environ.get("TORTOISE_CASE", "real16974")
 
 
 def _sh(cmd, timeout=None):
@@ -32,16 +34,18 @@ def help_text():
     return out
 
 
-@app.function(volumes={"/vol": vol}, timeout=6 * 3600, cpu=32, memory=65536)
+@app.function(volumes={"/vol": vol}, timeout=6 * 3600, cpu=32, memory=65536, secrets=[modal.Secret.from_dict({"TORTOISE_CASE": os.environ.get("TORTOISE_CASE", "real16974")})])
 def run_cpu(args: str, out: str = "out_cpu"):
+    ROOT = "/vol/motion_eddy/" + os.environ.get("TORTOISE_CASE", "real16974")
     vol.reload()
     code, so, se = _sh(f"cd {ROOT} && rm -rf {out} && mkdir -p {out} && cp -r in/* {out}/ && cd {out} && (date +%s; TORTOISEProcess {args}; echo exit $?; date +%s) > tortoise.log 2>&1; echo $?")
     vol.commit()
     return code, so, se
 
 
-@app.function(volumes={"/vol": vol}, timeout=6 * 3600, gpu="A10", cpu=8, memory=65536)
+@app.function(volumes={"/vol": vol}, timeout=6 * 3600, gpu="A10", cpu=8, memory=65536, secrets=[modal.Secret.from_dict({"TORTOISE_CASE": os.environ.get("TORTOISE_CASE", "real16974")})])
 def run_gpu(args: str, out: str = "out_gpu"):
+    ROOT = "/vol/motion_eddy/" + os.environ.get("TORTOISE_CASE", "real16974")
     vol.reload()
     code, so, se = _sh(f"cd {ROOT} && rm -rf {out} && mkdir -p {out} && cp -r in/* {out}/ && cd {out} && nvidia-smi -L > gpu.txt 2>&1; (date +%s; TORTOISEProcess_cuda {args}; echo exit $?; date +%s) > tortoise.log 2>&1; echo $?")
     vol.commit()
