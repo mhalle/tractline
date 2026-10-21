@@ -123,7 +123,8 @@ for a_ in range(4):
         for c_ in range(4):
             ic = (i0[..., 2] + c_ - 1).clamp(0, Z - 1)
             val += w[a_][..., 0]*w[b_][..., 1]*w[c_][..., 2]*torch.gather(flat, 1, (ia * Y + ib) * Z + ic)
-ref = (val * jac).clamp_min(0).reshape(G, X, Y, Z)
+inside = ((p_ >= 0) & (p_ <= torch.tensor([X - 1, Y - 1, Z - 1], dtype=torch.float64))).all(-1)
+ref = torch.where(inside, (val * jac).clamp_min(0), torch.zeros_like(val)).reshape(G, X, Y, Z)   # 0 outside the field of view
 nchA, ipA, fpA = M.consts(G, 1, X, Y, Z, PE, NMON, 2, cen, half, vox, scale, dev)
 got = M.apply_volumes(vols_.contiguous(), M.pack(th, rot), ipA, fpA)
 print("apply_volumes rel err", float((got.cpu().double() - ref).abs().max() / ref.abs().max()))

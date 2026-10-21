@@ -39,6 +39,7 @@ ap.add_argument("--anchor-no-pe", action="store_true", help="with --anchor: do n
 ap.add_argument("--anchor-bins", type=int, default=256, help="with --anchor-method gpumi: the MI histogram's bins (eddy's PEAS: 256; 32 biased the real scan's z by 0.3 mm)")
 ap.add_argument("--gain", action="store_true", help="with --fast --metal: a per-volume intensity gain, each step: the observations divided by (their sum / the prediction's sum) over the estimate's voxels (signal drift; SSD otherwise trades it for position)")
 ap.add_argument("--b0-bug", action="store_true", help="reproduce the earlier b0 step: the 16-parameter system solved, then the eddy part dropped")
+ap.add_argument("--mask-output", action="store_true", help="with --metal: the final resample zeroes voxels not inside the field of view for every volume, as eddy's output mask")
 ap.add_argument("--anchor-iters", type=int, default=30, help="with --anchor: Gauss-Newton iterations")
 ap.add_argument("--anchor-every", type=int, default=0, help="with --anchor: also every this many steps (0: only at the end)")
 ap.add_argument("--shells", default=None, help="with --all-shells: only these b-values, e.g. 0,2000 (b0s as 0)")
@@ -871,7 +872,7 @@ if args.fast and args.metal:
     with torch.no_grad():
         t0 = time.perf_counter()
         ipA, fpA = M.consts(G, 1, X, Y, Z, PE, NMON, 2, cen, half, vox_t, scale, dev)[1:]
-        corr = M.apply_volumes(acq.contiguous(), M.pack(th, rot), ipA, fpA)
+        corr = M.apply_volumes(acq.contiguous(), M.pack(th, rot), ipA, fpA, mask_output=args.mask_output)
         sync(); timings["final_resample_s"] = round(time.perf_counter() - t0, 2)
         timings["total_s"] = round(timings["estimate_s"] + timings["final_resample_s"], 2)
         mk = torch.tensor(mask, device=dev)

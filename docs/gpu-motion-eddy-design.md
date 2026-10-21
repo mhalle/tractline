@@ -829,9 +829,40 @@ After the fix:
 - Our rotated b-vectors are 0.26 deg RMS from eddy's (was 0.29).
 - The synthetic scan is unchanged (0.105 overall, 0.100 between shells).
 
-**What remains**: a 2-6 % higher b0 residual (volume 42 the most) with the misalignment at eddy's level, so not
-alignment. Likely the interpolation or intensity handling of the final resample: eddy resamples with splines and
-Jacobian modulation, TORTOISE with its own. Not examined.
+**What remained**: a 2-6 % higher b0 residual, with the misalignment at eddy's level. It was the slab's edges
+(section 2.9).
+
+### 2.9 The rest of the b0 gap: the slab's edges (2026-10-21)
+
+`b0_residual_anatomy.py` rules out two explanations:
+- **Scale**: the b0s' mean in the brain is 2668-2674 for every method.
+- **Smoothness**: the high-frequency share is 0.221-0.223 for every method.
+
+The residual's location settles it. Volume 42's |residual|, ours minus eddy's, is +855 in slice 0, +33 in slice
+71, and a few units either way in every slice between. In slice 0 our residual is 1261, TORTOISE's 1037, eddy's 134.
+
+The cause is how each tool fills voxels that a volume's motion carries out of the 72-slice slab:
+- we replicate the edge slice, and TORTOISE does much the same;
+- eddy masks its output to the voxels valid in every volume (its default; `--dont_mask_output` turns it off).
+  77 % of slice 0's brain voxels are exactly 0 in eddy's output, and 0 matches 0.
+
+| | LOO b0 / b1000 / b2000, all slices | the same without 2 end slices each side | tensor residual |
+|---|---|---|---|
+| eddy | 139.9 / 79.1 / 72.4 | 138.4 / 79.1 / 72.5 | 75.7 |
+| TORTOISE | 140.3 / 80.6 / 74.4 | 136.1 / 80.6 / 74.5 | 77.3 |
+| ours (b0 fix) | 143.7 / 80.4 / 74.1 | 138.1 / 80.3 / 74.1 | 77.1 |
+| **ours, output masked** (`--mask-output`) | **139.3** / 80.3 / 74.1 | | 77.0 |
+
+- **Away from the slab's edges our b0s fit as well as eddy's** (138.1 against 138.4), so the b0 gap is closed.
+- `apply_volumes` now writes 0 where a sample leaves the field of view and returns a validity map; `mask_output`
+  zeroes voxels not valid in every volume, as eddy does. With it the b0 residual is 139.3 against eddy's 139.9.
+  `metal_check.py` was updated (4e-6 against float64).
+- **This is a design point, not bookkeeping.** An edge-replicated voxel holds invented signal that differs from
+  volume to volume. A voxel without data for some volume should not reach the tracker. The pipeline's step masks
+  its output (or hands the tracker a validity mask), with eddy's default as the default.
+- **The DW shells were never affected by the edges.** There eddy stays 1.5-2 % lower than ours and TORTOISE (79.1
+  / 72.5 against 80.3 / 74.1), consistent with its better within-shell precision on the synthetic scan
+  (section 2.3): the predictor that draws on all shells (decision 1).
 
 ## 3. GPU mapping
 

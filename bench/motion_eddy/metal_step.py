@@ -295,6 +295,7 @@ kernel void apply_volumes(
     device float*       out   [[buffer(2)]],    // (G, X, Y, Z)
     device const int*   ip    [[buffer(3)]],    // G, -, -, X, Y, Z, PE, NMON
     device const float* fp    [[buffer(4)]],
+    device float*       valid [[buffer(5)]],    // (G, X, Y, Z): 1 where the sample is inside the field of view, else 0
     uint tid [[thread_position_in_grid]])
 {
     int G = ip[0], X = ip[3], Y = ip[4], Z = ip[5], pe = ip[6], nmon = ip[7];
@@ -319,7 +320,9 @@ kernel void apply_volumes(
     float jac = 1.0f + d / hlf[pe];
     float3 gr;
     float val = cubic_vg(coef + long(g) * nv, p, X, Y, Z, gr, false);
-    out[tid] = max(val * jac, 0.0f);
+    bool in = p.x >= 0.0f && p.x <= float(X - 1) && p.y >= 0.0f && p.y <= float(Y - 1) && p.z >= 0.0f && p.z <= float(Z - 1);
+    valid[tid] = in ? 1.0f : 0.0f;
+    out[tid] = in ? max(val * jac, 0.0f) : 0.0f;
 }
 """
 
@@ -399,14 +402,18 @@ def smooth(vols, fwhm_vox):
     return a
 
 
-def apply_volumes(vols, pvol, ip, fp):
+def apply_volumes(vols, pvol, ip, fp, mask_output=False):
     """The corrected volumes (G, X, Y, Z): each acquired volume prefiltered and sampled once at phi(x) for every voxel x,
-    times the eddy Jacobian, clipped at 0. ip, fp from consts() on vols' grid."""
+    times the eddy Jacobian, clipped at 0; 0 where phi(x) leaves the field of view. ip, fp from consts() on vols' grid.
+    mask_output: also 0 every voxel not valid in all volumes (eddy's default output mask: a voxel some volume's motion
+    carried out of the slab holds no data for that volume, and edge-replicated values differ from volume to volume)."""
     coef = prefilter(vols)
     G, X, Y, Z = vols.shape
-    out = torch.empty_like(coef)
+    out = torch.empty_like(coef); valid = torch.empty_like(coef)
     n = G * X * Y * Z
-    library().apply_volumes(coef, pvol, out, ip, fp, threads=((n + TG - 1) // TG) * TG, group_size=TG)
+    library().apply_volumes(coef, pvol, out, ip, fp, valid, threads=((n + TG - 1) // TG) * TG, group_size=TG)
+    if mask_output:
+        out = out * (valid.amin(0, keepdim=True) > 0)
     return out
 
 

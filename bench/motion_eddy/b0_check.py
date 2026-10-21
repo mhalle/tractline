@@ -34,7 +34,7 @@ def edge_rms(d):
 
 
 sets = {"as acquired": D / "imain.nii.gz", "eddy": D / "eddy.nii.gz", "TORTOISE": D / "tortoise_out2/tortoise.nii",
-        "ours": D / "v_bins256/ours.nii.gz", "ours, gain": D / "v_gain/ours.nii.gz", "ours, b0 fix": D / "v_b0fix/ours.nii.gz"}
+        "ours": D / "v_bins256/ours.nii.gz", "ours, gain": D / "v_gain/ours.nii.gz", "ours, b0 fix": D / "v_b0fix/ours.nii.gz", "ours, masked output": D / "v_maskout/ours.nii.gz"}
 if "--only" in sys.argv:
     sets = {k: v for k, v in sets.items() if k in sys.argv[sys.argv.index("--only") + 1].split(";")}
 out = {}
