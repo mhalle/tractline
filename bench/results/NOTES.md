@@ -6031,3 +6031,574 @@ Caveats:
 - **The trackers' phantom Dice** compares density presence with a traversal mask; it rewards streamline count (hence
   the count-matched column). TractSeg's masks are another kind of object.
 - **Hardware:** UKF on the GPU, the others on the CPU; the times are not a like-for-like speed comparison.
+
+## 2026-10-19 ISMRM 2027: MASiVar cohort II, scanner against protocol, a different vendor at a different site, and registration QC
+
+`calibration_cohortII.py` (`plan`, `run`, `collect`, `evaluate`, `compare`) → `calibration_cohortII.json`;
+`calibration_crosssite.py` → `calibration_crosssite_reg3.json`; `calibration_swap.py` → `calibration_swap_B2000.json`;
+registration comparisons `DATA/ensemble/cohortII_registration_compare.json` (modes 1 and 2) and
+`cohortII_registration_compare_2v3.json` (modes 2 and 3); the margin and R-subsampling check
+`scratchpad/crosssite/margin.json` (the cross-site agent's `margin.py`). Records in
+`DATA/ensemble/<subject>/card/<subject>-<protocol>[-swap|-site3]/`. Every number below is registration mode 3 unless
+it says otherwise. docs/ismrm2027-abstract.md; the cohort III card (step 5) and its cIs1 transfer check
+(`calibration_transfer_cIs1.json`) are the reference.
+
+**Data and protocols.**
+- **MASiVar cohort II (OpenNeuro ds003416), site 1, two Philips scanners (A, B), subjects cIIs01–04.** Each subject
+  has two sessions per scanner (s1Ax1/s1Ax2, s1Bx1/s1Bx2) and one scan per session, so every rescan is other-session:
+  A = the first session's scan, its 17-run ensemble (A and 16 replicates, step 5's scheme: smooth signs, FWHM 4, b0
+  noise "added", A's mask, draw 0); the rescan = the second session, corrected on its grid, registered rigidly onto A,
+  resampled and tracked there. cIIs00 has one session per scanner and no pair.
+- **No sidecars in cohort II:** the phase encoding comes from the names (APP j, APA j-), the readout time is nominal.
+  Each APP series has one b0, its last volume; `load` checks it is a real b0 (≥ 1.5 × the series' DW brain median).
+- **The protocols** (`PROTOCOLS`, strict descriptors as `calibration_runs.PROTOCOL`, with the scanner as an item):
+
+  | protocol | scanner | series | voxel (mm) | reversed b0 for the field | streamlines per run (A, mean) |
+  |---|---|---|---|---|---|
+  | B2000 | B | b2000n96 alone, 97 volumes | 2.5 iso, 96 × 96 × 48 | APA 107 (2.5 mm) | 48,437 |
+  | B32 | B | b1000n32 alone, 33 volumes | 2.5 iso | APA 110 (2.5 mm) | 51,924 |
+  | A32 | A | b1000n32 alone | 2.5 iso | r06x06x25 (0.625 × 0.625 × 2.5), box 4 × 4, rescaled | 53,394 |
+  | A2000r19 | A | b2000n96 alone | 1.89 × 1.89 × 2.2, 112 × 112 × 48 | r06x06x25, box 3 × 3, rescaled | 93,233 |
+
+  - Scanner A's reversed series is stored on another scale (its b0 0.021–0.024 (A32) or 0.086–0.102 (A2000r19) of
+    the forward b0's); `load` rescales it to the forward b0s' brain median. The 4 × 4 box's half-voxel offset is taken
+    into its affine (an even `uniform_filter` window is centered 0.3125 mm off).
+  - Every mask voxel is a seed, so A2000r19 has 1.93 × B2000's streamlines per run (A32/B32: 1.03 ×) and its point
+    lattice is 7.6 × 7.6 × 8.8 mm against 10 mm.
+  - The refusals are strict: each cohort II scan is accepted by its own descriptor only (`plan --check`: all 44
+    loadable scans), and cohort III's and cIs1's descriptors and the cohort III map's match refuse every cohort II scan.
+- **Site 3 (s3x1; Siemens Skyra 3T; `calibration_crosssite.py`, protocol S3_2000):** cIIs01–04's b2000n96 at 2.5 mm
+  (96 × 96 × 50, 98 volumes, two b0s first, stated b 1980–2005, TE 95 against 90 ms) and the b1000n3 APA series
+  nearest it. It is used only as a rescan of the B2000 ensemble. In MASiVar the other vendor is also another site
+  (another day, scanner, coil, reconstruction and table): vendor and site are confounded, and the comparison is "a
+  different vendor at a different site".
+- **Downloads** (`fetch_ds003416.py`; every file's size checked against OpenNeuro's S3 listing): cohort II 357 files,
+  1,567 MB (scanner B 213 files, 828 MB; scanner A 120 files, 502 MB: b1000n32, b2000n96 at 1.9 mm and the r06x06x25
+  series nearest them; site 3 24 files, 237 MB).
+
+**As stated, the map left one subject out, the learning curve and the transfers** (`calibration_cohortII.json`;
+envelope coverage of the other-session rescan, `calibration_card.coverage_curve`, at stated levels or map targets 0.8 /
+0.9 / 0.95; cohort III held out, as stated: 0.760 / 0.852 / 0.906):
+
+| protocol | as stated | gap at 0.9 (range over subjects) | map, LOSO | widest outline | streamline ECE: as stated / map |
+|---|---|---|---|---|---|
+| B2000 | 0.744 / 0.837 / 0.891 | −6.3 (−8.2 to −5.3) | 0.804 / 0.903 / 0.946 | 0.946 | 0.115 / 0.011 |
+| A2000r19 | 0.760 / 0.852 / 0.908 | −4.8 (−6.4 to −3.5) | 0.804 / 0.902 / 0.953 | 0.957 | 0.084 / 0.010 |
+| B32 | 0.704 / 0.795 / 0.853 | −10.5 (−12.8 to −7.3) | 0.803 / 0.904 / 0.917 | 0.917 | 0.162 / 0.030 |
+| A32 | 0.712 / 0.805 / 0.861 | −9.5 (−11.3 to −8.0) | 0.803 / 0.905 / 0.924 | 0.924 | 0.155 / 0.012 |
+
+- **The map, left one subject out (three training subjects), reaches 0.80 and 0.90 within half a point on all four
+  protocols.** At 0.95 it is capped by the widest outline on B32 and A32 (0.917, 0.924) and nearly on B2000 (0.946).
+- **The learning curve** (every training set of k = 1–3 subjects): the error at 0.9 is +0.6 / +0.2 / +0.3 points for
+  B2000 at k = 1 / 2 / 3 (as stated −6.3), +0.3 / +0.2 / +0.2 for A2000r19, −0.1 / +0.3 / +0.4 for B32, +0.2 / +0.5 /
+  +0.5 for A32: one training subject removes the miscalibration, as on cohort III. At 0.95 B32 and A32 stay at −3.4
+  and −2.6 for every k (the widest outline).
+- **Transfers, the source map fitted without the target person** (the same four people are on both scanners; the
+  all-subject fit is kept as an extra key):
+
+  | map → applied to | 0.8 / 0.9 / 0.95 | gap at 0.9 | the target scanner's own LOSO map at 0.9 |
+  |---|---|---|---|
+  | B32 → A32 (fixed protocol) | 0.811 / 0.911 / 0.924 | +1.1 | 0.905 |
+  | A32 → B32 (fixed protocol) | 0.796 / 0.897 / 0.917 | −0.3 | 0.904 |
+  | B2000 → A2000r19 (resolution and streamline count differ) | 0.820 / 0.916 / 0.957 | +1.6 | 0.902 |
+  | A2000r19 → B2000 (resolution and streamline count differ) | 0.787 / 0.887 / 0.942 | −1.3 | 0.903 |
+
+- **The cohort III map on B2000** (scanner B, another protocol): its match refuses all four scans (protocol items and
+  the pipeline settings' hash); applied anyway, 0.785 / 0.885 / 0.941 at the targets, against B2000's own LOSO map
+  0.804 / 0.903 / 0.946.
+
+**At a fixed protocol the scanners agree to about a point; the protocol moves the gap more.**
+- **Fixed protocol (b1000n32 at 2.5 mm):** A32 and B32 as stated differ by 1.0 point at 0.9 (−9.5 against −10.5), and
+  a map moved between them lands within 1.1 points of the target. Their reversed series differ (0.625 mm in-plane,
+  rescaled, on A), so even this pair is not identical in acquisition.
+- **Protocol:** 96-direction b2000 is −6.3 (B2000) and −4.8 (A2000r19) at 0.9, 32-direction b1000 −10.5 (B32) and −9.5
+  (A32); 32 directions are 4.2 points worse on scanner B and 4.7 on scanner A (paired by subject, `(f)`; on A the
+  resolution changes too). Cohort III (scanner B, 2.1 mm, b1000 x40 + b2000 x56) is −4.8.
+- **B2000 against A2000r19** (−6.3 against −4.8, and transfers of +1.6 / −1.3) confounds the scanner with resolution
+  and with twice the streamlines; it is not a scanner comparison.
+
+**Philips → Siemens, a different vendor at a different site** (`calibration_crosssite_reg3.json`; the B2000 ensemble
+against the same person's site 3 scan, B2000's other-session rescan beside it):
+
+| B2000 ensemble against | as stated 0.8 / 0.9 / 0.95 | gap at 0.9 | with the same-scanner LOSO map | with its own LOSO map (3 subjects) |
+|---|---|---|---|---|
+| session 2 (same scanner) | 0.744 / 0.837 / 0.891 | −6.3 | 0.804 / 0.903 / 0.946 | — |
+| site 3 (Siemens) | 0.670 / 0.762 / 0.821 | −13.8 | 0.729 / 0.835 / 0.891 | 0.803 / 0.891 / 0.891 |
+
+- **The Siemens rescan costs 7.5 points at 0.9 beyond the same-scanner gap** (per subject −8.2, −6.1, −8.2, −7.8).
+- **The same-scanner map closes about half of it** (+7.4 points at 0.9; per subject +6.5 to +7.8), leaving −6.5.
+- **A map fitted on the Siemens pairs themselves** (three subjects a fold) reaches 0.80 and comes within a point of
+  0.90; at 0.95 it is capped by the widest outline, 0.891 (the same-scanner widest is 0.946).
+- **Streamline ECE:** 0.168 as stated, 0.053 with the same-scanner map, 0.011 with its own map.
+- **The b-vectors as stated agree best** with A's streamline tangents on every site 3 scan (mean |cos| 0.976–0.979
+  against 0.985–0.988 for the same-scanner rescan); FA correlates 0.65–0.74 with A (0.77–0.82 same scanner).
+
+**The ceiling: the widest outline, a margin step, and R.** (`margin.json`, on the mode 1 records: session 2 of
+cIIs01–03, which mode 3 moved by at most 0.6 mm, and site 3 of cIIs01–04, of which mode 3 later moved cIIs02 by 2.3
+mm; coverage / precision / size relative to the rescan's presence, means.)
+
+| target | widest | + half step (6-neighbors with density ≥ ρ/2 in a run) | + 1 voxel (6-neighbors) | + 1 voxel (26-neighbors) |
+|---|---|---|---|---|
+| B2000 session 2 (3) | 0.941 / 0.467 / 2.0 | 0.984 / 0.328 / 3.0 | 0.991 / 0.266 / 3.7 | 0.995 / 0.190 / 5.2 |
+| B32 session 2 (3) | 0.900 / 0.450 / 2.0 | 0.967 / 0.319 / 3.0 | 0.980 / 0.266 / 3.7 | 0.992 / 0.191 / 5.2 |
+| site 3 (4) | 0.886 / 0.469 / 1.9 | 0.955 / 0.340 / 2.8 | 0.974 / 0.280 / 3.5 | 0.985 / 0.202 / 4.9 |
+
+- **A half-step margin past the widest outline lifts coverage by 4–7 points and costs about 0.13–0.14 in precision**
+  (the envelope grows to about 3 times the rescan's presence): the targets beyond the cap are reachable, at a price.
+- **Widest coverage against R′** (subsets of the 17 runs, A always in, 20 draws; mean over subjects at R′ = 1 / 8 /
+  12 / 17): B2000 0.724 / 0.909 / 0.928 / 0.941, B32 0.662 / 0.860 / 0.883 / 0.900, site 3 0.654 / 0.845 / 0.869 /
+  0.886. From 12 to 17 runs it still gains 1.3 (B2000), 1.7 (B32) and 1.7 points (site 3); there is no plateau by 17,
+  and a power law fitted per subject puts its asymptote above 1, so no ceiling can be read from these curves. More
+  runs would raise the cap; how far is not identified.
+
+**Swapping the sessions** (`calibration_swap.py`: session 2 as A with its own 17-run ensemble and its own reversed b0,
+session 1 as the rescan; 8 pairs):
+- **The two directions agree within 1.4 points at 0.9 for every subject** (forward / swapped gap: cIIs01 −6.3 / −5.8,
+  cIIs02 −8.2 / −6.8, cIIs03 −5.5 / −5.7, cIIs04 −5.3 / −4.8). Swapped as stated: 0.749 / 0.842 / 0.896; its LOSO map
+  0.803 / 0.903 / 0.950.
+- **Combined, the map left one person out** (fitted on the other three people's six pairs, scored on both of the
+  held-out person's): 0.802 / 0.903 / 0.948, mean |coverage − target| 0.9 points; as stated 0.747 / 0.840 / 0.894.
+  Its learning curve over people has errors at 0.9 of +0.4 / +0.4 / +0.3 points for 1 / 2 / 3 training people.
+  Without cIIs04: 0.803 / 0.902 / 0.946.
+- **The two directions' registrations are inverse-consistent under mode 3:** forward composed with swapped is 0.20,
+  0.00, 0.18 and 0.31° and 0.22, 0.06, 0.20 and 0.37 mm from the identity (mode 1 forward: 0.57, 0.58, 0.14 and 2.99°,
+  4.6 mm for cIIs04).
+
+**Registration: a silent local minimum biased the calibration, so the method now uses several starts and a QC flag.**
+- **Mode 1** (`ensemble_retest.register`: center of mass, translation, rigid MI on the corrected mean b0s; all records
+  before this evening) stopped in a local minimum on cIIs04's scanner B session 2, B2000 and B32: 5.4° / 2.8 mm
+  (B2000, b0 NCC 0.568) and NCC 0.549 (B32), against 8.3° / 3.9 mm and NCC 0.894 / 0.851 found later. The cross-site
+  agent's diagnosis: FA r 0.59 → 0.86, tangent agreement 0.941 → 0.988 once refit. Its gap at 0.9 was −20.6 (B2000) and
+  −20.3 (B32); refit, −5.3 and −7.3.
+- **Mode 2** (`_register_fa.py`: FA onto FA, then a rigid MI refinement of the mean b0s), applied to every pair,
+  fixed it, but in the swapped direction it fell into the same minimum for cIIs04 (6.0° / 2.6 mm, NCC 0.632; gap at
+  0.9 −17.4). FA-onto-FA MI is not symmetric, and FA NCC does not separate a good fit from a bad one; b0 NCC does (good
+  pairs 0.80–0.94 on scanner B and A).
+- **Mode 3** (`_register_fa.py` mode 3, `calibration_cohortII.register_multi`): starts (a) mode 1's pipeline, (b) mode
+  2's FA stage, (c) the other direction's transform inverted where it exists (forward and swapped B2000); each refined
+  by the same rigid b0 MI step; the best final b0 NCC is kept; every candidate is recorded; a QC flag below 0.8. It
+  is computed first for every pair (`--register-only`); a rescan is tracked again only if its transform moves any voxel
+  of A's mask by more than 0.5 mm, rotates by more than 0.5°, or gains more than 0.02 in NCC; otherwise the mode 3 entry
+  confirms mode 2's transform and points at its record (`statements_file` then reads mode 2's statements).
+- **Of the 24 pairs, mode 3 reran 6:** forward B2000 cIIs02 (0.61 mm, NCC +0.006) and cIIs03 (0.55 mm, +0.003),
+  A2000r19 cIIs03 (1.02 mm, +0.022: mode 2 had made it worse than mode 1, gap −6.7 against −5.1; now −5.2), swapped
+  cIIs03 (0.61 mm, +0.008) and cIIs04 (2.4° / 5.9 mm, NCC 0.632 → 0.896; gap −17.4 → −4.8), and site 3 cIIs02 (1.1° /
+  2.3 mm, NCC 0.806 → 0.866: mode 2 had moved it off mode 1's fit; its gap at 0.9 −16.6 → −14.3). The other 18 were
+  confirmed. Mode 3's best start was (a) on 12 pairs, (b) on 10, (c) on 2 (of the 8 where it exists); B32 and A32 changed
+  nowhere.
+- **One pair is flagged and kept:** site 3 cIIs04, b0 NCC 0.796 (all three modes 0.794–0.796). Its FA correlation with
+  A (0.739) and its tangent agreement (0.979) are the highest of the four site 3 scans, so the low NCC is most likely
+  the b0 contrast of another vendor (TE 95 against 90 ms), not misregistration. It stays in every result.
+- **The lesson:** a rigid registration that fails silently by 2–3° and 3–6 mm costs 12–15 points of coverage on that
+  subject and inflates the between-subject spread, the scanner difference and the ceiling (below). Rescan calibration
+  needs multi-start registration and a recorded QC measure, applied to every pair alike.
+
+**Corrections to earlier interim claims (all from cIIs04's misregistered session 2 under mode 1):**
+- **"The gap varies 5–21 points between subjects":** B2000's per-subject gap at 0.9 was −5.3 to −20.6 under mode 1; it
+  is −5.3 to −8.2. B32's −10.0 to −20.3 is now −7.3 to −12.8.
+- **"Scanner A is about 5 points better calibrated than B":** under mode 1 B2000's mean gap at 0.9 was −10.5 against
+  A2000r19's −4.7, and B32's −14.6 against A32's −9.5. At a fixed protocol it is now 1.0 point (B32 −10.5, A32 −9.5).
+- **Part of "the ceiling":** the widest outline's coverage was 0.912 (B2000) and 0.882 (B32) under mode 1; it is 0.946
+  and 0.917. The Siemens rescan's apparent advantage over the same-scanner rescan for cIIs04 (+7.1 points under mode 1)
+  was the same misregistration.
+
+Caveats:
+- **n = 4 people,** one other-session rescan per scanner and protocol: means and per-subject ranges, no intervals. The
+  same four people on both scanners, and all of them in the maps' training sets except the held-out one.
+- **A2000r19 changes resolution** (1.89 × 1.89 × 2.2 mm) **and doubles the streamlines** and seeds per mm³; its point
+  lattice is finer. B2000 ↔ A2000r19 is not a scanner comparison.
+- **B32 and A32 differ in the reversed series** (2.5 mm on B; 0.625 × 0.625 × 2.5 mm, box-averaged and rescaled, on A),
+  so the field estimate is not acquired alike even at a fixed protocol.
+- **A single shell per protocol, one b0 each;** the wild bootstrap's single-b0 path; nominal readout times; the phase
+  encoding from the names.
+- **Site 3 is one session of one Siemens scanner** at another site; vendor, site, day, TE, slices and reconstruction
+  are confounded. Its own LOSO map has three training subjects.
+- **The margin and R-subsampling check uses mode 1's records** (cIIs04's session 2 excluded; site 3 cIIs02 since moved
+  by mode 3); its curves are per subject at 20 draws.
+- **Mode 3's thresholds** (0.5 mm, 0.5°, NCC 0.02, the QC at 0.8) were set before computing it and not tuned; three of
+  the six reruns crossed them by small margins (0.55–0.61 mm). Mode 3's logged "rotation_deg" of the difference to
+  mode 2 carries up to 0.12° of arccos noise (fixed in `angle` afterwards; no decision depends on it). For confirmed
+  site 3 pairs `calibration_crosssite_reg3.json` leaves the FA correlation and tangent check empty; they are in the
+  mode 2 entries (`site3reg2_scan`), quoted above.
+
+Provenance (`DATA/ensemble/cohortII_module_history.txt` has the full history and copies of every version):
+- **`calibration_cohortII.py`:** 45b5c58e… made the B2000 and B32 records; 5b25c01e… the A32 and A2000r19 records;
+  3c8a25ce… (modes 1 and 2) the mode 2 rescans and the swap records; bde9b5f3… the transfer fix (target person left
+  out); e00c1763… the mode 3 entries; 2cab50b3… (current) the mode 3 reruns and `calibration_cohortII.json`
+  (7abc92d5…).
+- **`calibration_crosssite.py`:** 74a20ce5… (mode 1 site 3 records and `calibration_crosssite.json`) → 7980ce74…
+  (mode 2; `calibration_crosssite_reg2.json`) → 94ce53c3… → 06dcf9e7… (current; `calibration_crosssite_reg3.json`,
+  820fb59b…).
+- **`calibration_swap.py`:** 10c050f2… (the swap records, mode 2) → 79341c2f… (current; the mode 3 reruns and
+  `calibration_swap_B2000.json`, db2efea1…). **`_register_fa.py`:** df84462e… (mode 2) → 3ec03d4c… (adds mode 3).
+- **Comparisons:** `cohortII_registration_compare.json` (180ad54f…, modes 1 and 2) and
+  `cohortII_registration_compare_2v3.json` (c8d06dec…); `margin.json` (b6be9115…). Git: ismrm2027 at 975e6da, the
+  scripts untracked; no commits.
+
+**Margin step and replicate count on the mode-3 records.** (`calibration_margin.py` → `calibration_margin.json`,
+2e9907a5…, script f43322db…; every pair at registration mode 3, as `statements_file` resolves it, cIIs01–04 with
+cIIs04 included; presence recomputed from the records, the widest outline equal to the statements' in all 20 pairs.
+This supersedes the mode 1 `margin.json` numbers in the ceiling section above.) Coverage / precision / size relative
+to the rescan's presence, means over 4 subjects; each step is restricted to A's mask:
+
+| target | widest | + half step | + 1 voxel (6-neighbors) | + 1 voxel (26-neighbors) |
+|---|---|---|---|---|
+| B2000 session 2 | 0.946 / 0.472 / 2.0 | 0.985 / 0.330 / 3.0 | 0.991 / 0.268 / 3.7 | 0.995 / 0.193 / 5.2 |
+| B32 session 2 | 0.917 / 0.456 / 2.0 | 0.974 / 0.320 / 3.0 | 0.984 / 0.267 / 3.7 | 0.994 / 0.192 / 5.2 |
+| A32 session 2 | 0.924 / 0.458 / 2.0 | 0.977 / 0.320 / 3.1 | 0.986 / 0.267 / 3.7 | 0.994 / 0.192 / 5.2 |
+| A2000r19 session 2 | 0.957 / 0.477 / 2.0 | 0.988 / 0.356 / 2.8 | 0.993 / 0.306 / 3.2 | 0.997 / 0.236 / 4.2 |
+| site 3 | 0.891 / 0.470 / 1.9 | 0.958 / 0.340 / 2.8 | 0.975 / 0.279 / 3.5 | 0.986 / 0.202 / 4.9 |
+
+- **The LOSO map at 0.8 / 0.9 / 0.95, held-out coverage (precision), without → with the margin steps:** B2000
+  0.804 (0.70) / 0.903 (0.56) / 0.946 (0.47, not reached) → 0.95 becomes 0.974 (0.37); B32 0.803 / 0.904 / 0.917 (not
+  reached) → 0.974 (0.32); A32 0.803 / 0.905 / 0.924 (not reached) → 0.977 (0.32); A2000r19 0.804 / 0.902 / 0.953
+  (0.48), unchanged (the envelopes reach every target); site 3 0.803 (0.59) / 0.891 / 0.891 (both not reached) →
+  0.958 (0.34) at both 0.9 and 0.95. Only the half step is ever chosen; 0.8 and 0.9 on the same scanner need no margin.
+- **Widest coverage against R′** (A always in, 20 draws; mean over subjects at R′ = 4 / 8 / 12 / 17): B2000 0.870 /
+  0.915 / 0.934 / 0.946; B32 0.830 / 0.879 / 0.901 / 0.917; A32 0.839 / 0.887 / 0.909 / 0.924; A2000r19 0.884 / 0.927 /
+  0.945 / 0.957; site 3 0.802 / 0.852 / 0.875 / 0.891. From 12 to 17 runs every protocol still gains 1.2–1.7 points.
+- **No asymptote quoted:** a hyperbola's asymptote moves by 0.4–1.4 points between fitting R′ = 1–17 and 4–17, and a
+  power law exceeds 1; the curves do not plateau by 17.
+
+## 2026-10-20 ISMRM 2027: ON-Harmony, same scanner model at two sites; a same-scanner map carries over halfway
+
+`calibration_onharmony.py` (`check`, `plan`, `run`, `collect`, `evaluate`) → `calibration_onharmony.json`; downloads
+`fetch_ds004712.py`; queue `scratchpad/scripts/queue_onharmony.sh` (log `DATA/ensemble/onharmony_queue.log`). Records
+in `DATA/ensemble/ds004712-<subject>/card/<subject>-PRISMA_<OXF1|OXF2>/`, statements `statements_R17_reg3.npz`. The
+question: does one Siemens Prisma scan's 17-run envelope, recalibrated on that Prisma, hold its stated coverage on the
+same person's scan from a second Prisma (same make and model, same protocol) at another site? Every rescan is
+registered by mode 3; the scheme is the B2000 one (A and 16 replicates, smooth signs, FWHM 4, b0 noise "added", A's
+mask, draw 0, today's default pipeline at b = 2000).
+
+**Data, protocol and checks.**
+- **ON-Harmony (OpenNeuro ds004712 v2.0.1, CC0; Warrington et al., Sci Data 12:609, 2025).** The two Oxford Prismas:
+  OXF1PRI (WIN-FMRIB, John Radcliffe Hospital, Head_32 coil, serial 66050) and OXF2PRI (WIN-OHBA, Warneford Hospital,
+  HeadNeck_64 coil, serial 66093). All 20 subjects have a first session on each. 13192 and 16974 have six sessions on
+  OXF1PRI, and 14229 and 16766 six on OXF2PRI (the README).
+- **Download:** 544 files, 7.69 GB, every size equal to OpenNeuro's S3 listing (`ds004712/fetched.json`). Per session:
+  dir-AP and dir-PA DWI with their .bval, .bvec and .json, and the T1w; plus the top-level README, participants.tsv,
+  dataset_description.json and scan_delays.csv.
+- **The protocol is the same on both scanners:** the same sequence (cmrr_mbep2d_diff, syngo MR E11), TE 92 ms, TR 3.6
+  s, multiband 3, partial Fourier 0.75, no in-plane acceleration, TotalReadoutTime 0.0690115 s on both series. Only the
+  coil, the serial number and the site differ.
+  - **dir-AP (j-):** 104 × 104 × 72 at 2.0192 × 2.0192 × 2.0 mm, 105 volumes: 5 b0s (stated b = 5, at volumes 0, 21,
+    42, 63, 84, each with a nonzero b-vector, zeroed here), 50 at b 990–1005 and 50 at b 1985–2010.
+  - **dir-PA (j), same grid and shim:** phase A subjects have 3 volumes, all b0. Phase B subjects have 6: 3 b0s, then 3
+    b2000. Only the PA b0s are used, for the field.
+- **Tracked shell:** b2000 alone (5 b0s + 50 directions, 55 volumes), as B2000 and S3_2000. Joining b1000 would not
+  change the tracking (prep.prepare keeps the b0s and the 2000 shell; the field comes from the b0s).
+- **Descriptors:** PRISMA_UKB_OXF1 and PRISMA_UKB_OXF2, strict, with the session label, coil, serial number and
+  sidecar items. Each of the 60 sessions is accepted by its own scanner's descriptor only. Both refuse every MASiVar
+  scan (cohort III, cIs1, each cohort II protocol, site 3). Every MASiVar descriptor and the cohort III map's match
+  refuse these scans.
+- **Loader checks:**
+  - The b0s are 3.0–6.6 × the DW brain median, and no DW volume is above 0.44 of the b0s.
+  - The PA b0s are 0.832–1.026 of the forward b0s (180 b0s). The low end is 14229 OXF2PRI005; the descriptor bound is
+    [0.8, 1.1].
+  - Phase encoding comes from the sidecars, and tractline.bids pairs AP with PA with its own checks.
+- **b-vectors:**
+  - A tracking-free fiber-coherence check found "as stated" the most coherent in all 40 first sessions (mean |cos|
+    0.956 against 0.945–0.949 with an axis flipped; margin ≥ 0.005).
+  - calibration_crosssite.bvec_check found "as stated" agrees best for all 22 A's and all 42 rescans. On 13192's A
+    (smoke): the corpus callosum body median |e1 left-right| is 0.92, the CST |e1 superior-inferior| 0.82, and tangent
+    agreement is 0.96 as stated against 0.63–0.69 flipped.
+- **Bootstrap:** nothing changed. 5 forward b0s (B2000 has 1) have residuals of their own; b0_scale is 0.21 on 13192
+  (the b0s vary about 5 × the DW residual, through motion and drift). The 50 directions are fitted at SH order 6
+  (leverage 0.56). About 84k streamlines a run.
+- **Runs:**
+  - Folders: 20 forward (A = OXF1PRI001, cross-site rescan OXF2PRI001; plus OXF1PRI002–006 for 13192 and 16974). Two
+    more have A = OXF2PRI001 (14229 and 16766: OXF2PRI002–006, and the reverse cross-site rescan OXF1PRI001). The other
+    18 reverse folders were not run.
+  - In all: 22 ensembles, 22 cross-site rescans and 20 same-scanner rescans.
+  - Timing: the queue ran 21:46–12:45 with an hour's pause. The disk guard stopped it at 19 GB free (09:25), and it
+    was relaunched at 10:27.
+
+**The gaps, as stated** (envelope coverage at stated 0.8 / 0.9 / 0.95, means over subjects; a same-scanner subject
+is its mean over 5 rescans):
+
+| pairs | n | 0.8 | 0.9 | 0.95 | widest | streamline / point ECE |
+|---|---|---|---|---|---|---|
+| same scanner, both Prismas | 4 | 0.778 | 0.868 | 0.919 | 0.966 | 0.087 / 0.047 |
+| same scanner, OXF1PRI / OXF2PRI | 2 / 2 | 0.774 / 0.782 | 0.867 / 0.870 | 0.919 / 0.919 | 0.966 / 0.966 | |
+| cross site, OXF1 → OXF2 | 20 | 0.749 | 0.837 | 0.889 | 0.946 | 0.136 / 0.075 |
+| the same four subjects, cross site | 4 | 0.744 | 0.834 | 0.888 | 0.945 | 0.138 / 0.066 |
+| cross site, OXF2 → OXF1 | 2 | 0.770 | 0.857 | 0.908 | 0.961 | 0.114 / 0.057 |
+
+- **The cross-site gap is about twice the same-scanner one:** −5.1 / −6.3 / −6.1 points against −2.2 / −3.2 / −3.1.
+  - Every one of the 20 cross-site subjects is below target at 0.9 (−4.3 to −10.1; median −5.9).
+  - On the same four people, cross site is 3.4 points further below target at 0.9 than same scanner.
+  - For scale against MASiVar (`calibration_crosssite_reg3.json`): cohort II B2000's same-scanner other-session
+    rescans reach 0.744 / 0.837 / 0.891, the size of this cross-site gap. Its rescans at site 3 (a different vendor
+    at a different site) reach 0.670 / 0.762 / 0.821. This same-scanner gap is the smallest of the three.
+- The two Prismas' same-scanner gaps are equal (0.867 against 0.870 at 0.9).
+- The two reverse pairs fall short too (−4.3 at 0.9), less than the forward mean. Two subjects say nothing about
+  direction.
+
+**Maps** (coverage at target 0.8 / 0.9 / 0.95; the target person always left out of the fit; ECE streamline / point):
+
+| map | applied to | 0.8 | 0.9 | 0.95 | ECE |
+|---|---|---|---|---|---|
+| cross site, LOSO (19 subjects) | cross site (20) | 0.802 | 0.901 | 0.946* | 0.016 / 0.022 |
+| same scanner, LOSO (3) | same scanner (4) | 0.801 | 0.903 | 0.954 | 0.014 / 0.019 |
+| same scanner, both Prismas (3–4) | cross site (20) | 0.770 | 0.872 | 0.929 | 0.050 / 0.032 |
+| same scanner, OXF1PRI pairs only (1–2) | cross site (20) | 0.774 | 0.872 | 0.929 | 0.053 / 0.039 |
+| same scanner, OXF2PRI pairs only (1–2) | cross site (20) | 0.766 | 0.872 | 0.929 | 0.046 / 0.025 |
+| cross site (19) | same scanner (4) | 0.833 | 0.930 | 0.966 | 0.049 / 0.029 |
+| cross site (19) | cross site, reverse (2) | 0.824 | 0.921 | 0.961 | 0.024 / 0.023 |
+
+\* 0.95 is not reached in any fold: the training curve tops out below it, so the widest outline is used (0.904–0.962
+per subject).
+
+- **A same-scanner map does not transfer across sites.** Fitted on the within-scanner pairs and applied to the
+  cross-site pairs, it closes about half the gap and leaves the envelopes 3.0 / 2.8 / 2.1 points short. At 0.9 it
+  lifts 0.837 to 0.872 (per subject 0.835–0.893). Fitted on one Prisma's pairs or the other's, it gives the same
+  numbers (0.872 at 0.9 either way), so the shortfall is the site, not which scanner the map came from. On MASiVar
+  the same-scanner B2000 map left site 3 at 0.729 / 0.835 / 0.891; the same make and model at another site loses less.
+- **The reverse fails the other way.** The cross-site map applied to same-scanner pairs over-covers by 3.3 / 3.0 / 1.6
+  points (0.930 at 0.9) and wastes envelope size. A map has to be fitted on the term it is used for.
+- **A cross-site map fitted on cross-site pairs works:** 0.802 / 0.901 at 0.8 / 0.9, and streamline ECE drops from
+  0.136 to 0.016. At 0.95 it is limited by the widest outline. On the two reverse pairs it holds too (0.921 at 0.9),
+  though it over-covers by 2 points.
+
+**Learning curve of the cross-site map** (held-out coverage minus target, mean (10th, 90th percentile) over held-out
+subject × training set; up to 50 sets per subject):
+
+| k | 0.8 | 0.9 | 0.95 | streamline ECE |
+|---|---|---|---|---|
+| 0 (as stated) | −5.1 | −6.3 | −6.1 | 0.136 |
+| 1 | +0.2 (−2.5, +3.0) | +0.3 (−2.2, +3.0) | −0.6 (−2.3, +0.9) | 0.022 |
+| 2 | +0.2 (−2.4, +2.6) | +0.3 (−1.9, +2.5) | −0.5 (−2.3, +0.9) | 0.019 |
+| 4 | +0.2 (−2.3, +2.2) | +0.3 (−1.8, +2.2) | −0.5 (−2.0, +0.9) | 0.017 |
+| 8 | +0.2 (−2.1, +2.1) | +0.3 (−1.7, +1.8) | −0.5 (−2.0, +0.9) | 0.016 |
+| 19 | +0.2 (−1.6, +2.2) | +0.2 (−1.4, +1.7) | −0.5 (−1.8, +0.9) | 0.016 |
+
+One cross-site subject removes the bias. More subjects narrow the spread, from ±2.5–3 points at k = 1 to about ±2 at
+k = 4–8. 0.95 stays about half a point short at every k (the widest-outline ceiling). As in cohort III's learning
+curve, one subject of the matching term removes most of the miscalibration.
+
+**The widest outline and the margin step** (`evaluate --margin`, scratchpad/crosssite/margin.py's steps on the 2.02 ×
+2.02 × 2.0 mm grid; coverage / precision / size relative to the rescan's presence; mean over rescans):
+
+| target | widest | + half step | + 1 voxel (6-neighbors) | + 1 voxel (26-neighbors) |
+|---|---|---|---|---|
+| cross site (20) | 0.946 / 0.519 / 1.8 | 0.981 / 0.381 / 2.6 | 0.986 / 0.327 / 3.0 | 0.991 / 0.249 / 4.0 |
+| same scanner (20 rescans) | 0.966 / 0.521 / 1.9 | 0.991 / 0.377 / 2.6 | 0.993 / 0.323 / 3.1 | 0.996 / 0.244 / 4.1 |
+
+The cross-site widest outline (0.946) is above site 3's (0.891) and equal to MASiVar B2000's same-scanner one (0.946
+at 2.5 mm; this grid is finer and seeds about twice the streamlines). One half step takes cross site past 0.95 (0.981), so
+0.95 is reachable with the margin, as on cohort II. The map with the margin was not refitted here.
+
+**Registration QC: the cross-coil b0-NCC flag fires, and is kept.**
+- **Cross site (22 pairs):** 14 are flagged (best b0 NCC below 0.8; range 0.656–0.924, median 0.760). Same scanner
+  (20 rescans): none flagged (0.853–0.971, median 0.938).
+- **FA evidence that the cross-site registrations are sound:** FA's correlation with A in A's mask (contrast-free,
+  after correction) is 0.742–0.882 (median 0.835) against 0.823–0.874 (median 0.841) on the same scanner.
+- **Mode 3's starts (a) and (b)** reach the same transform within 0.6° and 0.2 mm in all 42 rescans. Start (c), the
+  other direction, was available for 2 (14229 and 16766 forward); it was never best.
+- **FA NCC** at the registration is lower across sites (median 0.625 against 0.829), as the b0 NCC is. Read together
+  with the FA correlation, this is the coils' receive profiles changing image contrast, not misregistration.
+- **Rule:** the flag is reported and the pairs are kept (calibration_cohortII's rule). A coil-independent QC
+  (FA-based) would be the better gate for cross-coil pairs.
+- **Head position:** rotations up to 12.3° and translations up to 31 mm across sites; up to 6.0° and 29 mm on the
+  same scanner. Residual left after correction: 0.20–0.39 cross site, 0.21–0.30
+  same scanner.
+
+**The time confound works against the finding** (scan_delays.csv, days from each subject's first scan):
+- The cross-site rescan is the same day for 16 of 20 subjects (median 0, at most 5).
+- The same-scanner rescans are 0–205 days after A (median 34.5): 13192 32–38, 16974 30–37, 14229 119–205, 16766 0–5.
+- So the cross-site pairs are closer in time, yet fall further short. Time between scans does not explain the extra
+  gap.
+
+**Caveats.**
+- The coil differs (32 against 64 channels), so "site" here includes the coil, the shim and the gradient set
+  (different serial numbers). Software, sequence and protocol do not differ. The test separates same make and model
+  at another site from the same scanner; it does not separate site from coil.
+- The two sites are in the same city (about 2 km apart, one study's protocol). Another city's Prisma could differ
+  more.
+- The same-scanner map is fitted on 4 subjects (2 per Prisma), 3 once the target person is left out (1 for a
+  single-Prisma map). Its transfer numbers rest on few people, though the three variants agree closely.
+- Multiband 3 on 72 slices: noise correlated between slices excited together (24 apart) is not modeled. The
+  bootstrap's smooth signs keep in-plane correlation only, which may make the ensemble narrower than the scan's real
+  variability. If so, it adds to every gap here, the same-scanner one included.
+- Only 2 reverse pairs. The 18 other reverse folders are optional (about 11 h) and not run.
+- No refit of the map with the margin step. fig6's "PRISMA OXF1->OXF2" rows are written in COHORT2_SCHEMA shape;
+  ismrm2027_figures.py does not draw them yet.
+
+**Provenance.**
+- **Scripts:** `calibration_onharmony.py` 2fc89a38… (every record folder and the evaluate),
+  `fetch_ds004712.py` 5443b996…, queue script 2831fe13… after the collect-skip fix below. The four cohort II modules
+  were imported unchanged: calibration_cohortII 2cab50b3…, calibration_crosssite 06dcf9e7…, _register_fa 3ec03d4c…,
+  calibration_swap 79341c2f…
+- **Records and results:** created at git 975e6da (ismrm2027; src/ and the card's bench modules clean; the new
+  scripts untracked). `fetched.json` 8419892a…; `calibration_onharmony.json` 874ceed0… (2026-10-20T16:45:02Z, not a
+  dry run, R = 17, every statements file's and A.npz's SHA-256 inside).
+- **The 20 "FAILED collect" lines in the queue log are benign.** After the disk-guard stop, the relaunch found every
+  finished folder's statements present, and collect refused to overwrite (FileExistsError). All 22 statements files
+  postdate every record in their folders. The queue script now skips collect when the statements exist and no record
+  is newer.
+- **Smoke records:** `ds004712-13192/card/13192-PRISMA_OXF1-smoke/` (R = 2), separate and unused. No commits.
+
+## 2026-10-20 ISMRM 2027: motion and eddy-current sanity check; neither explains the as-stated gap
+
+**Question.** The pipeline corrects only the static susceptibility field: no registration between volumes, no eddy
+model, no b-vector rotation (docs/pipeline.md, "Open"). Do pairs with more motion or eddy distortion have larger
+as-stated gaps (coverage − target at stated 0.8, 0.9, 0.95)? `bench/calibration_motion_check.py`, CPU only; 83 pairs
+(cohort II B2000, A2000r19, B32, A32, B2000 swapped and site 3, 4 each; cohort III 8 same-session and 9 other-session;
+ON-Harmony 20 cross-site, 2 reverse, 20 same scanner). Each gap was recomputed per rescan from the statements and
+matches its results file (83 of 83).
+
+**The proxies, per scan** (min / median / max):
+- **residual_left** (runs.json): cohort II 0.33/0.65/0.74, site 3 0.32/0.35/0.46, cohort III 0.47/0.51/0.57,
+  ON-Harmony 0.20/0.25/0.39. Mostly a protocol property.
+- **b0 motion** (each forward b0 onto the first, dipy rigid MI; max displacement at the mask's edge): cohort III
+  0.37/1.07/1.76 mm, ON-Harmony 0.16/0.74/6.57 mm, site 3 0.02/0.09/0.55 mm; cohort II has one forward b0 per series.
+  A least-squares rigid cross-check agrees (89 scans, r 0.994, median +0.06 mm).
+- **DW volumes** (each tracked-shell volume onto its own tensor prediction; 6 rigid + a PE affine, Gauss-Newton). The
+  eddy signature, R² on g of the PE shears and scale (medians): ON-Harmony 0.87–0.94, cohort III 0.75–0.87, cohort II
+  0.28–0.33, site 3 0.05–0.30. The g-explained PE edge displacement (RMS): ON-Harmony 0.35/0.72/2.07 mm, cohort III
+  0.61/0.72/1.01, cohort II 0.09/0.20/0.66, site 3 0.12/0.15/0.19.
+- **Validation** (dipy affine per volume, 12 volumes): ON-Harmony 13192 edge PE displacement r 0.998 (RMS difference
+  0.03 mm), cohort III s03 0.91 (0.20 mm), cohort II B2000 0.41 (eddy 0.2–0.3 mm, at the noise level; mean shift r 0.99).
+  In cohort III and ON-Harmony the non-PE rigid parameters also follow g (R² 0.35–0.38, against about 0.06 by chance):
+  some eddy leaks into "DW rigid", or acquisition order is confounded with direction.
+
+**Spearman ρ with the gap at 0.9** (proxy: A + rescan; permutation p, exact for n ≤ 8; n = 4 cannot go below 0.083):
+
+| stratum (n) | residual_left | b0 motion max | DW rigid p95 | DW PE p95 | DW eddy RMS |
+|---|---|---|---|---|---|
+| ON-H cross site (20) | −0.44 (0.054) | −0.12 (0.62) | −0.27 (0.25) | −0.17 (0.46) | −0.10 (0.66) |
+| ON-H same scanner (20) | 0.17 (0.48) | −0.37 (0.11) | −0.34 (0.15) | −0.08 (0.74) | −0.11 (0.65) |
+| cIII same session (8) | 0.21 (0.62) | −0.21 (0.62) | −0.21 (0.62) | 0.10 (0.83) | 0.00 (1.0) |
+| cIII other session (9) | −0.68 (0.055) | 0.14 (0.72) | −0.04 (0.92) | −0.27 (0.48) | −0.30 (0.43) |
+| cII, six strata (4 each) | −0.4 to 0.6 | n/a | −1.0 to −0.2 | −1.0 to 0.0 | −1.0 to 0.8 |
+
+Within subject (A fixed): ON-H same-scanner rescan proxies ρ 0.08–0.25 (all p > 0.3); cohort III other session, none.
+
+**Pooled** (within-stratum ranks, stratified permutation): A + rescan and max null for every proxy (|ρ| ≤ 0.25).
+The A-vs-rescan mismatch carries a weak signal: b0 motion ρ −0.36 (p 0.010, n 59), DW rigid −0.30 (p 0.016, n 83).
+Effect (fixed effects): about −0.24 coverage points per within-stratum SD (95 % about −0.47 to −0.01), R² ≤ 0.05;
+giving every pair its stratum's lowest proxy would shrink the gap at 0.9 by 0.1–0.25 points (mean gap −5.6). These
+are the best of several hundred tests; two within-subject mismatch tests have the opposite sign (ρ +0.50, +0.52).
+
+**A natural experiment.** 9 of the 20 OXF2PRI001 rescans carry about 2.5× the eddy of the other 11 (1.55–2.07
+against 0.55–1.01 mm RMS; the same scanner model, Prisma, and protocol). Their mean gap: −6.5 against −6.2 points
+(Mann-Whitney p 0.49). Across protocols eddy does not order the gaps either: cohort III has strong eddy and the
+smallest gaps, cohort II and site 3 weak eddy and the largest.
+
+**Verdict.** No evidence that eddy currents drive the gap; weak, multiplicity-prone evidence for motion mismatch.
+Together, plausibly under about 5 % of the gap, well under one coverage point. The differences between conditions
+(cross site against same scanner, 32 against 96 directions, vendor) are not explained by these proxies.
+
+**What it can't show.** Correlation only; small n; the proxies are not an eddy correction (alignment to the scan's own
+tensor prediction, whose contrast misfit can read as shifts); no b0 motion in cohort II.
+
+**Option 2 (the full DIPY affine-correction rerun):** not needed for the gap; possibly for accuracy (ON-Harmony's eddy
+0.7–2 mm at the edge, b0 motion up to 6.6 mm). A cheap direct test would be the extreme cross-site pairs (16974, 10975).
+
+**Provenance.** `calibration_motion_check.py` 58ec25dd…; `calibration_motion_check.json` 812268e5… (2026-10-20T16:47:37Z,
+git 975e6da, ismrm2027, src/ clean). Inputs: calibration_cohortII.json 7abc92d5…, calibration_swap_B2000.json
+db2efea1…, calibration_crosssite_reg3.json 820fb59b…, calibration_card_masivar_cIII.json 6500ea56…,
+calibration_onharmony.json 874ceed0… (final, not a dry run). Per-scan cache and validation in the session scratchpad
+(motion/). No commits.
+
+## 2026-10-20 ISMRM 2027: same-site cross-scanner rescans; another unit of the same scanner model costs about 3 points
+
+`calibration_crossscanner.py` (`run`, `collect`, `evaluate`) → `calibration_crossscanner.json`; queue
+`scratchpad/scripts/queue_crossscanner.sh` (log `DATA/ensemble/crossscanner_queue.log`, 13:37–14:55, 0 FAILED, 16 of
+16 collects). The question: an ensemble from one Philips Achieva at MASiVar's site 1, against the same person's scan
+on the OTHER Achieva at the same site, the same protocol: how much does coverage fall beyond that ensemble's own
+same-scanner other-session gap? It is the same measurement as the site 3 Siemens rung (above) and ON-Harmony's
+cross-site rung, with only the scanner unit changed.
+
+**Design.**
+- **Ensembles:** calibration_cohortII's existing records (A and 16 replicates, R = 17), read, never written: B32 and
+  A32 (b1000n32, 2.5 mm, the primary fixed-protocol pair), and B2000 and A2000r19 (the secondary pair, CONFOUNDED:
+  2.5 mm against 1.89 × 1.89 × 2.2 mm, and A2000r19's runs have 1.93 × the streamlines).
+- **Targets:** both sessions of the other scanner, as that protocol loads and checks them (B32's ensemble against A32's
+  s1Ax1 and s1Ax2; A32's against B32's s1Bx1 and s1Bx2; likewise for the 2000 pair). Each is corrected on its own grid
+  with its own reversed b0, registered onto the ensemble scan by mode 3, resampled onto its grid (b-vectors turned;
+  A2000r19 down to 2.5 mm, B2000 up to 1.89 mm) and tracked once at the ensemble's shell: 32 runs, 16 a pair of
+  protocols. A subject's two target sessions are averaged (each subject weighted equally).
+- **Records:** `DATA/ensemble/<subject>/card/<subject>-<source>-x<A|B>/` (`x<T>1reg3_onA.npz`, `x<T>2reg3_onA.npz`,
+  `runs.json`, `statements_R17_reg3.npz`; 6–21 MB a folder). Each collect checks A's arrays equal to the source's own
+  mode 3 statements; the same-scanner as-stated numbers are checked equal to `calibration_cohortII.json`. Smoke:
+  `cIIs01-B32-xA-smoke` (not used).
+- **The same-scanner baseline** is each ensemble's own other-session rescan (`calibration_cohortII.json`, mode 3). Both
+  the baseline and the targets are other days; the targets add the change of scanner unit.
+
+**Registration QC** (mode 3: starts (a) mode 1's pipeline, (b) mode 2's FA stage, (c) the reverse pair's transform for
+the session-1 targets once it exists; best final b0 NCC; flag below 0.8):
+- **Transforms:** 3.3–14.0° and 2.5–42.2 mm (scanner A's sessions sit up to 42 mm from B's on the table). The best
+  start was (a) on 19 targets, (b) on 10 and (c) on 3 (of the 8 where it existed).
+- **Inverse consistency** (the session-1 pairs both ways, composed): B32 ↔ A32 0.08°/0.00 mm, 0.06°/0.17 mm,
+  0.54°/1.18 mm and 0.02°/0.00 mm (cIIs01–04); B2000 ↔ A2000r19 0.04–0.21° and 0.01–0.27 mm.
+- **QC flags, kept:**
+  - Primary: 2 of 16, B32 ensemble against cIIs03's A32 s1Ax2 (b0 NCC 0.770) and A32 ensemble against cIIs04's B32
+    s1Bx2 (0.799). Their extra gaps (−3.8 and −4.8 at 0.9) are within a point of the same subject's other session (−4.2,
+    −4.5).
+  - Secondary: B2000's ensemble against A2000r19 scans, 6 of 8 (NCC 0.696–0.754); the reverse direction, none (0.867–
+    0.910). The session-1 pairs are inverse-consistent within 0.21°/0.27 mm, so the low NCC there is the 1.89 mm b0
+    against the 2.5 mm one (resolution and contrast), not a failed fit.
+
+**The fixed-protocol pair, b1000n32 at 2.5 mm** (`calibration_crossscanner.json`; means over 4 subjects at 0.8 / 0.9 /
+0.95; ECE streamline / point):
+
+| ensemble → targets | same scanner, as stated | cross scanner, as stated | extra gap | same-scanner map carried over | cross-scanner LOSO map | ECE as stated: same / cross |
+|---|---|---|---|---|---|---|
+| B32 → A32 scans | 0.704 / 0.795 / 0.853 | 0.671 / 0.759 / 0.817 | −3.3 / −3.6 / −3.6 | 0.766 / 0.873 / 0.887 | 0.802 / 0.887 / 0.887 | 0.162 / 0.189 |
+| A32 → B32 scans | 0.712 / 0.805 / 0.861 | 0.685 / 0.773 / 0.830 | −2.7 / −3.1 / −3.1 | 0.772 / 0.877 / 0.897 | 0.801 / 0.896 / 0.897 | 0.155 / 0.184 |
+
+- **Another unit of the same scanner model at the same site costs 3.1–3.6 points at 0.9** beyond the same-scanner
+  gap (about −3.4 averaged over both directions), at every level from 0.8 to 0.95 alike.
+- **The same-scanner map carries over most of the way:** it lifts the cross-scanner targets by 11.4 and 10.3 points at
+  0.9, leaving −2.7 and −2.3 (on its own rescan it leaves +0.4 and +0.5). Its ECE on the targets is 0.027 and 0.029.
+- **A cross-scanner map** (fitted on the other three people's cross-scanner pairs) reaches 0.80 and comes within 1.3
+  and 0.4 points of 0.90; at 0.95 it is capped by the widest outline (0.887, 0.897). ECE 0.009 and 0.017.
+- **Per subject, the extra gap at 0.9:** B32 → A32 −4.0, −1.4, −4.0, −5.1 (cIIs01–04); A32 → B32 −0.1, −5.1, −2.8,
+  −4.6. Per target session: −5.5 to +0.5. Seven of the eight subject-directions are 1.4 points or more below the
+  same-scanner gap; cIIs01 A32 → B32 is the exception (−0.6 and +0.5 on its two sessions).
+
+**The confounded pair, b2000n96** (2.5 mm on B, 1.89 × 1.89 × 2.2 mm on A, the target resampled onto the ensemble's
+grid; A2000r19 with about twice the streamlines; reported separately, not part of the ladder):
+
+| ensemble → targets | same scanner, as stated | cross scanner, as stated | extra gap | same-scanner map carried over | cross-scanner LOSO map |
+|---|---|---|---|---|---|
+| B2000 → A2000r19 scans | 0.744 / 0.837 / 0.891 | 0.683 / 0.769 / 0.825 | −6.1 / −6.8 / −6.7 | 0.738 / 0.839 / 0.892 | 0.804 / 0.892 / 0.892 |
+| A2000r19 → B2000 scans | 0.760 / 0.852 / 0.908 | 0.714 / 0.803 / 0.864 | −4.7 / −4.8 / −4.4 | 0.755 / 0.858 / 0.920 | 0.802 / 0.906 / 0.925 |
+
+- The extra gap is larger (−6.8 and −4.8 at 0.9; per subject −8.6 to −3.0), and the same-scanner map carries over
+  less (−6.1 and −4.2 left at 0.9). Resolution, streamline density and the resampling all change with the unit here,
+  so none of it can be assigned to the scanner unit.
+
+**The revised ladder at 0.9** (the extra gap beyond the same-scanner other-session rescan, as stated):
+- another unit of the same scanner model, same site (MASiVar, b1000n32): about 3 (3.1–3.6);
+- the same scanner model at another site (ON-Harmony, two Prismas): about 3 (3.4 on the same four people);
+- a different vendor at a different site (MASiVar site 3, Siemens Skyra against Philips Achieva, b2000): about 7.5.
+- **Implication:** ON-Harmony's two Prismas differ in unit and coil (Head_32 against HeadNeck_64) as well as site.
+  Changing only the unit at one site costs about as much, so ON-Harmony's ~3-point "site" penalty may be largely the
+  change of scanner unit and coil, not the site. The protocols differ (b1000 x32 here, b2000 x50 there), so the match of
+  the two numbers is suggestive, not a decomposition.
+
+**Correction to an earlier claim.** The cohort II entry above (2026-10-19, "At a fixed protocol the scanners agree to
+about a point") compared each scanner's own same-scanner gap: A32's −9.5 against B32's −10.5 at 0.9. That is still
+true, and so is the transfer of a map between them, but it is a different quantity. Two units have similar own gaps;
+a rescan on the other unit costs about 3 points more. "Matched scanners agree within about 1 point" should not be read
+as "a rescan on the other scanner is as good as one on the same scanner".
+
+Caveats:
+- **n = 4 people,** two target sessions each (averaged) and one same-scanner rescan per ensemble; means and
+  per-subject ranges, no intervals.
+- **Every pair is another day;** the baseline is too, so the difference isolates the unit change only in the mean.
+- **The fixed-protocol pair is not acquired identically:** A32's reversed series is 0.625 × 0.625 × 2.5 mm (box-averaged
+  and rescaled), B32's 2.5 mm, so the fields differ in how they are estimated. Cohort II has no sidecars, so the coils
+  and software versions of the two Achievas are not known.
+- **A single b1000 shell with 32 directions** (the noisiest protocol here, same-scanner gap −10); the extra gap at b2000
+  x96 on matched resolution is not measured (the 2000 pair is confounded).
+- **8 of the 32 targets are flagged below the 0.8 QC line** (2 of the 16 primary; 6 of the 8 in B2000 → A2000r19
+  scans); all are kept.
+
+Provenance: `calibration_crossscanner.py` 7c65acca…; it imports `calibration_cohortII.py` 2cab50b3… (unchanged, no
+hook) and `calibration_crosssite.py` 06dcf9e7… (`map_on`, `stated`); `_register_fa.py` 3ec03d4c…;
+`calibration_cohortII.json` 7abc92d5… (the baseline, mode 3); `calibration_crossscanner.json` 62a8e75c…; every
+record's and statements file's SHA-256 in its `provenance`; history in `DATA/ensemble/cohortII_module_history.txt`
+(entry 6). Git: ismrm2027 at 975e6da, the scripts untracked; no commits.

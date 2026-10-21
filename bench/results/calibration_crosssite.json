@@ -1,0 +1,2103 @@
+{
+ "what": "MASiVar cohort II across vendors: a Philips scan's 17-run ensemble envelope against the same person's Siemens (site 3) scan, as stated and with recalibration maps; beside the same-scanner other-session rescan",
+ "term": "cross vendor (site 3)",
+ "levels": [
+  0.5,
+  0.55,
+  0.6,
+  0.65,
+  0.7,
+  0.75,
+  0.8,
+  0.85,
+  0.9,
+  0.95
+ ],
+ "coverage": "calibration_card.coverage_curve: the share of the rescan's density presence inside the envelope, the 42 named tracts pooled, weighted by the rescan's voxels",
+ "protocol descriptor S3_2000": {
+  "scanner": "s3x",
+  "vendor": "Siemens Skyra 3T (MASiVar site 3)",
+  "series": [
+   "b2000n96"
+  ],
+  "reversed series rescaled to the forward b0s": false,
+  "series resolution (BIDS acq r...)": "25x25x25",
+  "reversed series resolution": "25x25x25",
+  "resolution": "2.5 x 2.5 x 2.5 mm (r25x25x25); reversed series 2.5 x 2.5 x 2.5 mm (r25x25x25)",
+  "reversed series": "the r25x25x25 APA series (b1000n3) nearest in acquisition number to b2000n96 (ties: the later)",
+  "tracked shell": 2000.0,
+  "note": "site 3 (Siemens Skyra), b2000n96 alone, 2.5 mm, tracked at 2000: B2000's nominal protocol on another vendor",
+  "check": {
+   "site and scanner (BIDS session label)": "s3x",
+   "volumes": 98,
+   "volumes per shell": {
+    "0": 2,
+    "2000": 96
+   },
+   "shell_round": 100,
+   "matrix": [
+    96,
+    96,
+    50
+   ],
+   "voxel_mm": [
+    2.5,
+    2.5,
+    2.5
+   ],
+   "voxel_tolerance_mm": 0.01,
+   "phase_encoding": [
+    "j",
+    "j-"
+   ],
+   "reversed_b0s": 1,
+   "reversed_b0_over_forward": [
+    0.85,
+    1.15
+   ],
+   "reversed series voxel_mm": [
+    2.5,
+    2.5,
+    2.5
+   ],
+   "forward b0s at (volume index)": [
+    0,
+    1
+   ],
+   "stated b of the 2000 shell (min, max)": [
+    1975,
+    2010
+   ],
+   "echo time ms (NIfTI descrip), forward and reversed": [
+    95,
+    95
+   ],
+   "phase polarity (NIfTI descrip), forward and reversed": [
+    1,
+    0
+   ]
+  }
+ },
+ "sources": {
+  "B2000": {
+   "per subject": {
+    "cIIs01": {
+     "(i) cross vendor, as stated": {
+      "coverage at stated level": [
+       0.4593,
+       0.4793,
+       0.5117,
+       0.5385,
+       0.5765,
+       0.61,
+       0.6482,
+       0.6891,
+       0.7368,
+       0.7996
+      ],
+      "streamline ECE": 0.175,
+      "point ECE": 0.1201,
+      "streamline: the rescan labels the seed": 0.914
+     },
+     "(ii) cross vendor, map (leave one subject out; fitted on the others' cross-vendor pairs)": {
+      "map fitted on": [
+       "cIIs02",
+       "cIIs03",
+       "cIIs04"
+      ],
+      "map term": "cross vendor (site 3)",
+      "coverage at target": [
+       0.4923,
+       0.5367,
+       0.5842,
+       0.6325,
+       0.6819,
+       0.734,
+       0.7854,
+       0.8421,
+       0.8722,
+       0.8722
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false,
+       false
+      ],
+      "stated level used": [
+       0.575,
+       0.645,
+       0.715,
+       0.78,
+       0.84,
+       0.895,
+       0.94,
+       0.975,
+       1.0,
+       1.0
+      ],
+      "streamline ECE (map)": 0.0052,
+      "point ECE (map)": 0.0302,
+      "streamline ECE (PAT16 map)": 0.1014
+     },
+     "(iii) same scanner (other session), as stated": {
+      "coverage at stated level": [
+       0.5261,
+       0.5494,
+       0.587,
+       0.6167,
+       0.6596,
+       0.6972,
+       0.7395,
+       0.7809,
+       0.8285,
+       0.8862
+      ],
+      "streamline ECE": 0.1275,
+      "point ECE": 0.0685,
+      "streamline: the rescan labels the seed": 0.9381
+     },
+     "(iii) same scanner (other session), map (leave one subject out)": {
+      "map fitted on": [
+       "cIIs02",
+       "cIIs03",
+       "cIIs04"
+      ],
+      "map term": "other session",
+      "coverage at target": [
+       0.5415,
+       0.5908,
+       0.645,
+       0.6929,
+       0.7479,
+       0.7994,
+       0.8501,
+       0.8956,
+       0.9384,
+       0.9409
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false
+      ],
+      "stated level used": [
+       0.535,
+       0.61,
+       0.68,
+       0.745,
+       0.81,
+       0.87,
+       0.92,
+       0.96,
+       0.99,
+       1.0
+      ],
+      "streamline ECE (map)": 0.0335,
+      "point ECE (map)": 0.0195,
+      "streamline ECE (PAT16 map)": 0.0537
+     },
+     "(iv) same-scanner map (without this subject) applied cross vendor": {
+      "map fitted on": [
+       "cIIs02",
+       "cIIs03",
+       "cIIs04"
+      ],
+      "map term": "other session",
+      "coverage at target": [
+       0.4727,
+       0.5154,
+       0.5622,
+       0.6064,
+       0.6567,
+       0.7071,
+       0.7597,
+       0.8111,
+       0.869,
+       0.8722
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false
+      ],
+      "stated level used": [
+       0.535,
+       0.61,
+       0.68,
+       0.745,
+       0.81,
+       0.87,
+       0.92,
+       0.96,
+       0.99,
+       1.0
+      ],
+      "streamline ECE (map)": 0.0148,
+      "point ECE (map)": 0.0525,
+      "streamline ECE (PAT16 map)": 0.1014
+     },
+     "table (0.8, 0.9, 0.95)": {
+      "same scanner, as stated": {
+       "0.8": 0.7395,
+       "0.9": 0.8285,
+       "0.95": 0.8862
+      },
+      "same scanner, map": {
+       "0.8": 0.8501,
+       "0.9": 0.9384,
+       "0.95": 0.9409
+      },
+      "cross vendor, as stated": {
+       "0.8": 0.6482,
+       "0.9": 0.7368,
+       "0.95": 0.7996
+      },
+      "cross vendor, map": {
+       "0.8": 0.7854,
+       "0.9": 0.8722,
+       "0.95": 0.8722
+      },
+      "cross vendor, same-scanner map": {
+       "0.8": 0.7597,
+       "0.9": 0.869,
+       "0.95": 0.8722
+      }
+     },
+     "registration": {
+      "site 3 (rotation deg, translation mm, NCC)": [
+       8.87,
+       44.17,
+       0.8171
+      ],
+      "same-scanner session 2 (rotation deg, translation mm, NCC)": [
+       5.35,
+       6.46,
+       0.8914
+      ],
+      "FA correlation with A (site 3, session 2)": [
+       0.6434,
+       0.7547
+      ],
+      "tensor direction against A's streamline tangents, mean |cos| (site 3, session 2, A itself)": [
+       0.9716,
+       0.9849,
+       0.9745
+      ]
+     },
+     "b-vector check (site 3 on A's grid)": {
+      "CC body midline: median |e1 left-right|, share largest": [
+       0.839,
+       0.609
+      ],
+      "CST below the callosum: median |e1 superior-inferior|, share largest": [
+       0.899,
+       0.81
+      ],
+      "tangent agreement, mean |cos|: as stated, x, y, z flipped": [
+       0.9716,
+       0.6787,
+       0.6565,
+       0.6499
+      ],
+      "as stated agrees best": true
+     },
+     "b-vector check (A, the Philips reference)": {
+      "CC body midline: median |e1 left-right|, share largest": [
+       0.847,
+       0.627
+      ],
+      "CST below the callosum: median |e1 superior-inferior|, share largest": [
+       0.888,
+       0.816
+      ],
+      "tangent agreement, mean |cos|: as stated, x, y, z flipped": [
+       0.9745,
+       0.6866,
+       0.659,
+       0.6588
+      ],
+      "as stated agrees best": true
+     },
+     "correction": {
+      "site 3 residual_left": 0.328,
+      "site 3 field_hz_p99_abs": 101.59,
+      "session 2 residual_left": 0.607
+     },
+     "streamlines": {
+      "A": 53405,
+      "session2_onA": 52001,
+      "site3_onA": 55667
+     }
+    },
+    "cIIs02": {
+     "(i) cross vendor, as stated": {
+      "coverage at stated level": [
+       0.4576,
+       0.487,
+       0.5156,
+       0.5511,
+       0.5814,
+       0.6188,
+       0.6623,
+       0.7034,
+       0.7542,
+       0.8118
+      ],
+      "streamline ECE": 0.1665,
+      "point ECE": 0.105,
+      "streamline: the rescan labels the seed": 0.9324
+     },
+     "(ii) cross vendor, map (leave one subject out; fitted on the others' cross-vendor pairs)": {
+      "map fitted on": [
+       "cIIs01",
+       "cIIs03",
+       "cIIs04"
+      ],
+      "map term": "cross vendor (site 3)",
+      "coverage at target": [
+       0.4956,
+       0.5511,
+       0.6004,
+       0.6481,
+       0.7008,
+       0.7542,
+       0.8007,
+       0.8535,
+       0.8823,
+       0.8823
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false,
+       false
+      ],
+      "stated level used": [
+       0.575,
+       0.65,
+       0.72,
+       0.785,
+       0.845,
+       0.9,
+       0.94,
+       0.975,
+       1.0,
+       1.0
+      ],
+      "streamline ECE (map)": 0.0097,
+      "point ECE (map)": 0.0208,
+      "streamline ECE (PAT16 map)": 0.0919
+     },
+     "(iii) same scanner (other session), as stated": {
+      "coverage at stated level": [
+       0.5005,
+       0.533,
+       0.5633,
+       0.6024,
+       0.6342,
+       0.6742,
+       0.7195,
+       0.761,
+       0.8118,
+       0.8671
+      ],
+      "streamline ECE": 0.1473,
+      "point ECE": 0.077,
+      "streamline: the rescan labels the seed": 0.9315
+     },
+     "(iii) same scanner (other session), map (leave one subject out)": {
+      "map fitted on": [
+       "cIIs01",
+       "cIIs03",
+       "cIIs04"
+      ],
+      "map term": "other session",
+      "coverage at target": [
+       0.511,
+       0.5666,
+       0.6121,
+       0.6691,
+       0.7195,
+       0.7695,
+       0.8195,
+       0.8739,
+       0.9231,
+       0.9285
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false
+      ],
+      "stated level used": [
+       0.52,
+       0.605,
+       0.67,
+       0.74,
+       0.8,
+       0.86,
+       0.91,
+       0.955,
+       0.985,
+       1.0
+      ],
+      "streamline ECE (map)": 0.0112,
+      "point ECE (map)": 0.0269,
+      "streamline ECE (PAT16 map)": 0.0727
+     },
+     "(iv) same-scanner map (without this subject) applied cross vendor": {
+      "map fitted on": [
+       "cIIs01",
+       "cIIs03",
+       "cIIs04"
+      ],
+      "map term": "other session",
+      "coverage at target": [
+       0.4671,
+       0.5186,
+       0.5601,
+       0.6144,
+       0.6623,
+       0.7114,
+       0.7619,
+       0.8197,
+       0.8752,
+       0.8823
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false
+      ],
+      "stated level used": [
+       0.52,
+       0.605,
+       0.67,
+       0.74,
+       0.8,
+       0.86,
+       0.91,
+       0.955,
+       0.985,
+       1.0
+      ],
+      "streamline ECE (map)": 0.0111,
+      "point ECE (map)": 0.0298,
+      "streamline ECE (PAT16 map)": 0.0919
+     },
+     "table (0.8, 0.9, 0.95)": {
+      "same scanner, as stated": {
+       "0.8": 0.7195,
+       "0.9": 0.8118,
+       "0.95": 0.8671
+      },
+      "same scanner, map": {
+       "0.8": 0.8195,
+       "0.9": 0.9231,
+       "0.95": 0.9285
+      },
+      "cross vendor, as stated": {
+       "0.8": 0.6623,
+       "0.9": 0.7542,
+       "0.95": 0.8118
+      },
+      "cross vendor, map": {
+       "0.8": 0.8007,
+       "0.9": 0.8823,
+       "0.95": 0.8823
+      },
+      "cross vendor, same-scanner map": {
+       "0.8": 0.7619,
+       "0.9": 0.8752,
+       "0.95": 0.8823
+      }
+     },
+     "registration": {
+      "site 3 (rotation deg, translation mm, NCC)": [
+       9.41,
+       53.66,
+       0.8653
+      ],
+      "same-scanner session 2 (rotation deg, translation mm, NCC)": [
+       6.8,
+       5.12,
+       0.9241
+      ],
+      "FA correlation with A (site 3, session 2)": [
+       0.6552,
+       0.7544
+      ],
+      "tensor direction against A's streamline tangents, mean |cos| (site 3, session 2, A itself)": [
+       0.9763,
+       0.984,
+       0.9716
+      ]
+     },
+     "b-vector check (site 3 on A's grid)": {
+      "CC body midline: median |e1 left-right|, share largest": [
+       0.802,
+       0.557
+      ],
+      "CST below the callosum: median |e1 superior-inferior|, share largest": [
+       0.87,
+       0.801
+      ],
+      "tangent agreement, mean |cos|: as stated, x, y, z flipped": [
+       0.9763,
+       0.6904,
+       0.6586,
+       0.6929
+      ],
+      "as stated agrees best": true
+     },
+     "b-vector check (A, the Philips reference)": {
+      "CC body midline: median |e1 left-right|, share largest": [
+       0.8,
+       0.561
+      ],
+      "CST below the callosum: median |e1 superior-inferior|, share largest": [
+       0.857,
+       0.804
+      ],
+      "tangent agreement, mean |cos|: as stated, x, y, z flipped": [
+       0.9716,
+       0.6965,
+       0.6521,
+       0.7034
+      ],
+      "as stated agrees best": true
+     },
+     "correction": {
+      "site 3 residual_left": 0.369,
+      "site 3 field_hz_p99_abs": 106.7,
+      "session 2 residual_left": 0.628
+     },
+     "streamlines": {
+      "A": 38655,
+      "session2_onA": 38497,
+      "site3_onA": 41774
+     }
+    },
+    "cIIs03": {
+     "(i) cross vendor, as stated": {
+      "coverage at stated level": [
+       0.459,
+       0.4862,
+       0.5177,
+       0.5553,
+       0.5895,
+       0.6298,
+       0.6662,
+       0.7116,
+       0.7606,
+       0.817
+      ],
+      "streamline ECE": 0.1685,
+      "point ECE": 0.1039,
+      "streamline: the rescan labels the seed": 0.9517
+     },
+     "(ii) cross vendor, map (leave one subject out; fitted on the others' cross-vendor pairs)": {
+      "map fitted on": [
+       "cIIs01",
+       "cIIs02",
+       "cIIs04"
+      ],
+      "map term": "cross vendor (site 3)",
+      "coverage at target": [
+       0.5017,
+       0.5567,
+       0.6058,
+       0.66,
+       0.7079,
+       0.7606,
+       0.8119,
+       0.8586,
+       0.8911,
+       0.8911
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false,
+       false
+      ],
+      "stated level used": [
+       0.58,
+       0.655,
+       0.72,
+       0.79,
+       0.845,
+       0.9,
+       0.945,
+       0.975,
+       1.0,
+       1.0
+      ],
+      "streamline ECE (map)": 0.0064,
+      "point ECE (map)": 0.0203,
+      "streamline ECE (PAT16 map)": 0.0971
+     },
+     "(iii) same scanner (other session), as stated": {
+      "coverage at stated level": [
+       0.5132,
+       0.5443,
+       0.5813,
+       0.6252,
+       0.6642,
+       0.7096,
+       0.7505,
+       0.7965,
+       0.8466,
+       0.8988
+      ],
+      "streamline ECE": 0.1115,
+      "point ECE": 0.0589,
+      "streamline: the rescan labels the seed": 0.9605
+     },
+     "(iii) same scanner (other session), map (leave one subject out)": {
+      "map fitted on": [
+       "cIIs01",
+       "cIIs02",
+       "cIIs04"
+      ],
+      "map term": "other session",
+      "coverage at target": [
+       0.5274,
+       0.5954,
+       0.6463,
+       0.7096,
+       0.765,
+       0.8154,
+       0.8739,
+       0.9192,
+       0.9531,
+       0.9531
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false,
+       false
+      ],
+      "stated level used": [
+       0.53,
+       0.61,
+       0.68,
+       0.75,
+       0.815,
+       0.87,
+       0.925,
+       0.965,
+       1.0,
+       1.0
+      ],
+      "streamline ECE (map)": 0.0519,
+      "point ECE (map)": 0.0335,
+      "streamline ECE (PAT16 map)": 0.0402
+     },
+     "(iv) same-scanner map (without this subject) applied cross vendor": {
+      "map fitted on": [
+       "cIIs01",
+       "cIIs02",
+       "cIIs04"
+      ],
+      "map term": "other session",
+      "coverage at target": [
+       0.4716,
+       0.5305,
+       0.5738,
+       0.6298,
+       0.6815,
+       0.7301,
+       0.7898,
+       0.8427,
+       0.8911,
+       0.8911
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false,
+       false
+      ],
+      "stated level used": [
+       0.53,
+       0.61,
+       0.68,
+       0.75,
+       0.815,
+       0.87,
+       0.925,
+       0.965,
+       1.0,
+       1.0
+      ],
+      "streamline ECE (map)": 0.0086,
+      "point ECE (map)": 0.0178,
+      "streamline ECE (PAT16 map)": 0.0971
+     },
+     "table (0.8, 0.9, 0.95)": {
+      "same scanner, as stated": {
+       "0.8": 0.7505,
+       "0.9": 0.8466,
+       "0.95": 0.8988
+      },
+      "same scanner, map": {
+       "0.8": 0.8739,
+       "0.9": 0.9531,
+       "0.95": 0.9531
+      },
+      "cross vendor, as stated": {
+       "0.8": 0.6662,
+       "0.9": 0.7606,
+       "0.95": 0.817
+      },
+      "cross vendor, map": {
+       "0.8": 0.8119,
+       "0.9": 0.8911,
+       "0.95": 0.8911
+      },
+      "cross vendor, same-scanner map": {
+       "0.8": 0.7898,
+       "0.9": 0.8911,
+       "0.95": 0.8911
+      }
+     },
+     "registration": {
+      "site 3 (rotation deg, translation mm, NCC)": [
+       7.41,
+       50.62,
+       0.8714
+      ],
+      "same-scanner session 2 (rotation deg, translation mm, NCC)": [
+       3.21,
+       5.7,
+       0.9303
+      ],
+      "FA correlation with A (site 3, session 2)": [
+       0.7369,
+       0.8168
+      ],
+      "tensor direction against A's streamline tangents, mean |cos| (site 3, session 2, A itself)": [
+       0.9774,
+       0.9871,
+       0.9806
+      ]
+     },
+     "b-vector check (site 3 on A's grid)": {
+      "CC body midline: median |e1 left-right|, share largest": [
+       0.704,
+       0.518
+      ],
+      "CST below the callosum: median |e1 superior-inferior|, share largest": [
+       0.897,
+       0.796
+      ],
+      "tangent agreement, mean |cos|: as stated, x, y, z flipped": [
+       0.9774,
+       0.6935,
+       0.6356,
+       0.6597
+      ],
+      "as stated agrees best": true
+     },
+     "b-vector check (A, the Philips reference)": {
+      "CC body midline: median |e1 left-right|, share largest": [
+       0.781,
+       0.545
+      ],
+      "CST below the callosum: median |e1 superior-inferior|, share largest": [
+       0.873,
+       0.768
+      ],
+      "tangent agreement, mean |cos|: as stated, x, y, z flipped": [
+       0.9806,
+       0.6984,
+       0.6401,
+       0.6632
+      ],
+      "as stated agrees best": true
+     },
+     "correction": {
+      "site 3 residual_left": 0.457,
+      "site 3 field_hz_p99_abs": 73.33,
+      "session 2 residual_left": 0.682
+     },
+     "streamlines": {
+      "A": 47281,
+      "session2_onA": 46549,
+      "site3_onA": 50842
+     }
+    },
+    "cIIs04": {
+     "(i) cross vendor, as stated": {
+      "coverage at stated level": [
+       0.4655,
+       0.4975,
+       0.5254,
+       0.5581,
+       0.5957,
+       0.6376,
+       0.6732,
+       0.7206,
+       0.7655,
+       0.8253
+      ],
+      "streamline ECE": 0.1787,
+      "point ECE": 0.1031,
+      "streamline: the rescan labels the seed": 0.9361
+     },
+     "(ii) cross vendor, map (leave one subject out; fitted on the others' cross-vendor pairs)": {
+      "map fitted on": [
+       "cIIs01",
+       "cIIs02",
+       "cIIs03"
+      ],
+      "map term": "cross vendor (site 3)",
+      "coverage at target": [
+       0.5115,
+       0.5702,
+       0.6168,
+       0.6682,
+       0.7206,
+       0.7655,
+       0.8197,
+       0.8688,
+       0.8975,
+       0.8975
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false,
+       false
+      ],
+      "stated level used": [
+       0.58,
+       0.66,
+       0.725,
+       0.79,
+       0.85,
+       0.9,
+       0.945,
+       0.975,
+       1.0,
+       1.0
+      ],
+      "streamline ECE (map)": 0.01,
+      "point ECE (map)": 0.0267,
+      "streamline ECE (PAT16 map)": 0.106
+     },
+     "(iii) same scanner (other session), as stated": {
+      "coverage at stated level": [
+       0.4295,
+       0.4573,
+       0.4814,
+       0.5101,
+       0.5426,
+       0.5795,
+       0.6114,
+       0.6538,
+       0.6944,
+       0.7498
+      ],
+      "streamline ECE": 0.2225,
+      "point ECE": 0.1197,
+      "streamline: the rescan labels the seed": 0.8192
+     },
+     "(iii) same scanner (other session), map (leave one subject out)": {
+      "map fitted on": [
+       "cIIs01",
+       "cIIs02",
+       "cIIs03"
+      ],
+      "map term": "other session",
+      "coverage at target": [
+       0.426,
+       0.4635,
+       0.5054,
+       0.5387,
+       0.5851,
+       0.6294,
+       0.6734,
+       0.7141,
+       0.7707,
+       0.8265
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false
+      ],
+      "stated level used": [
+       0.485,
+       0.565,
+       0.63,
+       0.695,
+       0.76,
+       0.82,
+       0.875,
+       0.92,
+       0.965,
+       1.0
+      ],
+      "streamline ECE (map)": 0.0935,
+      "point ECE (map)": 0.0607,
+      "streamline ECE (PAT16 map)": 0.1493
+     },
+     "(iv) same-scanner map (without this subject) applied cross vendor": {
+      "map fitted on": [
+       "cIIs01",
+       "cIIs02",
+       "cIIs03"
+      ],
+      "map term": "other session",
+      "coverage at target": [
+       0.4613,
+       0.505,
+       0.5525,
+       0.5914,
+       0.6445,
+       0.6935,
+       0.7425,
+       0.7882,
+       0.8455,
+       0.8975
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false
+      ],
+      "stated level used": [
+       0.485,
+       0.565,
+       0.63,
+       0.695,
+       0.76,
+       0.82,
+       0.875,
+       0.92,
+       0.965,
+       1.0
+      ],
+      "streamline ECE (map)": 0.0501,
+      "point ECE (map)": 0.0515,
+      "streamline ECE (PAT16 map)": 0.106
+     },
+     "table (0.8, 0.9, 0.95)": {
+      "same scanner, as stated": {
+       "0.8": 0.6114,
+       "0.9": 0.6944,
+       "0.95": 0.7498
+      },
+      "same scanner, map": {
+       "0.8": 0.6734,
+       "0.9": 0.7707,
+       "0.95": 0.8265
+      },
+      "cross vendor, as stated": {
+       "0.8": 0.6732,
+       "0.9": 0.7655,
+       "0.95": 0.8253
+      },
+      "cross vendor, map": {
+       "0.8": 0.8197,
+       "0.9": 0.8975,
+       "0.95": 0.8975
+      },
+      "cross vendor, same-scanner map": {
+       "0.8": 0.7425,
+       "0.9": 0.8455,
+       "0.95": 0.8975
+      }
+     },
+     "registration": {
+      "site 3 (rotation deg, translation mm, NCC)": [
+       7.59,
+       29.64,
+       0.7938
+      ],
+      "same-scanner session 2 (rotation deg, translation mm, NCC)": [
+       5.42,
+       2.8,
+       0.5678
+      ],
+      "FA correlation with A (site 3, session 2)": [
+       0.7371,
+       0.5919
+      ],
+      "tensor direction against A's streamline tangents, mean |cos| (site 3, session 2, A itself)": [
+       0.9783,
+       0.9413,
+       0.9818
+      ]
+     },
+     "b-vector check (site 3 on A's grid)": {
+      "CC body midline: median |e1 left-right|, share largest": [
+       0.928,
+       0.671
+      ],
+      "CST below the callosum: median |e1 superior-inferior|, share largest": [
+       0.875,
+       0.782
+      ],
+      "tangent agreement, mean |cos|: as stated, x, y, z flipped": [
+       0.9783,
+       0.6637,
+       0.6264,
+       0.6567
+      ],
+      "as stated agrees best": true
+     },
+     "b-vector check (A, the Philips reference)": {
+      "CC body midline: median |e1 left-right|, share largest": [
+       0.946,
+       0.713
+      ],
+      "CST below the callosum: median |e1 superior-inferior|, share largest": [
+       0.865,
+       0.796
+      ],
+      "tangent agreement, mean |cos|: as stated, x, y, z flipped": [
+       0.9818,
+       0.6698,
+       0.6371,
+       0.6602
+      ],
+      "as stated agrees best": true
+     },
+     "correction": {
+      "site 3 residual_left": 0.317,
+      "site 3 field_hz_p99_abs": 108.39,
+      "session 2 residual_left": 0.658
+     },
+     "streamlines": {
+      "A": 54406,
+      "session2_onA": 53664,
+      "site3_onA": 57081
+     }
+    }
+   },
+   "summary": {
+    "subjects": [
+     "cIIs01",
+     "cIIs02",
+     "cIIs03",
+     "cIIs04"
+    ],
+    "mean coverage (0.8, 0.9, 0.95)": {
+     "same scanner, as stated": {
+      "0.8": 0.7052,
+      "0.9": 0.7953,
+      "0.95": 0.8505
+     },
+     "same scanner, map": {
+      "0.8": 0.8042,
+      "0.9": 0.8963,
+      "0.95": 0.9123
+     },
+     "cross vendor, as stated": {
+      "0.8": 0.6625,
+      "0.9": 0.7543,
+      "0.95": 0.8134
+     },
+     "cross vendor, map": {
+      "0.8": 0.8044,
+      "0.9": 0.8858,
+      "0.95": 0.8858
+     },
+     "cross vendor, same-scanner map": {
+      "0.8": 0.7635,
+      "0.9": 0.8702,
+      "0.95": 0.8858
+     }
+    },
+    "mean gap, coverage - target": {
+     "same scanner, as stated": {
+      "0.8": -0.0948,
+      "0.9": -0.1047,
+      "0.95": -0.0995
+     },
+     "same scanner, map": {
+      "0.8": 0.0042,
+      "0.9": -0.0037,
+      "0.95": -0.0377
+     },
+     "cross vendor, as stated": {
+      "0.8": -0.1375,
+      "0.9": -0.1457,
+      "0.95": -0.1366
+     },
+     "cross vendor, map": {
+      "0.8": 0.0044,
+      "0.9": -0.0142,
+      "0.95": -0.0642
+     },
+     "cross vendor, same-scanner map": {
+      "0.8": -0.0365,
+      "0.9": -0.0298,
+      "0.95": -0.0642
+     }
+    },
+    "per subject: cross vendor as stated - same scanner as stated": {
+     "0.8": [
+      -0.0913,
+      -0.0572,
+      -0.0843,
+      0.0618
+     ],
+     "0.9": [
+      -0.0917,
+      -0.0576,
+      -0.086,
+      0.0711
+     ],
+     "0.95": [
+      -0.0866,
+      -0.0553,
+      -0.0818,
+      0.0755
+     ]
+    },
+    "per subject: cross-vendor map - cross vendor as stated": {
+     "0.8": [
+      0.1372,
+      0.1384,
+      0.1457,
+      0.1465
+     ],
+     "0.9": [
+      0.1354,
+      0.1281,
+      0.1305,
+      0.132
+     ],
+     "0.95": [
+      0.0726,
+      0.0705,
+      0.0741,
+      0.0722
+     ]
+    },
+    "per subject: same-scanner map on cross vendor - cross vendor as stated": {
+     "0.8": [
+      0.1115,
+      0.0996,
+      0.1236,
+      0.0693
+     ],
+     "0.9": [
+      0.1322,
+      0.121,
+      0.1305,
+      0.08
+     ],
+     "0.95": [
+      0.0726,
+      0.0705,
+      0.0741,
+      0.0722
+     ]
+    },
+    "per subject: |coverage - target| mean over 0.8, 0.9, 0.95": {
+     "same scanner, as stated": {
+      "cIIs01": 0.0653,
+      "cIIs02": 0.0839,
+      "cIIs03": 0.0514,
+      "cIIs04": 0.1981
+     },
+     "same scanner, map": {
+      "cIIs01": 0.0325,
+      "cIIs02": 0.0214,
+      "cIIs03": 0.0434,
+      "cIIs04": 0.1265
+     },
+     "cross vendor, as stated": {
+      "cIIs01": 0.1551,
+      "cIIs02": 0.1406,
+      "cIIs03": 0.1354,
+      "cIIs04": 0.1287
+     },
+     "cross vendor, map": {
+      "cIIs01": 0.0401,
+      "cIIs02": 0.0287,
+      "cIIs03": 0.0266,
+      "cIIs04": 0.0249
+     },
+     "cross vendor, same-scanner map": {
+      "cIIs01": 0.0497,
+      "cIIs02": 0.0435,
+      "cIIs03": 0.026,
+      "cIIs04": 0.0548
+     }
+    },
+    "ECE (mean over subjects): streamline / point": {
+     "same scanner, as stated": [
+      0.1522,
+      0.081
+     ],
+     "same scanner, map": [
+      0.0475,
+      0.0352
+     ],
+     "cross vendor, as stated": [
+      0.1722,
+      0.108
+     ],
+     "cross vendor, map": [
+      0.0078,
+      0.0245
+     ],
+     "cross vendor, same-scanner map": [
+      0.0212,
+      0.0379
+     ]
+    }
+   },
+   "provenance": {
+    "cIIs01": {
+     "cross-vendor records": "ensemble/cIIs01/card/cIIs01-B2000-site3",
+     "cross-vendor statements sha256": "0a8d9543e331d710dd1554004b2a049d52696d497ddc7b77734fead04fc06565",
+     "site3_onA.npz sha256": "886470e0e5b8f8c88e591aabcd45f9888032bf3a57a3905f6023fd2e3de50aec",
+     "cross-vendor runs.json sha256": "5e4beac890ec17482928b48240f184a52f7c42b7903d13e868537f048810c229",
+     "cross-vendor records created": {
+      "commit": "975e6dae3a23d73309751be1e64a726686176a61",
+      "branch": "ismrm2027",
+      "dirty (src/ and the card's bench modules)": []
+     },
+     "source records": "ensemble/cIIs01/card/cIIs01-B2000",
+     "source statements sha256": "398910e66cf0c361fcaf43ed471f35f7e10b3573150c9b582c5aa4207e85fce2",
+     "source runs.json sha256": "9cfa8cd960cbb2b7594e06e402889ec6a5a4ee4e57c19b8be275b2ef630c5ee9",
+     "source A.npz sha256": "cbe7622910a79fe20c30125a5af695a75e46d4463f425f723197d857d55f8d73",
+     "site 3 files sha256": {
+      "sub-cIIs01_ses-s3x1_acq-b2000n96r25x25x25peAPP_run-106_dwi.nii.gz": "36b057e0f29724dee0c907eb5eeddfdbe954a85fff919579efa1ae4a35494b1b",
+      "sub-cIIs01_ses-s3x1_acq-b1000n3r25x25x25peAPA_run-108_dwi.nii.gz": "f67b779db10915c35d80cc3477485542d2e97a1f0e18983666717201ed16c1f8"
+     }
+    },
+    "cIIs02": {
+     "cross-vendor records": "ensemble/cIIs02/card/cIIs02-B2000-site3",
+     "cross-vendor statements sha256": "519c12a259f88f42e7ffe3be972b0cf4b2e56943de03eba9bbdb6d654542006f",
+     "site3_onA.npz sha256": "bcaca70f7009df745523a5258859f996dbac195980d8af022710617041216296",
+     "cross-vendor runs.json sha256": "becf37678f86f196494e5b62ed9a62dd517c58efa89e8f52604a38aa9f7be7f1",
+     "cross-vendor records created": {
+      "commit": "975e6dae3a23d73309751be1e64a726686176a61",
+      "branch": "ismrm2027",
+      "dirty (src/ and the card's bench modules)": []
+     },
+     "source records": "ensemble/cIIs02/card/cIIs02-B2000",
+     "source statements sha256": "ff8a34f66fc393ae6dcecd1168c0afb997c6529b7563e292432f1dea77b188be",
+     "source runs.json sha256": "40d4b39ae1dc1a91133c66400e1ad9ff41d85d18a30661753b5218473d52fadb",
+     "source A.npz sha256": "d9f5128fad42cf42d12fadbc107754c8219c7e4a4645836fd597d9d08b76d188",
+     "site 3 files sha256": {
+      "sub-cIIs02_ses-s3x1_acq-b2000n96r25x25x25peAPP_run-106_dwi.nii.gz": "e2c7ab2d2279b38ef21fe703b2403dc0d5e864206431559b761fbaa93c006e1a",
+      "sub-cIIs02_ses-s3x1_acq-b1000n3r25x25x25peAPA_run-105_dwi.nii.gz": "b42b65c5aa96589231a7917ca0698b08ebe3dda768948d12c53d81a8f6007dc1"
+     }
+    },
+    "cIIs03": {
+     "cross-vendor records": "ensemble/cIIs03/card/cIIs03-B2000-site3",
+     "cross-vendor statements sha256": "99db39e740b452be82450d765cc1e08e4f61af7e0685e26974d4f52e298e8685",
+     "site3_onA.npz sha256": "9e59afaac7954e24fa9ba931546a2e5b88a20959afa2812850c6f17e0511a1d9",
+     "cross-vendor runs.json sha256": "b72807e3a459d9709bc37a04a5043038e2411203099a65204d764affcf78871f",
+     "cross-vendor records created": {
+      "commit": "975e6dae3a23d73309751be1e64a726686176a61",
+      "branch": "ismrm2027",
+      "dirty (src/ and the card's bench modules)": []
+     },
+     "source records": "ensemble/cIIs03/card/cIIs03-B2000",
+     "source statements sha256": "9ed15b02c852dc9d0ccff28246b77d30407e67c142e6288d7d9b92dd15098a3a",
+     "source runs.json sha256": "cef8e23b701881958c122729cd90f5c30645b0900a88ccb68a3dcf1026aa7dac",
+     "source A.npz sha256": "9c955250e3591b9dcb1f835862fe119b29d976ca707177b8499e1684c7276b66",
+     "site 3 files sha256": {
+      "sub-cIIs03_ses-s3x1_acq-b2000n96r25x25x25peAPP_run-107_dwi.nii.gz": "ec22168ee5d90c5183eaaae1d81d08a30681074e073b2e455a59a1b46269a276",
+      "sub-cIIs03_ses-s3x1_acq-b1000n3r25x25x25peAPA_run-108_dwi.nii.gz": "fe91ca37dafc345eb95a99bc75d4f92177c7608a929ebd817610d72062018caf"
+     }
+    },
+    "cIIs04": {
+     "cross-vendor records": "ensemble/cIIs04/card/cIIs04-B2000-site3",
+     "cross-vendor statements sha256": "e6edfb0e5833d3ed484d4c37779b58e944203f0c2cef67ad9e77b9551e59ca18",
+     "site3_onA.npz sha256": "56a18a5bde8a5a74e7e54d915673741b2bd0fbd40c5c576bfd81fa18c9007103",
+     "cross-vendor runs.json sha256": "3768f8be8b06ab59de9e0aa5f086e860cf69a56f1e6a0eea90deff8a32b8551c",
+     "cross-vendor records created": {
+      "commit": "975e6dae3a23d73309751be1e64a726686176a61",
+      "branch": "ismrm2027",
+      "dirty (src/ and the card's bench modules)": []
+     },
+     "source records": "ensemble/cIIs04/card/cIIs04-B2000",
+     "source statements sha256": "ebd55dc2e9aa3fe263422901ca9fbd0db5f8d880801ebbe4bfc8c0b856c25f8b",
+     "source runs.json sha256": "e31d63972cd2c2efacc08e48462c1d5d1049c3b6a9848af455bdc571aa7983f8",
+     "source A.npz sha256": "5f0d9ceab5a481d4b1d18b4f8d0e4a9ba7241832c0e206f595f94def79324789",
+     "site 3 files sha256": {
+      "sub-cIIs04_ses-s3x1_acq-b2000n96r25x25x25peAPP_run-107_dwi.nii.gz": "27718aba73a3017f46cd6ff35c4dcf64b18c02d3f29af0789b2c0624efec67a5",
+      "sub-cIIs04_ses-s3x1_acq-b1000n3r25x25x25peAPA_run-108_dwi.nii.gz": "8b5ae0c1c1622054ce82730a5874a014c0baec5dff661e87dadecd2eecae508c"
+     }
+    }
+   }
+  },
+  "A2000r19": {
+   "skipped": "cross-vendor statements for [] only (need >= 2)"
+  }
+ },
+ "fig6 (COHORT2_SCHEMA shape)": {
+  "schema": "tractline.calibration_cohortII/1",
+  "mock": false,
+  "levels": [
+   0.5,
+   0.55,
+   0.6,
+   0.65,
+   0.7,
+   0.75,
+   0.8,
+   0.85,
+   0.9,
+   0.95
+  ],
+  "protocols": {
+   "B2000 -> S3_2000": {
+    "scanner": "B",
+    "voxel_mm": [
+     2.5,
+     2.5,
+     2.5
+    ],
+    "tracked shell": 2000,
+    "directions": 96,
+    "subjects": [
+     "cIIs01",
+     "cIIs02",
+     "cIIs03",
+     "cIIs04"
+    ],
+    "rescan": "site 3 (Siemens Skyra 3T (MASiVar site 3)), S3_2000: the rescan is the same person on another vendor",
+    "as stated": {
+     "per subject": {
+      "cIIs01": [
+       0.4593,
+       0.4793,
+       0.5117,
+       0.5385,
+       0.5765,
+       0.61,
+       0.6482,
+       0.6891,
+       0.7368,
+       0.7996
+      ],
+      "cIIs02": [
+       0.4576,
+       0.487,
+       0.5156,
+       0.5511,
+       0.5814,
+       0.6188,
+       0.6623,
+       0.7034,
+       0.7542,
+       0.8118
+      ],
+      "cIIs03": [
+       0.459,
+       0.4862,
+       0.5177,
+       0.5553,
+       0.5895,
+       0.6298,
+       0.6662,
+       0.7116,
+       0.7606,
+       0.817
+      ],
+      "cIIs04": [
+       0.4655,
+       0.4975,
+       0.5254,
+       0.5581,
+       0.5957,
+       0.6376,
+       0.6732,
+       0.7206,
+       0.7655,
+       0.8253
+      ]
+     },
+     "mean": [
+      0.4604,
+      0.4875,
+      0.5176,
+      0.5507,
+      0.5858,
+      0.624,
+      0.6625,
+      0.7062,
+      0.7543,
+      0.8134
+     ]
+    },
+    "map (leave one subject out)": {
+     "per subject": {
+      "cIIs01": [
+       0.4923,
+       0.5367,
+       0.5842,
+       0.6325,
+       0.6819,
+       0.734,
+       0.7854,
+       0.8421,
+       0.8722,
+       0.8722
+      ],
+      "cIIs02": [
+       0.4956,
+       0.5511,
+       0.6004,
+       0.6481,
+       0.7008,
+       0.7542,
+       0.8007,
+       0.8535,
+       0.8823,
+       0.8823
+      ],
+      "cIIs03": [
+       0.5017,
+       0.5567,
+       0.6058,
+       0.66,
+       0.7079,
+       0.7606,
+       0.8119,
+       0.8586,
+       0.8911,
+       0.8911
+      ],
+      "cIIs04": [
+       0.5115,
+       0.5702,
+       0.6168,
+       0.6682,
+       0.7206,
+       0.7655,
+       0.8197,
+       0.8688,
+       0.8975,
+       0.8975
+      ]
+     },
+     "mean": [
+      0.5003,
+      0.5537,
+      0.6018,
+      0.6522,
+      0.7028,
+      0.7536,
+      0.8044,
+      0.8558,
+      0.8858,
+      0.8858
+     ],
+     "reached": {
+      "cIIs01": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false,
+       false
+      ],
+      "cIIs02": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false,
+       false
+      ],
+      "cIIs03": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false,
+       false
+      ],
+      "cIIs04": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false,
+       false
+      ]
+     }
+    }
+   }
+  },
+  "transfer (fixed protocol, other scanner)": {
+   "B2000 -> S3_2000": {
+    "map from": "B2000",
+    "applied to": "B2000 -> S3_2000",
+    "map fitted on": [
+     "cIIs01",
+     "cIIs02",
+     "cIIs03",
+     "cIIs04"
+    ],
+    "confounded": "vendor (Philips Achieva against Siemens Skyra; TE 90 against 95 ms; one session)",
+    "per subject": {
+     "cIIs01": [
+      0.4727,
+      0.5154,
+      0.5622,
+      0.6064,
+      0.6567,
+      0.7071,
+      0.7597,
+      0.8111,
+      0.869,
+      0.8722
+     ],
+     "cIIs02": [
+      0.4671,
+      0.5186,
+      0.5601,
+      0.6144,
+      0.6623,
+      0.7114,
+      0.7619,
+      0.8197,
+      0.8752,
+      0.8823
+     ],
+     "cIIs03": [
+      0.4716,
+      0.5305,
+      0.5738,
+      0.6298,
+      0.6815,
+      0.7301,
+      0.7898,
+      0.8427,
+      0.8911,
+      0.8911
+     ],
+     "cIIs04": [
+      0.4613,
+      0.505,
+      0.5525,
+      0.5914,
+      0.6445,
+      0.6935,
+      0.7425,
+      0.7882,
+      0.8455,
+      0.8975
+     ]
+    },
+    "mean": [
+     0.4682,
+     0.5174,
+     0.5621,
+     0.6105,
+     0.6612,
+     0.7105,
+     0.7635,
+     0.8154,
+     0.8702,
+     0.8858
+    ],
+    "note": "the B2000 same-scanner (other-session) map fitted without the target subject, applied to the B2000 envelope against that subject's site 3 rescan"
+   }
+  },
+  "note": "COHORT2_SCHEMA's shape; fig6_protocol_gap draws protocols named B2000, B32, A2000, A32 only, so these rows need their names added there to be drawn (ismrm2027_figures.py is not changed by this script)"
+ },
+ "refusals": {
+  "other protocols' scans against S3_2000": {
+   "B2000: cIIs01_s1Bx1_B2000": {
+    "S3_2000 accepts": false,
+    "S3_2000 items failed": [
+     "volumes",
+     "volumes per shell",
+     "matrix",
+     "reversed_b0_over_forward",
+     "site and scanner (BIDS session label)",
+     "forward b0s at (volume index)",
+     "echo time ms (NIfTI descrip), forward and reversed",
+     "phase polarity (NIfTI descrip), forward and reversed"
+    ]
+   },
+   "A2000r19: cIIs01_s1Ax1_A2000r19": {
+    "S3_2000 accepts": false,
+    "S3_2000 items failed": [
+     "volumes",
+     "volumes per shell",
+     "matrix",
+     "voxel_mm",
+     "reversed_b0_over_forward",
+     "site and scanner (BIDS session label)",
+     "reversed series voxel_mm",
+     "forward b0s at (volume index)",
+     "echo time ms (NIfTI descrip), forward and reversed",
+     "phase polarity (NIfTI descrip), forward and reversed"
+    ]
+   },
+   "B2000J: cIIs01_s1Bx1_B2000J": {
+    "S3_2000 accepts": false,
+    "S3_2000 items failed": [
+     "volumes",
+     "volumes per shell",
+     "matrix",
+     "reversed_b0_over_forward",
+     "site and scanner (BIDS session label)",
+     "forward b0s at (volume index)",
+     "echo time ms (NIfTI descrip), forward and reversed",
+     "phase polarity (NIfTI descrip), forward and reversed"
+    ]
+   },
+   "B32: cIIs01_s1Bx1_B32": {
+    "S3_2000 accepts": false,
+    "S3_2000 items failed": [
+     "volumes",
+     "volumes per shell",
+     "matrix",
+     "reversed_b0_over_forward",
+     "site and scanner (BIDS session label)",
+     "forward b0s at (volume index)",
+     "stated b of the 2000 shell (min, max)",
+     "echo time ms (NIfTI descrip), forward and reversed",
+     "phase polarity (NIfTI descrip), forward and reversed"
+    ]
+   },
+   "A32: cIIs01_s1Ax1_A32": {
+    "S3_2000 accepts": false,
+    "S3_2000 items failed": [
+     "volumes",
+     "volumes per shell",
+     "matrix",
+     "reversed_b0_over_forward",
+     "site and scanner (BIDS session label)",
+     "reversed series voxel_mm",
+     "forward b0s at (volume index)",
+     "stated b of the 2000 shell (min, max)",
+     "echo time ms (NIfTI descrip), forward and reversed",
+     "phase polarity (NIfTI descrip), forward and reversed"
+    ]
+   },
+   "A2000r25: cIIs00_s1Ax1_A2000r25": {
+    "S3_2000 accepts": false,
+    "S3_2000 items failed": [
+     "volumes",
+     "volumes per shell",
+     "matrix",
+     "reversed_b0_over_forward",
+     "site and scanner (BIDS session label)",
+     "forward b0s at (volume index)",
+     "echo time ms (NIfTI descrip), forward and reversed",
+     "phase polarity (NIfTI descrip), forward and reversed"
+    ]
+   },
+   "cohort III (cIIIs03 A): cIIIs03_s1Bx1_scan1": {
+    "S3_2000 accepts": false,
+    "S3_2000 items failed": [
+     "volumes",
+     "volumes per shell",
+     "matrix",
+     "voxel_mm",
+     "site and scanner (BIDS session label)",
+     "reversed series voxel_mm",
+     "forward b0s at (volume index)",
+     "echo time ms (NIfTI descrip), forward and reversed",
+     "phase polarity (NIfTI descrip), forward and reversed"
+    ]
+   },
+   "cIs1 A: cIs1_s1Ax1_scan1": {
+    "S3_2000 accepts": false,
+    "S3_2000 items failed": [
+     "volumes",
+     "volumes per shell",
+     "matrix",
+     "site and scanner (BIDS session label)",
+     "reversed series voxel_mm",
+     "forward b0s at (volume index)",
+     "echo time ms (NIfTI descrip), forward and reversed",
+     "phase polarity (NIfTI descrip), forward and reversed"
+    ]
+   }
+  },
+  "site 3 scans against every descriptor": {
+   "cIIs01_s3x1_S3_2000": {
+    "accepted by": [
+     "S3_2000"
+    ],
+    "refused by": [
+     "B2000",
+     "A2000r25",
+     "A2000r19",
+     "B2000J",
+     "B32",
+     "A32",
+     "cohort III",
+     "cIs1",
+     "cohort III map's match (protocol items only)"
+    ],
+    "S3_2000 items": {
+     "volumes": 98,
+     "volumes per shell": {
+      "0": 2,
+      "2000": 96
+     },
+     "matrix": [
+      96,
+      96,
+      50
+     ],
+     "voxel_mm": [
+      2.5,
+      2.5,
+      2.5
+     ],
+     "phase_encoding": [
+      "j",
+      "j-"
+     ],
+     "reversed_b0s": 1,
+     "reversed_b0_over_forward": [
+      0.936
+     ],
+     "site and scanner (BIDS session label)": "s3x",
+     "reversed series voxel_mm": [
+      2.5,
+      2.5,
+      2.5
+     ],
+     "forward b0s at (volume index)": [
+      0,
+      1
+     ],
+     "stated b of the 2000 shell (min, max)": [
+      1980,
+      2000
+     ],
+     "echo time ms (NIfTI descrip), forward and reversed": [
+      95.0,
+      95.0
+     ],
+     "phase polarity (NIfTI descrip), forward and reversed": [
+      1.0,
+      0.0
+     ]
+    }
+   },
+   "cIIs02_s3x1_S3_2000": {
+    "accepted by": [
+     "S3_2000"
+    ],
+    "refused by": [
+     "B2000",
+     "A2000r25",
+     "A2000r19",
+     "B2000J",
+     "B32",
+     "A32",
+     "cohort III",
+     "cIs1",
+     "cohort III map's match (protocol items only)"
+    ],
+    "S3_2000 items": {
+     "volumes": 98,
+     "volumes per shell": {
+      "0": 2,
+      "2000": 96
+     },
+     "matrix": [
+      96,
+      96,
+      50
+     ],
+     "voxel_mm": [
+      2.5,
+      2.5,
+      2.5
+     ],
+     "phase_encoding": [
+      "j",
+      "j-"
+     ],
+     "reversed_b0s": 1,
+     "reversed_b0_over_forward": [
+      0.967
+     ],
+     "site and scanner (BIDS session label)": "s3x",
+     "reversed series voxel_mm": [
+      2.5,
+      2.5,
+      2.5
+     ],
+     "forward b0s at (volume index)": [
+      0,
+      1
+     ],
+     "stated b of the 2000 shell (min, max)": [
+      1980,
+      2005
+     ],
+     "echo time ms (NIfTI descrip), forward and reversed": [
+      95.0,
+      95.0
+     ],
+     "phase polarity (NIfTI descrip), forward and reversed": [
+      1.0,
+      0.0
+     ]
+    }
+   },
+   "cIIs03_s3x1_S3_2000": {
+    "accepted by": [
+     "S3_2000"
+    ],
+    "refused by": [
+     "B2000",
+     "A2000r25",
+     "A2000r19",
+     "B2000J",
+     "B32",
+     "A32",
+     "cohort III",
+     "cIs1",
+     "cohort III map's match (protocol items only)"
+    ],
+    "S3_2000 items": {
+     "volumes": 98,
+     "volumes per shell": {
+      "0": 2,
+      "2000": 96
+     },
+     "matrix": [
+      96,
+      96,
+      50
+     ],
+     "voxel_mm": [
+      2.5,
+      2.5,
+      2.5
+     ],
+     "phase_encoding": [
+      "j",
+      "j-"
+     ],
+     "reversed_b0s": 1,
+     "reversed_b0_over_forward": [
+      0.941
+     ],
+     "site and scanner (BIDS session label)": "s3x",
+     "reversed series voxel_mm": [
+      2.5,
+      2.5,
+      2.5
+     ],
+     "forward b0s at (volume index)": [
+      0,
+      1
+     ],
+     "stated b of the 2000 shell (min, max)": [
+      1980,
+      2000
+     ],
+     "echo time ms (NIfTI descrip), forward and reversed": [
+      95.0,
+      95.0
+     ],
+     "phase polarity (NIfTI descrip), forward and reversed": [
+      1.0,
+      0.0
+     ]
+    }
+   },
+   "cIIs04_s3x1_S3_2000": {
+    "accepted by": [
+     "S3_2000"
+    ],
+    "refused by": [
+     "B2000",
+     "A2000r25",
+     "A2000r19",
+     "B2000J",
+     "B32",
+     "A32",
+     "cohort III",
+     "cIs1",
+     "cohort III map's match (protocol items only)"
+    ],
+    "S3_2000 items": {
+     "volumes": 98,
+     "volumes per shell": {
+      "0": 2,
+      "2000": 96
+     },
+     "matrix": [
+      96,
+      96,
+      50
+     ],
+     "voxel_mm": [
+      2.5,
+      2.5,
+      2.5
+     ],
+     "phase_encoding": [
+      "j",
+      "j-"
+     ],
+     "reversed_b0s": 1,
+     "reversed_b0_over_forward": [
+      0.935
+     ],
+     "site and scanner (BIDS session label)": "s3x",
+     "reversed series voxel_mm": [
+      2.5,
+      2.5,
+      2.5
+     ],
+     "forward b0s at (volume index)": [
+      0,
+      1
+     ],
+     "stated b of the 2000 shell (min, max)": [
+      1980,
+      2000
+     ],
+     "echo time ms (NIfTI descrip), forward and reversed": [
+      95.0,
+      95.0
+     ],
+     "phase polarity (NIfTI descrip), forward and reversed": [
+      1.0,
+      0.0
+     ]
+    }
+   }
+  },
+  "S3_2000 refuses every other protocol's scan": true,
+  "each site 3 scan accepted by S3_2000 only": true
+ },
+ "provenance": {
+  "git": {
+   "commit": "975e6dae3a23d73309751be1e64a726686176a61",
+   "branch": "ismrm2027",
+   "dirty (src/ and the card's bench modules)": []
+  },
+  "status of this script, calibration_cohortII.py and fetch_ds003416.py": [
+   " M bench/fetch_ds003416.py",
+   "?? bench/calibration_cohortII.py",
+   "?? bench/calibration_crosssite.py"
+  ],
+  "calibration_crosssite.py sha256": "74a20ce595466c42eb8bb93cab392fe6b02523a05bd0ee7d030ca4c6c48b2f9c",
+  "calibration_cohortII.py sha256": "5b25c01e50c0b91a071cb81c3039d84a36f8d127c536514d325e4b084a1aec74",
+  "created (UTC)": "2026-10-19T19:06:47Z",
+  "downloads": "bench/fetch_ds003416.py (SITE3), every size equal to OpenNeuro's S3 listing (ds003416/fetched.json)"
+ },
+ "caveats": [
+  "four subjects, one site 3 session each: means and per-subject signs, no intervals; the cross-vendor map is fitted on 3 subjects",
+  "vendor differs in more than the vendor: TE 95 against 90 ms, TR (pixdim) 6.35 against 5.9 s, 50 against 48 slices, two forward b0s (first) against one (last), stated b per direction 1980-2005 against 2000, uint16 against scaled int16, other gradient hardware, coil and reconstruction; the site 3 session is another day as well as another scanner",
+  "the readout time is nominal on both (no sidecars): the field is estimated and applied with the same value, so the correction is consistent within a scan but the Hz scale is not comparable across vendors",
+  "the site 3 rescan is resampled once onto A's grid (cubic), as the same-scanner rescan is",
+  "the same people on both scanners: the cross-vendor LOSO map never sees the target person; the same-scanner map applied cross vendor is fitted without the target person too"
+ ]
+}
