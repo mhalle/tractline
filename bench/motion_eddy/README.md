@@ -10,6 +10,7 @@ synthetic scan with its eddy runs is in `derived/motion_eddy_synth/`.
 | `compare_eddy.py` | eddy's `--dfields` and rotated b-vectors scored against the truth, as `proto.py` scores itself | 2.1 |
 | `bench_pieces.py` | the time of one Gauss-Newton iteration's pieces on a device, at 96 x 96 x 50 x 100 and 104 x 104 x 72 x 105 | 3 |
 | `bench_fast.py` | faster moments, and the cubic resample as 8 trilinear fetches (checked against the 64-tap sum) | 3 |
+| `metal_step.py`, `metal_check.py` | the fused Metal kernels (inverse, cubic value and exact gradient, Jacobian, H, b; cost; resample; prefilter; Gaussian) and their checks | 3 |
 | `bench_moments.py` | moment layouts on MPS | 3 |
 | `cpu_timing.py`, `headers.py` | the first CPU-only timing; the data headers | 3, 6.3 |
 
@@ -18,6 +19,8 @@ Reproduce (MPS; the GPU should be otherwise idle for timings):
     uv run --group dipy bench/motion_eddy/proto.py --device mps --acq-cost --cubic --outer 15 --inner 1   # final form: 0.103 voxels
     uv run --group dipy bench/motion_eddy/proto.py --device mps --fast --outer 15 [--profile]             # final form with the fixes: 0.107 voxels, 20 s
     uv run --group dipy bench/motion_eddy/proto.py --device mps --selftest                                # the fast path's pieces against the originals
+    uv run --group dipy bench/motion_eddy/proto.py --device mps --fast --metal --coarse 0 --outer 40 --tol 0.05   # fused Metal kernels: 0.099 voxels, 4.0 s
+    uv run bench/motion_eddy/metal_check.py                                                               # the kernels against float64 references
     uv run --group dipy bench/motion_eddy/proto.py --device mps                                           # first form: 0.284
     uv run --group dipy bench/motion_eddy/proto.py --device mps --save-synth $TRACTOGRAPHY_DATA/derived/motion_eddy_synth
 

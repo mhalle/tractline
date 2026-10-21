@@ -29,6 +29,9 @@ ap.add_argument("--outer", type=int, default=5)
 ap.add_argument("--eddy-scale", type=float, default=1.0, help="multiplies the simulated eddy only")
 ap.add_argument("--inner", type=int, default=3)
 ap.add_argument("--seed", type=int, default=0)
+ap.add_argument("--tol", type=float, default=0.0, help="with --fast: stop when no volume's step moves an edge point more than this (voxels) two steps running; --outer is then the cap")
+ap.add_argument("--smooth-steps", type=int, default=2, help="with --fast: the first steps smoothed (FWHM 2, then 1 voxel)")
+ap.add_argument("--metal", action="store_true", help="with --fast on mps: the inverse, cubic value and gradient, Jacobian and H, b, cost in the fused Metal kernels (metal_step.py)")
 ap.add_argument("--grad", default="autograd", choices=["autograd", "taps"], help="with --fast: the cubic gradient by autograd through the 8 fetches, or the one-pass 64 taps")
 ap.add_argument("--selftest", action="store_true", help="check the fast path's pieces against the originals, then exit")
 ap.add_argument("--fast", action="store_true", help="the final form (acquisition-space residual, cubic, one step per prediction) with the profile's fixes")
@@ -405,7 +408,7 @@ if args.selftest:
           "ratio of norms:", round(float(gb.norm() / ga.norm()), 4))
     sys.exit(0)
 if args.fast:
-    fw_steps = [2.0, 1.0] + [0.0] * (args.outer - 2)                                      # the 15 x 1 schedule's smoothing
+    fw_steps = ([2.0, 1.0][:args.smooth_steps] + [0.0] * args.outer)[:args.outer]          # the 15 x 1 schedule's smoothing
     coarse = args.coarse                                                                  # the first steps on 1/8 of the points
     sub = torch.tensor(np.flatnonzero((np.argwhere(emask) % 2 == 0).all(1)), device=dev)  # every other voxel per axis
     ye_full = xe
@@ -413,25 +416,50 @@ if args.fast:
     ym_full = (xe - cen) * vox_t
     rng_t = torch.Generator(device="cpu").manual_seed(1)
     probe = xedge[torch.randperm(len(xedge), generator=rng_t)[:2000].to(dev)]            # edge points for the step size
-    smooth_cache = {}
+    smooth_cache, mcache = {}, {}
+    quiet, steps_run = 0, 0
+    if args.metal:
+        import metal_step as M
+        nz = np.argwhere(emask4)                                                          # the coefficients' crop: the predictions'
+        lo = np.maximum(nz.min(0) - 4, 0); hi = np.minimum(nz.max(0) + 5, [X, Y, Z])     # support plus the cubic's reach
+        crop = tuple(slice(int(a), int(b)) for a, b in zip(lo, hi))
+        Xc, Yc, Zc = (int(b - a) for a, b in zip(lo, hi))
+        xp_c = xp.contiguous()
+        rs_consts = M.consts(G, len(xp), X, Y, Z, PE, NMON, 2, cen, half, vox_t, scale, dev)
     for it, fw in enumerate(fw_steps):
         tick()
         if fw not in smooth_cache:
-            smooth_cache[fw] = smooth(acq, fw)
+            smooth_cache[fw] = M.smooth(acq, fw) if args.metal else smooth(acq, fw)
         vols = smooth_cache[fw]
         obs_full = vols.reshape(G, -1)[:, lin_e]                                          # the raw data at the grid: never interpolated
         tick("smooth")
         with torch.no_grad():
-            u = sample_lin(vols, phi_fast(th, xp))
+            if args.metal:
+                u = M.resample(vols.contiguous(), xp_c, M.pack(th, rot), rs_consts[1], rs_consts[2])
+            else:
+                u = sample_lin(vols, phi_fast(th, xp))
+            tick("predict: resample")
             pv = torch.zeros(G, X * Y * Z, dtype=dt, device=dev)
             pv[:, lin_p] = W @ u
             pv = pv.reshape(G, X, Y, Z)
-            coef = prefilter(pv)
-        tick("predict (resample, matmul, prefilter)")
+            tick("predict: matmul, scatter")
+            coef = M.prefilter(pv[(slice(None),) + crop]) if args.metal else prefilter(pv)
+        tick("predict: prefilter")
         c_ = it < coarse
         ys, obs = (ye_full[sub], obs_full[:, sub]) if c_ else (ye_full, obs_full)
         mon, ym = (mon_full[sub], ym_full[sub]) if c_ else (mon_full, ym_full)
+        if args.metal:
+            key = bool(c_)
+            if key not in mcache:
+                mcache[key] = M.consts(G, len(ys), Xc, Yc, Zc, PE, NMON, 2, cen, half, vox_t, scale, dev, offset=tuple(float(a) for a in lo))
+            nch, ipk, fpk = mcache[key]
+            ys_c, obs_c, coef_c = ys.contiguous(), obs.contiguous(), coef.contiguous()
         with torch.no_grad():
+          if args.metal:
+            H, b, f0 = M.step_moments(coef_c, obs_c, ys_c, M.pack(th, rot), nch, ipk, fpk, P)
+            Hd = torch.diagonal(H, dim1=1, dim2=2)
+            tick("fused kernel: inverse, sample + gradient, jacobian, H, b")
+          else:
             x = phi_inv_fast(th, ys)
             tick("phi_inv (step)")
             if args.grad == "taps":
@@ -456,39 +484,48 @@ if args.fast:
             f0 = (r ** 2).sum(1)
             Hd = torch.diagonal(H, dim1=1, dim2=2)
             tick("jacobian + H, b")
-            accept = torch.zeros(G, dtype=torch.bool, device=dev)
-            th_new = th.clone()
-            for _ls in range(6):
-                todo = ~accept
-                if not bool(todo.any()):
-                    break
-                A_ = H + torch.diag_embed(mu[:, None] * Hd)
-                step = -torch.linalg.solve(A_.cpu(), b.cpu()[..., None])[..., 0].to(dev) * scale
-                cand = th + step
-                big = (phi_fast(cand, probe) - phi_fast(th, probe)).norm(dim=-1).amax(1) > args.trial_vox
-                need = todo & (big | (it < 2))                                            # a trial only for large steps (and the first two)
-                free = todo & ~need
-                th_new[free] = cand[free]; accept |= free
-                mu = torch.where(free, (mu / 3).clamp_min(1e-7), mu)
-                if bool(need.any()):
-                    k = torch.nonzero(need)[:, 0]
-                    f1 = ((sample_cubic(coef[k], phi_inv_fast(cand[k], ys)) - obs[k]) ** 2).sum(1)
-                    ntrials += 1
-                    ok = torch.zeros(G, dtype=torch.bool, device=dev); ok[k] = f1 < f0[k]
-                    th_new[ok] = cand[ok]; accept |= ok
-                    bad = need & ~ok
-                    mu = torch.where(ok, (mu / 3).clamp_min(1e-7), torch.where(bad, mu * 8, mu))
-                    if not bool(bad.any()):
-                        break
-                else:
-                    break
-            th = th_new
-            tick("LM trials (solve, inverse, sample)")
-        if args.profile or it == len(fw_steps) - 1 or it % 5 == 0:
+          accept = torch.zeros(G, dtype=torch.bool, device=dev)
+          th_new = th.clone()
+          for _ls in range(6):
+              todo = ~accept
+              if not bool(todo.any()):
+                  break
+              A_ = H + torch.diag_embed(mu[:, None] * Hd)
+              step = -torch.linalg.solve(A_.cpu(), b.cpu()[..., None])[..., 0].to(dev) * scale
+              cand = th + step
+              big = (phi_fast(cand, probe) - phi_fast(th, probe)).norm(dim=-1).amax(1) > args.trial_vox
+              need = todo & (big | (it < 2))                                            # a trial only for large steps (and the first two)
+              free = todo & ~need
+              th_new[free] = cand[free]; accept |= free
+              mu = torch.where(free, (mu / 3).clamp_min(1e-7), mu)
+              if bool(need.any()):
+                  k = torch.nonzero(need)[:, 0]
+                  if args.metal:
+                      f1 = M.step_cost(coef_c, obs_c, ys_c, M.pack(cand[k], rot), k, nch, ipk, fpk)
+                  else:
+                      f1 = ((sample_cubic(coef[k], phi_inv_fast(cand[k], ys)) - obs[k]) ** 2).sum(1)
+                  ntrials += 1
+                  ok = torch.zeros(G, dtype=torch.bool, device=dev); ok[k] = f1 < f0[k]
+                  th_new[ok] = cand[ok]; accept |= ok
+                  bad = need & ~ok
+                  mu = torch.where(ok, (mu / 3).clamp_min(1e-7), torch.where(bad, mu * 8, mu))
+                  if not bool(bad.any()):
+                      break
+              else:
+                  break
+          moved = float((phi_fast(th_new, probe) - phi_fast(th, probe)).norm(dim=-1).amax()) if args.tol else 1.0
+          th = th_new
+          tick("LM trials (solve, inverse, sample)")
+        quiet = quiet + 1 if (args.tol and fw == 0 and moved < args.tol) else 0
+        done = quiet >= 2
+        if args.profile or it == len(fw_steps) - 1 or it % 5 == 0 or done:
             history.append({"step": it, "fwhm": fw, "coarse": bool(c_), "accepted": int(accept.sum()),
                             "edge_err_rms_p95": [round(v, 3) for v in edge_err(th)]})
             print(history[-1], flush=True)
         tick("diagnostics (edge error)")
+        steps_run = it + 1
+        if done:
+            break
     fwhms = []
     args.acq_cost = False                                                                 # skip the other paths below
 if args.acq_cost:
@@ -597,7 +634,8 @@ info.update({"true_edge_displacement_rms_p95_vox": [round(v, 3) for v in disp_tr
              "final_edge_error_rms_p95_vox": [round(v, 3) for v in edge_err(th)],
              "gn_iterations": args.outer * args.inner, **timings, "history": history,
              **({"profile_s": {k: round(v, 2) for k, v in prof.items()}, "lm_trials": ntrials} if args.profile else {}),
+             **({"steps_run": steps_run, "tol_vox": args.tol} if args.fast else {}),
              "device": args.device})
-tag = f"_{args.device}_o{args.order}" + ("_noloo" if args.no_loo else "") + (f"_s{args.scale}" if args.scale != 1 else "") + (f"_e{args.eddy_scale}" if args.eddy_scale != 1 else "") + f"_n{args.outer}" + (f"_f{args.final_fwhm}" if args.final_fwhm else "") + ("_slm" if args.slm else "") + ("_acq" if args.acq_cost else "") + ("_cubic" if args.cubic else "") + (f"_fast_c{args.coarse}_{args.grad}" if args.fast else "") + ("_prof" if args.profile else "")
+tag = f"_{args.device}_o{args.order}" + ("_noloo" if args.no_loo else "") + (f"_s{args.scale}" if args.scale != 1 else "") + (f"_e{args.eddy_scale}" if args.eddy_scale != 1 else "") + f"_n{args.outer}" + (f"_f{args.final_fwhm}" if args.final_fwhm else "") + ("_slm" if args.slm else "") + ("_acq" if args.acq_cost else "") + ("_cubic" if args.cubic else "") + (f"_fast_c{args.coarse}_" + ("metal" if args.metal else args.grad) + (f"_sm{args.smooth_steps}" if args.smooth_steps != 2 else "") + (f"_tol{args.tol}" if args.tol else "") if args.fast else "") + ("_prof" if args.profile else "")
 json.dump(info, open(OUT / f"proto{tag}.json", "w"), indent=1)
 print(json.dumps({k: v for k, v in info.items() if k != "history"}))

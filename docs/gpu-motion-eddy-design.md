@@ -29,9 +29,10 @@ Levenberg-Marquardt Gauss-Newton fit over all volumes at once, in PyTorch, on MP
   - the prototype's whole estimate takes 14 s for 50 volumes;
   - the final cubic resample takes 2.9 s / 5.2 s, as eight trilinear fetches.
 
-  The final form (below) took 103 s at first. Plain-torch fixes cut it to **20 s for 50 volumes** at the same
-  accuracy (section 3): about 40 s for a 105-volume scan, twice the field estimate. A fused sample-and-gradient
-  kernel is in phase 1's scope.
+  The final form (below) took 103 s at first. Plain-torch fixes cut it to 20 s for 50 volumes. **Fused Metal kernels
+  (`bench/motion_eddy/metal_step.py`) cut it to 2.4 s for 15 steps, or 4.0 s run to convergence, at eddy's accuracy**
+  (section 3). Projected: about 5-9 s for a 105-volume 2 mm scan, under the field estimate's 18 s. The CUDA (Triton)
+  port is still to write.
 - **Prototype against eddy, on one synthetic scan with known motion and eddy** (section 2.1). FSL eddy (`eddy_cpu`
   2602.0, installed natively) gets the edge displacement from 1.52 voxels RMS to 0.105, with b-vector rotation error
   0.13 deg, in 36 min on 6 CPU threads. The prototype's first form stopped at 0.24-0.28 voxels. Three changes bring it
@@ -369,6 +370,11 @@ The predictions are recomputed after every resampling.
 | final form with the section 3 fixes, 8 of 15 steps coarse (`--fast --coarse 8`) | 0.104 / 0.185 | 31 s; rotation error 0.118 deg |
 | **the same, 12 of 15 steps coarse (`--fast`, the default)** | **0.107 / 0.191** | **20 s; rotation error 0.123 deg** |
 | the same, all 15 steps coarse | 0.115 / 0.207 | 13 s; rotation error 0.134 deg |
+| **fused Metal kernels (`--fast --metal --coarse 0`), 15 steps** | **0.103 / 0.181** | **2.4 s; rotation error 0.116 deg** |
+| the same, to convergence (`--outer 40 --tol 0.05`: 25 steps) | 0.099 / 0.178 | 4.0 s; rotation error 0.099 deg |
+| the same, no motion | 0.083 / 0.158 | 3.2 s (20 steps); rotation error 0.041 deg |
+| the same, 2x the motion and eddy (3.0 voxels RMS true) | 0.111 / 0.201 | 30 steps, 4.6 s; rotation error 0.10 deg |
+| the same, 3x (4.6 voxels RMS, 7.7 p95: about 9 mm and 3 deg) | 0.160 / 0.285 | 29 steps, 4.6 s; a floor (45 steps: 0.163); eddy not run at 3x |
 
 The rotation errors are those of the rotated b-vectors against the truth's, as `F R^T F` (section 1.3). eddy's
 `eddy_rotated_bvecs` match that convention.
@@ -471,20 +477,45 @@ What remains, at 20 s:
   voxels.
 - Each full-resolution step costs about 2 s. Most of that is the 8-fetch cubic with its backward pass.
 
-Scaled to 105 volumes, plain torch gives about 40 s on the M2. The fused kernel gathers the 64 coefficients once and
-accumulates value, gradient and the H, b moments per voxel, with no (G, N, 16) array. It is the remaining lever; it is
-estimated at 3-5x on the steps, which would bring a 105-volume scan to about 10-15 s.
+Scaled to 105 volumes, plain torch gives about 40 s on the M2.
+
+**The fused Metal kernels** (`bench/motion_eddy/metal_step.py`, `torch.mps.compile_shader` as `tractline.ukf_metal`;
+`proto.py --fast --metal`). Each is checked against a float64 reference (`metal_check.py`): H to 1.5e-5 relative, b
+to 4e-6, the cost to 8e-8, the prefilter to 2.6e-7.
+
+| kernel | what one thread does | replaces |
+|---|---|---|
+| `step_moments` | one point of one volume: the inverse (closed-form rigid, 2 eddy passes), the 64-tap cubic value and exact gradient (each coefficient read once), the 16 Jacobian entries, then J'J (upper 136), J'r and r^2 summed over the threadgroup (`simd_sum`, then threadgroup memory) and written per threadgroup; torch sums the partials in a fixed order (deterministic, no atomics) | the inverse, the 8-fetch sample with its backward pass, the (G, N, 16) Jacobian, `bmm` |
+| `step_cost` | the same without the gradient, for the listed volumes | the LM trials' cost |
+| `resample` | the forward map and a trilinear sample of the acquired volume, for the predictions | `grid_sample` and the torch transform |
+| `prefilter_axis` | one line of the recursive cubic B-spline prefilter (pole sqrt(3) - 2, mirrored edges), on a crop to the head | three dense (n x n) matmuls on the full box |
+| `gauss_axis` | one voxel of one axis of the separable Gaussian | `conv3d` |
+
+Profile, 50 volumes, 15 steps (device-synchronized):
+
+| part | plain torch, fixed (3 coarse steps) | Metal (no coarse steps) |
+|---|---|---|
+| inverse, sample + gradient, Jacobian, H, b | 35.6 s | 1.05 s |
+| predictions (resample, matmul, prefilter) | 4.3 s | 0.85 s |
+| smoothing | 1.9 s | 0.23 s |
+| LM trials | 2.5 s | 0.2 s |
+| **total** | **44.7 s** (20 s with 12 coarse steps, at 0.107 voxels) | **2.7 s with profiling, 2.4 s without** (0.103 voxels) |
+
+So the fixed 15-step schedule is no longer the constraint, and the step runs to convergence. The stop: no volume's
+step moves an edge point more than 0.05 voxel, two steps running, capped at 40. Rebuilding the prediction every step
+leaves a jitter of a few hundredths of a voxel, so 0.01-0.03 never stop. The predictions' smoothing (the first two
+steps, FWHM 2 and 1 voxels) made no difference on this scan, but stays for capture range on larger real motion.
 
 | | 2.5 mm, 100 vol | 2 mm, 105 vol |
 |---|---|---|
 | estimate, plain torch, fixed (measured at 50 volumes, scaled by volumes x points) | 25-30 s | 40-45 s |
-| + final resample (8-fetch form, measured) | 3 s | 5 s |
-| **total, M2, plain torch** | **about 30 s** | **about 45-50 s** |
-| **total, M2, fused kernel** (estimated) | **8-12 s** | **12-18 s** |
-| CUDA (A10 / L40S): not measured; 3-5x the M2 by the field estimate's ratio | 3-8 s | 4-12 s |
+| **estimate, Metal, to convergence** (measured 4.0-4.6 s at 50 volumes; scaled) | **about 5 s** | **about 9 s** |
+| + final resample (8-fetch torch form, measured; a Metal value-only kernel would take a fraction) | 3 s | 5 s |
+| **total, M2, Metal** | **about 8 s** | **about 14 s** |
+| CUDA (A10 / L40S): Triton port not written; 3-5x the M2 by the field estimate's ratio | 2-3 s | 3-5 s |
 
-For scale: the field estimate takes 18 s on the M2 and the UKF 27 s. The step reaches the field estimate's time only
-with the fused kernel, which is therefore in phase 1.
+For scale: the field estimate takes 18 s on the M2 and the UKF 27 s. With the Metal kernels the step costs less than
+the field estimate. The final resample is the next piece to move into a kernel.
 
 eddy's own CUDA version took 13 min for 128 volumes of 96 x 96 x 64 (quadratic model, a GeForce 750M; Andersson &
 Sotiropoulos 2016). Its CPU version is "noticeably slower" (FSL user guide). Most of this design's advantage over eddy
@@ -695,7 +726,7 @@ GPU budget: phase 0 about 150 tracking runs; phase 1 one arm over all pairs. Bot
 | phase | scope | effort (focused) | main risks |
 |---|---|---|---|
 | 0 | a direct test with eddy: install fsl-eddy (**done 2026-10-20**; validated on the synthetic scan, section 2.1); eddy on tractline's field for A and the rescan of about 8 extreme pairs (section 6.3); the import loader; arm E-fixed; the accuracy measures. **Gate**: the gap verdict settles the paper's question; the accuracy verdict decides phase 1 | 3-4 days of work, 16 eddy runs (36 min each for 55 volumes on 6 M2 threads, measured: about 10 h locally, or in parallel on Modal), about 150 tracking runs (5-8 GPU hours) | (resolved: eddy installed natively, 2026-10-20) FSL's channel has `fsl-eddy` 2602.0 for osx-arm64 (about 1 MB), and every dependency it lists is already in `DATA/fsl-env` from the topup install, so it adds one package through the same standalone micromamba, no conda; `eddy_cpu` is threaded (`--nthr`); eddy's `--field` input behaving as documented; few pairs, so the gap verdict is only coarse (it only needs to tell under 1 point from more) |
-| 1 | rigid + quadratic eddy, acquisition-space residual (shared with R1's forward model), cubic prediction rebuilt every step, LOO-SH predictor, the joint second-level model as an option, shell anchors, b-vector rotation, the fused sample-and-moments kernel (Metal and Triton), `apply_volumes` (one cubic resample, 8 fetches), forward-model bootstrap (R1), flag and provenance, synthetic tests (starting from `bench/motion_eddy/proto.py`), CPU / MPS / CUDA | 4-5 weeks | the prototype matching eddy on one synthetic scan only (section 2.1), and the fused kernel not bringing a 105-volume scan from about 45 s (plain torch, measured at 50 volumes and scaled) to the field estimate's 18 s; gauge and confounds (c0 against PE translation; one-b0 protocols); registration of noisy high-b volumes (b = 2000-2500 at 2.5 mm; Ben-Amitay et al. 2012, Nilsson et al. 2015); b-vector sign conventions; float32 rounding at small steps on MPS; GPU time contended by the queue |
+| 1 | rigid + quadratic eddy, acquisition-space residual (shared with R1's forward model), cubic prediction rebuilt every step, LOO-SH predictor, the joint second-level model as an option, shell anchors, b-vector rotation, the fused kernels (Metal: prototyped, `metal_step.py`; Triton: to port), `apply_volumes` (one cubic resample, 8 fetches), forward-model bootstrap (R1), flag and provenance, synthetic tests (starting from `bench/motion_eddy/proto.py`), CPU / MPS / CUDA | 4-5 weeks | the prototype matching eddy on one synthetic scan only (section 2.1), the 3x-motion floor (0.16 voxel at about 9 mm and 3 deg; eddy not run there); the Triton port's speed unmeasured; gauge and confounds (c0 against PE translation; one-b0 protocols); registration of noisy high-b volumes (b = 2000-2500 at 2.5 mm; Ben-Amitay et al. 2012, Nilsson et al. 2015); b-vector sign conventions; float32 rounding at small steps on MPS; GPU time contended by the queue |
 | 2 | slice outliers and replacement, GP predictor (multi-shell, if decision 1's test passes), the full eddy comparison of section 6.1 | about 2 weeks | the GP's hyperparameter fit; outlier thresholds tuned on few protocols; the bootstrap's change moves every committed ensemble result (a new arm, not a replacement) |
 | 3 | slice-to-volume, susceptibility-by-movement | 4-8 weeks | needs slice timing (absent for cohort II); identifiability per slice group; research-grade |
 
