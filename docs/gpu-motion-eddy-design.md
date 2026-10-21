@@ -57,6 +57,9 @@ Levenberg-Marquardt Gauss-Newton fit over all volumes at once, in PyTorch, on MP
     but measurable, and the same size as correcting this low-motion scan at all.
   - The anchor should apply only when the fit has drifted beyond MI's precision, or use the interspersed b0s as eddy
     does.
+  - **The anchor's z bias had a cause** (section 2.6): MI's single histogram meets a DW/b0 intensity relation that
+    varies along z, strongly in this head-truncated slab. Registering flattened means halves the disagreement (0.218
+    to 0.111 voxel), and the result sits with eddy and TORTOISE.
 - **Prototype against eddy, on one synthetic scan with known motion and eddy** (section 2.1). FSL eddy (`eddy_cpu`
   2602.0, installed natively) gets the edge displacement from 1.52 voxels RMS to 0.105, with b-vector rotation error
   0.13 deg, in 36 min on 6 CPU threads. The prototype's first form stopped at 0.24-0.28 voxels. Three changes bring it
@@ -688,6 +691,58 @@ What it shows:
   - **prefer eddy's interspersed-b0 estimate where the protocol has b0s spread through the scan** (ON-Harmony: 5);
   - **cohort II has one b0, its last volume**, so it has only MI.
 - One scan, little motion. A high-motion scan (ON-Harmony's extreme pairs) is the next test.
+
+### 2.6 Why our anchor was off, and only in z (2026-10-21)
+
+Our MI anchor disagreed with eddy, TORTOISE and the interspersed b0s in one respect: it moved the DW shells about
+0.3-0.5 mm in z against the b0s, with a tilt about x (0.2 deg). In-plane it agreed. The causes were tested on the raw
+b2000 mean registered to the raw b0 mean (`z_ends.py`), the pair eddy's PEAS measures too.
+
+**z is special in this scan.**
+- The brain mask spans every slice (0-71): the head is cut off at both ends of the 144 mm slab.
+- The DW/b0 ratio varies along z: about 0.13 in the bottom slices (skull base, cerebellum, truncated neck), about
+  0.36 through the middle, about 0.17 at the top. In-plane it is far more uniform.
+- MI fits one global intensity relation between the two images. A relation that changes along z lets MI raise its
+  score by sliding and tilting the images in z.
+
+| raw b2000 mean to raw b0 mean | GPU MI z (mm) | dipy MI z (mm) | rotation about x |
+|---|---|---|---|
+| as is | -0.43 | -0.29 | 0.20-0.24 deg |
+| end slices excluded (3, 6, 10) | -0.45 to -0.50 | -0.29 to -0.35 (one local optimum at -1.67) | 0.13-0.28 deg |
+| **flattened**: each image divided by a Gaussian-smoothed copy within the head, sigma 8 voxels | -0.19 | -0.16 | 0.05-0.08 deg |
+| flattened, sigma 4 voxels | -0.14 | -0.08 | about 0 |
+| FSL (eddy's MI on its corrected means; its interspersed b0s) | +0.03 to +0.08 | | under 0.03 deg |
+
+- **Excluding the truncated end slices changes nothing.** The cut-off itself is not the cause.
+- **Removing the slowly varying intensity relation moves z most of the way to FSL's value, and removes the x tilt.**
+  The bias comes from MI's single global histogram meeting a contrast relation that varies in space, most strongly
+  along z. FSL's implementation resists it better; its exact choices were not examined.
+- The z estimate also moved with the mask (-0.24 mm with the self-test's mask, -0.43 with this one). An optimum this
+  soft is what such a bias produces.
+- **A separate difference along y, the PE axis**, remains: ours -0.23 to -0.25 mm against FSL's 0.0 to +0.2. Along
+  PE a shift is ambiguous between motion and the eddy field's constant term. eddy reports its MI PE translation as
+  "calculated but not used". Dropping ours made the placement no better (0.121 against 0.111), so it is not what
+  matters here.
+
+**The anchor on flattened means** (`--anchor-flatten 4`), real scan:
+
+| | agreement with eddy (b0s / b1000 / b2000) | b0 placement vs eddy (`placement.py`) | tensor residual | mean FA |
+|---|---|---|---|---|
+| eddy | | | 75.7 | 0.471 |
+| TORTOISE | | 0.082 | 77.2 | 0.475 |
+| ours, no anchor | 0.075 (0.138 / 0.035 / 0.048) | 0.084 | 77.2 | 0.477 |
+| ours, MI anchor | 0.095 (0.250 / 0.047 / 0.064) | 0.218 | 74.9 | 0.4715 |
+| **ours, MI anchor on flattened means** | **0.079 (0.163 / 0.040 / 0.049)** | **0.111** | 76.6 | 0.476 |
+
+- The flattened anchor halves the disagreement and sits with eddy and TORTOISE. A residual 0.14-0.17 mm in z
+  remains against FSL's estimates.
+- **Model-fit residuals cannot arbitrate b0 placement.** The biased anchor had the lowest tensor and LOO residuals
+  of all (74.9), so the residuals reward something other than correct placement. The cross-method, same-contrast
+  placement check is the one to trust.
+- Design: **the shell anchor registers flattened means** (sigma 4 voxels within the head). It applies only beyond
+  MI's precision, and prefers interspersed b0s where the protocol has them (section 2.5).
+- Not yet examined: what FSL does differently (its masks, histogram, smoothing), and our b0s' own mutual alignment
+  (their LOO residual is 4-6 % above eddy's and TORTOISE's).
 
 ## 3. GPU mapping
 

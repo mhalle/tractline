@@ -40,7 +40,8 @@ def means(f):
 T = lambda a: torch.as_tensor(np.asarray(a, np.float32), device=dev)
 ref_b0, ref_dw = means(D / "eddy.nii.gz")
 sets = {"ours, GPU MI rigid anchor": D / "v_gpumi2/ours.nii.gz", "ours, no anchor": D / "v_none/ours.nii.gz",
-        "ours, dipy MI anchor": D / "v_dipy/ours.nii.gz", "TORTOISE": D / "tortoise_out2/tortoise.nii", "as acquired": D / "imain.nii.gz"}
+        "ours, dipy MI anchor": D / "v_dipy/ours.nii.gz", "ours, GPU MI anchor, flattened": D / "v_flat4/ours.nii.gz",
+        "ours, GPU MI anchor, flattened, no PE translation": D / "v_flat4nope/ours.nii.gz", "TORTOISE": D / "tortoise_out2/tortoise.nii", "as acquired": D / "imain.nii.gz"}
 out = {}
 for name, f in sets.items():
     if not Path(f).exists():

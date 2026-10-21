@@ -65,6 +65,50 @@
    0.035
   ]
  },
+ "ours, GPU MI anchor, flattened": {
+  "b0 placement vs eddy's, relative to the DW shells: edge rms, p95 (voxels)": [
+   0.111,
+   0.156
+  ],
+  "b0 mean vs eddy's (mm, deg)": [
+   -0.004,
+   0.011,
+   0.063,
+   0.142,
+   -0.211,
+   0.027
+  ],
+  "DW mean vs eddy's (mm, deg)": [
+   0.015,
+   0.095,
+   0.25,
+   0.208,
+   -0.261,
+   0.012
+  ]
+ },
+ "ours, GPU MI anchor, flattened, no PE translation": {
+  "b0 placement vs eddy's, relative to the DW shells: edge rms, p95 (voxels)": [
+   0.121,
+   0.162
+  ],
+  "b0 mean vs eddy's (mm, deg)": [
+   -0.004,
+   0.011,
+   0.063,
+   0.142,
+   -0.211,
+   0.027
+  ],
+  "DW mean vs eddy's (mm, deg)": [
+   0.016,
+   -0.124,
+   0.25,
+   0.208,
+   -0.261,
+   0.012
+  ]
+ },
  "TORTOISE": {
   "b0 placement vs eddy's, relative to the DW shells: edge rms, p95 (voxels)": [
    0.082,
