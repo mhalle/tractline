@@ -1,0 +1,96 @@
+{
+ "per set": {
+  "as acquired": {
+   "fibers": 99040,
+   "labeled": 80437,
+   "other_share": 0.5272,
+   "seconds": {
+    "prep": 4.6,
+    "load": 0.45,
+    "ukf": 62.48,
+    "label": 2.21
+   }
+  },
+  "eddy": {
+   "fibers": 98625,
+   "labeled": 80041,
+   "other_share": 0.526,
+   "seconds": {
+    "prep": 4.34,
+    "load": 0.58,
+    "ukf": 65.46,
+    "label": 1.95
+   }
+  },
+  "TORTOISE": {
+   "fibers": 99034,
+   "labeled": 80476,
+   "other_share": 0.5268,
+   "seconds": {
+    "prep": 4.67,
+    "load": 0.6,
+    "ukf": 67.64,
+    "label": 2.29
+   }
+  },
+  "ours, GPU MI anchor": {
+   "fibers": 99001,
+   "labeled": 80507,
+   "other_share": 0.5236,
+   "seconds": {
+    "prep": 4.69,
+    "load": 0.65,
+    "ukf": 69.83,
+    "label": 2.17
+   }
+  },
+  "ours, no anchor": {
+   "fibers": 98890,
+   "labeled": 80216,
+   "other_share": 0.5259,
+   "seconds": {
+    "prep": 4.73,
+    "load": 0.63,
+    "ukf": 70.59,
+    "label": 2.16
+   }
+  }
+ },
+ "pairs": {
+  "ours, GPU MI anchor vs ours, no anchor": {
+   "density correlation": 0.9812,
+   "support Dice (>= 5 streamlines)": 0.9273,
+   "tract count difference": 0.0348
+  },
+  "eddy vs TORTOISE": {
+   "density correlation": 0.9854,
+   "support Dice (>= 5 streamlines)": 0.9297,
+   "tract count difference": 0.0226
+  },
+  "eddy vs ours, no anchor": {
+   "density correlation": 0.985,
+   "support Dice (>= 5 streamlines)": 0.929,
+   "tract count difference": 0.0271
+  },
+  "eddy vs ours, GPU MI anchor": {
+   "density correlation": 0.9775,
+   "support Dice (>= 5 streamlines)": 0.9235,
+   "tract count difference": 0.0358
+  },
+  "TORTOISE vs ours, no anchor": {
+   "density correlation": 0.9898,
+   "support Dice (>= 5 streamlines)": 0.9363,
+   "tract count difference": 0.0201
+  },
+  "as acquired vs eddy": {
+   "density correlation": 0.9832,
+   "support Dice (>= 5 streamlines)": 0.9274,
+   "tract count difference": 0.0315
+  },
+  "as acquired vs ours, no anchor": {
+   "density correlation": 0.9896,
+   "support Dice (>= 5 streamlines)": 0.9366,
+   "tract count difference": 0.027
+  }
+ }
+}

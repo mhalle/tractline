@@ -1,0 +1,74 @@
+{
+ "as acquired": {
+  "LOO residual rms, by group": {
+   "b0": 180.95,
+   "b1000": 108.56,
+   "b2005": 92.05
+  },
+  "tensor fit residual rms (DW)": 91.5,
+  "mean FA where FA > 0.25 as acquired": 0.4751
+ },
+ "eddy": {
+  "LOO residual rms, by group": {
+   "b0": 139.86,
+   "b1000": 79.07,
+   "b2005": 72.38
+  },
+  "tensor fit residual rms (DW)": 75.68,
+  "mean FA where FA > 0.25 as acquired": 0.4713
+ },
+ "eddy, round trip through TORTOISE's grid": {
+  "LOO residual rms, by group": {
+   "b0": 139.72,
+   "b1000": 79.05,
+   "b2005": 72.37
+  },
+  "tensor fit residual rms (DW)": 75.66,
+  "mean FA where FA > 0.25 as acquired": 0.4712
+ },
+ "TORTOISE (quadratic), resampled to the scan's grid": {
+  "LOO residual rms, by group": {
+   "b0": 137.51,
+   "b1000": 80.52,
+   "b2005": 74.39
+  },
+  "tensor fit residual rms (DW)": 77.23,
+  "mean FA where FA > 0.25 as acquired": 0.4748
+ },
+ "ours (GPU MI rigid anchor)": {
+  "LOO residual rms, by group": {
+   "b0": 146.42,
+   "b1000": 77.06,
+   "b2005": 70.58
+  },
+  "tensor fit residual rms (DW)": 74.92,
+  "mean FA where FA > 0.25 as acquired": 0.4715
+ },
+ "ours (GPU MI rigid anchor), round trip": {
+  "LOO residual rms, by group": {
+   "b0": 141.96,
+   "b1000": 76.9,
+   "b2005": 70.47
+  },
+  "tensor fit residual rms (DW)": 74.78,
+  "mean FA where FA > 0.25 as acquired": 0.4701
+ },
+ "ours, no anchor": {
+  "LOO residual rms, by group": {
+   "b0": 146.42,
+   "b1000": 80.48,
+   "b2005": 74.41
+  },
+  "tensor fit residual rms (DW)": 77.19,
+  "mean FA where FA > 0.25 as acquired": 0.4769
+ },
+ "ours, no anchor, round trip": {
+  "LOO residual rms, by group": {
+   "b0": 141.96,
+   "b1000": 80.35,
+   "b2005": 74.32
+  },
+  "tensor fit residual rms (DW)": 77.09,
+  "mean FA where FA > 0.25 as acquired": 0.4753
+ }
+}

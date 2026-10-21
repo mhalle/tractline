@@ -48,7 +48,15 @@ Levenberg-Marquardt Gauss-Newton fit over all volumes at once, in PyTorch, on MP
   - As the rigid anchor it slightly beats eddy on every model-fit measure: DW LOO residuals 77.1 / 70.6 against
     79.1 / 72.4, tensor residual 74.9 against 75.7, FA 0.4715 against 0.471.
   - **The eddy-term anchor**, which fixed the synthetic scan, does slightly worse on real data (tensor residual 75.3,
-    FA 0.464). The rigid anchor is the default, as in eddy.
+    FA 0.464).
+  - **But on this real scan the anchor itself is the outlier** (section 2.5). eddy (both its MI and its
+    interspersed-b0 estimates), TORTOISE and our unanchored fit all place the b0s against the DW shells within about
+    0.08 voxel of each other. Our MI anchor moves the shells about 0.2 voxel (0.47 mm in z): cross-contrast MI's own
+    bias, which differs between implementations by about the 0.2-0.3 mm eddy's guide states.
+  - In tracking, that placement changes tract counts by 3.5 %, against a 2.2 % floor for a trivial shift. That is small
+    but measurable, and the same size as correcting this low-motion scan at all.
+  - The anchor should apply only when the fit has drifted beyond MI's precision, or use the interspersed b0s as eddy
+    does.
 - **Prototype against eddy, on one synthetic scan with known motion and eddy** (section 2.1). FSL eddy (`eddy_cpu`
   2602.0, installed natively) gets the edge displacement from 1.52 voxels RMS to 0.105, with b-vector rotation error
   0.13 deg, in 36 min on 6 CPU threads. The prototype's first form stopped at 0.24-0.28 voxels. Three changes bring it
@@ -610,6 +618,76 @@ What it shows:
   whole rotation here (0.31 deg). The image displacements agree while the split between rotation and eddy shear
   does not; on a low-motion scan the rotations are weakly determined. It matters little at this size, but a
   higher-motion scan should be checked.
+
+### 2.5 Three methods on the real scan, and what the b0 placement does to tracking (2026-10-21)
+
+**TORTOISE** (TORTOISEV4 4.1.1, `TORTOISEProcess_cuda` on a Modal A10, `bench/motion_eddy/modal_tortoise.py`):
+- run as `-c quadratic --epi off --denoising off --gibbs 0 --s2v 0 --repol 0 --drift off`, which registers each DW
+  volume to the b0 by MI with 14 parameters (rigid, scale, shear, quadratic eddy), in 11 min;
+- the CPU build crashed writing its outputs ("corrupted size vs. prev_size");
+- `--output_orientation` takes letters in a convention other than nibabel's (LAS gave a cropped 107 x 27 x 145
+  grid); left at its default, the output lands on the scan's own grid.
+
+| (`score_sets.py`, same measures) | LOO residual b0 / b1000 / b2000 | tensor residual | mean FA |
+|---|---|---|---|
+| as acquired | 181.0 / 108.6 / 92.1 | 91.5 | 0.475 |
+| eddy | 139.9 / 79.1 / 72.4 | 75.7 | 0.471 |
+| TORTOISE | 137.5 / 80.5 / 74.4 | 77.2 | 0.475 |
+| ours, no anchor | 146.4 / 80.5 / 74.4 | 77.2 | 0.477 |
+| ours, rigid GPU-MI anchor | 146.4 / 77.1 / 70.6 | 74.9 | 0.4715 |
+
+Our b0 residual (146) is 4-6 % above eddy's and TORTOISE's (138-140): our b0s are aligned among themselves less well.
+That is to examine; our b0 predictor is the mean of the other four, with no eddy terms and no special treatment.
+
+**Where each method puts the b0s against its DW shells** (`placement.py`): each corrected b0 mean and DW mean are
+registered to eddy's at the same contrast, which is accurate. Each method's b0-to-DW placement then differs from
+eddy's by (voxels at the edge, RMS):
+
+| | vs eddy |
+|---|---|
+| as acquired | 0.086 |
+| TORTOISE | 0.082 |
+| ours, no anchor | 0.084 |
+| ours, dipy MI anchor | 0.152 |
+| ours, GPU MI anchor | 0.218 (the DW shells 0.47 mm in z) |
+
+**eddy's second estimate**, from the interspersed b0s, needs single-shell data, so eddy was rerun on the b0s + b1000
+and the b0s + b2000 subsets (50 and 48 min):
+- b1000 against the b0s: (0.01, 0.16, 0.07) mm from the interspersed b0s, against (-0.01, 0.20, 0.03) mm by MI;
+- b2000 against the b0s: (0.03, 0.02, 0.08) mm from the interspersed b0s;
+- all rotations under 0.03 deg.
+
+eddy's two estimates agree to about 0.1 mm, and both put the shells within about 0.2 mm of the b0s, as TORTOISE and
+our unanchored fit do. **Our MI anchor is the outlier.** On this pair (raw b2000 mean to b0 mean), dipy-style MI
+(dipy, and the GPU MI that matches it) says z = -0.16 to -0.24 mm. FSL's MI and eddy's interspersed b0s say +0.03 to
++0.08. Cross-contrast MI implementations differ by about the 0.2-0.3 mm eddy's guide gives for its PEAS.
+
+**What the b0 placement does to tracking** (`track_compare.py`: tractline's UKF on the b = 2000 shell and the b0s,
+RapidParc one draw, each set with its own rotated b-vectors; about 99 k streamlines each):
+
+| pair | density correlation | support Dice | tract count difference |
+|---|---|---|---|
+| floor: the scan against itself moved 0.05 voxel | 0.991 | 0.939 | 2.2 % |
+| TORTOISE vs ours, no anchor | 0.990 | 0.936 | 2.0 % |
+| eddy vs TORTOISE | 0.985 | 0.930 | 2.3 % |
+| eddy vs ours, no anchor | 0.985 | 0.929 | 2.7 % |
+| as acquired vs eddy (correcting at all) | 0.983 | 0.927 | 3.2 % |
+| **ours with vs without the anchor (the b0 placement alone)** | 0.981 | 0.927 | **3.5 %** |
+
+What it shows:
+- **On this low-motion scan, the three methods' tractograms differ from each other at about the floor** of a
+  0.05-voxel shift, the tracker's own sensitivity.
+- **A 0.2-voxel b0 placement is measurable**: about 1.3 points of tract count above the floor, and a density
+  correlation of 0.981 against 0.991. It is the same size as correcting this scan's motion at all. Small, but not
+  nothing.
+- So the anchor must not add more error than it removes. On real data, MI's cross-contrast bias (about 0.2-0.3 mm)
+  is as large as the drift it corrects here.
+- The design's response:
+  - **apply the anchor only when it is larger than MI's precision** (about 0.3 mm), so a fit that has not drifted is
+    left alone;
+  - **prefer eddy's interspersed-b0 estimate where the protocol has b0s spread through the scan** (ON-Harmony: 5);
+  - **cohort II has one b0, its last volume**, so it has only MI.
+- One scan, little motion. A high-motion scan (ON-Harmony's extreme pairs) is the next test.
 
 ## 3. GPU mapping
 
