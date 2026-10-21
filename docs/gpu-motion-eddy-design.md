@@ -40,6 +40,13 @@ Levenberg-Marquardt Gauss-Newton fit over all volumes at once, in PyTorch, on MP
   synthetic scan. The fit plus anchor takes 11.7 s on the M2, against eddy's 78 min.
 - **What remains is within-shell precision**: 0.086 voxels against eddy's 0.051 on that scan. eddy's predictor
   draws on all shells at once; ours uses each shell alone (decision 1).
+- **On a real scan** (ON-Harmony sub-16974, 105 volumes, no field for either method; section 2.4), the fit agrees
+  with eddy to 0.075 voxels RMS at the edge, in 18 s against eddy's 79 min. A rigid shell anchor by dipy's MI gives
+  eddy's model-fit numbers almost exactly. Two cautions:
+  - **The GPU MI is biased on real cross-contrast images.** It moved the b0s about 1.1 voxels off eddy's and lowered
+    FA by 0.05. It is not usable until it matches dipy's MI there.
+  - **The eddy-term anchor**, which fixed the synthetic scan, has no support on real data. There the rigid anchor is
+    the evidence-backed choice, as in eddy.
 - **Prototype against eddy, on one synthetic scan with known motion and eddy** (section 2.1). FSL eddy (`eddy_cpu`
   2602.0, installed natively) gets the edge displacement from 1.52 voxels RMS to 0.105, with b-vector rotation error
   0.13 deg, in 36 min on 6 CPU threads. The prototype's first form stopped at 0.24-0.28 voxels. Three changes bring it
@@ -536,6 +543,58 @@ What it shows:
   test is decision 1's multi-shell predictor: an SH model per shell with the shells coupled, or eddy's GP.
 - Its PEAS output on this scan applied (0.05, 1.41, 0.29) mm and (-1.09, 1.47, 0.59) deg to the b1000 shell. Its
   shells too drift far from the b0s during the fit; the alignment at the end is what fixes them.
+
+### 2.4 A real scan, against eddy (2026-10-21)
+
+**Setup**:
+- The scan is ON-Harmony sub-16974 OXF1PRI001, all 105 volumes (5 b0s, 50 at b1000, 50 at b2000), 104 x 104 x 72
+  at 2 mm, multiband 3.
+- Neither method gets the static field (no `--topup` or `--field`), so they are compared on motion and eddy alone.
+- eddy: `eddy_cpu --flm=quadratic --slm=none --dfields --nthr=6 --data_is_shelled`, 79 min.
+- Ours: `proto.py --all-shells --fast --metal --coarse 0 --outer 20 --real <dir>`, 18 s with eddy sharing the CPU.
+
+There is no truth, so `compare_real.py` measures:
+- agreement with eddy: each volume's displacement at the brain edge, the common transform removed, also by group;
+- each corrected set's leave-one-out residual per shell and single-tensor residual, RMS over the brain;
+- mean FA where FA > 0.25 as acquired.
+
+`between_shells.py` adds two truth-free checks: the b2000 mean registered to the b1000 mean, and an extrapolated b0
+(S1000^2 / S2000) registered to the b0 mean.
+
+| | agreement with eddy, RMS (b0s / b1000 / b2000 group offsets) | LOO residual b0 / b1000 / b2000 | tensor residual | mean FA |
+|---|---|---|---|---|
+| as acquired | | 181.0 / 108.6 / 92.1 | 91.5 | 0.475 |
+| **eddy** | | **139.9 / 79.1 / 72.4** | **75.7** | **0.471** |
+| ours, no anchor | **0.075** (0.138 / 0.035 / 0.048) | 146.4 / 80.5 / 74.4 | 77.2 | 0.477 |
+| **ours, rigid anchor by dipy's MI** | 0.101 (0.194 / 0.068 / 0.082) | 146.4 / **79.1 / 72.6** | 76.2 | 0.476 |
+| ours, rigid anchor by the GPU MI | 0.317 (1.10 / 0.145 / 0.250) | 146.4 / 79.2 / 68.7 | 80.2 | 0.421 |
+| ours, GPU MI with the eddy terms | 0.328 (1.15 / 0.158 / 0.251) | 146.4 / 71.3 / 67.3 | 76.8 | 0.427 |
+
+What it shows:
+- **The fit agrees with eddy on real data.** Volume by volume within each shell, it differs from eddy by about 0.04
+  voxels. Overall it is 0.075, and the rest is mostly the b0s' group offset, about the size of eddy's own shell
+  alignment on this scan: (-0.01, 0.18, 0.04) mm for b1000 and (-0.02, 0.29, -0.00) mm for b2000, 0.03-0.12 deg.
+- **With a rigid dipy-MI anchor, our corrected images fit the models as well as eddy's.** The DW residuals are equal
+  to 0.2 %, and the tensor residual and FA are within 1 %. The b0 residual is 4.6 % higher; our b0s are anchored, not
+  refitted, so that is expected.
+- **The GPU MI is wrong here.** It moves the shells about a voxel against the b0s, and FA drops by 0.05, the
+  signature of a b0-to-DW mismatch. Its self-test had warned: on this pair it disagreed with dipy by up to 0.6 mm. It
+  was accurate on the synthetic scan, whose shells are the b0 times a smooth attenuation. Real b0 and DW means differ
+  in contrast in ways the synthetic scan does not. The likely causes to examine are full-resolution smoothing
+  (sigma 1.5), the Parzen intensity ranges, and masking of the moving image. **Until it matches dipy on real data,
+  dipy's MI (CPU, its own process, about 10 s) is the anchor.**
+- **The eddy-term anchor overfits on real data.** It wins the synthetic scan's between-shell score, but on real data
+  it bends the shells to match real contrast differences. On real data the rigid anchor is the one with support,
+  as in eddy's PEAS.
+- **The between-shell checks** (`between_shells_16974.json`): b2000 against b1000 leaves 0.26 voxels as acquired
+  and 0.24 with the eddy-term anchor. The extrapolated b0 against the b0 mean leaves 1.1 and 0.7. That check
+  assumes mono-exponential decay, so it cannot separate misalignment from kurtosis. It was not rerun on eddy's or on
+  the rigid-anchor sets.
+- **b-vectors**: this affine is radiological (det < 0), so there is no x flip, and `R^T` fits eddy's rotated
+  b-vectors best of the four conventions. Still, ours and eddy's differ by 0.29 deg RMS, about the size of eddy's
+  whole rotation here (0.31 deg). The image displacements agree while the split between rotation and eddy shear
+  does not; on a low-motion scan the rotations are weakly determined. It matters little at this size, but a
+  higher-motion scan should be checked.
 
 ## 3. GPU mapping
 

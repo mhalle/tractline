@@ -38,6 +38,7 @@ ap.add_argument("--anchor-iters", type=int, default=30, help="with --anchor: Gau
 ap.add_argument("--anchor-every", type=int, default=0, help="with --anchor: also every this many steps (0: only at the end)")
 ap.add_argument("--shells", default=None, help="with --all-shells: only these b-values, e.g. 0,2000 (b0s as 0)")
 ap.add_argument("--tensor-truth", action="store_true", help="with --all-shells: the truth from one tensor model, S0 exp(-b g'Dg), S0 the real b0 mean and D a log-linear fit to the real data: every shell aligned with the b0s by construction (the real scan's own between-shell offsets, about 0.3 mm, otherwise sit in the truth)")
+ap.add_argument("--real", default=None, help="with --all-shells --fast --metal: fit the scan as acquired (no simulation, no truth) and write its parameters, corrected volumes and rotated b-vectors to this folder (compare_real.py compares them with eddy's)")
 ap.add_argument("--all-shells", action="store_true", help="every volume of the scan (5 b0s, b1000, b2000: 105 on ON-Harmony), each shell its own LOO-SH predictor, the b0s the mean of the others; eddy scaled by sqrt(b / 2000) and zero for b0s")
 ap.add_argument("--tol", type=float, default=0.0, help="with --fast: stop when no volume's step moves an edge point more than this (voxels) two steps running; --outer is then the cap")
 ap.add_argument("--smooth-steps", type=int, default=2, help="with --fast: the first steps smoothed (FWHM 2, then 1 voxel)")
@@ -233,7 +234,12 @@ th_true[:, 6:] = ((g * np.sqrt(np.clip(bsel, 0, None) / 2000.0)[:, None]) @ A.T)
 th_true_t = torch.tensor(th_true, dtype=dt, device=dev)
 full = torch.stack(torch.meshgrid(*[torch.arange(n, dtype=dt, device=dev) for n in (X, Y, Z)], indexing="ij"), -1).reshape(-1, 3)
 truth_t = torch.tensor(np.moveaxis(truth, -1, 0).copy(), dtype=dt, device=dev)
+if args.real:
+    th_true[:] = 0; th_true_t.zero_()                                                    # no truth: the scores against it are not read
 with torch.no_grad():
+  if args.real:
+    acq = torch.tensor(np.moveaxis(data[..., shell], -1, 0).copy(), dtype=dt, device=dev)   # the scan as acquired
+  else:
     # acquired f_v(y) = truth_v(phi_v^-1(y)): invert by fixed point, x <- x - (phi(x) - y), from x = y
     coef = prefilter(truth_t)
     acq = torch.empty(G, X * Y * Z, dtype=dt, device=dev)
@@ -845,6 +851,20 @@ if args.fast and args.metal:
         err_c = float(((corr - truth_g)[:, mk] ** 2).mean().sqrt())
         err_a = float(((acq - truth_t)[:, mk] ** 2).mean().sqrt())
         timings["image_rmse_in_mask"] = {"corrected": round(err_c, 2), "as_acquired": round(err_a, 2), "noise_sigma": round(sigma, 2)}
+    if args.real:
+        import os
+        os.makedirs(args.real, exist_ok=True)
+        nib.save(nib.Nifti1Image(np.moveaxis(corr.cpu().numpy(), 0, -1).astype(np.float32), img.affine), f"{args.real}/ours.nii.gz")
+        # b-vectors rotated as section 1.3: F R^T F bvec (F the x flip when det(affine) > 0); b0s zero
+        F_ = np.diag([-1.0, 1.0, 1.0]) if np.linalg.det(img.affine[:3, :3]) > 0 else np.eye(3)
+        thn = th.cpu().double().numpy()
+        Rs = rot(torch.tensor(thn[:, 3:6], dtype=torch.float64)).numpy()
+        bv_in = bvec[:, shell].copy(); bv_in[:, isb0] = 0
+        bv_out = np.stack([F_ @ Rs[k].T @ F_ @ bv_in[:, k] for k in range(G)], 1)
+        np.savetxt(f"{args.real}/ours_rotated_bvecs", bv_out, fmt="%.6f")
+        np.savez(f"{args.real}/ours_theta.npz", th=thn, pe_axis=PE, cen=cen.cpu().numpy(), vox=vox, nmon=NMON, shell=shell,
+                 groups=np.array([np.isin(np.arange(G), gi).astype(int) * (k + 1) for k, gi in enumerate(groups)]).sum(0))
+        timings["real_outputs"] = args.real
 def split_err(th):
     tr = th.clone(); tr[:, 6:] = th_true_t[:, 6:]                                         # estimated rigid, true eddy
     te = th.clone(); te[:, :6] = th_true_t[:, :6]                                         # true rigid, estimated eddy
@@ -886,6 +906,6 @@ info.update({"true_edge_displacement_rms_p95_vox": [round(v, 3) for v in disp_tr
              **({"profile_s": {k: round(v, 2) for k, v in prof.items()}, "lm_trials": ntrials} if args.profile else {}),
              **({"steps_run": steps_run, "tol_vox": args.tol} if args.fast else {}),
              "device": args.device})
-tag = f"_{args.device}_o{args.order}" + ("_noloo" if args.no_loo else "") + (f"_s{args.scale}" if args.scale != 1 else "") + (f"_e{args.eddy_scale}" if args.eddy_scale != 1 else "") + f"_n{args.outer}" + (f"_f{args.final_fwhm}" if args.final_fwhm else "") + ("_slm" if args.slm else "") + ("_acq" if args.acq_cost else "") + ("_cubic" if args.cubic else "") + ("_all" if args.all_shells else "") + ("_tt" if args.tensor_truth else "") + (f"_b{args.shells.replace(',', '-')}" if args.shells else "") + (f"_anchor{args.anchor_every}{args.anchor_method}" + ("e" if args.anchor_eddy else "") if args.anchor else "") + (f"_fast_c{args.coarse}_" + ("metal" if args.metal else args.grad) + (f"_sm{args.smooth_steps}" if args.smooth_steps != 2 else "") + (f"_tol{args.tol}" if args.tol else "") if args.fast else "") + ("_prof" if args.profile else "")
+tag = f"_{args.device}_o{args.order}" + ("_noloo" if args.no_loo else "") + (f"_s{args.scale}" if args.scale != 1 else "") + (f"_e{args.eddy_scale}" if args.eddy_scale != 1 else "") + f"_n{args.outer}" + (f"_f{args.final_fwhm}" if args.final_fwhm else "") + ("_slm" if args.slm else "") + ("_acq" if args.acq_cost else "") + ("_cubic" if args.cubic else "") + ("_real" if args.real else "") + ("_all" if args.all_shells else "") + ("_tt" if args.tensor_truth else "") + (f"_b{args.shells.replace(',', '-')}" if args.shells else "") + (f"_anchor{args.anchor_every}{args.anchor_method}" + ("e" if args.anchor_eddy else "") if args.anchor else "") + (f"_fast_c{args.coarse}_" + ("metal" if args.metal else args.grad) + (f"_sm{args.smooth_steps}" if args.smooth_steps != 2 else "") + (f"_tol{args.tol}" if args.tol else "") if args.fast else "") + ("_prof" if args.profile else "")
 json.dump(info, open(OUT / f"proto{tag}.json", "w"), indent=1)
 print(json.dumps({k: v for k, v in info.items() if k != "history"}))
