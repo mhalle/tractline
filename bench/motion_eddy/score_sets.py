@@ -11,6 +11,21 @@ import numpy as np, nibabel as nib
 from scipy.ndimage import map_coordinates
 
 D = Path(sys.argv[1]); tort = nib.load(sys.argv[2])
+
+
+def sets_arg(D, default):
+    """--sets "name=relpath;name=relpath" (relative to the scan folder; "img,bvecs" pairs for track_compare) replaces the
+    default sets; the output file is tagged with the scan folder's number"""
+    if "--sets" not in sys.argv:
+        return default
+    out = {}
+    for item in sys.argv[sys.argv.index("--sets") + 1].split(";"):
+        k, v = item.split("=", 1)
+        out[k] = tuple(D / p for p in v.split(",")) if "," in v else D / v
+    return out
+
+
+TAG = Path(sys.argv[1]).name.replace("motion_eddy_real", "")
 ref = nib.load(D / "imain.nii.gz")
 mask = np.asarray(nib.load(D / "mask.nii.gz").dataobj) > 0
 bval = np.loadtxt(D / "bvals"); bvec = np.loadtxt(D / "bvecs"); G = len(bval)
@@ -74,10 +89,10 @@ tshape = tort.shape[:3]
 out["eddy, round trip through TORTOISE's grid"] = score(resample(resample(eddy, ref.affine, tort.affine, tshape), tort.affine, ref.affine, ref.shape[:3]), fa_mask)
 T = np.asarray(tort.dataobj, np.float32)
 out["TORTOISE (quadratic), resampled to the scan's grid"] = score(resample(T, tort.affine, ref.affine, ref.shape[:3]), fa_mask)
-for name, f in (("ours (GPU MI rigid anchor)", D / "v_gpumi2/ours.nii.gz"), ("ours, no anchor", D / "v_none/ours.nii.gz")):
+for name, f in sets_arg(D, {"ours (GPU MI rigid anchor)": D / "v_gpumi2/ours.nii.gz", "ours, no anchor": D / "v_none/ours.nii.gz"}).items():
     if f.exists():
         o = np.asarray(nib.load(f).dataobj, np.float32)
         out[name] = score(o, fa_mask)
         out[name + ", round trip"] = score(resample(resample(o, ref.affine, tort.affine, tshape), tort.affine, ref.affine, ref.shape[:3]), fa_mask)
 print(json.dumps(out, indent=1))
-json.dump(out, open(Path(__file__).resolve().parent.parent / "results/motion_eddy/score_sets_16974.json", "w"), indent=1)
+json.dump(out, open(Path(__file__).resolve().parent.parent / f"results/motion_eddy/score_sets_{TAG}.json", "w"), indent=1)

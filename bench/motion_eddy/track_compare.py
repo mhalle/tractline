@@ -16,6 +16,21 @@ import numpy as np, nibabel as nib, torch
 from tractline import pipeline as P
 
 D = Path(sys.argv[1])
+
+
+def sets_arg(D, default):
+    """--sets "name=relpath;name=relpath" (relative to the scan folder; "img,bvecs" pairs for track_compare) replaces the
+    default sets; the output file is tagged with the scan folder's number"""
+    if "--sets" not in sys.argv:
+        return default
+    out = {}
+    for item in sys.argv[sys.argv.index("--sets") + 1].split(";"):
+        k, v = item.split("=", 1)
+        out[k] = tuple(D / p for p in v.split(",")) if "," in v else D / v
+    return out
+
+
+TAG = Path(sys.argv[1]).name.replace("motion_eddy_real", "")
 ref = nib.load(D / "imain.nii.gz")
 bval = np.loadtxt(D / "bvals")
 sets = {"as acquired": (D / "imain.nii.gz", D / "bvecs"),
@@ -23,6 +38,7 @@ sets = {"as acquired": (D / "imain.nii.gz", D / "bvecs"),
         "TORTOISE": (D / "tortoise_out2/tortoise.nii", D / "tortoise_out2/tortoise.bvecs"),
         "ours, GPU MI anchor": (D / "v_gpumi2/ours.nii.gz", D / "v_gpumi2/ours_rotated_bvecs"),
         "ours, no anchor": (D / "v_none/ours.nii.gz", D / "v_none/ours_rotated_bvecs")}
+sets = sets_arg(D, sets)
 if "--floor" in sys.argv:                                                                 # the floor: a trivial change, the whole scan moved
     from scipy.ndimage import shift as _shift                                             # by 0.05 voxel (b0s and shells together)
     acq = np.asarray(ref.dataobj, np.float32)
@@ -68,4 +84,4 @@ out = {"per set": {k: {kk: vv for kk, vv in v.items() if kk not in ("dens", "cou
        "pairs": {f"{a} vs {b}": compare(a, b) for a, b in pairs}}
 for k, v in out["pairs"].items():
     print(k.ljust(44), v)
-json.dump(out, open(Path(__file__).resolve().parent.parent / ("results/motion_eddy/track_compare_16974" + ("_floor" if "--floor" in sys.argv else "") + ".json"), "w"), indent=1)
+json.dump(out, open(Path(__file__).resolve().parent.parent / (f"results/motion_eddy/track_compare_{TAG}" + ("_floor" if "--floor" in sys.argv else "") + ".json"), "w"), indent=1)

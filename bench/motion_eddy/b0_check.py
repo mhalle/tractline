@@ -14,6 +14,21 @@ sys.path.insert(0, str(HERE))
 from mi_torch import register
 
 D = Path(sys.argv[1]); dev = torch.device("mps")
+
+
+def sets_arg(D, default):
+    """--sets "name=relpath;name=relpath" (relative to the scan folder; "img,bvecs" pairs for track_compare) replaces the
+    default sets; the output file is tagged with the scan folder's number"""
+    if "--sets" not in sys.argv:
+        return default
+    out = {}
+    for item in sys.argv[sys.argv.index("--sets") + 1].split(";"):
+        k, v = item.split("=", 1)
+        out[k] = tuple(D / p for p in v.split(",")) if "," in v else D / v
+    return out
+
+
+TAG = Path(sys.argv[1]).name.replace("motion_eddy_real", "")
 bval = np.loadtxt(D / "bvals"); b0i = np.flatnonzero(bval < 50)
 mask = np.asarray(nib.load(D / "mask.nii.gz").dataobj) > 0
 edge = mask & ~binary_erosion(mask, iterations=1)
@@ -35,6 +50,7 @@ def edge_rms(d):
 
 sets = {"as acquired": D / "imain.nii.gz", "eddy": D / "eddy.nii.gz", "TORTOISE": D / "tortoise_out2/tortoise.nii",
         "ours": D / "v_bins256/ours.nii.gz", "ours, gain": D / "v_gain/ours.nii.gz", "ours, b0 fix": D / "v_b0fix/ours.nii.gz", "ours, masked output": D / "v_maskout/ours.nii.gz"}
+sets = sets_arg(D, sets)
 if "--only" in sys.argv:
     sets = {k: v for k, v in sets.items() if k in sys.argv[sys.argv.index("--only") + 1].split(";")}
 out = {}
@@ -53,4 +69,4 @@ for name, f in sets.items():
     print(name)
     for r in rows:
         print("   ", r, flush=True)
-json.dump(out, open(HERE.parent / "results/motion_eddy/b0_check_16974.json", "w"), indent=1)
+json.dump(out, open(HERE.parent / f"results/motion_eddy/b0_check_{TAG}.json", "w"), indent=1)

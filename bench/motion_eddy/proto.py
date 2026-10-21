@@ -38,6 +38,11 @@ ap.add_argument("--anchor-flatten", type=float, default=0.0, help="with --anchor
 ap.add_argument("--anchor-no-pe", action="store_true", help="with --anchor: do not apply the anchor's translation along PE (eddy: its PE translations are calculated but not used)")
 ap.add_argument("--anchor-bins", type=int, default=256, help="with --anchor-method gpumi: the MI histogram's bins (eddy's PEAS: 256; 32 biased the real scan's z by 0.3 mm)")
 ap.add_argument("--gain", action="store_true", help="with --fast --metal: a per-volume intensity gain, each step: the observations divided by (their sum / the prediction's sum) over the estimate's voxels (signal drift; SSD otherwise trades it for position)")
+ap.add_argument("--offset-in-solve", action="store_true", help="the earlier step: the eddy constant solved with the PE translation (an exact null direction; the pair walks)")
+ap.add_argument("--no-ec-gauge", action="store_true", help="the earlier step: each shell's common eddy field left free (its leave-one-out predictor cannot see it; it drifts with the steps)")
+ap.add_argument("--no-ref", action="store_true", help="the earlier step: no location reference (the scan's overall position unpinned; it drifts under large motion)")
+ap.add_argument("--shell-pose-free", action="store_true", help="the earlier step: each DW shell's mean pose left free during the fit (its predictor cannot see it; it drifts slowly with the steps)")
+ap.add_argument("--ref-pin", action="store_true", help="the location reference as eddy's: the first b0 held fixed (default: the b0s' mean rigid parameters held at 0)")
 ap.add_argument("--b0-bug", action="store_true", help="reproduce the earlier b0 step: the 16-parameter system solved, then the eddy part dropped")
 ap.add_argument("--mask-output", action="store_true", help="with --metal: the final resample zeroes voxels not inside the field of view for every volume, as eddy's output mask")
 ap.add_argument("--anchor-iters", type=int, default=30, help="with --anchor: Gauss-Newton iterations")
@@ -59,6 +64,7 @@ ap.add_argument("--cubic", action="store_true", help="with --acq-cost: the predi
 ap.add_argument("--acq-cost", action="store_true", help="residual in acquisition space: the prediction moved into each volume's acquired grid and compared with the raw data there (no interpolation of noisy data)")
 ap.add_argument("--save-synth", default=None, help="write the synthetic scan (5 b0s with rigid motion, b0 0 fixed, + the DW volumes) for eddy, then exit")
 ap.add_argument("--slm", action="store_true", help="after each outer iteration, eddy coefficients projected onto [1, g] (eddy's second-level model, linear)")
+ap.add_argument("--scan", default="16974/OXF1PRI001", help="ON-Harmony subject/session of the dir-AP scan to use (synthetic truth or, with --real, the scan fitted)")
 ap.add_argument("--final-fwhm", type=float, default=0.0, help="smoothing (voxels) kept at the full-resolution levels")
 args = ap.parse_args()
 dev = torch.device(args.device)
@@ -68,7 +74,8 @@ torch.manual_seed(args.seed); rng = np.random.default_rng(args.seed)
 sync = (lambda: torch.mps.synchronize()) if dev.type == "mps" else (lambda: None)
 
 # ---------------------------------------------------------------- data -> truth
-D = str(DATA / "ds004712/sub-16974/ses-OXF1PRI001/dwi/sub-16974_ses-OXF1PRI001_dir-AP_dwi")
+SUB, SES = args.scan.split("/")
+D = str(DATA / f"ds004712/sub-{SUB}/ses-{SES}/dwi/sub-{SUB}_ses-{SES}_dir-AP_dwi")
 img = nib.load(D + ".nii.gz")
 data = np.asarray(img.dataobj, dtype=np.float32)
 bval = np.loadtxt(D + ".bval"); bvec = np.loadtxt(D + ".bvec")
@@ -647,6 +654,45 @@ if args.fast:
     quiet, steps_run = 0, 0
     gains_last = None
     no_eddy_b0 = torch.tensor(isb0, device=dev) if (args.all_shells and isb0.any()) else None
+    # parameters held out of the solve, per volume: the b0s' eddy terms (zero at b = 0); every volume's eddy constant,
+    # which is the PE translation by another name (the translation carries the whole PE offset during the fit, and the
+    # two are separated afterwards, as eddy separates them); and with --ref-pin the first b0's rigid 6 (eddy's location
+    # reference). By default the location reference is the b0s' mean pose instead (gauge() below): a pinned volume is
+    # the one volume never interpolated, and the others settle around a consensus slightly off it
+    frozen = torch.zeros(G, P, dtype=torch.bool, device=dev)
+    if no_eddy_b0 is not None and not args.b0_bug:
+        frozen[no_eddy_b0, 6:] = True
+    if not args.offset_in_solve:
+        frozen[:, 6] = True
+    ref_vol = int(np.flatnonzero(isb0)[0]) if isb0.any() else 0
+    if args.ref_pin and not args.no_ref:
+        frozen[ref_vol, :6] = True
+    # each group's mean pose is invisible to its own predictor. The b0s' mean pose is the location reference; each DW
+    # shell's is held at 0 during the fit too (it drifts slowly otherwise) and set at the end by the shell anchor
+    pose_groups = []
+    if isb0.any() and not args.no_ref and not args.ref_pin:
+        pose_groups.append(torch.tensor(np.flatnonzero(isb0), device=dev))
+    if not args.shell_pose_free:
+        pose_groups += [torch.tensor(idx, device=dev) for idx in groups if not isb0[idx].all() and len(idx) > 1]
+    keep = (~frozen).to(dt)
+    # each DW shell's eddy field common to all its directions is invisible to the shell's own predictor and drifts with
+    # the steps. Eddy fields scale with the gradient, so that common part is zero: after each step, each eddy term's
+    # intercept in a per-shell linear model in g is removed (eddy's second-level model, linear in (b / 1000) g with
+    # no intercept, makes the same assumption). The constant term is held out above, so terms 7.. only
+    ec_gauge = []
+    if not args.no_ec_gauge and NMON > 1:
+        for idx in groups:
+            if isb0[idx].all() or len(idx) < 5:
+                continue
+            Xg = np.c_[np.ones(len(idx)), g[idx]]
+            ec_gauge.append((torch.tensor(idx, device=dev), torch.tensor(np.linalg.pinv(Xg)[0], dtype=dt, device=dev)))
+
+    def gauge(th):
+        for idx, w0 in ec_gauge:
+            th[idx, 7:] -= w0 @ th[idx, 7:]
+        for idx in pose_groups:                                                           # each group's mean pose
+            th[idx, :6] -= th[idx, :6].mean(0)
+        return th
     if args.metal:
         import metal_step as M
         nz = np.argwhere(emask4)                                                          # the coefficients' crop: the predictions'
@@ -726,14 +772,15 @@ if args.fast:
                   break
               A_ = H + torch.diag_embed(mu[:, None] * Hd)
               bb = b
-              if no_eddy_b0 is not None and not args.b0_bug:                          # b0s: the rigid 6 alone (eddy terms fixed at 0),
-                  A_ = A_.clone(); bb = b.clone()                                      # not the 16 solved and the eddy part dropped: the
-                  A_[no_eddy_b0, :6, 6:] = 0; A_[no_eddy_b0, 6:, :6] = 0               # PE translation and the eddy constant are confounded,
-                  A_[no_eddy_b0, 6:, 6:] = torch.eye(P - 6, dtype=dt, device=dev)       # so dropping the latter lost most of the b0s' PE step
-                  bb[no_eddy_b0, 6:] = 0
+              # held-out parameters leave the system (the b0s solve the rigid 6 alone, not the 16 solved and the eddy part
+              # dropped: the PE translation and the eddy constant are confounded, so dropping the latter lost most of the
+              # b0s' PE step)
+              A_ = A_ * keep[:, :, None] * keep[:, None, :] + torch.diag_embed(frozen.to(dt))
+              bb = b * keep
               step = -torch.linalg.solve(A_.cpu(), bb.cpu()[..., None])[..., 0].to(dev) * scale
               if no_eddy_b0 is not None:
                   step[no_eddy_b0, 6:] = 0                                                 # eddy currents are zero at b = 0
+              step = step * keep
               cand = th + step
               big = (phi_fast(cand, probe) - phi_fast(th, probe)).norm(dim=-1).amax(1) > args.trial_vox
               need = todo & (big | (it < 2))                                            # a trial only for large steps (and the first two)
@@ -756,7 +803,7 @@ if args.fast:
               else:
                   break
           moved = float((phi_fast(th_new, probe) - phi_fast(th, probe)).norm(dim=-1).amax()) if args.tol else 1.0
-          th = th_new
+          th = gauge(th_new)
           tick("LM trials (solve, inverse, sample)")
         if args.anchor and args.anchor_every and (it + 1) % args.anchor_every == 0:
             th, a_ = shell_anchor(th); anchors.append({"step": it, **a_})
@@ -893,7 +940,19 @@ if args.fast and args.metal:
         bv_in = bvec[:, shell].copy(); bv_in[:, isb0] = 0
         bv_out = np.stack([F_ @ Rs[k].T @ F_ @ bv_in[:, k] for k in range(G)], 1)
         np.savetxt(f"{args.real}/ours_rotated_bvecs", bv_out, fmt="%.6f")
-        np.savez(f"{args.real}/ours_theta.npz", th=thn, pe_axis=PE, cen=cen.cpu().numpy(), vox=vox, nmon=NMON, shell=shell,
+        # reported parameters: each DW volume's PE offset (translation / voxel + eddy constant, voxels) split as eddy
+        # splits it: the part a demeaned linear model in (b / 1000) g explains is the field offset, the rest movement.
+        # The sampling map is unchanged; th_fit keeps the parameters as fitted (the offset all in the translation)
+        th_fit = thn.copy()
+        dw = ~isb0
+        if dw.sum() > 3:
+            off = thn[dw, PE] / vox[PE] + thn[dw, 6]
+            Xd = (bsel[dw] / 1000.0)[:, None] * bvec[:, shell][:, dw].T
+            Xd = Xd - Xd.mean(0)
+            off_hat = Xd @ np.linalg.lstsq(Xd, off, rcond=None)[0]
+            thn[dw, 6] = off_hat
+            thn[dw, PE] = (off - off_hat) * vox[PE]
+        np.savez(f"{args.real}/ours_theta.npz", th=thn, th_fit=th_fit, pe_axis=PE, cen=cen.cpu().numpy(), vox=vox, nmon=NMON, shell=shell,
                  groups=np.array([np.isin(np.arange(G), gi).astype(int) * (k + 1) for k, gi in enumerate(groups)]).sum(0))
         timings["real_outputs"] = args.real
 def split_err(th):

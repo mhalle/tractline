@@ -17,7 +17,9 @@ from pathlib import Path
 import numpy as np, nibabel as nib
 
 D = Path(sys.argv[1])
-T = np.load(D / "ours_theta.npz")
+O = D / sys.argv[sys.argv.index("--ours") + 1] if "--ours" in sys.argv else D   # the prototype's outputs
+TAG = D.name.replace("motion_eddy_real", "")
+T = np.load(O / "ours_theta.npz")
 th, PE, cen, vox, nmon, grp = T["th"], int(T["pe_axis"]), T["cen"], T["vox"], int(T["nmon"]), T["groups"]
 mask = np.asarray(nib.load(D / "mask.nii.gz").dataobj) > 0
 from scipy.ndimage import binary_erosion
@@ -62,7 +64,7 @@ if len(files) == G:
                                                                       "group mean difference rms": round(float(np.sqrt((mg ** 2).mean())), 3)}
     out["agreement by group"] = by
 try:
-    re_, ro = np.loadtxt(D / "eddy.eddy_rotated_bvecs"), np.loadtxt(D / "ours_rotated_bvecs")
+    re_, ro = np.loadtxt(D / "eddy.eddy_rotated_bvecs"), np.loadtxt(O / "ours_rotated_bvecs")
     dw = bval > 50
     c = np.abs((re_[:, dw] * ro[:, dw]).sum(0) / np.linalg.norm(re_[:, dw], axis=0) / np.linalg.norm(ro[:, dw], axis=0))
     ang = np.degrees(np.arccos(np.clip(c, -1, 1)))
@@ -98,7 +100,7 @@ def fa_of(Dc):
     return np.sqrt(1.5 * ((ev - md) ** 2).sum(1) / np.clip((ev ** 2).sum(1), 1e-12, None))
 
 
-sets = {"as acquired": D / "imain.nii.gz", "eddy": D / "eddy.nii.gz", "ours": D / "ours.nii.gz"}
+sets = {"as acquired": D / "imain.nii.gz", "eddy": D / "eddy.nii.gz", "ours": O / "ours.nii.gz"}
 fa_mask = None
 fit = {}
 for name, f in sets.items():
@@ -116,4 +118,4 @@ for name, f in sets.items():
                  "mean FA where FA > 0.25 as acquired": round(float(fa[fa_mask].mean()), 4)}
 out["model fit"] = fit
 print(json.dumps(out, indent=1))
-json.dump(out, open(Path(__file__).resolve().parent.parent / "results/motion_eddy/compare_real_16974.json", "w"), indent=1)
+json.dump(out, open(Path(__file__).resolve().parent.parent / (f"results/motion_eddy/compare_real_{TAG}" + ("_" + O.name if O != D else "") + ".json"), "w"), indent=1)

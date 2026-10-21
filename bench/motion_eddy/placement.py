@@ -14,6 +14,21 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from mi_torch import register
 
 D = Path(sys.argv[1]); dev = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
+
+
+def sets_arg(D, default):
+    """--sets "name=relpath;name=relpath" (relative to the scan folder; "img,bvecs" pairs for track_compare) replaces the
+    default sets; the output file is tagged with the scan folder's number"""
+    if "--sets" not in sys.argv:
+        return default
+    out = {}
+    for item in sys.argv[sys.argv.index("--sets") + 1].split(";"):
+        k, v = item.split("=", 1)
+        out[k] = tuple(D / p for p in v.split(",")) if "," in v else D / v
+    return out
+
+
+TAG = Path(sys.argv[1]).name.replace("motion_eddy_real", "")
 bval = np.loadtxt(D / "bvals"); mask = np.asarray(nib.load(D / "mask.nii.gz").dataobj) > 0
 edge = mask & ~binary_erosion(mask, iterations=1)
 mk = torch.as_tensor(binary_dilation(mask, iterations=2), device=dev)
@@ -43,6 +58,7 @@ sets = {"ours, GPU MI rigid anchor": D / "v_gpumi2/ours.nii.gz", "ours, no ancho
         "ours, dipy MI anchor": D / "v_dipy/ours.nii.gz", "ours, GPU MI anchor, flattened": D / "v_flat4/ours.nii.gz",
         "ours, GPU MI anchor, flattened, no PE translation": D / "v_flat4nope/ours.nii.gz",
         "ours, GPU MI anchor, 256 bins": D / "v_bins256/ours.nii.gz", "TORTOISE": D / "tortoise_out2/tortoise.nii", "as acquired": D / "imain.nii.gz"}
+sets = sets_arg(D, sets)
 out = {}
 for name, f in sets.items():
     if not Path(f).exists():
@@ -55,4 +71,4 @@ for name, f in sets.items():
                  "b0 mean vs eddy's (mm, deg)": [round(float(v), 3) for v in rb[:3]] + [round(math.degrees(float(v) * 0.01), 3) for v in rb[3:]],
                  "DW mean vs eddy's (mm, deg)": [round(float(v), 3) for v in rd[:3]] + [round(math.degrees(float(v) * 0.01), 3) for v in rd[3:]]}
     print(name, json.dumps(out[name]), flush=True)
-json.dump(out, open(Path(__file__).resolve().parent.parent / "results/motion_eddy/placement_16974.json", "w"), indent=1)
+json.dump(out, open(Path(__file__).resolve().parent.parent / f"results/motion_eddy/placement_{TAG}.json", "w"), indent=1)
