@@ -31,11 +31,12 @@ ap.add_argument("--inner", type=int, default=3)
 ap.add_argument("--seed", type=int, default=0)
 ap.add_argument("--anchor", action="store_true", help="with --all-shells --fast --metal: after the fit, each DW shell's corrected mean registered rigidly to the corrected mean b0 (normalized gradient fields), the shift added to the shell's volumes (decision 5)")
 ap.add_argument("--anchor-selftest", action="store_true")
-ap.add_argument("--anchor-method", default="ngf", choices=["ngf", "mi"], help="with --anchor: Gauss-Newton NGF on the GPU, or dipy's rigid mutual information on the CPU (eddy's PEAS uses MI)")
+ap.add_argument("--anchor-method", default="ngf", choices=["ngf", "mi", "gpumi"], help="with --anchor: Gauss-Newton NGF on the GPU, dipy's rigid mutual information on the CPU (eddy's PEAS uses MI), or mi_torch's MI on the device")
 ap.add_argument("--anchor-truthtest", action="store_true", help="a mechanical check: each group's corrected mean registered (NGF, same contrast) to the truth's mean of that group in the estimate's frame; found against needed, printed")
 ap.add_argument("--anchor-iters", type=int, default=30, help="with --anchor: Gauss-Newton iterations")
 ap.add_argument("--anchor-every", type=int, default=0, help="with --anchor: also every this many steps (0: only at the end)")
 ap.add_argument("--shells", default=None, help="with --all-shells: only these b-values, e.g. 0,2000 (b0s as 0)")
+ap.add_argument("--tensor-truth", action="store_true", help="with --all-shells: the truth from one tensor model, S0 exp(-b g'Dg), S0 the real b0 mean and D a log-linear fit to the real data: every shell aligned with the b0s by construction (the real scan's own between-shell offsets, about 0.3 mm, otherwise sit in the truth)")
 ap.add_argument("--all-shells", action="store_true", help="every volume of the scan (5 b0s, b1000, b2000: 105 on ON-Harmony), each shell its own LOO-SH predictor, the b0s the mean of the others; eddy scaled by sqrt(b / 2000) and zero for b0s")
 ap.add_argument("--tol", type=float, default=0.0, help="with --fast: stop when no volume's step moves an edge point more than this (voxels) two steps running; --outer is then the cap")
 ap.add_argument("--smooth-steps", type=int, default=2, help="with --fast: the first steps smoothed (FWHM 2, then 1 voxel)")
@@ -102,6 +103,19 @@ W_loo = (Hhat - np.diag(dH)) / (1 - dH)[:, None]                                
 W_all = Hhat
 S = data[..., shell].reshape(-1, G)
 truth = (S @ Hhat.T).reshape(X, Y, Z, G)                                                 # the SH fit: the truth
+if args.tensor_truth:
+    # one model for all volumes: log S = log S0 - b g'Dg, fitted per voxel to the real data (b0s and DW), then the truth
+    # rebuilt from the b0 mean S0 itself, so every volume's edges are S0's: the shells aligned with the b0s exactly
+    bs = np.where(isb0, 0.0, bsel) / 1000.0
+    Bm = np.stack([np.ones(G), -bs * g[:, 0] ** 2, -bs * g[:, 1] ** 2, -bs * g[:, 2] ** 2,
+                   -2 * bs * g[:, 0] * g[:, 1], -2 * bs * g[:, 0] * g[:, 2], -2 * bs * g[:, 1] * g[:, 2]], 1)
+    logS = np.log(np.clip(S, 1.0, None))
+    coef = logS @ np.linalg.pinv(Bm).T                                                    # (voxels, 7): log S0, D (um^2/ms)
+    Dtt = coef[:, 1:].copy()
+    Dtt[~mask.reshape(-1)] = 0                                                            # outside the brain: no attenuation model
+    S0 = data[..., bval < 50].mean(-1).reshape(-1)
+    att = np.exp(-(Dtt @ Bm[:, 1:].T))                                                   # (voxels, G)
+    truth = (S0[:, None] * np.clip(att, 0, 1)).reshape(X, Y, Z, G).astype(np.float32)
 dwv = ~isb0                                                                               # the noise from the DW fits only
 sigma = float(np.sqrt(((S - S @ Hhat.T)[mask.reshape(-1)][:, dwv] ** 2).mean() / (1 - dH[dwv].mean())))
 info = {"data": D.split("/")[-1], "grid": [X, Y, Z], "vox_mm": vox.tolist(), "volumes": int(G), "mask_voxels": int(mask.sum()),
@@ -230,6 +244,23 @@ with torch.no_grad():
         acq[g0:g0 + 10] = sample_cubic(coef[g0:g0 + 10], x)
     acq = acq.reshape(G, X, Y, Z)
     acq = acq + sigma * torch.randn_like(acq)
+if args.save_synth and args.all_shells:
+    # the full scan as simulated (every volume, its motion and eddy), for eddy; scored by compare_eddy_all.py
+    import os
+    os.makedirs(args.save_synth, exist_ok=True)
+    imain = np.moveaxis(acq.clamp_min(0).cpu().numpy(), 0, -1).astype(np.float32)
+    nib.save(nib.Nifti1Image(imain, img.affine), f"{args.save_synth}/imain.nii.gz")
+    nib.save(nib.Nifti1Image(mask.astype(np.uint8), img.affine), f"{args.save_synth}/mask.nii.gz")
+    bv = bsel.copy(); bv[isb0] = 0
+    bvec_o = bvec[:, shell].copy(); bvec_o[:, isb0] = 0
+    np.savetxt(f"{args.save_synth}/bvals", bv[None], fmt="%g")
+    np.savetxt(f"{args.save_synth}/bvecs", bvec_o, fmt="%.6f")
+    open(f"{args.save_synth}/acqp.txt", "w").write("0 -1 0 0.0690115\n")
+    np.savetxt(f"{args.save_synth}/index.txt", np.ones((1, G), int), fmt="%d")
+    np.savez(f"{args.save_synth}/truth.npz", th=th_true, groups=np.array([np.isin(np.arange(G), gi).astype(int) * (k + 1) for k, gi in enumerate(groups)]).sum(0),
+             pe_axis=PE, cen=cen.cpu().numpy(), vox=vox, nmon=NMON, edge=edge, sigma=sigma)
+    print("wrote", args.save_synth, imain.shape, flush=True)
+    sys.exit(0)
 if args.save_synth:
     import os
     os.makedirs(args.save_synth, exist_ok=True)
@@ -486,18 +517,17 @@ def gn_ngf(mov, fixed, mk, iters=None):
 
 
 def mi_rigid(mov, fixed, mk):
-    """dipy's rigid registration by mutual information (CPU), mov onto fixed, both (X, Y, Z) on the reference grid; in
-    phi's parameterization: d (3 mm, 3 x 0.01 rad) with mov(phi_d(x)) ~ fixed(x)."""
-    from dipy.align import affine_registration
-    A = np.diag(list(vox) + [1.0]); A[:3, 3] = -np.asarray(cen.cpu()) * vox               # world = (x - c) vox, phi's frame
-    m_, f_ = mov.cpu().double().numpy(), fixed.cpu().double().numpy()
-    _, M_ = affine_registration(m_, f_, moving_affine=A, static_affine=A, pipeline=["rigid"], nbins=32,
-                                level_iters=[200, 100, 50], sigmas=[2.0, 1.0, 0.0], factors=[4, 2, 1],
-                                static_mask=binary_dilation(mask, iterations=2).astype(np.int32))
-    R_, t_ = M_[:3, :3], M_[:3, 3]                                                         # moving world = R static world + t
-    beta = -math.asin(max(-1.0, min(1.0, R_[2, 0])))
-    alpha, gamma = math.atan2(R_[2, 1], R_[2, 2]), math.atan2(R_[1, 0], R_[0, 0])           # R = Rz(gamma) Ry(beta) Rx(alpha)
-    return torch.tensor([t_[0], t_[1], t_[2], alpha / 0.01, beta / 0.01, gamma / 0.01], dtype=dt, device=dev)
+    """dipy's rigid mutual-information registration (mi_dipy.py, in a process of its own: dipy's and torch's OpenMP
+    runtimes clash in one), mov onto fixed on the reference grid; in phi's parameterization: d (3 mm, 3 x 0.01 rad) with
+    mov(phi_d(x)) ~ fixed(x)."""
+    import subprocess, tempfile, os, json as _json
+    with tempfile.TemporaryDirectory() as tdir:
+        np.savez(os.path.join(tdir, "in.npz"), mov=mov.cpu().double().numpy(), fixed=fixed.cpu().double().numpy(),
+                 mask=binary_dilation(mask, iterations=2), vox=np.asarray(vox), cen=np.asarray(cen.cpu()))
+        subprocess.run([sys.executable, str(__import__("pathlib").Path(__file__).resolve().parent / "mi_dipy.py"), "register",
+                        os.path.join(tdir, "in.npz"), os.path.join(tdir, "out.json")], check=True, capture_output=True)
+        r = _json.load(open(os.path.join(tdir, "out.json")))
+    return torch.tensor(r[:3] + [v / 0.01 for v in r[3:]], dtype=dt, device=dev)
 
 
 def anchor_truthtest(th):
@@ -554,7 +584,11 @@ def shell_anchor(th):
         eps_m = float(torch.stack(torch.gradient(mov)).norm(dim=0)[mk].mean()) * 0.5
         eps_f = float(torch.stack(torch.gradient(fixed)).norm(dim=0)[mk].mean()) * 0.5
         fixed_n = fixed / eps_f; mov_n = mov / eps_m                                     # gradients scaled to ~1
-        dd = mi_rigid(mov, fixed, mk) if args.anchor_method == "mi" else gn_ngf(mov_n, fixed_n, mk)
+        if args.anchor_method == "gpumi":
+            from mi_torch import register as mi_register
+            dd = mi_register(mov, fixed, mk, vox)
+        else:
+            dd = mi_rigid(mov, fixed, mk) if args.anchor_method == "mi" else gn_ngf(mov_n, fixed_n, mk)
         if label is not None:
             print(label, "-> recovered", [round(v, 3) for v in dd[:3].tolist()], "mm", [round(float(v) * 0.01 * 180 / math.pi, 3) for v in dd[3:]], "deg", flush=True)
             continue
@@ -849,6 +883,6 @@ info.update({"true_edge_displacement_rms_p95_vox": [round(v, 3) for v in disp_tr
              **({"profile_s": {k: round(v, 2) for k, v in prof.items()}, "lm_trials": ntrials} if args.profile else {}),
              **({"steps_run": steps_run, "tol_vox": args.tol} if args.fast else {}),
              "device": args.device})
-tag = f"_{args.device}_o{args.order}" + ("_noloo" if args.no_loo else "") + (f"_s{args.scale}" if args.scale != 1 else "") + (f"_e{args.eddy_scale}" if args.eddy_scale != 1 else "") + f"_n{args.outer}" + (f"_f{args.final_fwhm}" if args.final_fwhm else "") + ("_slm" if args.slm else "") + ("_acq" if args.acq_cost else "") + ("_cubic" if args.cubic else "") + ("_all" if args.all_shells else "") + (f"_b{args.shells.replace(',', '-')}" if args.shells else "") + (f"_anchor{args.anchor_every}{args.anchor_method}" if args.anchor else "") + (f"_fast_c{args.coarse}_" + ("metal" if args.metal else args.grad) + (f"_sm{args.smooth_steps}" if args.smooth_steps != 2 else "") + (f"_tol{args.tol}" if args.tol else "") if args.fast else "") + ("_prof" if args.profile else "")
+tag = f"_{args.device}_o{args.order}" + ("_noloo" if args.no_loo else "") + (f"_s{args.scale}" if args.scale != 1 else "") + (f"_e{args.eddy_scale}" if args.eddy_scale != 1 else "") + f"_n{args.outer}" + (f"_f{args.final_fwhm}" if args.final_fwhm else "") + ("_slm" if args.slm else "") + ("_acq" if args.acq_cost else "") + ("_cubic" if args.cubic else "") + ("_all" if args.all_shells else "") + ("_tt" if args.tensor_truth else "") + (f"_b{args.shells.replace(',', '-')}" if args.shells else "") + (f"_anchor{args.anchor_every}{args.anchor_method}" if args.anchor else "") + (f"_fast_c{args.coarse}_" + ("metal" if args.metal else args.grad) + (f"_sm{args.smooth_steps}" if args.smooth_steps != 2 else "") + (f"_tol{args.tol}" if args.tol else "") if args.fast else "") + ("_prof" if args.profile else "")
 json.dump(info, open(OUT / f"proto{tag}.json", "w"), indent=1)
 print(json.dumps({k: v for k, v in info.items() if k != "history"}))
