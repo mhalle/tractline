@@ -205,6 +205,9 @@ that would reverse it. None of them changes the default pipeline: everything her
 
 ### What still needs the owner
 
+- **The merge plan and stage configuration** (sections 5.1-5.2, written 2026-10-22 to resume after the 28 Oct deadline):
+  whether to introduce `PipelineConfig` with the pipeline wiring, or add `motion_eddy=` as one more keyword first.
+
 These are not design choices.
 
 - **GPU time**:
@@ -1342,6 +1345,85 @@ as it is.
   **Run-time effect**: a replicate takes 83-207 s now (`calibration_cohortII.py`'s per-protocol table, M2). The step
   adds about 3-12 s, and R1's forward push one more resample, about 1-3 s. That is +5-10 % per run, about +2-4 min per
   17-run ensemble on the M2, and +2-4 s per run on CUDA. The GPU, not the CPU, stays the ensemble's bottleneck.
+
+### 5.1 Merge plan (resume after the 28 Oct ISMRM deadline)
+
+Written 2026-10-22, at fc20c01 on `motion-eddy`. Nothing here changes the default pipeline, and none of it should land
+on main before the abstract is in.
+
+**Where things are.**
+- `motion-eddy` holds the design doc and `bench/motion_eddy/`. That is the prototype `proto.py` (a script with flags),
+  the Metal kernels `metal_step.py`, the GPU MI `mi_torch.py`, and the scorers (`compare_real.py`, `placement.py`,
+  `b0_check.py`, `score_sets.py`, `track_compare.py`, `score_phantom.py`, `score_possum.py`).
+- `src/tractline/` has none of it.
+- The pipeline's convention for optional work is already set: `run()` takes opt-in keywords that default to None
+  (`denoise=`, `tracker=`). None is today's path; an options dict is checked against its allowed keys (as `tracker=`
+  is against `TRACKER_SETTINGS`); what ran is recorded on `Correction`.
+
+**Four steps, each its own commit or PR.**
+
+1. **Doc and bench code to main; no pipeline change.** `docs/gpu-motion-eddy-design.md` and `bench/motion_eddy/`
+   merge as they are, so the validation stays reproducible. Nothing at runtime changes.
+2. **The library module, not yet wired.** `src/tractline/motion_eddy.py`, from the prototype's final form:
+   - `estimate(dwi, bval, bvec, affine, pe_axis, field_hz=None, options=None) -> MotionEddy`. It returns per-volume
+     rigid and eddy parameters (the PE offset split as eddy splits it, plus the fitted ones), rotated b-vectors, the
+     shell anchors, and a QC summary (displacements at the mask edge, steps, final cost, seconds).
+   - `apply_volumes(dwi, field_hz, result, ...)`: one resample per volume composing field, motion and eddy, with the
+     validity mask (output masking, section 2.9).
+   - The Metal kernels move to `motion_eddy_metal.py`. A plain-torch path covers CUDA and the CPU until the Triton port.
+   - The MI anchor moves to its own module, from `mi_torch.register`.
+   - The bench's `proto.py` then calls the library, so bench and pipeline share one implementation.
+   - Tests: the float64 kernel checks (`metal_check.py`, `mi_torch_check.py`), a small known-truth synthetic case
+     (rigid and eddy, two shells), and determinism.
+3. **Pipeline wiring, off by default.**
+   - `correct(s, timer, device, motion_eddy=None)` and `run(..., motion_eddy=None)`. None keeps today's output bit for
+     bit.
+   - With the step on, `track()` passes `corr.bvec` (the rotated table) to `prepare`.
+   - `Correction` gains `volume_motion`, `eddy`, `bvec` and a `motion_eddy` summary, all None when off.
+   - The step is timed as `motion_eddy`, among `pipeline_stages`, and gets a short line in `Correction.note`.
+   - It runs without a reversed b0 pair too, with `h = 0`, as eddy runs without topup. The note says which case ran.
+4. **Ensemble replicates, after the validation below.** The forward-model bootstrap R1 (section 5, decision 4): each
+   replicate carries the scan's own estimated motion and eddy distortion for the step to find again.
+   - Turning the step on changes the calibrated outputs, so the calibration maps are relearned with it.
+   - The protocol descriptor gains a `motion_eddy` item, and a map learned without the step refuses to apply to runs
+     with it, as maps already refuse mismatched protocols (decision 6).
+
+**Before step 3 is turned on for anything that matters:**
+- The predictor's weight chosen per shell from the data (section 2.11's top open item; proposed as its own task). The
+  default 0.06 stands until then.
+- The real-scan comparisons (sections 2.4-2.10) rerun at lambda 0.06.
+- Phase 0 (section 7): eddy on the extreme rescan pairs, to see whether correction moves the calibration gap.
+
+### 5.2 Making the stages optional and configurable
+
+Today each optional stage is one more keyword on `run()` (`denoise`, `denoise_order`, `tracker`, `shell`, and now
+`motion_eddy`). That grows awkward, and the settings are recorded in more than one place. The plan is one frozen
+configuration object, `PipelineConfig`, with one entry per stage:
+
+| stage | setting | default (today's path) |
+|---|---|---|
+| denoise | None, `"mppca"` or `"patch2self"` (a setting may ride along, `"mppca:r3"`); order `"acquired"` or `"corrected"` | None |
+| field | `"auto"` (estimate and apply when a reversed pair passes its checks) or `"off"` | `"auto"` |
+| motion_eddy | None, `"rigid"`, `"linear"` or `"quadratic"`, with options: `steps` (40), `sh_lambda` (0.06), `sh_order` (6), `anchor` (`"mi"` or `"none"`), `b0_ec` (the b0s fit the PE polynomial), `mask_output` (eddy's default: on) | None |
+| track | `shell`, tracker settings (`TRACKER_SETTINGS`) | today's (ORG settings) |
+| label | `"rapidparc"` or `"tractcloud"` | `"rapidparc"` |
+| output | TRX path and options | none |
+
+- **Validation.** Unknown keys and values raise at construction, before any work, as `tracker=` does today.
+- **Dependencies are explicit.** motion_eddy with the field off runs with `h = 0`. Outlier replacement, when it comes,
+  requires motion_eddy. Each stage states what it requires.
+- **Compatibility.** `run(**kwargs)` keeps working: its keywords translate into a `PipelineConfig`, so the bench and the
+  ensemble do not break. New code passes `config=`.
+- **Provenance.** The config serializes to JSON (`to_dict` / `from_dict`) and is written into the ensemble's `runs.json`
+  and the bench's `pipeline_settings`. Its hash keys the calibration maps.
+- **Command line.** One flag per setting, mapped onto the config, for example
+  `--denoise mppca --motion-eddy quadratic --motion-eddy-opt sh_lambda=0.06`.
+- **Stages as functions.** Each stage stays a function of (subject or state, its own config entry, timer) that returns
+  its result and what it did. `run()` calls the enabled ones in order, so a stage is optional by its entry being None
+  (or `"off"`).
+
+**Decision for the owner:** introduce `PipelineConfig` with step 3, or add `motion_eddy=` as one more keyword now and
+refactor later. The config object touches `run()`'s signature, which the bench and the ensemble call.
 
 ## 6. Validation plan
 
