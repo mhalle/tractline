@@ -65,6 +65,9 @@ ap.add_argument("--cubic", action="store_true", help="with --acq-cost: the predi
 ap.add_argument("--acq-cost", action="store_true", help="residual in acquisition space: the prediction moved into each volume's acquired grid and compared with the raw data there (no interpolation of noisy data)")
 ap.add_argument("--save-synth", default=None, help="write the synthetic scan (5 b0s with rigid motion, b0 0 fixed, + the DW volumes) for eddy, then exit")
 ap.add_argument("--slm", action="store_true", help="after each outer iteration, eddy coefficients projected onto [1, g] (eddy's second-level model, linear)")
+ap.add_argument("--pred-rot", action="store_true", help="rebuild the predictor each step from the gradient directions rotated by the current motion (no gain on the SHORELine phantoms, worse on DW-POSSUM large motion; off by default)")
+ap.add_argument("--pe", type=int, default=None, help="the PE axis (0, 1, 2), over the sidecar and the default (1)")
+ap.add_argument("--dwi", default=None, help="any DWI instead of --scan: the path without .nii.gz (with .bval, .bvec, and .json for the PE axis)")
 ap.add_argument("--scan", default="16974/OXF1PRI001", help="ON-Harmony subject/session of the dir-AP scan to use (synthetic truth or, with --real, the scan fitted)")
 ap.add_argument("--final-fwhm", type=float, default=0.0, help="smoothing (voxels) kept at the full-resolution levels")
 args = ap.parse_args()
@@ -77,6 +80,9 @@ sync = (lambda: torch.mps.synchronize()) if dev.type == "mps" else (lambda: None
 # ---------------------------------------------------------------- data -> truth
 SUB, SES = args.scan.split("/")
 D = str(DATA / f"ds004712/sub-{SUB}/ses-{SES}/dwi/sub-{SUB}_ses-{SES}_dir-AP_dwi")
+if args.dwi:
+    D = args.dwi[:-7] if args.dwi.endswith(".nii.gz") else args.dwi
+    SUB = Path(D).name
 img = nib.load(D + ".nii.gz")
 data = np.asarray(img.dataobj, dtype=np.float32)
 bval = np.loadtxt(D + ".bval"); bvec = np.loadtxt(D + ".bvec")
@@ -94,6 +100,10 @@ emask = binary_dilation(mask, iterations=2)
 edge = mask & ~binary_erosion(mask, iterations=1)
 X, Y, Z = mask.shape
 PE = 1                                                                                   # j
+if args.dwi and Path(D + ".json").exists():                                              # the PE axis from the sidecar
+    PE = "ijk".index(json.load(open(D + ".json")).get("PhaseEncodingDirection", "j")[0])
+if args.pe is not None:
+    PE = args.pe
 G = len(shell)
 from dipy.reconst.shm import real_sh_descoteaux
 bsel = bval[shell]
@@ -105,17 +115,31 @@ Hhat = np.zeros((G, G))
 groups = [np.flatnonzero(isb0)] if isb0.any() else []
 for b in sorted(set(np.round(bsel[~isb0] / 100) * 100)):
     groups.append(np.flatnonzero((~isb0) & (np.abs(bsel - b) < 100)))
-for idx in groups:                                                                        # block-diagonal: one predictor per shell
-    if isb0[idx[0]]:
-        Hhat[np.ix_(idx, idx)] = 1.0 / len(idx)                                           # b0s: their mean
-        continue
-    gg = g[idx]
-    theta, phi = np.arccos(np.clip(gg[:, 2], -1, 1)), np.arctan2(gg[:, 1], gg[:, 0])
-    B, m_, l_ = real_sh_descoteaux(6, theta, phi, legacy=False)
-    L = np.diag((l_ * (l_ + 1)) ** 2)
-    Hhat[np.ix_(idx, idx)] = B @ np.linalg.solve(B.T @ B + lam * L, B.T)
+
+
+def build_hat(gd):
+    """The per-shell regularized SH smoother (G, G) for gradient directions gd (G, 3); the b0s' block is their mean."""
+    H = np.zeros((G, G))
+    for idx in groups:                                                                    # block-diagonal: one predictor per shell
+        if isb0[idx[0]]:
+            H[np.ix_(idx, idx)] = 1.0 / len(idx)                                          # b0s: their mean
+            continue
+        gg = gd[idx]
+        theta, phi = np.arccos(np.clip(gg[:, 2], -1, 1)), np.arctan2(gg[:, 1], gg[:, 0])
+        B, m_, l_ = real_sh_descoteaux(6, theta, phi, legacy=False)
+        L = np.diag((l_ * (l_ + 1)) ** 2)
+        H[np.ix_(idx, idx)] = B @ np.linalg.solve(B.T @ B + lam * L, B.T)
+    return H
+
+
+def build_loo(gd):
+    H = build_hat(gd); dh = np.diag(H)
+    return (H - np.diag(dh)) / (1 - dh)[:, None]                                         # row v: LOO prediction of v
+
+
+Hhat = build_hat(g)
 dH = np.diag(Hhat)
-W_loo = (Hhat - np.diag(dH)) / (1 - dH)[:, None]                                         # row v: LOO prediction of v
+W_loo = build_loo(g)
 W_all = Hhat
 S = data[..., shell].reshape(-1, G)
 truth = (S @ Hhat.T).reshape(X, Y, Z, G)                                                 # the SH fit: the truth
@@ -717,6 +741,14 @@ if args.fast:
             else:
                 u = sample_lin(vols, phi_fast(th, xp))
             tick("predict: resample")
+            if args.pred_rot and not args.no_loo:
+                # each volume measured its gradient in the scanner's frame, so in the corrected (anatomy's) frame its
+                # direction is turned by the volume's rotation (as the output b-vectors are: F R^T F g); the predictor is
+                # rebuilt from those directions, which matters when volumes rotate by several degrees
+                Rk = rot(th[:, 3:6]).cpu().double().numpy()
+                Fl = np.diag([-1.0, 1.0, 1.0]) if np.linalg.det(img.affine[:3, :3]) > 0 else np.eye(3)
+                g_rot = np.einsum("ij,gkj,kl,gl->gi", Fl, Rk, Fl, g)
+                W = torch.tensor(build_loo(g_rot), dtype=dt, device=dev)
             pv = torch.zeros(G, X * Y * Z, dtype=dt, device=dev)
             pv[:, lin_p] = W @ u
             pv = pv.reshape(G, X, Y, Z)
@@ -788,7 +820,7 @@ if args.fast:
               big = (phi_fast(cand, probe) - phi_fast(th, probe)).norm(dim=-1).amax(1) > args.trial_vox
               need = todo & (big | (it < 2))                                            # a trial only for large steps (and the first two)
               free = todo & ~need
-              th_new[free] = cand[free]; accept |= free
+              th_new = torch.where(free[:, None], cand, th_new); accept |= free
               mu = torch.where(free, (mu / 3).clamp_min(1e-7), mu)
               if bool(need.any()):
                   k = torch.nonzero(need)[:, 0]
@@ -798,7 +830,7 @@ if args.fast:
                       f1 = ((sample_cubic(coef[k], phi_inv_fast(cand[k], ys)) - obs[k]) ** 2).sum(1)
                   ntrials += 1
                   ok = torch.zeros(G, dtype=torch.bool, device=dev); ok[k] = f1 < f0[k]
-                  th_new[ok] = cand[ok]; accept |= ok
+                  th_new = torch.where(ok[:, None], cand, th_new); accept |= ok
                   bad = need & ~ok
                   mu = torch.where(ok, (mu / 3).clamp_min(1e-7), torch.where(bad, mu * 8, mu))
                   if not bool(bad.any()):
@@ -867,7 +899,7 @@ if args.acq_cost:
                     f1 = (((sample_cubic(pv, phi_inv(cand, xe)) if args.cubic else sample_lin(pv, phi_inv(cand, xe))) - obs) ** 2).sum(1)
                 ntrials += 1
                 ok = (f1 < f0) & todo
-                th_new[ok] = cand[ok]
+                th_new = torch.where(ok[:, None], cand, th_new)
                 accept |= ok
                 mu = torch.where(ok, (mu / 3).clamp_min(1e-7), torch.where(todo, mu * 8, mu))
             th = th_new
@@ -901,7 +933,7 @@ for it, fw in enumerate(fwhms):
             with torch.no_grad():
                 f1 = ((sample_lin(vols, phi(cand, xe)) - pred) ** 2).sum(1)
             ok = (f1 < f0) & todo
-            th_new[ok] = cand[ok]
+            th_new = torch.where(ok[:, None], cand, th_new)
             accept |= ok
             mu = torch.where(ok, (mu / 3).clamp_min(1e-7), torch.where(todo, mu * 8, mu))
         th = th_new
@@ -1000,6 +1032,6 @@ info.update({"true_edge_displacement_rms_p95_vox": [round(v, 3) for v in disp_tr
              **({"steps_run": steps_run, "tol_vox": args.tol} if args.fast else {}),
              **({"gains (b0s first)": [round(float(v), 4) for v in torch.cat([gains_last[torch.tensor(np.flatnonzero(isb0), device=dev)], gains_last[torch.tensor(np.flatnonzero(~isb0)[:5], device=dev)]])]} if (args.fast and args.gain and gains_last is not None and args.all_shells) else {}),
              "device": args.device})
-tag = f"_{args.device}_o{args.order}" + ("_noloo" if args.no_loo else "") + (f"_s{args.scale}" if args.scale != 1 else "") + (f"_e{args.eddy_scale}" if args.eddy_scale != 1 else "") + f"_n{args.outer}" + (f"_f{args.final_fwhm}" if args.final_fwhm else "") + ("_slm" if args.slm else "") + ("_acq" if args.acq_cost else "") + ("_cubic" if args.cubic else "") + ("_real" if args.real else "") + (f"_{SUB}" if args.scan != "16974/OXF1PRI001" else "") + ("_gain" if args.gain else "") + ("_all" if args.all_shells else "") + ("_tt" if args.tensor_truth else "") + (f"_b{args.shells.replace(',', '-')}" if args.shells else "") + (f"_anchor{args.anchor_every}{args.anchor_method}" + ("e" if args.anchor_eddy else "") + (f"f{args.anchor_flatten:g}" if args.anchor_flatten else "") + (f"b{args.anchor_bins}" if args.anchor_bins != 256 else "") + ("nope" if args.anchor_no_pe else "") if args.anchor else "") + (f"_fast_c{args.coarse}_" + ("metal" if args.metal else args.grad) + (f"_sm{args.smooth_steps}" if args.smooth_steps != 2 else "") + (f"_tol{args.tol}" if args.tol else "") if args.fast else "") + ("_prof" if args.profile else "")
+tag = f"_{args.device}_o{args.order}" + ("_noloo" if args.no_loo else "") + (f"_s{args.scale}" if args.scale != 1 else "") + (f"_e{args.eddy_scale}" if args.eddy_scale != 1 else "") + f"_n{args.outer}" + (f"_f{args.final_fwhm}" if args.final_fwhm else "") + ("_slm" if args.slm else "") + ("_acq" if args.acq_cost else "") + ("_cubic" if args.cubic else "") + ("_real" if args.real else "") + (f"_{SUB}" if (args.scan != "16974/OXF1PRI001" or args.dwi) else "") + ("_gain" if args.gain else "") + ("_all" if args.all_shells else "") + ("_tt" if args.tensor_truth else "") + (f"_b{args.shells.replace(',', '-')}" if args.shells else "") + (f"_anchor{args.anchor_every}{args.anchor_method}" + ("e" if args.anchor_eddy else "") + (f"f{args.anchor_flatten:g}" if args.anchor_flatten else "") + (f"b{args.anchor_bins}" if args.anchor_bins != 256 else "") + ("nope" if args.anchor_no_pe else "") if args.anchor else "") + (f"_fast_c{args.coarse}_" + ("metal" if args.metal else args.grad) + (f"_sm{args.smooth_steps}" if args.smooth_steps != 2 else "") + (f"_tol{args.tol}" if args.tol else "") if args.fast else "") + ("_prof" if args.profile else "")
 json.dump(info, open(OUT / f"proto{tag}.json", "w"), indent=1)
 print(json.dumps({k: v for k, v in info.items() if k != "history"}))

@@ -1,0 +1,36 @@
+{
+ "case": "SmallMovement+EC SNR 40",
+ "volumes": 108,
+ "groups": [
+  12,
+  32,
+  64
+ ],
+ "as acquired": {
+  "edge_error_rms_p95": [
+   0.789,
+   1.352
+  ],
+  "within_shell_rms": 0.72,
+  "between_shell_rms": 0.298,
+  "worst_volume_rms": 1.233
+ },
+ "ours, fixed predictor": {
+  "edge_error_rms_p95": [
+   0.208,
+   0.398
+  ],
+  "within_shell_rms": 0.203,
+  "between_shell_rms": 0.049,
+  "worst_volume_rms": 0.41
+ },
+ "ours, rotated predictor": {
+  "edge_error_rms_p95": [
+   0.206,
+   0.395
+  ],
+  "within_shell_rms": 0.2,
+  "between_shell_rms": 0.05,
+  "worst_volume_rms": 0.397
+ }
+}

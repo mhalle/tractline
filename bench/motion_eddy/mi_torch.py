@@ -92,8 +92,8 @@ def _mi(Wf, Wm):
     P = Wf.T @ Wm
     P = P / P.sum()
     pf, pm = P.sum(1, keepdim=True), P.sum(0, keepdim=True)
-    nz = P > 1e-12
-    return (P[nz] * torch.log(P[nz] / (pf @ pm)[nz])).sum()
+    nz = P > 1e-12                                                                        # masked, not indexed: a boolean index sizes
+    return torch.where(nz, P * torch.log(torch.where(nz, P, 1.0) / (pf @ pm).clamp_min(1e-30)), 0.0).sum()   # a buffer by data (MPS failed on it)
 
 
 def _mono(u, nmon):
@@ -150,14 +150,17 @@ def register(mov, fixed, mask, vox, bins=256, levels=None, d0=None, tol=1e-5, pe
             else:
                 s = F.grid_sample(m_l[None, None], (2 * p / (sizes - 1) - 1)[:, [2, 1, 0]][None, None, None], mode="bilinear",
                                   padding_mode="border", align_corners=True).reshape(-1)
-            return -_mi(Wf, _parzen(s, mlo, mhi, bins))
+            return -_mi(Wf, _parzen(torch.nan_to_num(s), mlo, mhi, bins))
 
         def fg(d):
             d = d.detach().requires_grad_(True)
             with torch.enable_grad():
                 c = cost(d)
                 g, = torch.autograd.grad(c, d)
-            return float(c), g.detach()
+            c = float(c)
+            if not math.isfinite(c) or not bool(torch.isfinite(g).all()):                # a wild trial step: refuse it
+                return math.inf, torch.zeros_like(g)
+            return c, g.detach()
 
         c, g = fg(d)
         Hinv = torch.eye(P, dtype=dt, device=dev) * 0.1 / max(float(g.abs().max()), 1e-12)
@@ -171,6 +174,8 @@ def register(mov, fixed, mask, vox, bins=256, levels=None, d0=None, tol=1e-5, pe
                 if c1 <= c + 1e-4 * a * float(p_ @ g) or a < 1e-6:
                     break
                 a *= 0.5
+            if not math.isfinite(c1):                                                     # no finite step: stay at the last point
+                break
             s_ = a * p_; y_ = g1 - g
             d, c_prev, c, g = d + s_, c, c1, g1
             sy = float(s_ @ y_)
@@ -196,8 +201,8 @@ def _mi_w(Wf, Wm, w):
     P = Wf.T @ (Wm * w[:, None])
     P = P / P.sum()
     pf, pm = P.sum(1, keepdim=True), P.sum(0, keepdim=True)
-    nz = P > 1e-12
-    return (P[nz] * torch.log(P[nz] / (pf @ pm)[nz])).sum()
+    nz = P > 1e-12                                                                        # masked, not indexed: a boolean index sizes
+    return torch.where(nz, P * torch.log(torch.where(nz, P, 1.0) / (pf @ pm).clamp_min(1e-30)), 0.0).sum()   # a buffer by data (MPS failed on it)
 
 
 def register_fsl(mov, fixed, mask, vox, bins=256, mask_mode="fov", parzen="linear", symmetric=True, robust=(0.02, 0.98),
@@ -259,7 +264,10 @@ def register_fsl(mov, fixed, mask, vox, bins=256, mask_mode="fov", parzen="linea
             with torch.enable_grad():
                 c = cost(d)
                 g, = torch.autograd.grad(c, d)
-            return float(c), g.detach()
+            c = float(c)
+            if not math.isfinite(c) or not bool(torch.isfinite(g).all()):                # a wild trial step: refuse it
+                return math.inf, torch.zeros_like(g)
+            return c, g.detach()
 
         c, g = fg(d)
         Hinv = torch.eye(6, dtype=dt, device=dev) * 0.1 / max(float(g.abs().max()), 1e-12)
@@ -273,6 +281,8 @@ def register_fsl(mov, fixed, mask, vox, bins=256, mask_mode="fov", parzen="linea
                 if c1 <= c + 1e-4 * a * float(p_ @ g) or a < 1e-6:
                     break
                 a *= 0.5
+            if not math.isfinite(c1):                                                     # no finite step: stay at the last point
+                break
             s_ = a * p_; y_ = g1 - g
             d, c, g = d + s_, c1, g1
             sy = float(s_ @ y_)

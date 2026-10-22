@@ -1,0 +1,52 @@
+{
+ "scan": "ABCD noisefree lowmotion",
+ "volumes": 103,
+ "groups": [
+  7,
+  6,
+  15,
+  15,
+  60
+ ],
+ "true motion at the edge, rms (voxels)": 1.759,
+ "as acquired": {
+  "edge_error_rms_p95": [
+   1.759,
+   2.84
+  ],
+  "within_shell_rms": 1.717,
+  "between_shell_rms": 0.502,
+  "worst_volume_rms": 2.561
+ },
+ "ours, rigid": {
+  "edge_error_rms_p95": [
+   0.226,
+   0.403
+  ],
+  "within_shell_rms": 0.217,
+  "between_shell_rms": 0.077,
+  "worst_volume_rms": 0.415
+ },
+ "ours, rigid, as fitted (PE offset all in the translation)": {
+  "edge_error_rms_p95": [
+   0.185,
+   0.343
+  ],
+  "within_shell_rms": 0.175,
+  "between_shell_rms": 0.075,
+  "worst_volume_rms": 0.354
+ },
+ "ours, rotation error after the frame (deg), rms / max": [
+  0.298,
+  0.597
+ ],
+ "ours, with eddy terms": {
+  "edge_error_rms_p95": [
+   0.216,
+   0.403
+  ],
+  "within_shell_rms": 0.207,
+  "between_shell_rms": 0.076,
+  "worst_volume_rms": 0.356
+ }
+}
