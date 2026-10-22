@@ -15,22 +15,13 @@
   "between_shell_rms": 0.298,
   "worst_volume_rms": 1.233
  },
- "ours, fixed predictor": {
+ "lam 0.02": {
   "edge_error_rms_p95": [
-   0.208,
-   0.398
+   0.124,
+   0.22
   ],
-  "within_shell_rms": 0.203,
-  "between_shell_rms": 0.049,
-  "worst_volume_rms": 0.41
- },
- "ours, rotated predictor": {
-  "edge_error_rms_p95": [
-   0.206,
-   0.395
-  ],
-  "within_shell_rms": 0.2,
-  "between_shell_rms": 0.05,
-  "worst_volume_rms": 0.397
+  "within_shell_rms": 0.113,
+  "between_shell_rms": 0.052,
+  "worst_volume_rms": 0.194
  }
 }

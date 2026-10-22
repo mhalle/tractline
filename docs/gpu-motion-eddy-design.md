@@ -38,8 +38,17 @@ Levenberg-Marquardt Gauss-Newton fit over all volumes at once, in PyTorch, on MP
   registration of each shell's corrected mean to the corrected mean b0 (`mi_torch.py`, on the GPU) with those 16
   parameters brings the between-shell error to eddy's level: 0.013 against 0.015 voxels on an aligned 105-volume
   synthetic scan. The fit plus anchor takes 11.7 s on the M2, against eddy's 78 min.
-- **What remains is within-shell precision**: 0.086 voxels against eddy's 0.051 on that scan. eddy's predictor
-  draws on all shells at once; ours uses each shell alone (decision 1).
+- **What remained was within-shell precision**: 0.086 voxels against eddy's 0.051 on that scan. It was our predictor's
+  regularization, not eddy's multi-shell predictor: with lambda = 0.06 ours is 0.033 (section 2.11).
+- **On public simulations with known motion, ours is as accurate as eddy or better in most conditions** (section
+  2.11: the SHORELine Fiberfox phantoms and DW-POSSUM).
+  - Noise-free phantoms: 0.11-0.30 voxels against eddy's 0.29-1.00 at its defaults.
+  - DW-POSSUM large motion: 0.12 against 0.29.
+  - The one clear eddy advantage, DW-POSSUM b2000, traced to our predictor's regularization. With lambda = 0.06 (now
+    the default, was 0.006) we match it (0.098 against 0.097), and the synthetic scan's within-shell error drops from
+    0.088 to 0.033 voxels (eddy 0.053).
+  - eddy with its large-motion settings is close to ours at high motion.
+  - A data-driven weight per shell is the top open item.
 - **A high-motion scan (6.6 mm, 3.1 deg) showed the fit was not converging, and three gauges now fix it** (section
   2.10). The eddy constant is held out of the solve (it is the PE translation by another name), each shell's
   direction-independent eddy field is removed, and each group's mean pose is held. Then 40 steps converge (about
@@ -1009,6 +1018,129 @@ worse, in the middle of the brain as much as at the edges, and not through a smo
 - The known deficit is still within-shell precision on the synthetic scan (0.089 voxel against eddy's 0.051).
 - Each new scan so far has exposed a defect, so the next scans are the test. Candidates: the published simulation
   sets with known motion (DW-POSSUM; the SHORELine phantoms of Cieslak et al.) and the extreme rescan pairs.
+
+### 2.11 Public simulations with known motion: the SHORELine phantoms and DW-POSSUM (2026-10-22)
+
+Every test so far had its truth from our own model or from agreement with eddy. Two public sets have truth from
+independent simulators.
+
+**SHORELine phantoms** (Cieslak et al., "Diffusion MRI head motion correction methods are highly accurate but impacted
+by denoising and sampling scheme"; OSF 38vce via `PennLINC/dMRI_HMC_Benchmark`, BSD-3).
+- MITK Fiberfox phantoms of the ISMRM 2015 tractography bundles, 2 mm, 90 x 108 x 90.
+- Sampling schemes: HCP (288 volumes, b1000/2000/3000), ABCD (103 volumes, b500 to 3000, 6-60 directions per shell)
+  and PNC (35 volumes, b1000). DSI-Q5 and HASC55 are not shelled, so out of scope for a per-shell predictor (and for
+  eddy's `--data_is_shelled`).
+- Conditions: noise-free, or "realistic" (noise, susceptibility distortion, Fiberfox eddy currents); no, low (up to
+  2 mm and 3 deg per volume) or high (4 mm and 8 deg) motion. **Every volume is moved independently**, which is harder
+  than the published benchmark, where only a share of volumes is moved.
+- The ground truth is the rigid motion only.
+
+**DW-POSSUM** (Graham, Drobnjak & Zhang 2016, NITRC `diffusionsim`, public domain).
+- POSSUM-based simulations, 2.5 mm, 108 volumes (12 b0s, b700 x 32, b2000 x 64).
+- Eddy currents with small or large motion, at SNR 20 and 40, plus an artifact-free ground-truth series.
+- No motion parameters are released. Each corrected volume is registered to the same truth volume (`score_possum.py`:
+  same contrast, no noise, rigid plus the quadratic PE polynomial), so leftover eddy distortion counts as error.
+- PE is taken along y (POSSUM's default; y scored 0.208 against 0.226 for x).
+
+**The phantoms' convention**, found by registering each noise-free moved volume to its no-motion copy:
+- R = Rx Ry Rz of the listed angles (degrees), in the voxel-axis frame, about a fixed center, plus the translation.
+- This fits to 0.11 deg RMS.
+- The center is about 9 voxels below the grid center in z. Fitted per scheme, the three centers agree within about
+  1 mm; their mean is used.
+- eddy's parameters were read in FSL's own construction (`TOPUP::MovePar2Matrix`, read for method): R = Rx Ry Rz about
+  the grid center, in coordinates whose x axis is flipped when the affine's determinant is positive, as it is here.
+- Every score is the displacement error at the brain's edge after the transform common to all volumes is removed.
+
+**Rigid error on the phantoms** (voxels; ours as fitted, 40 steps, rigid MI anchor; eddy `--flm=quadratic --slm=none`):
+
+| scan | true motion | ours | eddy, defaults | eddy, `--niter=8 --fwhm=10,6,4,2,0,0,0,0` |
+|---|---|---|---|---|
+| PNC noise-free, low | 1.68 | **0.11** | 0.29 | 0.41 |
+| PNC noise-free, high | 4.36 | **0.28** | 1.00 | 0.62 |
+| ABCD noise-free, low | 1.76 | **0.19** | 0.33 | |
+| ABCD noise-free, high | 4.22 | **0.30** | 0.52 | |
+| HCP noise-free, low / high | 1.77 / 4.28 | 0.14 / 0.29 | (not run) | |
+| PNC realistic, low | 2.10 | **0.18** | 0.25 | |
+| PNC realistic, high | 5.81 | 0.60 | 1.53 | **0.57** |
+| ABCD realistic, low | 2.26 | **0.29** | 1.08 | |
+| ABCD realistic, high | 5.71 | **0.61** | 4.21 (diverged) | |
+| HCP realistic, low / high | 2.31 / 5.74 | 0.34 / 0.68 | (not run) | |
+
+- **The noise-free rows are the clean comparison.** There the scan holds only the rigid motion.
+  - eddy's displacement fields, which do not depend on reading its parameters, give the same picture (PNC low 0.26,
+    ABCD low 0.42).
+  - Our rotation error is 0.18-0.30 deg RMS at low motion and about 0.4 deg at high.
+- **In the realistic rows the rigid truth is partly a convention.** Fiberfox's eddy field is linear about the world
+  origin, which here is the volume's corner. At the brain that is a large PE offset, indistinguishable from
+  translation. eddy's error grows with b (b0 0.33, b500-1000 0.54, b2000 0.91, b3000 1.30 voxels on ABCD low), which
+  is what that would do.
+- **With its large-motion settings eddy improves at high motion and worsens at low** (PNC noise-free: 1.00 to 0.62,
+  but 0.29 to 0.41). On PNC realistic high motion it is slightly ahead of ours (0.57 against 0.60).
+- eddy was not run on HCP. It would take about 8-10 h per run on 3 threads; ABCD took 2.4-4.3 h, against our
+  1-2.5 min per scan.
+- The rigid error grows with the motion in both methods: for ours about 6-7 % of the motion noise-free, 9-13 %
+  realistic. Rebuilding the predictor from the gradient directions rotated by the current motion (eddy does this;
+  `--pred-rot`) did not help (PNC 0.275 to 0.279) and hurt on DW-POSSUM large motion (0.144 to 0.198), so it stays
+  off.
+- **eddy's offset split moves real motion into the "field offset" here** (ours: PNC noise-free low 0.11 as fitted,
+  0.27 split). Phantom motion is random, not linear in the gradient as real eddy offsets are. It changes the reported
+  parameters, not the correction.
+
+**DW-POSSUM** (residual misregistration against the truth, voxels):
+
+| case | as acquired | ours, lambda 0.006 | ours, lambda 0.06 | eddy, defaults |
+|---|---|---|---|---|
+| small motion, SNR 40 | 0.79 | 0.208 | **0.098** | **0.097** |
+| small motion, SNR 20 | 0.79 | 0.232 | | |
+| large motion, SNR 40 | 1.93 | 0.107 | | |
+| large motion, SNR 20 | 1.94 | 0.144 | 0.118 | 0.287 |
+
+**What DW-POSSUM found: the predictor's regularization.**
+- At small motion and SNR 40 eddy was twice as accurate as ours (0.097 against 0.208).
+- All of the difference was in the b2000 shell: ours b0 0.068, b700 0.111, b2000 0.257; eddy 0.104, 0.073, 0.106.
+- Variants: SH order 4 or 8 changed little (0.220, 0.202), and so did 80 steps (0.221). Without the eddy-field gauge
+  the error rose to 0.334 (between shells 0.30).
+- **The Laplace-Beltrami weight lambda decides it**: 0.0006 gives 0.505, 0.006 (the default) 0.208, 0.06 **0.098**
+  (eddy's level), 0.2 0.103, 0.6 0.100: the error levels off above about 0.06.
+- **lambda = 0.06 elsewhere:**
+  - synthetic 105 volumes: 0.088 to **0.033** (within shells 0.032, eddy 0.051);
+  - low-motion real scan: agreement with eddy 0.068 to 0.054, residuals unchanged;
+  - PNC phantoms: 0.11 to 0.08, 0.18 to 0.16, 0.60 to 0.56;
+  - ABCD about the same (0.29 to 0.32, 0.61 to 0.61);
+  - HCP realistic worse (0.34 to 0.37, 0.68 to 0.77).
+- **The best weight depends on the data** (SNR, b, directions per shell), so no fixed value is right. Choosing it as
+  the weight that minimizes the leave-one-out prediction error (`--sh-lambda auto`) picks 0.005-0.009 here, near the
+  old default.
+- Registration wants more angular smoothing than prediction does. Smoothing across directions lowers the noise in the
+  predicted images without blurring their spatial edges, which are what the alignment uses.
+- eddy fits its GP's hyperparameters to the data and is close to right on DW-POSSUM. Its multi-shell predictor is
+  therefore not obviously the source of its earlier within-shell advantage (sections 2.3, 2.9): the regularization is.
+- **Open, and now the top item for accuracy: choosing lambda for registration, per shell, from the data.** Candidates:
+  - scale it with the shell's noise (b, SNR, directions);
+  - pick the weight that minimizes the scatter of the motion estimates (a registration-side criterion);
+  - estimate it as eddy does (the marginal likelihood of a GP with a noise term).
+- **The default is now 0.06** (`--sh-lambda`, was 0.006). Against the best weight for each case:
+
+| case | 0.006 | 0.02 | 0.06 | eddy |
+|---|---|---|---|---|
+| DW-POSSUM, small motion, SNR 40 | 0.208 | 0.124 | **0.098** | 0.097 |
+| DW-POSSUM, large motion, SNR 20 | 0.144 | | **0.118** | 0.287 |
+| synthetic, 105 volumes | 0.088 | 0.048 | **0.033** | 0.053 |
+| HCP phantom, realistic, low motion | **0.342** | 0.363 | 0.371 | |
+| HCP phantom, realistic, high motion | 0.678 | **0.620** | 0.769 | |
+
+  - 0.06's worst shortfall from the best weight is 24 % (HCP realistic, high motion). 0.02's is 45 % (synthetic).
+  - 0.06 also holds the PNC phantom gains and the real scan's closer agreement with eddy.
+  - A data-driven weight per shell remains the better answer.
+
+**What this says about accuracy against the state of the art.**
+- On independent simulations with known motion, ours is as accurate as eddy or better in most conditions, and markedly
+  better at large motion with eddy's default settings.
+- With eddy's large-motion settings the two are close at high motion; at low motion eddy's defaults suit it better
+  and ours is still ahead.
+- The one clear eddy advantage (DW-POSSUM b2000) traced to our predictor's regularization. A better weight closes it.
+- Not tested: eddy's outlier replacement and slice-to-volume correction, HCP-sized eddy runs, and data with real
+  within-volume motion.
 
 ## 3. GPU mapping
 

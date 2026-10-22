@@ -20,33 +20,51 @@
  },
  "ours, rigid": {
   "edge_error_rms_p95": [
-   0.408,
-   0.709
+   0.406,
+   0.706
   ],
-  "within_shell_rms": 0.397,
-  "between_shell_rms": 0.105,
-  "worst_volume_rms": 0.784
+  "within_shell_rms": 0.395,
+  "between_shell_rms": 0.106,
+  "worst_volume_rms": 0.807
  },
  "ours, rigid, as fitted (PE offset all in the translation)": {
   "edge_error_rms_p95": [
-   0.303,
-   0.522
+   0.299,
+   0.526
   ],
-  "within_shell_rms": 0.288,
-  "between_shell_rms": 0.104,
-  "worst_volume_rms": 0.544
+  "within_shell_rms": 0.284,
+  "between_shell_rms": 0.105,
+  "worst_volume_rms": 0.547
  },
  "ours, rotation error after the frame (deg), rms / max": [
-  0.42,
-  1.004
+  0.416,
+  1.015
  ],
  "ours, with eddy terms": {
   "edge_error_rms_p95": [
-   0.339,
-   0.588
+   0.333,
+   0.584
   ],
-  "within_shell_rms": 0.326,
-  "between_shell_rms": 0.103,
-  "worst_volume_rms": 0.57
+  "within_shell_rms": 0.319,
+  "between_shell_rms": 0.104,
+  "worst_volume_rms": 0.55
+ },
+ "eddy, displacement fields (x sign -1, overall sign 1)": {
+  "edge_error_rms_p95": [
+   0.672,
+   1.206
+  ],
+  "within_shell_rms": 0.631,
+  "between_shell_rms": 0.241,
+  "worst_volume_rms": 1.183
+ },
+ "eddy, rigid parameters (best-fitting convention: rotation sign -1, inverse False, x-flip True)": {
+  "edge_error_rms_p95": [
+   0.521,
+   0.899
+  ],
+  "within_shell_rms": 0.497,
+  "between_shell_rms": 0.176,
+  "worst_volume_rms": 0.892
  }
 }

@@ -12,7 +12,7 @@ Ours: the rigid part of ours_theta.npz (the PE offset split as eddy splits it) a
 eddy terms. eddy: its displacement fields (motion and eddy together), and its rigid parameters in the convention
 that fits best (--eddy-rigid).
 
-    python score_phantom.py <phantom data dir> <scheme> <noise> <motion> --center cx,cy,cz [--ours DIR] [--eddy DIR]
+    python score_phantom.py <phantom data dir> <scheme> <noise> <motion> --center cx,cy,cz [--ours DIR] [--eddy DIR] [--tag T]
 """
 import glob, itertools, json, sys
 from pathlib import Path
@@ -130,5 +130,5 @@ if arg("--eddy"):
     out["eddy, rigid parameters (best-fitting convention: " + best[1] + ")"] = best[0]
 
 print(json.dumps(out, indent=1))
-tag = f"{S}_{NOISE}_{MOT}"
+tag = f"{S}_{NOISE}_{MOT}" + (f"_{arg('--tag')}" if arg("--tag") else "")
 json.dump(out, open(Path(__file__).resolve().parent.parent / f"results/motion_eddy/phantom_{tag}.json", "w"), indent=1)

@@ -65,6 +65,8 @@ ap.add_argument("--cubic", action="store_true", help="with --acq-cost: the predi
 ap.add_argument("--acq-cost", action="store_true", help="residual in acquisition space: the prediction moved into each volume's acquired grid and compared with the raw data there (no interpolation of noisy data)")
 ap.add_argument("--save-synth", default=None, help="write the synthetic scan (5 b0s with rigid motion, b0 0 fixed, + the DW volumes) for eddy, then exit")
 ap.add_argument("--slm", action="store_true", help="after each outer iteration, eddy coefficients projected onto [1, g] (eddy's second-level model, linear)")
+ap.add_argument("--sh-order", type=int, default=6, help="the per-shell predictor's SH order")
+ap.add_argument("--sh-lambda", default="0.06", help="the per-shell predictor's Laplace-Beltrami weight (0.06: doc section 2.11; 0.006 before), or 'auto': per shell, the weight on a grid that minimizes the leave-one-out residual of the current corrected volumes, chosen again every 10 steps")
 ap.add_argument("--pred-rot", action="store_true", help="rebuild the predictor each step from the gradient directions rotated by the current motion (no gain on the SHORELine phantoms, worse on DW-POSSUM large motion; off by default)")
 ap.add_argument("--pe", type=int, default=None, help="the PE axis (0, 1, 2), over the sidecar and the default (1)")
 ap.add_argument("--dwi", default=None, help="any DWI instead of --scan: the path without .nii.gz (with .bval, .bvec, and .json for the PE axis)")
@@ -110,15 +112,18 @@ bsel = bval[shell]
 isb0 = bsel < 50
 g = np.zeros((G, 3))
 g[~isb0] = (bvec[:, shell].T / np.linalg.norm(bvec[:, shell].T, axis=1, keepdims=True).clip(1e-9))[~isb0]
-lam = 0.006
+LAM_AUTO = args.sh_lambda == "auto"
+lam = 0.06 if LAM_AUTO else float(args.sh_lambda)
+LAM_GRID = np.geomspace(3e-4, 3.0, 17)
 Hhat = np.zeros((G, G))
 groups = [np.flatnonzero(isb0)] if isb0.any() else []
 for b in sorted(set(np.round(bsel[~isb0] / 100) * 100)):
     groups.append(np.flatnonzero((~isb0) & (np.abs(bsel - b) < 100)))
 
 
-def build_hat(gd):
-    """The per-shell regularized SH smoother (G, G) for gradient directions gd (G, 3); the b0s' block is their mean."""
+def build_hat(gd, lams=None):
+    """The per-shell regularized SH smoother (G, G) for gradient directions gd (G, 3); the b0s' block is their mean.
+    lams: one weight per group (default: lam)."""
     H = np.zeros((G, G))
     for idx in groups:                                                                    # block-diagonal: one predictor per shell
         if isb0[idx[0]]:
@@ -126,14 +131,15 @@ def build_hat(gd):
             continue
         gg = gd[idx]
         theta, phi = np.arccos(np.clip(gg[:, 2], -1, 1)), np.arctan2(gg[:, 1], gg[:, 0])
-        B, m_, l_ = real_sh_descoteaux(6, theta, phi, legacy=False)
+        B, m_, l_ = real_sh_descoteaux(args.sh_order, theta, phi, legacy=False)
         L = np.diag((l_ * (l_ + 1)) ** 2)
-        H[np.ix_(idx, idx)] = B @ np.linalg.solve(B.T @ B + lam * L, B.T)
+        lg = lam if lams is None else lams[[i for i, gi in enumerate(groups) if gi is idx][0]]
+        H[np.ix_(idx, idx)] = B @ np.linalg.solve(B.T @ B + lg * L, B.T)
     return H
 
 
-def build_loo(gd):
-    H = build_hat(gd); dh = np.diag(H)
+def build_loo(gd, lams=None):
+    H = build_hat(gd, lams); dh = np.diag(H)
     return (H - np.diag(dh)) / (1 - dh)[:, None]                                         # row v: LOO prediction of v
 
 
@@ -728,6 +734,7 @@ if args.fast:
         Xc, Yc, Zc = (int(b - a) for a, b in zip(lo, hi))
         xp_c = xp.contiguous()
         rs_consts = M.consts(G, len(xp), X, Y, Z, PE, NMON, 2, cen, half, vox_t, scale, dev)
+    lam_hist = []
     for it, fw in enumerate(fw_steps):
         tick()
         if fw not in smooth_cache:
@@ -741,6 +748,23 @@ if args.fast:
             else:
                 u = sample_lin(vols, phi_fast(th, xp))
             tick("predict: resample")
+            if LAM_AUTO and not args.no_loo and it % 10 == 0:
+                # the predictor's smoothness from the data, as eddy fits its GP's: per shell, the weight whose
+                # leave-one-out prediction of the current corrected volumes has the least residual (on a subsample)
+                ss = u[:, torch.randperm(u.shape[1], generator=torch.Generator().manual_seed(it))[:20000].to(dev)]
+                lams_sel = []
+                for idx in groups:
+                    if isb0[idx[0]]:
+                        lams_sel.append(lam); continue
+                    it_ = torch.tensor(idx, device=dev); best = None
+                    for lg in LAM_GRID:
+                        Wg = torch.tensor(build_loo(g, [lg] * len(groups))[np.ix_(idx, idx)], dtype=dt, device=dev)
+                        r = float(((ss[it_] - Wg @ ss[it_]) ** 2).sum())
+                        if best is None or r < best[0]:
+                            best = (r, float(lg))
+                    lams_sel.append(best[1])
+                W = torch.tensor(build_loo(g, lams_sel), dtype=dt, device=dev)
+                lam_hist.append({"step": it, "lambda by group": [round(v, 5) for v in lams_sel]})
             if args.pred_rot and not args.no_loo:
                 # each volume measured its gradient in the scanner's frame, so in the corrected (anatomy's) frame its
                 # direction is turned by the volume's rotation (as the output b-vectors are: F R^T F g); the predictor is
@@ -989,6 +1013,8 @@ if args.fast and args.metal:
             thn[dw, PE] = (off - off_hat) * vox[PE]
         np.savez(f"{args.real}/ours_theta.npz", th=thn, th_fit=th_fit, pe_axis=PE, cen=cen.cpu().numpy(), vox=vox, nmon=NMON, shell=shell,
                  groups=np.array([np.isin(np.arange(G), gi).astype(int) * (k + 1) for k, gi in enumerate(groups)]).sum(0))
+        if LAM_AUTO:
+            timings["sh_lambda_auto"] = lam_hist
         timings["real_outputs"] = args.real
 def split_err(th):
     tr = th.clone(); tr[:, 6:] = th_true_t[:, 6:]                                         # estimated rigid, true eddy
