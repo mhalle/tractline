@@ -205,9 +205,6 @@ that would reverse it. None of them changes the default pipeline: everything her
 
 ### What still needs the owner
 
-- **The merge plan and stage configuration** (sections 5.1-5.2, written 2026-10-22 to resume after the 28 Oct deadline):
-  whether to introduce `PipelineConfig` with the pipeline wiring, or add `motion_eddy=` as one more keyword first.
-
 These are not design choices.
 
 - **GPU time**:
@@ -216,6 +213,10 @@ These are not design choices.
   - all after the current queue.
 - **Modal or CPU time** for phase 0's 16 eddy runs (A and rescan of about 8 pairs). Eddy per replicate (E-rerun) is
   conditional.
+
+One design choice does need the owner: **the merge plan's stage configuration** (sections 5.1-5.2, written 2026-10-22
+to resume after the 28 Oct deadline). Either introduce `PipelineConfig` with the pipeline wiring, or add
+`motion_eddy=` as one more keyword first.
 
 ## 1. The model
 
