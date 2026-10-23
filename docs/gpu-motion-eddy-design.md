@@ -1146,6 +1146,67 @@ by denoising and sampling scheme"; OSF 38vce via `PennLINC/dMRI_HMC_Benchmark`, 
 - Not tested: eddy's outlier replacement and slice-to-volume correction, HCP-sized eddy runs, and data with real
   within-volume motion.
 
+### 2.12 Phase 0, quick: what motion and eddy correction does to the calibration gap (2026-10-23)
+
+A short version of phase 0 (section 6.3), run before the abstract deadline, with our step in place of FSL eddy
+(`bench/motion_eddy/phase0.py`; FSL eddy's 14 runs, about 8 h, were set aside).
+- **The arm.** The published ON-Harmony ensemble procedure, unchanged, with our motion and eddy-current step after the
+  susceptibility correction:
+  - the field is re-estimated in every run, as published;
+  - the replicates are the published ones (same scan, mask and seeds);
+  - the rescan goes onto A's grid by the published mode-3 registration.
+  So only the step differs.
+- **The step:** 40 steps, output masking, lambda 0.06, no shell anchor. The MI anchor moved the control scan's b2000
+  shell 1.27 mm, a wrong optimum; its rescan and replicates moved 0.09-0.16 mm. The anchor's robustness is a follow-up.
+- **The field is applied first**, so the data are interpolated twice.
+- **Two variants:**
+  - O: the step in every run;
+  - S: the step on the scan and the rescan only, with the published replicates.
+- **Pairs**, chosen beforehand by the motion check's proxies: cross-site OXF1PRI001 to OXF2PRI001 for the most b0
+  motion (10975, 16974), the most eddy-like displacement (16793) and the least of both (14221, the control).
+
+| pair | why | gap at 0.9, published | O (step in every run) | S (scan and rescan only) |
+|---|---|---|---|---|
+| 14221 | control | -5.75 | -5.83 (-0.08) | -5.68 (+0.07) |
+| 10975 | most motion (6.6 mm) | -7.05 | -5.98 (+1.07) | -6.19 (+0.86) |
+| 16974 | motion 3.8 mm, eddy 1.7 mm | -8.95 | -7.13 (+1.82) | -7.23 (+1.72) |
+| 16793 | most eddy (2.1 mm) | -6.87 | -3.90 (**+2.97**) | -4.48 (+2.39) |
+
+The change from the published gap, in points:
+
+| level | O | S |
+|---|---|---|
+| 0.8 | 0.02 / 0.90 / 1.67 / 2.87 | 0.15 / 0.62 / 1.59 / 2.28 |
+| 0.9 | -0.08 / 1.07 / 1.82 / 2.97 | 0.07 / 0.86 / 1.72 / 2.39 |
+| 0.95 | 0.21 / 1.09 / 1.68 / 2.49 | 0.14 / 0.95 / 1.56 / 2.08 |
+
+The pairs are in the order 14221, 10975, 16974, 16793. The mean over the three high-motion or high-eddy pairs at 0.9
+is 1.95 points (O) and 1.66 (S).
+
+**Better agreement, not wider envelopes** (`phase0_quick_shape.json`; size and precision as
+`calibration_precision.py` computes them):
+- At 0.9 the envelope's size stays the same or shrinks slightly (10975 1.18 to 1.14, 16974 1.15 to 1.13, 16793 1.20 to
+  1.20), and its precision rises 2.4-2.8 points on the three pairs.
+- The widest outline (the union of the 17 runs) does not grow.
+- Arm S keeps 80-95 % of O's gain, so re-estimating motion and eddy in the replicates adds little; correcting the scan
+  and the rescan does most of it.
+- A's single run against the rescan agrees better too: precision 0.734 to 0.763 (10975), 0.731 to 0.755 (16974),
+  0.725 to 0.753 (16793).
+- The control is unchanged.
+
+**What it means.** On the scans where motion and eddy currents are largest, correcting them closes 1-3 points of a
+5.5-9 point cross-site gap at 0.9. It does so by making scan and rescan agree better. Eddy currents matter at least as
+much as head motion: 16793, with modest motion and the most eddy, gains the most. Where both are small, nothing
+changes. This is consistent with the pooled correlational check (at most about 0.2 points over all pairs): the
+effect is concentrated in a few scans.
+
+**Limits.**
+- Four pairs, the extreme ones: a per-pair effect on the worst cases, not a pooled estimate.
+- Our prototype, not FSL eddy, with the field applied first.
+- Only cross-site pairs. The cohort II and same-scanner strata are not run.
+- Recalibration maps were not refitted with the step.
+- The full phase 0 (FSL eddy fed our field; arms T and E, section 6.3) remains the reference test.
+
 ## 3. GPU mapping
 
 **Targets**: MPS on the M2 and CUDA, both through plain PyTorch in phase 1, with one code path and the device as an

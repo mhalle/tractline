@@ -307,6 +307,64 @@ def run(args):
         print(f"{sub} arm {args.arm} done {time.time() - t0:.0f}s, {CR.free_gb():.1f} GB free", flush=True)
 
 
+def hybrid(args):
+    """Arm S, the step on the scan and the rescan only: arm O's A and rescan runs with the published 16 replicates
+    (links to the records, no new runs). Isolates "scan and rescan agree better" from "the replicates spread more"."""
+    for sub in args.subject or list(QUICK):
+        sc = PAIRS[sub][0]
+        o, pub, S = ArmRecords(sub, sc, "O").dir, CO.Records(sub, sc).dir, ArmRecords(sub, sc, "S").dir
+        tag = CII.rescan_tag(PAIRS[sub][1], CO.REG)
+        (S / "smooth").mkdir(parents=True, exist_ok=True)
+        links = {"A.npz": o / "A.npz", "A_mask.npy": o / "A_mask.npy", "A_meanb0.npy": o / "A_meanb0.npy", f"{tag}_onA.npz": o / f"{tag}_onA.npz",
+                 **{f"smooth/r{r:03d}.npz": pub / f"smooth/r{r:03d}.npz" for r in range(1, CR.RUNS + 1)}}
+        for name, src in links.items():
+            if not (S / name).exists():
+                os.symlink(src, S / name)
+        log = json.loads((o / "runs.json").read_text())
+        log["created"]["phase0 arm"] = "S: arm O's A and rescan, the published replicates (links)"
+        (S / "runs.json").write_text(json.dumps(log, indent=1))
+        print(sub, "arm S linked", flush=True)
+
+
+def shape(args):
+    """Per pair and arm: the as-stated envelope's coverage, size (envelope / rescan tract voxels) and precision (share of
+    the envelope inside the rescan's tract) at 0.8 / 0.9 / 0.95, as bench/calibration_precision.py computes them; and
+    the replicates' spread: the widest outline (the union of the 17 runs) and A's own run alone."""
+    import importlib
+    import calibration_precision as CP
+    CC = CO.CC
+    Pub = importlib.reload(CO).Records
+    out = {}
+    for sub in args.subject or list(QUICK):
+        sc, tag = PAIRS[sub]
+        term = CO.term_of(sc, tag)
+        r = {}
+        for arm, d in (("published", Pub(sub, sc).dir), ("O: step in every run", ArmRecords(sub, sc, "O").dir),
+                       ("S: step on scan and rescan only", ArmRecords(sub, sc, "S").dir)):
+            p = d / CO.statements_name(args.runs + 1)
+            if not p.exists():
+                continue
+            st = CP.load(p)
+            cov, size, prec = CP.subject_curves(st, term)
+            row = {f"{q:g}": {"coverage": round(float(cov[CP.index_of(q)]), 4), "size": round(float(size[CP.index_of(q)]), 4),
+                              "precision": round(float(prec[CP.index_of(q)]), 4)} for q in (0.8, 0.9, 0.95)}
+            row["widest outline (union of the 17 runs): coverage, size, precision"] = [round(float(x[-1]), 4) for x in (cov, size, prec)]
+            sh = CC.term_shapes(st, term)
+            row["A alone: coverage, precision, size"] = [round(float(sh["A alone"][m]), 4) for m in ("coverage", "precision", "size")] if sh else None
+            r[arm] = row
+        out[sub] = {"pair": f"{CO.SCANNERS[sc]}001 -> {tag}", "term": term, "arms": r}
+        print(sub, json.dumps(out[sub]), flush=True)
+    res = {"what": "phase 0 quick test (arm O: our motion and eddy step after the field in every run; arm S: on the scan and rescan only, "
+                   "the published replicates): envelope coverage, size and precision as stated, and the spread",
+           "definitions": {"coverage": "rescan tract voxels inside the envelope / rescan tract voxels",
+                           "size": "envelope voxels / rescan tract voxels", "precision": "envelope voxels inside the rescan tract / envelope voxels",
+                           "as stated": "the envelope at stated level = target (calibration_card.curves on calibration_card.GRID), 42 named tracts pooled"},
+           "pairs": out, "git": CR.git_state()}
+    path = HERE.parent / "results" / "motion_eddy" / "phase0_quick_shape.json"
+    json.dump(res, open(path, "w"), indent=1)
+    print("wrote", path)
+
+
 def collect(args):
     """calibration_onharmony.collect on the arm's folders (its Records swapped for the arm's)."""
     for sub in args.subject or list(PAIRS):
@@ -325,7 +383,7 @@ def evaluate(args):
         term = CO.term_of(sc, tag)
         r = {}
         for arm, d in (("published", Pub(sub, sc).dir), ("T", ArmRecords(sub, sc, "T").dir), ("E", ArmRecords(sub, sc, "E").dir),
-                       ("O", ArmRecords(sub, sc, "O").dir)):
+                       ("O", ArmRecords(sub, sc, "O").dir), ("S", ArmRecords(sub, sc, "S").dir)):
             p = d / CO.statements_name(args.runs + 1)
             if not p.exists():
                 continue
@@ -336,7 +394,7 @@ def evaluate(args):
             r[arm] = {q: round(cov[q] - float(q), 4) for q in cov}
         rows[sub] = {"pair": f"{CO.SCANNERS[sc]}001 -> {tag}", "term": term, "gap (coverage - target)": r}
         print(sub, json.dumps(rows[sub]), flush=True)
-    arms = ("published", "T", "E", "O")
+    arms = ("published", "T", "E", "O", "S")
     mean = {a: {q: round(float(np.mean([v["gap (coverage - target)"][a][q] for v in rows.values() if a in v["gap (coverage - target)"]])), 4)
                 for q in ("0.8", "0.9", "0.95")} for a in arms if any(a in v["gap (coverage - target)"] for v in rows.values())}
     diff = {q: round(float(np.mean([v["gap (coverage - target)"]["E"][q] - v["gap (coverage - target)"]["T"][q] for v in rows.values()
@@ -356,8 +414,10 @@ if __name__ == "__main__":
     a = sp.add_parser("fieldcheck"); a.add_argument("dir")
     a = sp.add_parser("eddy"); a.add_argument("--subject", nargs="*")
     for c in ("run", "collect"):
-        a = sp.add_parser(c); a.add_argument("--arm", choices=("T", "E", "O"), required=True); a.add_argument("--subject", nargs="*")
+        a = sp.add_parser(c); a.add_argument("--arm", choices=("T", "E", "O", "S"), required=True); a.add_argument("--subject", nargs="*")
         a.add_argument("--runs", type=int, default=CR.RUNS); a.add_argument("--force", action="store_true")
     a = sp.add_parser("evaluate"); a.add_argument("--runs", type=int, default=CR.RUNS)
+    a = sp.add_parser("hybrid"); a.add_argument("--subject", nargs="*")
+    a = sp.add_parser("shape"); a.add_argument("--subject", nargs="*"); a.add_argument("--runs", type=int, default=CR.RUNS)
     args = ap.parse_args()
-    {"prep": prep, "fieldcheck": fieldcheck, "eddy": eddy_all, "run": run, "collect": collect, "evaluate": evaluate}[args.cmd](args)
+    {"prep": prep, "fieldcheck": fieldcheck, "eddy": eddy_all, "run": run, "collect": collect, "evaluate": evaluate, "hybrid": hybrid, "shape": shape}[args.cmd](args)

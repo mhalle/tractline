@@ -1,0 +1,148 @@
+{
+ "pairs": {
+  "10975": {
+   "pair": "OXF1PRI001 -> OXF2PRI001",
+   "term": "cross site (the other Prisma)",
+   "gap (coverage - target)": {
+    "published": {
+     "0.8": -0.0571,
+     "0.9": -0.0705,
+     "0.95": -0.0679
+    },
+    "O": {
+     "0.8": -0.0481,
+     "0.9": -0.0598,
+     "0.95": -0.057
+    },
+    "S": {
+     "0.8": -0.0509,
+     "0.9": -0.0619,
+     "0.95": -0.0584
+    }
+   }
+  },
+  "16974": {
+   "pair": "OXF1PRI001 -> OXF2PRI001",
+   "term": "cross site (the other Prisma)",
+   "gap (coverage - target)": {
+    "published": {
+     "0.8": -0.0782,
+     "0.9": -0.0895,
+     "0.95": -0.0845
+    },
+    "O": {
+     "0.8": -0.0615,
+     "0.9": -0.0713,
+     "0.95": -0.0677
+    },
+    "S": {
+     "0.8": -0.0623,
+     "0.9": -0.0723,
+     "0.95": -0.0689
+    }
+   }
+  },
+  "16793": {
+   "pair": "OXF1PRI001 -> OXF2PRI001",
+   "term": "cross site (the other Prisma)",
+   "gap (coverage - target)": {
+    "published": {
+     "0.8": -0.0546,
+     "0.9": -0.0687,
+     "0.95": -0.0659
+    },
+    "O": {
+     "0.8": -0.0259,
+     "0.9": -0.039,
+     "0.95": -0.041
+    },
+    "S": {
+     "0.8": -0.0318,
+     "0.9": -0.0448,
+     "0.95": -0.0451
+    }
+   }
+  },
+  "16794": {
+   "pair": "OXF1PRI001 -> OXF2PRI001",
+   "term": "cross site (the other Prisma)",
+   "gap (coverage - target)": {
+    "published": {
+     "0.8": -0.0418,
+     "0.9": -0.0569,
+     "0.95": -0.0553
+    }
+   }
+  },
+  "16745": {
+   "pair": "OXF1PRI001 -> OXF2PRI001",
+   "term": "cross site (the other Prisma)",
+   "gap (coverage - target)": {
+    "published": {
+     "0.8": -0.0505,
+     "0.9": -0.0625,
+     "0.95": -0.062
+    }
+   }
+  },
+  "14221": {
+   "pair": "OXF1PRI001 -> OXF2PRI001",
+   "term": "cross site (the other Prisma)",
+   "gap (coverage - target)": {
+    "published": {
+     "0.8": -0.048,
+     "0.9": -0.0575,
+     "0.95": -0.0573
+    },
+    "O": {
+     "0.8": -0.0478,
+     "0.9": -0.0583,
+     "0.95": -0.0552
+    },
+    "S": {
+     "0.8": -0.0465,
+     "0.9": -0.0568,
+     "0.95": -0.0559
+    }
+   }
+  },
+  "16766": {
+   "pair": "OXF2PRI001 -> OXF2PRI002",
+   "term": "same scanner (other session)",
+   "gap (coverage - target)": {
+    "published": {
+     "0.8": -0.0126,
+     "0.9": -0.0224,
+     "0.95": -0.0252
+    }
+   }
+  }
+ },
+ "mean gap per arm": {
+  "published": {
+   "0.8": -0.049,
+   "0.9": -0.0611,
+   "0.95": -0.0597
+  },
+  "O": {
+   "0.8": -0.0458,
+   "0.9": -0.0571,
+   "0.95": -0.0552
+  },
+  "S": {
+   "0.8": -0.0479,
+   "0.9": -0.059,
+   "0.95": -0.0571
+  }
+ },
+ "E - T, mean over pairs (the effect of motion and eddy correction)": {
+  "0.8": NaN,
+  "0.9": NaN,
+  "0.95": NaN
+ },
+ "O - published, mean over pairs (our step in every run)": {
+  "0.8": 0.0137,
+  "0.9": 0.0144,
+  "0.95": 0.0137
+ }
+}
