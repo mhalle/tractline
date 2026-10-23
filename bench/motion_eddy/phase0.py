@@ -209,10 +209,98 @@ class ArmRunner(CO.Runner):
             self.one(replace(Ax, dwi=dwi, b0s=None), f"{CR.FLIP}/r{r:03d}", corrected=dwi)
 
 
-def run(args):
-    for sub in args.subject or list(PAIRS):
+PROTO = HERE / "proto.py"
+PROTO_ARGS = ["--device", "mps", "--all-shells", "--fast", "--metal", "--coarse", "0", "--outer", "40", "--mask-output"]
+# no shell anchor: on 14221's scan the MI anchor moved the b2000 shell 1.27 mm (its rescan and replicates 0.09-0.16):
+# a wrong optimum. Without it each shell's mean pose stays as acquired (b0 placement vs eddy 0.08-0.15 voxel on the
+# two real scans, sections 2.7 and 2.10). The anchor's robustness is a follow-up.
+QUICK = ("10975", "16974", "16793", "14221")            # arm O's pairs: the most motion (2), the most eddy, the control
+
+
+def motion_eddy(dwi, s, tmp):
+    """Our GPU motion and eddy-current step (bench/motion_eddy/proto.py: 40 steps, no shell anchor,
+    output masking, lambda 0.06) on a field-corrected series: (corrected series, rotated b-vectors, its summary)."""
+    import nibabel as nib
+    tmp.mkdir(parents=True, exist_ok=True)
+    base = tmp / "in"
+    nib.save(nib.Nifti1Image(np.asarray(dwi, np.float32), s.affine), str(base) + ".nii.gz")
+    np.savetxt(str(base) + ".bval", np.asarray(s.bval)[None], fmt="%g"); np.savetxt(str(base) + ".bvec", np.asarray(s.bvec), fmt="%.6f")
+    out = tmp / "out"
+    r = subprocess.run([sys.executable, str(PROTO), "--dwi", str(base), "--pe", str(s.pe_axis), *PROTO_ARGS, "--real", str(out)],
+                       capture_output=True, text=True, cwd=str(HERE.parent.parent))
+    if r.returncode:
+        raise RuntimeError(f"motion_eddy failed: {r.stderr[-800:]}")
+    info = json.loads([l for l in r.stdout.splitlines() if l.startswith('{"data"')][-1])
+    corr = np.asarray(nib.load(out / "ours.nii.gz").dataobj, np.float32)
+    bvec = np.loadtxt(out / "ours_rotated_bvecs")
+    return corr, bvec, {k: info.get(k) for k in ("estimate_s", "final_resample_s", "total_s", "shell_anchors (mm, deg)")}
+
+
+class ORunner(ArmRunner):
+    """Arm O: the published procedure, with our motion and eddy-current step after the field correction in every run.
+    The field is re-estimated in every run as published, the replicates are the published ones (same scan, mask, seeds),
+    and the rescan goes onto A's grid by the published registration: only the step differs."""
+    def __init__(self, subject):
+        super().__init__(subject, "O")
+        self.pub = CO.Records(subject, self.sc).dir
+        self.tmp = OUT / "arm_O_tmp" / subject
+
+    def corrected(self, s):
+        timer = P.Timer()
+        with P.exact_float32(CR.DEVICE):
+            c = P.correct(s, timer, CR.DEVICE)
+        P.release_memory(CR.DEVICE)
         t0 = time.time()
-        rn = ArmRunner(sub, args.arm)
+        dwi, bvec, info = motion_eddy(c.dwi, s, self.tmp)
+        return dwi, bvec, {"field": timer.seconds, "residual_left": c.residual_left, "motion_eddy": info,
+                           "motion_eddy_wall_s": round(time.time() - t0, 1)}
+
+    def reference(self):
+        A = CO.load_checked(self.subject, self.pair.ref[0], self.key)
+        if not self.R.have("A"):
+            dwi, bvec, info = self.corrected(A)
+            Ax = replace(A, dwi=dwi, bvec=bvec, b0s=None)
+            self.log["A_scan"] = {"name": A.name, "series": A.series, "arm": "O", "shape": list(A.dwi.shape), "correction": info}
+
+            def companions(corr, tg):
+                for name, arr in (("A_meanb0", CO.mean_b0(corr.dwi, A.bval)), ("A_mask", tg.mask)):
+                    q = self.R.new(name, ".npy"); tmp = q.with_name(q.stem + ".partial.npy"); np.save(tmp, arr); tmp.replace(q)
+            self.one(Ax, "A", corrected=dwi, before_record=companions, extra={"correction": info})
+        return A, np.load(self.R.path("A_meanb0", ".npy")), np.load(self.pub / "A_mask.npy")      # the published mask
+
+    def rescan(self, A):
+        tag = PAIRS[self.subject][1]
+        name = CII.rescan_tag(tag, CO.REG)
+        if self.R.have(f"{name}_onA"):
+            return
+        pub = json.loads((self.pub / "runs.json").read_text())[f"{name}_scan"]
+        B = CO.load_checked(self.subject, tag)
+        dwi, bvec, info = self.corrected(B)
+        dwiA, bvecA = CO.onto_reference(dwi, bvec, B.affine, np.array(pub["to_A"]), A.affine, A.dwi.shape[:3])
+        self.log[f"{name}_scan"] = {**{k: pub[k] for k in ("to_A", "rotation_deg", "translation_mm", "ncc_after", "QC") if k in pub},
+                                    "name": B.name, "term": CO.term_of(self.sc, tag), "session": tag, "arm": "O", "correction": info,
+                                    "registration": "the published arm's (reused)"}
+        self.save_log()
+        self.one(replace(A, dwi=dwiA, bval=B.bval, bvec=bvecA, b0s=None), f"{name}_onA", corrected=dwiA)
+
+    def replicates(self, A, mask, runs):
+        from _bootstrap import ShellWildBootstrap
+        need = [r for r in range(1, runs + 1) if not self.R.have(f"{CR.FLIP}/r{r:03d}")]
+        if not need:
+            return
+        wb = ShellWildBootstrap(A.dwi, A.bval, A.bvec, extra_b0s=A.b0s[..., len(A.b0_index):], b0_noise="added", mask=mask,
+                                flip=CR.FLIP, fwhm=CR.FWHM)                     # as published (calibration_runs.Runner.replicates)
+        for r in need:
+            dwi, apa = wb.replicate(r)
+            Ar = replace(A, dwi=dwi, b0s=np.concatenate([dwi[..., A.b0_index].astype(np.float64), apa], -1))
+            cdwi, bvec, info = self.corrected(Ar)
+            self.one(replace(Ar, dwi=cdwi, bvec=bvec, b0s=None), f"{CR.FLIP}/r{r:03d}", corrected=cdwi, extra={"correction": info})
+
+
+def run(args):
+    for sub in args.subject or (list(QUICK) if args.arm == "O" else list(PAIRS)):
+        t0 = time.time()
+        rn = ORunner(sub) if args.arm == "O" else ArmRunner(sub, args.arm)
         Ax, ref_b0, mask = rn.reference()
         rn.rescan(Ax)
         rn.replicates(Ax, mask, args.runs)
@@ -236,7 +324,8 @@ def evaluate(args):
     for sub, (sc, tag) in PAIRS.items():
         term = CO.term_of(sc, tag)
         r = {}
-        for arm, d in (("published", Pub(sub, sc).dir), ("T", ArmRecords(sub, sc, "T").dir), ("E", ArmRecords(sub, sc, "E").dir)):
+        for arm, d in (("published", Pub(sub, sc).dir), ("T", ArmRecords(sub, sc, "T").dir), ("E", ArmRecords(sub, sc, "E").dir),
+                       ("O", ArmRecords(sub, sc, "O").dir)):
             p = d / CO.statements_name(args.runs + 1)
             if not p.exists():
                 continue
@@ -247,13 +336,16 @@ def evaluate(args):
             r[arm] = {q: round(cov[q] - float(q), 4) for q in cov}
         rows[sub] = {"pair": f"{CO.SCANNERS[sc]}001 -> {tag}", "term": term, "gap (coverage - target)": r}
         print(sub, json.dumps(rows[sub]), flush=True)
-    arms = ("published", "T", "E")
+    arms = ("published", "T", "E", "O")
     mean = {a: {q: round(float(np.mean([v["gap (coverage - target)"][a][q] for v in rows.values() if a in v["gap (coverage - target)"]])), 4)
                 for q in ("0.8", "0.9", "0.95")} for a in arms if any(a in v["gap (coverage - target)"] for v in rows.values())}
     diff = {q: round(float(np.mean([v["gap (coverage - target)"]["E"][q] - v["gap (coverage - target)"]["T"][q] for v in rows.values()
                                    if {"E", "T"} <= set(v["gap (coverage - target)"])])), 4) for q in ("0.8", "0.9", "0.95")}
-    out = {"pairs": rows, "mean gap per arm": mean, "E - T, mean over pairs (the effect of motion and eddy correction)": diff}
-    print(json.dumps({k: out[k] for k in ("mean gap per arm", "E - T, mean over pairs (the effect of motion and eddy correction)")}, indent=1))
+    diffO = {q: round(float(np.mean([v["gap (coverage - target)"]["O"][q] - v["gap (coverage - target)"]["published"][q] for v in rows.values()
+                                    if {"O", "published"} <= set(v["gap (coverage - target)"])])), 4) for q in ("0.8", "0.9", "0.95")}
+    out = {"pairs": rows, "mean gap per arm": mean, "E - T, mean over pairs (the effect of motion and eddy correction)": diff,
+           "O - published, mean over pairs (our step in every run)": diffO}
+    print(json.dumps({k: out[k] for k in ("mean gap per arm", "O - published, mean over pairs (our step in every run)")}, indent=1))
     json.dump(out, open(HERE.parent / "results" / "motion_eddy" / "phase0_gap.json", "w"), indent=1)
 
 
@@ -264,7 +356,7 @@ if __name__ == "__main__":
     a = sp.add_parser("fieldcheck"); a.add_argument("dir")
     a = sp.add_parser("eddy"); a.add_argument("--subject", nargs="*")
     for c in ("run", "collect"):
-        a = sp.add_parser(c); a.add_argument("--arm", choices=("T", "E"), required=True); a.add_argument("--subject", nargs="*")
+        a = sp.add_parser(c); a.add_argument("--arm", choices=("T", "E", "O"), required=True); a.add_argument("--subject", nargs="*")
         a.add_argument("--runs", type=int, default=CR.RUNS); a.add_argument("--force", action="store_true")
     a = sp.add_parser("evaluate"); a.add_argument("--runs", type=int, default=CR.RUNS)
     args = ap.parse_args()
