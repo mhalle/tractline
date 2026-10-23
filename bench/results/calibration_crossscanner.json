@@ -1,0 +1,6749 @@
+{
+ "what": "MASiVar cohort II, the same-site cross-scanner rung: one Philips Achieva's 17-run ensemble against the same person's scans on the other Philips Achieva at the same site, beside the same-scanner other-session rescan",
+ "term": "cross scanner (same site)",
+ "levels": [
+  0.5,
+  0.55,
+  0.6,
+  0.65,
+  0.7,
+  0.75,
+  0.8,
+  0.85,
+  0.9,
+  0.95
+ ],
+ "registration mode": 3,
+ "registration": "multi-start: (a) mode 1's pipeline on the mean b0s, (b) mode 2's FA stage, (c) the other direction's transform inverted, where it exists; each refined by rigid MI on the corrected mean b0s, the best final b0 NCC kept (bench/_register_fa.py, mode 3)",
+ "dry run": false,
+ "coverage": "calibration_card.coverage_curve: the share of the rescan's density presence inside the envelope, the 42 named tracts pooled, weighted by the rescan's voxels; a subject's two target sessions averaged",
+ "directions": {
+  "B32 -> A32 scans (same site)": {
+   "target protocol": "A32",
+   "primary (fixed protocol)": true,
+   "confounded": null,
+   "per subject": {
+    "cIIs01": {
+     "cross scanner, as stated (both sessions)": {
+      "coverage at stated level": [
+       0.448,
+       0.4761,
+       0.5046,
+       0.5371,
+       0.5734,
+       0.6062,
+       0.6422,
+       0.6852,
+       0.7318,
+       0.7918
+      ],
+      "streamline ECE": 0.1967,
+      "point ECE": 0.1464,
+      "streamline: the rescan labels the seed": 0.9137
+     },
+     "cross scanner, as stated, per target session": {
+      "xA1reg3": [
+       0.4512,
+       0.4795,
+       0.5084,
+       0.5418,
+       0.5787,
+       0.6117,
+       0.6481,
+       0.6916,
+       0.7393,
+       0.8001
+      ],
+      "xA2reg3": [
+       0.4449,
+       0.4727,
+       0.5008,
+       0.5324,
+       0.5681,
+       0.6007,
+       0.6363,
+       0.6788,
+       0.7244,
+       0.7836
+      ]
+     },
+     "same scanner (other session), as stated": {
+      "coverage at stated level": [
+       0.471,
+       0.5016,
+       0.5324,
+       0.5681,
+       0.6065,
+       0.642,
+       0.6795,
+       0.7242,
+       0.7717,
+       0.8325
+      ],
+      "streamline ECE": 0.1777,
+      "point ECE": 0.14,
+      "streamline: the rescan labels the seed": 0.9158
+     },
+     "extra gap: cross scanner - same scanner, as stated": [
+      -0.023,
+      -0.0255,
+      -0.0278,
+      -0.031,
+      -0.0331,
+      -0.0358,
+      -0.0373,
+      -0.039,
+      -0.0399,
+      -0.0407
+     ],
+     "same-scanner LOSO map (without this subject) on the cross-scanner targets": {
+      "map fitted on": [
+       "cIIs02",
+       "cIIs03",
+       "cIIs04"
+      ],
+      "map term": "other session",
+      "coverage at target": [
+       0.4552,
+       0.4948,
+       0.5458,
+       0.5879,
+       0.6363,
+       0.6815,
+       0.7318,
+       0.784,
+       0.8489,
+       0.8665
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false
+      ],
+      "stated level used": [
+       0.51,
+       0.59,
+       0.66,
+       0.725,
+       0.79,
+       0.845,
+       0.9,
+       0.945,
+       0.98,
+       1.0
+      ],
+      "streamline ECE (map)": 0.0389,
+      "point ECE (map)": 0.0381,
+      "streamline ECE (PAT16 map)": 0.1169
+     },
+     "cross-scanner LOSO map": {
+      "map fitted on": [
+       "cIIs02",
+       "cIIs03",
+       "cIIs04"
+      ],
+      "map term": "cross scanner (same site)",
+      "coverage at target": [
+       0.4736,
+       0.5226,
+       0.5702,
+       0.6177,
+       0.6658,
+       0.7156,
+       0.7665,
+       0.821,
+       0.8665,
+       0.8665
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false,
+       false
+      ],
+      "stated level used": [
+       0.545,
+       0.62,
+       0.695,
+       0.765,
+       0.83,
+       0.885,
+       0.93,
+       0.97,
+       1.0,
+       1.0
+      ],
+      "streamline ECE (map)": 0.0132,
+      "point ECE (map)": 0.0134,
+      "streamline ECE (PAT16 map)": 0.1169
+     },
+     "same-scanner LOSO map on its own rescan": {
+      "map fitted on": [
+       "cIIs02",
+       "cIIs03",
+       "cIIs04"
+      ],
+      "map term": "other session",
+      "coverage at target": [
+       0.4789,
+       0.522,
+       0.5775,
+       0.6221,
+       0.6732,
+       0.7202,
+       0.7717,
+       0.8227,
+       0.885,
+       0.8996
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false
+      ],
+      "stated level used": [
+       0.51,
+       0.59,
+       0.66,
+       0.725,
+       0.79,
+       0.845,
+       0.9,
+       0.945,
+       0.98,
+       1.0
+      ],
+      "streamline ECE (map)": 0.02,
+      "point ECE (map)": 0.0317,
+      "streamline ECE (PAT16 map)": 0.0982
+     },
+     "table (0.8, 0.9, 0.95)": {
+      "same scanner, as stated": {
+       "0.8": 0.6795,
+       "0.9": 0.7717,
+       "0.95": 0.8325
+      },
+      "same scanner, map": {
+       "0.8": 0.7717,
+       "0.9": 0.885,
+       "0.95": 0.8996
+      },
+      "cross scanner, as stated": {
+       "0.8": 0.6422,
+       "0.9": 0.7318,
+       "0.95": 0.7918
+      },
+      "cross scanner, map": {
+       "0.8": 0.7665,
+       "0.9": 0.8665,
+       "0.95": 0.8665
+      },
+      "cross scanner, same-scanner map": {
+       "0.8": 0.7318,
+       "0.9": 0.8489,
+       "0.95": 0.8665
+      },
+      "extra gap": {
+       "0.8": -0.0373,
+       "0.9": -0.0399,
+       "0.95": -0.0407
+      }
+     },
+     "registration (mode 3)": {
+      "xA1reg3": {
+       "target session": "s1Ax1",
+       "rotation_deg": 5.08,
+       "translation_mm": 30.46,
+       "ncc_after": 0.8135,
+       "best": "a",
+       "QC": {
+        "threshold (b0 ncc)": 0.8,
+        "flag": false
+       },
+       "candidates b0 ncc": {
+        "a": 0.8135,
+        "b": 0.8132
+       }
+      },
+      "xA2reg3": {
+       "target session": "s1Ax2",
+       "rotation_deg": 7.51,
+       "translation_mm": 4.92,
+       "ncc_after": 0.8147,
+       "best": "b",
+       "QC": {
+        "threshold (b0 ncc)": 0.8,
+        "flag": false
+       },
+       "candidates b0 ncc": {
+        "a": 0.8019,
+        "b": 0.8147
+       }
+      }
+     }
+    },
+    "cIIs02": {
+     "cross scanner, as stated (both sessions)": {
+      "coverage at stated level": [
+       0.4712,
+       0.4939,
+       0.5339,
+       0.5605,
+       0.5967,
+       0.6345,
+       0.6735,
+       0.7124,
+       0.762,
+       0.8156
+      ],
+      "streamline ECE": 0.1889,
+      "point ECE": 0.1325,
+      "streamline: the rescan labels the seed": 0.8996
+     },
+     "cross scanner, as stated, per target session": {
+      "xA1reg3": [
+       0.4661,
+       0.4888,
+       0.5285,
+       0.5554,
+       0.5908,
+       0.6284,
+       0.6677,
+       0.7063,
+       0.7554,
+       0.8081
+      ],
+      "xA2reg3": [
+       0.4764,
+       0.4991,
+       0.5392,
+       0.5657,
+       0.6026,
+       0.6406,
+       0.6794,
+       0.7186,
+       0.7687,
+       0.823
+      ]
+     },
+     "same scanner (other session), as stated": {
+      "coverage at stated level": [
+       0.4846,
+       0.5066,
+       0.546,
+       0.572,
+       0.6097,
+       0.647,
+       0.686,
+       0.7248,
+       0.776,
+       0.8285
+      ],
+      "streamline ECE": 0.1929,
+      "point ECE": 0.1454,
+      "streamline: the rescan labels the seed": 0.909
+     },
+     "extra gap: cross scanner - same scanner, as stated": [
+      -0.0134,
+      -0.0127,
+      -0.0121,
+      -0.0115,
+      -0.013,
+      -0.0125,
+      -0.0125,
+      -0.0124,
+      -0.014,
+      -0.0129
+     ],
+     "same-scanner LOSO map (without this subject) on the cross-scanner targets": {
+      "map fitted on": [
+       "cIIs01",
+       "cIIs03",
+       "cIIs04"
+      ],
+      "map term": "other session",
+      "coverage at target": [
+       0.4838,
+       0.5339,
+       0.5671,
+       0.619,
+       0.6641,
+       0.7089,
+       0.762,
+       0.8106,
+       0.8652,
+       0.8863
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false
+      ],
+      "stated level used": [
+       0.52,
+       0.6,
+       0.66,
+       0.73,
+       0.79,
+       0.845,
+       0.9,
+       0.945,
+       0.98,
+       1.0
+      ],
+      "streamline ECE (map)": 0.0362,
+      "point ECE (map)": 0.0305,
+      "streamline ECE (PAT16 map)": 0.1088
+     },
+     "cross-scanner LOSO map": {
+      "map fitted on": [
+       "cIIs01",
+       "cIIs03",
+       "cIIs04"
+      ],
+      "map term": "cross scanner (same site)",
+      "coverage at target": [
+       0.4968,
+       0.547,
+       0.5995,
+       0.6529,
+       0.7065,
+       0.7556,
+       0.8005,
+       0.8553,
+       0.8863,
+       0.8863
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false,
+       false
+      ],
+      "stated level used": [
+       0.555,
+       0.63,
+       0.705,
+       0.775,
+       0.84,
+       0.895,
+       0.94,
+       0.975,
+       1.0,
+       1.0
+      ],
+      "streamline ECE (map)": 0.0007,
+      "point ECE (map)": 0.012,
+      "streamline ECE (PAT16 map)": 0.1088
+     },
+     "same-scanner LOSO map on its own rescan": {
+      "map fitted on": [
+       "cIIs01",
+       "cIIs03",
+       "cIIs04"
+      ],
+      "map term": "other session",
+      "coverage at target": [
+       0.4967,
+       0.546,
+       0.5797,
+       0.6315,
+       0.6755,
+       0.7211,
+       0.776,
+       0.8244,
+       0.8767,
+       0.8988
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false
+      ],
+      "stated level used": [
+       0.52,
+       0.6,
+       0.66,
+       0.73,
+       0.79,
+       0.845,
+       0.9,
+       0.945,
+       0.98,
+       1.0
+      ],
+      "streamline ECE (map)": 0.0402,
+      "point ECE (map)": 0.0432,
+      "streamline ECE (PAT16 map)": 0.1127
+     },
+     "table (0.8, 0.9, 0.95)": {
+      "same scanner, as stated": {
+       "0.8": 0.686,
+       "0.9": 0.776,
+       "0.95": 0.8285
+      },
+      "same scanner, map": {
+       "0.8": 0.776,
+       "0.9": 0.8767,
+       "0.95": 0.8988
+      },
+      "cross scanner, as stated": {
+       "0.8": 0.6735,
+       "0.9": 0.762,
+       "0.95": 0.8156
+      },
+      "cross scanner, map": {
+       "0.8": 0.8005,
+       "0.9": 0.8863,
+       "0.95": 0.8863
+      },
+      "cross scanner, same-scanner map": {
+       "0.8": 0.762,
+       "0.9": 0.8652,
+       "0.95": 0.8863
+      },
+      "extra gap": {
+       "0.8": -0.0125,
+       "0.9": -0.014,
+       "0.95": -0.0129
+      }
+     },
+     "registration (mode 3)": {
+      "xA1reg3": {
+       "target session": "s1Ax1",
+       "rotation_deg": 13.97,
+       "translation_mm": 28.51,
+       "ncc_after": 0.8549,
+       "best": "b",
+       "QC": {
+        "threshold (b0 ncc)": 0.8,
+        "flag": false
+       },
+       "candidates b0 ncc": {
+        "a": 0.8539,
+        "b": 0.8549
+       }
+      },
+      "xA2reg3": {
+       "target session": "s1Ax2",
+       "rotation_deg": 10.7,
+       "translation_mm": 20.68,
+       "ncc_after": 0.8741,
+       "best": "a",
+       "QC": {
+        "threshold (b0 ncc)": 0.8,
+        "flag": false
+       },
+       "candidates b0 ncc": {
+        "a": 0.8741,
+        "b": 0.8733
+       }
+      }
+     }
+    },
+    "cIIs03": {
+     "cross scanner, as stated (both sessions)": {
+      "coverage at stated level": [
+       0.4668,
+       0.5022,
+       0.5287,
+       0.5642,
+       0.6,
+       0.6345,
+       0.6791,
+       0.7164,
+       0.7656,
+       0.8249
+      ],
+      "streamline ECE": 0.1899,
+      "point ECE": 0.1636,
+      "streamline: the rescan labels the seed": 0.9356
+     },
+     "cross scanner, as stated, per target session": {
+      "xA1reg3": [
+       0.4638,
+       0.4997,
+       0.5256,
+       0.5613,
+       0.5978,
+       0.632,
+       0.6761,
+       0.7128,
+       0.7633,
+       0.8239
+      ],
+      "xA2reg3": [
+       0.4698,
+       0.5048,
+       0.5318,
+       0.567,
+       0.6022,
+       0.637,
+       0.6821,
+       0.7201,
+       0.768,
+       0.826
+      ]
+     },
+     "same scanner (other session), as stated": {
+      "coverage at stated level": [
+       0.4847,
+       0.5227,
+       0.5523,
+       0.5911,
+       0.6297,
+       0.6673,
+       0.7152,
+       0.7549,
+       0.8056,
+       0.8636
+      ],
+      "streamline ECE": 0.1421,
+      "point ECE": 0.0936,
+      "streamline: the rescan labels the seed": 0.9507
+     },
+     "extra gap: cross scanner - same scanner, as stated": [
+      -0.0179,
+      -0.0205,
+      -0.0236,
+      -0.0269,
+      -0.0297,
+      -0.0328,
+      -0.0361,
+      -0.0385,
+      -0.04,
+      -0.0387
+     ],
+     "same-scanner LOSO map (without this subject) on the cross-scanner targets": {
+      "map fitted on": [
+       "cIIs01",
+       "cIIs02",
+       "cIIs04"
+      ],
+      "map term": "other session",
+      "coverage at target": [
+       0.473,
+       0.5287,
+       0.5773,
+       0.6299,
+       0.6791,
+       0.7291,
+       0.7762,
+       0.8309,
+       0.8825,
+       0.8921
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false
+      ],
+      "stated level used": [
+       0.515,
+       0.6,
+       0.67,
+       0.74,
+       0.8,
+       0.86,
+       0.91,
+       0.955,
+       0.985,
+       1.0
+      ],
+      "streamline ECE (map)": 0.0214,
+      "point ECE (map)": 0.0413,
+      "streamline ECE (PAT16 map)": 0.112
+     },
+     "cross-scanner LOSO map": {
+      "map fitted on": [
+       "cIIs01",
+       "cIIs02",
+       "cIIs04"
+      ],
+      "map term": "cross scanner (same site)",
+      "coverage at target": [
+       0.5113,
+       0.5582,
+       0.6062,
+       0.6565,
+       0.7108,
+       0.7605,
+       0.8192,
+       0.8622,
+       0.8921,
+       0.8921
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false,
+       false
+      ],
+      "stated level used": [
+       0.56,
+       0.635,
+       0.71,
+       0.775,
+       0.84,
+       0.895,
+       0.945,
+       0.975,
+       1.0,
+       1.0
+      ],
+      "streamline ECE (map)": 0.0048,
+      "point ECE (map)": 0.0249,
+      "streamline ECE (PAT16 map)": 0.112
+     },
+     "same-scanner LOSO map on its own rescan": {
+      "map fitted on": [
+       "cIIs01",
+       "cIIs02",
+       "cIIs04"
+      ],
+      "map term": "other session",
+      "coverage at target": [
+       0.4913,
+       0.5523,
+       0.6053,
+       0.6629,
+       0.7152,
+       0.7688,
+       0.8162,
+       0.8691,
+       0.917,
+       0.9258
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false
+      ],
+      "stated level used": [
+       0.515,
+       0.6,
+       0.67,
+       0.74,
+       0.8,
+       0.86,
+       0.91,
+       0.955,
+       0.985,
+       1.0
+      ],
+      "streamline ECE (map)": 0.0264,
+      "point ECE (map)": 0.0303,
+      "streamline ECE (PAT16 map)": 0.0642
+     },
+     "table (0.8, 0.9, 0.95)": {
+      "same scanner, as stated": {
+       "0.8": 0.7152,
+       "0.9": 0.8056,
+       "0.95": 0.8636
+      },
+      "same scanner, map": {
+       "0.8": 0.8162,
+       "0.9": 0.917,
+       "0.95": 0.9258
+      },
+      "cross scanner, as stated": {
+       "0.8": 0.6791,
+       "0.9": 0.7656,
+       "0.95": 0.8249
+      },
+      "cross scanner, map": {
+       "0.8": 0.8192,
+       "0.9": 0.8921,
+       "0.95": 0.8921
+      },
+      "cross scanner, same-scanner map": {
+       "0.8": 0.7762,
+       "0.9": 0.8825,
+       "0.95": 0.8921
+      },
+      "extra gap": {
+       "0.8": -0.0361,
+       "0.9": -0.04,
+       "0.95": -0.0387
+      }
+     },
+     "registration (mode 3)": {
+      "xA1reg3": {
+       "target session": "s1Ax1",
+       "rotation_deg": 6.65,
+       "translation_mm": 17.36,
+       "ncc_after": 0.8143,
+       "best": "a",
+       "QC": {
+        "threshold (b0 ncc)": 0.8,
+        "flag": false
+       },
+       "candidates b0 ncc": {
+        "a": 0.8143,
+        "b": 0.7071
+       }
+      },
+      "xA2reg3": {
+       "target session": "s1Ax2",
+       "rotation_deg": 4.29,
+       "translation_mm": 42.18,
+       "ncc_after": 0.7703,
+       "best": "b",
+       "QC": {
+        "threshold (b0 ncc)": 0.8,
+        "flag": true
+       },
+       "candidates b0 ncc": {
+        "a": 0.7343,
+        "b": 0.7703
+       }
+      }
+     }
+    },
+    "cIIs04": {
+     "cross scanner, as stated (both sessions)": {
+      "coverage at stated level": [
+       0.4915,
+       0.5143,
+       0.5465,
+       0.5813,
+       0.6166,
+       0.654,
+       0.6898,
+       0.7338,
+       0.7761,
+       0.836
+      ],
+      "streamline ECE": 0.1783,
+      "point ECE": 0.1329,
+      "streamline: the rescan labels the seed": 0.9311
+     },
+     "cross scanner, as stated, per target session": {
+      "xA1reg3": [
+       0.4945,
+       0.5176,
+       0.5495,
+       0.5842,
+       0.62,
+       0.6573,
+       0.6936,
+       0.7379,
+       0.7805,
+       0.8403
+      ],
+      "xA2reg3": [
+       0.4885,
+       0.5111,
+       0.5436,
+       0.5783,
+       0.6131,
+       0.6507,
+       0.686,
+       0.7296,
+       0.7718,
+       0.8317
+      ]
+     },
+     "same scanner (other session), as stated": {
+      "coverage at stated level": [
+       0.5197,
+       0.5451,
+       0.5807,
+       0.6185,
+       0.6571,
+       0.6985,
+       0.7364,
+       0.7837,
+       0.8269,
+       0.8862
+      ],
+      "streamline ECE": 0.1366,
+      "point ECE": 0.0813,
+      "streamline: the rescan labels the seed": 0.9479
+     },
+     "extra gap: cross scanner - same scanner, as stated": [
+      -0.0282,
+      -0.0308,
+      -0.0342,
+      -0.0372,
+      -0.0405,
+      -0.0445,
+      -0.0466,
+      -0.0499,
+      -0.0508,
+      -0.0502
+     ],
+     "same-scanner LOSO map (without this subject) on the cross-scanner targets": {
+      "map fitted on": [
+       "cIIs01",
+       "cIIs02",
+       "cIIs03"
+      ],
+      "map term": "other session",
+      "coverage at target": [
+       0.5064,
+       0.5515,
+       0.6048,
+       0.654,
+       0.7011,
+       0.7428,
+       0.7955,
+       0.8455,
+       0.8955,
+       0.9019
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false
+      ],
+      "stated level used": [
+       0.535,
+       0.61,
+       0.685,
+       0.75,
+       0.81,
+       0.865,
+       0.92,
+       0.96,
+       0.985,
+       1.0
+      ],
+      "streamline ECE (map)": 0.0095,
+      "point ECE (map)": 0.0091,
+      "streamline ECE (PAT16 map)": 0.0996
+     },
+     "cross-scanner LOSO map": {
+      "map fitted on": [
+       "cIIs01",
+       "cIIs02",
+       "cIIs03"
+      ],
+      "map term": "cross scanner (same site)",
+      "coverage at target": [
+       0.5237,
+       0.578,
+       0.6294,
+       0.6823,
+       0.7302,
+       0.7761,
+       0.8235,
+       0.8708,
+       0.9019,
+       0.9019
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false,
+       false
+      ],
+      "stated level used": [
+       0.565,
+       0.645,
+       0.715,
+       0.785,
+       0.845,
+       0.9,
+       0.945,
+       0.975,
+       1.0,
+       1.0
+      ],
+      "streamline ECE (map)": 0.0173,
+      "point ECE (map)": 0.013,
+      "streamline ECE (PAT16 map)": 0.0996
+     },
+     "same-scanner LOSO map on its own rescan": {
+      "map fitted on": [
+       "cIIs01",
+       "cIIs02",
+       "cIIs03"
+      ],
+      "map term": "other session",
+      "coverage at target": [
+       0.5355,
+       0.5867,
+       0.6431,
+       0.6985,
+       0.7488,
+       0.7934,
+       0.8475,
+       0.8958,
+       0.9369,
+       0.9417
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false
+      ],
+      "stated level used": [
+       0.535,
+       0.61,
+       0.685,
+       0.75,
+       0.81,
+       0.865,
+       0.92,
+       0.96,
+       0.985,
+       1.0
+      ],
+      "streamline ECE (map)": 0.0336,
+      "point ECE (map)": 0.0444,
+      "streamline ECE (PAT16 map)": 0.0581
+     },
+     "table (0.8, 0.9, 0.95)": {
+      "same scanner, as stated": {
+       "0.8": 0.7364,
+       "0.9": 0.8269,
+       "0.95": 0.8862
+      },
+      "same scanner, map": {
+       "0.8": 0.8475,
+       "0.9": 0.9369,
+       "0.95": 0.9417
+      },
+      "cross scanner, as stated": {
+       "0.8": 0.6898,
+       "0.9": 0.7761,
+       "0.95": 0.836
+      },
+      "cross scanner, map": {
+       "0.8": 0.8235,
+       "0.9": 0.9019,
+       "0.95": 0.9019
+      },
+      "cross scanner, same-scanner map": {
+       "0.8": 0.7955,
+       "0.9": 0.8955,
+       "0.95": 0.9019
+      },
+      "extra gap": {
+       "0.8": -0.0466,
+       "0.9": -0.0508,
+       "0.95": -0.0502
+      }
+     },
+     "registration (mode 3)": {
+      "xA1reg3": {
+       "target session": "s1Ax1",
+       "rotation_deg": 3.34,
+       "translation_mm": 24.06,
+       "ncc_after": 0.8731,
+       "best": "a",
+       "QC": {
+        "threshold (b0 ncc)": 0.8,
+        "flag": false
+       },
+       "candidates b0 ncc": {
+        "a": 0.8731,
+        "b": 0.8721
+       }
+      },
+      "xA2reg3": {
+       "target session": "s1Ax2",
+       "rotation_deg": 9.14,
+       "translation_mm": 30.74,
+       "ncc_after": 0.8413,
+       "best": "a",
+       "QC": {
+        "threshold (b0 ncc)": 0.8,
+        "flag": false
+       },
+       "candidates b0 ncc": {
+        "a": 0.8413,
+        "b": 0.8409
+       }
+      }
+     }
+    }
+   },
+   "summary": {
+    "subjects": [
+     "cIIs01",
+     "cIIs02",
+     "cIIs03",
+     "cIIs04"
+    ],
+    "mean (0.8, 0.9, 0.95)": {
+     "same scanner, as stated": {
+      "0.8": 0.7043,
+      "0.9": 0.7951,
+      "0.95": 0.8527
+     },
+     "same scanner, map": {
+      "0.8": 0.8029,
+      "0.9": 0.9039,
+      "0.95": 0.9165
+     },
+     "cross scanner, as stated": {
+      "0.8": 0.6712,
+      "0.9": 0.7589,
+      "0.95": 0.8171
+     },
+     "cross scanner, map": {
+      "0.8": 0.8024,
+      "0.9": 0.8867,
+      "0.95": 0.8867
+     },
+     "cross scanner, same-scanner map": {
+      "0.8": 0.7664,
+      "0.9": 0.873,
+      "0.95": 0.8867
+     },
+     "extra gap": {
+      "0.8": -0.0331,
+      "0.9": -0.0362,
+      "0.95": -0.0356
+     }
+    },
+    "mean curves at levels": {
+     "cross scanner, as stated": [
+      0.4694,
+      0.4966,
+      0.5284,
+      0.5608,
+      0.5967,
+      0.6323,
+      0.6712,
+      0.712,
+      0.7589,
+      0.8171
+     ],
+     "same scanner, as stated": [
+      0.49,
+      0.519,
+      0.5529,
+      0.5874,
+      0.6258,
+      0.6637,
+      0.7043,
+      0.7469,
+      0.7951,
+      0.8527
+     ],
+     "cross scanner, same-scanner map": [
+      0.4796,
+      0.5272,
+      0.5737,
+      0.6227,
+      0.6702,
+      0.7156,
+      0.7664,
+      0.8177,
+      0.873,
+      0.8867
+     ],
+     "cross scanner, map": [
+      0.5013,
+      0.5514,
+      0.6013,
+      0.6523,
+      0.7033,
+      0.752,
+      0.8024,
+      0.8523,
+      0.8867,
+      0.8867
+     ]
+    },
+    "extra gap at 0.9, per subject": {
+     "cIIs01": -0.0399,
+     "cIIs02": -0.014,
+     "cIIs03": -0.04,
+     "cIIs04": -0.0508
+    },
+    "extra gap at 0.9, per target session": {
+     "cIIs01": {
+      "xA1reg3": -0.0324,
+      "xA2reg3": -0.0473
+     },
+     "cIIs02": {
+      "xA1reg3": -0.0206,
+      "xA2reg3": -0.0073
+     },
+     "cIIs03": {
+      "xA1reg3": -0.0423,
+      "xA2reg3": -0.0376
+     },
+     "cIIs04": {
+      "xA1reg3": -0.0464,
+      "xA2reg3": -0.0551
+     }
+    },
+    "ECE (mean): streamline / point": {
+     "cross scanner, as stated": [
+      0.1885,
+      0.1439
+     ],
+     "cross scanner, same-scanner map": [
+      0.0265,
+      0.0297
+     ],
+     "cross scanner, map": [
+      0.009,
+      0.0158
+     ],
+     "same scanner, as stated": [
+      0.1623,
+      0.1151
+     ]
+    },
+    "registration QC flags": {
+     "cIIs01 xA1reg3": false,
+     "cIIs01 xA2reg3": false,
+     "cIIs02 xA1reg3": false,
+     "cIIs02 xA2reg3": false,
+     "cIIs03 xA1reg3": false,
+     "cIIs03 xA2reg3": true,
+     "cIIs04 xA1reg3": false,
+     "cIIs04 xA2reg3": false
+    },
+    "same-scanner numbers equal to calibration_cohortII.json": true
+   },
+   "provenance": {
+    "cIIs01": {
+     "records": "ensemble/cIIs01/card/cIIs01-B32-xA",
+     "statements sha256": "58bbf422e5c9e6d9c2dbed73e2375c985826008f888701aab4e11a08acb8e0ca",
+     "runs.json sha256": "4fa6c8eefec37c9e0f195cff79f420a50583720e73eb99eacade6a39f9bf256a",
+     "created": {
+      "commit": "975e6dae3a23d73309751be1e64a726686176a61",
+      "branch": "ismrm2027",
+      "dirty (src/ and the card's bench modules)": []
+     },
+     "target records sha256": {
+      "xA1reg3": "56b7a134533f6fd3ecade19125dd73ac6487c663fde233c51706e9b7f02a9b00",
+      "xA2reg3": "21c6367d835dd21138f44dd0b47e4f5af32abcd1f69ef32baa7701880de30811"
+     },
+     "source records": "ensemble/cIIs01/card/cIIs01-B32",
+     "source statements": "statements_R17_reg2.npz",
+     "source statements sha256": "1ccf8bc3e3fac021dfa70ab76cf94d88f0c1df90fb685673d545a51b66de3d32",
+     "source A.npz sha256": "b70e86bb25a1eb58cfab074514ccfaf2a60e79664614812533060ce0f9f234be"
+    },
+    "cIIs02": {
+     "records": "ensemble/cIIs02/card/cIIs02-B32-xA",
+     "statements sha256": "15eae8476c0cfc038757d3f070208502a86377f111003b695fe0e53025e0350e",
+     "runs.json sha256": "798bd47829a8d9e433226842f57347c544be52ea902364bad3850b3bc6b6701a",
+     "created": {
+      "commit": "975e6dae3a23d73309751be1e64a726686176a61",
+      "branch": "ismrm2027",
+      "dirty (src/ and the card's bench modules)": []
+     },
+     "target records sha256": {
+      "xA1reg3": "789d238da571e63ba3894e96cc4a1b9060ff93ffc96b200e91e3f367e3977273",
+      "xA2reg3": "be9e4490dd415baabe6ed9c018eb7ae71ac65eeddb10f0c1f97516e7f6f65d8f"
+     },
+     "source records": "ensemble/cIIs02/card/cIIs02-B32",
+     "source statements": "statements_R17_reg2.npz",
+     "source statements sha256": "e70b6ad0a7c88dea47d5a0e9c7379691465a9e42971076953f2fcef93434b398",
+     "source A.npz sha256": "5cb88d9f340d34bafc7352ebc1bc5ad8ecf97c2de0492433756606cc80d703d0"
+    },
+    "cIIs03": {
+     "records": "ensemble/cIIs03/card/cIIs03-B32-xA",
+     "statements sha256": "013b7bc2526c15059637ace78fa4884a331974207cbb2b086b8ddc8e91c810df",
+     "runs.json sha256": "4e7807d4efb90cacf7291f6e5dacb04db628d9071b2c01ba4e5e063b63ff2d7e",
+     "created": {
+      "commit": "975e6dae3a23d73309751be1e64a726686176a61",
+      "branch": "ismrm2027",
+      "dirty (src/ and the card's bench modules)": []
+     },
+     "target records sha256": {
+      "xA1reg3": "d1f8bdeb62598ad630ef75fad9664aefe01ebb579db69b0c02bae293b7498615",
+      "xA2reg3": "f07af47a207cf2845a2b36b4880ae8e217336615d155bf5e906b9f130746cff8"
+     },
+     "source records": "ensemble/cIIs03/card/cIIs03-B32",
+     "source statements": "statements_R17_reg2.npz",
+     "source statements sha256": "6dc2a0ae785eae3e34c1dfc27d2639fa6b24333fc9f7e9c8d8d524151b89c892",
+     "source A.npz sha256": "4fa9f9ae804e3e689b95e3ffb45efba1671322f7f16c20246ba3e0cf78fd9b05"
+    },
+    "cIIs04": {
+     "records": "ensemble/cIIs04/card/cIIs04-B32-xA",
+     "statements sha256": "c2da2d28c7ba9996bbb4e887a07e818016e8985e105534bbcb8562f3854a4254",
+     "runs.json sha256": "89734a7486349c8c28fd2b940fda4941fa290d173ee2e4bcab48c9b263def87c",
+     "created": {
+      "commit": "975e6dae3a23d73309751be1e64a726686176a61",
+      "branch": "ismrm2027",
+      "dirty (src/ and the card's bench modules)": []
+     },
+     "target records sha256": {
+      "xA1reg3": "81ebee04ba99a4f3c74c85b49e456f5b91b0544a9ef171dd1a43208ccc689854",
+      "xA2reg3": "10c6cc203ea9b6c3710258b69e7b522971f87c7d148211693b0e363c6dadcab6"
+     },
+     "source records": "ensemble/cIIs04/card/cIIs04-B32",
+     "source statements": "statements_R17_reg2.npz",
+     "source statements sha256": "32797dae61be12c9b3227a3a07db8074814bbe37c2576d29a372119499f56131",
+     "source A.npz sha256": "4e0dda13d59e466f8c210145075f2836cf030d1a8d136c4a53af7570bdaf7267"
+    }
+   }
+  },
+  "A32 -> B32 scans (same site)": {
+   "target protocol": "B32",
+   "primary (fixed protocol)": true,
+   "confounded": null,
+   "per subject": {
+    "cIIs01": {
+     "cross scanner, as stated (both sessions)": {
+      "coverage at stated level": [
+       0.4832,
+       0.5141,
+       0.5505,
+       0.5811,
+       0.6177,
+       0.6565,
+       0.6964,
+       0.7389,
+       0.7862,
+       0.8435
+      ],
+      "streamline ECE": 0.1559,
+      "point ECE": 0.1364,
+      "streamline: the rescan labels the seed": 0.9057
+     },
+     "cross scanner, as stated, per target session": {
+      "xB1reg3": [
+       0.4822,
+       0.5129,
+       0.5483,
+       0.578,
+       0.6138,
+       0.6528,
+       0.6917,
+       0.7334,
+       0.7807,
+       0.8373
+      ],
+      "xB2reg3": [
+       0.4842,
+       0.5153,
+       0.5528,
+       0.5841,
+       0.6215,
+       0.6602,
+       0.7011,
+       0.7443,
+       0.7917,
+       0.8498
+      ]
+     },
+     "same scanner (other session), as stated": {
+      "coverage at stated level": [
+       0.474,
+       0.5059,
+       0.5436,
+       0.5748,
+       0.6122,
+       0.6537,
+       0.6937,
+       0.738,
+       0.7868,
+       0.844
+      ],
+      "streamline ECE": 0.1539,
+      "point ECE": 0.1124,
+      "streamline: the rescan labels the seed": 0.9368
+     },
+     "extra gap: cross scanner - same scanner, as stated": [
+      0.0092,
+      0.0082,
+      0.0069,
+      0.0063,
+      0.0055,
+      0.0028,
+      0.0027,
+      0.0009,
+      -0.0006,
+      -0.0005
+     ],
+     "same-scanner LOSO map (without this subject) on the cross-scanner targets": {
+      "map fitted on": [
+       "cIIs02",
+       "cIIs03",
+       "cIIs04"
+      ],
+      "map term": "other session",
+      "coverage at target": [
+       0.4832,
+       0.5338,
+       0.5811,
+       0.6328,
+       0.6791,
+       0.7306,
+       0.7768,
+       0.8306,
+       0.884,
+       0.9048
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false
+      ],
+      "stated level used": [
+       0.5,
+       0.575,
+       0.65,
+       0.715,
+       0.78,
+       0.84,
+       0.895,
+       0.94,
+       0.975,
+       1.0
+      ],
+      "streamline ECE (map)": 0.0042,
+      "point ECE (map)": 0.0456,
+      "streamline ECE (PAT16 map)": 0.0789
+     },
+     "cross-scanner LOSO map": {
+      "map fitted on": [
+       "cIIs02",
+       "cIIs03",
+       "cIIs04"
+      ],
+      "map term": "cross scanner (same site)",
+      "coverage at target": [
+       0.5116,
+       0.5625,
+       0.613,
+       0.6647,
+       0.7177,
+       0.7674,
+       0.8189,
+       0.8743,
+       0.9048,
+       0.9048
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false,
+       false
+      ],
+      "stated level used": [
+       0.545,
+       0.62,
+       0.695,
+       0.76,
+       0.825,
+       0.88,
+       0.93,
+       0.97,
+       1.0,
+       1.0
+      ],
+      "streamline ECE (map)": 0.0345,
+      "point ECE (map)": 0.0102,
+      "streamline ECE (PAT16 map)": 0.0789
+     },
+     "same-scanner LOSO map on its own rescan": {
+      "map fitted on": [
+       "cIIs02",
+       "cIIs03",
+       "cIIs04"
+      ],
+      "map term": "other session",
+      "coverage at target": [
+       0.474,
+       0.5264,
+       0.5748,
+       0.6288,
+       0.6771,
+       0.7305,
+       0.7772,
+       0.8314,
+       0.8829,
+       0.908
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false
+      ],
+      "stated level used": [
+       0.5,
+       0.575,
+       0.65,
+       0.715,
+       0.78,
+       0.84,
+       0.895,
+       0.94,
+       0.975,
+       1.0
+      ],
+      "streamline ECE (map)": 0.0066,
+      "point ECE (map)": 0.0219,
+      "streamline ECE (PAT16 map)": 0.0769
+     },
+     "table (0.8, 0.9, 0.95)": {
+      "same scanner, as stated": {
+       "0.8": 0.6937,
+       "0.9": 0.7868,
+       "0.95": 0.844
+      },
+      "same scanner, map": {
+       "0.8": 0.7772,
+       "0.9": 0.8829,
+       "0.95": 0.908
+      },
+      "cross scanner, as stated": {
+       "0.8": 0.6964,
+       "0.9": 0.7862,
+       "0.95": 0.8435
+      },
+      "cross scanner, map": {
+       "0.8": 0.8189,
+       "0.9": 0.9048,
+       "0.95": 0.9048
+      },
+      "cross scanner, same-scanner map": {
+       "0.8": 0.7768,
+       "0.9": 0.884,
+       "0.95": 0.9048
+      },
+      "extra gap": {
+       "0.8": 0.0027,
+       "0.9": -0.0006,
+       "0.95": -0.0005
+      }
+     },
+     "registration (mode 3)": {
+      "xB1reg3": {
+       "target session": "s1Bx1",
+       "rotation_deg": 5.04,
+       "translation_mm": 30.46,
+       "ncc_after": 0.8381,
+       "best": "c",
+       "QC": {
+        "threshold (b0 ncc)": 0.8,
+        "flag": false
+       },
+       "candidates b0 ncc": {
+        "a": 0.8378,
+        "b": 0.8344,
+        "c": 0.8381
+       }
+      },
+      "xB2reg3": {
+       "target session": "s1Bx2",
+       "rotation_deg": 6.98,
+       "translation_mm": 35.76,
+       "ncc_after": 0.8084,
+       "best": "b",
+       "QC": {
+        "threshold (b0 ncc)": 0.8,
+        "flag": false
+       },
+       "candidates b0 ncc": {
+        "a": 0.8007,
+        "b": 0.8084
+       }
+      }
+     }
+    },
+    "cIIs02": {
+     "cross scanner, as stated (both sessions)": {
+      "coverage at stated level": [
+       0.4673,
+       0.4905,
+       0.5299,
+       0.5658,
+       0.5937,
+       0.6295,
+       0.6654,
+       0.7072,
+       0.7521,
+       0.8119
+      ],
+      "streamline ECE": 0.1985,
+      "point ECE": 0.1383,
+      "streamline: the rescan labels the seed": 0.8597
+     },
+     "cross scanner, as stated, per target session": {
+      "xB1reg3": [
+       0.4624,
+       0.4863,
+       0.5263,
+       0.5626,
+       0.591,
+       0.6278,
+       0.6632,
+       0.7065,
+       0.7525,
+       0.8138
+      ],
+      "xB2reg3": [
+       0.4723,
+       0.4946,
+       0.5336,
+       0.5691,
+       0.5965,
+       0.6313,
+       0.6676,
+       0.7079,
+       0.7518,
+       0.81
+      ]
+     },
+     "same scanner (other session), as stated": {
+      "coverage at stated level": [
+       0.4901,
+       0.5165,
+       0.5612,
+       0.6014,
+       0.632,
+       0.6706,
+       0.7092,
+       0.7557,
+       0.8028,
+       0.8621
+      ],
+      "streamline ECE": 0.1506,
+      "point ECE": 0.1175,
+      "streamline: the rescan labels the seed": 0.9253
+     },
+     "extra gap: cross scanner - same scanner, as stated": [
+      -0.0228,
+      -0.026,
+      -0.0313,
+      -0.0356,
+      -0.0383,
+      -0.0411,
+      -0.0438,
+      -0.0485,
+      -0.0507,
+      -0.0502
+     ],
+     "same-scanner LOSO map (without this subject) on the cross-scanner targets": {
+      "map fitted on": [
+       "cIIs01",
+       "cIIs03",
+       "cIIs04"
+      ],
+      "map term": "other session",
+      "coverage at target": [
+       0.4784,
+       0.5231,
+       0.5698,
+       0.613,
+       0.6571,
+       0.7032,
+       0.7521,
+       0.8045,
+       0.8581,
+       0.8805
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false
+      ],
+      "stated level used": [
+       0.515,
+       0.585,
+       0.66,
+       0.725,
+       0.785,
+       0.845,
+       0.9,
+       0.945,
+       0.98,
+       1.0
+      ],
+      "streamline ECE (map)": 0.0409,
+      "point ECE (map)": 0.0456,
+      "streamline ECE (PAT16 map)": 0.1181
+     },
+     "cross-scanner LOSO map": {
+      "map fitted on": [
+       "cIIs01",
+       "cIIs03",
+       "cIIs04"
+      ],
+      "map term": "cross scanner (same site)",
+      "coverage at target": [
+       0.4826,
+       0.5327,
+       0.5805,
+       0.627,
+       0.6792,
+       0.7258,
+       0.7738,
+       0.8275,
+       0.8793,
+       0.8805
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false
+      ],
+      "stated level used": [
+       0.53,
+       0.61,
+       0.68,
+       0.745,
+       0.815,
+       0.87,
+       0.92,
+       0.96,
+       0.99,
+       1.0
+      ],
+      "streamline ECE (map)": 0.0181,
+      "point ECE (map)": 0.0154,
+      "streamline ECE (PAT16 map)": 0.1181
+     },
+     "same-scanner LOSO map on its own rescan": {
+      "map fitted on": [
+       "cIIs01",
+       "cIIs03",
+       "cIIs04"
+      ],
+      "map term": "other session",
+      "coverage at target": [
+       0.5028,
+       0.5535,
+       0.6059,
+       0.6536,
+       0.7007,
+       0.7512,
+       0.8028,
+       0.855,
+       0.9044,
+       0.9251
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false
+      ],
+      "stated level used": [
+       0.515,
+       0.585,
+       0.66,
+       0.725,
+       0.785,
+       0.845,
+       0.9,
+       0.945,
+       0.98,
+       1.0
+      ],
+      "streamline ECE (map)": 0.0132,
+      "point ECE (map)": 0.0176,
+      "streamline ECE (PAT16 map)": 0.0703
+     },
+     "table (0.8, 0.9, 0.95)": {
+      "same scanner, as stated": {
+       "0.8": 0.7092,
+       "0.9": 0.8028,
+       "0.95": 0.8621
+      },
+      "same scanner, map": {
+       "0.8": 0.8028,
+       "0.9": 0.9044,
+       "0.95": 0.9251
+      },
+      "cross scanner, as stated": {
+       "0.8": 0.6654,
+       "0.9": 0.7521,
+       "0.95": 0.8119
+      },
+      "cross scanner, map": {
+       "0.8": 0.7738,
+       "0.9": 0.8793,
+       "0.95": 0.8805
+      },
+      "cross scanner, same-scanner map": {
+       "0.8": 0.7521,
+       "0.9": 0.8581,
+       "0.95": 0.8805
+      },
+      "extra gap": {
+       "0.8": -0.0438,
+       "0.9": -0.0507,
+       "0.95": -0.0502
+      }
+     },
+     "registration (mode 3)": {
+      "xB1reg3": {
+       "target session": "s1Bx1",
+       "rotation_deg": 14.02,
+       "translation_mm": 28.64,
+       "ncc_after": 0.8297,
+       "best": "a",
+       "QC": {
+        "threshold (b0 ncc)": 0.8,
+        "flag": false
+       },
+       "candidates b0 ncc": {
+        "a": 0.8297,
+        "b": 0.8295,
+        "c": 0.8294
+       }
+      },
+      "xB2reg3": {
+       "target session": "s1Bx2",
+       "rotation_deg": 8.72,
+       "translation_mm": 23.52,
+       "ncc_after": 0.8295,
+       "best": "b",
+       "QC": {
+        "threshold (b0 ncc)": 0.8,
+        "flag": false
+       },
+       "candidates b0 ncc": {
+        "a": 0.8224,
+        "b": 0.8295
+       }
+      }
+     }
+    },
+    "cIIs03": {
+     "cross scanner, as stated (both sessions)": {
+      "coverage at stated level": [
+       0.4859,
+       0.5089,
+       0.5396,
+       0.5779,
+       0.616,
+       0.6537,
+       0.6923,
+       0.7344,
+       0.7814,
+       0.8373
+      ],
+      "streamline ECE": 0.1864,
+      "point ECE": 0.1373,
+      "streamline: the rescan labels the seed": 0.9125
+     },
+     "cross scanner, as stated, per target session": {
+      "xB1reg3": [
+       0.4863,
+       0.5093,
+       0.5393,
+       0.5775,
+       0.6152,
+       0.6522,
+       0.6908,
+       0.7324,
+       0.7794,
+       0.8352
+      ],
+      "xB2reg3": [
+       0.4856,
+       0.5086,
+       0.54,
+       0.5783,
+       0.6167,
+       0.6551,
+       0.6939,
+       0.7364,
+       0.7835,
+       0.8394
+      ]
+     },
+     "same scanner (other session), as stated": {
+      "coverage at stated level": [
+       0.5017,
+       0.5258,
+       0.559,
+       0.5983,
+       0.6396,
+       0.6786,
+       0.718,
+       0.7608,
+       0.809,
+       0.8653
+      ],
+      "streamline ECE": 0.1688,
+      "point ECE": 0.1242,
+      "streamline: the rescan labels the seed": 0.9255
+     },
+     "extra gap: cross scanner - same scanner, as stated": [
+      -0.0158,
+      -0.0169,
+      -0.0194,
+      -0.0204,
+      -0.0236,
+      -0.0249,
+      -0.0257,
+      -0.0264,
+      -0.0276,
+      -0.028
+     ],
+     "same-scanner LOSO map (without this subject) on the cross-scanner targets": {
+      "map fitted on": [
+       "cIIs01",
+       "cIIs02",
+       "cIIs04"
+      ],
+      "map term": "other session",
+      "coverage at target": [
+       0.4932,
+       0.5389,
+       0.585,
+       0.6325,
+       0.6854,
+       0.7313,
+       0.7814,
+       0.83,
+       0.8863,
+       0.9043
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false
+      ],
+      "stated level used": [
+       0.515,
+       0.585,
+       0.66,
+       0.725,
+       0.79,
+       0.845,
+       0.9,
+       0.945,
+       0.98,
+       1.0
+      ],
+      "streamline ECE (map)": 0.0357,
+      "point ECE (map)": 0.0475,
+      "streamline ECE (PAT16 map)": 0.1077
+     },
+     "cross-scanner LOSO map": {
+      "map fitted on": [
+       "cIIs01",
+       "cIIs02",
+       "cIIs04"
+      ],
+      "map term": "cross scanner (same site)",
+      "coverage at target": [
+       0.5029,
+       0.5622,
+       0.6066,
+       0.6597,
+       0.7116,
+       0.7641,
+       0.8138,
+       0.8676,
+       0.9043,
+       0.9043
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false,
+       false
+      ],
+      "stated level used": [
+       0.545,
+       0.62,
+       0.69,
+       0.76,
+       0.825,
+       0.88,
+       0.93,
+       0.97,
+       1.0,
+       1.0
+      ],
+      "streamline ECE (map)": 0.0039,
+      "point ECE (map)": 0.01,
+      "streamline ECE (PAT16 map)": 0.1077
+     },
+     "same-scanner LOSO map on its own rescan": {
+      "map fitted on": [
+       "cIIs01",
+       "cIIs02",
+       "cIIs04"
+      ],
+      "map term": "other session",
+      "coverage at target": [
+       0.5099,
+       0.5585,
+       0.6064,
+       0.6564,
+       0.7102,
+       0.758,
+       0.809,
+       0.8586,
+       0.9122,
+       0.9267
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false
+      ],
+      "stated level used": [
+       0.515,
+       0.585,
+       0.66,
+       0.725,
+       0.79,
+       0.845,
+       0.9,
+       0.945,
+       0.98,
+       1.0
+      ],
+      "streamline ECE (map)": 0.0183,
+      "point ECE (map)": 0.0229,
+      "streamline ECE (PAT16 map)": 0.0904
+     },
+     "table (0.8, 0.9, 0.95)": {
+      "same scanner, as stated": {
+       "0.8": 0.718,
+       "0.9": 0.809,
+       "0.95": 0.8653
+      },
+      "same scanner, map": {
+       "0.8": 0.809,
+       "0.9": 0.9122,
+       "0.95": 0.9267
+      },
+      "cross scanner, as stated": {
+       "0.8": 0.6923,
+       "0.9": 0.7814,
+       "0.95": 0.8373
+      },
+      "cross scanner, map": {
+       "0.8": 0.8138,
+       "0.9": 0.9043,
+       "0.95": 0.9043
+      },
+      "cross scanner, same-scanner map": {
+       "0.8": 0.7814,
+       "0.9": 0.8863,
+       "0.95": 0.9043
+      },
+      "extra gap": {
+       "0.8": -0.0257,
+       "0.9": -0.0276,
+       "0.95": -0.028
+      }
+     },
+     "registration (mode 3)": {
+      "xB1reg3": {
+       "target session": "s1Bx1",
+       "rotation_deg": 7.13,
+       "translation_mm": 17.93,
+       "ncc_after": 0.8339,
+       "best": "a",
+       "QC": {
+        "threshold (b0 ncc)": 0.8,
+        "flag": false
+       },
+       "candidates b0 ncc": {
+        "a": 0.8339,
+        "b": 0.8336,
+        "c": 0.8303
+       }
+      },
+      "xB2reg3": {
+       "target session": "s1Bx2",
+       "rotation_deg": 8.53,
+       "translation_mm": 18.64,
+       "ncc_after": 0.8282,
+       "best": "a",
+       "QC": {
+        "threshold (b0 ncc)": 0.8,
+        "flag": false
+       },
+       "candidates b0 ncc": {
+        "a": 0.8282,
+        "b": 0.8152
+       }
+      }
+     }
+    },
+    "cIIs04": {
+     "cross scanner, as stated (both sessions)": {
+      "coverage at stated level": [
+       0.487,
+       0.5123,
+       0.5487,
+       0.5811,
+       0.6154,
+       0.6478,
+       0.6866,
+       0.7272,
+       0.7737,
+       0.8265
+      ],
+      "streamline ECE": 0.1936,
+      "point ECE": 0.1334,
+      "streamline: the rescan labels the seed": 0.8993
+     },
+     "cross scanner, as stated, per target session": {
+      "xB1reg3": [
+       0.4884,
+       0.5136,
+       0.55,
+       0.5824,
+       0.6166,
+       0.6493,
+       0.6883,
+       0.729,
+       0.7754,
+       0.8277
+      ],
+      "xB2reg3": [
+       0.4856,
+       0.5111,
+       0.5474,
+       0.5798,
+       0.6142,
+       0.6464,
+       0.6849,
+       0.7255,
+       0.772,
+       0.8253
+      ]
+     },
+     "same scanner (other session), as stated": {
+      "coverage at stated level": [
+       0.5102,
+       0.5388,
+       0.5794,
+       0.6153,
+       0.6521,
+       0.6873,
+       0.7289,
+       0.771,
+       0.8199,
+       0.8712
+      ],
+      "streamline ECE": 0.1464,
+      "point ECE": 0.0651,
+      "streamline: the rescan labels the seed": 0.938
+     },
+     "extra gap: cross scanner - same scanner, as stated": [
+      -0.0232,
+      -0.0265,
+      -0.0307,
+      -0.0342,
+      -0.0367,
+      -0.0395,
+      -0.0423,
+      -0.0438,
+      -0.0462,
+      -0.0447
+     ],
+     "same-scanner LOSO map (without this subject) on the cross-scanner targets": {
+      "map fitted on": [
+       "cIIs01",
+       "cIIs02",
+       "cIIs03"
+      ],
+      "map term": "other session",
+      "coverage at target": [
+       0.502,
+       0.5378,
+       0.5862,
+       0.6314,
+       0.6763,
+       0.7272,
+       0.7771,
+       0.8183,
+       0.8784,
+       0.8965
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false
+      ],
+      "stated level used": [
+       0.52,
+       0.59,
+       0.665,
+       0.73,
+       0.79,
+       0.85,
+       0.905,
+       0.945,
+       0.98,
+       1.0
+      ],
+      "streamline ECE (map)": 0.0358,
+      "point ECE (map)": 0.024,
+      "streamline ECE (PAT16 map)": 0.1137
+     },
+     "cross-scanner LOSO map": {
+      "map fitted on": [
+       "cIIs01",
+       "cIIs02",
+       "cIIs03"
+      ],
+      "map term": "cross scanner (same site)",
+      "coverage at target": [
+       0.512,
+       0.5599,
+       0.5999,
+       0.6509,
+       0.7021,
+       0.7542,
+       0.7967,
+       0.8478,
+       0.8965,
+       0.8965
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false,
+       false
+      ],
+      "stated level used": [
+       0.545,
+       0.62,
+       0.685,
+       0.755,
+       0.82,
+       0.88,
+       0.925,
+       0.965,
+       1.0,
+       1.0
+      ],
+      "streamline ECE (map)": 0.0127,
+      "point ECE (map)": 0.0245,
+      "streamline ECE (PAT16 map)": 0.1137
+     },
+     "same-scanner LOSO map on its own rescan": {
+      "map fitted on": [
+       "cIIs01",
+       "cIIs02",
+       "cIIs03"
+      ],
+      "map term": "other session",
+      "coverage at target": [
+       0.5281,
+       0.5674,
+       0.6208,
+       0.6689,
+       0.7174,
+       0.771,
+       0.823,
+       0.8641,
+       0.9187,
+       0.9346
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false
+      ],
+      "stated level used": [
+       0.52,
+       0.59,
+       0.665,
+       0.73,
+       0.79,
+       0.85,
+       0.905,
+       0.945,
+       0.98,
+       1.0
+      ],
+      "streamline ECE (map)": 0.0114,
+      "point ECE (map)": 0.0442,
+      "streamline ECE (PAT16 map)": 0.0665
+     },
+     "table (0.8, 0.9, 0.95)": {
+      "same scanner, as stated": {
+       "0.8": 0.7289,
+       "0.9": 0.8199,
+       "0.95": 0.8712
+      },
+      "same scanner, map": {
+       "0.8": 0.823,
+       "0.9": 0.9187,
+       "0.95": 0.9346
+      },
+      "cross scanner, as stated": {
+       "0.8": 0.6866,
+       "0.9": 0.7737,
+       "0.95": 0.8265
+      },
+      "cross scanner, map": {
+       "0.8": 0.7967,
+       "0.9": 0.8965,
+       "0.95": 0.8965
+      },
+      "cross scanner, same-scanner map": {
+       "0.8": 0.7771,
+       "0.9": 0.8784,
+       "0.95": 0.8965
+      },
+      "extra gap": {
+       "0.8": -0.0423,
+       "0.9": -0.0462,
+       "0.95": -0.0447
+      }
+     },
+     "registration (mode 3)": {
+      "xB1reg3": {
+       "target session": "s1Bx1",
+       "rotation_deg": 3.33,
+       "translation_mm": 24.06,
+       "ncc_after": 0.8924,
+       "best": "c",
+       "QC": {
+        "threshold (b0 ncc)": 0.8,
+        "flag": false
+       },
+       "candidates b0 ncc": {
+        "a": 0.8861,
+        "b": 0.8493,
+        "c": 0.8924
+       }
+      },
+      "xB2reg3": {
+       "target session": "s1Bx2",
+       "rotation_deg": 7.83,
+       "translation_mm": 20.24,
+       "ncc_after": 0.7987,
+       "best": "a",
+       "QC": {
+        "threshold (b0 ncc)": 0.8,
+        "flag": true
+       },
+       "candidates b0 ncc": {
+        "a": 0.7987,
+        "b": 0.7981
+       }
+      }
+     }
+    }
+   },
+   "summary": {
+    "subjects": [
+     "cIIs01",
+     "cIIs02",
+     "cIIs03",
+     "cIIs04"
+    ],
+    "mean (0.8, 0.9, 0.95)": {
+     "same scanner, as stated": {
+      "0.8": 0.7124,
+      "0.9": 0.8046,
+      "0.95": 0.8606
+     },
+     "same scanner, map": {
+      "0.8": 0.803,
+      "0.9": 0.9045,
+      "0.95": 0.9236
+     },
+     "cross scanner, as stated": {
+      "0.8": 0.6852,
+      "0.9": 0.7733,
+      "0.95": 0.8298
+     },
+     "cross scanner, map": {
+      "0.8": 0.8008,
+      "0.9": 0.8962,
+      "0.95": 0.8965
+     },
+     "cross scanner, same-scanner map": {
+      "0.8": 0.7719,
+      "0.9": 0.8767,
+      "0.95": 0.8965
+     },
+     "extra gap": {
+      "0.8": -0.0273,
+      "0.9": -0.0313,
+      "0.95": -0.0309
+     }
+    },
+    "mean curves at levels": {
+     "cross scanner, as stated": [
+      0.4808,
+      0.5065,
+      0.5422,
+      0.5765,
+      0.6107,
+      0.6469,
+      0.6852,
+      0.7269,
+      0.7733,
+      0.8298
+     ],
+     "same scanner, as stated": [
+      0.494,
+      0.5217,
+      0.5608,
+      0.5975,
+      0.634,
+      0.6725,
+      0.7124,
+      0.7564,
+      0.8046,
+      0.8606
+     ],
+     "cross scanner, same-scanner map": [
+      0.4892,
+      0.5334,
+      0.5805,
+      0.6274,
+      0.6745,
+      0.7231,
+      0.7719,
+      0.8209,
+      0.8767,
+      0.8965
+     ],
+     "cross scanner, map": [
+      0.5023,
+      0.5543,
+      0.6,
+      0.6506,
+      0.7026,
+      0.7529,
+      0.8008,
+      0.8543,
+      0.8962,
+      0.8965
+     ]
+    },
+    "extra gap at 0.9, per subject": {
+     "cIIs01": -0.0006,
+     "cIIs02": -0.0507,
+     "cIIs03": -0.0276,
+     "cIIs04": -0.0462
+    },
+    "extra gap at 0.9, per target session": {
+     "cIIs01": {
+      "xB1reg3": -0.0061,
+      "xB2reg3": 0.0049
+     },
+     "cIIs02": {
+      "xB1reg3": -0.0503,
+      "xB2reg3": -0.051
+     },
+     "cIIs03": {
+      "xB1reg3": -0.0296,
+      "xB2reg3": -0.0255
+     },
+     "cIIs04": {
+      "xB1reg3": -0.0445,
+      "xB2reg3": -0.0479
+     }
+    },
+    "ECE (mean): streamline / point": {
+     "cross scanner, as stated": [
+      0.1836,
+      0.1363
+     ],
+     "cross scanner, same-scanner map": [
+      0.0292,
+      0.0407
+     ],
+     "cross scanner, map": [
+      0.0173,
+      0.015
+     ],
+     "same scanner, as stated": [
+      0.1549,
+      0.1048
+     ]
+    },
+    "registration QC flags": {
+     "cIIs01 xB1reg3": false,
+     "cIIs01 xB2reg3": false,
+     "cIIs02 xB1reg3": false,
+     "cIIs02 xB2reg3": false,
+     "cIIs03 xB1reg3": false,
+     "cIIs03 xB2reg3": false,
+     "cIIs04 xB1reg3": false,
+     "cIIs04 xB2reg3": true
+    },
+    "same-scanner numbers equal to calibration_cohortII.json": true
+   },
+   "provenance": {
+    "cIIs01": {
+     "records": "ensemble/cIIs01/card/cIIs01-A32-xB",
+     "statements sha256": "312ac144a0a69e40e6ac1622738f35c0d32220bba3293212b4c6b890a9c86d38",
+     "runs.json sha256": "2c8d250e1c9047da31cf3bb3a154af9e86a5a878cb5c4d4262499e690cd7e5a0",
+     "created": {
+      "commit": "975e6dae3a23d73309751be1e64a726686176a61",
+      "branch": "ismrm2027",
+      "dirty (src/ and the card's bench modules)": []
+     },
+     "target records sha256": {
+      "xB1reg3": "c1a929c6228b36213705e0d147c4bc40e780f34eae467cac36ec7996d2a685e3",
+      "xB2reg3": "afdee8bc25520900f09aeacb580ad9fe25d5811780a4d9f129f149172eb59f18"
+     },
+     "source records": "ensemble/cIIs01/card/cIIs01-A32",
+     "source statements": "statements_R17_reg2.npz",
+     "source statements sha256": "668e50bb5298c96a1650f93d5e1ded74b487f8024e4bb0c184b81e199b3e9357",
+     "source A.npz sha256": "3842e5b170102710ebea71bf225923dea128713730f35577eb1f80cf68b3fa2c"
+    },
+    "cIIs02": {
+     "records": "ensemble/cIIs02/card/cIIs02-A32-xB",
+     "statements sha256": "46a40620fd14f575590ac279a71471bc262c55f72de1953d7d7748180232405c",
+     "runs.json sha256": "bbbdfe54a3360e73b52b463139c0f183caa281ae94d2bf18f315f01a5301f056",
+     "created": {
+      "commit": "975e6dae3a23d73309751be1e64a726686176a61",
+      "branch": "ismrm2027",
+      "dirty (src/ and the card's bench modules)": []
+     },
+     "target records sha256": {
+      "xB1reg3": "26b55c112e86ddfe8e831a6d0e457b3b6e7e200cb7f708cc9ac76724ec47f1a7",
+      "xB2reg3": "c342d07a01f8de4f6b538862a7ff98772470d2ce97201fc47d651c76f6a61999"
+     },
+     "source records": "ensemble/cIIs02/card/cIIs02-A32",
+     "source statements": "statements_R17_reg2.npz",
+     "source statements sha256": "f5ecfd80f8f004e3ba0467ee99c2fc58b3e5008162420123c3ab2dcd0e90fd20",
+     "source A.npz sha256": "04e406ab9077adf2e12f12fc38bcdf4d73b02fbfd7b7332b26970f9ce988ba62"
+    },
+    "cIIs03": {
+     "records": "ensemble/cIIs03/card/cIIs03-A32-xB",
+     "statements sha256": "c0696b7a3412aec9857eeef673e35617db498a5a8d1bd453c96b684474e05e3c",
+     "runs.json sha256": "4d6fa6f8fdb96dce0609c7eb0169caa758247fdcfc72b423ee85f2672a72c982",
+     "created": {
+      "commit": "975e6dae3a23d73309751be1e64a726686176a61",
+      "branch": "ismrm2027",
+      "dirty (src/ and the card's bench modules)": []
+     },
+     "target records sha256": {
+      "xB1reg3": "3f4d57022cc74388ab7321ad3125aaa5b2d4e81becd9ad72dd6c129920af5a95",
+      "xB2reg3": "3a2b0aeebf7a6c4ec50b676a159f243d0f3e66ff196c409a965a3d4f21d0d9db"
+     },
+     "source records": "ensemble/cIIs03/card/cIIs03-A32",
+     "source statements": "statements_R17_reg2.npz",
+     "source statements sha256": "224bfcef9ddac124b14fe2cdda28dbad769e0dc9255bfd4f3d0034cd2f4fafd4",
+     "source A.npz sha256": "244a3ca71801d196a90fa071f75d7162aded82da2d17d18a4d82a3569813fe40"
+    },
+    "cIIs04": {
+     "records": "ensemble/cIIs04/card/cIIs04-A32-xB",
+     "statements sha256": "ed238a74ad08ae8e00f79e904a5d92cddb7c47db556c33f90b7d6325ec6ed7af",
+     "runs.json sha256": "9602165b6e3b9fb49d52b7797b27c971f1e1fdd7453673ee132821777bbc0171",
+     "created": {
+      "commit": "975e6dae3a23d73309751be1e64a726686176a61",
+      "branch": "ismrm2027",
+      "dirty (src/ and the card's bench modules)": []
+     },
+     "target records sha256": {
+      "xB1reg3": "3801f30d64fa5193133d09b474343e6e0ac153bd694e9437e641eeb0da2f0760",
+      "xB2reg3": "6e8af6bed2677975ae0cbd1824d96b592df71400c3248cd035b3bc7714441765"
+     },
+     "source records": "ensemble/cIIs04/card/cIIs04-A32",
+     "source statements": "statements_R17_reg2.npz",
+     "source statements sha256": "da7441cc90d3ea6def9581a0d2312b92226948d63e037ef2f7770034c91fd2b6",
+     "source A.npz sha256": "85dc7dc7f56175208bbd439a2281171ac8df77d3e7a3d934efe6a56edcbfe17e"
+    }
+   }
+  },
+  "B2000 -> A2000 scans (same site)": {
+   "target protocol": "A2000r19",
+   "primary (fixed protocol)": false,
+   "confounded": "resolution (2.5 mm on scanner B against 1.89 x 1.89 x 2.2 mm on A, the target resampled onto the ensemble's grid) and streamline count (A2000r19's runs have about twice as many: every mask voxel a seed)",
+   "per subject": {
+    "cIIs01": {
+     "cross scanner, as stated (both sessions)": {
+      "coverage at stated level": [
+       0.5028,
+       0.5227,
+       0.5566,
+       0.5838,
+       0.6218,
+       0.6549,
+       0.6927,
+       0.7304,
+       0.7746,
+       0.8311
+      ],
+      "streamline ECE": 0.1791,
+      "point ECE": 0.1552,
+      "streamline: the rescan labels the seed": 0.8344
+     },
+     "cross scanner, as stated, per target session": {
+      "xA1reg3": [
+       0.5038,
+       0.5228,
+       0.5561,
+       0.5816,
+       0.6186,
+       0.6505,
+       0.6867,
+       0.7232,
+       0.7661,
+       0.822
+      ],
+      "xA2reg3": [
+       0.5018,
+       0.5227,
+       0.5572,
+       0.586,
+       0.6251,
+       0.6593,
+       0.6987,
+       0.7376,
+       0.783,
+       0.8403
+      ]
+     },
+     "same scanner (other session), as stated": {
+      "coverage at stated level": [
+       0.5298,
+       0.5539,
+       0.5926,
+       0.6238,
+       0.6677,
+       0.7054,
+       0.7477,
+       0.7898,
+       0.8373,
+       0.894
+      ],
+      "streamline ECE": 0.1074,
+      "point ECE": 0.0601,
+      "streamline: the rescan labels the seed": 0.9549
+     },
+     "extra gap: cross scanner - same scanner, as stated": [
+      -0.027,
+      -0.0312,
+      -0.036,
+      -0.04,
+      -0.0459,
+      -0.0505,
+      -0.055,
+      -0.0594,
+      -0.0627,
+      -0.0629
+     ],
+     "same-scanner LOSO map (without this subject) on the cross-scanner targets": {
+      "map fitted on": [
+       "cIIs02",
+       "cIIs03",
+       "cIIs04"
+      ],
+      "map term": "other session",
+      "coverage at target": [
+       0.4868,
+       0.5272,
+       0.5657,
+       0.6157,
+       0.6549,
+       0.7003,
+       0.7458,
+       0.7918,
+       0.8428,
+       0.8961
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false
+      ],
+      "stated level used": [
+       0.485,
+       0.56,
+       0.62,
+       0.69,
+       0.75,
+       0.81,
+       0.865,
+       0.915,
+       0.96,
+       1.0
+      ],
+      "streamline ECE (map)": 0.0604,
+      "point ECE (map)": 0.1054,
+      "streamline ECE (PAT16 map)": 0.1052
+     },
+     "cross-scanner LOSO map": {
+      "map fitted on": [
+       "cIIs02",
+       "cIIs03",
+       "cIIs04"
+      ],
+      "map term": "cross scanner (same site)",
+      "coverage at target": [
+       0.516,
+       0.5625,
+       0.6157,
+       0.6631,
+       0.7141,
+       0.7624,
+       0.813,
+       0.8599,
+       0.8961,
+       0.8961
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false,
+       false
+      ],
+      "stated level used": [
+       0.535,
+       0.615,
+       0.69,
+       0.76,
+       0.83,
+       0.885,
+       0.935,
+       0.97,
+       1.0,
+       1.0
+      ],
+      "streamline ECE (map)": 0.0202,
+      "point ECE (map)": 0.0183,
+      "streamline ECE (PAT16 map)": 0.1052
+     },
+     "same-scanner LOSO map on its own rescan": {
+      "map fitted on": [
+       "cIIs02",
+       "cIIs03",
+       "cIIs04"
+      ],
+      "map term": "other session",
+      "coverage at target": [
+       0.5137,
+       0.5586,
+       0.6024,
+       0.6614,
+       0.7054,
+       0.7561,
+       0.8064,
+       0.8546,
+       0.9027,
+       0.9456
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false
+      ],
+      "stated level used": [
+       0.485,
+       0.56,
+       0.62,
+       0.69,
+       0.75,
+       0.81,
+       0.865,
+       0.915,
+       0.96,
+       1.0
+      ],
+      "streamline ECE (map)": 0.0111,
+      "point ECE (map)": 0.0137,
+      "streamline ECE (PAT16 map)": 0.0336
+     },
+     "table (0.8, 0.9, 0.95)": {
+      "same scanner, as stated": {
+       "0.8": 0.7477,
+       "0.9": 0.8373,
+       "0.95": 0.894
+      },
+      "same scanner, map": {
+       "0.8": 0.8064,
+       "0.9": 0.9027,
+       "0.95": 0.9456
+      },
+      "cross scanner, as stated": {
+       "0.8": 0.6927,
+       "0.9": 0.7746,
+       "0.95": 0.8311
+      },
+      "cross scanner, map": {
+       "0.8": 0.813,
+       "0.9": 0.8961,
+       "0.95": 0.8961
+      },
+      "cross scanner, same-scanner map": {
+       "0.8": 0.7458,
+       "0.9": 0.8428,
+       "0.95": 0.8961
+      },
+      "extra gap": {
+       "0.8": -0.055,
+       "0.9": -0.0627,
+       "0.95": -0.0629
+      }
+     },
+     "registration (mode 3)": {
+      "xA1reg3": {
+       "target session": "s1Ax1",
+       "rotation_deg": 7.02,
+       "translation_mm": 27.74,
+       "ncc_after": 0.7503,
+       "best": "a",
+       "QC": {
+        "threshold (b0 ncc)": 0.8,
+        "flag": true
+       },
+       "candidates b0 ncc": {
+        "a": 0.7503,
+        "b": 0.7493
+       }
+      },
+      "xA2reg3": {
+       "target session": "s1Ax2",
+       "rotation_deg": 9.28,
+       "translation_mm": 2.5,
+       "ncc_after": 0.7493,
+       "best": "a",
+       "QC": {
+        "threshold (b0 ncc)": 0.8,
+        "flag": true
+       },
+       "candidates b0 ncc": {
+        "a": 0.7493,
+        "b": 0.7461
+       }
+      }
+     }
+    },
+    "cIIs02": {
+     "cross scanner, as stated (both sessions)": {
+      "coverage at stated level": [
+       0.4578,
+       0.4872,
+       0.5157,
+       0.5496,
+       0.5791,
+       0.6143,
+       0.6564,
+       0.6956,
+       0.7452,
+       0.8039
+      ],
+      "streamline ECE": 0.2078,
+      "point ECE": 0.171,
+      "streamline: the rescan labels the seed": 0.8551
+     },
+     "cross scanner, as stated, per target session": {
+      "xA1reg3": [
+       0.4492,
+       0.4776,
+       0.5055,
+       0.538,
+       0.5673,
+       0.6015,
+       0.6431,
+       0.6812,
+       0.7299,
+       0.7892
+      ],
+      "xA2reg3": [
+       0.4665,
+       0.4967,
+       0.5258,
+       0.5611,
+       0.5908,
+       0.627,
+       0.6697,
+       0.71,
+       0.7606,
+       0.8186
+      ]
+     },
+     "same scanner (other session), as stated": {
+      "coverage at stated level": [
+       0.5026,
+       0.5356,
+       0.5664,
+       0.6045,
+       0.6371,
+       0.6785,
+       0.7247,
+       0.7671,
+       0.818,
+       0.8731
+      ],
+      "streamline ECE": 0.133,
+      "point ECE": 0.0822,
+      "streamline: the rescan labels the seed": 0.9399
+     },
+     "extra gap: cross scanner - same scanner, as stated": [
+      -0.0448,
+      -0.0484,
+      -0.0507,
+      -0.0549,
+      -0.058,
+      -0.0642,
+      -0.0683,
+      -0.0715,
+      -0.0728,
+      -0.0692
+     ],
+     "same-scanner LOSO map (without this subject) on the cross-scanner targets": {
+      "map fitted on": [
+       "cIIs01",
+       "cIIs03",
+       "cIIs04"
+      ],
+      "map term": "other session",
+      "coverage at target": [
+       0.4396,
+       0.4823,
+       0.5246,
+       0.5674,
+       0.6096,
+       0.6564,
+       0.7033,
+       0.7535,
+       0.8126,
+       0.8743
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true
+      ],
+      "stated level used": [
+       0.465,
+       0.545,
+       0.61,
+       0.68,
+       0.74,
+       0.8,
+       0.86,
+       0.91,
+       0.955,
+       0.995
+      ],
+      "streamline ECE (map)": 0.0976,
+      "point ECE (map)": 0.1247,
+      "streamline ECE (PAT16 map)": 0.1335
+     },
+     "cross-scanner LOSO map": {
+      "map fitted on": [
+       "cIIs01",
+       "cIIs03",
+       "cIIs04"
+      ],
+      "map term": "cross scanner (same site)",
+      "coverage at target": [
+       0.465,
+       0.5157,
+       0.5594,
+       0.6124,
+       0.6611,
+       0.7177,
+       0.7719,
+       0.8253,
+       0.8743,
+       0.8743
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false,
+       false
+      ],
+      "stated level used": [
+       0.515,
+       0.6,
+       0.67,
+       0.745,
+       0.81,
+       0.875,
+       0.925,
+       0.965,
+       1.0,
+       1.0
+      ],
+      "streamline ECE (map)": 0.0173,
+      "point ECE (map)": 0.0292,
+      "streamline ECE (PAT16 map)": 0.1335
+     },
+     "same-scanner LOSO map on its own rescan": {
+      "map fitted on": [
+       "cIIs01",
+       "cIIs03",
+       "cIIs04"
+      ],
+      "map term": "other session",
+      "coverage at target": [
+       0.4821,
+       0.5297,
+       0.5766,
+       0.6241,
+       0.6735,
+       0.7247,
+       0.7752,
+       0.8257,
+       0.8803,
+       0.9333
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true
+      ],
+      "stated level used": [
+       0.465,
+       0.545,
+       0.61,
+       0.68,
+       0.74,
+       0.8,
+       0.86,
+       0.91,
+       0.955,
+       0.995
+      ],
+      "streamline ECE (map)": 0.0227,
+      "point ECE (map)": 0.0299,
+      "streamline ECE (PAT16 map)": 0.0584
+     },
+     "table (0.8, 0.9, 0.95)": {
+      "same scanner, as stated": {
+       "0.8": 0.7247,
+       "0.9": 0.818,
+       "0.95": 0.8731
+      },
+      "same scanner, map": {
+       "0.8": 0.7752,
+       "0.9": 0.8803,
+       "0.95": 0.9333
+      },
+      "cross scanner, as stated": {
+       "0.8": 0.6564,
+       "0.9": 0.7452,
+       "0.95": 0.8039
+      },
+      "cross scanner, map": {
+       "0.8": 0.7719,
+       "0.9": 0.8743,
+       "0.95": 0.8743
+      },
+      "cross scanner, same-scanner map": {
+       "0.8": 0.7033,
+       "0.9": 0.8126,
+       "0.95": 0.8743
+      },
+      "extra gap": {
+       "0.8": -0.0683,
+       "0.9": -0.0728,
+       "0.95": -0.0692
+      }
+     },
+     "registration (mode 3)": {
+      "xA1reg3": {
+       "target session": "s1Ax1",
+       "rotation_deg": 13.42,
+       "translation_mm": 29.79,
+       "ncc_after": 0.8656,
+       "best": "a",
+       "QC": {
+        "threshold (b0 ncc)": 0.8,
+        "flag": false
+       },
+       "candidates b0 ncc": {
+        "a": 0.8656,
+        "b": 0.8597
+       }
+      },
+      "xA2reg3": {
+       "target session": "s1Ax2",
+       "rotation_deg": 10.19,
+       "translation_mm": 20.35,
+       "ncc_after": 0.8351,
+       "best": "a",
+       "QC": {
+        "threshold (b0 ncc)": 0.8,
+        "flag": false
+       },
+       "candidates b0 ncc": {
+        "a": 0.8351,
+        "b": 0.8342
+       }
+      }
+     }
+    },
+    "cIIs03": {
+     "cross scanner, as stated (both sessions)": {
+      "coverage at stated level": [
+       0.4756,
+       0.5026,
+       0.532,
+       0.5687,
+       0.6001,
+       0.6376,
+       0.6724,
+       0.713,
+       0.7597,
+       0.8138
+      ],
+      "streamline ECE": 0.2005,
+      "point ECE": 0.1946,
+      "streamline: the rescan labels the seed": 0.8832
+     },
+     "cross scanner, as stated, per target session": {
+      "xA1reg3": [
+       0.4867,
+       0.5145,
+       0.5443,
+       0.5816,
+       0.6137,
+       0.6516,
+       0.687,
+       0.7273,
+       0.7744,
+       0.8277
+      ],
+      "xA2reg3": [
+       0.4645,
+       0.4906,
+       0.5197,
+       0.5558,
+       0.5865,
+       0.6236,
+       0.6578,
+       0.6986,
+       0.745,
+       0.7999
+      ]
+     },
+     "same scanner (other session), as stated": {
+      "coverage at stated level": [
+       0.5146,
+       0.5454,
+       0.5824,
+       0.6261,
+       0.6646,
+       0.7092,
+       0.7498,
+       0.7957,
+       0.8454,
+       0.8982
+      ],
+      "streamline ECE": 0.1105,
+      "point ECE": 0.06,
+      "streamline: the rescan labels the seed": 0.9598
+     },
+     "extra gap: cross scanner - same scanner, as stated": [
+      -0.039,
+      -0.0428,
+      -0.0504,
+      -0.0574,
+      -0.0645,
+      -0.0716,
+      -0.0774,
+      -0.0827,
+      -0.0857,
+      -0.0844
+     ],
+     "same-scanner LOSO map (without this subject) on the cross-scanner targets": {
+      "map fitted on": [
+       "cIIs01",
+       "cIIs02",
+       "cIIs04"
+      ],
+      "map term": "other session",
+      "coverage at target": [
+       0.4565,
+       0.5028,
+       0.5546,
+       0.5975,
+       0.6376,
+       0.6835,
+       0.7301,
+       0.7828,
+       0.8342,
+       0.8851
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false
+      ],
+      "stated level used": [
+       0.47,
+       0.555,
+       0.625,
+       0.69,
+       0.75,
+       0.81,
+       0.87,
+       0.92,
+       0.96,
+       1.0
+      ],
+      "streamline ECE (map)": 0.0847,
+      "point ECE (map)": 0.1403,
+      "streamline ECE (PAT16 map)": 0.1292
+     },
+     "cross-scanner LOSO map": {
+      "map fitted on": [
+       "cIIs01",
+       "cIIs02",
+       "cIIs04"
+      ],
+      "map term": "cross scanner (same site)",
+      "coverage at target": [
+       0.488,
+       0.5443,
+       0.5862,
+       0.64,
+       0.6887,
+       0.7407,
+       0.7907,
+       0.8443,
+       0.8851,
+       0.8851
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false,
+       false
+      ],
+      "stated level used": [
+       0.525,
+       0.61,
+       0.68,
+       0.755,
+       0.82,
+       0.88,
+       0.93,
+       0.97,
+       1.0,
+       1.0
+      ],
+      "streamline ECE (map)": 0.0126,
+      "point ECE (map)": 0.0396,
+      "streamline ECE (PAT16 map)": 0.1292
+     },
+     "same-scanner LOSO map on its own rescan": {
+      "map fitted on": [
+       "cIIs01",
+       "cIIs02",
+       "cIIs04"
+      ],
+      "map term": "other session",
+      "coverage at target": [
+       0.491,
+       0.5456,
+       0.6088,
+       0.6617,
+       0.7092,
+       0.7621,
+       0.8142,
+       0.8687,
+       0.9144,
+       0.9524
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false
+      ],
+      "stated level used": [
+       0.47,
+       0.555,
+       0.625,
+       0.69,
+       0.75,
+       0.81,
+       0.87,
+       0.92,
+       0.96,
+       1.0
+      ],
+      "streamline ECE (map)": 0.0052,
+      "point ECE (map)": 0.0233,
+      "streamline ECE (PAT16 map)": 0.0392
+     },
+     "table (0.8, 0.9, 0.95)": {
+      "same scanner, as stated": {
+       "0.8": 0.7498,
+       "0.9": 0.8454,
+       "0.95": 0.8982
+      },
+      "same scanner, map": {
+       "0.8": 0.8142,
+       "0.9": 0.9144,
+       "0.95": 0.9524
+      },
+      "cross scanner, as stated": {
+       "0.8": 0.6724,
+       "0.9": 0.7597,
+       "0.95": 0.8138
+      },
+      "cross scanner, map": {
+       "0.8": 0.7907,
+       "0.9": 0.8851,
+       "0.95": 0.8851
+      },
+      "cross scanner, same-scanner map": {
+       "0.8": 0.7301,
+       "0.9": 0.8342,
+       "0.95": 0.8851
+      },
+      "extra gap": {
+       "0.8": -0.0774,
+       "0.9": -0.0857,
+       "0.95": -0.0844
+      }
+     },
+     "registration (mode 3)": {
+      "xA1reg3": {
+       "target session": "s1Ax1",
+       "rotation_deg": 6.79,
+       "translation_mm": 18.3,
+       "ncc_after": 0.7543,
+       "best": "b",
+       "QC": {
+        "threshold (b0 ncc)": 0.8,
+        "flag": true
+       },
+       "candidates b0 ncc": {
+        "a": 0.7493,
+        "b": 0.7543
+       }
+      },
+      "xA2reg3": {
+       "target session": "s1Ax2",
+       "rotation_deg": 4.43,
+       "translation_mm": 42.21,
+       "ncc_after": 0.7047,
+       "best": "a",
+       "QC": {
+        "threshold (b0 ncc)": 0.8,
+        "flag": true
+       },
+       "candidates b0 ncc": {
+        "a": 0.7047,
+        "b": 0.7005
+       }
+      }
+     }
+    },
+    "cIIs04": {
+     "cross scanner, as stated (both sessions)": {
+      "coverage at stated level": [
+       0.5031,
+       0.537,
+       0.565,
+       0.5964,
+       0.6341,
+       0.6759,
+       0.7099,
+       0.7538,
+       0.7958,
+       0.8494
+      ],
+      "streamline ECE": 0.1856,
+      "point ECE": 0.1262,
+      "streamline: the rescan labels the seed": 0.8622
+     },
+     "cross scanner, as stated, per target session": {
+      "xA1reg3": [
+       0.5079,
+       0.5421,
+       0.5702,
+       0.6017,
+       0.6393,
+       0.6809,
+       0.7151,
+       0.7588,
+       0.8008,
+       0.8541
+      ],
+      "xA2reg3": [
+       0.4984,
+       0.532,
+       0.5597,
+       0.5911,
+       0.6288,
+       0.6709,
+       0.7047,
+       0.7488,
+       0.7908,
+       0.8447
+      ]
+     },
+     "same scanner (other session), as stated": {
+      "coverage at stated level": [
+       0.5208,
+       0.5583,
+       0.5908,
+       0.6284,
+       0.6713,
+       0.7164,
+       0.7549,
+       0.8028,
+       0.8467,
+       0.8996
+      ],
+      "streamline ECE": 0.1104,
+      "point ECE": 0.0279,
+      "streamline: the rescan labels the seed": 0.9627
+     },
+     "extra gap: cross scanner - same scanner, as stated": [
+      -0.0177,
+      -0.0213,
+      -0.0258,
+      -0.032,
+      -0.0372,
+      -0.0405,
+      -0.045,
+      -0.049,
+      -0.0509,
+      -0.0502
+     ],
+     "same-scanner LOSO map (without this subject) on the cross-scanner targets": {
+      "map fitted on": [
+       "cIIs01",
+       "cIIs02",
+       "cIIs03"
+      ],
+      "map term": "other session",
+      "coverage at target": [
+       0.4987,
+       0.5446,
+       0.5912,
+       0.628,
+       0.6789,
+       0.7246,
+       0.771,
+       0.8162,
+       0.8659,
+       0.9132
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false
+      ],
+      "stated level used": [
+       0.485,
+       0.565,
+       0.63,
+       0.69,
+       0.755,
+       0.815,
+       0.87,
+       0.92,
+       0.96,
+       1.0
+      ],
+      "streamline ECE (map)": 0.0687,
+      "point ECE (map)": 0.073,
+      "streamline ECE (PAT16 map)": 0.1128
+     },
+     "cross-scanner LOSO map": {
+      "map fitted on": [
+       "cIIs01",
+       "cIIs02",
+       "cIIs03"
+      ],
+      "map term": "cross scanner (same site)",
+      "coverage at target": [
+       0.5362,
+       0.5884,
+       0.6341,
+       0.6941,
+       0.739,
+       0.7925,
+       0.8397,
+       0.8878,
+       0.9132,
+       0.9132
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false,
+       false
+      ],
+      "stated level used": [
+       0.545,
+       0.625,
+       0.7,
+       0.775,
+       0.835,
+       0.895,
+       0.94,
+       0.975,
+       1.0,
+       1.0
+      ],
+      "streamline ECE (map)": 0.0098,
+      "point ECE (map)": 0.0454,
+      "streamline ECE (PAT16 map)": 0.1128
+     },
+     "same-scanner LOSO map on its own rescan": {
+      "map fitted on": [
+       "cIIs01",
+       "cIIs02",
+       "cIIs03"
+      ],
+      "map term": "other session",
+      "coverage at target": [
+       0.516,
+       0.567,
+       0.6219,
+       0.6636,
+       0.7202,
+       0.7707,
+       0.8208,
+       0.8673,
+       0.9142,
+       0.9537
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false
+      ],
+      "stated level used": [
+       0.485,
+       0.565,
+       0.63,
+       0.69,
+       0.755,
+       0.815,
+       0.87,
+       0.92,
+       0.96,
+       1.0
+      ],
+      "streamline ECE (map)": 0.0065,
+      "point ECE (map)": 0.0389,
+      "streamline ECE (PAT16 map)": 0.0376
+     },
+     "table (0.8, 0.9, 0.95)": {
+      "same scanner, as stated": {
+       "0.8": 0.7549,
+       "0.9": 0.8467,
+       "0.95": 0.8996
+      },
+      "same scanner, map": {
+       "0.8": 0.8208,
+       "0.9": 0.9142,
+       "0.95": 0.9537
+      },
+      "cross scanner, as stated": {
+       "0.8": 0.7099,
+       "0.9": 0.7958,
+       "0.95": 0.8494
+      },
+      "cross scanner, map": {
+       "0.8": 0.8397,
+       "0.9": 0.9132,
+       "0.95": 0.9132
+      },
+      "cross scanner, same-scanner map": {
+       "0.8": 0.771,
+       "0.9": 0.8659,
+       "0.95": 0.9132
+      },
+      "extra gap": {
+       "0.8": -0.045,
+       "0.9": -0.0509,
+       "0.95": -0.0502
+      }
+     },
+     "registration (mode 3)": {
+      "xA1reg3": {
+       "target session": "s1Ax1",
+       "rotation_deg": 3.4,
+       "translation_mm": 23.32,
+       "ncc_after": 0.696,
+       "best": "b",
+       "QC": {
+        "threshold (b0 ncc)": 0.8,
+        "flag": true
+       },
+       "candidates b0 ncc": {
+        "a": 0.6866,
+        "b": 0.696
+       }
+      },
+      "xA2reg3": {
+       "target session": "s1Ax2",
+       "rotation_deg": 8.59,
+       "translation_mm": 30.2,
+       "ncc_after": 0.7054,
+       "best": "b",
+       "QC": {
+        "threshold (b0 ncc)": 0.8,
+        "flag": true
+       },
+       "candidates b0 ncc": {
+        "a": 0.7051,
+        "b": 0.7054
+       }
+      }
+     }
+    }
+   },
+   "summary": {
+    "subjects": [
+     "cIIs01",
+     "cIIs02",
+     "cIIs03",
+     "cIIs04"
+    ],
+    "mean (0.8, 0.9, 0.95)": {
+     "same scanner, as stated": {
+      "0.8": 0.7443,
+      "0.9": 0.8369,
+      "0.95": 0.8912
+     },
+     "same scanner, map": {
+      "0.8": 0.8041,
+      "0.9": 0.9029,
+      "0.95": 0.9463
+     },
+     "cross scanner, as stated": {
+      "0.8": 0.6828,
+      "0.9": 0.7688,
+      "0.95": 0.8246
+     },
+     "cross scanner, map": {
+      "0.8": 0.8038,
+      "0.9": 0.8922,
+      "0.95": 0.8922
+     },
+     "cross scanner, same-scanner map": {
+      "0.8": 0.7375,
+      "0.9": 0.8389,
+      "0.95": 0.8922
+     },
+     "extra gap": {
+      "0.8": -0.0614,
+      "0.9": -0.068,
+      "0.95": -0.0667
+     }
+    },
+    "mean curves at levels": {
+     "cross scanner, as stated": [
+      0.4848,
+      0.5124,
+      0.5423,
+      0.5746,
+      0.6088,
+      0.6457,
+      0.6828,
+      0.7232,
+      0.7688,
+      0.8246
+     ],
+     "same scanner, as stated": [
+      0.517,
+      0.5483,
+      0.5831,
+      0.6207,
+      0.6602,
+      0.7024,
+      0.7443,
+      0.7888,
+      0.8369,
+      0.8912
+     ],
+     "cross scanner, same-scanner map": [
+      0.4704,
+      0.5142,
+      0.559,
+      0.6022,
+      0.6452,
+      0.6912,
+      0.7375,
+      0.7861,
+      0.8389,
+      0.8922
+     ],
+     "cross scanner, map": [
+      0.5013,
+      0.5527,
+      0.5988,
+      0.6524,
+      0.7007,
+      0.7533,
+      0.8038,
+      0.8543,
+      0.8922,
+      0.8922
+     ]
+    },
+    "extra gap at 0.9, per subject": {
+     "cIIs01": -0.0627,
+     "cIIs02": -0.0728,
+     "cIIs03": -0.0857,
+     "cIIs04": -0.0509
+    },
+    "extra gap at 0.9, per target session": {
+     "cIIs01": {
+      "xA1reg3": -0.0712,
+      "xA2reg3": -0.0543
+     },
+     "cIIs02": {
+      "xA1reg3": -0.0881,
+      "xA2reg3": -0.0574
+     },
+     "cIIs03": {
+      "xA1reg3": -0.071,
+      "xA2reg3": -0.1004
+     },
+     "cIIs04": {
+      "xA1reg3": -0.0459,
+      "xA2reg3": -0.0559
+     }
+    },
+    "ECE (mean): streamline / point": {
+     "cross scanner, as stated": [
+      0.1933,
+      0.1618
+     ],
+     "cross scanner, same-scanner map": [
+      0.0779,
+      0.1109
+     ],
+     "cross scanner, map": [
+      0.015,
+      0.0331
+     ],
+     "same scanner, as stated": [
+      0.1153,
+      0.0575
+     ]
+    },
+    "registration QC flags": {
+     "cIIs01 xA1reg3": true,
+     "cIIs01 xA2reg3": true,
+     "cIIs02 xA1reg3": false,
+     "cIIs02 xA2reg3": false,
+     "cIIs03 xA1reg3": true,
+     "cIIs03 xA2reg3": true,
+     "cIIs04 xA1reg3": true,
+     "cIIs04 xA2reg3": true
+    },
+    "same-scanner numbers equal to calibration_cohortII.json": true
+   },
+   "provenance": {
+    "cIIs01": {
+     "records": "ensemble/cIIs01/card/cIIs01-B2000-xA",
+     "statements sha256": "8c3868e94e64adb712b451f777e0eaa8196f91fa4e26c5f50a7377c0f0c917d7",
+     "runs.json sha256": "59ae7cf654fa046621a54cb24e15d75fb53e471f169402b517b287bd6a30dc53",
+     "created": {
+      "commit": "975e6dae3a23d73309751be1e64a726686176a61",
+      "branch": "ismrm2027",
+      "dirty (src/ and the card's bench modules)": []
+     },
+     "target records sha256": {
+      "xA1reg3": "9f385ee5062f445fbe62e82c400d04df4287b0d5fa131d847f7c8e562e02b7cb",
+      "xA2reg3": "2585b8d82fa2b44a0cfd19b872f016edef8db280acc9796d042c5f856c575a0f"
+     },
+     "source records": "ensemble/cIIs01/card/cIIs01-B2000",
+     "source statements": "statements_R17_reg2.npz",
+     "source statements sha256": "169901079959c77aa348f5dad9f4028d6dc14c123970cec3114a1520f1b8cc75",
+     "source A.npz sha256": "cbe7622910a79fe20c30125a5af695a75e46d4463f425f723197d857d55f8d73"
+    },
+    "cIIs02": {
+     "records": "ensemble/cIIs02/card/cIIs02-B2000-xA",
+     "statements sha256": "0f977991ca0f046d5c6ad6a5a1ad64a9bf84f57fa38e996709cd30ed682f0b7b",
+     "runs.json sha256": "d86ffed6e08b0ab728deddc7de8847c69da9d8e74532d4eab3233e4d56c51755",
+     "created": {
+      "commit": "975e6dae3a23d73309751be1e64a726686176a61",
+      "branch": "ismrm2027",
+      "dirty (src/ and the card's bench modules)": []
+     },
+     "target records sha256": {
+      "xA1reg3": "038755f02d2395f393126d96b78bcc967c40739b5b6a281e0eb3dab46ae11cbd",
+      "xA2reg3": "8ff4ded8354e8a36b2746d149de7bcbea32041505a2f4c8cfb5aed0217b12588"
+     },
+     "source records": "ensemble/cIIs02/card/cIIs02-B2000",
+     "source statements": "statements_R17_reg3.npz",
+     "source statements sha256": "37061ff149a698bd66b4d80b17fd04beacebbb9f53ecd77b5a7643554f3ec447",
+     "source A.npz sha256": "d9f5128fad42cf42d12fadbc107754c8219c7e4a4645836fd597d9d08b76d188"
+    },
+    "cIIs03": {
+     "records": "ensemble/cIIs03/card/cIIs03-B2000-xA",
+     "statements sha256": "677357528260b090f6e0732a8c01599bdac903cf14450033235fd69cd9e29ad3",
+     "runs.json sha256": "8c53d7e05d714ec0937bd4832725edd6a4fac3c7c12ab30aa51002eb06cad4d2",
+     "created": {
+      "commit": "975e6dae3a23d73309751be1e64a726686176a61",
+      "branch": "ismrm2027",
+      "dirty (src/ and the card's bench modules)": []
+     },
+     "target records sha256": {
+      "xA1reg3": "9ce481178661a1c9d1583b71822395d945ee420ae7c3263ea903f83d5c39e41d",
+      "xA2reg3": "ee479e7ef487b09b7846a9b41d43ca1aab339268817c153d6ba722f7596be0a9"
+     },
+     "source records": "ensemble/cIIs03/card/cIIs03-B2000",
+     "source statements": "statements_R17_reg3.npz",
+     "source statements sha256": "e61aab79a538522a1db5cad7ffce56294ccb5967260d464058dc38f7e7563f0f",
+     "source A.npz sha256": "9c955250e3591b9dcb1f835862fe119b29d976ca707177b8499e1684c7276b66"
+    },
+    "cIIs04": {
+     "records": "ensemble/cIIs04/card/cIIs04-B2000-xA",
+     "statements sha256": "345c8123ea163b88a1d7fc2159710ba3e94a1c63a77cfb738bec0d893e2d45e4",
+     "runs.json sha256": "78ab51223144404c057b92792b93524541632bb3d7f9112dffda1b391a305729",
+     "created": {
+      "commit": "975e6dae3a23d73309751be1e64a726686176a61",
+      "branch": "ismrm2027",
+      "dirty (src/ and the card's bench modules)": []
+     },
+     "target records sha256": {
+      "xA1reg3": "b77f439de8aff4529eb146460e3f6fc6484763505d36504b0e7eed81b86a0f18",
+      "xA2reg3": "65a8873dbea4dd1b01c5630e1ecfa02c594a9745271cb952f3c4adecee75f52e"
+     },
+     "source records": "ensemble/cIIs04/card/cIIs04-B2000",
+     "source statements": "statements_R17_reg2.npz",
+     "source statements sha256": "eeab24845db995761eb2e6484c29c40f302e3b4f63420b5b916c60b7f2f6e8f2",
+     "source A.npz sha256": "5f0d9ceab5a481d4b1d18b4f8d0e4a9ba7241832c0e206f595f94def79324789"
+    }
+   }
+  },
+  "A2000 -> B2000 scans (same site)": {
+   "target protocol": "B2000",
+   "primary (fixed protocol)": false,
+   "confounded": "resolution (2.5 mm on scanner B against 1.89 x 1.89 x 2.2 mm on A, the target resampled onto the ensemble's grid) and streamline count (A2000r19's runs have about twice as many: every mask voxel a seed)",
+   "per subject": {
+    "cIIs01": {
+     "cross scanner, as stated (both sessions)": {
+      "coverage at stated level": [
+       0.4984,
+       0.525,
+       0.5544,
+       0.5872,
+       0.6247,
+       0.657,
+       0.6995,
+       0.7399,
+       0.7865,
+       0.8492
+      ],
+      "streamline ECE": 0.1246,
+      "point ECE": 0.0752,
+      "streamline: the rescan labels the seed": 0.8981
+     },
+     "cross scanner, as stated, per target session": {
+      "xB1reg3": [
+       0.4975,
+       0.5242,
+       0.5539,
+       0.5866,
+       0.6244,
+       0.6568,
+       0.6996,
+       0.7401,
+       0.7872,
+       0.85
+      ],
+      "xB2reg3": [
+       0.4992,
+       0.5257,
+       0.5549,
+       0.5878,
+       0.6251,
+       0.6572,
+       0.6995,
+       0.7396,
+       0.7858,
+       0.8484
+      ]
+     },
+     "same scanner (other session), as stated": {
+      "coverage at stated level": [
+       0.5286,
+       0.5578,
+       0.59,
+       0.626,
+       0.6669,
+       0.7023,
+       0.7478,
+       0.789,
+       0.8356,
+       0.8955
+      ],
+      "streamline ECE": 0.0897,
+      "point ECE": 0.0776,
+      "streamline: the rescan labels the seed": 0.9433
+     },
+     "extra gap: cross scanner - same scanner, as stated": [
+      -0.0302,
+      -0.0328,
+      -0.0356,
+      -0.0388,
+      -0.0422,
+      -0.0453,
+      -0.0483,
+      -0.0491,
+      -0.0491,
+      -0.0463
+     ],
+     "same-scanner LOSO map (without this subject) on the cross-scanner targets": {
+      "map fitted on": [
+       "cIIs02",
+       "cIIs03",
+       "cIIs04"
+      ],
+      "map term": "other session",
+      "coverage at target": [
+       0.4728,
+       0.5198,
+       0.5617,
+       0.597,
+       0.6397,
+       0.6857,
+       0.7375,
+       0.7816,
+       0.8345,
+       0.9059
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true
+      ],
+      "stated level used": [
+       0.46,
+       0.54,
+       0.61,
+       0.67,
+       0.73,
+       0.785,
+       0.845,
+       0.895,
+       0.94,
+       0.985
+      ],
+      "streamline ECE (map)": 0.0408,
+      "point ECE (map)": 0.0137,
+      "streamline ECE (PAT16 map)": 0.0547
+     },
+     "cross-scanner LOSO map": {
+      "map fitted on": [
+       "cIIs02",
+       "cIIs03",
+       "cIIs04"
+      ],
+      "map term": "cross scanner (same site)",
+      "coverage at target": [
+       0.4936,
+       0.5364,
+       0.5872,
+       0.6373,
+       0.6817,
+       0.7327,
+       0.7816,
+       0.8345,
+       0.8902,
+       0.9139
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false
+      ],
+      "stated level used": [
+       0.49,
+       0.575,
+       0.65,
+       0.72,
+       0.78,
+       0.84,
+       0.895,
+       0.94,
+       0.975,
+       1.0
+      ],
+      "streamline ECE (map)": 0.0148,
+      "point ECE (map)": 0.0106,
+      "streamline ECE (PAT16 map)": 0.0547
+     },
+     "same-scanner LOSO map on its own rescan": {
+      "map fitted on": [
+       "cIIs02",
+       "cIIs03",
+       "cIIs04"
+      ],
+      "map term": "other session",
+      "coverage at target": [
+       0.5,
+       0.5519,
+       0.5982,
+       0.637,
+       0.6838,
+       0.7331,
+       0.7865,
+       0.8306,
+       0.8811,
+       0.9422
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true
+      ],
+      "stated level used": [
+       0.46,
+       0.54,
+       0.61,
+       0.67,
+       0.73,
+       0.785,
+       0.845,
+       0.895,
+       0.94,
+       0.985
+      ],
+      "streamline ECE (map)": 0.006,
+      "point ECE (map)": 0.0155,
+      "streamline ECE (PAT16 map)": 0.0199
+     },
+     "table (0.8, 0.9, 0.95)": {
+      "same scanner, as stated": {
+       "0.8": 0.7478,
+       "0.9": 0.8356,
+       "0.95": 0.8955
+      },
+      "same scanner, map": {
+       "0.8": 0.7865,
+       "0.9": 0.8811,
+       "0.95": 0.9422
+      },
+      "cross scanner, as stated": {
+       "0.8": 0.6995,
+       "0.9": 0.7865,
+       "0.95": 0.8492
+      },
+      "cross scanner, map": {
+       "0.8": 0.7816,
+       "0.9": 0.8902,
+       "0.95": 0.9139
+      },
+      "cross scanner, same-scanner map": {
+       "0.8": 0.7375,
+       "0.9": 0.8345,
+       "0.95": 0.9059
+      },
+      "extra gap": {
+       "0.8": -0.0483,
+       "0.9": -0.0491,
+       "0.95": -0.0463
+      }
+     },
+     "registration (mode 3)": {
+      "xB1reg3": {
+       "target session": "s1Bx1",
+       "rotation_deg": 7.0,
+       "translation_mm": 27.75,
+       "ncc_after": 0.8967,
+       "best": "c",
+       "QC": {
+        "threshold (b0 ncc)": 0.8,
+        "flag": false
+       },
+       "candidates b0 ncc": {
+        "a": 0.8961,
+        "b": 0.8961,
+        "c": 0.8967
+       }
+      },
+      "xB2reg3": {
+       "target session": "s1Bx2",
+       "rotation_deg": 9.05,
+       "translation_mm": 34.42,
+       "ncc_after": 0.8996,
+       "best": "a",
+       "QC": {
+        "threshold (b0 ncc)": 0.8,
+        "flag": false
+       },
+       "candidates b0 ncc": {
+        "a": 0.8996,
+        "b": 0.8995
+       }
+      }
+     }
+    },
+    "cIIs02": {
+     "cross scanner, as stated (both sessions)": {
+      "coverage at stated level": [
+       0.5054,
+       0.5298,
+       0.5639,
+       0.6015,
+       0.6397,
+       0.6735,
+       0.7199,
+       0.7627,
+       0.8079,
+       0.8677
+      ],
+      "streamline ECE": 0.1271,
+      "point ECE": 0.0852,
+      "streamline: the rescan labels the seed": 0.9082
+     },
+     "cross scanner, as stated, per target session": {
+      "xB1reg3": [
+       0.5025,
+       0.5266,
+       0.56,
+       0.5968,
+       0.6344,
+       0.6682,
+       0.7138,
+       0.7565,
+       0.8012,
+       0.8612
+      ],
+      "xB2reg3": [
+       0.5083,
+       0.533,
+       0.5678,
+       0.6062,
+       0.645,
+       0.6789,
+       0.726,
+       0.7688,
+       0.8145,
+       0.8742
+      ]
+     },
+     "same scanner (other session), as stated": {
+      "coverage at stated level": [
+       0.5284,
+       0.5563,
+       0.5949,
+       0.6371,
+       0.6802,
+       0.7173,
+       0.7673,
+       0.8127,
+       0.858,
+       0.9139
+      ],
+      "streamline ECE": 0.0795,
+      "point ECE": 0.0617,
+      "streamline: the rescan labels the seed": 0.9669
+     },
+     "extra gap: cross scanner - same scanner, as stated": [
+      -0.023,
+      -0.0265,
+      -0.031,
+      -0.0356,
+      -0.0405,
+      -0.0438,
+      -0.0474,
+      -0.05,
+      -0.0501,
+      -0.0462
+     ],
+     "same-scanner LOSO map (without this subject) on the cross-scanner targets": {
+      "map fitted on": [
+       "cIIs01",
+       "cIIs03",
+       "cIIs04"
+      ],
+      "map term": "other session",
+      "coverage at target": [
+       0.4732,
+       0.5251,
+       0.571,
+       0.6208,
+       0.6665,
+       0.7145,
+       0.7627,
+       0.8121,
+       0.8677,
+       0.922
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true
+      ],
+      "stated level used": [
+       0.455,
+       0.54,
+       0.61,
+       0.675,
+       0.735,
+       0.795,
+       0.85,
+       0.905,
+       0.95,
+       0.985
+      ],
+      "streamline ECE (map)": 0.042,
+      "point ECE (map)": 0.0171,
+      "streamline ECE (PAT16 map)": 0.0603
+     },
+     "cross-scanner LOSO map": {
+      "map fitted on": [
+       "cIIs01",
+       "cIIs03",
+       "cIIs04"
+      ],
+      "map term": "cross scanner (same site)",
+      "coverage at target": [
+       0.5027,
+       0.5554,
+       0.6101,
+       0.6564,
+       0.7076,
+       0.7594,
+       0.8079,
+       0.8598,
+       0.918,
+       0.9277
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false
+      ],
+      "stated level used": [
+       0.495,
+       0.58,
+       0.66,
+       0.725,
+       0.79,
+       0.845,
+       0.9,
+       0.945,
+       0.98,
+       1.0
+      ],
+      "streamline ECE (map)": 0.0075,
+      "point ECE (map)": 0.0115,
+      "streamline ECE (PAT16 map)": 0.0603
+     },
+     "same-scanner LOSO map on its own rescan": {
+      "map fitted on": [
+       "cIIs01",
+       "cIIs03",
+       "cIIs04"
+      ],
+      "map term": "other session",
+      "coverage at target": [
+       0.4925,
+       0.5509,
+       0.603,
+       0.6589,
+       0.7096,
+       0.7617,
+       0.8127,
+       0.8623,
+       0.9139,
+       0.9558
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true
+      ],
+      "stated level used": [
+       0.455,
+       0.54,
+       0.61,
+       0.675,
+       0.735,
+       0.795,
+       0.85,
+       0.905,
+       0.95,
+       0.985
+      ],
+      "streamline ECE (map)": 0.0072,
+      "point ECE (map)": 0.0249,
+      "streamline ECE (PAT16 map)": 0.0167
+     },
+     "table (0.8, 0.9, 0.95)": {
+      "same scanner, as stated": {
+       "0.8": 0.7673,
+       "0.9": 0.858,
+       "0.95": 0.9139
+      },
+      "same scanner, map": {
+       "0.8": 0.8127,
+       "0.9": 0.9139,
+       "0.95": 0.9558
+      },
+      "cross scanner, as stated": {
+       "0.8": 0.7199,
+       "0.9": 0.8079,
+       "0.95": 0.8677
+      },
+      "cross scanner, map": {
+       "0.8": 0.8079,
+       "0.9": 0.918,
+       "0.95": 0.9277
+      },
+      "cross scanner, same-scanner map": {
+       "0.8": 0.7627,
+       "0.9": 0.8677,
+       "0.95": 0.922
+      },
+      "extra gap": {
+       "0.8": -0.0474,
+       "0.9": -0.0501,
+       "0.95": -0.0462
+      }
+     },
+     "registration (mode 3)": {
+      "xB1reg3": {
+       "target session": "s1Bx1",
+       "rotation_deg": 13.46,
+       "translation_mm": 29.72,
+       "ncc_after": 0.8877,
+       "best": "b",
+       "QC": {
+        "threshold (b0 ncc)": 0.8,
+        "flag": false
+       },
+       "candidates b0 ncc": {
+        "a": 0.8877,
+        "b": 0.8877,
+        "c": 0.8876
+       }
+      },
+      "xB2reg3": {
+       "target session": "s1Bx2",
+       "rotation_deg": 8.2,
+       "translation_mm": 24.49,
+       "ncc_after": 0.9101,
+       "best": "b",
+       "QC": {
+        "threshold (b0 ncc)": 0.8,
+        "flag": false
+       },
+       "candidates b0 ncc": {
+        "a": 0.9101,
+        "b": 0.9101
+       }
+      }
+     }
+    },
+    "cIIs03": {
+     "cross scanner, as stated (both sessions)": {
+      "coverage at stated level": [
+       0.5153,
+       0.5391,
+       0.5713,
+       0.6106,
+       0.6463,
+       0.6842,
+       0.7268,
+       0.7712,
+       0.8184,
+       0.8782
+      ],
+      "streamline ECE": 0.1374,
+      "point ECE": 0.0633,
+      "streamline: the rescan labels the seed": 0.9351
+     },
+     "cross scanner, as stated, per target session": {
+      "xB1reg3": [
+       0.5175,
+       0.5415,
+       0.5739,
+       0.6135,
+       0.6495,
+       0.6877,
+       0.7306,
+       0.7754,
+       0.8227,
+       0.8821
+      ],
+      "xB2reg3": [
+       0.513,
+       0.5367,
+       0.5688,
+       0.6077,
+       0.6431,
+       0.6807,
+       0.723,
+       0.7671,
+       0.8141,
+       0.8743
+      ]
+     },
+     "same scanner (other session), as stated": {
+      "coverage at stated level": [
+       0.5341,
+       0.559,
+       0.5936,
+       0.6349,
+       0.6732,
+       0.7131,
+       0.7572,
+       0.8018,
+       0.8482,
+       0.9047
+      ],
+      "streamline ECE": 0.0939,
+      "point ECE": 0.0872,
+      "streamline: the rescan labels the seed": 0.9633
+     },
+     "extra gap: cross scanner - same scanner, as stated": [
+      -0.0188,
+      -0.0199,
+      -0.0223,
+      -0.0243,
+      -0.0269,
+      -0.0289,
+      -0.0304,
+      -0.0306,
+      -0.0298,
+      -0.0265
+     ],
+     "same-scanner LOSO map (without this subject) on the cross-scanner targets": {
+      "map fitted on": [
+       "cIIs01",
+       "cIIs02",
+       "cIIs04"
+      ],
+      "map term": "other session",
+      "coverage at target": [
+       0.4857,
+       0.5306,
+       0.5768,
+       0.6279,
+       0.675,
+       0.7242,
+       0.7696,
+       0.8184,
+       0.869,
+       0.9309
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true
+      ],
+      "stated level used": [
+       0.46,
+       0.54,
+       0.61,
+       0.675,
+       0.735,
+       0.795,
+       0.845,
+       0.9,
+       0.945,
+       0.985
+      ],
+      "streamline ECE (map)": 0.0567,
+      "point ECE (map)": 0.0135,
+      "streamline ECE (PAT16 map)": 0.0702
+     },
+     "cross-scanner LOSO map": {
+      "map fitted on": [
+       "cIIs01",
+       "cIIs02",
+       "cIIs04"
+      ],
+      "map term": "cross scanner (same site)",
+      "coverage at target": [
+       0.5085,
+       0.5582,
+       0.6194,
+       0.6702,
+       0.7242,
+       0.7712,
+       0.8248,
+       0.869,
+       0.9209,
+       0.9364
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false
+      ],
+      "stated level used": [
+       0.495,
+       0.58,
+       0.665,
+       0.73,
+       0.795,
+       0.85,
+       0.905,
+       0.945,
+       0.98,
+       1.0
+      ],
+      "streamline ECE (map)": 0.0058,
+      "point ECE (map)": 0.0172,
+      "streamline ECE (PAT16 map)": 0.0702
+     },
+     "same-scanner LOSO map on its own rescan": {
+      "map fitted on": [
+       "cIIs01",
+       "cIIs02",
+       "cIIs04"
+      ],
+      "map term": "other session",
+      "coverage at target": [
+       0.503,
+       0.55,
+       0.5993,
+       0.6532,
+       0.7035,
+       0.7546,
+       0.8001,
+       0.8482,
+       0.8964,
+       0.9509
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true
+      ],
+      "stated level used": [
+       0.46,
+       0.54,
+       0.61,
+       0.675,
+       0.735,
+       0.795,
+       0.845,
+       0.9,
+       0.945,
+       0.985
+      ],
+      "streamline ECE (map)": 0.0133,
+      "point ECE (map)": 0.0297,
+      "streamline ECE (PAT16 map)": 0.0269
+     },
+     "table (0.8, 0.9, 0.95)": {
+      "same scanner, as stated": {
+       "0.8": 0.7572,
+       "0.9": 0.8482,
+       "0.95": 0.9047
+      },
+      "same scanner, map": {
+       "0.8": 0.8001,
+       "0.9": 0.8964,
+       "0.95": 0.9509
+      },
+      "cross scanner, as stated": {
+       "0.8": 0.7268,
+       "0.9": 0.8184,
+       "0.95": 0.8782
+      },
+      "cross scanner, map": {
+       "0.8": 0.8248,
+       "0.9": 0.9209,
+       "0.95": 0.9364
+      },
+      "cross scanner, same-scanner map": {
+       "0.8": 0.7696,
+       "0.9": 0.869,
+       "0.95": 0.9309
+      },
+      "extra gap": {
+       "0.8": -0.0304,
+       "0.9": -0.0298,
+       "0.95": -0.0265
+      }
+     },
+     "registration (mode 3)": {
+      "xB1reg3": {
+       "target session": "s1Bx1",
+       "rotation_deg": 6.88,
+       "translation_mm": 18.28,
+       "ncc_after": 0.8809,
+       "best": "a",
+       "QC": {
+        "threshold (b0 ncc)": 0.8,
+        "flag": false
+       },
+       "candidates b0 ncc": {
+        "a": 0.8809,
+        "b": 0.8807,
+        "c": 0.8793
+       }
+      },
+      "xB2reg3": {
+       "target session": "s1Bx2",
+       "rotation_deg": 9.06,
+       "translation_mm": 20.28,
+       "ncc_after": 0.8711,
+       "best": "a",
+       "QC": {
+        "threshold (b0 ncc)": 0.8,
+        "flag": false
+       },
+       "candidates b0 ncc": {
+        "a": 0.8711,
+        "b": 0.8706
+       }
+      }
+     }
+    },
+    "cIIs04": {
+     "cross scanner, as stated (both sessions)": {
+      "coverage at stated level": [
+       0.5053,
+       0.5278,
+       0.5598,
+       0.5935,
+       0.6281,
+       0.6709,
+       0.7084,
+       0.752,
+       0.8009,
+       0.8596
+      ],
+      "streamline ECE": 0.1453,
+      "point ECE": 0.0788,
+      "streamline: the rescan labels the seed": 0.92
+     },
+     "cross scanner, as stated, per target session": {
+      "xB1reg3": [
+       0.511,
+       0.5341,
+       0.5661,
+       0.6002,
+       0.6352,
+       0.6786,
+       0.7163,
+       0.7599,
+       0.8087,
+       0.8664
+      ],
+      "xB2reg3": [
+       0.4995,
+       0.5216,
+       0.5535,
+       0.5867,
+       0.6211,
+       0.6631,
+       0.7005,
+       0.744,
+       0.793,
+       0.8528
+      ]
+     },
+     "same scanner (other session), as stated": {
+      "coverage at stated level": [
+       0.5357,
+       0.5619,
+       0.5991,
+       0.6377,
+       0.6778,
+       0.7265,
+       0.7686,
+       0.8161,
+       0.8655,
+       0.9184
+      ],
+      "streamline ECE": 0.0731,
+      "point ECE": 0.043,
+      "streamline: the rescan labels the seed": 0.9757
+     },
+     "extra gap: cross scanner - same scanner, as stated": [
+      -0.0304,
+      -0.0341,
+      -0.0393,
+      -0.0442,
+      -0.0497,
+      -0.0556,
+      -0.0602,
+      -0.0641,
+      -0.0646,
+      -0.0588
+     ],
+     "same-scanner LOSO map (without this subject) on the cross-scanner targets": {
+      "map fitted on": [
+       "cIIs01",
+       "cIIs02",
+       "cIIs03"
+      ],
+      "map term": "other session",
+      "coverage at target": [
+       0.482,
+       0.5215,
+       0.5644,
+       0.6159,
+       0.6537,
+       0.7037,
+       0.752,
+       0.8077,
+       0.8596,
+       0.92
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true
+      ],
+      "stated level used": [
+       0.465,
+       0.54,
+       0.61,
+       0.675,
+       0.735,
+       0.795,
+       0.85,
+       0.905,
+       0.95,
+       0.99
+      ],
+      "streamline ECE (map)": 0.0582,
+      "point ECE (map)": 0.0145,
+      "streamline ECE (PAT16 map)": 0.0785
+     },
+     "cross-scanner LOSO map": {
+      "map fitted on": [
+       "cIIs01",
+       "cIIs02",
+       "cIIs03"
+      ],
+      "map term": "cross scanner (same site)",
+      "coverage at target": [
+       0.5049,
+       0.5525,
+       0.5956,
+       0.6479,
+       0.6976,
+       0.7468,
+       0.7929,
+       0.8444,
+       0.8958,
+       0.9226
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false
+      ],
+      "stated level used": [
+       0.495,
+       0.58,
+       0.655,
+       0.72,
+       0.785,
+       0.845,
+       0.895,
+       0.94,
+       0.975,
+       1.0
+      ],
+      "streamline ECE (map)": 0.0166,
+      "point ECE (map)": 0.0208,
+      "streamline ECE (PAT16 map)": 0.0785
+     },
+     "same-scanner LOSO map on its own rescan": {
+      "map fitted on": [
+       "cIIs01",
+       "cIIs02",
+       "cIIs03"
+      ],
+      "map term": "other session",
+      "coverage at target": [
+       0.5098,
+       0.5546,
+       0.6045,
+       0.6636,
+       0.7073,
+       0.7636,
+       0.8161,
+       0.8719,
+       0.9184,
+       0.962
+      ],
+      "reached": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true
+      ],
+      "stated level used": [
+       0.465,
+       0.54,
+       0.61,
+       0.675,
+       0.735,
+       0.795,
+       0.85,
+       0.905,
+       0.95,
+       0.99
+      ],
+      "streamline ECE (map)": 0.0138,
+      "point ECE (map)": 0.0333,
+      "streamline ECE (PAT16 map)": 0.016
+     },
+     "table (0.8, 0.9, 0.95)": {
+      "same scanner, as stated": {
+       "0.8": 0.7686,
+       "0.9": 0.8655,
+       "0.95": 0.9184
+      },
+      "same scanner, map": {
+       "0.8": 0.8161,
+       "0.9": 0.9184,
+       "0.95": 0.962
+      },
+      "cross scanner, as stated": {
+       "0.8": 0.7084,
+       "0.9": 0.8009,
+       "0.95": 0.8596
+      },
+      "cross scanner, map": {
+       "0.8": 0.7929,
+       "0.9": 0.8958,
+       "0.95": 0.9226
+      },
+      "cross scanner, same-scanner map": {
+       "0.8": 0.752,
+       "0.9": 0.8596,
+       "0.95": 0.92
+      },
+      "extra gap": {
+       "0.8": -0.0602,
+       "0.9": -0.0646,
+       "0.95": -0.0588
+      }
+     },
+     "registration (mode 3)": {
+      "xB1reg3": {
+       "target session": "s1Bx1",
+       "rotation_deg": 3.46,
+       "translation_mm": 23.42,
+       "ncc_after": 0.9019,
+       "best": "a",
+       "QC": {
+        "threshold (b0 ncc)": 0.8,
+        "flag": false
+       },
+       "candidates b0 ncc": {
+        "a": 0.9019,
+        "b": 0.9019,
+        "c": 0.9019
+       }
+      },
+      "xB2reg3": {
+       "target session": "s1Bx2",
+       "rotation_deg": 7.05,
+       "translation_mm": 20.0,
+       "ncc_after": 0.8667,
+       "best": "a",
+       "QC": {
+        "threshold (b0 ncc)": 0.8,
+        "flag": false
+       },
+       "candidates b0 ncc": {
+        "a": 0.8667,
+        "b": 0.8661
+       }
+      }
+     }
+    }
+   },
+   "summary": {
+    "subjects": [
+     "cIIs01",
+     "cIIs02",
+     "cIIs03",
+     "cIIs04"
+    ],
+    "mean (0.8, 0.9, 0.95)": {
+     "same scanner, as stated": {
+      "0.8": 0.7602,
+      "0.9": 0.8518,
+      "0.95": 0.9081
+     },
+     "same scanner, map": {
+      "0.8": 0.8039,
+      "0.9": 0.9024,
+      "0.95": 0.9527
+     },
+     "cross scanner, as stated": {
+      "0.8": 0.7137,
+      "0.9": 0.8034,
+      "0.95": 0.8637
+     },
+     "cross scanner, map": {
+      "0.8": 0.8018,
+      "0.9": 0.9062,
+      "0.95": 0.9252
+     },
+     "cross scanner, same-scanner map": {
+      "0.8": 0.7554,
+      "0.9": 0.8577,
+      "0.95": 0.9197
+     },
+     "extra gap": {
+      "0.8": -0.0466,
+      "0.9": -0.0484,
+      "0.95": -0.0444
+     }
+    },
+    "mean curves at levels": {
+     "cross scanner, as stated": [
+      0.5061,
+      0.5304,
+      0.5624,
+      0.5982,
+      0.6347,
+      0.6714,
+      0.7137,
+      0.7565,
+      0.8034,
+      0.8637
+     ],
+     "same scanner, as stated": [
+      0.5317,
+      0.5588,
+      0.5944,
+      0.6339,
+      0.6745,
+      0.7148,
+      0.7602,
+      0.8049,
+      0.8518,
+      0.9081
+     ],
+     "cross scanner, same-scanner map": [
+      0.4784,
+      0.5242,
+      0.5685,
+      0.6154,
+      0.6587,
+      0.707,
+      0.7554,
+      0.805,
+      0.8577,
+      0.9197
+     ],
+     "cross scanner, map": [
+      0.5024,
+      0.5506,
+      0.6031,
+      0.6529,
+      0.7028,
+      0.7525,
+      0.8018,
+      0.8519,
+      0.9062,
+      0.9252
+     ]
+    },
+    "extra gap at 0.9, per subject": {
+     "cIIs01": -0.0491,
+     "cIIs02": -0.0501,
+     "cIIs03": -0.0298,
+     "cIIs04": -0.0646
+    },
+    "extra gap at 0.9, per target session": {
+     "cIIs01": {
+      "xB1reg3": -0.0484,
+      "xB2reg3": -0.0498
+     },
+     "cIIs02": {
+      "xB1reg3": -0.0568,
+      "xB2reg3": -0.0435
+     },
+     "cIIs03": {
+      "xB1reg3": -0.0255,
+      "xB2reg3": -0.0341
+     },
+     "cIIs04": {
+      "xB1reg3": -0.0568,
+      "xB2reg3": -0.0725
+     }
+    },
+    "ECE (mean): streamline / point": {
+     "cross scanner, as stated": [
+      0.1336,
+      0.0756
+     ],
+     "cross scanner, same-scanner map": [
+      0.0494,
+      0.0147
+     ],
+     "cross scanner, map": [
+      0.0112,
+      0.015
+     ],
+     "same scanner, as stated": [
+      0.084,
+      0.0674
+     ]
+    },
+    "registration QC flags": {
+     "cIIs01 xB1reg3": false,
+     "cIIs01 xB2reg3": false,
+     "cIIs02 xB1reg3": false,
+     "cIIs02 xB2reg3": false,
+     "cIIs03 xB1reg3": false,
+     "cIIs03 xB2reg3": false,
+     "cIIs04 xB1reg3": false,
+     "cIIs04 xB2reg3": false
+    },
+    "same-scanner numbers equal to calibration_cohortII.json": true
+   },
+   "provenance": {
+    "cIIs01": {
+     "records": "ensemble/cIIs01/card/cIIs01-A2000r19-xB",
+     "statements sha256": "c95ee566691061d9612bae31e6f1abfdad9e21c5b333beb23672cc6ce6718719",
+     "runs.json sha256": "b89eca844f9ffd389cfddae7970e553ced9e9adcca6dbaf6413db974de843caf",
+     "created": {
+      "commit": "975e6dae3a23d73309751be1e64a726686176a61",
+      "branch": "ismrm2027",
+      "dirty (src/ and the card's bench modules)": []
+     },
+     "target records sha256": {
+      "xB1reg3": "7bc426a8210a742f54911202a6900f241437f237efb0bbefcb5c6d4459050f83",
+      "xB2reg3": "17bad3d34b97f5be49511b622beadec94954c17e86b6029079c0898454f7a445"
+     },
+     "source records": "ensemble/cIIs01/card/cIIs01-A2000r19",
+     "source statements": "statements_R17_reg2.npz",
+     "source statements sha256": "926c636e9f75837ec79642c6b8e675bf411b65790b21be7d69132121acef2b32",
+     "source A.npz sha256": "88fe95a1c7ad17a9d89e4e95db7578de9ddaf283d82009b6c231fc80b012dfcb"
+    },
+    "cIIs02": {
+     "records": "ensemble/cIIs02/card/cIIs02-A2000r19-xB",
+     "statements sha256": "a9df2013ee6df94f38df30d31ac0b86449efa41f21305cd69516c756f0dd459a",
+     "runs.json sha256": "193ae3b80b12de5344f1fb435e0df71ffa2053781422025bbe967b1da160e75e",
+     "created": {
+      "commit": "975e6dae3a23d73309751be1e64a726686176a61",
+      "branch": "ismrm2027",
+      "dirty (src/ and the card's bench modules)": []
+     },
+     "target records sha256": {
+      "xB1reg3": "0512bba1e40c19b83ac1a49a14401281c2252a197c951d3cf11a32fcdb635075",
+      "xB2reg3": "3b039d4d9d22dfb96441bf1edd2b807937483ad47f5045bc3370ee7ef272983c"
+     },
+     "source records": "ensemble/cIIs02/card/cIIs02-A2000r19",
+     "source statements": "statements_R17_reg2.npz",
+     "source statements sha256": "3cd670a822351c67d73477af95fd4e9ce5eb7d13b76d8e88405e8e4d6fe14eda",
+     "source A.npz sha256": "eb76eee68aaa83d3c6626c6d1f2e945150a1c500bb947eeab782d89bac4a955e"
+    },
+    "cIIs03": {
+     "records": "ensemble/cIIs03/card/cIIs03-A2000r19-xB",
+     "statements sha256": "e737741d1d193f74f577fd9bd228b8fb4f5f40dd8908057d86acf439a753cd92",
+     "runs.json sha256": "929e502f625ba5479f6c9093a3ad0568d7333fc2f0f277d0c9de2fbc048cc445",
+     "created": {
+      "commit": "975e6dae3a23d73309751be1e64a726686176a61",
+      "branch": "ismrm2027",
+      "dirty (src/ and the card's bench modules)": []
+     },
+     "target records sha256": {
+      "xB1reg3": "e21a80304624076dc5dd5c38c5dfa6798f04a58b8ece0dd64366c451a8d11188",
+      "xB2reg3": "e034c224f1351d62a162e658eb2f8b549a02d3b55769ab23914917ca33d72f04"
+     },
+     "source records": "ensemble/cIIs03/card/cIIs03-A2000r19",
+     "source statements": "statements_R17_reg3.npz",
+     "source statements sha256": "cbdc7aaea45ee6130723d13db33b0f4840fa273a2fdce0d0bfc83c0e34b53954",
+     "source A.npz sha256": "7e5bac0093c851c64bacc799b8396be73979987175532eca97fd1aa377310378"
+    },
+    "cIIs04": {
+     "records": "ensemble/cIIs04/card/cIIs04-A2000r19-xB",
+     "statements sha256": "6912486e6a89e1123a01458488d7437ded7b9325fe351e27b6a94727810ccaa1",
+     "runs.json sha256": "7143e6c7004f04334ca7e0a463aed11aa3718299fe4d4c76c02f6053f9c9b317",
+     "created": {
+      "commit": "975e6dae3a23d73309751be1e64a726686176a61",
+      "branch": "ismrm2027",
+      "dirty (src/ and the card's bench modules)": []
+     },
+     "target records sha256": {
+      "xB1reg3": "c78dc91382b4cbc4f3f6ca7ea482fd35621bc12a34f0f7ea40e5091a318f7039",
+      "xB2reg3": "0afa664dfeeee3ec90c2c515962f0eacd7b669f50e295f52407617eb185f9eb0"
+     },
+     "source records": "ensemble/cIIs04/card/cIIs04-A2000r19",
+     "source statements": "statements_R17_reg2.npz",
+     "source statements sha256": "2d44328be3ed185376541a05c85080d9ba7de10dc9930117787cfe46b6d330a6",
+     "source A.npz sha256": "eb0f63ce7316802056bb16f5429978d63e0dcff4246898ef4af2fdc19a0a8a18"
+    }
+   }
+  }
+ },
+ "inverse consistency (x?1 pairs both ways)": {
+  "B32 <-> A32 cIIs01": {
+   "rotation_deg": 0.084,
+   "translation_mm": 0.002
+  },
+  "B32 <-> A32 cIIs02": {
+   "rotation_deg": 0.061,
+   "translation_mm": 0.173
+  },
+  "B32 <-> A32 cIIs03": {
+   "rotation_deg": 0.539,
+   "translation_mm": 1.18
+  },
+  "B32 <-> A32 cIIs04": {
+   "rotation_deg": 0.018,
+   "translation_mm": 0.0
+  },
+  "B2000 <-> A2000r19 cIIs01": {
+   "rotation_deg": 0.043,
+   "translation_mm": 0.005
+  },
+  "B2000 <-> A2000r19 cIIs02": {
+   "rotation_deg": 0.044,
+   "translation_mm": 0.266
+  },
+  "B2000 <-> A2000r19 cIIs03": {
+   "rotation_deg": 0.205,
+   "translation_mm": 0.273
+  },
+  "B2000 <-> A2000r19 cIIs04": {
+   "rotation_deg": 0.114,
+   "translation_mm": 0.263
+  }
+ },
+ "fig6 (COHORT2_SCHEMA shape)": {
+  "schema": "tractline.calibration_cohortII/1",
+  "mock": false,
+  "levels": [
+   0.5,
+   0.55,
+   0.6,
+   0.65,
+   0.7,
+   0.75,
+   0.8,
+   0.85,
+   0.9,
+   0.95
+  ],
+  "protocols": {
+   "B32 -> A32 scans (same site)": {
+    "scanner": "B",
+    "voxel_mm": [
+     2.5,
+     2.5,
+     2.5
+    ],
+    "tracked shell": 1000,
+    "directions": 32,
+    "subjects": [
+     "cIIs01",
+     "cIIs02",
+     "cIIs03",
+     "cIIs04"
+    ],
+    "rescan": "the same person's A32 scans (both sessions) on scanner A, the other Philips Achieva at the same site",
+    "confounded": null,
+    "as stated": {
+     "per subject": {
+      "cIIs01": [
+       0.448,
+       0.4761,
+       0.5046,
+       0.5371,
+       0.5734,
+       0.6062,
+       0.6422,
+       0.6852,
+       0.7318,
+       0.7918
+      ],
+      "cIIs02": [
+       0.4712,
+       0.4939,
+       0.5339,
+       0.5605,
+       0.5967,
+       0.6345,
+       0.6735,
+       0.7124,
+       0.762,
+       0.8156
+      ],
+      "cIIs03": [
+       0.4668,
+       0.5022,
+       0.5287,
+       0.5642,
+       0.6,
+       0.6345,
+       0.6791,
+       0.7164,
+       0.7656,
+       0.8249
+      ],
+      "cIIs04": [
+       0.4915,
+       0.5143,
+       0.5465,
+       0.5813,
+       0.6166,
+       0.654,
+       0.6898,
+       0.7338,
+       0.7761,
+       0.836
+      ]
+     },
+     "mean": [
+      0.4694,
+      0.4966,
+      0.5284,
+      0.5608,
+      0.5967,
+      0.6323,
+      0.6712,
+      0.712,
+      0.7589,
+      0.8171
+     ]
+    },
+    "map (leave one subject out)": {
+     "per subject": {
+      "cIIs01": [
+       0.4736,
+       0.5226,
+       0.5702,
+       0.6177,
+       0.6658,
+       0.7156,
+       0.7665,
+       0.821,
+       0.8665,
+       0.8665
+      ],
+      "cIIs02": [
+       0.4968,
+       0.547,
+       0.5995,
+       0.6529,
+       0.7065,
+       0.7556,
+       0.8005,
+       0.8553,
+       0.8863,
+       0.8863
+      ],
+      "cIIs03": [
+       0.5113,
+       0.5582,
+       0.6062,
+       0.6565,
+       0.7108,
+       0.7605,
+       0.8192,
+       0.8622,
+       0.8921,
+       0.8921
+      ],
+      "cIIs04": [
+       0.5237,
+       0.578,
+       0.6294,
+       0.6823,
+       0.7302,
+       0.7761,
+       0.8235,
+       0.8708,
+       0.9019,
+       0.9019
+      ]
+     },
+     "mean": [
+      0.5013,
+      0.5514,
+      0.6013,
+      0.6523,
+      0.7033,
+      0.752,
+      0.8024,
+      0.8523,
+      0.8867,
+      0.8867
+     ],
+     "reached": {
+      "cIIs01": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false,
+       false
+      ],
+      "cIIs02": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false,
+       false
+      ],
+      "cIIs03": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false,
+       false
+      ],
+      "cIIs04": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false,
+       false
+      ]
+     }
+    }
+   },
+   "A32 -> B32 scans (same site)": {
+    "scanner": "A",
+    "voxel_mm": [
+     2.5,
+     2.5,
+     2.5
+    ],
+    "tracked shell": 1000,
+    "directions": 32,
+    "subjects": [
+     "cIIs01",
+     "cIIs02",
+     "cIIs03",
+     "cIIs04"
+    ],
+    "rescan": "the same person's B32 scans (both sessions) on scanner B, the other Philips Achieva at the same site",
+    "confounded": null,
+    "as stated": {
+     "per subject": {
+      "cIIs01": [
+       0.4832,
+       0.5141,
+       0.5505,
+       0.5811,
+       0.6177,
+       0.6565,
+       0.6964,
+       0.7389,
+       0.7862,
+       0.8435
+      ],
+      "cIIs02": [
+       0.4673,
+       0.4905,
+       0.5299,
+       0.5658,
+       0.5937,
+       0.6295,
+       0.6654,
+       0.7072,
+       0.7521,
+       0.8119
+      ],
+      "cIIs03": [
+       0.4859,
+       0.5089,
+       0.5396,
+       0.5779,
+       0.616,
+       0.6537,
+       0.6923,
+       0.7344,
+       0.7814,
+       0.8373
+      ],
+      "cIIs04": [
+       0.487,
+       0.5123,
+       0.5487,
+       0.5811,
+       0.6154,
+       0.6478,
+       0.6866,
+       0.7272,
+       0.7737,
+       0.8265
+      ]
+     },
+     "mean": [
+      0.4808,
+      0.5065,
+      0.5422,
+      0.5765,
+      0.6107,
+      0.6469,
+      0.6852,
+      0.7269,
+      0.7733,
+      0.8298
+     ]
+    },
+    "map (leave one subject out)": {
+     "per subject": {
+      "cIIs01": [
+       0.5116,
+       0.5625,
+       0.613,
+       0.6647,
+       0.7177,
+       0.7674,
+       0.8189,
+       0.8743,
+       0.9048,
+       0.9048
+      ],
+      "cIIs02": [
+       0.4826,
+       0.5327,
+       0.5805,
+       0.627,
+       0.6792,
+       0.7258,
+       0.7738,
+       0.8275,
+       0.8793,
+       0.8805
+      ],
+      "cIIs03": [
+       0.5029,
+       0.5622,
+       0.6066,
+       0.6597,
+       0.7116,
+       0.7641,
+       0.8138,
+       0.8676,
+       0.9043,
+       0.9043
+      ],
+      "cIIs04": [
+       0.512,
+       0.5599,
+       0.5999,
+       0.6509,
+       0.7021,
+       0.7542,
+       0.7967,
+       0.8478,
+       0.8965,
+       0.8965
+      ]
+     },
+     "mean": [
+      0.5023,
+      0.5543,
+      0.6,
+      0.6506,
+      0.7026,
+      0.7529,
+      0.8008,
+      0.8543,
+      0.8962,
+      0.8965
+     ],
+     "reached": {
+      "cIIs01": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false,
+       false
+      ],
+      "cIIs02": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false
+      ],
+      "cIIs03": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false,
+       false
+      ],
+      "cIIs04": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false,
+       false
+      ]
+     }
+    }
+   },
+   "B2000 -> A2000 scans (same site)": {
+    "scanner": "B",
+    "voxel_mm": [
+     2.5,
+     2.5,
+     2.5
+    ],
+    "tracked shell": 2000,
+    "directions": 96,
+    "subjects": [
+     "cIIs01",
+     "cIIs02",
+     "cIIs03",
+     "cIIs04"
+    ],
+    "rescan": "the same person's A2000r19 scans (both sessions) on scanner A, the other Philips Achieva at the same site",
+    "confounded": "resolution (2.5 mm on scanner B against 1.89 x 1.89 x 2.2 mm on A, the target resampled onto the ensemble's grid) and streamline count (A2000r19's runs have about twice as many: every mask voxel a seed)",
+    "as stated": {
+     "per subject": {
+      "cIIs01": [
+       0.5028,
+       0.5227,
+       0.5566,
+       0.5838,
+       0.6218,
+       0.6549,
+       0.6927,
+       0.7304,
+       0.7746,
+       0.8311
+      ],
+      "cIIs02": [
+       0.4578,
+       0.4872,
+       0.5157,
+       0.5496,
+       0.5791,
+       0.6143,
+       0.6564,
+       0.6956,
+       0.7452,
+       0.8039
+      ],
+      "cIIs03": [
+       0.4756,
+       0.5026,
+       0.532,
+       0.5687,
+       0.6001,
+       0.6376,
+       0.6724,
+       0.713,
+       0.7597,
+       0.8138
+      ],
+      "cIIs04": [
+       0.5031,
+       0.537,
+       0.565,
+       0.5964,
+       0.6341,
+       0.6759,
+       0.7099,
+       0.7538,
+       0.7958,
+       0.8494
+      ]
+     },
+     "mean": [
+      0.4848,
+      0.5124,
+      0.5423,
+      0.5746,
+      0.6088,
+      0.6457,
+      0.6828,
+      0.7232,
+      0.7688,
+      0.8246
+     ]
+    },
+    "map (leave one subject out)": {
+     "per subject": {
+      "cIIs01": [
+       0.516,
+       0.5625,
+       0.6157,
+       0.6631,
+       0.7141,
+       0.7624,
+       0.813,
+       0.8599,
+       0.8961,
+       0.8961
+      ],
+      "cIIs02": [
+       0.465,
+       0.5157,
+       0.5594,
+       0.6124,
+       0.6611,
+       0.7177,
+       0.7719,
+       0.8253,
+       0.8743,
+       0.8743
+      ],
+      "cIIs03": [
+       0.488,
+       0.5443,
+       0.5862,
+       0.64,
+       0.6887,
+       0.7407,
+       0.7907,
+       0.8443,
+       0.8851,
+       0.8851
+      ],
+      "cIIs04": [
+       0.5362,
+       0.5884,
+       0.6341,
+       0.6941,
+       0.739,
+       0.7925,
+       0.8397,
+       0.8878,
+       0.9132,
+       0.9132
+      ]
+     },
+     "mean": [
+      0.5013,
+      0.5527,
+      0.5988,
+      0.6524,
+      0.7007,
+      0.7533,
+      0.8038,
+      0.8543,
+      0.8922,
+      0.8922
+     ],
+     "reached": {
+      "cIIs01": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false,
+       false
+      ],
+      "cIIs02": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false,
+       false
+      ],
+      "cIIs03": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false,
+       false
+      ],
+      "cIIs04": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false,
+       false
+      ]
+     }
+    }
+   },
+   "A2000 -> B2000 scans (same site)": {
+    "scanner": "A",
+    "voxel_mm": [
+     1.89286,
+     1.89286,
+     2.2
+    ],
+    "tracked shell": 2000,
+    "directions": 96,
+    "subjects": [
+     "cIIs01",
+     "cIIs02",
+     "cIIs03",
+     "cIIs04"
+    ],
+    "rescan": "the same person's B2000 scans (both sessions) on scanner B, the other Philips Achieva at the same site",
+    "confounded": "resolution (2.5 mm on scanner B against 1.89 x 1.89 x 2.2 mm on A, the target resampled onto the ensemble's grid) and streamline count (A2000r19's runs have about twice as many: every mask voxel a seed)",
+    "as stated": {
+     "per subject": {
+      "cIIs01": [
+       0.4984,
+       0.525,
+       0.5544,
+       0.5872,
+       0.6247,
+       0.657,
+       0.6995,
+       0.7399,
+       0.7865,
+       0.8492
+      ],
+      "cIIs02": [
+       0.5054,
+       0.5298,
+       0.5639,
+       0.6015,
+       0.6397,
+       0.6735,
+       0.7199,
+       0.7627,
+       0.8079,
+       0.8677
+      ],
+      "cIIs03": [
+       0.5153,
+       0.5391,
+       0.5713,
+       0.6106,
+       0.6463,
+       0.6842,
+       0.7268,
+       0.7712,
+       0.8184,
+       0.8782
+      ],
+      "cIIs04": [
+       0.5053,
+       0.5278,
+       0.5598,
+       0.5935,
+       0.6281,
+       0.6709,
+       0.7084,
+       0.752,
+       0.8009,
+       0.8596
+      ]
+     },
+     "mean": [
+      0.5061,
+      0.5304,
+      0.5624,
+      0.5982,
+      0.6347,
+      0.6714,
+      0.7137,
+      0.7565,
+      0.8034,
+      0.8637
+     ]
+    },
+    "map (leave one subject out)": {
+     "per subject": {
+      "cIIs01": [
+       0.4936,
+       0.5364,
+       0.5872,
+       0.6373,
+       0.6817,
+       0.7327,
+       0.7816,
+       0.8345,
+       0.8902,
+       0.9139
+      ],
+      "cIIs02": [
+       0.5027,
+       0.5554,
+       0.6101,
+       0.6564,
+       0.7076,
+       0.7594,
+       0.8079,
+       0.8598,
+       0.918,
+       0.9277
+      ],
+      "cIIs03": [
+       0.5085,
+       0.5582,
+       0.6194,
+       0.6702,
+       0.7242,
+       0.7712,
+       0.8248,
+       0.869,
+       0.9209,
+       0.9364
+      ],
+      "cIIs04": [
+       0.5049,
+       0.5525,
+       0.5956,
+       0.6479,
+       0.6976,
+       0.7468,
+       0.7929,
+       0.8444,
+       0.8958,
+       0.9226
+      ]
+     },
+     "mean": [
+      0.5024,
+      0.5506,
+      0.6031,
+      0.6529,
+      0.7028,
+      0.7525,
+      0.8018,
+      0.8519,
+      0.9062,
+      0.9252
+     ],
+     "reached": {
+      "cIIs01": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false
+      ],
+      "cIIs02": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false
+      ],
+      "cIIs03": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false
+      ],
+      "cIIs04": [
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       true,
+       false
+      ]
+     }
+    }
+   }
+  },
+  "transfer (fixed protocol, other scanner)": {
+   "B32 -> A32 scans (same site)": {
+    "map from": "B32",
+    "applied to": "B32 -> A32 scans (same site)",
+    "map fitted on": [
+     "cIIs01",
+     "cIIs02",
+     "cIIs03",
+     "cIIs04"
+    ],
+    "target person excluded": true,
+    "confounded": null,
+    "per subject": {
+     "cIIs01": [
+      0.4552,
+      0.4948,
+      0.5458,
+      0.5879,
+      0.6363,
+      0.6815,
+      0.7318,
+      0.784,
+      0.8489,
+      0.8665
+     ],
+     "cIIs02": [
+      0.4838,
+      0.5339,
+      0.5671,
+      0.619,
+      0.6641,
+      0.7089,
+      0.762,
+      0.8106,
+      0.8652,
+      0.8863
+     ],
+     "cIIs03": [
+      0.473,
+      0.5287,
+      0.5773,
+      0.6299,
+      0.6791,
+      0.7291,
+      0.7762,
+      0.8309,
+      0.8825,
+      0.8921
+     ],
+     "cIIs04": [
+      0.5064,
+      0.5515,
+      0.6048,
+      0.654,
+      0.7011,
+      0.7428,
+      0.7955,
+      0.8455,
+      0.8955,
+      0.9019
+     ]
+    },
+    "mean": [
+     0.4796,
+     0.5272,
+     0.5737,
+     0.6227,
+     0.6702,
+     0.7156,
+     0.7664,
+     0.8177,
+     0.873,
+     0.8867
+    ],
+    "reached": {
+     "cIIs01": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      false
+     ],
+     "cIIs02": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      false
+     ],
+     "cIIs03": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      false
+     ],
+     "cIIs04": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      false
+     ]
+    },
+    "note": "the B32 same-scanner (other-session) map fitted without the target subject, applied to the B32 envelope against that subject's A32 scans"
+   },
+   "A32 -> B32 scans (same site)": {
+    "map from": "A32",
+    "applied to": "A32 -> B32 scans (same site)",
+    "map fitted on": [
+     "cIIs01",
+     "cIIs02",
+     "cIIs03",
+     "cIIs04"
+    ],
+    "target person excluded": true,
+    "confounded": null,
+    "per subject": {
+     "cIIs01": [
+      0.4832,
+      0.5338,
+      0.5811,
+      0.6328,
+      0.6791,
+      0.7306,
+      0.7768,
+      0.8306,
+      0.884,
+      0.9048
+     ],
+     "cIIs02": [
+      0.4784,
+      0.5231,
+      0.5698,
+      0.613,
+      0.6571,
+      0.7032,
+      0.7521,
+      0.8045,
+      0.8581,
+      0.8805
+     ],
+     "cIIs03": [
+      0.4932,
+      0.5389,
+      0.585,
+      0.6325,
+      0.6854,
+      0.7313,
+      0.7814,
+      0.83,
+      0.8863,
+      0.9043
+     ],
+     "cIIs04": [
+      0.502,
+      0.5378,
+      0.5862,
+      0.6314,
+      0.6763,
+      0.7272,
+      0.7771,
+      0.8183,
+      0.8784,
+      0.8965
+     ]
+    },
+    "mean": [
+     0.4892,
+     0.5334,
+     0.5805,
+     0.6274,
+     0.6745,
+     0.7231,
+     0.7719,
+     0.8209,
+     0.8767,
+     0.8965
+    ],
+    "reached": {
+     "cIIs01": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      false
+     ],
+     "cIIs02": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      false
+     ],
+     "cIIs03": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      false
+     ],
+     "cIIs04": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      false
+     ]
+    },
+    "note": "the A32 same-scanner (other-session) map fitted without the target subject, applied to the A32 envelope against that subject's B32 scans"
+   },
+   "B2000 -> A2000 scans (same site)": {
+    "map from": "B2000",
+    "applied to": "B2000 -> A2000 scans (same site)",
+    "map fitted on": [
+     "cIIs01",
+     "cIIs02",
+     "cIIs03",
+     "cIIs04"
+    ],
+    "target person excluded": true,
+    "confounded": "resolution (2.5 mm on scanner B against 1.89 x 1.89 x 2.2 mm on A, the target resampled onto the ensemble's grid) and streamline count (A2000r19's runs have about twice as many: every mask voxel a seed)",
+    "per subject": {
+     "cIIs01": [
+      0.4868,
+      0.5272,
+      0.5657,
+      0.6157,
+      0.6549,
+      0.7003,
+      0.7458,
+      0.7918,
+      0.8428,
+      0.8961
+     ],
+     "cIIs02": [
+      0.4396,
+      0.4823,
+      0.5246,
+      0.5674,
+      0.6096,
+      0.6564,
+      0.7033,
+      0.7535,
+      0.8126,
+      0.8743
+     ],
+     "cIIs03": [
+      0.4565,
+      0.5028,
+      0.5546,
+      0.5975,
+      0.6376,
+      0.6835,
+      0.7301,
+      0.7828,
+      0.8342,
+      0.8851
+     ],
+     "cIIs04": [
+      0.4987,
+      0.5446,
+      0.5912,
+      0.628,
+      0.6789,
+      0.7246,
+      0.771,
+      0.8162,
+      0.8659,
+      0.9132
+     ]
+    },
+    "mean": [
+     0.4704,
+     0.5142,
+     0.559,
+     0.6022,
+     0.6452,
+     0.6912,
+     0.7375,
+     0.7861,
+     0.8389,
+     0.8922
+    ],
+    "reached": {
+     "cIIs01": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      false
+     ],
+     "cIIs02": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+     ],
+     "cIIs03": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      false
+     ],
+     "cIIs04": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      false
+     ]
+    },
+    "note": "the B2000 same-scanner (other-session) map fitted without the target subject, applied to the B2000 envelope against that subject's A2000r19 scans"
+   },
+   "A2000 -> B2000 scans (same site)": {
+    "map from": "A2000",
+    "applied to": "A2000 -> B2000 scans (same site)",
+    "map fitted on": [
+     "cIIs01",
+     "cIIs02",
+     "cIIs03",
+     "cIIs04"
+    ],
+    "target person excluded": true,
+    "confounded": "resolution (2.5 mm on scanner B against 1.89 x 1.89 x 2.2 mm on A, the target resampled onto the ensemble's grid) and streamline count (A2000r19's runs have about twice as many: every mask voxel a seed)",
+    "per subject": {
+     "cIIs01": [
+      0.4728,
+      0.5198,
+      0.5617,
+      0.597,
+      0.6397,
+      0.6857,
+      0.7375,
+      0.7816,
+      0.8345,
+      0.9059
+     ],
+     "cIIs02": [
+      0.4732,
+      0.5251,
+      0.571,
+      0.6208,
+      0.6665,
+      0.7145,
+      0.7627,
+      0.8121,
+      0.8677,
+      0.922
+     ],
+     "cIIs03": [
+      0.4857,
+      0.5306,
+      0.5768,
+      0.6279,
+      0.675,
+      0.7242,
+      0.7696,
+      0.8184,
+      0.869,
+      0.9309
+     ],
+     "cIIs04": [
+      0.482,
+      0.5215,
+      0.5644,
+      0.6159,
+      0.6537,
+      0.7037,
+      0.752,
+      0.8077,
+      0.8596,
+      0.92
+     ]
+    },
+    "mean": [
+     0.4784,
+     0.5242,
+     0.5685,
+     0.6154,
+     0.6587,
+     0.707,
+     0.7554,
+     0.805,
+     0.8577,
+     0.9197
+    ],
+    "reached": {
+     "cIIs01": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+     ],
+     "cIIs02": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+     ],
+     "cIIs03": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+     ],
+     "cIIs04": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+     ]
+    },
+    "note": "the A2000 same-scanner (other-session) map fitted without the target subject, applied to the A2000 envelope against that subject's B2000 scans"
+   }
+  },
+  "note": "COHORT2_SCHEMA's shape; fig6_protocol_gap draws protocols named B2000, B32, A2000, A32 only, so these rows need their names added there to be drawn (ismrm2027_figures.py is not changed by this script)"
+ },
+ "provenance": {
+  "git": {
+   "commit": "975e6dae3a23d73309751be1e64a726686176a61",
+   "branch": "ismrm2027",
+   "dirty (src/ and the card's bench modules)": []
+  },
+  "calibration_crossscanner.py sha256": "7c65acca66ee8955d29100f606631dd7c85fa61e546e29f07a1a3e55d311a07e",
+  "calibration_cohortII.py sha256": "2cab50b3c1d15e043e7ffadccb894c273039a38eea2bcb72d9a25856b4fc961d",
+  "calibration_crosssite.py sha256": "06dcf9e77130d2a1d5c271ede45430514a5cf72afee4c323b6c20cd2a77790fa",
+  "_register_fa.py sha256": "3ec03d4cd1400e5a231444e4eacff2fe4ef38dd1420f06cf4b5a1e46ad302a61",
+  "calibration_cohortII.json sha256": "7abc92d5dcd9410013bb288d8417b6301b25444aa8b782c41673aa632c7a4746",
+  "created (UTC)": "2026-10-20T18:54:56Z"
+ },
+ "caveats": [
+  "four subjects; two target sessions per subject and direction (averaged), one same-scanner other-session rescan",
+  "B2000 <-> A2000r19 is CONFOUNDED: resolution (2.5 mm on scanner B against 1.89 x 1.89 x 2.2 mm on A, the target resampled onto the ensemble's grid) and streamline count (A2000r19's runs have about twice as many: every mask voxel a seed)",
+  "B32 <-> A32 is a fixed protocol, but the reversed series differ (2.5 mm on B; 0.625 x 0.625 x 2.5 mm, box-averaged and rescaled, on A), so the field estimate is not acquired alike",
+  "the same people on both scanners: the LOSO maps leave the target person out",
+  "a target session's scan is a different day as well as a different scanner unit, as the same-scanner rescan is a different day"
+ ]
+}

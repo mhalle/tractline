@@ -1,0 +1,4590 @@
+{
+ "what": "the size and precision of recalibrated envelopes against as-stated ones at the same target",
+ "targets": [
+  0.8,
+  0.9,
+  0.95
+ ],
+ "definitions": {
+  "coverage": "rescan presence voxels inside the envelope / rescan presence voxels",
+  "precision": "envelope voxels inside the rescan's presence / envelope voxels",
+  "size": "envelope voxels / rescan presence voxels",
+  "pooling": "the 42 named tracts pooled; a subject's rescans of the term averaged; subjects averaged"
+ },
+ "conditions": {
+  "cohort III other session": {
+   "term": "other session",
+   "subjects": [
+    "cIIIs01",
+    "cIIIs02",
+    "cIIIs04",
+    "cIIIs05",
+    "cIIIs08"
+   ],
+   "per subject": {
+    "cIIIs01": {
+     "rescans": [
+      "session1"
+     ],
+     "statements": "statements_R17.npz",
+     "A alone (coverage, precision, size)": [
+      0.7553,
+      0.7437,
+      1.0155
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.7613,
+       "precision": 0.7896,
+       "size": 0.9641
+      },
+      "map": {
+       "level": 0.845,
+       "reached": true,
+       "coverage": 0.7988,
+       "precision": 0.7524,
+       "size": 1.0617
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.8508,
+       "precision": 0.69,
+       "size": 1.2331
+      },
+      "map": {
+       "level": 0.945,
+       "reached": true,
+       "coverage": 0.9001,
+       "precision": 0.6103,
+       "size": 1.4749
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.9067,
+       "precision": 0.599,
+       "size": 1.5137
+      },
+      "map": {
+       "level": 0.985,
+       "reached": true,
+       "coverage": 0.9518,
+       "precision": 0.4904,
+       "size": 1.9407
+      }
+     }
+    },
+    "cIIIs02": {
+     "rescans": [
+      "session4",
+      "session5"
+     ],
+     "statements": "statements_R17.npz",
+     "A alone (coverage, precision, size)": [
+      0.7229,
+      0.7078,
+      1.0214
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.7517,
+       "precision": 0.7406,
+       "size": 1.015
+      },
+      "map": {
+       "level": 0.845,
+       "reached": true,
+       "coverage": 0.7935,
+       "precision": 0.6977,
+       "size": 1.1374
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.8439,
+       "precision": 0.6322,
+       "size": 1.3349
+      },
+      "map": {
+       "level": 0.945,
+       "reached": true,
+       "coverage": 0.8929,
+       "precision": 0.5513,
+       "size": 1.6195
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.8965,
+       "precision": 0.5427,
+       "size": 1.6518
+      },
+      "map": {
+       "level": 0.985,
+       "reached": true,
+       "coverage": 0.9436,
+       "precision": 0.4374,
+       "size": 2.1575
+      }
+     }
+    },
+    "cIIIs04": {
+     "rescans": [
+      "session2",
+      "session3",
+      "session4",
+      "session5"
+     ],
+     "statements": "statements_R17.npz",
+     "A alone (coverage, precision, size)": [
+      0.7621,
+      0.7648,
+      0.9966
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.7617,
+       "precision": 0.8138,
+       "size": 0.9362
+      },
+      "map": {
+       "level": 0.845,
+       "reached": true,
+       "coverage": 0.8,
+       "precision": 0.7762,
+       "size": 1.0309
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.855,
+       "precision": 0.7098,
+       "size": 1.2047
+      },
+      "map": {
+       "level": 0.945,
+       "reached": true,
+       "coverage": 0.9019,
+       "precision": 0.6377,
+       "size": 1.4147
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.9064,
+       "precision": 0.6289,
+       "size": 1.4416
+      },
+      "map": {
+       "level": 0.985,
+       "reached": true,
+       "coverage": 0.9537,
+       "precision": 0.5093,
+       "size": 1.873
+      }
+     }
+    },
+    "cIIIs05": {
+     "rescans": [
+      "session2"
+     ],
+     "statements": "statements_R17.npz",
+     "A alone (coverage, precision, size)": [
+      0.7466,
+      0.7578,
+      0.9851
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.765,
+       "precision": 0.7944,
+       "size": 0.9631
+      },
+      "map": {
+       "level": 0.85,
+       "reached": true,
+       "coverage": 0.8078,
+       "precision": 0.751,
+       "size": 1.0757
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.8565,
+       "precision": 0.6867,
+       "size": 1.2472
+      },
+      "map": {
+       "level": 0.95,
+       "reached": true,
+       "coverage": 0.9094,
+       "precision": 0.5953,
+       "size": 1.5275
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.9094,
+       "precision": 0.5953,
+       "size": 1.5275
+      },
+      "map": {
+       "level": 0.985,
+       "reached": true,
+       "coverage": 0.9539,
+       "precision": 0.4823,
+       "size": 1.978
+      }
+     }
+    },
+    "cIIIs08": {
+     "rescans": [
+      "session2"
+     ],
+     "statements": "statements_R17.npz",
+     "A alone (coverage, precision, size)": [
+      0.7527,
+      0.7347,
+      1.0245
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.7606,
+       "precision": 0.7793,
+       "size": 0.976
+      },
+      "map": {
+       "level": 0.85,
+       "reached": true,
+       "coverage": 0.808,
+       "precision": 0.7341,
+       "size": 1.1006
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.8555,
+       "precision": 0.6704,
+       "size": 1.2763
+      },
+      "map": {
+       "level": 0.945,
+       "reached": true,
+       "coverage": 0.9047,
+       "precision": 0.5917,
+       "size": 1.5289
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.909,
+       "precision": 0.582,
+       "size": 1.5618
+      },
+      "map": {
+       "level": 0.985,
+       "reached": true,
+       "coverage": 0.9545,
+       "precision": 0.469,
+       "size": 2.035
+      }
+     }
+    }
+   },
+   "summary": {
+    "0.8": {
+     "as stated (coverage, precision, size)": [
+      0.7601,
+      0.7835,
+      0.9709
+     ],
+     "map (coverage, precision, size)": [
+      0.8016,
+      0.7423,
+      1.0813
+     ],
+     "map reached the target (subjects)": 5,
+     "size change % (of the means)": 11.4,
+     "size change % (mean of the subjects' ratios)": 11.4,
+     "precision change (map - as stated)": -0.0413
+    },
+    "0.9": {
+     "as stated (coverage, precision, size)": [
+      0.8523,
+      0.6778,
+      1.2592
+     ],
+     "map (coverage, precision, size)": [
+      0.9018,
+      0.5973,
+      1.5131
+     ],
+     "map reached the target (subjects)": 5,
+     "size change % (of the means)": 20.2,
+     "size change % (mean of the subjects' ratios)": 20.1,
+     "precision change (map - as stated)": -0.0806
+    },
+    "0.95": {
+     "as stated (coverage, precision, size)": [
+      0.9056,
+      0.5896,
+      1.5393
+     ],
+     "map (coverage, precision, size)": [
+      0.9515,
+      0.4777,
+      1.9968
+     ],
+     "map reached the target (subjects)": 5,
+     "size change % (of the means)": 29.7,
+     "size change % (mean of the subjects' ratios)": 29.7,
+     "precision change (map - as stated)": -0.1119
+    },
+    "A alone (coverage, precision, size)": [
+     0.7479,
+     0.7418,
+     1.0086
+    ]
+   }
+  },
+  "cohort II same scanner B2000": {
+   "term": "other session",
+   "subjects": [
+    "cIIs01",
+    "cIIs02",
+    "cIIs03",
+    "cIIs04"
+   ],
+   "per subject": {
+    "cIIs01": {
+     "rescans": [
+      "session2reg2"
+     ],
+     "statements": "statements_R17_reg2.npz",
+     "A alone (coverage, precision, size)": [
+      0.7373,
+      0.7115,
+      1.0363
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.7477,
+       "precision": 0.75,
+       "size": 0.9969
+      },
+      "map": {
+       "level": 0.865,
+       "reached": true,
+       "coverage": 0.8064,
+       "precision": 0.6934,
+       "size": 1.163
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.8373,
+       "precision": 0.658,
+       "size": 1.2726
+      },
+      "map": {
+       "level": 0.96,
+       "reached": true,
+       "coverage": 0.9027,
+       "precision": 0.558,
+       "size": 1.6178
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.894,
+       "precision": 0.5746,
+       "size": 1.5559
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.9456,
+       "precision": 0.4641,
+       "size": 2.0375
+      }
+     }
+    },
+    "cIIs02": {
+     "rescans": [
+      "session2reg3"
+     ],
+     "statements": "statements_R17_reg3.npz",
+     "A alone (coverage, precision, size)": [
+      0.7106,
+      0.7156,
+      0.993
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.7247,
+       "precision": 0.7438,
+       "size": 0.9742
+      },
+      "map": {
+       "level": 0.86,
+       "reached": true,
+       "coverage": 0.7752,
+       "precision": 0.698,
+       "size": 1.1106
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.818,
+       "precision": 0.6455,
+       "size": 1.2672
+      },
+      "map": {
+       "level": 0.955,
+       "reached": true,
+       "coverage": 0.8803,
+       "precision": 0.563,
+       "size": 1.5636
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.8731,
+       "precision": 0.5725,
+       "size": 1.5251
+      },
+      "map": {
+       "level": 0.995,
+       "reached": true,
+       "coverage": 0.9333,
+       "precision": 0.4669,
+       "size": 1.999
+      }
+     }
+    },
+    "cIIs03": {
+     "rescans": [
+      "session2reg3"
+     ],
+     "statements": "statements_R17_reg3.npz",
+     "A alone (coverage, precision, size)": [
+      0.7373,
+      0.7337,
+      1.0049
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.7498,
+       "precision": 0.7723,
+       "size": 0.9709
+      },
+      "map": {
+       "level": 0.87,
+       "reached": true,
+       "coverage": 0.8142,
+       "precision": 0.7082,
+       "size": 1.1497
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.8454,
+       "precision": 0.6764,
+       "size": 1.2498
+      },
+      "map": {
+       "level": 0.96,
+       "reached": true,
+       "coverage": 0.9144,
+       "precision": 0.5656,
+       "size": 1.6169
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.8982,
+       "precision": 0.602,
+       "size": 1.492
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.9524,
+       "precision": 0.4785,
+       "size": 1.9901
+      }
+     }
+    },
+    "cIIs04": {
+     "rescans": [
+      "session2reg2"
+     ],
+     "statements": "statements_R17_reg2.npz",
+     "A alone (coverage, precision, size)": [
+      0.7423,
+      0.7403,
+      1.0026
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.7549,
+       "precision": 0.7813,
+       "size": 0.9662
+      },
+      "map": {
+       "level": 0.87,
+       "reached": true,
+       "coverage": 0.8208,
+       "precision": 0.7116,
+       "size": 1.1534
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.8467,
+       "precision": 0.6802,
+       "size": 1.2449
+      },
+      "map": {
+       "level": 0.96,
+       "reached": true,
+       "coverage": 0.9142,
+       "precision": 0.5726,
+       "size": 1.5965
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.8996,
+       "precision": 0.6035,
+       "size": 1.4907
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.9537,
+       "precision": 0.479,
+       "size": 1.9912
+      }
+     }
+    }
+   },
+   "summary": {
+    "0.8": {
+     "as stated (coverage, precision, size)": [
+      0.7443,
+      0.7618,
+      0.977
+     ],
+     "map (coverage, precision, size)": [
+      0.8041,
+      0.7028,
+      1.1442
+     ],
+     "map reached the target (subjects)": 4,
+     "size change % (of the means)": 17.1,
+     "size change % (mean of the subjects' ratios)": 17.1,
+     "precision change (map - as stated)": -0.059
+    },
+    "0.9": {
+     "as stated (coverage, precision, size)": [
+      0.8369,
+      0.665,
+      1.2586
+     ],
+     "map (coverage, precision, size)": [
+      0.9029,
+      0.5648,
+      1.5987
+     ],
+     "map reached the target (subjects)": 4,
+     "size change % (of the means)": 27.0,
+     "size change % (mean of the subjects' ratios)": 27.0,
+     "precision change (map - as stated)": -0.1002
+    },
+    "0.95": {
+     "as stated (coverage, precision, size)": [
+      0.8912,
+      0.5881,
+      1.5159
+     ],
+     "map (coverage, precision, size)": [
+      0.9463,
+      0.4721,
+      2.0045
+     ],
+     "map reached the target (subjects)": 1,
+     "size change % (of the means)": 32.2,
+     "size change % (mean of the subjects' ratios)": 32.2,
+     "precision change (map - as stated)": -0.116
+    },
+    "A alone (coverage, precision, size)": [
+     0.7319,
+     0.7253,
+     1.0092
+    ]
+   }
+  },
+  "cohort II same scanner A2000r19": {
+   "term": "other session",
+   "subjects": [
+    "cIIs01",
+    "cIIs02",
+    "cIIs03",
+    "cIIs04"
+   ],
+   "per subject": {
+    "cIIs01": {
+     "rescans": [
+      "session2reg2"
+     ],
+     "statements": "statements_R17_reg2.npz",
+     "A alone (coverage, precision, size)": [
+      0.7411,
+      0.723,
+      1.025
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.7478,
+       "precision": 0.7605,
+       "size": 0.9833
+      },
+      "map": {
+       "level": 0.845,
+       "reached": true,
+       "coverage": 0.7865,
+       "precision": 0.7208,
+       "size": 1.0911
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.8356,
+       "precision": 0.6635,
+       "size": 1.2594
+      },
+      "map": {
+       "level": 0.94,
+       "reached": true,
+       "coverage": 0.8811,
+       "precision": 0.594,
+       "size": 1.4834
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.8955,
+       "precision": 0.5722,
+       "size": 1.5651
+      },
+      "map": {
+       "level": 0.985,
+       "reached": true,
+       "coverage": 0.9422,
+       "precision": 0.4688,
+       "size": 2.0098
+      }
+     }
+    },
+    "cIIs02": {
+     "rescans": [
+      "session2reg2"
+     ],
+     "statements": "statements_R17_reg2.npz",
+     "A alone (coverage, precision, size)": [
+      0.7503,
+      0.7513,
+      0.9987
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.7673,
+       "precision": 0.7909,
+       "size": 0.9701
+      },
+      "map": {
+       "level": 0.85,
+       "reached": true,
+       "coverage": 0.8127,
+       "precision": 0.7425,
+       "size": 1.0946
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.858,
+       "precision": 0.6827,
+       "size": 1.2567
+      },
+      "map": {
+       "level": 0.95,
+       "reached": true,
+       "coverage": 0.9139,
+       "precision": 0.5876,
+       "size": 1.5553
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.9139,
+       "precision": 0.5876,
+       "size": 1.5553
+      },
+      "map": {
+       "level": 0.985,
+       "reached": true,
+       "coverage": 0.9558,
+       "precision": 0.4773,
+       "size": 2.0024
+      }
+     }
+    },
+    "cIIs03": {
+     "rescans": [
+      "session2reg3"
+     ],
+     "statements": "statements_R17_reg3.npz",
+     "A alone (coverage, precision, size)": [
+      0.7547,
+      0.7367,
+      1.0244
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.7572,
+       "precision": 0.7858,
+       "size": 0.9636
+      },
+      "map": {
+       "level": 0.845,
+       "reached": true,
+       "coverage": 0.8001,
+       "precision": 0.7447,
+       "size": 1.0744
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.8482,
+       "precision": 0.6893,
+       "size": 1.2306
+      },
+      "map": {
+       "level": 0.945,
+       "reached": true,
+       "coverage": 0.8964,
+       "precision": 0.6158,
+       "size": 1.4556
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.9047,
+       "precision": 0.6011,
+       "size": 1.5052
+      },
+      "map": {
+       "level": 0.985,
+       "reached": true,
+       "coverage": 0.9509,
+       "precision": 0.4908,
+       "size": 1.9374
+      }
+     }
+    },
+    "cIIs04": {
+     "rescans": [
+      "session2reg2"
+     ],
+     "statements": "statements_R17_reg2.npz",
+     "A alone (coverage, precision, size)": [
+      0.7681,
+      0.7733,
+      0.9932
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.7686,
+       "precision": 0.8169,
+       "size": 0.9409
+      },
+      "map": {
+       "level": 0.85,
+       "reached": true,
+       "coverage": 0.8161,
+       "precision": 0.7735,
+       "size": 1.0551
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.8655,
+       "precision": 0.7116,
+       "size": 1.2163
+      },
+      "map": {
+       "level": 0.95,
+       "reached": true,
+       "coverage": 0.9184,
+       "precision": 0.6175,
+       "size": 1.4872
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.9184,
+       "precision": 0.6175,
+       "size": 1.4872
+      },
+      "map": {
+       "level": 0.99,
+       "reached": true,
+       "coverage": 0.962,
+       "precision": 0.4986,
+       "size": 1.9293
+      }
+     }
+    }
+   },
+   "summary": {
+    "0.8": {
+     "as stated (coverage, precision, size)": [
+      0.7602,
+      0.7885,
+      0.9645
+     ],
+     "map (coverage, precision, size)": [
+      0.8039,
+      0.7454,
+      1.0788
+     ],
+     "map reached the target (subjects)": 4,
+     "size change % (of the means)": 11.9,
+     "size change % (mean of the subjects' ratios)": 11.9,
+     "precision change (map - as stated)": -0.0432
+    },
+    "0.9": {
+     "as stated (coverage, precision, size)": [
+      0.8518,
+      0.6868,
+      1.2407
+     ],
+     "map (coverage, precision, size)": [
+      0.9024,
+      0.6037,
+      1.4954
+     ],
+     "map reached the target (subjects)": 4,
+     "size change % (of the means)": 20.5,
+     "size change % (mean of the subjects' ratios)": 20.5,
+     "precision change (map - as stated)": -0.083
+    },
+    "0.95": {
+     "as stated (coverage, precision, size)": [
+      0.9081,
+      0.5946,
+      1.5282
+     ],
+     "map (coverage, precision, size)": [
+      0.9527,
+      0.4839,
+      1.9697
+     ],
+     "map reached the target (subjects)": 4,
+     "size change % (of the means)": 28.9,
+     "size change % (mean of the subjects' ratios)": 28.9,
+     "precision change (map - as stated)": -0.1107
+    },
+    "A alone (coverage, precision, size)": [
+     0.7536,
+     0.7461,
+     1.0103
+    ]
+   }
+  },
+  "cohort II same scanner B32": {
+   "term": "other session",
+   "subjects": [
+    "cIIs01",
+    "cIIs02",
+    "cIIs03",
+    "cIIs04"
+   ],
+   "per subject": {
+    "cIIs01": {
+     "rescans": [
+      "session2reg2"
+     ],
+     "statements": "statements_R17_reg2.npz",
+     "A alone (coverage, precision, size)": [
+      0.658,
+      0.6577,
+      1.0005
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.6795,
+       "precision": 0.6994,
+       "size": 0.9716
+      },
+      "map": {
+       "level": 0.9,
+       "reached": true,
+       "coverage": 0.7717,
+       "precision": 0.6159,
+       "size": 1.2529
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.7717,
+       "precision": 0.6159,
+       "size": 1.2529
+      },
+      "map": {
+       "level": 0.98,
+       "reached": true,
+       "coverage": 0.885,
+       "precision": 0.4695,
+       "size": 1.8851
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.8325,
+       "precision": 0.5482,
+       "size": 1.5186
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.8996,
+       "precision": 0.4474,
+       "size": 2.0108
+      }
+     }
+    },
+    "cIIs02": {
+     "rescans": [
+      "session2reg2"
+     ],
+     "statements": "statements_R17_reg2.npz",
+     "A alone (coverage, precision, size)": [
+      0.6694,
+      0.6404,
+      1.0453
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.686,
+       "precision": 0.6715,
+       "size": 1.0216
+      },
+      "map": {
+       "level": 0.9,
+       "reached": true,
+       "coverage": 0.776,
+       "precision": 0.5873,
+       "size": 1.3213
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.776,
+       "precision": 0.5873,
+       "size": 1.3213
+      },
+      "map": {
+       "level": 0.98,
+       "reached": true,
+       "coverage": 0.8767,
+       "precision": 0.457,
+       "size": 1.9186
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.8285,
+       "precision": 0.5296,
+       "size": 1.5644
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.8988,
+       "precision": 0.4327,
+       "size": 2.0775
+      }
+     }
+    },
+    "cIIs03": {
+     "rescans": [
+      "session2reg2"
+     ],
+     "statements": "statements_R17_reg2.npz",
+     "A alone (coverage, precision, size)": [
+      0.6903,
+      0.7094,
+      0.973
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.7152,
+       "precision": 0.7337,
+       "size": 0.9748
+      },
+      "map": {
+       "level": 0.91,
+       "reached": true,
+       "coverage": 0.8162,
+       "precision": 0.6322,
+       "size": 1.2911
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.8056,
+       "precision": 0.6462,
+       "size": 1.2467
+      },
+      "map": {
+       "level": 0.985,
+       "reached": true,
+       "coverage": 0.917,
+       "precision": 0.4839,
+       "size": 1.8949
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.8636,
+       "precision": 0.5732,
+       "size": 1.5066
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.9258,
+       "precision": 0.4703,
+       "size": 1.9683
+      }
+     }
+    },
+    "cIIs04": {
+     "rescans": [
+      "session2reg2"
+     ],
+     "statements": "statements_R17_reg2.npz",
+     "A alone (coverage, precision, size)": [
+      0.7275,
+      0.7087,
+      1.0264
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.7364,
+       "precision": 0.7528,
+       "size": 0.9782
+      },
+      "map": {
+       "level": 0.92,
+       "reached": true,
+       "coverage": 0.8475,
+       "precision": 0.6328,
+       "size": 1.3392
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.8269,
+       "precision": 0.6614,
+       "size": 1.2503
+      },
+      "map": {
+       "level": 0.985,
+       "reached": true,
+       "coverage": 0.9369,
+       "precision": 0.48,
+       "size": 1.9519
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.8862,
+       "precision": 0.5819,
+       "size": 1.5229
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.9417,
+       "precision": 0.4716,
+       "size": 1.9967
+      }
+     }
+    }
+   },
+   "summary": {
+    "0.8": {
+     "as stated (coverage, precision, size)": [
+      0.7043,
+      0.7144,
+      0.9866
+     ],
+     "map (coverage, precision, size)": [
+      0.8029,
+      0.617,
+      1.3011
+     ],
+     "map reached the target (subjects)": 4,
+     "size change % (of the means)": 31.9,
+     "size change % (mean of the subjects' ratios)": 31.9,
+     "precision change (map - as stated)": -0.0973
+    },
+    "0.9": {
+     "as stated (coverage, precision, size)": [
+      0.7951,
+      0.6277,
+      1.2678
+     ],
+     "map (coverage, precision, size)": [
+      0.9039,
+      0.4726,
+      1.9126
+     ],
+     "map reached the target (subjects)": 4,
+     "size change % (of the means)": 50.9,
+     "size change % (mean of the subjects' ratios)": 50.9,
+     "precision change (map - as stated)": -0.1551
+    },
+    "0.95": {
+     "as stated (coverage, precision, size)": [
+      0.8527,
+      0.5582,
+      1.5281
+     ],
+     "map (coverage, precision, size)": [
+      0.9165,
+      0.4555,
+      2.0133
+     ],
+     "map reached the target (subjects)": 0,
+     "size change % (of the means)": 31.8,
+     "size change % (mean of the subjects' ratios)": 31.7,
+     "precision change (map - as stated)": -0.1027
+    },
+    "A alone (coverage, precision, size)": [
+     0.6863,
+     0.679,
+     1.0113
+    ]
+   }
+  },
+  "cohort II same scanner A32": {
+   "term": "other session",
+   "subjects": [
+    "cIIs01",
+    "cIIs02",
+    "cIIs03",
+    "cIIs04"
+   ],
+   "per subject": {
+    "cIIs01": {
+     "rescans": [
+      "session2reg2"
+     ],
+     "statements": "statements_R17_reg2.npz",
+     "A alone (coverage, precision, size)": [
+      0.666,
+      0.6608,
+      1.0079
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.6937,
+       "precision": 0.6915,
+       "size": 1.0032
+      },
+      "map": {
+       "level": 0.895,
+       "reached": true,
+       "coverage": 0.7772,
+       "precision": 0.613,
+       "size": 1.2679
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.7868,
+       "precision": 0.6019,
+       "size": 1.3071
+      },
+      "map": {
+       "level": 0.975,
+       "reached": true,
+       "coverage": 0.8829,
+       "precision": 0.4653,
+       "size": 1.8976
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.844,
+       "precision": 0.5309,
+       "size": 1.5896
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.908,
+       "precision": 0.4328,
+       "size": 2.0982
+      }
+     }
+    },
+    "cIIs02": {
+     "rescans": [
+      "session2reg2"
+     ],
+     "statements": "statements_R17_reg2.npz",
+     "A alone (coverage, precision, size)": [
+      0.6968,
+      0.6999,
+      0.9956
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.7092,
+       "precision": 0.7297,
+       "size": 0.9719
+      },
+      "map": {
+       "level": 0.9,
+       "reached": true,
+       "coverage": 0.8028,
+       "precision": 0.6398,
+       "size": 1.2548
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.8028,
+       "precision": 0.6398,
+       "size": 1.2548
+      },
+      "map": {
+       "level": 0.98,
+       "reached": true,
+       "coverage": 0.9044,
+       "precision": 0.4903,
+       "size": 1.8444
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.8621,
+       "precision": 0.5625,
+       "size": 1.5326
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.9251,
+       "precision": 0.4618,
+       "size": 2.0033
+      }
+     }
+    },
+    "cIIs03": {
+     "rescans": [
+      "session2reg2"
+     ],
+     "statements": "statements_R17_reg2.npz",
+     "A alone (coverage, precision, size)": [
+      0.6947,
+      0.6809,
+      1.0202
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.718,
+       "precision": 0.7175,
+       "size": 1.0008
+      },
+      "map": {
+       "level": 0.9,
+       "reached": true,
+       "coverage": 0.809,
+       "precision": 0.6303,
+       "size": 1.2833
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.809,
+       "precision": 0.6303,
+       "size": 1.2833
+      },
+      "map": {
+       "level": 0.98,
+       "reached": true,
+       "coverage": 0.9122,
+       "precision": 0.4827,
+       "size": 1.89
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.8653,
+       "precision": 0.5585,
+       "size": 1.5494
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.9267,
+       "precision": 0.4561,
+       "size": 2.0317
+      }
+     }
+    },
+    "cIIs04": {
+     "rescans": [
+      "session2reg2"
+     ],
+     "statements": "statements_R17_reg2.npz",
+     "A alone (coverage, precision, size)": [
+      0.7229,
+      0.7162,
+      1.0094
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.7289,
+       "precision": 0.7574,
+       "size": 0.9624
+      },
+      "map": {
+       "level": 0.905,
+       "reached": true,
+       "coverage": 0.823,
+       "precision": 0.6652,
+       "size": 1.2372
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.8199,
+       "precision": 0.6697,
+       "size": 1.2242
+      },
+      "map": {
+       "level": 0.98,
+       "reached": true,
+       "coverage": 0.9187,
+       "precision": 0.5123,
+       "size": 1.7934
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.8712,
+       "precision": 0.5902,
+       "size": 1.4763
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.9346,
+       "precision": 0.4826,
+       "size": 1.9368
+      }
+     }
+    }
+   },
+   "summary": {
+    "0.8": {
+     "as stated (coverage, precision, size)": [
+      0.7124,
+      0.724,
+      0.9846
+     ],
+     "map (coverage, precision, size)": [
+      0.803,
+      0.6371,
+      1.2608
+     ],
+     "map reached the target (subjects)": 4,
+     "size change % (of the means)": 28.1,
+     "size change % (mean of the subjects' ratios)": 28.1,
+     "precision change (map - as stated)": -0.0869
+    },
+    "0.9": {
+     "as stated (coverage, precision, size)": [
+      0.8046,
+      0.6354,
+      1.2673
+     ],
+     "map (coverage, precision, size)": [
+      0.9045,
+      0.4876,
+      1.8563
+     ],
+     "map reached the target (subjects)": 4,
+     "size change % (of the means)": 46.5,
+     "size change % (mean of the subjects' ratios)": 46.5,
+     "precision change (map - as stated)": -0.1478
+    },
+    "0.95": {
+     "as stated (coverage, precision, size)": [
+      0.8606,
+      0.5605,
+      1.537
+     ],
+     "map (coverage, precision, size)": [
+      0.9236,
+      0.4583,
+      2.0175
+     ],
+     "map reached the target (subjects)": 0,
+     "size change % (of the means)": 31.3,
+     "size change % (mean of the subjects' ratios)": 31.3,
+     "precision change (map - as stated)": -0.1022
+    },
+    "A alone (coverage, precision, size)": [
+     0.6951,
+     0.6894,
+     1.0083
+    ]
+   }
+  },
+  "ON-Harmony same scanner": {
+   "term": "same scanner (other session)",
+   "subjects": [
+    "13192",
+    "16974",
+    "14229",
+    "16766"
+   ],
+   "per subject": {
+    "13192": {
+     "rescans": [
+      "OXF1PRI002reg3",
+      "OXF1PRI003reg3",
+      "OXF1PRI004reg3",
+      "OXF1PRI005reg3",
+      "OXF1PRI006reg3"
+     ],
+     "statements": "statements_R17_reg3.npz",
+     "A alone (coverage, precision, size)": [
+      0.7792,
+      0.7816,
+      0.997
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.7723,
+       "precision": 0.8408,
+       "size": 0.9185
+      },
+      "map": {
+       "level": 0.825,
+       "reached": true,
+       "coverage": 0.7951,
+       "precision": 0.8219,
+       "size": 0.9674
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.8642,
+       "precision": 0.7415,
+       "size": 1.1655
+      },
+      "map": {
+       "level": 0.935,
+       "reached": true,
+       "coverage": 0.8981,
+       "precision": 0.6895,
+       "size": 1.3027
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.9169,
+       "precision": 0.6489,
+       "size": 1.413
+      },
+      "map": {
+       "level": 0.98,
+       "reached": true,
+       "coverage": 0.9542,
+       "precision": 0.5439,
+       "size": 1.7543
+      }
+     }
+    },
+    "16974": {
+     "rescans": [
+      "OXF1PRI002reg3",
+      "OXF1PRI003reg3",
+      "OXF1PRI004reg3",
+      "OXF1PRI005reg3",
+      "OXF1PRI006reg3"
+     ],
+     "statements": "statements_R17_reg3.npz",
+     "A alone (coverage, precision, size)": [
+      0.7924,
+      0.7892,
+      1.004
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.7762,
+       "precision": 0.861,
+       "size": 0.9015
+      },
+      "map": {
+       "level": 0.825,
+       "reached": true,
+       "coverage": 0.7993,
+       "precision": 0.8411,
+       "size": 0.9502
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.8695,
+       "precision": 0.7628,
+       "size": 1.1399
+      },
+      "map": {
+       "level": 0.935,
+       "reached": true,
+       "coverage": 0.9037,
+       "precision": 0.7075,
+       "size": 1.2774
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.9202,
+       "precision": 0.6717,
+       "size": 1.3698
+      },
+      "map": {
+       "level": 0.98,
+       "reached": true,
+       "coverage": 0.9547,
+       "precision": 0.5726,
+       "size": 1.6674
+      }
+     }
+    },
+    "14229": {
+     "rescans": [
+      "OXF2PRI002reg3",
+      "OXF2PRI003reg3",
+      "OXF2PRI004reg3",
+      "OXF2PRI005reg3",
+      "OXF2PRI006reg3"
+     ],
+     "statements": "statements_R17_reg3.npz",
+     "A alone (coverage, precision, size)": [
+      0.7934,
+      0.7748,
+      1.024
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.7774,
+       "precision": 0.8418,
+       "size": 0.9235
+      },
+      "map": {
+       "level": 0.825,
+       "reached": true,
+       "coverage": 0.7968,
+       "precision": 0.8245,
+       "size": 0.9665
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.8621,
+       "precision": 0.7496,
+       "size": 1.15
+      },
+      "map": {
+       "level": 0.93,
+       "reached": true,
+       "coverage": 0.892,
+       "precision": 0.7027,
+       "size": 1.2695
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.9128,
+       "precision": 0.6645,
+       "size": 1.3737
+      },
+      "map": {
+       "level": 0.98,
+       "reached": true,
+       "coverage": 0.9465,
+       "precision": 0.5682,
+       "size": 1.6658
+      }
+     }
+    },
+    "16766": {
+     "rescans": [
+      "OXF2PRI002reg3",
+      "OXF2PRI003reg3",
+      "OXF2PRI004reg3",
+      "OXF2PRI005reg3",
+      "OXF2PRI006reg3"
+     ],
+     "statements": "statements_R17_reg3.npz",
+     "A alone (coverage, precision, size)": [
+      0.8004,
+      0.7937,
+      1.0084
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.7874,
+       "precision": 0.8617,
+       "size": 0.9138
+      },
+      "map": {
+       "level": 0.83,
+       "reached": true,
+       "coverage": 0.8125,
+       "precision": 0.8403,
+       "size": 0.9669
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.8776,
+       "precision": 0.7655,
+       "size": 1.1465
+      },
+      "map": {
+       "level": 0.94,
+       "reached": true,
+       "coverage": 0.9169,
+       "precision": 0.6969,
+       "size": 1.3158
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.9248,
+       "precision": 0.6811,
+       "size": 1.3578
+      },
+      "map": {
+       "level": 0.98,
+       "reached": true,
+       "coverage": 0.9613,
+       "precision": 0.5656,
+       "size": 1.6998
+      }
+     }
+    }
+   },
+   "summary": {
+    "0.8": {
+     "as stated (coverage, precision, size)": [
+      0.7783,
+      0.8513,
+      0.9143
+     ],
+     "map (coverage, precision, size)": [
+      0.8009,
+      0.8319,
+      0.9627
+     ],
+     "map reached the target (subjects)": 4,
+     "size change % (of the means)": 5.3,
+     "size change % (mean of the subjects' ratios)": 5.3,
+     "precision change (map - as stated)": -0.0194
+    },
+    "0.9": {
+     "as stated (coverage, precision, size)": [
+      0.8684,
+      0.7549,
+      1.1505
+     ],
+     "map (coverage, precision, size)": [
+      0.9027,
+      0.6991,
+      1.2913
+     ],
+     "map reached the target (subjects)": 4,
+     "size change % (of the means)": 12.2,
+     "size change % (mean of the subjects' ratios)": 12.2,
+     "precision change (map - as stated)": -0.0557
+    },
+    "0.95": {
+     "as stated (coverage, precision, size)": [
+      0.9187,
+      0.6665,
+      1.3786
+     ],
+     "map (coverage, precision, size)": [
+      0.9542,
+      0.5626,
+      1.6968
+     ],
+     "map reached the target (subjects)": 4,
+     "size change % (of the means)": 23.1,
+     "size change % (mean of the subjects' ratios)": 23.1,
+     "precision change (map - as stated)": -0.104
+    },
+    "A alone (coverage, precision, size)": [
+     0.7913,
+     0.7848,
+     1.0084
+    ]
+   }
+  },
+  "ON-Harmony cross site (OXF1 -> OXF2)": {
+   "term": "cross site (the other Prisma)",
+   "subjects": [
+    "03286",
+    "03997",
+    "10975",
+    "12813",
+    "13192",
+    "13305",
+    "14221",
+    "14229",
+    "14230",
+    "14482",
+    "15320",
+    "16745",
+    "16766",
+    "16793",
+    "16794",
+    "16841",
+    "16842",
+    "16974",
+    "16975",
+    "16981"
+   ],
+   "per subject": {
+    "03286": {
+     "rescans": [
+      "OXF2PRI001reg3"
+     ],
+     "statements": "statements_R17_reg3.npz",
+     "A alone (coverage, precision, size)": [
+      0.7689,
+      0.7888,
+      0.9748
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.7373,
+       "precision": 0.8582,
+       "size": 0.8591
+      },
+      "map": {
+       "level": 0.86,
+       "reached": true,
+       "coverage": 0.7868,
+       "precision": 0.8165,
+       "size": 0.9636
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.8245,
+       "precision": 0.7768,
+       "size": 1.0614
+      },
+      "map": {
+       "level": 0.96,
+       "reached": true,
+       "coverage": 0.8868,
+       "precision": 0.6771,
+       "size": 1.3098
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.8733,
+       "precision": 0.7032,
+       "size": 1.2418
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.9327,
+       "precision": 0.555,
+       "size": 1.6807
+      }
+     }
+    },
+    "03997": {
+     "rescans": [
+      "OXF2PRI001reg3"
+     ],
+     "statements": "statements_R17_reg3.npz",
+     "A alone (coverage, precision, size)": [
+      0.777,
+      0.7762,
+      1.001
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.7645,
+       "precision": 0.8378,
+       "size": 0.9125
+      },
+      "map": {
+       "level": 0.865,
+       "reached": true,
+       "coverage": 0.8211,
+       "precision": 0.7826,
+       "size": 1.0491
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.8524,
+       "precision": 0.7451,
+       "size": 1.144
+      },
+      "map": {
+       "level": 0.96,
+       "reached": true,
+       "coverage": 0.9179,
+       "precision": 0.6329,
+       "size": 1.4504
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.9039,
+       "precision": 0.661,
+       "size": 1.3675
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.9587,
+       "precision": 0.5229,
+       "size": 1.8334
+      }
+     }
+    },
+    "10975": {
+     "rescans": [
+      "OXF2PRI001reg3"
+     ],
+     "statements": "statements_R17_reg3.npz",
+     "A alone (coverage, precision, size)": [
+      0.7698,
+      0.7335,
+      1.0495
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.7429,
+       "precision": 0.7936,
+       "size": 0.9361
+      },
+      "map": {
+       "level": 0.86,
+       "reached": true,
+       "coverage": 0.7923,
+       "precision": 0.7442,
+       "size": 1.0647
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.8295,
+       "precision": 0.7059,
+       "size": 1.1751
+      },
+      "map": {
+       "level": 0.96,
+       "reached": true,
+       "coverage": 0.8937,
+       "precision": 0.6122,
+       "size": 1.4598
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.8821,
+       "precision": 0.6309,
+       "size": 1.3982
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.9418,
+       "precision": 0.5081,
+       "size": 1.8536
+      }
+     }
+    },
+    "12813": {
+     "rescans": [
+      "OXF2PRI001reg3"
+     ],
+     "statements": "statements_R17_reg3.npz",
+     "A alone (coverage, precision, size)": [
+      0.7407,
+      0.7618,
+      0.9723
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.7203,
+       "precision": 0.8296,
+       "size": 0.8683
+      },
+      "map": {
+       "level": 0.86,
+       "reached": true,
+       "coverage": 0.765,
+       "precision": 0.7859,
+       "size": 0.9734
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.7988,
+       "precision": 0.747,
+       "size": 1.0694
+      },
+      "map": {
+       "level": 0.96,
+       "reached": true,
+       "coverage": 0.8636,
+       "precision": 0.6417,
+       "size": 1.3458
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.8511,
+       "precision": 0.6664,
+       "size": 1.2772
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.9042,
+       "precision": 0.5264,
+       "size": 1.7178
+      }
+     }
+    },
+    "13192": {
+     "rescans": [
+      "OXF2PRI001reg3"
+     ],
+     "statements": "statements_R17_reg3.npz",
+     "A alone (coverage, precision, size)": [
+      0.7611,
+      0.7727,
+      0.9849
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.7533,
+       "precision": 0.8302,
+       "size": 0.9074
+      },
+      "map": {
+       "level": 0.86,
+       "reached": true,
+       "coverage": 0.8067,
+       "precision": 0.7813,
+       "size": 1.0325
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.8454,
+       "precision": 0.7343,
+       "size": 1.1513
+      },
+      "map": {
+       "level": 0.96,
+       "reached": true,
+       "coverage": 0.9131,
+       "precision": 0.6226,
+       "size": 1.4665
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.9003,
+       "precision": 0.645,
+       "size": 1.3958
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.9543,
+       "precision": 0.5112,
+       "size": 1.8668
+      }
+     }
+    },
+    "13305": {
+     "rescans": [
+      "OXF2PRI001reg3"
+     ],
+     "statements": "statements_R17_reg3.npz",
+     "A alone (coverage, precision, size)": [
+      0.7738,
+      0.7793,
+      0.993
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.7529,
+       "precision": 0.8436,
+       "size": 0.8924
+      },
+      "map": {
+       "level": 0.86,
+       "reached": true,
+       "coverage": 0.8047,
+       "precision": 0.7968,
+       "size": 1.0099
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.8405,
+       "precision": 0.7575,
+       "size": 1.1096
+      },
+      "map": {
+       "level": 0.96,
+       "reached": true,
+       "coverage": 0.9061,
+       "precision": 0.6543,
+       "size": 1.3849
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.8928,
+       "precision": 0.6816,
+       "size": 1.3098
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.9528,
+       "precision": 0.5388,
+       "size": 1.7685
+      }
+     }
+    },
+    "14221": {
+     "rescans": [
+      "OXF2PRI001reg3"
+     ],
+     "statements": "statements_R17_reg3.npz",
+     "A alone (coverage, precision, size)": [
+      0.773,
+      0.7757,
+      0.9965
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.752,
+       "precision": 0.8385,
+       "size": 0.8969
+      },
+      "map": {
+       "level": 0.86,
+       "reached": true,
+       "coverage": 0.804,
+       "precision": 0.7903,
+       "size": 1.0173
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.8425,
+       "precision": 0.7488,
+       "size": 1.1252
+      },
+      "map": {
+       "level": 0.96,
+       "reached": true,
+       "coverage": 0.9058,
+       "precision": 0.6465,
+       "size": 1.401
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.8927,
+       "precision": 0.6721,
+       "size": 1.3282
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.9519,
+       "precision": 0.532,
+       "size": 1.7894
+      }
+     }
+    },
+    "14229": {
+     "rescans": [
+      "OXF2PRI001reg3"
+     ],
+     "statements": "statements_R17_reg3.npz",
+     "A alone (coverage, precision, size)": [
+      0.7893,
+      0.788,
+      1.0017
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.7675,
+       "precision": 0.86,
+       "size": 0.8924
+      },
+      "map": {
+       "level": 0.865,
+       "reached": true,
+       "coverage": 0.8258,
+       "precision": 0.8077,
+       "size": 1.0224
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.8572,
+       "precision": 0.7689,
+       "size": 1.1149
+      },
+      "map": {
+       "level": 0.96,
+       "reached": true,
+       "coverage": 0.9171,
+       "precision": 0.6656,
+       "size": 1.3777
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.9077,
+       "precision": 0.6853,
+       "size": 1.3245
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.9586,
+       "precision": 0.5357,
+       "size": 1.7893
+      }
+     }
+    },
+    "14230": {
+     "rescans": [
+      "OXF2PRI001reg3"
+     ],
+     "statements": "statements_R17_reg3.npz",
+     "A alone (coverage, precision, size)": [
+      0.7831,
+      0.7669,
+      1.0211
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.7599,
+       "precision": 0.8329,
+       "size": 0.9123
+      },
+      "map": {
+       "level": 0.865,
+       "reached": true,
+       "coverage": 0.8164,
+       "precision": 0.7804,
+       "size": 1.0462
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.8478,
+       "precision": 0.74,
+       "size": 1.1456
+      },
+      "map": {
+       "level": 0.96,
+       "reached": true,
+       "coverage": 0.9127,
+       "precision": 0.632,
+       "size": 1.4443
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.8977,
+       "precision": 0.6606,
+       "size": 1.359
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.9544,
+       "precision": 0.5226,
+       "size": 1.8262
+      }
+     }
+    },
+    "14482": {
+     "rescans": [
+      "OXF2PRI001reg3"
+     ],
+     "statements": "statements_R17_reg3.npz",
+     "A alone (coverage, precision, size)": [
+      0.7696,
+      0.7769,
+      0.9906
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.7637,
+       "precision": 0.8424,
+       "size": 0.9066
+      },
+      "map": {
+       "level": 0.865,
+       "reached": true,
+       "coverage": 0.8204,
+       "precision": 0.7868,
+       "size": 1.0427
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.8549,
+       "precision": 0.7449,
+       "size": 1.1477
+      },
+      "map": {
+       "level": 0.96,
+       "reached": true,
+       "coverage": 0.9152,
+       "precision": 0.6368,
+       "size": 1.4373
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.9051,
+       "precision": 0.658,
+       "size": 1.3756
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.9541,
+       "precision": 0.5197,
+       "size": 1.8358
+      }
+     }
+    },
+    "15320": {
+     "rescans": [
+      "OXF2PRI001reg3"
+     ],
+     "statements": "statements_R17_reg3.npz",
+     "A alone (coverage, precision, size)": [
+      0.7369,
+      0.7562,
+      0.9745
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.7325,
+       "precision": 0.8117,
+       "size": 0.9024
+      },
+      "map": {
+       "level": 0.86,
+       "reached": true,
+       "coverage": 0.7855,
+       "precision": 0.7625,
+       "size": 1.0302
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.8229,
+       "precision": 0.7185,
+       "size": 1.1452
+      },
+      "map": {
+       "level": 0.96,
+       "reached": true,
+       "coverage": 0.8922,
+       "precision": 0.6083,
+       "size": 1.4666
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.8798,
+       "precision": 0.6347,
+       "size": 1.3861
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.9364,
+       "precision": 0.5083,
+       "size": 1.8422
+      }
+     }
+    },
+    "16745": {
+     "rescans": [
+      "OXF2PRI001reg3"
+     ],
+     "statements": "statements_R17_reg3.npz",
+     "A alone (coverage, precision, size)": [
+      0.7687,
+      0.7534,
+      1.0204
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.7495,
+       "precision": 0.8124,
+       "size": 0.9226
+      },
+      "map": {
+       "level": 0.86,
+       "reached": true,
+       "coverage": 0.8003,
+       "precision": 0.7655,
+       "size": 1.0454
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.8375,
+       "precision": 0.7211,
+       "size": 1.1615
+      },
+      "map": {
+       "level": 0.96,
+       "reached": true,
+       "coverage": 0.9012,
+       "precision": 0.6195,
+       "size": 1.4549
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.888,
+       "precision": 0.6443,
+       "size": 1.3783
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.9486,
+       "precision": 0.5138,
+       "size": 1.8464
+      }
+     }
+    },
+    "16766": {
+     "rescans": [
+      "OXF2PRI001reg3"
+     ],
+     "statements": "statements_R17_reg3.npz",
+     "A alone (coverage, precision, size)": [
+      0.7446,
+      0.7673,
+      0.9704
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.7317,
+       "precision": 0.8272,
+       "size": 0.8846
+      },
+      "map": {
+       "level": 0.86,
+       "reached": true,
+       "coverage": 0.7856,
+       "precision": 0.78,
+       "size": 1.0071
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.8234,
+       "precision": 0.7382,
+       "size": 1.1155
+      },
+      "map": {
+       "level": 0.96,
+       "reached": true,
+       "coverage": 0.8946,
+       "precision": 0.6256,
+       "size": 1.43
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.8802,
+       "precision": 0.66,
+       "size": 1.3336
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.9409,
+       "precision": 0.5233,
+       "size": 1.798
+      }
+     }
+    },
+    "16793": {
+     "rescans": [
+      "OXF2PRI001reg3"
+     ],
+     "statements": "statements_R17_reg3.npz",
+     "A alone (coverage, precision, size)": [
+      0.7623,
+      0.7251,
+      1.0513
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.7454,
+       "precision": 0.7902,
+       "size": 0.9433
+      },
+      "map": {
+       "level": 0.86,
+       "reached": true,
+       "coverage": 0.7976,
+       "precision": 0.7373,
+       "size": 1.0819
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.8313,
+       "precision": 0.6939,
+       "size": 1.1981
+      },
+      "map": {
+       "level": 0.96,
+       "reached": true,
+       "coverage": 0.8954,
+       "precision": 0.586,
+       "size": 1.5279
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.8841,
+       "precision": 0.6079,
+       "size": 1.4543
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.938,
+       "precision": 0.4832,
+       "size": 1.9413
+      }
+     }
+    },
+    "16794": {
+     "rescans": [
+      "OXF2PRI001reg3"
+     ],
+     "statements": "statements_R17_reg3.npz",
+     "A alone (coverage, precision, size)": [
+      0.7715,
+      0.7486,
+      1.0307
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.7582,
+       "precision": 0.8121,
+       "size": 0.9336
+      },
+      "map": {
+       "level": 0.865,
+       "reached": true,
+       "coverage": 0.812,
+       "precision": 0.7609,
+       "size": 1.0672
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.8431,
+       "precision": 0.7213,
+       "size": 1.1688
+      },
+      "map": {
+       "level": 0.96,
+       "reached": true,
+       "coverage": 0.9069,
+       "precision": 0.6159,
+       "size": 1.4724
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.8947,
+       "precision": 0.6387,
+       "size": 1.4008
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.9504,
+       "precision": 0.5061,
+       "size": 1.8779
+      }
+     }
+    },
+    "16841": {
+     "rescans": [
+      "OXF2PRI001reg3"
+     ],
+     "statements": "statements_R17_reg3.npz",
+     "A alone (coverage, precision, size)": [
+      0.7735,
+      0.7723,
+      1.0016
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.7532,
+       "precision": 0.8393,
+       "size": 0.8975
+      },
+      "map": {
+       "level": 0.86,
+       "reached": true,
+       "coverage": 0.8049,
+       "precision": 0.7922,
+       "size": 1.0159
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.8411,
+       "precision": 0.7508,
+       "size": 1.1203
+      },
+      "map": {
+       "level": 0.96,
+       "reached": true,
+       "coverage": 0.905,
+       "precision": 0.6462,
+       "size": 1.4005
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.8926,
+       "precision": 0.6717,
+       "size": 1.3289
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.9516,
+       "precision": 0.5303,
+       "size": 1.7946
+      }
+     }
+    },
+    "16842": {
+     "rescans": [
+      "OXF2PRI001reg3"
+     ],
+     "statements": "statements_R17_reg3.npz",
+     "A alone (coverage, precision, size)": [
+      0.7626,
+      0.7584,
+      1.0055
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.7472,
+       "precision": 0.8169,
+       "size": 0.9148
+      },
+      "map": {
+       "level": 0.86,
+       "reached": true,
+       "coverage": 0.7955,
+       "precision": 0.7678,
+       "size": 1.036
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.833,
+       "precision": 0.7263,
+       "size": 1.1469
+      },
+      "map": {
+       "level": 0.96,
+       "reached": true,
+       "coverage": 0.9004,
+       "precision": 0.616,
+       "size": 1.4618
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.8877,
+       "precision": 0.644,
+       "size": 1.3784
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.9466,
+       "precision": 0.5128,
+       "size": 1.846
+      }
+     }
+    },
+    "16974": {
+     "rescans": [
+      "OXF2PRI001reg3"
+     ],
+     "statements": "statements_R17_reg3.npz",
+     "A alone (coverage, precision, size)": [
+      0.7377,
+      0.731,
+      1.0092
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.7218,
+       "precision": 0.7966,
+       "size": 0.9061
+      },
+      "map": {
+       "level": 0.86,
+       "reached": true,
+       "coverage": 0.7749,
+       "precision": 0.7484,
+       "size": 1.0354
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.8105,
+       "precision": 0.7074,
+       "size": 1.1458
+      },
+      "map": {
+       "level": 0.96,
+       "reached": true,
+       "coverage": 0.8776,
+       "precision": 0.6104,
+       "size": 1.4379
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.8655,
+       "precision": 0.6286,
+       "size": 1.3768
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.9271,
+       "precision": 0.5036,
+       "size": 1.8408
+      }
+     }
+    },
+    "16975": {
+     "rescans": [
+      "OXF2PRI001reg3"
+     ],
+     "statements": "statements_R17_reg3.npz",
+     "A alone (coverage, precision, size)": [
+      0.79,
+      0.7654,
+      1.0322
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.7701,
+       "precision": 0.8348,
+       "size": 0.9224
+      },
+      "map": {
+       "level": 0.865,
+       "reached": true,
+       "coverage": 0.8279,
+       "precision": 0.7774,
+       "size": 1.0649
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.8564,
+       "precision": 0.742,
+       "size": 1.1541
+      },
+      "map": {
+       "level": 0.96,
+       "reached": true,
+       "coverage": 0.9198,
+       "precision": 0.6328,
+       "size": 1.4536
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.9092,
+       "precision": 0.6544,
+       "size": 1.3893
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.9616,
+       "precision": 0.5167,
+       "size": 1.8611
+      }
+     }
+    },
+    "16981": {
+     "rescans": [
+      "OXF2PRI001reg3"
+     ],
+     "statements": "statements_R17_reg3.npz",
+     "A alone (coverage, precision, size)": [
+      0.7716,
+      0.7569,
+      1.0194
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.7556,
+       "precision": 0.8165,
+       "size": 0.9255
+      },
+      "map": {
+       "level": 0.86,
+       "reached": true,
+       "coverage": 0.8068,
+       "precision": 0.7688,
+       "size": 1.0494
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.8415,
+       "precision": 0.7267,
+       "size": 1.1579
+      },
+      "map": {
+       "level": 0.96,
+       "reached": true,
+       "coverage": 0.9039,
+       "precision": 0.6196,
+       "size": 1.4589
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.8905,
+       "precision": 0.6488,
+       "size": 1.3726
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.9463,
+       "precision": 0.5082,
+       "size": 1.8618
+      }
+     }
+    }
+   },
+   "summary": {
+    "0.8": {
+     "as stated (coverage, precision, size)": [
+      0.749,
+      0.8262,
+      0.9068
+     ],
+     "map (coverage, precision, size)": [
+      0.8017,
+      0.7767,
+      1.0328
+     ],
+     "map reached the target (subjects)": 20,
+     "size change % (of the means)": 13.9,
+     "size change % (mean of the subjects' ratios)": 13.9,
+     "precision change (map - as stated)": -0.0496
+    },
+    "0.9": {
+     "as stated (coverage, precision, size)": [
+      0.8367,
+      0.7358,
+      1.1379
+     ],
+     "map (coverage, precision, size)": [
+      0.9014,
+      0.6301,
+      1.4321
+     ],
+     "map reached the target (subjects)": 20,
+     "size change % (of the means)": 25.9,
+     "size change % (mean of the subjects' ratios)": 25.8,
+     "precision change (map - as stated)": -0.1057
+    },
+    "0.95": {
+     "as stated (coverage, precision, size)": [
+      0.889,
+      0.6549,
+      1.3588
+     ],
+     "map (coverage, precision, size)": [
+      0.9456,
+      0.5189,
+      1.8236
+     ],
+     "map reached the target (subjects)": 0,
+     "size change % (of the means)": 34.2,
+     "size change % (mean of the subjects' ratios)": 34.2,
+     "precision change (map - as stated)": -0.1359
+    },
+    "A alone (coverage, precision, size)": [
+     0.7663,
+     0.7627,
+     1.005
+    ]
+   }
+  },
+  "MASiVar cross scanner B32 -> A32": {
+   "term": "cross scanner (same site)",
+   "subjects": [
+    "cIIs01",
+    "cIIs02",
+    "cIIs03",
+    "cIIs04"
+   ],
+   "per subject": {
+    "cIIs01": {
+     "rescans": [
+      "xA1reg3",
+      "xA2reg3"
+     ],
+     "statements": "statements_R17_reg3.npz",
+     "A alone (coverage, precision, size)": [
+      0.6284,
+      0.6501,
+      0.9667
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.6422,
+       "precision": 0.6841,
+       "size": 0.9388
+      },
+      "map": {
+       "level": 0.93,
+       "reached": true,
+       "coverage": 0.7665,
+       "precision": 0.5675,
+       "size": 1.3507
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.7318,
+       "precision": 0.6045,
+       "size": 1.2106
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.8665,
+       "precision": 0.446,
+       "size": 1.9429
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.7918,
+       "precision": 0.5396,
+       "size": 1.4673
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.8665,
+       "precision": 0.446,
+       "size": 1.9429
+      }
+     }
+    },
+    "cIIs02": {
+     "rescans": [
+      "xA1reg3",
+      "xA2reg3"
+     ],
+     "statements": "statements_R17_reg3.npz",
+     "A alone (coverage, precision, size)": [
+      0.6586,
+      0.6621,
+      0.9946
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.6735,
+       "precision": 0.6929,
+       "size": 0.9721
+      },
+      "map": {
+       "level": 0.94,
+       "reached": true,
+       "coverage": 0.8005,
+       "precision": 0.5612,
+       "size": 1.4263
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.762,
+       "precision": 0.6061,
+       "size": 1.2573
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.8863,
+       "precision": 0.4483,
+       "size": 1.9768
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.8156,
+       "precision": 0.5479,
+       "size": 1.4885
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.8863,
+       "precision": 0.4483,
+       "size": 1.9768
+      }
+     }
+    },
+    "cIIs03": {
+     "rescans": [
+      "xA1reg3",
+      "xA2reg3"
+     ],
+     "statements": "statements_R17_reg3.npz",
+     "A alone (coverage, precision, size)": [
+      0.6561,
+      0.6612,
+      0.9925
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.6791,
+       "precision": 0.6831,
+       "size": 0.9943
+      },
+      "map": {
+       "level": 0.945,
+       "reached": true,
+       "coverage": 0.8192,
+       "precision": 0.5441,
+       "size": 1.5058
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.7656,
+       "precision": 0.6022,
+       "size": 1.2716
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.8921,
+       "precision": 0.4444,
+       "size": 2.0077
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.8249,
+       "precision": 0.5369,
+       "size": 1.5368
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.8921,
+       "precision": 0.4444,
+       "size": 2.0077
+      }
+     }
+    },
+    "cIIs04": {
+     "rescans": [
+      "xA1reg3",
+      "xA2reg3"
+     ],
+     "statements": "statements_R17_reg3.npz",
+     "A alone (coverage, precision, size)": [
+      0.685,
+      0.6696,
+      1.023
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.6898,
+       "precision": 0.7075,
+       "size": 0.975
+      },
+      "map": {
+       "level": 0.945,
+       "reached": true,
+       "coverage": 0.8235,
+       "precision": 0.5662,
+       "size": 1.4544
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.7761,
+       "precision": 0.6228,
+       "size": 1.2462
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.9019,
+       "precision": 0.4532,
+       "size": 1.9902
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.836,
+       "precision": 0.5508,
+       "size": 1.5179
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.9019,
+       "precision": 0.4532,
+       "size": 1.9902
+      }
+     }
+    }
+   },
+   "summary": {
+    "0.8": {
+     "as stated (coverage, precision, size)": [
+      0.6712,
+      0.6919,
+      0.97
+     ],
+     "map (coverage, precision, size)": [
+      0.8024,
+      0.5597,
+      1.4343
+     ],
+     "map reached the target (subjects)": 4,
+     "size change % (of the means)": 47.9,
+     "size change % (mean of the subjects' ratios)": 47.8,
+     "precision change (map - as stated)": -0.1322
+    },
+    "0.9": {
+     "as stated (coverage, precision, size)": [
+      0.7589,
+      0.6089,
+      1.2464
+     ],
+     "map (coverage, precision, size)": [
+      0.8867,
+      0.448,
+      1.9794
+     ],
+     "map reached the target (subjects)": 0,
+     "size change % (of the means)": 58.8,
+     "size change % (mean of the subjects' ratios)": 58.8,
+     "precision change (map - as stated)": -0.1609
+    },
+    "0.95": {
+     "as stated (coverage, precision, size)": [
+      0.8171,
+      0.5438,
+      1.5026
+     ],
+     "map (coverage, precision, size)": [
+      0.8867,
+      0.448,
+      1.9794
+     ],
+     "map reached the target (subjects)": 0,
+     "size change % (of the means)": 31.7,
+     "size change % (mean of the subjects' ratios)": 31.7,
+     "precision change (map - as stated)": -0.0958
+    },
+    "A alone (coverage, precision, size)": [
+     0.657,
+     0.6607,
+     0.9942
+    ]
+   }
+  },
+  "MASiVar cross scanner A32 -> B32": {
+   "term": "cross scanner (same site)",
+   "subjects": [
+    "cIIs01",
+    "cIIs02",
+    "cIIs03",
+    "cIIs04"
+   ],
+   "per subject": {
+    "cIIs01": {
+     "rescans": [
+      "xB1reg3",
+      "xB2reg3"
+     ],
+     "statements": "statements_R17_reg3.npz",
+     "A alone (coverage, precision, size)": [
+      0.6654,
+      0.6315,
+      1.0539
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.6964,
+       "precision": 0.664,
+       "size": 1.049
+      },
+      "map": {
+       "level": 0.93,
+       "reached": true,
+       "coverage": 0.8189,
+       "precision": 0.5405,
+       "size": 1.5155
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.7862,
+       "precision": 0.5753,
+       "size": 1.3668
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.9048,
+       "precision": 0.4125,
+       "size": 2.1941
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.8435,
+       "precision": 0.5076,
+       "size": 1.6622
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.9048,
+       "precision": 0.4125,
+       "size": 2.1941
+      }
+     }
+    },
+    "cIIs02": {
+     "rescans": [
+      "xB1reg3",
+      "xB2reg3"
+     ],
+     "statements": "statements_R17_reg3.npz",
+     "A alone (coverage, precision, size)": [
+      0.6529,
+      0.6377,
+      1.0246
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.6654,
+       "precision": 0.6657,
+       "size": 1.0002
+      },
+      "map": {
+       "level": 0.92,
+       "reached": true,
+       "coverage": 0.7738,
+       "precision": 0.5574,
+       "size": 1.3893
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.7521,
+       "precision": 0.5829,
+       "size": 1.2914
+      },
+      "map": {
+       "level": 0.99,
+       "reached": true,
+       "coverage": 0.8793,
+       "precision": 0.4281,
+       "size": 2.056
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.8119,
+       "precision": 0.5152,
+       "size": 1.5773
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.8805,
+       "precision": 0.4274,
+       "size": 2.0617
+      }
+     }
+    },
+    "cIIs03": {
+     "rescans": [
+      "xB1reg3",
+      "xB2reg3"
+     ],
+     "statements": "statements_R17_reg3.npz",
+     "A alone (coverage, precision, size)": [
+      0.6735,
+      0.6607,
+      1.0196
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.6923,
+       "precision": 0.6923,
+       "size": 1.0002
+      },
+      "map": {
+       "level": 0.93,
+       "reached": true,
+       "coverage": 0.8138,
+       "precision": 0.5716,
+       "size": 1.424
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.7814,
+       "precision": 0.6093,
+       "size": 1.2826
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.9043,
+       "precision": 0.4454,
+       "size": 2.0305
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.8373,
+       "precision": 0.5408,
+       "size": 1.5485
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.9043,
+       "precision": 0.4454,
+       "size": 2.0305
+      }
+     }
+    },
+    "cIIs04": {
+     "rescans": [
+      "xB1reg3",
+      "xB2reg3"
+     ],
+     "statements": "statements_R17_reg3.npz",
+     "A alone (coverage, precision, size)": [
+      0.6789,
+      0.6709,
+      1.012
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.6866,
+       "precision": 0.7116,
+       "size": 0.9649
+      },
+      "map": {
+       "level": 0.925,
+       "reached": true,
+       "coverage": 0.7967,
+       "precision": 0.6015,
+       "size": 1.3246
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.7737,
+       "precision": 0.6304,
+       "size": 1.2273
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.8965,
+       "precision": 0.4617,
+       "size": 1.9418
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.8265,
+       "precision": 0.5584,
+       "size": 1.4801
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.8965,
+       "precision": 0.4617,
+       "size": 1.9418
+      }
+     }
+    }
+   },
+   "summary": {
+    "0.8": {
+     "as stated (coverage, precision, size)": [
+      0.6852,
+      0.6834,
+      1.0036
+     ],
+     "map (coverage, precision, size)": [
+      0.8008,
+      0.5678,
+      1.4133
+     ],
+     "map reached the target (subjects)": 4,
+     "size change % (of the means)": 40.8,
+     "size change % (mean of the subjects' ratios)": 40.8,
+     "precision change (map - as stated)": -0.1156
+    },
+    "0.9": {
+     "as stated (coverage, precision, size)": [
+      0.7733,
+      0.5995,
+      1.292
+     ],
+     "map (coverage, precision, size)": [
+      0.8962,
+      0.4369,
+      2.0556
+     ],
+     "map reached the target (subjects)": 1,
+     "size change % (of the means)": 59.1,
+     "size change % (mean of the subjects' ratios)": 59.1,
+     "precision change (map - as stated)": -0.1625
+    },
+    "0.95": {
+     "as stated (coverage, precision, size)": [
+      0.8298,
+      0.5305,
+      1.567
+     ],
+     "map (coverage, precision, size)": [
+      0.8965,
+      0.4367,
+      2.057
+     ],
+     "map reached the target (subjects)": 0,
+     "size change % (of the means)": 31.3,
+     "size change % (mean of the subjects' ratios)": 31.3,
+     "precision change (map - as stated)": -0.0938
+    },
+    "A alone (coverage, precision, size)": [
+     0.6677,
+     0.6502,
+     1.0275
+    ]
+   }
+  },
+  "Siemens (site 3, B2000 ensemble)": {
+   "term": "cross vendor (site 3)",
+   "subjects": [
+    "cIIs01",
+    "cIIs02",
+    "cIIs03",
+    "cIIs04"
+   ],
+   "per subject": {
+    "cIIs01": {
+     "rescans": [
+      "site3reg2"
+     ],
+     "statements": "statements_R17_reg2.npz",
+     "A alone (coverage, precision, size)": [
+      0.6647,
+      0.6763,
+      0.9829
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.6687,
+       "precision": 0.7072,
+       "size": 0.9456
+      },
+      "map": {
+       "level": 0.935,
+       "reached": true,
+       "coverage": 0.799,
+       "precision": 0.5836,
+       "size": 1.3691
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.7578,
+       "precision": 0.6278,
+       "size": 1.207
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.8887,
+       "precision": 0.4598,
+       "size": 1.9326
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.8204,
+       "precision": 0.5559,
+       "size": 1.4758
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.8887,
+       "precision": 0.4598,
+       "size": 1.9326
+      }
+     }
+    },
+    "cIIs02": {
+     "rescans": [
+      "site3reg3"
+     ],
+     "statements": "statements_R17_reg3.npz",
+     "A alone (coverage, precision, size)": [
+      0.6523,
+      0.686,
+      0.9509
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.6663,
+       "precision": 0.7143,
+       "size": 0.9329
+      },
+      "map": {
+       "level": 0.935,
+       "reached": true,
+       "coverage": 0.7922,
+       "precision": 0.5833,
+       "size": 1.358
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.7568,
+       "precision": 0.6237,
+       "size": 1.2134
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.8838,
+       "precision": 0.4617,
+       "size": 1.9141
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.814,
+       "precision": 0.5574,
+       "size": 1.4603
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.8838,
+       "precision": 0.4617,
+       "size": 1.9141
+      }
+     }
+    },
+    "cIIs03": {
+     "rescans": [
+      "site3reg2"
+     ],
+     "statements": "statements_R17_reg2.npz",
+     "A alone (coverage, precision, size)": [
+      0.6586,
+      0.7056,
+      0.9334
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.6692,
+       "precision": 0.7421,
+       "size": 0.9018
+      },
+      "map": {
+       "level": 0.935,
+       "reached": true,
+       "coverage": 0.8045,
+       "precision": 0.613,
+       "size": 1.3125
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.7639,
+       "precision": 0.6581,
+       "size": 1.1608
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.8934,
+       "precision": 0.4833,
+       "size": 1.8485
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.8203,
+       "precision": 0.5919,
+       "size": 1.3858
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.8934,
+       "precision": 0.4833,
+       "size": 1.8485
+      }
+     }
+    },
+    "cIIs04": {
+     "rescans": [
+      "site3reg2"
+     ],
+     "statements": "statements_R17_reg2.npz",
+     "A alone (coverage, precision, size)": [
+      0.6699,
+      0.7047,
+      0.9506
+     ],
+     "0.8": {
+      "as stated": {
+       "level": 0.8,
+       "coverage": 0.6772,
+       "precision": 0.7392,
+       "size": 0.9161
+      },
+      "map": {
+       "level": 0.94,
+       "reached": true,
+       "coverage": 0.8166,
+       "precision": 0.598,
+       "size": 1.3656
+      }
+     },
+     "0.9": {
+      "as stated": {
+       "level": 0.9,
+       "coverage": 0.769,
+       "precision": 0.6515,
+       "size": 1.1804
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.8998,
+       "precision": 0.4766,
+       "size": 1.8879
+      }
+     },
+     "0.95": {
+      "as stated": {
+       "level": 0.95,
+       "coverage": 0.8281,
+       "precision": 0.5859,
+       "size": 1.4134
+      },
+      "map": {
+       "level": "widest",
+       "reached": false,
+       "coverage": 0.8998,
+       "precision": 0.4766,
+       "size": 1.8879
+      }
+     }
+    }
+   },
+   "summary": {
+    "0.8": {
+     "as stated (coverage, precision, size)": [
+      0.6704,
+      0.7257,
+      0.9241
+     ],
+     "map (coverage, precision, size)": [
+      0.8031,
+      0.5945,
+      1.3513
+     ],
+     "map reached the target (subjects)": 4,
+     "size change % (of the means)": 46.2,
+     "size change % (mean of the subjects' ratios)": 46.2,
+     "precision change (map - as stated)": -0.1312
+    },
+    "0.9": {
+     "as stated (coverage, precision, size)": [
+      0.7619,
+      0.6403,
+      1.1904
+     ],
+     "map (coverage, precision, size)": [
+      0.8914,
+      0.4704,
+      1.8958
+     ],
+     "map reached the target (subjects)": 0,
+     "size change % (of the means)": 59.3,
+     "size change % (mean of the subjects' ratios)": 59.3,
+     "precision change (map - as stated)": -0.1699
+    },
+    "0.95": {
+     "as stated (coverage, precision, size)": [
+      0.8207,
+      0.5728,
+      1.4338
+     ],
+     "map (coverage, precision, size)": [
+      0.8914,
+      0.4704,
+      1.8958
+     ],
+     "map reached the target (subjects)": 0,
+     "size change % (of the means)": 32.2,
+     "size change % (mean of the subjects' ratios)": 32.2,
+     "precision change (map - as stated)": -0.1024
+    },
+    "A alone (coverage, precision, size)": [
+     0.6614,
+     0.6931,
+     0.9545
+    ]
+   }
+  }
+ },
+ "floor: one rescan's presence as the outline for another": {
+  "per subject (coverage, precision, size, ordered pairs)": {
+   "ON-Harmony same scanner": {
+    "13192": {
+     "same scanner, other session": [
+      0.7917,
+      0.7917,
+      1.0,
+      20
+     ]
+    },
+    "16974": {
+     "same scanner, other session": [
+      0.7892,
+      0.7892,
+      1.0,
+      20
+     ]
+    },
+    "14229": {
+     "same scanner, other session": [
+      0.7889,
+      0.7889,
+      1.0001,
+      20
+     ]
+    },
+    "16766": {
+     "same scanner, other session": [
+      0.7949,
+      0.7949,
+      1.0,
+      20
+     ]
+    }
+   },
+   "cohort II A32 sessions 1 and 2 (on B32's A)": {
+    "cIIs01": {
+     "same scanner, other session": [
+      0.6621,
+      0.6621,
+      1.0002,
+      2
+     ]
+    },
+    "cIIs02": {
+     "same scanner, other session": [
+      0.692,
+      0.692,
+      1.0,
+      2
+     ]
+    },
+    "cIIs03": {
+     "same scanner, other session": [
+      0.6858,
+      0.6858,
+      1.0006,
+      2
+     ]
+    },
+    "cIIs04": {
+     "same scanner, other session": [
+      0.7173,
+      0.7173,
+      1.0,
+      2
+     ]
+    }
+   },
+   "cohort II B32 sessions 1 and 2 (on A32's A)": {
+    "cIIs01": {
+     "same scanner, other session": [
+      0.6563,
+      0.6563,
+      1.0003,
+      2
+     ]
+    },
+    "cIIs02": {
+     "same scanner, other session": [
+      0.6541,
+      0.6541,
+      1.0016,
+      2
+     ]
+    },
+    "cIIs03": {
+     "same scanner, other session": [
+      0.6976,
+      0.6976,
+      1.0002,
+      2
+     ]
+    },
+    "cIIs04": {
+     "same scanner, other session": [
+      0.7184,
+      0.7184,
+      1.0,
+      2
+     ]
+    }
+   },
+   "cohort II A2000r19 sessions 1 and 2 (on B2000's A)": {
+    "cIIs01": {
+     "same scanner, other session": [
+      0.6662,
+      0.6662,
+      1.0035,
+      2
+     ]
+    },
+    "cIIs02": {
+     "same scanner, other session": [
+      0.6987,
+      0.6987,
+      1.0005,
+      2
+     ]
+    },
+    "cIIs03": {
+     "same scanner, other session": [
+      0.7076,
+      0.7076,
+      1.0,
+      2
+     ]
+    },
+    "cIIs04": {
+     "same scanner, other session": [
+      0.7352,
+      0.7352,
+      1.0,
+      2
+     ]
+    }
+   },
+   "cohort II B2000 sessions 1 and 2 (on A2000r19's A)": {
+    "cIIs01": {
+     "same scanner, other session": [
+      0.7725,
+      0.7725,
+      1.0,
+      2
+     ]
+    },
+    "cIIs02": {
+     "same scanner, other session": [
+      0.7513,
+      0.7513,
+      1.0,
+      2
+     ]
+    },
+    "cIIs03": {
+     "same scanner, other session": [
+      0.7715,
+      0.7715,
+      1.0,
+      2
+     ]
+    },
+    "cIIs04": {
+     "same scanner, other session": [
+      0.7778,
+      0.7778,
+      1.0,
+      2
+     ]
+    }
+   },
+   "cohort III": {
+    "cIIIs01": {
+     "same-session rescan against an other-session one": [
+      0.7396,
+      0.7396,
+      1.0,
+      2
+     ]
+    },
+    "cIIIs02": {
+     "same-session rescan against an other-session one": [
+      0.7181,
+      0.7181,
+      1.0002,
+      4
+     ],
+     "two other-session rescans": [
+      0.7343,
+      0.7343,
+      1.0001,
+      2
+     ]
+    },
+    "cIIIs04": {
+     "same-session rescan against an other-session one": [
+      0.7603,
+      0.7603,
+      1.0003,
+      8
+     ],
+     "two other-session rescans": [
+      0.7562,
+      0.7562,
+      1.0003,
+      12
+     ]
+    },
+    "cIIIs05": {
+     "same-session rescan against an other-session one": [
+      0.7484,
+      0.7484,
+      1.0,
+      2
+     ]
+    },
+    "cIIIs08": {
+     "same-session rescan against an other-session one": [
+      0.7408,
+      0.7408,
+      1.0003,
+      2
+     ]
+    }
+   }
+  },
+  "summary": {
+   "ON-Harmony same scanner": {
+    "same scanner, other session": {
+     "subjects": [
+      "13192",
+      "16974",
+      "14229",
+      "16766"
+     ],
+     "ordered pairs": 80,
+     "coverage, precision, size (mean over subjects)": [
+      0.7912,
+      0.7912,
+      1.0
+     ]
+    }
+   },
+   "cohort II A32 sessions 1 and 2 (on B32's A)": {
+    "same scanner, other session": {
+     "subjects": [
+      "cIIs01",
+      "cIIs02",
+      "cIIs03",
+      "cIIs04"
+     ],
+     "ordered pairs": 8,
+     "coverage, precision, size (mean over subjects)": [
+      0.6893,
+      0.6893,
+      1.0002
+     ]
+    }
+   },
+   "cohort II B32 sessions 1 and 2 (on A32's A)": {
+    "same scanner, other session": {
+     "subjects": [
+      "cIIs01",
+      "cIIs02",
+      "cIIs03",
+      "cIIs04"
+     ],
+     "ordered pairs": 8,
+     "coverage, precision, size (mean over subjects)": [
+      0.6816,
+      0.6816,
+      1.0005
+     ]
+    }
+   },
+   "cohort II A2000r19 sessions 1 and 2 (on B2000's A)": {
+    "same scanner, other session": {
+     "subjects": [
+      "cIIs01",
+      "cIIs02",
+      "cIIs03",
+      "cIIs04"
+     ],
+     "ordered pairs": 8,
+     "coverage, precision, size (mean over subjects)": [
+      0.7019,
+      0.7019,
+      1.001
+     ]
+    }
+   },
+   "cohort II B2000 sessions 1 and 2 (on A2000r19's A)": {
+    "same scanner, other session": {
+     "subjects": [
+      "cIIs01",
+      "cIIs02",
+      "cIIs03",
+      "cIIs04"
+     ],
+     "ordered pairs": 8,
+     "coverage, precision, size (mean over subjects)": [
+      0.7683,
+      0.7683,
+      1.0
+     ]
+    }
+   },
+   "cohort III": {
+    "same-session rescan against an other-session one": {
+     "subjects": [
+      "cIIIs01",
+      "cIIIs02",
+      "cIIIs04",
+      "cIIIs05",
+      "cIIIs08"
+     ],
+     "ordered pairs": 18,
+     "coverage, precision, size (mean over subjects)": [
+      0.7414,
+      0.7414,
+      1.0002
+     ]
+    },
+    "two other-session rescans": {
+     "subjects": [
+      "cIIIs02",
+      "cIIIs04"
+     ],
+     "ordered pairs": 14,
+     "coverage, precision, size (mean over subjects)": [
+      0.7452,
+      0.7452,
+      1.0002
+     ]
+    }
+   }
+  }
+ },
+ "provenance": {
+  "git": {
+   "commit": "975e6dae3a23d73309751be1e64a726686176a61",
+   "branch": "ismrm2027",
+   "dirty (src/ and the card's bench modules)": []
+  },
+  "git status": [
+   "?? bench/calibration_precision.py"
+  ],
+  "calibration_precision.py sha256": "a3f9f4ad653b2b23efd5d49017b602e2ff50d5bc194bd5c5ba008a54aab72303",
+  "module sha256": {
+   "calibration_cohortII.py": "2cab50b3c1d15e043e7ffadccb894c273039a38eea2bcb72d9a25856b4fc961d",
+   "calibration_card.py": "34bc0f0f133ab32848965931a5c009397d04e0605b272d618055323d8ee41901",
+   "calibration_crosssite.py": "06dcf9e77130d2a1d5c271ede45430514a5cf72afee4c323b6c20cd2a77790fa",
+   "calibration_crossscanner.py": "7c65acca66ee8955d29100f606631dd7c85fa61e546e29f07a1a3e55d311a07e",
+   "calibration_onharmony.py": "2fc89a3896adf98c066271fbb874fee733c20afe1f076ab3d0cd576d48a9b601"
+  },
+  "registration mode": 3,
+  "statements": {
+   "cohort III other session": {
+    "cIIIs01": {
+     "statements": "ensemble/cIIIs01/card/cIIIs01-2.1/statements_R17.npz",
+     "sha256": "9792319d3889190775c2b6c852a23e815af049663ee4c455e2a60f6ced9f4b82"
+    },
+    "cIIIs02": {
+     "statements": "ensemble/cIIIs02/card/cIIIs02-2.1/statements_R17.npz",
+     "sha256": "31eee9b774a44f3a1b0cb66089027285b5818c98e77532e048c397e6d0eda1c2"
+    },
+    "cIIIs04": {
+     "statements": "ensemble/cIIIs04/card/cIIIs04-2.1/statements_R17.npz",
+     "sha256": "5fbf38012d228f4448bf87d5321ec2278a4c4d1ce437f605f561bc9c8e5230d4"
+    },
+    "cIIIs05": {
+     "statements": "ensemble/cIIIs05/card/cIIIs05-2.1/statements_R17.npz",
+     "sha256": "ee397447d35df96c98c60e380a0e74ce3230ca2794b70572cb323ccc2e90b3e7"
+    },
+    "cIIIs08": {
+     "statements": "ensemble/cIIIs08/card/cIIIs08-2.1/statements_R17.npz",
+     "sha256": "2979b52938d50e2ed14b0c21285586f93c081b8c7e23529fd73ac56ca093a071"
+    }
+   },
+   "cohort II same scanner B2000": {
+    "cIIs01": {
+     "statements": "ensemble/cIIs01/card/cIIs01-B2000/statements_R17_reg2.npz",
+     "sha256": "169901079959c77aa348f5dad9f4028d6dc14c123970cec3114a1520f1b8cc75"
+    },
+    "cIIs02": {
+     "statements": "ensemble/cIIs02/card/cIIs02-B2000/statements_R17_reg3.npz",
+     "sha256": "37061ff149a698bd66b4d80b17fd04beacebbb9f53ecd77b5a7643554f3ec447"
+    },
+    "cIIs03": {
+     "statements": "ensemble/cIIs03/card/cIIs03-B2000/statements_R17_reg3.npz",
+     "sha256": "e61aab79a538522a1db5cad7ffce56294ccb5967260d464058dc38f7e7563f0f"
+    },
+    "cIIs04": {
+     "statements": "ensemble/cIIs04/card/cIIs04-B2000/statements_R17_reg2.npz",
+     "sha256": "eeab24845db995761eb2e6484c29c40f302e3b4f63420b5b916c60b7f2f6e8f2"
+    }
+   },
+   "cohort II same scanner A2000r19": {
+    "cIIs01": {
+     "statements": "ensemble/cIIs01/card/cIIs01-A2000r19/statements_R17_reg2.npz",
+     "sha256": "926c636e9f75837ec79642c6b8e675bf411b65790b21be7d69132121acef2b32"
+    },
+    "cIIs02": {
+     "statements": "ensemble/cIIs02/card/cIIs02-A2000r19/statements_R17_reg2.npz",
+     "sha256": "3cd670a822351c67d73477af95fd4e9ce5eb7d13b76d8e88405e8e4d6fe14eda"
+    },
+    "cIIs03": {
+     "statements": "ensemble/cIIs03/card/cIIs03-A2000r19/statements_R17_reg3.npz",
+     "sha256": "cbdc7aaea45ee6130723d13db33b0f4840fa273a2fdce0d0bfc83c0e34b53954"
+    },
+    "cIIs04": {
+     "statements": "ensemble/cIIs04/card/cIIs04-A2000r19/statements_R17_reg2.npz",
+     "sha256": "2d44328be3ed185376541a05c85080d9ba7de10dc9930117787cfe46b6d330a6"
+    }
+   },
+   "cohort II same scanner B32": {
+    "cIIs01": {
+     "statements": "ensemble/cIIs01/card/cIIs01-B32/statements_R17_reg2.npz",
+     "sha256": "1ccf8bc3e3fac021dfa70ab76cf94d88f0c1df90fb685673d545a51b66de3d32"
+    },
+    "cIIs02": {
+     "statements": "ensemble/cIIs02/card/cIIs02-B32/statements_R17_reg2.npz",
+     "sha256": "e70b6ad0a7c88dea47d5a0e9c7379691465a9e42971076953f2fcef93434b398"
+    },
+    "cIIs03": {
+     "statements": "ensemble/cIIs03/card/cIIs03-B32/statements_R17_reg2.npz",
+     "sha256": "6dc2a0ae785eae3e34c1dfc27d2639fa6b24333fc9f7e9c8d8d524151b89c892"
+    },
+    "cIIs04": {
+     "statements": "ensemble/cIIs04/card/cIIs04-B32/statements_R17_reg2.npz",
+     "sha256": "32797dae61be12c9b3227a3a07db8074814bbe37c2576d29a372119499f56131"
+    }
+   },
+   "cohort II same scanner A32": {
+    "cIIs01": {
+     "statements": "ensemble/cIIs01/card/cIIs01-A32/statements_R17_reg2.npz",
+     "sha256": "668e50bb5298c96a1650f93d5e1ded74b487f8024e4bb0c184b81e199b3e9357"
+    },
+    "cIIs02": {
+     "statements": "ensemble/cIIs02/card/cIIs02-A32/statements_R17_reg2.npz",
+     "sha256": "f5ecfd80f8f004e3ba0467ee99c2fc58b3e5008162420123c3ab2dcd0e90fd20"
+    },
+    "cIIs03": {
+     "statements": "ensemble/cIIs03/card/cIIs03-A32/statements_R17_reg2.npz",
+     "sha256": "224bfcef9ddac124b14fe2cdda28dbad769e0dc9255bfd4f3d0034cd2f4fafd4"
+    },
+    "cIIs04": {
+     "statements": "ensemble/cIIs04/card/cIIs04-A32/statements_R17_reg2.npz",
+     "sha256": "da7441cc90d3ea6def9581a0d2312b92226948d63e037ef2f7770034c91fd2b6"
+    }
+   },
+   "ON-Harmony same scanner": {
+    "13192": {
+     "statements": "ensemble/ds004712-13192/card/13192-PRISMA_OXF1/statements_R17_reg3.npz",
+     "sha256": "32ec6553159446f2fc2cd1293af33b842fb4c6ea58bedc004021c42e4fc7f266"
+    },
+    "16974": {
+     "statements": "ensemble/ds004712-16974/card/16974-PRISMA_OXF1/statements_R17_reg3.npz",
+     "sha256": "9bf1b638498219f93c0439302cc5f22fee127345e0e74a691b0d2a1392e3dc0b"
+    },
+    "14229": {
+     "statements": "ensemble/ds004712-14229/card/14229-PRISMA_OXF2/statements_R17_reg3.npz",
+     "sha256": "0f89505037675d7623c229d73ab0d3aa8cebd77df51fc800178e13fc0697e1a0"
+    },
+    "16766": {
+     "statements": "ensemble/ds004712-16766/card/16766-PRISMA_OXF2/statements_R17_reg3.npz",
+     "sha256": "391aa945fb8a8534b60ff136270b520e12bdc986961e36d994b9a64230c438da"
+    }
+   },
+   "ON-Harmony cross site (OXF1 -> OXF2)": {
+    "03286": {
+     "statements": "ensemble/ds004712-03286/card/03286-PRISMA_OXF1/statements_R17_reg3.npz",
+     "sha256": "880ae3f157cd0b2061dba8a652b9da9fcfddf65d95e0436379306874df53bbc7"
+    },
+    "03997": {
+     "statements": "ensemble/ds004712-03997/card/03997-PRISMA_OXF1/statements_R17_reg3.npz",
+     "sha256": "e9d5dd18f4e26059fe6adcd00e94a4b74cfea4c0fe20a4bcd84f5c99600dcbd5"
+    },
+    "10975": {
+     "statements": "ensemble/ds004712-10975/card/10975-PRISMA_OXF1/statements_R17_reg3.npz",
+     "sha256": "6d022c787bfdf500240afc01b26b279bbab2af037b00aa4e9c5439b0ebc0dbc2"
+    },
+    "12813": {
+     "statements": "ensemble/ds004712-12813/card/12813-PRISMA_OXF1/statements_R17_reg3.npz",
+     "sha256": "6371c9f0a817e902d3f677599d27ea155a5af6bb9bcc461d7efefd280c162973"
+    },
+    "13192": {
+     "statements": "ensemble/ds004712-13192/card/13192-PRISMA_OXF1/statements_R17_reg3.npz",
+     "sha256": "32ec6553159446f2fc2cd1293af33b842fb4c6ea58bedc004021c42e4fc7f266"
+    },
+    "13305": {
+     "statements": "ensemble/ds004712-13305/card/13305-PRISMA_OXF1/statements_R17_reg3.npz",
+     "sha256": "ca8edaab49bd369538f5c61a6ecd2b79fefc3387ccecf9524905d428076a6a3f"
+    },
+    "14221": {
+     "statements": "ensemble/ds004712-14221/card/14221-PRISMA_OXF1/statements_R17_reg3.npz",
+     "sha256": "01905887dc9fbde2a53c7020e1b25d5ce6260b1c02607c1cee722a50659c0e76"
+    },
+    "14229": {
+     "statements": "ensemble/ds004712-14229/card/14229-PRISMA_OXF1/statements_R17_reg3.npz",
+     "sha256": "922280915252a5c7ea446c14d9d4ed714eaf9e30893fa451ee82092c18bec393"
+    },
+    "14230": {
+     "statements": "ensemble/ds004712-14230/card/14230-PRISMA_OXF1/statements_R17_reg3.npz",
+     "sha256": "046130c7a7779b83dee465920dfdaeb7e5d8bded23abb7738351297298273c00"
+    },
+    "14482": {
+     "statements": "ensemble/ds004712-14482/card/14482-PRISMA_OXF1/statements_R17_reg3.npz",
+     "sha256": "9bdbfbb935010df4963c13e8e15b0e621d84fa31f9d2037569abf8f8bec0e84a"
+    },
+    "15320": {
+     "statements": "ensemble/ds004712-15320/card/15320-PRISMA_OXF1/statements_R17_reg3.npz",
+     "sha256": "cd9acab57d5460dfad21ecb0293ff8a30fa949b4a5a6aec7dfcbb49854efde5a"
+    },
+    "16745": {
+     "statements": "ensemble/ds004712-16745/card/16745-PRISMA_OXF1/statements_R17_reg3.npz",
+     "sha256": "ddbcdba66a437769d04144819d0acde8c9ff446b9e24fd4ab87d8c4647c392d5"
+    },
+    "16766": {
+     "statements": "ensemble/ds004712-16766/card/16766-PRISMA_OXF1/statements_R17_reg3.npz",
+     "sha256": "ccfff8067872a144cd38afde87112522fe0c890ecf2c75b6367a347e499b78a1"
+    },
+    "16793": {
+     "statements": "ensemble/ds004712-16793/card/16793-PRISMA_OXF1/statements_R17_reg3.npz",
+     "sha256": "c565d03f6bd50e3f9cc5ba085520f74f89ed52b9721d50f31b1dbabb9af9f65c"
+    },
+    "16794": {
+     "statements": "ensemble/ds004712-16794/card/16794-PRISMA_OXF1/statements_R17_reg3.npz",
+     "sha256": "e14225dbff45b4f73f6cb0abdda82da975c06a27ca0a0b88c5e47dbb559302d6"
+    },
+    "16841": {
+     "statements": "ensemble/ds004712-16841/card/16841-PRISMA_OXF1/statements_R17_reg3.npz",
+     "sha256": "efe6a0ed700a1c6990cb767e7a5aaefd5b088fca4393f710009b5ff3c0ec8ac5"
+    },
+    "16842": {
+     "statements": "ensemble/ds004712-16842/card/16842-PRISMA_OXF1/statements_R17_reg3.npz",
+     "sha256": "a60c732105709c83657cdc64ba1d0a27c82761afc3d6c6000df57b98cf5f4d13"
+    },
+    "16974": {
+     "statements": "ensemble/ds004712-16974/card/16974-PRISMA_OXF1/statements_R17_reg3.npz",
+     "sha256": "9bf1b638498219f93c0439302cc5f22fee127345e0e74a691b0d2a1392e3dc0b"
+    },
+    "16975": {
+     "statements": "ensemble/ds004712-16975/card/16975-PRISMA_OXF1/statements_R17_reg3.npz",
+     "sha256": "e3c06a912d2fd476ecea78342eb3de7f5a485934deda61b68800a7e69579cf79"
+    },
+    "16981": {
+     "statements": "ensemble/ds004712-16981/card/16981-PRISMA_OXF1/statements_R17_reg3.npz",
+     "sha256": "ef27229f4ad309536d64988eaea75bf3609cd3043c51075ae50c896e53270994"
+    }
+   },
+   "MASiVar cross scanner B32 -> A32": {
+    "cIIs01": {
+     "statements": "ensemble/cIIs01/card/cIIs01-B32-xA/statements_R17_reg3.npz",
+     "sha256": "58bbf422e5c9e6d9c2dbed73e2375c985826008f888701aab4e11a08acb8e0ca"
+    },
+    "cIIs02": {
+     "statements": "ensemble/cIIs02/card/cIIs02-B32-xA/statements_R17_reg3.npz",
+     "sha256": "15eae8476c0cfc038757d3f070208502a86377f111003b695fe0e53025e0350e"
+    },
+    "cIIs03": {
+     "statements": "ensemble/cIIs03/card/cIIs03-B32-xA/statements_R17_reg3.npz",
+     "sha256": "013b7bc2526c15059637ace78fa4884a331974207cbb2b086b8ddc8e91c810df"
+    },
+    "cIIs04": {
+     "statements": "ensemble/cIIs04/card/cIIs04-B32-xA/statements_R17_reg3.npz",
+     "sha256": "c2da2d28c7ba9996bbb4e887a07e818016e8985e105534bbcb8562f3854a4254"
+    }
+   },
+   "MASiVar cross scanner A32 -> B32": {
+    "cIIs01": {
+     "statements": "ensemble/cIIs01/card/cIIs01-A32-xB/statements_R17_reg3.npz",
+     "sha256": "312ac144a0a69e40e6ac1622738f35c0d32220bba3293212b4c6b890a9c86d38"
+    },
+    "cIIs02": {
+     "statements": "ensemble/cIIs02/card/cIIs02-A32-xB/statements_R17_reg3.npz",
+     "sha256": "46a40620fd14f575590ac279a71471bc262c55f72de1953d7d7748180232405c"
+    },
+    "cIIs03": {
+     "statements": "ensemble/cIIs03/card/cIIs03-A32-xB/statements_R17_reg3.npz",
+     "sha256": "c0696b7a3412aec9857eeef673e35617db498a5a8d1bd453c96b684474e05e3c"
+    },
+    "cIIs04": {
+     "statements": "ensemble/cIIs04/card/cIIs04-A32-xB/statements_R17_reg3.npz",
+     "sha256": "ed238a74ad08ae8e00f79e904a5d92cddb7c47db556c33f90b7d6325ec6ed7af"
+    }
+   },
+   "Siemens (site 3, B2000 ensemble)": {
+    "cIIs01": {
+     "statements": "ensemble/cIIs01/card/cIIs01-B2000-site3/statements_R17_reg2.npz",
+     "sha256": "e364332aa3256bb5f1aa445d78d5deddad1d59646280d06455e527413e2b3f4f"
+    },
+    "cIIs02": {
+     "statements": "ensemble/cIIs02/card/cIIs02-B2000-site3/statements_R17_reg3.npz",
+     "sha256": "c1ad5ef7a4398fc36e6807ad232848ec456da44afca86d0ab7ad0c1ef06f3325"
+    },
+    "cIIs03": {
+     "statements": "ensemble/cIIs03/card/cIIs03-B2000-site3/statements_R17_reg2.npz",
+     "sha256": "336d7542462654e126820ef01798e954774dc0355d6e7ec5b1a65d562705a309"
+    },
+    "cIIs04": {
+     "statements": "ensemble/cIIs04/card/cIIs04-B2000-site3/statements_R17_reg2.npz",
+     "sha256": "6bc00fd2600ad2a692251c6de6997268de5e245ccbdbf890aeddf0deb1183596"
+    }
+   }
+  },
+  "floor records sha256": {
+   "ensemble/ds004712-13192/card/13192-PRISMA_OXF1/OXF1PRI002reg3_onA.npz": "a277b223c12171f64b8039001ea1d81b25ae3adc1e4406b3b5eafedcc25849af",
+   "ensemble/ds004712-13192/card/13192-PRISMA_OXF1/OXF1PRI003reg3_onA.npz": "11d8f76a8362c12939eaf0aadd62cd2f29d8242481fe3485ce415f97db7a9d24",
+   "ensemble/ds004712-13192/card/13192-PRISMA_OXF1/OXF1PRI004reg3_onA.npz": "9d6bd995d1a7dac6a89eb785a349b9c4112db85cfc68763aaa02dffc48b88784",
+   "ensemble/ds004712-13192/card/13192-PRISMA_OXF1/OXF1PRI005reg3_onA.npz": "8ce6efadf0bce8a0f820bb1ab8dc59b9495e128b01871ce2d2b07bead9df9c38",
+   "ensemble/ds004712-13192/card/13192-PRISMA_OXF1/OXF1PRI006reg3_onA.npz": "764dc8f73b8f91549cab1f641f9d917f51195cc9660a407d79192ccc3b8f7b0b",
+   "ensemble/ds004712-16974/card/16974-PRISMA_OXF1/OXF1PRI002reg3_onA.npz": "85b9430c013ed768b9cf130f817332a6ccab4e2cd58091d5a816974ad64029ec",
+   "ensemble/ds004712-16974/card/16974-PRISMA_OXF1/OXF1PRI003reg3_onA.npz": "1cb67c4468590c89cf3d880291028d793a44afbe15b41b53228ef38848987744",
+   "ensemble/ds004712-16974/card/16974-PRISMA_OXF1/OXF1PRI004reg3_onA.npz": "a8fc324090e4f1b93aa20f8880cacdb419ca365e111c4a63552b84cf50cc0773",
+   "ensemble/ds004712-16974/card/16974-PRISMA_OXF1/OXF1PRI005reg3_onA.npz": "0913731e510769ed05257c53889a10a9fd4a0a373c115bb9d459ef8434446481",
+   "ensemble/ds004712-16974/card/16974-PRISMA_OXF1/OXF1PRI006reg3_onA.npz": "dca4b730f04f73d74b43ae4de3575ed23859662273186384383e307622050deb",
+   "ensemble/ds004712-14229/card/14229-PRISMA_OXF2/OXF2PRI002reg3_onA.npz": "891bdd4e1c3d9a6cb380d3bc4ac67bac616c3668c3ea13cc62912e5bb4f8581f",
+   "ensemble/ds004712-14229/card/14229-PRISMA_OXF2/OXF2PRI003reg3_onA.npz": "ed30b515a2ecb63f043333eee84f6b750b74ff43ef390ac39de773486c3a2356",
+   "ensemble/ds004712-14229/card/14229-PRISMA_OXF2/OXF2PRI004reg3_onA.npz": "daefbf8d65dc1ffee43d0702b1a4824769e47bee7563281138993b08d53d1578",
+   "ensemble/ds004712-14229/card/14229-PRISMA_OXF2/OXF2PRI005reg3_onA.npz": "68b833d361c92701bcd48397dfdaac27195a07372cc630912d723dd63a4b7cfc",
+   "ensemble/ds004712-14229/card/14229-PRISMA_OXF2/OXF2PRI006reg3_onA.npz": "70da34deead0f5fd4976e8a77ac5e1dfe18236f41c9a6d286d6d978f4ab24633",
+   "ensemble/ds004712-16766/card/16766-PRISMA_OXF2/OXF2PRI002reg3_onA.npz": "b032c59d914628392f095a216d044e74ab31d7943484fc27e4665be6ad43ccfd",
+   "ensemble/ds004712-16766/card/16766-PRISMA_OXF2/OXF2PRI003reg3_onA.npz": "3d09c4d6b125af5186469a061ca8cfb920528c1f22db269477559854dcda51ad",
+   "ensemble/ds004712-16766/card/16766-PRISMA_OXF2/OXF2PRI004reg3_onA.npz": "80386aeff60e901cd3409f8c0656254fdaaa0411d984c4cd5c14a90050062580",
+   "ensemble/ds004712-16766/card/16766-PRISMA_OXF2/OXF2PRI005reg3_onA.npz": "54f39a4ab134d1658aa4044ebcba8e064982104e17c4b62bdb4a3178c7c98f4c",
+   "ensemble/ds004712-16766/card/16766-PRISMA_OXF2/OXF2PRI006reg3_onA.npz": "eae2cd3e2db7144e00b446cda49980a13c64656e9eff11a05a2af32c868724e6",
+   "ensemble/cIIs01/card/cIIs01-B32-xA/xA1reg3_onA.npz": "56b7a134533f6fd3ecade19125dd73ac6487c663fde233c51706e9b7f02a9b00",
+   "ensemble/cIIs01/card/cIIs01-B32-xA/xA2reg3_onA.npz": "21c6367d835dd21138f44dd0b47e4f5af32abcd1f69ef32baa7701880de30811",
+   "ensemble/cIIs02/card/cIIs02-B32-xA/xA1reg3_onA.npz": "789d238da571e63ba3894e96cc4a1b9060ff93ffc96b200e91e3f367e3977273",
+   "ensemble/cIIs02/card/cIIs02-B32-xA/xA2reg3_onA.npz": "be9e4490dd415baabe6ed9c018eb7ae71ac65eeddb10f0c1f97516e7f6f65d8f",
+   "ensemble/cIIs03/card/cIIs03-B32-xA/xA1reg3_onA.npz": "d1f8bdeb62598ad630ef75fad9664aefe01ebb579db69b0c02bae293b7498615",
+   "ensemble/cIIs03/card/cIIs03-B32-xA/xA2reg3_onA.npz": "f07af47a207cf2845a2b36b4880ae8e217336615d155bf5e906b9f130746cff8",
+   "ensemble/cIIs04/card/cIIs04-B32-xA/xA1reg3_onA.npz": "81ebee04ba99a4f3c74c85b49e456f5b91b0544a9ef171dd1a43208ccc689854",
+   "ensemble/cIIs04/card/cIIs04-B32-xA/xA2reg3_onA.npz": "10c6cc203ea9b6c3710258b69e7b522971f87c7d148211693b0e363c6dadcab6",
+   "ensemble/cIIs01/card/cIIs01-A32-xB/xB1reg3_onA.npz": "c1a929c6228b36213705e0d147c4bc40e780f34eae467cac36ec7996d2a685e3",
+   "ensemble/cIIs01/card/cIIs01-A32-xB/xB2reg3_onA.npz": "afdee8bc25520900f09aeacb580ad9fe25d5811780a4d9f129f149172eb59f18",
+   "ensemble/cIIs02/card/cIIs02-A32-xB/xB1reg3_onA.npz": "26b55c112e86ddfe8e831a6d0e457b3b6e7e200cb7f708cc9ac76724ec47f1a7",
+   "ensemble/cIIs02/card/cIIs02-A32-xB/xB2reg3_onA.npz": "c342d07a01f8de4f6b538862a7ff98772470d2ce97201fc47d651c76f6a61999",
+   "ensemble/cIIs03/card/cIIs03-A32-xB/xB1reg3_onA.npz": "3f4d57022cc74388ab7321ad3125aaa5b2d4e81becd9ad72dd6c129920af5a95",
+   "ensemble/cIIs03/card/cIIs03-A32-xB/xB2reg3_onA.npz": "3a2b0aeebf7a6c4ec50b676a159f243d0f3e66ff196c409a965a3d4f21d0d9db",
+   "ensemble/cIIs04/card/cIIs04-A32-xB/xB1reg3_onA.npz": "3801f30d64fa5193133d09b474343e6e0ac153bd694e9437e641eeb0da2f0760",
+   "ensemble/cIIs04/card/cIIs04-A32-xB/xB2reg3_onA.npz": "6e8af6bed2677975ae0cbd1824d96b592df71400c3248cd035b3bc7714441765",
+   "ensemble/cIIs01/card/cIIs01-B2000-xA/xA1reg3_onA.npz": "9f385ee5062f445fbe62e82c400d04df4287b0d5fa131d847f7c8e562e02b7cb",
+   "ensemble/cIIs01/card/cIIs01-B2000-xA/xA2reg3_onA.npz": "2585b8d82fa2b44a0cfd19b872f016edef8db280acc9796d042c5f856c575a0f",
+   "ensemble/cIIs02/card/cIIs02-B2000-xA/xA1reg3_onA.npz": "038755f02d2395f393126d96b78bcc967c40739b5b6a281e0eb3dab46ae11cbd",
+   "ensemble/cIIs02/card/cIIs02-B2000-xA/xA2reg3_onA.npz": "8ff4ded8354e8a36b2746d149de7bcbea32041505a2f4c8cfb5aed0217b12588",
+   "ensemble/cIIs03/card/cIIs03-B2000-xA/xA1reg3_onA.npz": "9ce481178661a1c9d1583b71822395d945ee420ae7c3263ea903f83d5c39e41d",
+   "ensemble/cIIs03/card/cIIs03-B2000-xA/xA2reg3_onA.npz": "ee479e7ef487b09b7846a9b41d43ca1aab339268817c153d6ba722f7596be0a9",
+   "ensemble/cIIs04/card/cIIs04-B2000-xA/xA1reg3_onA.npz": "b77f439de8aff4529eb146460e3f6fc6484763505d36504b0e7eed81b86a0f18",
+   "ensemble/cIIs04/card/cIIs04-B2000-xA/xA2reg3_onA.npz": "65a8873dbea4dd1b01c5630e1ecfa02c594a9745271cb952f3c4adecee75f52e",
+   "ensemble/cIIs01/card/cIIs01-A2000r19-xB/xB1reg3_onA.npz": "7bc426a8210a742f54911202a6900f241437f237efb0bbefcb5c6d4459050f83",
+   "ensemble/cIIs01/card/cIIs01-A2000r19-xB/xB2reg3_onA.npz": "17bad3d34b97f5be49511b622beadec94954c17e86b6029079c0898454f7a445",
+   "ensemble/cIIs02/card/cIIs02-A2000r19-xB/xB1reg3_onA.npz": "0512bba1e40c19b83ac1a49a14401281c2252a197c951d3cf11a32fcdb635075",
+   "ensemble/cIIs02/card/cIIs02-A2000r19-xB/xB2reg3_onA.npz": "3b039d4d9d22dfb96441bf1edd2b807937483ad47f5045bc3370ee7ef272983c",
+   "ensemble/cIIs03/card/cIIs03-A2000r19-xB/xB1reg3_onA.npz": "e21a80304624076dc5dd5c38c5dfa6798f04a58b8ece0dd64366c451a8d11188",
+   "ensemble/cIIs03/card/cIIs03-A2000r19-xB/xB2reg3_onA.npz": "e034c224f1351d62a162e658eb2f8b549a02d3b55769ab23914917ca33d72f04",
+   "ensemble/cIIs04/card/cIIs04-A2000r19-xB/xB1reg3_onA.npz": "c78dc91382b4cbc4f3f6ca7ea482fd35621bc12a34f0f7ea40e5091a318f7039",
+   "ensemble/cIIs04/card/cIIs04-A2000r19-xB/xB2reg3_onA.npz": "0afa664dfeeee3ec90c2c515962f0eacd7b669f50e295f52407617eb185f9eb0",
+   "cIIIs01/within_onA.npz": "a61c888426f443b367cb8ce3866acdb5fe76f52378013f77d819ecab65f6b254",
+   "cIIIs01/session1_onA.npz": "a87098aff011060236e891199e5155dbe0f09c4be8c0752d99494169683ab4f1",
+   "cIIIs02/within_onA.npz": "7b2b300cc5cbd71c47ad1526ee820e75131bdbd069e328af46aba315e58aeb34",
+   "cIIIs02/session4_onA.npz": "668f0eedf18892ba45c81b74785b6a5bc48a0f6fca4c0da9a28308a6522cc108",
+   "cIIIs02/session5_onA.npz": "ebe49243058eb1c542a0d7f489a783941a402c701bfde1e568de8d68e7818916",
+   "cIIIs04/within_onA.npz": "21c1be5183c0e67241d14ed8aeba2b91972e0b42bb3192e4c7b4ef5ef0e796c5",
+   "cIIIs04/session2_onA.npz": "ebef3a3c80bcddc05c79353424a3b85ebfc72cd706674401a87fc8cf5bde6ba9",
+   "cIIIs04/session3_onA.npz": "9543f2134289614171e8400152d9991d5ba6a8ea10ad3a74d3fdf5cdf3fd2114",
+   "cIIIs04/session4_onA.npz": "d5bc0af8399f864c1df54cf4793f8b2756e47e670fdfff48a48a2f71217fbe4c",
+   "cIIIs04/session5_onA.npz": "053def86f9c5364316a93875ff60ceee0aaab39423eada8a20b0058ab33b0e25",
+   "cIIIs05/within_onA.npz": "39c3a5be5669ad6c73d8f3edb7fca3e5a4fb62fd623ccfb339653ca0400f87b4",
+   "cIIIs05/session2_onA.npz": "60e13c146cbafe5bd0338bbbb16e5fc0eac39a12649b704a364e81eb8f68357d",
+   "cIIIs08/within_onA.npz": "f31c599f2f4d97b631e9ceeb2d4a23f723e6540883773c10a30821f90c3344b5",
+   "cIIIs08/session2_onA.npz": "6269424a841143ce102892db28f1d0d3944e7079c7a1b81427c065dfe4c96e63"
+  },
+  "created (UTC)": "2026-10-20T21:09:04Z"
+ }
+}
