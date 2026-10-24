@@ -1,0 +1,254 @@
+{
+ "note": "idle M2 (no other jobs); after the review: first step in float64 on the host",
+ "cpu_count": 8,
+ "scans": {
+  "cIIIs04": {
+   "shell": 2000.0,
+   "directions": 56,
+   "order": 8,
+   "mask voxels": 133017,
+   "fiber voxels (FA >= 0.3)": 43935,
+   "response": {
+    "ours": {
+     "evals": [
+      0.001393145052718756,
+      0.00030900949433674294,
+      0.00030900949433674294
+     ],
+     "S0": 107.88836343319318,
+     "voxels": 926
+    },
+    "DIPY": {
+     "evals": [
+      0.0013931450507769676,
+      0.0003090094931308092,
+      0.0003090094931308092
+     ],
+     "S0": 107.88836669921875
+    },
+    "relative difference, evals (max) and S0": [
+     3.9025782605506265e-09,
+     -3.0272268247699685e-08
+    ]
+   },
+   "FOD against DIPY, fiber voxels": {
+    "ours on DIPY's sphere (the method)": {
+     "correlation: 1st percentile, median": [
+      1.0,
+      1.0
+     ],
+     "relative L2 difference: median, 99th percentile": [
+      0.0,
+      0.0
+     ]
+    },
+    "ours on our sphere (the default)": {
+     "correlation: 1st percentile, median": [
+      0.95145,
+      0.99729
+     ],
+     "relative L2 difference: median, 99th percentile": [
+      0.06586,
+      0.26161
+     ]
+    }
+   },
+   "the constraint's own sensitivity: DIPY's sphere rotated at random against DIPY's, ours, fiber voxels": {
+    "correlation: 1st percentile, median": [
+     0.95081,
+     0.9972
+    ],
+    "relative L2 difference: median, 99th percentile": [
+     0.06702,
+     0.2647
+    ]
+   },
+   "MPS (float32) against CPU (float64), fiber voxels": {
+    "correlation: 1st percentile, median": [
+     1.0,
+     1.0
+    ],
+    "relative L2 difference: median, 99th percentile": [
+     0.0,
+     1e-05
+    ]
+   },
+   "peaks, ours (our sphere) against DIPY's, fiber voxels": {
+    "same number of peaks": 0.9374,
+    "first peak angle, degrees: median, 95th percentile": [
+     0.0,
+     8.39
+    ],
+    "first peaks within 5 degrees": 0.8367
+   },
+   "seconds": {
+    "ours: response": 0.16,
+    "ours: cpu": {
+     "fit s": 7.55,
+     "iterations max": 19,
+     "iterations mean": 4.81782779644707,
+     "not converged": 0,
+     "voxels": 133017,
+     "device": "cpu",
+     "condition number of X^T X": 9354753.79705223
+    },
+    "ours: cpu, DIPY's sphere": {
+     "fit s": 7.55,
+     "iterations max": 18,
+     "iterations mean": 4.817692475397881,
+     "not converged": 0,
+     "voxels": 133017,
+     "device": "cpu",
+     "condition number of X^T X": 9354753.79705223
+    },
+    "ours: mps": {
+     "fit s": 4.67,
+     "iterations max": 19,
+     "iterations mean": 4.818030778020854,
+     "not converged": 0,
+     "voxels": 133017,
+     "device": "mps",
+     "condition number of X^T X": 9354753.79705223
+    },
+    "ours: mps, DIPY's sphere rotated": {
+     "fit s": 4.52,
+     "iterations max": 17,
+     "iterations mean": 4.818481848184819,
+     "not converged": 0,
+     "voxels": 133017,
+     "device": "mps",
+     "condition number of X^T X": 9354753.79705223
+    },
+    "DIPY (subprocess wall, incl. loading)": 7.7,
+    "DIPY": {
+     "response": 0.22,
+     "fit and peaks (parallel)": 6.5
+    }
+   }
+  },
+  "PAT16": {
+   "shell": 2800.0,
+   "directions": 50,
+   "order": 8,
+   "mask voxels": 94936,
+   "fiber voxels (FA >= 0.3)": 24825,
+   "response": {
+    "ours": {
+     "evals": [
+      0.0011978265819272084,
+      0.0002549261216692076,
+      0.0002549261216692076
+     ],
+     "S0": 106.30644130431104,
+     "voxels": 836
+    },
+    "DIPY": {
+     "evals": [
+      0.001197826580663797,
+      0.00025492612091845005,
+      0.00025492612091845005
+     ],
+     "S0": 106.30644226074219
+    },
+    "relative difference, evals (max) and S0": [
+     2.9450004657149975e-09,
+     -8.996925648929732e-09
+    ]
+   },
+   "FOD against DIPY, fiber voxels": {
+    "ours on DIPY's sphere (the method)": {
+     "correlation: 1st percentile, median": [
+      1.0,
+      1.0
+     ],
+     "relative L2 difference: median, 99th percentile": [
+      0.0,
+      0.0
+     ]
+    },
+    "ours on our sphere (the default)": {
+     "correlation: 1st percentile, median": [
+      0.96619,
+      0.99806
+     ],
+     "relative L2 difference: median, 99th percentile": [
+      0.05639,
+      0.21981
+     ]
+    }
+   },
+   "the constraint's own sensitivity: DIPY's sphere rotated at random against DIPY's, ours, fiber voxels": {
+    "correlation: 1st percentile, median": [
+     0.96758,
+     0.99801
+    ],
+    "relative L2 difference: median, 99th percentile": [
+     0.05706,
+     0.21516
+    ]
+   },
+   "MPS (float32) against CPU (float64), fiber voxels": {
+    "correlation: 1st percentile, median": [
+     1.0,
+     1.0
+    ],
+    "relative L2 difference: median, 99th percentile": [
+     0.0,
+     0.0
+    ]
+   },
+   "peaks, ours (our sphere) against DIPY's, fiber voxels": {
+    "same number of peaks": 0.9511,
+    "first peak angle, degrees: median, 95th percentile": [
+     0.0,
+     8.19
+    ],
+    "first peaks within 5 degrees": 0.8756
+   },
+   "seconds": {
+    "ours: response": 0.14,
+    "ours: cpu": {
+     "fit s": 5.65,
+     "iterations max": 25,
+     "iterations mean": 5.094305637482093,
+     "not converged": 0,
+     "voxels": 94936,
+     "device": "cpu",
+     "condition number of X^T X": 703601.7880583631
+    },
+    "ours: cpu, DIPY's sphere": {
+     "fit s": 6.4,
+     "iterations max": 18,
+     "iterations mean": 5.0936420325271765,
+     "not converged": 0,
+     "voxels": 94936,
+     "device": "cpu",
+     "condition number of X^T X": 703601.7880583631
+    },
+    "ours: mps": {
+     "fit s": 3.63,
+     "iterations max": 25,
+     "iterations mean": 5.094189769950282,
+     "not converged": 0,
+     "voxels": 94936,
+     "device": "mps",
+     "condition number of X^T X": 703601.7880583631
+    },
+    "ours: mps, DIPY's sphere rotated": {
+     "fit s": 3.46,
+     "iterations max": 21,
+     "iterations mean": 5.098013398500042,
+     "not converged": 0,
+     "voxels": 94936,
+     "device": "mps",
+     "condition number of X^T X": 703601.7880583631
+    },
+    "DIPY (subprocess wall, incl. loading)": 6.0,
+    "DIPY": {
+     "response": 0.19,
+     "fit and peaks (parallel)": 4.88
+    }
+   }
+  }
+ }
+}

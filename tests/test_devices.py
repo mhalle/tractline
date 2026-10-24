@@ -1,8 +1,8 @@
 """The devices run the same pipeline (docs/sota-pipeline-design.md, decision 6: the config hash leaves the device out).
 These tolerances catch a device that runs a different pipeline. They do not show that a calibration map carries across
-devices: on a real scan the devices differ per streamline by about a fifth of the ensemble's spread (cIIIs04, CPU
-against MPS: 93.8 % same tract, 31 % of paths more than 1 mm apart; bench/device_agreement.py). Skipped where there is
-no GPU.
+devices. On a real scan the devices differ per streamline by about a fifth of the ensemble's spread (cIIIs04, CPU
+against MPS: 93.8 % same tract, 31 % of paths more than 1 mm apart; bench/device_agreement.py). At the ensemble level
+the calibrated coverage agrees within 0.003 (bench/device_ensemble.py). Skipped where there is no GPU.
 
 On the phantom (2026-10-24, M2), CPU against MPS:
 - the field in the brain differs by 0.075 Hz at its 99th percentile (0.16 at most);

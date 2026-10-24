@@ -185,16 +185,17 @@ def pipeline_settings(shell=SHELL):
             "record": "tractline.ensemble.RunRecord, compact (format 2)"}
 
 
-def run_scan(s, cfg, labeler, corrected=None):
+def run_scan(s, cfg, labeler, corrected=None, device=DEVICE):
     """One run as the records are made: pipeline.execute(cfg) on s with the caller's labeler (draw 0, as cfg says). With
     `corrected` (a DWI corrected before, on the scan's own grid, then moved onto A's), the field slot is off and the
-    Correction says "given". Returns (Correction, Tractogram, Labels, Timer)."""
+    Correction says "given". device: DEVICE unless a runner says otherwise (device_ensemble.py). Returns (Correction,
+    Tractogram, Labels, Timer)."""
     timer = P.Timer()
     if corrected is not None:
         cfg = cfg.with_(field=None)
         if s.dwi is not corrected:
             s = replace(s, dwi=corrected)
-    corr, tg, labels = P.execute(s, cfg, timer, device=DEVICE, labeler=labeler, release=False)
+    corr, tg, labels = P.execute(s, cfg, timer, device=device, labeler=labeler, release=False)
     if corrected is not None:
         corr.applied, corr.note = True, "given"
     return corr, tg, labels, timer
@@ -265,10 +266,11 @@ class Runner:
         before_record(corr, tg), if given, runs before the record is written (its companions first)."""
         guard_disk()
         path = self.R.new(name)
+        device = getattr(self, "device", DEVICE)
         if self.labeler is None:
-            self.labeler = P.default_labeler(DEVICE)
+            self.labeler = P.default_labeler(device)
         t0 = time.time()
-        corr, tg, labels, timer = run_scan(s, self.config, self.labeler, corrected)
+        corr, tg, labels, timer = run_scan(s, self.config, self.labeler, corrected, device)
         if before_record is not None:
             before_record(corr, tg)
         tmp = path.with_name(path.stem + ".partial.npz")
@@ -277,10 +279,10 @@ class Runner:
         self.log[name] = {"fibers": len(tg.fibers), "labeled": int(labels.keep.sum()), "residual_left": corr.residual_left,
                           "field_hz_p99_abs": round(float(np.quantile(np.abs(corr.field_hz), 0.99)), 2) if corr.field_hz is not None else None,
                           "seconds": timer.seconds, "total_s": round(time.time() - t0, 1),
-                          "config sha256": corr.provenance["config"]["sha256"], "device": DEVICE, **(extra or {})}
+                          "config sha256": corr.provenance["config"]["sha256"], "device": device, **(extra or {})}
         self.save_log()
         print(*self.tag(), name, json.dumps(self.log[name]), flush=True)
-        P.release_memory(DEVICE)
+        P.release_memory(device)
         return corr, tg
 
     def reference(self):

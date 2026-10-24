@@ -18,9 +18,10 @@ pipeline.execute records them beside it. The device is left out on purpose (docs
 6), so a calibration map learned on one device is meant to apply on another. Metal, Triton and the CPU's fast step are
 different kernels, and on a real scan they are not close per streamline. On cIIIs04, the CPU against MPS: 93.8 % of the
 shared seeds get the same tract, 31 % of the paths end more than 1 mm apart (bench/results/device_agreement_cIIIs04.json).
-That is about a fifth of the ensemble's own spread: a bootstrap replicate against A gives 68 % and 97 %. Whether a map
-carries across devices is an ensemble-level question, not yet answered; the runtime record says which device ran, so a
-map can check it. tests/test_devices.py only checks that the devices run the same pipeline.
+That is about a fifth of the ensemble's own spread: a bootstrap replicate against A gives 68 % and 97 %. At the
+ensemble level, where a map acts, the difference goes away: cIIIs04's 17-run ensemble on the CPU, with the cohort III
+map, covers its rescans within 0.003 of the MPS ensemble at every target (bench/device_ensemble.py; one subject, CUDA not
+run). tests/test_devices.py checks only that the devices run the same pipeline.
 An implementation that cannot be described by its options (a labeler object
 the caller made) makes the config unhashable: hash() returns None, and a calibration map refuses it.
 

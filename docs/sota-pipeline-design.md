@@ -349,8 +349,8 @@ difference, so they come first.
     now), `external.run`, and the cache.
   - Finished the same day: the calibration runners run through `pipeline.execute` (`calibration_runs.run_scan`) and
     record `cfg.to_dict()` in place of the hand-written settings. New cards (schema 3) also match on the config hash.
-    A cross-device test (the devices run the same pipeline) and a real-scan device check (they differ per streamline by
-    about a fifth of the ensemble's spread; decision 6 reopened).
+    A cross-device test (the devices run the same pipeline) and two real-scan checks. Per streamline the devices differ
+    by about a fifth of the ensemble's spread; at the ensemble level, where maps act, they do not (decision 6).
 - **Totals.** A–E (both new presets, without SIFT2) take about 2.5–3.5 months. The full set takes 4–6 months.
   Motion/eddy runs on its own track (its merge plan, after 28 Oct) and slots in after A.
 - **Parallel work.** Phases B, C and E touch separate modules and can run as separate sessions once A has landed. D
@@ -404,6 +404,23 @@ tolerance, not bit for bit.
 
 Level 2 waits for phase D: it needs the tracking on top.
 
+**Status (2026-10-24, uncommitted at first).** `tractline.sh`, `tractline.csd` and `bench/csd_check.py` are done.
+- **Our fit reproduces DIPY's exactly.** On cIIIs04 and PAT16, with DIPY's constraint sphere, our FODs equal DIPY's
+  (correlation 1.0, L2 difference 0.0 to five decimals), and the response agrees to about 1e-8.
+- **Our own sphere** is a 181-axis hemisphere made by repulsion. It differs from DIPY's (relative L2 difference 0.22–0.26
+  at the 99th percentile in fiber voxels; 84–88 % of first peaks within 5 degrees). DIPY's own sphere, rotated at random,
+  differs from itself as much. The constraint samples the sphere, and where it samples moves the FOD: a property of the
+  method, worth knowing for the uncertainty work.
+- **MPS (float32) against CPU (float64):** equal to five decimals.
+- **Time, idle M2:**
+  - cIIIs04: ours 4.7 s on MPS, 7.6 s on the CPU; DIPY 6.5 s for the fit and peaks in 8 processes;
+  - PAT16: 3.6 s, 5.7 s and 4.9 s.
+  So there is no real speedup yet, as planned: the gain is in-process FODs.
+- **On MPS,** `cholesky_solve` and `solve_triangular` are about 50 times slower than an LU solve, so MPS solves by LU.
+- **After the review:** the first step is float64 on the host on every device, and a near-singular X^T X (condition
+  number above 1e8, e.g. fewer directions than coefficients) runs on the CPU in float64. The docstring states the
+  provenance (DIPY's code read to match its behavior; our own batched implementation).
+
 ## 8. Licensing and the source policy
 
 The policy already set for FSL applies to every tool here:
@@ -441,11 +458,16 @@ weights' license permits, and recorded as such in the implementation's record.
 5. **Labelers off their domain.** Options: retrain RapidParc on PTT and iFOD2 tractograms, or rely on
    tractogram-agnostic bundling (RecoBundles, TractSeg) for those presets. Recommended: agnostic bundling first, with
    retraining as a later study.
-6. **The hash's scope.** *Decided 2026-10-24:* the device stays out of the key. The same day's real-scan check
-   weakens the premise. On cIIIs04, the CPU against MPS gives 93.8 % the same tract and 31 % of paths more than 1 mm
-   apart. A bootstrap replicate against A gives 68 % and 97 %. So the device's difference is about a fifth of the
-   ensemble's spread. Whether a map carries across devices needs an ensemble-level check: a CPU ensemble of cIIIs04 (17
-   runs, about 70 min on the M2's CPU), its calibrated coverage against the MPS map's. Open again for the owner.
+6. **The hash's scope.** *Decided 2026-10-24:* the device stays out of the key.
+   - **Per streamline, the devices differ.** On cIIIs04, a single run on the CPU against MPS gives 93.8 % the same tract
+     and 31 % of paths more than 1 mm apart. That is about a fifth of a bootstrap replicate's difference.
+   - **At the ensemble level, where maps act, they do not differ.** cIIIs04's whole 17-run ensemble was run again on the
+     CPU (`bench/device_ensemble.py`) and judged against the same rescans with the cohort III map (fitted without
+     cIIIs04). Calibrated coverage is within 0.003 of the MPS ensemble's at every target and for both terms, about a
+     tenth of the spread between subjects. The shapes' coverage agrees to three decimals and their size within 0.003. The
+     point statement's calibrated ECE differs more (0.023 against 0.018, one rescan).
+   - **Limits.** One subject; the CPU against MPS; CUDA not run.
+
 7. **Calibration budget.** Which presets get maps (about a day of compute each on the M2, more with motion/eddy on).
    Recommended: `ukf-rapidparc@1` (existing) and `msmt-ptt-act-sift2-recobundles@1` first.
 8. **Preset naming.** Content names with an immutable version (section 2.3). Alternatives: dated recipes

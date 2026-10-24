@@ -6705,3 +6705,76 @@ records).
 
 Not separated: how much of the difference is the field (the CPU estimates every level in float32; MPS estimates its
 subsampled levels on the CPU) and how much is the tracker's step.
+
+## 2026-10-24 Decision 6 at the ensemble level; phase C: CSD in torch, DIPY's method exactly
+
+**The devices, ensemble against ensemble** (`bench/device_ensemble.py`, `results/device_ensemble_cIIIs04.json`).
+- **What ran.** cIIIs04's whole 17-run ensemble (A and smooth/r001..r016, the same bootstrap seeds) was run again on the
+  M2's CPU: 8 workers, 246–366 s a run, 84 min in all. It used its own A mask and was written to
+  `card/cIIIs04-2.1-cpu`. The rescans stayed the MPS records, so the events to predict were the same. The replicates share
+  their seeds but are not bit-paired: the bootstrap scales its b0 noise inside A's mask, and the CPU's mask differs in 19
+  of 133,032 voxels.
+- **How it was judged.** Both ensembles were judged with the cohort III map fitted on the other seven subjects
+  (`calibration_card.evaluate`). The disk guard was lowered to 5 GB for this script only: 15 GB were free, and the runs
+  wrote about 130 MB.
+
+| cIIIs04 | MPS ensemble | CPU ensemble | held out, across the 8 subjects (MPS) |
+|---|---|---|---|
+| same session, calibrated coverage at 0.5 / 0.8 / 0.9 / 0.95 | 0.527 / 0.817 / 0.915 / 0.963 | 0.528 / 0.818 / 0.913 / 0.963 | 0.9: 0.892–0.915 |
+| other session, calibrated | 0.519 / 0.800 / 0.902 / 0.954 | 0.519 / 0.801 / 0.901 / 0.953 | 0.9: 0.893–0.909 |
+| other session, uncalibrated | 0.541 / 0.762 / 0.855 / 0.906 | 0.541 / 0.761 / 0.855 / 0.904 | |
+| streamline ECE, calibrated, same / other session | 0.0095 / 0.0014 | 0.0082 / 0.0022 | |
+| point ECE, calibrated, same / other session | 0.018 / 0.020 | 0.023 / 0.019 | |
+| core coverage, widest coverage (other session) | 0.764, 0.958 | 0.764, 0.958 | |
+| widest envelope's size, same / other session | 1.958 / 1.918 | 1.955 / 1.915 | |
+
+- **Reading.** Per streamline the devices differ by a fifth of a replicate's difference. Over 17 runs that washes out:
+  the ensembles' coverage agrees within 0.003, about a tenth of the spread between subjects. This supports decision 6
+  (the device out of the hash) for the CPU against MPS.
+- **One exception, small.** The point statement's calibrated ECE (same session, 1 rescan) is 0.023 on the CPU against
+  0.018 on MPS, and on the CPU calibration does not improve it (0.021 uncalibrated). That is 1,503 points and one rescan:
+  within its noise, but not evidence of agreement either.
+- **Limits.**
+  - One subject; one device pair; CUDA not run.
+  - The ensembles share their bootstrap seeds, so this compares the device, not two independent ensembles.
+  - The rescans are the MPS records for both.
+
+**Phase C: single-shell CSD in torch** (`tractline.sh`, `tractline.csd`; tests `test_sh.py`, `test_csd.py`; level 1
+`bench/csd_check.py` with `_csd_dipy.py`, `results/csd_check.json`, run on an idle M2).
+- **What was written** (provenance as the policy asks: DIPY's code was read to match its behavior; the implementation is
+  our own and batched; the docstring credits the choices taken from DIPY's code).
+  - `sh`: the real SH basis in DIPY's descoteaux07 convention (legacy and paper forms), written from the definitions.
+    It equals DIPY's to 1e-11 for orders up to 12.
+  - `csd.response_ssst`: our own WLS tensor fit in a cube of radius 10 about the volume's center, then FA > 0.7.
+  - `csd.CSD`: Tournier et al. 2007's iteration as DIPY's own account of it describes it (docstrings credit both),
+    batched over voxels. The constraint matrices come from one GEMM over the directions' outer products. Solves use
+    Cholesky in float64 on the CPU and CUDA, and LU in float32 on MPS.
+- **Level 1 on cIIIs04 (b2000 × 56) and PAT16 (b2800 × 50), order 8, fiber voxels (FA ≥ 0.3).**
+  - **The response** equals DIPY's to about 1e-8 relative.
+  - **On DIPY's constraint sphere,** our FODs equal DIPY's: correlation 1.0 and relative L2 difference 0.0, to five
+    decimals. The method is reproduced.
+  - **On our own sphere** (a 181-axis hemisphere made by axial repulsion, nearest axes 10.3–11.3° apart): correlation
+    0.951 / 0.966 at the 1st percentile; relative L2 difference 0.066 / 0.056 median and 0.26 / 0.22 at the 99th
+    percentile; first peaks within 5° in 84 % / 88 % of voxels, 95th percentile 8.4° / 8.2°.
+  - **DIPY's sphere rotated at random** against itself: 0.951 / 0.968, 0.067 / 0.057, 0.26 / 0.22. The same size. Where the
+    constraint samples the sphere moves the FOD; that is not a defect of our sphere. It is a spread of the method,
+    possibly worth a place in the ensemble later.
+  - **MPS (float32) against the CPU (float64):** the same to five decimals.
+- **Time, idle M2.**
+  - cIIIs04 (133k mask voxels): ours 4.7 s on MPS, 7.6 s on the CPU; DIPY 6.5 s for the fit and peaks in 8 processes.
+  - PAT16 (95k voxels): 3.6 s, 5.7 s and 4.9 s.
+  - The final run, after the review's fix; agreement unchanged.
+  - No real speedup, as the phase C plan said. The gain is FODs in-process, on the tracker's device.
+- **Found on the way.**
+  - **The review (an independent agent)** found that with fewer directions than coefficients (30 at order 8) the float32
+    first step goes wrong: X^T X is singular. Fixed: the first step (f0, the threshold, the first negative set) is
+    float64 on the host always, and above a condition number of 1e8 the fit runs on the CPU in float64 and says so.
+    Measured condition numbers: PAT16 (50 directions) 5.8e4; cIIIs04 (56) 1.6e6; 46 directions 7.9e11; 30, singular.
+    The tests gained crossings at 45–90 degrees, the mask and chunk paths, the singular case against DIPY, and the
+    b-vectors' layout (a (3, 3) table now refuses rather than guessing).
+  - On MPS, `cholesky_solve` and `solve_triangular` take about 50 times as long as an LU solve (513 and 599 ms against
+    10 ms for 2,000 systems of 45). The first version took 39 s for 20,000 voxels on MPS.
+  - DIPY's `small_sphere` is a hemisphere of 181, not 362. A doubled symmetric sphere gives the same fit, because the
+    lambda scaling counts the directions: twice as many rows, half of lambda squared.
+- **Not done in phase C.** The model slot's `csd` registration (it becomes usable with `track:ptt`, phase D); peaks in
+  torch; level 2 (it needs tracking).
