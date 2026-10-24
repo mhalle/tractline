@@ -1,0 +1,47 @@
+{
+ "subject": "cIIIs04",
+ "device": "cpu",
+ "workers": 8,
+ "seconds": 236.2,
+ "config sha256": "43c84606d585e5a1a4f0720b7df7ac74f17aac6b5927c9bd253c074bd7f8bc4b",
+ "stored": "MPS (M2), calibration_runs records, A.npz",
+ "streamlines (new, stored)": [
+  64372,
+  64378
+ ],
+ "seeds shared, share of stored": 0.99539,
+ "shared: same winning cluster": 0.79365,
+ "shared: same tract": 0.93795,
+ "shared: path within 0.05 mm (quantization 0.025)": 0.20053,
+ "shared: path more than 1 mm apart": 0.30861,
+ "shared: point count differs by more than 2": 0.1374,
+ "mask voxels (new, stored), differing": [
+  133032,
+  133017,
+  19
+ ],
+ "per-tract voxel counts correlation (42 tracts): min, median": [
+  0.8076,
+  0.9816
+ ],
+ "runtime": {
+  "tractline": "0.2.0",
+  "torch": "2.14.1",
+  "numpy": "2.5.3",
+  "python": "3.12.14",
+  "device": "cpu",
+  "workers": 8,
+  "torch_compile": false,
+  "labeler": "tractline.labelers.rapidparc.Labeler"
+ },
+ "git": {
+  "commit": "0684a388741044841a02268e8350834bcff05dda",
+  "branch": "modular-pipeline",
+  "dirty (src/ and the card's bench modules)": [
+   "M bench/calibration_card.py",
+   "M bench/calibration_runs.py",
+   "M src/tractline/config.py"
+  ]
+ },
+ "device_agreement.py sha256": "6e9fa0c20186d069b82bed74f96d74824821bfa15c61bec32a6b6ed2251db1b8"
+}

@@ -347,12 +347,62 @@ difference, so they come first.
   - `ukf-rapidparc@1` is bit for bit on PAT16 and matches cIIIs04's stored record.
   - Deferred to phase B, where they are first needed: the `Scan` artifact state (requirements are between slots for
     now), `external.run`, and the cache.
-  - Not done yet: the bench's and the ensemble's `pipeline_settings()` replaced by `cfg.to_dict()`, so the calibration
-    maps can key on the config hash.
+  - Finished the same day: the calibration runners run through `pipeline.execute` (`calibration_runs.run_scan`) and
+    record `cfg.to_dict()` in place of the hand-written settings. New cards (schema 3) also match on the config hash.
+    A cross-device test (the devices run the same pipeline) and a real-scan device check (they differ per streamline by
+    about a fifth of the ensemble's spread; decision 6 reopened).
 - **Totals.** A–E (both new presets, without SIFT2) take about 2.5–3.5 months. The full set takes 4–6 months.
   Motion/eddy runs on its own track (its merge plan, after 28 Oct) and slots in after A.
 - **Parallel work.** Phases B, C and E touch separate modules and can run as separate sessions once A has landed. D
   needs C's FODs and B's tissue maps.
+
+### 7.1 Phase C plan: single-shell CSD (2026-10-24)
+
+**What the measurements say first.** In the step 6 benchmark, DIPY's CSD fit plus peaks took 6.4 s on cIIIs04 (CPU,
+parallel), and its PTT tracking took 193.5 s. The fit is not the cost. Phase C's value is a torch implementation inside
+the pipeline: no DIPY subprocess (the OpenMP clash), FODs on the GPU where the tracker reads them, and one code path for
+every ensemble replicate. GPU speed is a secondary goal. This shortens phase C to about 1–1.5 weeks. The time goes to
+phase D, where the 190 s is.
+
+**The oracle.** DIPY 1.12's `ConstrainedSphericalDeconvModel` and `auto_response_ssst`, with the bench's settings
+(`_benchmark_dipy.py csd`): response from FA > 0.7 within 10 voxels of the center; `sh_order_max` 8 (6 below 45
+directions); lambda 1, tau 0.1; `small_sphere` for the constraint; peaks on `default_sphere` (3 peaks, relative
+threshold 0.1, separation 25°). DIPY's docstring states the algorithm (Tournier et al. 2007, as DIPY implements it).
+We write our own from that description and credit both, as with topup.
+
+**The algorithm, batched.** Per voxel:
+- z = Xᵀs, then an initial f from P = XᵀX (with μI if needed);
+- a threshold tau × the mean amplitude (from the order-0 coefficient);
+- the negative set taken from the order-4 part first;
+- iterate: Q = P + B_Hᵀ B_H over the negative directions, Cholesky solve, recompute the set, stop when it repeats
+  (at most 50 iterations).
+
+Batched, the negative set is a 0/1 weight per constraint direction: Q = P + Bᵀ diag(w) B for all voxels of a chunk at
+once (einsum), then a batched Cholesky. Voxels that have converged are frozen. The work is a chunk × directions × n_sh²
+product per iteration. It runs in float64 on the CPU and CUDA. MPS has no float64, so there it runs in float32, with the
+difference measured against float64. Threshold comparisons can flip on borderline voxels, so agreement is to a
+tolerance, not bit for bit.
+
+**Pieces.**
+1. `tractline.sh`: the real SH basis and the order-zero mean. It works in DIPY's descoteaux07 convention (what the PTT
+   oracle reads). The stored FOD's basis is chosen and documented here, with conversions to MRtrix's basis tested.
+2. The response: our own small DTI fit (weighted least squares) over the ROI, the FA threshold, and the mean
+   eigenvalues and S0, recorded.
+3. The batched CSD fit and FOD sampling on a sphere.
+4. Peaks: the FOD on `default_sphere`, local maxima over the sphere's edges, the relative threshold and the 25°
+   suppression, batched.
+5. The model slot's `csd` implementation (options: `sh_order` auto/6/8, `lambda`, `tau`, the response's `fa_threshold`
+   and `roi_radius`). The `track:ukf` implementation keeps requiring `model:ukf-two-tensor`, so `csd` first becomes
+   usable with `track:ptt` (phase D). Until then it is called directly and checked by a bench script.
+
+**Level 1 checks against DIPY**, on cIIIs04 A, PAT16, the phantom and Stanford HARDI:
+- the response (eigenvalues and S0, relative difference);
+- per voxel: the FOD's SH correlation and amplitude difference, the iteration counts, the share of voxels with the
+  same negative set at the end;
+- peaks: the count agreement, the angular error of matched peaks (median and 95th percentile), the amplitude ratio;
+- time against DIPY's 6.4 s.
+
+Level 2 waits for phase D: it needs the tracking on top.
 
 ## 8. Licensing and the source policy
 
@@ -379,19 +429,23 @@ weights' license permits, and recorded as such in the implementation's record.
 
 ## 9. Decisions for the owner
 
-1. **When.** Start phase A after the 28 Oct deadline, on a branch from `main` after the `ismrm2027` and `motion-eddy`
-   merges. Recommended: yes. A changes `run()`'s internals, which every ensemble script calls.
+1. **When.** *Decided 2026-10-24:* phase A started at once, on its own branch (`modular-pipeline`, from `ismrm2027`),
+   rather than after the deadline. Merging waits for the `ismrm2027` and `motion-eddy` merges.
 2. **`PipelineConfig` with motion/eddy.** This answers the motion-eddy design's open decision. Recommended: introduce
    the config in phase A, and wire `motion_eddy` as its first new slot.
-3. **First tracker.** Recommended: GPU PTT + ACT first (measured, oracle in hand), then iFOD2 (what reviewers
-   know from MRtrix).
+3. **First tracker.** *Decided 2026-10-24:* GPU PTT + ACT first (measured, oracle in hand), then iFOD2. The order is
+   C (single-shell CSD, DIPY as oracle) → D (GPU PTT + ACT on the bench's tissue maps) → B (anatomy, with MRtrix and
+   ANTs as oracles) → MSMT-CSD and iFOD2. Nothing before B needs a download.
 4. **Installs and downloads.** MRtrix3, ANTs, FastSurfer weights, SynthStrip weights, and GPUStreamlines to read. Each
    needs your approval before downloading.
 5. **Labelers off their domain.** Options: retrain RapidParc on PTT and iFOD2 tractograms, or rely on
    tractogram-agnostic bundling (RecoBundles, TractSeg) for those presets. Recommended: agnostic bundling first, with
    retraining as a later study.
-6. **The hash's scope.** Device out of the key, with a cross-device check in the test suite (recommended), or the
-   device in the key, which makes maps device-specific.
+6. **The hash's scope.** *Decided 2026-10-24:* the device stays out of the key. The same day's real-scan check
+   weakens the premise. On cIIIs04, the CPU against MPS gives 93.8 % the same tract and 31 % of paths more than 1 mm
+   apart. A bootstrap replicate against A gives 68 % and 97 %. So the device's difference is about a fifth of the
+   ensemble's spread. Whether a map carries across devices needs an ensemble-level check: a CPU ensemble of cIIIs04 (17
+   runs, about 70 min on the M2's CPU), its calibrated coverage against the MPS map's. Open again for the owner.
 7. **Calibration budget.** Which presets get maps (about a day of compute each on the M2, more with motion/eddy on).
    Recommended: `ukf-rapidparc@1` (existing) and `msmt-ptt-act-sift2-recobundles@1` first.
 8. **Preset naming.** Content names with an immutable version (section 2.3). Alternatives: dated recipes

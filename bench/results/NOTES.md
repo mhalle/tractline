@@ -6655,3 +6655,53 @@ dicts are not yet replaced by `cfg.to_dict()`; the calibration maps still hash t
 
 Provenance: config.py 7dc99aaa…, pipeline.py 6050230a…, prep.py 8e3f5b24…;
 uncommitted.
+
+## 2026-10-24 Phase A finished: the calibration runners run a config; the devices are not close per streamline
+
+**What.** Decisions 1, 3 and 6 recorded in `docs/sota-pipeline-design.md`: phase A started at once; PTT before iFOD2;
+the device out of the hash.
+- `calibration_runs.run_scan(s, cfg, labeler, corrected=None)` runs `pipeline.execute`. `Runner.one` uses it, and the
+  duplicated `one()` of `calibration_cohortII.py` and `calibration_transfer.py` are gone. Every subclass keeps its shell
+  through `self.shell`, and its print tag through `tag()`.
+- Rescans (corrected on their own grid, then moved onto A's) run with the field slot off and are marked "given".
+- `pipeline_settings(shell)` now records `{"config": cfg.to_dict(), "rescans", "rescans config sha256", "bootstrap",
+  "record"}`. The device moves to each run's log. Folders made earlier keep the older form (runs.json's "created" is
+  written once).
+- Cards are schema 3: `validity.match` gains the pipeline config hash when the settings carry one, and
+  `calibration_transfer.match` checks it (a missing hash never matches). A card refuses to fit an unhashable config.
+- Default config hashes:
+  - at b = 2000 (cohort III), 43c84606d585…;
+  - its rescans (field off), recorded too;
+  - at 2800 (ds001226), 28d01a1d3947… (pinned).
+
+**Same output.**
+- cIIIs04 `verify` through `run_scan`: the same as stored.
+- PAT16 through the given-DWI path (the rescans'): identical to the old code, array for array.
+- 124 tests pass.
+
+**The devices, on a real scan.** `bench/device_agreement.py` ran cIIIs04's reference scan through the same config on the
+M2's CPU (8 workers, 236 s) and compared it with its stored MPS record (`results/device_agreement_cIIIs04.json`). For
+scale, the stored A was compared with its first four MPS bootstrap replicates, by the same measures (CPU-only, from the
+records).
+
+| cIIIs04, streamlines matched by seed | CPU vs MPS, one run each | A vs replicate r1–r4 (MPS) |
+|---|---|---|
+| seeds shared | 0.995 | 0.922–0.924 |
+| same winning cluster | 0.794 | 0.31 |
+| same tract | 0.938 | 0.68–0.685 |
+| paths more than 1 mm apart | 0.309 | 0.972–0.973 |
+| per-tract voxel count correlation, median (min) | 0.982 (0.808) | 0.864–0.876 (0.25–0.40) |
+
+- The masks differ in 19 of 133,017 voxels.
+- The phantom test (`tests/test_devices.py`) showed none of this. Its band has no branching, and every streamline gets
+  one tract. It now claims only that the devices run the same pipeline.
+- **Reading.** The UKF's paths are chaotic: a float32 difference grows at a branching, as a bootstrap sign does. The
+  device is a perturbation about a fifth of the ensemble's spread in label terms, not a rounding error.
+- **What is not known.** Whether a calibration map learned on MPS gives the same coverage on a CPU ensemble. A difference
+  of this kind could be another draw from the same distribution (and carry over) or a bias (and not).
+- **The check.** A CPU ensemble of cIIIs04 (17 runs, about 70 min on the M2's CPU), its calibrated coverage of the
+  rescans against the MPS ensemble's.
+- **Decision 6 is open again.** The runtime record names the device, so a map can check it in the meantime.
+
+Not separated: how much of the difference is the field (the CPU estimates every level in float32; MPS estimates its
+subsampled levels on the CPU) and how much is the tracker's step.

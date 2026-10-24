@@ -396,14 +396,13 @@ def module_sha256():
 
 
 def pipeline_settings():
-    s = CR.pipeline_settings()
-    s["track"] = {**s["track"], "shell": SHELL}
+    s = CR.pipeline_settings(SHELL)
     s["volumes kept"] = "the b0s and the b2000 shell of the AP series"
     return s
 
 
 class Runner(CII.Runner):
-    """calibration_cohortII.Runner's one() (tracked at b = 2000) and calibration_runs.Runner's replicates, with this
+    """calibration_runs.Runner's one() (tracked at self.shell, b = 2000) and calibration_runs.Runner's replicates, with this
     module's loader, descriptors, records and mode 3 rescans."""
     def __init__(self, subject, sc, smoke=False):
         self.key, self.shell, self.sc = KEY[sc], SHELL, sc

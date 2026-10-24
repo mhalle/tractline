@@ -14,9 +14,14 @@ raise ValueError, as do implementations whose required slots are off or set othe
 The hash covers each slot that is on: its implementation, the implementation's version and every option, defaults
 filled in, as canonical JSON. Slots that are off are left out, so a slot added later does not change the hash of a
 config that leaves it off. Runtime choices (device, workers, batch sizes, the TRX file) are not part of a config;
-pipeline.execute records them beside it. The device does change the outputs a little (Metal, Triton and the CPU's fast
-step are different kernels), so until that is settled (docs/sota-pipeline-design.md, decision 6) a calibration map
-matches on the hash and on the runtime's device type both. An implementation that cannot be described by its options (a labeler object
+pipeline.execute records them beside it. The device is left out on purpose (docs/sota-pipeline-design.md, decision
+6), so a calibration map learned on one device is meant to apply on another. Metal, Triton and the CPU's fast step are
+different kernels, and on a real scan they are not close per streamline. On cIIIs04, the CPU against MPS: 93.8 % of the
+shared seeds get the same tract, 31 % of the paths end more than 1 mm apart (bench/results/device_agreement_cIIIs04.json).
+That is about a fifth of the ensemble's own spread: a bootstrap replicate against A gives 68 % and 97 %. Whether a map
+carries across devices is an ensemble-level question, not yet answered; the runtime record says which device ran, so a
+map can check it. tests/test_devices.py only checks that the devices run the same pipeline.
+An implementation that cannot be described by its options (a labeler object
 the caller made) makes the config unhashable: hash() returns None, and a calibration map refuses it.
 
 Presets are named by what they contain, with a version that never changes once released: any change, even to an

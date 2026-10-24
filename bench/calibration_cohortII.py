@@ -476,8 +476,7 @@ def load_checked(subject, session, key):
 
 
 def pipeline_settings(key):
-    s = CR.pipeline_settings()
-    s["track"] = {**s["track"], "shell": PROTOCOLS[key]["tracked shell"]}
+    s = CR.pipeline_settings(PROTOCOLS[key]["tracked shell"])
     s["series joined"] = PROTOCOLS[key]["series"]
     return s
 
@@ -510,30 +509,8 @@ class Runner(CR.Runner):
             "reuse": None, "notes": list(self.pair.notes)}})
         self.labeler = None
 
-    def one(self, s, name, corrected=None, extra=None, before_record=None):
-        """calibration_runs.Runner.one, tracked at the protocol's shell."""
-        CR.guard_disk()
-        path = self.R.new(name)
-        if self.labeler is None:
-            self.labeler = P.default_labeler(CR.DEVICE)
-        timer, t0 = P.Timer(), time.time()
-        with P.exact_float32(CR.DEVICE):
-            corr = P.correct(s, timer, CR.DEVICE) if corrected is None else P.Correction(corrected, None, None, None, applied=True, note="given")
-            tg = P.track(s, corr.dwi, timer, device=CR.DEVICE, shell=self.shell)
-            with timer("label"):
-                labels = self.labeler(tg.fibers, draws=(0,), logp=True)
-        if before_record is not None:
-            before_record(corr, tg)
-        tmp = path.with_name(path.stem + ".partial.npz")
-        E.RunRecord.of(tg, labels, s.affine, s.dwi.shape[:3]).save(tmp, compact=True)
-        os.replace(tmp, path)
-        self.log[name] = {"fibers": len(tg.fibers), "labeled": int(labels.keep.sum()), "residual_left": corr.residual_left,
-                          "field_hz_p99_abs": round(float(np.quantile(np.abs(corr.field_hz), 0.99)), 2) if corr.field_hz is not None else None,
-                          "seconds": timer.seconds, "total_s": round(time.time() - t0, 1), **(extra or {})}
-        self.save_log()
-        print(self.subject, self.key, name, json.dumps(self.log[name]), flush=True)
-        P.release_memory(CR.DEVICE)
-        return corr, tg
+    def tag(self):
+        return (self.subject, self.key)
 
     def reference(self):
         """calibration_runs.Runner.reference with this protocol's loader: A and its companions, all three or none."""

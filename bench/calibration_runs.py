@@ -168,13 +168,36 @@ def module_hashes():
     return {m: sha256(HERE / m) for m in BENCH_MODULES}
 
 
-def pipeline_settings():
-    """Today's default pipeline, as these runs call it."""
-    return {"correct": "P.correct (default)", "track": {"shell": SHELL, "tracker": "UKF defaults (no tracker= settings)"},
-            "denoise": None, "labeler": "P.default_labeler (RapidParc), draw 0, grouping 'index' (the default)",
+def pipeline_config(shell=SHELL):
+    """The pipeline these runs execute (tractline.config): the default preset, tracked at `shell`."""
+    return P.config_for(shell=shell)
+
+
+def pipeline_settings(shell=SHELL):
+    """What these runs are, for a card to key on: the pipeline's config (PipelineConfig.to_dict; its sha256 is the config
+    hash) and the ensemble's own settings. The device is runtime (docs/sota-pipeline-design.md, decision 6): each run's log
+    records it. Folders made before 2026-10-24 keep the older form (correct/track/denoise/labeler/device keys, no config)."""
+    return {"config": pipeline_config(shell).to_dict(),
+            "rescans": "corrected on their own grid, registered and resampled onto A's, then run with the field slot off",
+            "rescans config sha256": pipeline_config(shell).with_(field=None).hash(),
             "bootstrap": {"class": "_bootstrap.ShellWildBootstrap", "flip": FLIP, "fwhm_voxels": FWHM, "b0_noise": "added",
                           "mask": "A's tracking mask (A_mask.npy)", "seed": "replicate r uses seed r"},
-            "record": "tractline.ensemble.RunRecord, compact (format 2)", "device": DEVICE}
+            "record": "tractline.ensemble.RunRecord, compact (format 2)"}
+
+
+def run_scan(s, cfg, labeler, corrected=None):
+    """One run as the records are made: pipeline.execute(cfg) on s with the caller's labeler (draw 0, as cfg says). With
+    `corrected` (a DWI corrected before, on the scan's own grid, then moved onto A's), the field slot is off and the
+    Correction says "given". Returns (Correction, Tractogram, Labels, Timer)."""
+    timer = P.Timer()
+    if corrected is not None:
+        cfg = cfg.with_(field=None)
+        if s.dwi is not corrected:
+            s = replace(s, dwi=corrected)
+    corr, tg, labels = P.execute(s, cfg, timer, device=DEVICE, labeler=labeler, release=False)
+    if corrected is not None:
+        corr.applied, corr.note = True, "given"
+    return corr, tg, labels, timer
 
 
 def protocol_check(s):
@@ -218,6 +241,14 @@ class Runner:
             "reuse": self.pair.reuse, "notes": list(self.pair.notes)}})
         self.labeler = None
 
+    @property
+    def config(self):
+        """The pipeline config of this runner's runs: the default preset at its tracked shell."""
+        return pipeline_config(getattr(self, "shell", SHELL))
+
+    def tag(self):
+        return (self.subject,)
+
     def scan_log(self, tag):
         """A rescan's registration and series, from this folder's runs.json or the reused folder's."""
         if f"{tag}_scan" in self.log:
@@ -236,12 +267,8 @@ class Runner:
         path = self.R.new(name)
         if self.labeler is None:
             self.labeler = P.default_labeler(DEVICE)
-        timer, t0 = P.Timer(), time.time()
-        with P.exact_float32(DEVICE):
-            corr = P.correct(s, timer, DEVICE) if corrected is None else P.Correction(corrected, None, None, None, applied=True, note="given")
-            tg = P.track(s, corr.dwi, timer, device=DEVICE, shell=SHELL)
-            with timer("label"):
-                labels = self.labeler(tg.fibers, draws=(0,), logp=True)
+        t0 = time.time()
+        corr, tg, labels, timer = run_scan(s, self.config, self.labeler, corrected)
         if before_record is not None:
             before_record(corr, tg)
         tmp = path.with_name(path.stem + ".partial.npz")
@@ -249,9 +276,10 @@ class Runner:
         os.replace(tmp, path)
         self.log[name] = {"fibers": len(tg.fibers), "labeled": int(labels.keep.sum()), "residual_left": corr.residual_left,
                           "field_hz_p99_abs": round(float(np.quantile(np.abs(corr.field_hz), 0.99)), 2) if corr.field_hz is not None else None,
-                          "seconds": timer.seconds, "total_s": round(time.time() - t0, 1), **(extra or {})}
+                          "seconds": timer.seconds, "total_s": round(time.time() - t0, 1),
+                          "config sha256": corr.provenance["config"]["sha256"], "device": DEVICE, **(extra or {})}
         self.save_log()
-        print(self.subject, name, json.dumps(self.log[name]), flush=True)
+        print(*self.tag(), name, json.dumps(self.log[name]), flush=True)
         P.release_memory(DEVICE)
         return corr, tg
 
@@ -321,7 +349,8 @@ class Runner:
         B = load_checked(self.subject, ses, scan)
         to_ref = np.array(self.scan_log(tag)["to_A"])
         with P.exact_float32(DEVICE):
-            mask = prepare(P.correct(B, P.Timer(), DEVICE).dwi, B.affine, B.bval, B.bvec, shell=SHELL, device=DEVICE).mask
+            mask = prepare(P.correct(B, P.Timer(), DEVICE).dwi, B.affine, B.bval, B.bvec, shell=getattr(self, "shell", SHELL),
+                           device=DEVICE).mask
         P.release_memory(DEVICE)
         wb = ShellWildBootstrap(B.dwi, B.bval, B.bvec, extra_b0s=B.b0s[..., len(B.b0_index):], b0_noise="added", mask=mask,
                                 flip=FLIP, fwhm=FWHM)
@@ -373,14 +402,12 @@ def verify(args):
         stored = E.RunRecord.load(stored_path, logp=False, fibers=True)
         A = load_checked(subject, *CARD[subject].ref)
         labeler = P.default_labeler(DEVICE)
-        timer, t0 = P.Timer(), time.time()
-        with P.exact_float32(DEVICE):
-            corr = P.correct(A, timer, DEVICE)
-            tg = P.track(A, corr.dwi, timer, device=DEVICE, shell=SHELL)
-            labels = labeler(tg.fibers, draws=(0,), logp=True)
+        t0 = time.time()
+        corr, tg, labels, _ = run_scan(A, pipeline_config(), labeler)
         new = E.RunRecord.of(tg, labels, A.affine, A.dwi.shape[:3])
         same_keys = bool(np.array_equal(new.keys, stored.keys))
         out = {"subject": subject, "stored": str(stored_path.relative_to(DATA)), "git": git_state(), "seconds": round(time.time() - t0, 1),
+               "path": "run_scan (pipeline.execute)", "config sha256": corr.provenance["config"]["sha256"],
                "streamlines (new, stored)": [len(new.keys), len(stored.keys)], "seed keys equal": same_keys}
         if same_keys:
             lens = [len(a) == len(b) for a, b in zip(new.fibers, stored.fibers)]

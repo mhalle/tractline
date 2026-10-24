@@ -96,7 +96,8 @@ TARGETS = (0.5, 0.8, 0.9, 0.95)
 SITE_MM, LATTICE, MIN_STREAMLINES = 8.0, 4, 5
 POOL_SCANS = 3
 MATCHED = (0.8, 0.85, 0.9, 0.95)                # held-out coverages at which card and pooled envelope sizes are compared
-CARD_VERSION = 2
+CARD_VERSION = 3                 # 3 (2026-10-24): validity.match gains the pipeline config hash (tractline.config) when the
+                                 # subjects' settings carry a config (folders made from 2026-10-24); older folders give none
 ECE_BINS = (0, 0.5, 0.7, 0.8, 0.9, 0.95, 0.99, 1.0001)
 
 
@@ -733,6 +734,8 @@ def fit(args):
     canon = {json.dumps(v, sort_keys=True) for v in settings.values()}
     assert len(canon) == 1, f"the subjects' pipeline settings differ: {sorted(settings)}"
     settings_json = canon.pop()
+    if "config" in json.loads(settings_json) and json.loads(settings_json)["config"]["sha256"] is None:
+        raise ValueError("the pipeline's config is not hashable (a caller's object in a slot): a card cannot key on it")
     settings_hash = hashlib.sha256(settings_json.encode()).hexdigest()
     R = subjects[0].R
     assert all(s.R == R for s in subjects)
@@ -758,6 +761,8 @@ def fit(args):
                      "statement files sha256": {n: sha256(p) for n, p in stmt.items()},
                      "provenance": {s.name: provenance(s.name, list(s.meta["rescans"]), args.runs) for s in subjects}},
         "validity": {"match": {"protocol": PROTOCOL, "R": R, "pipeline settings sha256": settings_hash,
+                               **({"pipeline config sha256": json.loads(settings_json)["config"]["sha256"]}
+                                  if "config" in json.loads(settings_json) else {}),
                                "labeler weights sha256": HASHES["rapidparc"], "terms": list(TERMS)},
                      "population": "healthy adults (MASiVar cohort III)", "protocol": "this protocol only (see protocol)",
                      "pipeline": "these settings and R only; any option that changes the pipeline (denoising, tracker settings, labeler grouping) needs its own card",

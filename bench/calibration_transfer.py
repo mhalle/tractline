@@ -101,8 +101,7 @@ def load_checked(session, scan):
 
 def pipeline_settings():
     """calibration_runs.pipeline_settings, at cIs1's shells: the tracked shell 3000, b1000-3000 joined."""
-    s = CR.pipeline_settings()
-    s["track"] = {**s["track"], "shell": SHELL}
+    s = CR.pipeline_settings(SHELL)
     s["shells joined"] = list(SHELLS)
     return s
 
@@ -125,7 +124,7 @@ class Runner(CR.Runner):
     """calibration_runs.Runner at cIs1's protocol: its own records, check and tracked shell; replicates as is."""
     def __init__(self):
         self.R = Records()
-        self.subject, self.pair = SUBJECT, PAIR
+        self.subject, self.pair, self.shell = SUBJECT, PAIR, SHELL
         self.R.dir.mkdir(parents=True, exist_ok=True)
         self.log_path = self.R.dir / "runs.json"
         self.log = json.loads(self.log_path.read_text()) if self.log_path.exists() else {}
@@ -134,31 +133,6 @@ class Runner(CR.Runner):
             "reference": self.pair.ref, "same session": self.pair.same, "other sessions": self.pair.other,
             "reuse": None, "notes": list(self.pair.notes)}})
         self.labeler = None
-
-    def one(self, s, name, corrected=None, extra=None, before_record=None):
-        """calibration_runs.Runner.one, tracked at SHELL (3000)."""
-        CR.guard_disk()
-        path = self.R.new(name)
-        if self.labeler is None:
-            self.labeler = P.default_labeler(CR.DEVICE)
-        timer, t0 = P.Timer(), time.time()
-        with P.exact_float32(CR.DEVICE):
-            corr = P.correct(s, timer, CR.DEVICE) if corrected is None else P.Correction(corrected, None, None, None, applied=True, note="given")
-            tg = P.track(s, corr.dwi, timer, device=CR.DEVICE, shell=SHELL)
-            with timer("label"):
-                labels = self.labeler(tg.fibers, draws=(0,), logp=True)
-        if before_record is not None:
-            before_record(corr, tg)
-        tmp = path.with_name(path.stem + ".partial.npz")
-        E.RunRecord.of(tg, labels, s.affine, s.dwi.shape[:3]).save(tmp, compact=True)
-        os.replace(tmp, path)
-        self.log[name] = {"fibers": len(tg.fibers), "labeled": int(labels.keep.sum()), "residual_left": corr.residual_left,
-                          "field_hz_p99_abs": round(float(np.quantile(np.abs(corr.field_hz), 0.99)), 2) if corr.field_hz is not None else None,
-                          "seconds": timer.seconds, "total_s": round(time.time() - t0, 1), **(extra or {})}
-        self.save_log()
-        print(self.subject, name, json.dumps(self.log[name]), flush=True)
-        P.release_memory(CR.DEVICE)
-        return corr, tg
 
     def reference(self):
         """calibration_runs.Runner.reference with cIs1's check: A and its companions, all three or none."""
@@ -292,6 +266,10 @@ def match(card, s, settings, R, weights, terms):
              "R": {"found": R, "expected": m["R"], "ok": R == m["R"]},
              "pipeline settings sha256": {"found": settings_sha256(settings), "expected": m["pipeline settings sha256"],
                                           "ok": settings_sha256(settings) == m["pipeline settings sha256"]},
+             **({"pipeline config sha256": {"found": settings.get("config", {}).get("sha256"), "expected": m["pipeline config sha256"],
+                                            "ok": m["pipeline config sha256"] is not None
+                                                  and settings.get("config", {}).get("sha256") == m["pipeline config sha256"]}}
+                if "pipeline config sha256" in m else {}),       # cards from 2026-10-24 (schema 3) key on the config hash
              "labeler weights sha256": {"found": weights, "expected": m["labeler weights sha256"], "ok": weights == m["labeler weights sha256"]},
              "terms": {"found": terms, "expected": m["terms"], "ok": all(t in m["terms"] for t in terms)}}
     failed = [k for k, v in items.items() if not v["ok"]]

@@ -2,15 +2,17 @@
  "subject": "cIIIs04",
  "stored": "ensemble/cIIIs04/retest/cIIIs04-2.1/A.npz",
  "git": {
-  "commit": "ea4fa694199adbc257864de9cc78268cf5186be4",
+  "commit": "0684a388741044841a02268e8350834bcff05dda",
   "branch": "modular-pipeline",
   "dirty (src/ and the card's bench modules)": [
-   "M src/tractline/pipeline.py",
-   "M src/tractline/prep.py",
-   "?? src/tractline/config.py"
+   "M bench/calibration_card.py",
+   "M bench/calibration_runs.py",
+   "M src/tractline/config.py"
   ]
  },
- "seconds": 88.7,
+ "seconds": 85.2,
+ "path": "run_scan (pipeline.execute)",
+ "config sha256": "43c84606d585e5a1a4f0720b7df7ac74f17aac6b5927c9bd253c074bd7f8bc4b",
  "streamlines (new, stored)": [
   64378,
   64378
