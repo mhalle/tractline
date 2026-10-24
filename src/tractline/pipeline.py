@@ -4,6 +4,9 @@
     corr, tg, labels = run(s, None, timer, device="mps")   # None: the default labeler (RapidParc)
     print(corr.note, corr.warnings)                         # what corrected it, or why nothing did
 
+    cfg = PipelineConfig.preset("default").with_(model={"shell": 2000.0}, denoise="mppca")   # tractline.config
+    r = execute(s, cfg, timer, device="mps")                # Run: r.correction, r.tractogram, r.labels, r.config
+
 The subject s: any object with these fields (bids.Subject and the bench's _ds001226.Subject are two):
   dwi         (X, Y, Z, G) the diffusion series as acquired (one phase-encoding direction)
   affine      4x4 voxel -> RAS mm; vox (3,) voxel sizes mm
@@ -26,8 +29,9 @@ Stages, and where they run:
             float32, ~18 s on the M2), then applied to the DWI (susceptibility.apply: CPU, float64, ~1 s);
             residual_left: how much of the pair's difference the field leaves - above RESIDUAL_WARN a
             warning (Correction.warnings), never a refusal. Skipped when there is no pair (can_correct).
-  track     the tracker's input (prep.prepare: b0s + the b = 2800 shell, gradients in RAS, the
-            median_otsu mask, exact in torch on the pipeline's device; ~3 s), UKF two-tensor with the
+  mask      median_otsu of the mean b0 (brain_mask; exact in torch on the pipeline's device; ~3 s)
+  track     the tracker's input (prep.prepare: b0s + the b = 2800 shell, gradients in RAS; ~0.1 s),
+            UKF two-tensor with the
             ORG settings and the binary's seeds (ukf.track: on "mps" the Metal kernel, float32 steps
             from float64 seeds, ~27 s; on "cuda" the Triton block kernel; on the CPU one process per
             core, the fast step; compiled by torch.compile only on request, TRACTLINE_COMPILE=1 (ukf.can_compile:
@@ -37,6 +41,12 @@ Stages, and where they run:
   TRX       optional: the tractogram with labels and tract probabilities (trx.write)
 Dependencies of the default path: numpy, torch and RapidParc's weights - no scipy, no nibabel (reading the
 scan is the caller's), no TractCloud code (bench/dependency_check.py).
+
+Configuration (tractline.config): the stages are slots - denoise, field, mask, model, track, bundles - each off or one
+implementation with its options; a PipelineConfig names them all, checks them before any work, and hashes what changes the
+outputs (calibration maps key on that hash). execute(s, cfg, ...) runs one; run()'s keywords build one from the "default"
+preset (config_for) and call execute, so both paths are the same code. The run's config and runtime are in
+Correction.provenance (execute: also Run.config and Run.runtime).
 
 Conventions at every module boundary (_ds001226, susceptibility, prep, ukf, the labelers, t1check):
   volumes   numpy (X, Y, Z[, V]) in the NIfTI's voxel order; affine voxel -> RAS mm; voxel sizes as
@@ -55,6 +65,8 @@ import numpy as np, torch
 from . import susceptibility as S
 from . import ukf as U
 from .prep import prepare
+from .mask import median_otsu
+from .config import PipelineConfig
 from .labelers.base import Labels
 
 ESTIMATE_THREADS = 16            # the field estimate on the CPU: its problem is small (~5e5 voxels); on 48 vCPUs
@@ -144,6 +156,7 @@ class Correction:
     residual_left: float | None = None   # the pair's mean-b0 difference left after correction (residual_left)
     warnings: list = field(default_factory=list)
     denoise: dict | None = None  # the opt-in denoising's settings and what it estimated (denoise_subject); None: not denoised
+    provenance: dict | None = None   # the run's config (PipelineConfig.to_dict) and runtime (execute); None: correct() alone
 
 
 RESIDUAL_WARN = 0.5              # residual_left above this: a warning, never a refusal. On 23 judged good pairs
@@ -304,25 +317,31 @@ GPU_BATCH = 200_000              # on a GPU: each block steps until its longest 
                                  # does not depend on its batch; gpu_track_profile.py); ~0.4 GB of device memory
 
 
-def track(s, dwi, timer: Timer, prefix="", device="mps", workers=None, shell=2800.0, tracker=None) -> Tractogram:
-    """device "mps": the Metal kernel; "cuda": the Triton block kernel (ukf_triton_block); "cpu": ukf's
-    steps in float32 with the fast step (ukf._ukf_step_fast: as close to float64 as the binary's operation
-    order in float32, ukf_cpu_tune.py), through torch.compile only when TRACTLINE_COMPILE=1 (ukf.can_compile; the
-    parent compiles, ~10-80 s, in stats["compile_s"], and each worker then loads it), batches of
-    CPU_BATCH on `workers` processes of one thread (default: one per core). Workers are spawned, so a
-    script running the CPU path needs an `if __name__ == "__main__":` guard. shell: the b-value tracked
-    (prep.prepare; ds001226's 2800, the nearest to TractCloud's training b = 3000). tracker: opt-in settings passed
-    on to ukf.track (e.g. {"Rs": 0.1} or {"step_length": 0.6}; its keywords: seeding_threshold, stopping_fa,
-    stopping_threshold, step_length, record_length, max_half_length, Qm, Ql, Rs, tie_angle, tie_sw2); None or {} is today's, the ORG
-    settings, and the labelers were trained on tractography made with those."""
-    if torch.device(device).type == "cpu" and (workers or os.cpu_count() or 1) > 1:
-        U.require_main_guard()                                             # before any work, not after it
+def _check_tracker(tracker) -> dict:
     tracker = dict(tracker or {})
     unknown = set(tracker) - TRACKER_SETTINGS
     if unknown:
         raise ValueError(f"track: {sorted(unknown)} not among the tracker's settings {sorted(TRACKER_SETTINGS)}")
-    with timer(prefix + "prep"):
-        t = prepare(dwi, s.affine, s.bval, s.bvec, shell=shell, device=device)
+    return tracker
+
+
+def _check_shell(bval, shell):
+    """prepare's own check, made before any work: the shell tracked, and a b0."""
+    bval = np.asarray(bval)
+    if not (np.abs(bval - shell) < 50).any() or not (bval < 50).any():
+        raise ValueError(f"prepare: no b = {shell:g} shell or no b0 in this scan (b-values: {sorted(set(np.round(bval).astype(int)))})")
+
+
+def brain_mask(dwi, bval, timer: Timer, prefix="", device="mps") -> np.ndarray:
+    """The mask slot's median-otsu: dipy's median_otsu (median radius 4, 4 passes; tractline.mask) of the mean b0. It is
+    prep.prepare's own mask, voxel for voxel: prepare keeps every b0, in order, so the mean is of the same volumes."""
+    bval = np.asarray(bval)
+    with timer(prefix + "mask"):
+        b0 = dwi[..., bval < 50].astype(np.float32).mean(-1)
+        return median_otsu(b0, median_radius=4, numpass=4, device=device)[1]
+
+
+def _ukf(t, timer: Timer, prefix, device, workers, tracker: dict) -> Tractogram:
     with timer(prefix + "load"):                                          # on the host: the seeds' fit in float64 there, the same
         D = U.from_arrays(t.dwi, t.header, t.mask)                         # seeds on every device (on CUDA's float64: +-2 fibers)
     with timer(prefix + "ukf"):
@@ -337,6 +356,27 @@ def track(s, dwi, timer: Timer, prefix="", device="mps", workers=None, shell=280
     return Tractogram(fibers, stats, t.mask, t.info)
 
 
+def track(s, dwi, timer: Timer, prefix="", device="mps", workers=None, shell=2800.0, tracker=None) -> Tractogram:
+    """The mask (brain_mask), the tracker's input (prep.prepare) and the tracking. device "mps": the Metal kernel;
+    "cuda": the Triton block kernel (ukf_triton_block); "cpu": ukf's steps in float32 with the fast step (ukf._ukf_step_fast: as close to float64 as the binary's operation
+    order in float32, ukf_cpu_tune.py), through torch.compile only when TRACTLINE_COMPILE=1 (ukf.can_compile; the
+    parent compiles, ~10-80 s, in stats["compile_s"], and each worker then loads it), batches of
+    CPU_BATCH on `workers` processes of one thread (default: one per core). Workers are spawned, so a
+    script running the CPU path needs an `if __name__ == "__main__":` guard. shell: the b-value tracked
+    (prep.prepare; ds001226's 2800, the nearest to TractCloud's training b = 3000). tracker: opt-in settings passed
+    on to ukf.track (e.g. {"Rs": 0.1} or {"step_length": 0.6}; its keywords: seeding_threshold, stopping_fa,
+    stopping_threshold, step_length, record_length, max_half_length, Qm, Ql, Rs, tie_angle, tie_sw2); None or {} is today's, the ORG
+    settings, and the labelers were trained on tractography made with those."""
+    if torch.device(device).type == "cpu" and (workers or os.cpu_count() or 1) > 1:
+        U.require_main_guard()                                             # before any work, not after it
+    tracker = _check_tracker(tracker)
+    _check_shell(s.bval, shell)
+    mask = brain_mask(dwi, s.bval, timer, prefix, device)
+    with timer(prefix + "prep"):
+        t = prepare(dwi, s.affine, s.bval, s.bvec, shell=shell, device=device, mask=mask)
+    return _ukf(t, timer, prefix, device, workers, tracker)
+
+
 def default_labeler(device="mps"):
     """The pipeline's labeler: RapidParc (labelers.rapidparc; its released "rapidparc" model). On TractCloud's
     own test split 94.5 % tract accuracy against TractCloud's 92.0 % at its trained context, the steadiest
@@ -346,16 +386,161 @@ def default_labeler(device="mps"):
     return Labeler(device)
 
 
-def label(tg: Tractogram, labeler, timer: Timer, prefix="") -> Labels:
+def label(tg: Tractogram, labeler, timer: Timer, prefix="", draw=0, grouping="index") -> Labels:
+    """One draw of the labeler on the tractogram, with the cluster log-probabilities. grouping other than "index"
+    (RapidParc's hash groupings) keys each streamline by its seed voxel (ensemble.seed_keys)."""
     with timer(prefix + "label"):
-        return labeler(tg.fibers, draws=(0,), logp=True)
+        if grouping == "index":
+            return labeler(tg.fibers, draws=(draw,), logp=True)
+        from .ensemble import seed_keys
+        return labeler(tg.fibers, draws=(draw,), logp=True, keys=seed_keys(tg.stats["seed_voxel"]), grouping=grouping)
 
 
-STAGES = ("field_estimate", "field_apply", "prep", "load", "ukf", "label")
+STAGES = ("field_estimate", "field_apply", "mask", "prep", "load", "ukf", "label")
+
+
+def _bundles_of(labeler) -> dict:
+    """A labeler object as the bundles slot's entry: RapidParc's and TractCloud's with their settings (read from the
+    object), anything else as "caller-object" (its settings unknown: the config is then not hashable). By module name, so
+    that no labeler module is imported here. The object is trusted beyond what is read: weights loaded into it by hand
+    would still hash as its model's; its batch size is not read (the labels do not depend on it)."""
+    kind = type(labeler)
+    where = f"{kind.__module__}.{kind.__qualname__}"
+    if where == "tractline.labelers.rapidparc.Labeler":
+        return {"impl": "rapidparc", "model": labeler.model_name}
+    if where == "tractline.labelers.tractcloud.Labeler":
+        return {"impl": "tractcloud", "upstream": bool(labeler.upstream),
+                "exact": "no" if type(labeler.model).__name__ == "MatmulDGCNN" else "yes"}
+    name = getattr(labeler, "__qualname__", None)
+    return {"impl": "caller-object",
+            "class": f"{getattr(labeler, '__module__', kind.__module__)}.{name}" if name else where}
+
+
+def _labeler(cfg: PipelineConfig, labeler, device):
+    """The labeler the bundles slot names: the caller's object when given (checked against the slot), else made here."""
+    st = cfg["bundles"]
+    if st is None:
+        if labeler is not None:
+            raise ValueError("execute: a labeler was given, but the bundles slot is off")
+        return None
+    o = st.opts()
+    if labeler is not None:
+        got = _bundles_of(labeler)
+        if got["impl"] != st.impl or any(o.get(k) != v for k, v in got.items() if k not in ("impl", "class")):
+            raise ValueError(f"execute: the labeler given ({got}) is not the bundles slot's ({st.impl}, {o})")
+        return labeler
+    if st.impl == "rapidparc":
+        from .labelers.rapidparc import Labeler
+        return Labeler(device, model=o["model"])
+    if st.impl == "tractcloud":
+        from .labelers.tractcloud import Labeler
+        return Labeler(device, exact=o["exact"] == "yes", upstream=o["upstream"])
+    raise ValueError(f"execute: bundles {st.impl!r} needs the labeler object itself (labeler=)")
+
+
+def config_for(labeler=None, shell=2800.0, tracker=None, denoise=None, denoise_order="acquired") -> PipelineConfig:
+    """run()'s keywords as a config: the "default" preset with them applied. labeler: None for the preset's (RapidParc),
+    or an object (_bundles_of)."""
+    changes = {"model": {"shell": float(shell)}}
+    tracker = _check_tracker(tracker)
+    if tracker:
+        changes["track"] = tracker
+    if denoise is not None:
+        from .denoise import parse
+        method, settings = parse(denoise)
+        changes["denoise"] = {"impl": method, **settings, "order": denoise_order}
+    if labeler is not None:
+        changes["bundles"] = _bundles_of(labeler)
+    return PipelineConfig.preset("default").with_(**changes)
+
+
+def _denoise_spec(st) -> str:
+    """The denoise slot's entry as tractline.denoise's name ("mppca:r2", "patch2self:s0")."""
+    o = st.opts()
+    return f"mppca:r{o['patch_radius']}" if st.impl == "mppca" else f"patch2self:s{o['sketch_seed']}"
+
+
+def runtime_record(device, workers, labeler) -> dict:
+    """What a run's config leaves out because it does not change the outputs (or should not): where and how it ran."""
+    import platform
+    from . import __version__
+    cpu = torch.device(device).type == "cpu"
+    return {"tractline": __version__, "torch": torch.__version__, "numpy": np.__version__,
+            "python": platform.python_version(), "device": str(device),
+            "workers": (workers or os.cpu_count() or 1) if cpu else None,       # the CPU tracker's processes, as used
+            "torch_compile": bool(U.can_compile()) if cpu else False,          # TRACTLINE_COMPILE: the CPU tracker compiled
+            "labeler": None if labeler is None else f"{type(labeler).__module__}.{type(labeler).__qualname__}"}
+
+
+@dataclass
+class Run:
+    correction: Correction
+    tractogram: Tractogram
+    labels: Labels | None        # None: the bundles slot is off
+    config: dict                 # PipelineConfig.to_dict(): the slots, their versions and options, origin, sha256
+    runtime: dict                # runtime_record
+
+    def __iter__(self):          # corr, tg, labels = execute(...), as run() returns them
+        return iter((self.correction, self.tractogram, self.labels))
+
+
+def execute(s, cfg: PipelineConfig, timer: Timer, prefix="", device="mps", workers=None, labeler=None, trx=None,
+            release=True, **trx_options) -> Run:
+    """The pipeline as cfg configures it (tractline.config), on subject s. Every check runs before any work: the
+    config's own (at its construction), the shell tracked, the CPU's main guard, the labeler against the bundles slot.
+    Then, in SLOTS' order: denoise (when on; order "acquired" before the field, "corrected" after it), field (when on
+    and the subject has a pair: correct; off: the DWI as acquired, the reason in Correction.note), mask, model (the
+    tracker's input), track, bundles (when on). labeler: an object for the bundles slot (needed for "caller-object";
+    otherwise made from the slot, or the caller's checked against it). device, workers, trx and release as run()'s:
+    runtime, recorded beside the config, not in it. Times: timer.total(*pipeline_stages(prefix)), and "denoise"."""
+    if not isinstance(cfg, PipelineConfig):
+        raise TypeError(f"execute: cfg is a {type(cfg).__name__}, not a PipelineConfig")
+    if not cfg.is_on("track"):
+        raise ValueError("execute: the track slot is off; there is nothing to run without it yet")
+    shell, tracker = cfg.opts("model")["shell"], cfg.opts("track")
+    _check_shell(s.bval, shell)
+    if trx is not None and not cfg.is_on("bundles"):
+        raise ValueError("execute: TRX output needs labels, and the bundles slot is off")
+    if torch.device(device).type == "cpu" and (workers or os.cpu_count() or 1) > 1:
+        U.require_main_guard()                                             # before the 20 s field estimate
+    labeler = _labeler(cfg, labeler, device)
+    dn = cfg["denoise"]
+    spec, order, dstats = (None, None, None) if dn is None else (_denoise_spec(dn), dn.opts()["order"], None)
+    if order == "acquired":
+        s, dstats = denoise_subject(s, timer, spec, workers)
+    with exact_float32(device):
+        if cfg.is_on("field"):
+            corr = correct(s, timer, device)
+        else:
+            timer.skip("field_estimate"); timer.skip("field_apply")
+            corr = Correction(np.array(s.dwi, np.float32), None, None, None, applied=False,
+                              note="not corrected: the field slot is off")
+        if order == "corrected":
+            corr.dwi, dstats = denoise_corrected(corr.dwi, s.bval, timer, spec, workers)
+        corr.denoise = dstats
+        mask = brain_mask(corr.dwi, s.bval, timer, prefix, device)
+        with timer(prefix + "prep"):
+            t = prepare(corr.dwi, s.affine, s.bval, s.bvec, shell=shell, device=device, mask=mask)
+        tg = _ukf(t, timer, prefix, device, workers, tracker)
+        if labeler is None:
+            labels = None
+            timer.skip(prefix + "label")
+        else:
+            b = cfg.opts("bundles")
+            labels = label(tg, labeler, timer, prefix, draw=b.get("draw", 0), grouping=b.get("grouping", "index"))
+    if trx is not None:
+        from . import trx as _trx
+        with timer(prefix + "write_trx"):
+            _trx.write(trx, s, tg, labels, **trx_options)
+    if release:
+        release_memory(device)
+    config, runtime = cfg.to_dict(), runtime_record(device, workers, labeler)
+    corr.provenance = {"config": config, "runtime": runtime}
+    return Run(corr, tg, labels, config, runtime)
 
 
 def run(s, labeler, timer: Timer, prefix="", trx=None, device="mps", workers=None, release=True, shell=2800.0, tracker=None,
-        denoise=None, denoise_order="acquired", **trx_options):
+        denoise=None, denoise_order="acquired", config=None, **trx_options):
     """The whole pipeline on a subject: (Correction, Tractogram, Labels). labeler: None for the default
     (default_labeler: RapidParc), or any labeler (labelers.tractcloud.Labeler, ...). Its time is
     timer.total(*pipeline_stages(prefix)). trx: also write the tractogram there as TRX (trx.write;
@@ -368,29 +553,16 @@ def run(s, labeler, timer: Timer, prefix="", trx=None, device="mps", workers=Non
     container's own); tracker: opt-in tracker settings (track), None for today's. denoise: opt-in, None for today's,
     or "mppca" / "patch2self" (denoise_subject; "mppca:r3" with a setting), its settings and estimates in Correction.denoise and its time in
     timer.seconds["denoise"] (not among pipeline_stages), and `workers` its processes too; denoise_order: "acquired" (before the field; the default)
-    or "corrected" (denoise_corrected, for comparison)."""
-    if denoise is not None and denoise_order not in DENOISE_ORDERS:
-        raise ValueError(f"denoise_order: {denoise_order!r} is not one of {DENOISE_ORDERS}")
-    if torch.device(device).type == "cpu" and (workers or os.cpu_count() or 1) > 1:
-        U.require_main_guard()                                             # before the 20 s field estimate
-    labeler = labeler if labeler is not None else default_labeler(device)
-    if denoise is not None and denoise_order == "acquired":
-        s, dn = denoise_subject(s, timer, denoise, workers)
-    with exact_float32(device):
-        corr = correct(s, timer, device)
-        if denoise is not None:
-            if denoise_order == "corrected":
-                corr.dwi, dn = denoise_corrected(corr.dwi, s.bval, timer, denoise, workers)
-            corr.denoise = dn
-        tg = track(s, corr.dwi, timer, prefix, device, workers, shell, tracker)
-        labels = label(tg, labeler, timer, prefix)
-    if trx is not None:
-        from . import trx as _trx
-        with timer(prefix + "write_trx"):
-            _trx.write(trx, s, tg, labels, **trx_options)
-    if release:
-        release_memory(device)
-    return corr, tg, labels
+    or "corrected" (denoise_corrected, for comparison). config: a PipelineConfig instead of shell, tracker, denoise and
+    denoise_order (which must then be left as they are). Either way the run goes through execute, the config and runtime
+    recorded in Correction.provenance."""
+    if config is None:
+        if denoise is not None and denoise_order not in DENOISE_ORDERS:
+            raise ValueError(f"denoise_order: {denoise_order!r} is not one of {DENOISE_ORDERS}")
+        config = config_for(labeler, shell, tracker, denoise, denoise_order)
+    elif (shell, tracker or None, denoise, denoise_order) != (2800.0, None, None, "acquired"):
+        raise ValueError("run: with config=, set shell, tracker and denoise in the config, not as keywords too")
+    return tuple(execute(s, config, timer, prefix, device, workers, labeler, trx, release, **trx_options))
 
 
 def pipeline_stages(prefix=""):

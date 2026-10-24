@@ -2,11 +2,15 @@
  "subject": "cIIIs04",
  "stored": "ensemble/cIIIs04/retest/cIIIs04-2.1/A.npz",
  "git": {
-  "commit": "53a0e2e7da6200b79655a020ef8cf20797894cc2",
-  "branch": "robustness",
-  "dirty (src/ and the card's bench modules)": []
+  "commit": "ea4fa694199adbc257864de9cc78268cf5186be4",
+  "branch": "modular-pipeline",
+  "dirty (src/ and the card's bench modules)": [
+   "M src/tractline/pipeline.py",
+   "M src/tractline/prep.py",
+   "?? src/tractline/config.py"
+  ]
  },
- "seconds": 86.2,
+ "seconds": 88.7,
  "streamlines (new, stored)": [
   64378,
   64378

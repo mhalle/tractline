@@ -14,7 +14,7 @@ PLATFORMS = [("M2 GPU (MPS)", "mps"), ("M2 CPU, 8 workers", "m2cpu"), ("L4", "l4
              ("x86 CPU, 32 workers", "cpu")]
 SCANS = [("Stanford HARDI (no correction; 150 dirs, b 2000)", "hardi"), ("ds001226 PAT16 (corrected; 50 dirs, b 2800)", "pat16"),
          ("ds005123 sub-10317 (field maps refused; 30 dirs, b 3250)", "ds005123")]
-STAGES = ["field_estimate", "field_apply", "prep", "load", "ukf", "label"]
+STAGES = ["field_estimate", "field_apply", "mask", "prep", "load", "ukf", "label"]   # "mask" apart from "prep" since 2026-10-24 (0 in older results)
 
 
 def load(platform, tag):
@@ -22,7 +22,7 @@ def load(platform, tag):
     return json.loads(f.read_text()) if f.exists() else None
 
 
-LABELS = {"field_estimate": "field estimate", "field_apply": "field apply", "prep": "prep (shell, gradients, mask)",
+LABELS = {"field_estimate": "field estimate", "field_apply": "field apply", "mask": "mask (median_otsu)", "prep": "prep (shell, gradients; before 2026-10-24 the mask too)",
           "load": "load (tracker input)", "ukf": "tracking (UKF)", "label": "labeling (RapidParc)"}
 
 

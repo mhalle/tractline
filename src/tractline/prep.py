@@ -23,10 +23,11 @@ class TrackerInput:
     info: dict
 
 
-def prepare(dwi, affine, bval, bvec, shell=2800.0, device="cpu") -> TrackerInput:
+def prepare(dwi, affine, bval, bvec, shell=2800.0, device="cpu", mask=None) -> TrackerInput:
     """dwi (X, Y, Z, G) int or float, affine its voxel -> RAS matrix, bval (G,), bvec (3, G) FSL. In memory:
     ukf.from_arrays(t.dwi, t.header, t.mask) takes it. device: where the mask's median passes
-    run (the same mask either way)."""
+    run (the same mask either way). mask: a brain mask (X, Y, Z) already made (pipeline.brain_mask: the same
+    median_otsu of the same mean b0), used as it is instead of computing it here."""
     keep = (bval < 50) | (np.abs(bval - shell) < 50)
     if not (np.abs(bval - shell) < 50).any() or not (bval < 50).any():
         raise ValueError(f"prepare: no b = {shell:g} shell or no b0 in this scan (b-values: {sorted(set(np.round(bval).astype(int)))})")
@@ -51,8 +52,13 @@ def prepare(dwi, affine, bval, bvec, shell=2800.0, device="cpu") -> TrackerInput
     for n, v in enumerate(g):
         hdr[f"DWMRI_gradient_{n:04d}"] = f"{v[0]:.8f} {v[1]:.8f} {v[2]:.8f}"
     stored = dwi.astype(np.float32 if floating else np.int16)
-    b0 = dwi[..., bval < 50].astype(np.float32).mean(-1)
-    _, mask = median_otsu(b0, median_radius=4, numpass=4, device=device)
+    if mask is None:
+        b0 = dwi[..., bval < 50].astype(np.float32).mean(-1)
+        _, mask = median_otsu(b0, median_radius=4, numpass=4, device=device)
+    else:
+        mask = np.asarray(mask, bool)
+        if mask.shape != dwi.shape[:3]:
+            raise ValueError(f"prepare: the mask's shape {mask.shape} is not the DWI's {dwi.shape[:3]}")
     info = {"shape": list(dwi.shape), "voxel_mm": [round(float(v), 3) for v in spacing], "b0": int((bval < 50).sum()),
             "shell": shell, "directions": int((bval > 50).sum()), "affine_det_positive": bool(np.linalg.det(M) > 0),
             "mask_voxels": int(mask.sum())}

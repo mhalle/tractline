@@ -6602,3 +6602,56 @@ hook) and `calibration_crosssite.py` 06dcf9e7… (`map_on`, `stated`); `_registe
 `calibration_cohortII.json` 7abc92d5… (the baseline, mode 3); `calibration_crossscanner.json` 62a8e75c…; every
 record's and statements file's SHA-256 in its `provenance`; history in `DATA/ensemble/cohortII_module_history.txt`
 (entry 6). Git: ismrm2027 at 975e6da, the scripts untracked; no commits.
+
+## 2026-10-24 Modular pipeline, phase A: slots, a checked config, its hash; today's output unchanged
+
+**What.** Phase A of `docs/sota-pipeline-design.md`, on branch `modular-pipeline` (worktree ../tractline-modular, from
+ismrm2027 at ea4fa69).
+- `tractline.config` (new, no numpy or torch): six slots in run order (denoise, field, mask, model, track, bundles),
+  each off or one registered implementation with checked options. `PipelineConfig` is frozen and checked at
+  construction (unknown slots, implementations, option keys and values, a required slot that is off, all raise before
+  any work). Its hash is the SHA-256 of canonical JSON over the slots that are on: implementation, version, every option
+  with defaults filled in. Runtime choices (device, workers, TRX) are recorded beside it, not in it. A labeler object
+  the caller made ("caller-object") makes the config unhashable (hash None).
+- Preset `ukf-rapidparc@1` (alias `default`) is today's pipeline. Its hash is pinned in `tests/test_config.py`:
+  28d01a1d3947a3f2f2de450b9b472c61e228129a156fad14be37b252f5574678.
+- `pipeline.execute(s, cfg, ...)` runs a config and returns `Run` (correction, tractogram, labels, config, runtime;
+  unpacks like run()'s tuple). `run()` keeps its signature, builds its config from `default` (`config_for`) and calls
+  execute, so there is one code path; `config=` is new. `Correction.provenance` holds the config and the runtime.
+- The mask is its own slot: `pipeline.brain_mask` (the same median_otsu of the same mean b0) and `prep.prepare(...,
+  mask=)`. Timer names: "mask" is new (about 3 s on PAT16), "prep" drops from about 3.1 s to 0.03 s; `STAGES` and
+  `pipeline_stages` include "mask", so totals are unchanged. `pipeline.track()` keeps its signature and does the same.
+- New, opt-in: `field=None` (track the DWI as acquired). Unknown tracker settings now raise before the field estimate,
+  not after it.
+
+**Checks.**
+- PAT16 on the M2 (mps): old code (ea4fa69's src) against the new `run()` and the new `execute(default)`: the field, motion,
+  corrected DWI (SHA-256), mask, every streamline point, seed voxels, kept flags, tracts, cluster log-probabilities and
+  lengths are identical, array for array (42,168 streamlines, 32,242 labeled, both paths).
+- cIIIs04 through `calibration_runs.py verify` (P.correct + P.track, the compatibility path): same as stored (seed keys,
+  clusters, voxel counts, lengths, mask equal; max vertex difference 0.025 mm, the record's quantization), 88.7 s;
+  `results/calibration_verify_cIIIs04.json` rewritten.
+- Tests: the existing 114 pass; `tests/test_config.py` adds 9 (pinned hash, the tracker's defaults equal ukf.track's
+  signature, construction checks, hash stability, round trip, no numpy or torch in config, the mask slot equal to
+  prepare's own, execute's record and field off, the review's fixes): 123 pass.
+
+**Review** (an independent agent; nothing serious on the default path). Fixed:
+- TractCloud's `exact` had an "auto" that resolved by device, and a caller's labeler was allowed to differ from it:
+  the same hash for different labels. Now "yes" (the default) or "no", always named, and checked.
+- An int given for a float option in a hand-built `Stage` changed the hash: the constructor now normalizes every stage.
+- `origin` is no longer compared, returns to the preset's name when the stages do, and is not taken on trust from a
+  record ("(from a record)" unless the stages are a preset's); `from_dict` requires impl and version.
+- Presets and aliases are read-only (`MappingProxyType`).
+- numpy numbers are accepted as option values (the old `run()` passed them through).
+- `bench/hardi_paths.py` and `bench/timing_table.py` count the new "mask" stage.
+- `runtime_record` gives the CPU tracker's workers as used and whether it was compiled (TRACTLINE_COMPILE).
+Left for the owner: the device is outside the hash, and the kernels differ by device (decision 6). Until it is
+settled, the config's docstring says a calibration map matches on the hash and the device type both.
+PAT16 rechecked after the fixes: identical, array for array.
+
+**Not in this step** (moved to where they are first used, phase B): the `Scan` artifact state, `external.run` and the
+content-addressed cache. Requirements are between slots, not yet between artifacts. The bench's `pipeline_settings()`
+dicts are not yet replaced by `cfg.to_dict()`; the calibration maps still hash those dicts.
+
+Provenance: config.py 7dc99aaa…, pipeline.py 6050230a…, prep.py 8e3f5b24…;
+uncommitted.
