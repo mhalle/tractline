@@ -3,6 +3,8 @@ PTT as step 6 ran it (robust_benchmark.py's records), on the ISMRM 2015 phantom 
 same work files, tissue maps, ACT rule and seed points.
 
     uv run --group dipy --group rankfield bench/ptt_compare.py run --scan phantom --variant compat [--seeds N]
+    uv run --group dipy --group rankfield bench/ptt_compare.py run --scan phantom --variant mm --probe-length 6 --max-angle 20
+    uv run --group dipy --group rankfield bench/ptt_compare.py subsample --n 40000 --sources dipy ukf compat mm
     uv run --group dipy --group rankfield bench/ptt_compare.py summary          # results/ptt_compare.json
 
 Variants (the FODs and the tracker; everything else as step 6):
@@ -76,11 +78,20 @@ def act_maps(pve, data):
     return include, csf.copy()
 
 
+def run_name(variant, probe_length, max_angle):
+    """The run's folder name: the variant, and the tracker's settings when not the defaults (1.5 mm, 10 degrees)."""
+    default = ptt.Params()
+    if probe_length == default.probe_length and max_angle == default.max_angle:
+        return variant
+    return f"{variant}_probe{probe_length:g}_angle{max_angle:g}"
+
+
 def run(args):
     scan, variant = args.scan, args.variant
     subject = RB.subject_of(scan)
     n = args.seeds or RB.SEEDS["phantom" if scan == "phantom" else "cIIIs04"]
-    d = OUT / variant / subject
+    name = run_name(variant, args.probe_length, args.max_angle)
+    d = OUT / name / subject
     out = d / ("record.npz" if scan == "phantom" else f"{scan}.npz")
     if out.exists() and not args.pilot:
         raise SystemExit(f"{out} exists; not overwritten")
@@ -102,7 +113,8 @@ def run(args):
     with timer("track"):
         pmf = F.PmfField(coeffs, mask, default_sphere, DEVICE)
         act = F.Act(include, exclude, DEVICE)
-        tracker = ptt.Tracker(pmf, act, affine, vox, ptt.Params(min_len=20.0, max_len=250.0), DEVICE,
+        tracker = ptt.Tracker(pmf, act, affine, vox, ptt.Params(min_len=20.0, max_len=250.0, probe_length=args.probe_length,
+                                                                  max_angle=args.max_angle), DEVICE,
                               _dipy_compat=variant == "compat", backend=args.backend)
         fibers, tinfo = tracker.track(seeds, seed=1)
     if args.pilot:                                                       # a timing and sanity run: nothing written
@@ -117,7 +129,7 @@ def run(args):
         labels = labeler(fibers, draws=(0,), logp=True)
     P.release_memory(DEVICE)
     _, _, lens = lengths(fibers)
-    log = {"variant": variant, "work": winfo, "seeds": int(len(seeds)), "tracker": tinfo, "streamlines": len(fibers),
+    log = {"variant": variant, "name": name, "work": winfo, "seeds": int(len(seeds)), "tracker": tinfo, "streamlines": len(fibers),
            "labeled": int(labels.keep.sum()), "Other share": round(float((labels.tract == OTHER).mean()), 4),
            "length mm (quartiles), all": [round(float(x), 1) for x in np.quantile(lens, [0.25, 0.5, 0.75])],
            "csd": {"order": order, "response evals": resp.evals.tolist(), "response S0": resp.S0, **cinfo},
@@ -141,7 +153,7 @@ def run(args):
     RB.place(tmp, out)
     log["total_s"] = round(time.time() - t0, 1)
     RB.log_update(d / "runs.json", scan, log)
-    print(variant, scan, json.dumps({k: log[k] for k in ("streamlines", "labeled", "Other share", "seconds")}), flush=True)
+    print(name, scan, json.dumps({k: log[k] for k in ("streamlines", "labeled", "Other share", "seconds")}), flush=True)
     if scan == "phantom":
         import robust_phantom as RP
         RB.log_update(d / "runs.json", "scoring_seconds", RP.score(d))
@@ -181,10 +193,12 @@ def summary(args):
     dipy_ph = RB.OUT / "ptt" / "phantom"
     if (dipy_ph / "score" / "labeled" / "results.json").exists():
         res["phantom"]["DIPY (step 6)"] = phantom_summary(dipy_ph)
-    for v in VARIANTS:
-        d = OUT / v / "phantom"
-        if (d / "score" / "labeled" / "results.json").exists():
-            res["phantom"][v] = phantom_summary(d)
+    for d in sorted(OUT.glob("*/phantom")):
+        if d.parent.name != "inputs" and not d.parent.name.startswith("matched") and (d / "score" / "labeled" / "results.json").exists():
+            res["phantom"][d.parent.name] = phantom_summary(d)
+    for m in sorted(OUT.glob("matched_*")):
+        res[f"phantom, count-matched ({m.name})"] = {d.name: phantom_summary(d) for d in sorted(m.iterdir())
+                                                     if (d / "score" / "labeled" / "results.json").exists()}
     dA = RB.OUT / "ptt" / RB.SUBJECT / "A.npz"
     reps = sorted((RB.OUT / "ptt" / RB.SUBJECT / "replicates").glob("A_seed*_track*.npz"))
     reps = [p for p in reps if not p.stem.endswith(("_edge", "_nodata"))]
@@ -201,15 +215,69 @@ def summary(args):
     print(json.dumps(res, indent=1, default=str))
 
 
+def source_dir(name):
+    """A phantom run's folder: "dipy" (step 6), "ukf" (today's UKF, robust_phantom), or one of ours (OUT/<name>)."""
+    import robust_phantom as RP
+    if name == "dipy":
+        return RB.OUT / "ptt" / "phantom"
+    if name == "ukf":
+        return RP.OUT / "today"
+    return OUT / name / "phantom"
+
+
+def subsample(args):
+    """Count-matched phantom runs: each source's streamlines, n drawn at random (generator 0) with their labels, into
+    OUT/matched_<n>/<source>/, scored with the 2023 scoring (as step 6's count controls, robust_benchmark.subsample_control:
+    F1 depends on the streamline count)."""
+    import nibabel as nib
+    import robust_phantom as RP
+    if not args.n or not args.sources:
+        raise SystemExit("subsample needs --n and --sources")
+    n = args.n
+    for name in args.sources:
+        src = source_dir(name)
+        d = OUT / f"matched_{n}" / name
+        if (d / "score" / "labeled" / "results.json").exists():
+            print(name, "scored, skipped")
+            continue
+        RB.guard(RB.OUT)
+        d.mkdir(parents=True, exist_ok=True)
+        fibers = list(nib.streamlines.load(str(src / "tractogram.trk")).streamlines)
+        if len(fibers) < n:
+            raise SystemExit(f"{name}: {len(fibers)} streamlines, fewer than {n}")
+        lab = np.load(src / "labels.npz")
+        idx = np.sort(np.random.default_rng(0).choice(len(fibers), n, replace=False))
+        kept_rank = np.cumsum(lab["keep"]) - 1
+        keep = lab["keep"][idx]
+        rows = kept_rank[idx[keep]]
+        log = {"source": str(src), "streamlines": int(n), "of": len(fibers), "labeled": int(keep.sum()),
+               "Other share": round(float((lab["tract"][rows] == OTHER).mean()), 4)}
+        done = (d / "labels.npz").exists() and (d / "runs.json").exists() and \
+            "phantom" in json.loads((d / "runs.json").read_text())
+        if done and json.loads((d / "runs.json").read_text())["phantom"]["source"] != str(src):
+            raise SystemExit(f"{d} holds a subsample of another source; remove it")
+        if not done:                                                     # (re)written whole: trk, labels, then the log
+            log["trk"] = RP.write_trk(d / "tractogram.trk", [np.asarray(fibers[i], np.float32) for i in idx])
+            np.savez_compressed(d / "labels.npz", keys=lab["keys"][idx], keep=keep, tract=lab["tract"][rows],
+                                length_mm=lab["length_mm"][rows])
+            RB.log_update(d / "runs.json", "phantom", log)
+        RB.log_update(d / "runs.json", "scoring_seconds", RP.score(d))
+        print(name, json.dumps({k: log[k] for k in ("streamlines", "of", "labeled")}), flush=True)
+
+
 TRACT_LUT = None
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("what", choices=("run", "summary"))
+    ap.add_argument("what", choices=("run", "summary", "subsample"))
     ap.add_argument("--scan", choices=("phantom", "A"))
     ap.add_argument("--variant", choices=VARIANTS)
     ap.add_argument("--seeds", type=int, help="the first N of step 6's seeds (a pilot); default: all of them")
     ap.add_argument("--pilot", action="store_true", help="track and report; write nothing")
     ap.add_argument("--backend", choices=("torch", "metal"), default="torch")
+    ap.add_argument("--probe-length", type=float, default=1.5, help="mm (the study; default step 6's)")
+    ap.add_argument("--max-angle", type=float, default=10.0, help="degrees per step (the study; default step 6's)")
+    ap.add_argument("--n", type=int, help="subsample: the common streamline count")
+    ap.add_argument("--sources", nargs="+", help="subsample: dipy, ukf, or our run names")
     args = ap.parse_args()
-    {"run": run, "summary": summary}[args.what](args)
+    {"run": run, "summary": summary, "subsample": subsample}[args.what](args)

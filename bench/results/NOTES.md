@@ -6956,3 +6956,54 @@ float32. `ptt.Tracker(..., backend="metal")` uses it; `backend="torch"` stays th
   angle) should show how much of the gap such settings close: honest parameters, not a units mistake.
 - **Our own constraint sphere** shows no clear cost: `mm-own` against `mm` is F1 0.505 against 0.517 (all 21) and 0.558
   against 0.543 (found). `mm` finds CP and `mm-own` does not. The run-to-run noise is not yet measured.
+
+## 2026-10-25 PTT in real units: a parameter study and the count-matched comparison
+
+**What ran** (`bench/ptt_compare.py run --probe-length --max-angle` and `subsample`; `results/ptt_compare.json`).
+- **The study:** our PTT in real units on the phantom with DIPY's FODs (variant `mm`), probe length {1.5, 3, 6} mm × max
+  angle {10, 20}°. Otherwise step 6's inputs and scoring. Metal backend, 14–20 s of tracking a run.
+- **The count match:** every phantom run (DIPY's step 6, UKF's, our `compat`, `mm`, `mm-own` and the study's)
+  subsampled to 46,000 streamlines (generator 0; the smallest run had 46,773) with their labels, scored again (as step
+  6's count controls).
+
+**The phantom, 2023 scoring.** F1 is the mean over all 21 bundles.
+
+| run | streamlines | F1 | F1 at 46,000 | VS at 46,000 | IB at 46,000 |
+|---|---|---|---|---|---|
+| DIPY 1.12, step 6 (its units) | 61,454 | 0.583 | 0.567 | 48.9 % | 325 |
+| ours, `compat` (DIPY's units) | 61,424 | 0.583 | 0.569 | 49.0 % | 328 |
+| real, probe 1.5, 10° (as stated) | 46,773 | 0.517 | 0.516 | 37.5 % | 320 |
+| real, probe 1.5, 10°, our FODs (`mm-own`) | 47,157 | 0.505 | 0.503 | 37.7 % | 313 |
+| real, probe 3, 10° | 60,155 | 0.566 | 0.551 | 47.9 % | 331 |
+| real, probe 6, 10° | 57,029 | 0.563 | 0.551 | 47.8 % | 342 |
+| **real, probe 1.5, 20°** | 63,456 | 0.579 | **0.563** | 48.2 % | 342 |
+| real, probe 3, 20° | 62,926 | 0.576 | 0.560 | 46.8 % | 349 |
+| real, probe 6, 20° | 64,195 | 0.520 | 0.495 | 25.6 % | 391 |
+| UKF today | 61,637 | 0.412 | 0.397 | 27.5 % | 435 |
+
+**Reading.**
+- **The count explained about a quarter of the gap.** At 46,000 streamlines, real units at the stated settings lose
+  0.051 of DIPY's 0.170 gain over UKF: 30 %, not the 39 % at unmatched counts. The gap shrinks from 0.066 to 0.051,
+  almost entirely because DIPY's F1 drops 0.016 when subsampled and `mm`'s only 0.001.
+- **Honest settings close it.**
+  - In real units, a 20° maximum angle with the stated 1.5 mm probe scores 0.563 against DIPY's 0.567 (and our
+    `compat`'s 0.569), with about the same VS (48.2 % against 48.9 %) and a few more IB (342 against 325). It finds 19
+    bundles: CP lost, which `mm` found.
+  - A longer probe alone helps less (0.551 at 3 or 6 mm, 10°).
+  - Both together go too far (6 mm, 20°: 0.495, VS 25.6 %). A likely reason: in real units a 6 mm probe at 20° per
+    0.5 mm step may bend through up to about 240° (6 sub-steps of 1 mm at a curvature bound of 0.69 per mm), so the
+    look-ahead stops constraining the turn. DIPY's long probe bends a quarter as much per millimeter: each sub-step turns
+    by the bound times the nominal 0.25 mm but advances voxel_size² as far, at most about 60° over its 6 mm.
+  - **Why 20° matches DIPY.** At 2 mm voxels, DIPY's curvature bound for its stated 10° (2 sin 5° / (0.5 / 2) = 0.697 per
+    mm) is numerically the real-units bound for 20° (2 sin 10° / 0.5 = 0.695 per mm). DIPY's runs have tracked at a 20°
+    bound all along. That is a reason for the default beyond the phantom's score.
+- **So most of step 6's PTT advantage survives in real units.** What DIPY's units did amounts, in effect, to a looser
+  turn per step.
+- **Proposed defaults for the PTT preset:** real units, probe 1.5 mm, max angle 20°.
+- **Caveats.**
+  - Chosen on this phantom: six settings, scored on the same data they were chosen on. They need confirming elsewhere:
+    cIIIs04's rescan agreement (step 6's other measure), and a second phantom or simulated brain.
+  - One phantom, one run per setting, one subsample draw: the seed-to-seed noise of F1 is not measured. The only pair of
+    like runs (DIPY's and `compat`) differs by 0.002, and the 0.563 against 0.567 gap is not shown to exceed the noise.
+  - The 2023 scoring rewards valid streamlines and penalizes invalid bundles. It is not the calibration question
+    (rescan agreement), which this does not touch.

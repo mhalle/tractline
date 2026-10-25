@@ -500,11 +500,13 @@ interpolation) to understand it, and from Aydogan & Shi 2021. Our own implementa
   - With the switch our PTT reproduces DIPY's phantom scores (F1 0.583 / 0.583). On cIIIs04 it stays within DIPY's own
     seed-to-seed spread.
   - Tracking takes 10–21 s against DIPY's 177–194 s.
-  - In real units PTT still beats UKF (F1 0.505–0.517 against 0.412). Up to about 40–45 % of step 6's gain went with
-    DIPY's unit inconsistencies, pending a count-matched comparison: real units give three quarters of the
-    streamlines, and F1 depends on the count.
-  - **Next:** a small parameter study in real units (probe length near 6 mm, max angle near 20°), and a count-matched
-    comparison.
+  - In real units at the stated settings PTT still beats UKF (F1 0.505–0.517 against 0.412). 39–46 % of step 6's gain
+    seemed lost; at matched counts it is 30 % (below).
+  - **The parameter study and the count match** (NOTES 2026-10-25): at 46,000 streamlines each, real units at the
+    stated settings score 0.516 against DIPY's 0.567. With a 20° maximum angle (probe 1.5 mm) they score 0.563.
+  - **Proposed PTT defaults:** real units, probe 1.5 mm, max angle 20°. At 2 mm voxels DIPY's stated 10° is
+    numerically a 20° bound in real units, so DIPY tracked at 20° all along. They were chosen on this phantom and need
+    confirming on cIIIs04's rescan agreement and on other data.
 - **Was "still to run":** the phantom in both. Step 6's PTT advantage was measured with DIPY's units; how much of it survives
   in real units decides whether PTT earns its preset.
 
