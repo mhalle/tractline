@@ -6778,3 +6778,64 @@ subsampled levels on the CPU) and how much is the tracker's step.
     lambda scaling counts the directions: twice as many rows, half of lambda squared.
 - **Not done in phase C.** The model slot's `csd` registration (it becomes usable with `track:ptt`, phase D); peaks in
   torch; level 2 (it needs tracking).
+
+## 2026-10-24 Phase D begun: the samplers and a PTT prototype; DIPY 1.12's PTT mixes voxel and mm units
+
+**What.** `docs/sota-pipeline-design.md` section 7.2 (the plan).
+- `tractline.fields`: trilinear sampling, the PMF along a direction, and the ACT decision, with DIPY's conventions. They
+  equal DIPY's own functions (`trilinear_interpolate4d`, `SHCoeffPmfGen.get_pmf_value`, `ActStoppingCriterion.check_point`)
+  at random points, the border and outside included (`tests/test_fields.py`).
+- `tractline.ptt`: PTT with ACT, vectorized in torch: all halves of a batch step in lockstep, candidates scored in
+  blocks. `tests/test_ptt.py` covers the propagator against the exact arc and a synthetic band on the CPU and MPS.
+
+**DIPY 1.12's PTT, read** (`propspeed.pyx`, `tracker_parameters.pyx`, `tractogen.pyx` at the 1.12.1 tag; the same lines
+on master on 2026-10-24). Three places mix voxel and millimeter units:
+1. **The probe.** `calculate_ptt_data_support` advances the probe by the propagator times `params.voxel_size`, where
+   the tracking step (`parallel_transport_propagator`) and the probe's ring use `inv_voxel_size`. The probe reaches
+   voxel_size² times its stated length in mm: 1.5 mm stated is 6.6 mm at cIIIs04's 2.1 mm, 6 mm on the phantom's 2 mm.
+2. **The curvature bound.** `max_curvature = 1 / min_radius_curvature_from_angle(max_angle, step_size /
+   average_voxel_size)`, the step in voxels. The propagator applies it with `params.step_size`, in mm. The turn per step,
+   k·s, can reach 2·v̄·sin(max_angle / 2) radians: 21° at 2.1 mm for the stated 10°.
+3. **The recorded points.** PTT writes its position into `point`, and `generate_local_streamline` then adds `voxdir ×
+   inv_voxel_size × step_size`, where `voxdir` is still the half's starting direction (the seed's; in the backward half,
+   minus the first forward segment). Every recorded point but the seed, and the ACT test there, sits one step (0.5 mm)
+   from the tracker's position. So the two segments next to the seed are about 1 mm long.
+
+**Consequence.** The step 6 benchmark's PTT is the method with these three in effect. That includes its phantom result
+(F1 0.583 against UKF's 0.412). `tractline.ptt` works in real units. A private validation switch
+(`_dipy_compat=True`) reproduces DIPY's three, the oracle as it ran, and is never a pipeline option (the owner, 2026-10-24:
+units are real units). On a synthetic straight band (2 mm voxels, MPS):
+- real units: 200 of 200 seeds valid, spans 75–75.5 mm, mean segment angle 8.4°;
+- DIPY's units: 195 of 200 valid, spans from 57 mm, 11.5°.
+
+As predicted, DIPY's units are looser. Which units track the phantom's truth better is the next measurement.
+
+**Review** (an independent agent). It confirmed all three against the 1.12.1 sources and master, with line numbers:
+- `propspeed.pyx` 641–643 against 537, 679 and 1014–1018;
+- `tracker_parameters.pyx` 108–110;
+- `propspeed.pyx` 1056 with `tractogen.pyx` 275 and 314.
+
+Nothing compensates for them. DIPY's PR 3944 (April 2026) fixed other PTT bugs, not these. The review also ran DIPY's own
+`ptt_tracking` against this module on a band (2 mm voxels, 400 seeds, CPU); `tests/test_ptt.py` now repeats it:
+
+| | kept | turn per step, p99 / max | lines with two ~1 mm seed segments |
+|---|---|---|---|
+| DIPY 1.12.1 | 382 | 16.8° / 21.6° | all |
+| ours, DIPY's units (validation switch) | 382 | 16.9° / 24.1° | all |
+| ours, real units | 398 | 8.6° / 9.9° | none |
+| DIPY, 1 mm voxels | 390 | 8.5° / 11.2° | all (inconsistencies 1 and 2 vanish at 1 mm) |
+
+Fixed after the review:
+- with the switch on, the length filter is DIPY's point count;
+- seeds whose PMF has no positive value are dropped, as DIPY drops them (and counted);
+- `PmfField` refuses coefficients outside its mask;
+- wording.
+- Whether to report the three upstream is the owner's decision.
+
+**Not yet.**
+- The real-scan comparison with DIPY: distributions, since random streams cannot match. It needs the bench's tissue
+  maps for cIIIs04 and the phantom.
+- Time on a real scan.
+- The Metal kernel and counter-based random numbers.
+- The `track:ptt` slot.
+- The probe ring (`probe_count` > 1; the benchmark used 1).

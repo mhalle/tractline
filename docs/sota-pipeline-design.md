@@ -421,6 +421,81 @@ Level 2 waits for phase D: it needs the tracking on top.
   number above 1e8, e.g. fewer directions than coefficients) runs on the CPU in float64. The docstring states the
   provenance (DIPY's code read to match its behavior; our own batched implementation).
 
+### 7.2 Phase D plan: GPU PTT with ACT (2026-10-24)
+
+**The oracle,** as step 6 ran it (`_benchmark_dipy.py csd --track`): DIPY 1.12's `ptt_tracking` on the CSD's SH.
+- **Settings:** step 0.5 mm; max angle 10°; probe length 1.5 mm; probe quality 7; probe count 1; PMF threshold 0.1;
+  `default_sphere`; 20–250 mm; valid streamlines only.
+- **ACT:** include = GM + background + the field of view's faces; exclude = CSF.
+- **Seeds:** uniform in WM ≥ 0.5; seeds and tracking from fixed generators.
+- **Cost:** 193.5 s for cIIIs04's tracking on 8 CPU processes.
+
+The method, read in DIPY's code (`propspeed.pyx`, `tractogen.pyx`, `pmf.pyx`, `stopping_criterion.pyx`, the
+interpolation) to understand it, and from Aydogan & Shi 2021. Our own implementation follows, crediting both.
+- **State per half-streamline:** position (voxel coordinates); a frame (T, N1, N2); curvatures (k1, k2) in the normal
+  plane; the last accepted likelihood.
+- **Propagation:** a second-order parallel-transport step. Position += s T + s²/2 (k1 N1 + k2 N2), in voxel units through
+  1/voxel size. The tangent and N2 are updated, then the frame is re-orthonormalized. Curvatures below 1e-4 are raised
+  to it unless both are; then the step is straight.
+- **Candidates:** (k1, k2) uniform in a disk of radius 1 / r_min, where r_min = (step / mean voxel size) / 2 /
+  sin(max angle / 2).
+- **The probe:** quality - 1 sub-steps of probe length / (quality - 1) along the candidate's arc. The PMF is read along the
+  local tangent at each sub-step, and values at or below the threshold count as 0. The likelihood is (1 / (quality ×
+  count)) × (the last value + the probe's sum), to the data-support exponent.
+- **Rejection sampling:** 10 candidates estimate the maximum, which is then doubled. Up to 100 tries follow, and the first
+  with u × max < L is accepted. If none is accepted, the half stops.
+- **Initialization:** the same, with a random N2 perpendicular to the seed direction (N1 = N2 × T). The seed direction is the PMF's
+  largest peak at the seed.
+- **Bidirectional:** the backward half starts from the seed along the negated first forward segment, with fresh state
+  and the same random stream continued.
+- **The PMF value** along a direction: the SH, trilinearly interpolated, evaluated at the sphere vertex nearest the
+  direction (|cos|), not at the direction itself. Negative values are not clipped; the threshold removes them.
+- **Trilinear conventions** (PMF and ACT): voxel centers at integers; valid within [-0.5, n - 0.5), with the edge voxel
+  repeated; outside is OUTSIDEIMAGE.
+- **ACT:** include > 0.5 gives ENDPOINT (tested first); exclude > 0.5 gives INVALIDPOINT; outside the image is a valid
+  end. A streamline is valid only when both halves end validly. The stopping point is not kept.
+- **Random numbers:** DIPY seeds each streamline from its seed's coordinates. Ours: a counter-based hash of (seed index,
+  half, step, draw), so a streamline's path does not depend on batch, device order or thread count.
+
+**Our implementation.**
+1. **The FOD sampler** (`tractline.fields`): the PMF on a vertex set, per masked voxel, computed once
+   (B @ coeffs). The vertex set is our own hemisphere(362) with antipodes, or DIPY's for the oracle check. A lookup is a
+   gather of 8 corners × the nearest vertex, plus trilinear weights. An option evaluates the SH exactly along the
+   direction, with no vertex quantization: not DIPY's behavior, so off by default for the oracle preset.
+2. **The ACT sampler:** include and exclude maps (float32, on the device) with the same trilinear conventions; the
+   tissue maps from the bench's `tissue_fs` / `tissue_t1` (FastSurfer labels or the T1 classes) until phase B makes them
+   in the library.
+3. **The tracker,** first as a vectorized torch prototype. All half-streamlines of a batch step in lockstep, and finished
+   ones are masked. Per step, the 10 estimating candidates and a first block of 10 tries are scored at once (a probe is
+   6 sub-steps × one lookup); the rare halves still unaccepted try again. Then a Metal kernel, and a Triton one, as the
+   UKF has: one thread per half-streamline, the same samplers, the same counter-based random numbers.
+4. **Frames:** the b-vectors in image axes with FSL's x flip for a positive determinant, as `prep.py` and the bench
+   apply it. Directions are in the voxel axes' mm frame, steps through 1/voxel size, as DIPY's.
+5. **The slot:** `track:ptt` (options as above) requires `model:csd` and a `tissue` input. It needs the `Scan` artifact
+   state or a narrow stand-in, which comes due here.
+
+**Checks.**
+- **Level 1, exact pieces:** the propagator against the formulas (float64); the likelihood of a given candidate; the
+  ACT decision at given points; the trilinear conventions at the edges; the RNG's independence of batching.
+- **Level 1, the tracker as a whole:** a probabilistic tracker cannot match DIPY's paths, since the random streams
+  differ. It matches distributions instead: on the phantom, F1, VS, IB and overreach against step 6's DIPY run (0.583,
+  48.9 %, 338); on cIIIs04, the density map's correlation, length histograms, the share of valid streamlines, RapidParc's
+  tract mix, and each against DIPY run twice with different seeds (DIPY's own spread is the tolerance).
+- **Level 2:** the rescan agreement of step 6 (CST, AF, UF), and then an ensemble with its own calibration map.
+- **Target time:** under 30 s for cIIIs04's seeds on the M2 (DIPY: 193.5 s), so that a 17-run ensemble with PTT
+  stays under about 15 min of tracking.
+
+**Status (2026-10-24).**
+- `tractline.fields` (the samplers) equals DIPY's own functions.
+- `tractline.ptt` (the torch prototype) tracks a synthetic band on the CPU and MPS.
+- Reading DIPY's PTT found three unit inconsistencies (NOTES 2026-10-24): a probe voxel_size² too long, a curvature bound
+  v̄ times too high, and points shifted one step along the half's starting direction.
+- **Decided 2026-10-24 (owner):** the tracker works in real units, its only behavior. Reproducing DIPY's units is a
+  private validation switch (`Tracker(..., _dipy_compat=True)`), used by the tests and the oracle comparisons and never
+  by a config, preset or calibration map.
+- **Still to run:** the phantom in both. Step 6's PTT advantage was measured with DIPY's units; how much of it survives
+  in real units decides whether PTT earns its preset.
+
 ## 8. Licensing and the source policy
 
 The policy already set for FSL applies to every tool here:
