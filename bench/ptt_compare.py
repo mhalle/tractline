@@ -1,0 +1,215 @@
+"""Phase D, level 1 for the tracker as a whole (docs/sota-pipeline-design.md, section 7.2): tractline.ptt against DIPY's
+PTT as step 6 ran it (robust_benchmark.py's records), on the ISMRM 2015 phantom and on cIIIs04's reference scan A, from the
+same work files, tissue maps, ACT rule and seed points.
+
+    uv run --group dipy --group rankfield bench/ptt_compare.py run --scan phantom --variant compat [--seeds N]
+    uv run --group dipy --group rankfield bench/ptt_compare.py summary          # results/ptt_compare.json
+
+Variants (the FODs and the tracker; everything else as step 6):
+  compat   our CSD on DIPY's constraint sphere (DIPY's FODs, to rounding: csd_check.py) and our tracker with the validation
+           switch on (_dipy_compat: DIPY 1.12's units): the oracle as it ran, but for the random numbers. Validates the
+           implementation: its scores should fall within DIPY's own run-to-run spread.
+  mm       the same FODs, our tracker in real units: what the units alone change.
+  mm-own   our CSD on our own sphere and real units: the pipeline's default.
+The PMF is read on DIPY's default_sphere in all three (as step 6). Seeds: DIPY's random_seeds_from_mask on wm >= 0.5 with
+step 6's count and generator (1), made in a DIPY process and cached, so every variant starts where DIPY's run started.
+Each run: RapidParc labels; on the phantom, the 2023 ROI scoring (robust_phantom.score), as step 6's.
+Records: DATA/ensemble/benchmark/ptt_ours/<variant>/<subject>/; the summary sets them beside DIPY's step 6 records and, on
+cIIIs04, beside DIPY's reruns with other seeds (its own spread).
+"""
+import argparse, json, os, subprocess, sys, time
+from pathlib import Path
+import numpy as np
+HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))
+os.environ.setdefault("TRACTLINE_MIN_FREE_GB", "5")                    # the runs write ~0.5 GB; robust_benchmark's 20 is for its queue
+import robust_benchmark as RB  # noqa: E402
+import _benchmark_dipy as BD  # noqa: E402
+from tractline import pipeline as P, csd, fields as F, ptt  # noqa: E402
+from tractline.labelers.base import OTHER, lengths  # noqa: E402
+
+VARIANTS = ("compat", "mm", "mm-own")
+OUT = RB.OUT / "ptt_ours"
+DEVICE = "mps"
+SEEDS_PY = """
+import sys, warnings
+import numpy as np
+warnings.simplefilter("ignore")
+from dipy.data import default_sphere, small_sphere
+from dipy.tracking.utils import random_seeds_from_mask
+z = np.load(sys.argv[1])
+seeds = random_seeds_from_mask(z["wm"] >= 0.5, z["affine"], seeds_count=int(z["n"]), seed_count_per_voxel=False,
+                               random_seed=1)
+np.savez(sys.argv[2], seeds=seeds, default_sphere=default_sphere.vertices, small_sphere=small_sphere.vertices)
+"""
+
+
+def inputs(scan, n):
+    """The work file's arrays, the tissue maps, step 6's seeds and DIPY's spheres (cached under OUT/inputs)."""
+    work, winfo = RB.work_file(scan)
+    tis = RB.tissue(scan, work)
+    w = np.load(work)
+    pve = np.load(tis)["pve"].astype(np.float64)
+    d = OUT / "inputs"
+    d.mkdir(parents=True, exist_ok=True)
+    cache = d / f"{RB.subject_of(scan)}_{scan}_seeds{n}.npz"
+    if not cache.exists():
+        src = d / "seed_request.npz"
+        np.savez(src, wm=pve[..., 0], affine=w["affine"], n=n)
+        subprocess.run([sys.executable, "-I", "-c", SEEDS_PY, str(src), str(cache)], check=True)
+        src.unlink()
+    s = np.load(cache)
+    return w, winfo, pve, s["seeds"], s["default_sphere"], s["small_sphere"]
+
+
+def act_maps(pve, data):
+    """_benchmark_dipy.py's ACT (step 6, without its opt-in no-data rules): include gm + background + the field of
+    view's faces, exclude csf."""
+    gm, csf = pve[..., 1], pve[..., 3]
+    include = gm.copy()
+    include[pve.sum(-1) < 1e-6] = 1.0
+    for ax in range(3):
+        for idx in (0, -1):
+            sl = [slice(None)] * 3
+            sl[ax] = idx
+            include[tuple(sl)] = 1.0
+    return include, csf.copy()
+
+
+def run(args):
+    scan, variant = args.scan, args.variant
+    subject = RB.subject_of(scan)
+    n = args.seeds or RB.SEEDS["phantom" if scan == "phantom" else "cIIIs04"]
+    d = OUT / variant / subject
+    out = d / ("record.npz" if scan == "phantom" else f"{scan}.npz")
+    if out.exists() and not args.pilot:
+        raise SystemExit(f"{out} exists; not overwritten")
+    RB.guard(RB.OUT)
+    d.mkdir(parents=True, exist_ok=True)
+    timer, t0 = P.Timer(), time.time()
+    w, winfo, pve, seeds, default_sphere, small_sphere = inputs(scan, RB.SEEDS["phantom" if scan == "phantom" else "cIIIs04"])
+    seeds = seeds[:n]                                                    # a pilot: step 6's first seeds
+    dwi, bval, affine, mask = w["dwi"], w["bval"], w["affine"], w["mask"].astype(bool)
+    bvec = BD.flip(affine) @ w["bvec"]                                   # image axes, as step 6 gave DIPY
+    order = 8 if int((bval > 50).sum()) >= 45 else 6
+    with timer("response"):
+        resp = csd.response_ssst(dwi, bval, bvec)
+    with timer("csd"):
+        model = csd.CSD(bval, bvec, resp, order=order, sphere=None if variant == "mm-own" else small_sphere)
+        coeffs, cinfo = model.fit(dwi, mask, device=DEVICE)
+    include, exclude = act_maps(pve, dwi)
+    vox = np.linalg.norm(affine[:3, :3], axis=0)
+    with timer("track"):
+        pmf = F.PmfField(coeffs, mask, default_sphere, DEVICE)
+        act = F.Act(include, exclude, DEVICE)
+        tracker = ptt.Tracker(pmf, act, affine, vox, ptt.Params(min_len=20.0, max_len=250.0), DEVICE,
+                              _dipy_compat=variant == "compat", backend=args.backend)
+        fibers, tinfo = tracker.track(seeds, seed=1)
+    if args.pilot:                                                       # a timing and sanity run: nothing written
+        _, _, lens = lengths(fibers)
+        print(json.dumps({"variant": variant, "scan": scan, "backend": args.backend, "seeds": len(seeds), "tracker": tinfo,
+                          "streamlines per seed": round(len(fibers) / len(seeds), 3),
+                          "length quartiles": np.quantile(lens, [0.25, 0.5, 0.75]).round(1).tolist() if len(fibers) else None,
+                          "seconds": timer.seconds}, indent=1), flush=True)
+        return
+    labeler = P.default_labeler(DEVICE)
+    with timer("label"):
+        labels = labeler(fibers, draws=(0,), logp=True)
+    P.release_memory(DEVICE)
+    _, _, lens = lengths(fibers)
+    log = {"variant": variant, "work": winfo, "seeds": int(len(seeds)), "tracker": tinfo, "streamlines": len(fibers),
+           "labeled": int(labels.keep.sum()), "Other share": round(float((labels.tract == OTHER).mean()), 4),
+           "length mm (quartiles), all": [round(float(x), 1) for x in np.quantile(lens, [0.25, 0.5, 0.75])],
+           "csd": {"order": order, "response evals": resp.evals.tolist(), "response S0": resp.S0, **cinfo},
+           "settings": {**{k: getattr(tracker.p, k) for k in ("step_size", "max_angle", "probe_length", "probe_quality",
+                                                               "probe_count", "pmf_threshold", "min_len", "max_len")},
+                        "units": "DIPY 1.12's (validation switch)" if variant == "compat" else "real",
+                        "constraint sphere": "ours (hemisphere 181)" if variant == "mm-own" else "DIPY's small_sphere",
+                        "pmf sphere": "DIPY's default_sphere", "seeds": "DIPY random_seeds_from_mask, wm >= 0.5, random_seed 1",
+                        "tracking random numbers": ("Philox, counter-based, seed 1" if args.backend == "metal"
+                                                    else "torch generator, seed 1"),
+                        "backend": args.backend, "device": DEVICE},
+           "seconds": timer.seconds}
+    rec = RB.record_of(fibers, labels, affine, mask.shape)
+    if scan == "phantom":
+        import robust_phantom as RP
+        np.savez_compressed(d / "labels.npz", keys=np.arange(len(fibers)), keep=labels.keep, tract=labels.tract.astype(np.int16),
+                            length_mm=labels.length_mm.astype(np.float32))
+        log["trk"] = RP.write_trk(d / "tractogram.trk", fibers)
+    tmp = out.with_suffix(".tmp.npz")
+    rec.save(tmp, compact=True)
+    RB.place(tmp, out)
+    log["total_s"] = round(time.time() - t0, 1)
+    RB.log_update(d / "runs.json", scan, log)
+    print(variant, scan, json.dumps({k: log[k] for k in ("streamlines", "labeled", "Other share", "seconds")}), flush=True)
+    if scan == "phantom":
+        import robust_phantom as RP
+        RB.log_update(d / "runs.json", "scoring_seconds", RP.score(d))
+
+
+def phantom_summary(d):
+    import robust_phantom as RP
+    log = json.loads((d / "runs.json").read_text())["phantom"]
+    lab = np.load(d / "labels.npz")
+    vd, pair = RP.verdicts(d)
+    sc = d / "score"
+    seg = json.loads((sc / "segmentation" / "results.json").read_text())
+    return {"run": {k: log.get(k) for k in ("seeds", "streamlines", "labeled", "Other share", "length mm (quartiles), all",
+                                            "seconds", "settings")},
+            "all streamlines": RP.headline(json.loads((sc / "final" / "results.json").read_text()), vd, np.ones(len(vd), bool))
+            | {"IB": seg.get("IB"), "IC": seg.get("IC"), "NC": seg.get("NC")},
+            "labeled streamlines": RP.headline(json.loads((sc / "labeled" / "results.json").read_text()), vd, lab["keep"])}
+
+
+def record_compare(a, b):
+    """Two cIIIs04 records on A's grid: the tract mix's total variation, and the per-tract voxel counts' correlation."""
+    from tractline import ensemble as E
+    A, B = (E.RunRecord.load(p, logp=False) for p in (a, b))
+    ma = np.bincount(np.asarray(TRACT_LUT)[A.cluster], minlength=43) / len(A.cluster)
+    mb = np.bincount(np.asarray(TRACT_LUT)[B.cluster], minlength=43) / len(B.cluster)
+    ca, cb = A.counts.astype(np.float64), B.counts.astype(np.float64)
+    corr = [float(np.corrcoef(ca[t], cb[t])[0, 1]) for t in range(42) if ca[t].sum() and cb[t].sum()]
+    return {"labeled (a, b)": [int(len(A.cluster)), int(len(B.cluster))], "tract mix total variation": round(float(0.5 * np.abs(ma - mb).sum()), 4),
+            "per-tract voxel count correlation: min, median": [round(min(corr), 4), round(float(np.median(corr)), 4)]}
+
+
+def summary(args):
+    from tractline.labelers.base import LUT
+    global TRACT_LUT
+    TRACT_LUT = LUT
+    res = {"phantom": {}, "cIIIs04 A": {}}
+    dipy_ph = RB.OUT / "ptt" / "phantom"
+    if (dipy_ph / "score" / "labeled" / "results.json").exists():
+        res["phantom"]["DIPY (step 6)"] = phantom_summary(dipy_ph)
+    for v in VARIANTS:
+        d = OUT / v / "phantom"
+        if (d / "score" / "labeled" / "results.json").exists():
+            res["phantom"][v] = phantom_summary(d)
+    dA = RB.OUT / "ptt" / RB.SUBJECT / "A.npz"
+    reps = sorted((RB.OUT / "ptt" / RB.SUBJECT / "replicates").glob("A_seed*_track*.npz"))
+    reps = [p for p in reps if not p.stem.endswith(("_edge", "_nodata"))]
+    res["cIIIs04 A"]["DIPY against its reruns (other seeds): the spread"] = {p.stem: record_compare(dA, p) for p in reps}
+    for v in VARIANTS:
+        p = OUT / v / RB.SUBJECT / "A.npz"
+        if p.exists():
+            res["cIIIs04 A"][f"DIPY against {v}"] = record_compare(dA, p)
+            res["cIIIs04 A"][f"{v}: run"] = {k: json.loads((p.parent / "runs.json").read_text())["A"].get(k)
+                                             for k in ("streamlines", "labeled", "Other share", "length mm (quartiles), all", "seconds")}
+    dlog = json.loads((RB.OUT / "ptt" / RB.SUBJECT / "runs.json").read_text()).get("A", {})
+    res["cIIIs04 A"]["DIPY: run"] = {k: dlog.get(k) for k in ("streamlines", "labeled", "Other share", "length mm (quartiles), all", "seconds")}
+    (HERE / "results" / "ptt_compare.json").write_text(json.dumps(res, indent=1, default=str))
+    print(json.dumps(res, indent=1, default=str))
+
+
+TRACT_LUT = None
+
+if __name__ == "__main__":
+    ap = argparse.ArgumentParser()
+    ap.add_argument("what", choices=("run", "summary"))
+    ap.add_argument("--scan", choices=("phantom", "A"))
+    ap.add_argument("--variant", choices=VARIANTS)
+    ap.add_argument("--seeds", type=int, help="the first N of step 6's seeds (a pilot); default: all of them")
+    ap.add_argument("--pilot", action="store_true", help="track and report; write nothing")
+    ap.add_argument("--backend", choices=("torch", "metal"), default="torch")
+    args = ap.parse_args()
+    {"run": run, "summary": summary}[args.what](args)

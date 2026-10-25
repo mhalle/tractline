@@ -6830,7 +6830,8 @@ Fixed after the review:
 - seeds whose PMF has no positive value are dropped, as DIPY drops them (and counted);
 - `PmfField` refuses coefficients outside its mask;
 - wording.
-- Whether to report the three upstream is the owner's decision.
+- Upstream: the owner's decision (2026-10-24) is to wait on reporting issues in other projects' code until our own
+  code is stable.
 
 **Not yet.**
 - The real-scan comparison with DIPY: distributions, since random streams cannot match. It needs the bench's tissue
@@ -6839,3 +6840,119 @@ Fixed after the review:
 - The Metal kernel and counter-based random numbers.
 - The `track:ptt` slot.
 - The probe ring (`probe_count` > 1; the benchmark used 1).
+
+## 2026-10-24 Phase D: the PTT Metal kernel
+
+**What.** `tractline.ptt_metal`: PTT with ACT in Metal (`torch.mps.compile_shader`), one thread per half-streamline,
+float32. `ptt.Tracker(..., backend="metal")` uses it; `backend="torch"` stays the prototype. The method is `tractline.ptt`'s
+(including the validation switch). New:
+- counter-based random numbers (Philox4x32-10: key the seed; counter the seed's global index, the draw, the half). A
+  seed's path is the same in any batch: tested by tracking the seeds' second half alone and in batches of 70;
+- `track(..., offset=, keep_index=)`;
+- debug kernels for the pieces (`ptt_pmf`, `ptt_act`, `ptt_support`).
+
+**Checks** (`tests/test_ptt_metal.py`, MPS):
+- PMF values and ACT decisions equal `tractline.fields`';
+- candidate likelihoods equal the torch prototype's to float32 rounding, both unit modes;
+- the band in both modes, with determinism and batch independence;
+- DIPY's own `ptt_tracking` against the kernel on the band (as for the prototype): the switch reproduces DIPY's turns
+  and its 1 mm seed segments, real units neither.
+- On the phantom, at 20,000 of step 6's seeds (validation switch, DIPY's FODs):
+
+| | valid | kept | per seed | track time |
+|---|---|---|---|---|
+| torch prototype | 15,294 | 12,275 | 0.614 | 281 s |
+| Metal kernel | 15,339 | 12,286 | 0.614 | 24 s (GPU shared with another job) |
+| DIPY, step 6 (100,000 seeds, 8 CPU processes) | | | 0.615 | 177 s |
+
+**Found on the way.**
+- **Launch length and synchronization.** The first kernel tracked a whole half in one launch, while another process
+  used the GPU. At 2,000 seeds it agreed with the prototype (kept 1,242 against 1,242). At 20,000 it was wrong twice:
+  - unsynchronized: 88 % valid and most streamlines too long;
+  - synchronized after each launch: 0.15 % valid, most halves returned with no points.
+
+  Two causes fit: temporaries freed while a kernel still read them, and a command buffer stopped for running too long.
+  No error was reported, and the cause was not isolated. The fix covers both: `ptt_init`, then `ptt_steps` launches of
+  25 steps, each thread's state (position, frame, curvatures, last value, the generator's position) kept in device
+  buffers between launches, and every launch synchronized. `run()` now raises if any half is still alive after its
+  launches. The results are bit-identical for 1, 7, 25 and 10,000 steps per launch, including halves that reach the
+  point limit at a launch boundary (`test_launch_size_does_not_matter`).
+- **The nearest vertex** was a loop over all 362 vertices of DIPY's `default_sphere` per lookup. Now
+  `tractline.nearest.CubeMap`: 6 × 32 × 32 cells, each listing the only vertices that can be nearest for a direction in
+  it (all within a + 2r of the cell's center, a the center's nearest angle and r the cell's radius, plus 0.05° for
+  float32). It is exact (first on a tie, as the full scan):
+  - on 200,000 random directions, the same vertex as brute force at 8, 16 and 32 cells. `tests/test_nearest.py` adds the
+    hard cases: cube edges and corners, cell edges ±1e-7, the vertices, midpoints between neighbors, antipodes. The
+    same axis wherever the maximum is clear; elsewhere a maximum to 1 ulp. The review's float32 probe of the kernel on
+    227,592 such directions: 0 mismatches against a sequential float32 scan;
+  - 2.5 candidates on average at 32 for DIPY's 362-vertex sphere (6 at most), 6.7 at 16, 19.6 at 8; 3.9 at 32 for our
+    hemisphere(181) with antipodes;
+  - the Metal tests went from 49 s to 15 s.
+
+  The queue's first run (phantom, validation switch) used the full scan, the rest the cube map: the same vertices, so
+  the same computation.
+- **Times on an idle GPU** are still to be measured.
+- **The queue.** The torch-prototype comparison queue was stopped after 48 minutes on its first run and restarted on the
+  Metal backend.
+
+## 2026-10-25 Phase D, level 1: our PTT against DIPY's on the phantom and cIIIs04; how much of PTT's gain is DIPY's units
+
+**What ran** (`bench/ptt_compare.py`, `results/ptt_compare.json`, Metal backend, M2).
+- **Inputs:** step 6's work files, tissue maps and ACT rule (`_benchmark_dipy.py`'s). Its seeds: DIPY's
+  `random_seeds_from_mask`, WM ≥ 0.5, generator 1, 100,000 on the phantom and 130,000 on cIIIs04, made in a DIPY process.
+- **The PMF** read on DIPY's `default_sphere` (362 vertices).
+- **Labels and scoring:** RapidParc; on the phantom the 2023 ROI scoring, as step 6.
+- **Variants:**
+  - `compat`: our CSD on DIPY's constraint sphere (DIPY's FODs, `csd_check.py`), tracker with the validation switch;
+  - `mm`: the same FODs, real units;
+  - `mm-own`: our sphere and real units (the pipeline's default).
+
+**The phantom.**
+
+| | streamlines | F1, all 21 (found) | VS | IB | IC | NC | bundles |
+|---|---|---|---|---|---|---|---|
+| DIPY 1.12, step 6 | 61,454 | 0.583 (0.644) | 48.9 % | 338 | 28,316 | 3,101 | 19 |
+| ours, `compat` | 61,424 | 0.583 (0.645) | 48.9 % | 344 | 28,384 | 3,029 | 19 |
+| ours, `mm` | 46,773 | 0.517 (0.543) | 37.5 % | 321 | 24,269 | 4,962 | 20 (CP found) |
+| ours, `mm-own` | 47,157 | 0.505 (0.558) | 37.7 % | 314 | 24,318 | 5,070 | 19 |
+| UKF today, step 6 | 61,637 | 0.412 (0.433) | 27.5 % | 452 | | | 20 |
+
+**cIIIs04 A**, each run against DIPY's step 6 run, on A's grid. For scale, DIPY's own reruns with other seeds:
+
+| | labeled | Other share | lengths, quartiles (mm) | tract mix TV | per-tract count correlation, min / median |
+|---|---|---|---|---|---|
+| DIPY's reruns (3) against DIPY | 64,737–65,129 | | | 0.007–0.013 | 0.37–0.43 / 0.885–0.889 |
+| ours, `compat` | 64,967 | 0.483 (DIPY 0.484) | 39.8 / 66.0 / 103.8 (DIPY 39.8 / 66.5 / 104.2) | 0.009 | 0.39 / 0.882 |
+| ours, `mm` | 40,525 | 0.387 | 54.1 / 80.1 / 109.2 | 0.144 | 0.27 / 0.762 |
+| ours, `mm-own` | 40,306 | 0.388 | 53.6 / 79.6 / 108.7 | 0.144 | 0.29 / 0.765 |
+
+**Time** (tracking only, M2 GPU; DIPY on 8 CPU processes):
+
+| | phantom (100,000 seeds) | cIIIs04 (130,000) |
+|---|---|---|
+| ours, `compat` | 54.9 s (the first run, still the full vertex scan) | 20.8 s |
+| ours, real units | 10.0 / 9.9 s | 14.4 / 13.7 s |
+| DIPY, step 6 | 176.6 s | 193.5 s |
+
+**Reading.**
+- **The implementation is validated.**
+  - With DIPY's units our PTT gives DIPY's phantom scores to the third decimal (F1 0.583 / 0.583, VS 48.9 % / 48.9 %,
+    IB 344 / 338).
+  - On cIIIs04 its tract mix differs from DIPY's run as little as DIPY's reruns differ from each other (TV 0.009 within
+    0.007–0.013). Its per-tract count correlation is just below theirs (median 0.882 against 0.885–0.889).
+  - The cube-map runs track in a ninth to an eighteenth of DIPY's time: 10–21 s against 177–194 s. The GPU was
+    otherwise idle, but for a 15 s test run during the first. The first `compat` run, 54.9 s, still had the full vertex
+    scan.
+- **Real units keep most of PTT's gain, not all.** In real units PTT still beats UKF on the phantom (F1 0.505–0.517
+  against 0.412; VS 37.5 % against 27.5 %; IB 314–321 against 452). Up to about 0.07–0.08 of F1 of the step 6 gain (39 %
+  with DIPY's FODs, 46 % with ours) went with DIPY's unit inconsistencies, pending the count-matched comparison below.
+  Those amount to a 6 mm probe and a curvature bound about twice as loose.
+- **Count.** Real units give about three quarters of the streamlines (46,773 against 61,424), and F1 depends on the
+  count. Step 6's controls show it: DIPY-units PTT at 29,231 streamlines scored F1 0.533–0.537 (robust_benchmark.json,
+  `ptt_ukf_seeds` and `ptt_at_ukf_seed_count`). Part of the gap may be the count; a count-matched comparison is still to
+  do.
+- **Implication.** DIPY's effective parameters may simply be better parameters. In real units, the same reach is
+  probe_length = 1.5 × v̄² ≈ 6 mm and max_angle ≈ 20° at the phantom's 2 mm (21° at 2.1 mm). A small parameter study in real units (probe length and max
+  angle) should show how much of the gap such settings close: honest parameters, not a units mistake.
+- **Our own constraint sphere** shows no clear cost: `mm-own` against `mm` is F1 0.505 against 0.517 (all 21) and 0.558
+  against 0.543 (found). `mm` finds CP and `mm-own` does not. The run-to-run noise is not yet measured.

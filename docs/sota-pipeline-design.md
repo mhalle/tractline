@@ -493,7 +493,19 @@ interpolation) to understand it, and from Aydogan & Shi 2021. Our own implementa
 - **Decided 2026-10-24 (owner):** the tracker works in real units, its only behavior. Reproducing DIPY's units is a
   private validation switch (`Tracker(..., _dipy_compat=True)`), used by the tests and the oracle comparisons and never
   by a config, preset or calibration map.
-- **Still to run:** the phantom in both. Step 6's PTT advantage was measured with DIPY's units; how much of it survives
+- **The Metal kernel** (`tractline.ptt_metal`, NOTES 2026-10-24) agrees with the prototype and with DIPY. It runs
+  in short launches, with counter-based random numbers, so a seed's path is the same in any batch. The nearest vertex
+  is an exact cube-map lookup (`tractline.nearest`).
+- **The phantom and cIIIs04 against DIPY** (NOTES 2026-10-25).
+  - With the switch our PTT reproduces DIPY's phantom scores (F1 0.583 / 0.583). On cIIIs04 it stays within DIPY's own
+    seed-to-seed spread.
+  - Tracking takes 10–21 s against DIPY's 177–194 s.
+  - In real units PTT still beats UKF (F1 0.505–0.517 against 0.412). Up to about 40–45 % of step 6's gain went with
+    DIPY's unit inconsistencies, pending a count-matched comparison: real units give three quarters of the
+    streamlines, and F1 depends on the count.
+  - **Next:** a small parameter study in real units (probe length near 6 mm, max angle near 20°), and a count-matched
+    comparison.
+- **Was "still to run":** the phantom in both. Step 6's PTT advantage was measured with DIPY's units; how much of it survives
   in real units decides whether PTT earns its preset.
 
 ## 8. Licensing and the source policy

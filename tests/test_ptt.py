@@ -58,8 +58,9 @@ def test_band(device, compat):
     # measured (2026-10-24, MPS): real units: all 200 valid, spans 75-75.5 mm, mean angle 8.4 degrees; DIPY's units: 195,
     # spans from 57 mm, 11.5 degrees (its curvature bound is twice the real one at 2 mm voxels)
     cy = c.shape[1] // 2 * 2.0                                               # mm: the band's voxels span cy - 6 .. cy + 4
-    for x in lines:
-        assert x[:, 0].max() - x[:, 0].min() > 50                            # most of the band's 80 mm
+    span = np.array([x[:, 0].max() - x[:, 0].min() for x in lines])
+    assert np.mean(span > 50) > 0.95                                          # most cover most of the band's 80 mm (a rare
+    for x in lines:                                                           # one turns back: the FOD supports +x and -x)
         assert (x[:, 1:] > cy - 8.0).all() and (x[:, 1:] < cy + 6.0).all()   # inside the band and its one-voxel fade
     seg = np.concatenate([np.diff(x, axis=0) for x in lines])
     cos = np.abs(seg[:, 0]) / np.linalg.norm(seg, axis=1)

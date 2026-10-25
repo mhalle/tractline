@@ -98,12 +98,20 @@ def _propagate(pos, T, N1, N2, k, s, scale):
 
 class Tracker:
     def __init__(self, pmf: F.PmfField, act: F.Act, affine, vox, params: Params = Params(), device="cpu",
-                 _dipy_compat=False):
-        """_dipy_compat: validation only (module docstring): DIPY 1.12's units, to compare with it."""
+                 _dipy_compat=False, backend="torch"):
+        """_dipy_compat: validation only (module docstring): DIPY 1.12's units, to compare with it. backend: "torch" (the
+        lockstep prototype, any device) or "metal" (tractline.ptt_metal: one thread per half; "mps" only)."""
         if params.probe_count != 1:
             raise NotImplementedError("probe_count > 1 (a ring of probes) is not implemented yet")
-        self.pmf, self.act, self.p, self.compat = pmf, act, params, bool(_dipy_compat)
+        if backend not in ("torch", "metal"):
+            raise ValueError(f"backend {backend!r}: 'torch' or 'metal'")
+        self.pmf, self.act, self.p, self.compat, self.backend = pmf, act, params, bool(_dipy_compat), backend
         self.dev = torch.device(device)
+        if backend == "metal":
+            from . import ptt_metal
+            if self.dev.type != "mps" or not ptt_metal.available():
+                raise ValueError("backend 'metal' needs device 'mps' and torch.mps.compile_shader")
+            self.metal = ptt_metal.Halves(pmf, act, vox, params, compat=_dipy_compat)
         self.dt = F._dtype(device)
         self.affine = np.asarray(affine, np.float64)
         vox = np.asarray(vox, np.float64)
@@ -155,57 +163,59 @@ class Tracker:
         B = len(pos)
         p = self.p
 
-        def candidates(C):
-            k = self._disk((B, C), g)
+        def candidates(C, r):
+            """C candidates for the halves r: (k, their frames and last values, per-candidate frames or None)."""
+            k = self._disk((len(r), C), g)
             if not init:
-                return k, (T, N1, N2, last), None
+                return k, (T[r], N1[r], N2[r], last[r]), None
             # each candidate its own frame: T the seed direction, N2 a random unit vector perpendicular to it
-            r = torch.randn((B, C, 3), generator=g, device=self.dev, dtype=self.dt)
-            t = seed_dir[:, None].expand(-1, C, -1)
-            n2 = r - (r * t).sum(-1, keepdim=True) * t
+            rr = torch.randn((len(r), C, 3), generator=g, device=self.dev, dtype=self.dt)
+            t = seed_dir[r][:, None].expand(-1, C, -1)
+            n2 = rr - (rr * t).sum(-1, keepdim=True) * t
             n2 = n2 / torch.linalg.norm(n2, dim=-1, keepdim=True)
             n1 = torch.cross(n2, t, dim=-1)
-            lv = self._pmf(pos[:, None].expand(-1, C, -1), t)
+            lv = self._pmf(pos[r][:, None].expand(-1, C, -1), t)
             return k, (t, n1, n2, lv), True
 
-        def support(k, fr, per):
+        def support(k, fr, per, r):
             if per is None:
-                return self._support(pos, *fr, k)
-            t, n1, n2, lv = fr                                            # per-candidate frames: flatten (B C) as B
-            C = k.shape[1]
-            L, v = self._support(pos.repeat_interleave(C, 0), t.reshape(-1, 3), n1.reshape(-1, 3), n2.reshape(-1, 3),
+                return self._support(pos[r], *fr, k)
+            t, n1, n2, lv = fr                                            # per-candidate frames: flatten (n C) as rows
+            n, C = k.shape[:2]
+            L, v = self._support(pos[r].repeat_interleave(C, 0), t.reshape(-1, 3), n1.reshape(-1, 3), n2.reshape(-1, 3),
                                  lv.reshape(-1), k.reshape(-1, 1, 2))
-            return L.reshape(B, C), v.reshape(B, C)
+            return L.reshape(n, C), v.reshape(n, C)
 
-        k, fr, per = candidates(p.nbr_sample)
-        L, _ = support(k, fr, per)
+        rows = torch.arange(B, device=self.dev)
+        k, fr, per = candidates(p.nbr_sample, rows)
+        L, _ = support(k, fr, per, rows)
         M = (2.0 * L.max(1).values) ** p.data_support_exponent
         done = torch.zeros(B, dtype=torch.bool, device=self.dev)
         out_k = torch.zeros((B, 2), dtype=self.dt, device=self.dev)
         out_v = torch.zeros(B, dtype=self.dt, device=self.dev)
         out_f = [torch.zeros((B, 3), dtype=self.dt, device=self.dev) for _ in range(3)] if init else None
-        tried = 0
-        while tried < p.max_try and not bool(done.all()):
+        pending, tried = rows, 0                                           # later blocks score only the halves still waiting
+        while tried < p.max_try and len(pending):
             C = min(p.block, p.max_try - tried)
-            k, fr, per = candidates(C)
-            L, v = support(k, fr, per)
-            u = torch.rand((B, C), generator=g, device=self.dev, dtype=self.dt)
-            ok = (u * M[:, None] <= L) if init else (u * M[:, None] < L)
-            ok &= ~done[:, None]
+            k, fr, per = candidates(C, pending)
+            L, v = support(k, fr, per, pending)
+            u = torch.rand((len(pending), C), generator=g, device=self.dev, dtype=self.dt)
+            ok = (u * M[pending, None] <= L) if init else (u * M[pending, None] < L)
             first = torch.argmax(ok.to(torch.int8), 1)
             take = ok.any(1)
-            rows = torch.nonzero(take).flatten()
-            out_k[rows] = k[rows, first[rows]]
-            out_v[rows] = v[rows, first[rows]]
+            got, sel = pending[take], first[take]
+            out_k[got] = k[take, sel]
+            out_v[got] = v[take, sel]
             if init:
                 for j in range(3):
-                    out_f[j][rows] = fr[j][rows, first[rows]]
-                last_rows = torch.nonzero(~done & ~take).flatten()          # the last candidate tried stands (DIPY)
-                out_k[last_rows] = k[last_rows, -1]
-                out_v[last_rows] = fr[3][last_rows, -1]
+                    out_f[j][got] = fr[j][take, sel]
+                nt = ~take                                                  # the last candidate tried stands (DIPY)
+                out_k[pending[nt]] = k[nt, -1]
+                out_v[pending[nt]] = fr[3][nt, -1]
                 for j in range(3):
-                    out_f[j][last_rows] = fr[j][last_rows, -1]
-            done |= take
+                    out_f[j][pending[nt]] = fr[j][nt, -1]
+            done[got] = True
+            pending = pending[~take]
             tried += C
         return done, out_k, out_v, out_f
 
@@ -251,42 +261,56 @@ class Tracker:
         return stack, n, valid
 
     @torch.no_grad()
-    def track(self, seeds_world, seed=1, directions=None, batch=20_000):
+    def track(self, seeds_world, seed=1, directions=None, batch=None, offset=0, keep_index=False):
         """seeds_world (n, 3) RAS mm -> (streamlines: list of (m, 3) RAS mm, kept: valid and within the lengths; info).
-        Seeds go in batches of `batch` (each half's points are held for the whole batch: batch x max points x 3)."""
+        Seeds go in batches of `batch` (each half's points are held for the whole batch: batch x max points x 3). offset:
+        the first seed's index among all seeds (the Metal backend's random numbers are keyed by it: a seed's path is the
+        same in any batch). keep_index: a dict {seed index: streamline} instead of the list."""
         g = torch.Generator(device=self.dev).manual_seed(int(seed))
         seeds_world = np.asarray(seeds_world, np.float64)
+        batch = batch or (200_000 if self.backend == "metal" else 20_000)     # the prototype holds more per seed
         out, info = [], {"seeds": 0, "seeds without a peak": 0, "valid": 0, "kept": 0}
-        lengths = []
         for a in range(0, len(seeds_world), batch):
-            o, i = self._track(seeds_world[a:a + batch], g, None if directions is None else directions[a:a + batch])
+            o, i = self._track(seeds_world[a:a + batch], g, None if directions is None else directions[a:a + batch],
+                               seed, offset + a)
             out += o
-            lengths += [float(np.linalg.norm(np.diff(x, axis=0), axis=1).sum()) for x in o]
             for key in info:
                 info[key] += i[key]
+        lengths = [float(np.linalg.norm(np.diff(x, axis=0), axis=1).sum()) for _, x in out]
         info["mean length mm"] = float(np.mean(lengths)) if lengths else 0.0
-        return out, info
+        return (dict(out) if keep_index else [x for _, x in out]), info
 
-    def _track(self, seeds_world, g, directions):
+    def _halves_metal(self, sv, d, ids, seed, half):
+        pts, n, st = self.metal.run(sv, d, seed=seed, half=half, ids=ids)
+        valid = (st == F.ENDPOINT) | (st == F.OUTSIDEIMAGE)
+        return pts.to(self.dt), n.to(torch.int64), valid
+
+    def _track(self, seeds_world, g, directions, seed=1, offset=0):
         inv = np.linalg.inv(self.affine)
         sv = np.asarray(seeds_world, np.float64) @ inv[:3, :3].T + inv[:3, 3]
         sv = torch.as_tensor(sv, dtype=self.dt, device=self.dev)
         dropped = 0
+        ids = torch.arange(offset, offset + len(sv), device=self.dev)
         if directions is None:                                              # the PMF's largest peak at the seed; seeds
             allv, _ = self.pmf.all(sv)                                      # with none (all <= 0) are dropped, as DIPY's
             peak = allv.max(1).values > 0                                   # seeds_directions_pairs does
             dropped = int((~peak).sum())
-            sv, allv = sv[peak], allv[peak]
+            sv, allv, ids = sv[peak], allv[peak], ids[peak]
             directions = self.pmf.vertices[torch.argmax(allv, 1)]
         d = torch.as_tensor(directions, dtype=self.dt, device=self.dev)
         if len(sv) == 0:
             return [], {"seeds": dropped, "seeds without a peak": dropped, "valid": 0, "kept": 0}
-        fw, nf, vf = self._half(sv, d, g)
+        half = (lambda s, dd, h: self._halves_metal(s, dd, ids, seed, h)) if self.backend == "metal" \
+            else (lambda s, dd, h: self._half(s, dd, g))
+        fw, nf, vf = half(sv, d, 0)
         back = torch.where((nf > 1)[:, None], fw[:, 1] - fw[:, 0], d)      # the first forward segment, else the seed's
         back = -back / torch.linalg.norm(back, dim=-1, keepdim=True)
-        bw, nb, vb = self._half(sv, back, g)
-        fw, bw, nf, nb = fw.cpu().double().numpy(), bw.cpu().double().numpy(), nf.cpu().numpy(), nb.cpu().numpy()
+        bw, nb, vb = half(sv, back, 1)
+        mf, mb = int(nf.max()), int(nb.max())                              # only the points in use leave the device
+        fw, bw = fw[:, :mf].cpu().double().numpy(), bw[:, :mb].cpu().double().numpy()
+        nf, nb = nf.cpu().numpy(), nb.cpu().numpy()
         valid = (vf & vb).cpu().numpy()
+        idn = ids.cpu().numpy()
         A, p = self.affine, self.p
         lo, hi = int(p.min_len / p.step_size), int(p.max_len / p.step_size)
         out = []
@@ -299,5 +323,5 @@ class Tracker:
                 length = float(np.linalg.norm(np.diff(world, axis=0), axis=1).sum()) if len(world) > 1 else 0.0
                 keep = p.min_len <= length <= p.max_len
             if keep:
-                out.append(world.astype(np.float32))
+                out.append((int(idn[i]), world.astype(np.float32)))
         return out, {"seeds": len(sv) + dropped, "seeds without a peak": dropped, "valid": int(valid.sum()), "kept": len(out)}
