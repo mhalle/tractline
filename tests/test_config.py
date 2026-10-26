@@ -29,7 +29,7 @@ def test_ukf_defaults_are_the_trackers():
 def test_checked_at_construction():
     cfg = PipelineConfig.preset("default")
     with pytest.raises(ValueError, match="not among the slots"):
-        cfg.with_(gibbs="subvoxel")
+        cfg.with_(bias="n4")
     with pytest.raises(ValueError, match="is not one of"):
         cfg.with_(track="ifod2")
     with pytest.raises(ValueError, match="not among its options"):

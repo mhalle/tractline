@@ -7273,3 +7273,64 @@ ORG counterparts (`robust_phantom.STRICT`, with `LOOSE` for the near ones).
 - A PTT preset would ship with those flagged (ICP, MCP, BPS, Intra-CBLM-I-P) and with cIIIs04's cortical suspects
   flagged (Sup-O, Sup-PO, CC1).
 - A check of those against a reference not derived from UKF (RecoBundles mapped to the ORG names) remains open.
+
+## 2026-10-26 The gibbs slot: Gibbs ringing removal in torch, DIPY's method in one process
+
+**What.** The first of the level-1-only elements (built and matched to an established tool; opt-in, "experimental", no
+research claim).
+- `tractline.gibbs`: Kellner et al. 2016's local subvoxel shifts, as DIPY 1.12's `gibbs_removal` implements them. DIPY's
+  code was read to match its behavior; the batched implementation is our own. Per review, the weights are written from
+  their formula (the edges and corners follow from it) and the interpolation as a weighted mean, not in DIPY's form.
+  - For each slice and each axis, 45 Fourier shifts (0.02–0.9 voxel) are tried, positive and negative. The positive and
+    the negative shift that lower each voxel's local oscillation most are kept (the first of equals), and the voxel is
+    interpolated between their two images.
+  - The two axes' corrections are combined with DIPY's (1 + cos k) weights.
+  - Taken from DIPY's code beyond the paper: the shift grid, the weights' grid and boundaries, the magnitude after each
+    inverse transform, the periodic total variation.
+- **The slot:** `gibbs:subvoxel-shift` (options `slice_axis`, `n_points`). It runs in `execute` after denoising and
+  before the field, on the series as acquired and on the b0s that feed the field. The b0s that are the DWI's own
+  volumes are taken from the corrected DWI. Another series' b0s are corrected only when they are on their own grid
+  (`bids.Subject.b0_native`): resampling onto the DWI's grid moves the ringing off the grid it is a pattern on. The
+  counts go in `Correction.gibbs`, and a warning says when b0s phase-encoded against the DWI keep their ringing (every
+  bench loader so far leaves `b0_native` unset). A config with denoise order "corrected" is refused: denoising must
+  come first. Its time is `timer.seconds["gibbs"]`. The default config's hash is unchanged.
+
+**Acceleration** (cIIIs04, 112 × 112 × 54 × 112, MPS, float32):
+
+| version | seconds |
+|---|---|
+| per-shift FFT, masked updates | 92.8 |
+| `where` in place of masked assignment | 62.2 |
+| each shift as a 112 × 112 complex matrix, 9 shifts per GEMM | 41.5 |
+| the total variation from one padded difference and slices (no `torch.roll`), `hypot` | 31–33 |
+| DIPY, 8 processes | 90–99 |
+
+- `torch.roll` on large tensors costs several times its memory traffic on MPS.
+- A line is short (112 samples), so the transform as a matrix product beats an FFT per shift.
+- On the CPU, torch's `argmin` across the shifts (a strided middle axis) cost several times the matrix products.
+  Picking the best shift one shift at a time instead (the same choice, bit for bit) brought the full scan from 343 s
+  to 262 s in float64 and to 83 s in float32, against DIPY's 99 s (80 s in float32), with no subprocess
+  (`gibbs_check.json`; other processes were running, so the times are rough).
+
+**Agreement** (`bench/gibbs_check.py`, `results/gibbs_check.json`; `tests/test_gibbs.py`):
+- **Synthetic ringing** (a disk's truncated k-space): CPU float64 equals DIPY to 1.4e-13, for every slice axis and for
+  3D and 4D input. The weights and the total variation equal DIPY's.
+- **cIIIs04 as acquired:**
+  - CPU float64: within 0.15 % of the scan's scale everywhere (near-ties in float64 rounding).
+  - Against DIPY float64, the voxels (of 76 million) differing by more than 0.1 %, 1 % and 5 % of scale, and the
+    largest difference: ours on MPS in float32 678, 35, 2, 12 %; ours on the CPU in float32 549, 21, 0, 4.1 %; DIPY's
+    own float32 443, 19, 2, 6.3 %. Ours on the CPU in float64: 2 voxels above 0.1 %, the largest 0.15 %.
+  - The 12 % voxel (34, 80, 36, volume 82) sits on an edge (21 to 144 along the line). For its positive shift, 0.62 and
+    0.10 score 60.776736 and 60.776817 in float64 (1.3 parts per million apart); MPS float32 rounds them the other way.
+    The two shifts are 0.52 apart, so the interpolated value moves 15 units. The method's choice of shift is
+    discontinuous, and both answers are equally good by its own measure. Anyone who needs DIPY's float64 output runs
+    the CPU in float64.
+  - The mean change to the scan is 0.44 % of scale, ours and DIPY's alike.
+
+**Not done.**
+- No effect on tracking or calibration measured (a level-2 question).
+- Partial Fourier acquisitions: the method assumes a full, symmetric k-space. The slot does not check, and its
+  documentation says so.
+- `slice_axis` is the caller's (default 2); it is not checked against the sidecar's `SliceEncodingDirection`.
+- A fused Metal kernel could go several times faster. Not needed: the slot runs once per scan, not per ensemble
+  replicate.

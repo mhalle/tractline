@@ -156,6 +156,7 @@ class Correction:
     residual_left: float | None = None   # the pair's mean-b0 difference left after correction (residual_left)
     warnings: list = field(default_factory=list)
     denoise: dict | None = None  # the opt-in denoising's settings and what it estimated (denoise_subject); None: not denoised
+    gibbs: dict | None = None    # the gibbs slot's b0 counts (gibbs_subject), when it ran on b0s; None otherwise
     provenance: dict | None = None   # the run's config (PipelineConfig.to_dict) and runtime (execute); None: correct() alone
 
 
@@ -296,6 +297,52 @@ def denoise_subject(s, timer: Timer, method="mppca", workers=None, mask=None):
              "b0s denoised (the DWI's own), of those feeding the field": [replaced, n_b0s],
              "b0s phase-encoded as the DWI": forward}
     return out, stats
+
+
+def gibbs_subject(s, timer: Timer, opts: dict, device="cpu"):
+    """The gibbs slot: Gibbs ringing removed from the diffusion series as acquired and from the b0s that feed the field
+    (tractline.gibbs). The b0s that are the DWI's own volumes (found by value, as denoise_subject finds them) are taken
+    from the corrected DWI, so the field is estimated from the b0s the DWI is corrected as. The other series' b0s are
+    corrected on their own where s.b0_native says they were not resampled onto the DWI's grid (the ringing is a pattern
+    on the acquired grid; an interpolated image no longer has it there), and left as they are otherwise, or when the
+    loader does not say (or s.b0_native's length is not the b0s'). A warning when a b0 phase-encoded against the DWI is
+    left: the field is then estimated from corrected forward b0s against uncorrected reversed ones. A copy of s, and
+    the counts: {"b0s from the DWI": n, "b0s corrected on their own": n, "b0s left (resampled or not known)": n}."""
+    import warnings
+    from . import gibbs as GB
+    out = copy.copy(s)
+    run = lambda v: GB.gibbs_removal(np.asarray(v, np.float32), opts["slice_axis"], opts["n_points"], device)  # noqa: E731
+    counts = None
+    with timer("gibbs"):
+        out.dwi = run(s.dwi)
+        if getattr(s, "b0s", None) is not None:
+            b0s = np.array(s.b0s, np.float64)
+            b0i = np.flatnonzero(np.asarray(s.bval) < 50)
+            native = getattr(s, "b0_native", None)
+            if native is not None and len(native) != b0s.shape[-1]:
+                native = None                                             # flags for other b0s (e.g. a replace): not known
+            own, alone = [], []
+            for v in range(b0s.shape[-1]):
+                same = [i for i in b0i if np.array_equal(b0s[..., v], np.asarray(s.dwi[..., i], np.float64))]
+                if same:
+                    b0s[..., v] = out.dwi[..., same[0]]
+                    own.append(v)
+                elif native is not None and native[v]:
+                    alone.append(v)
+            if alone:
+                b0s[..., alone] = run(b0s[..., alone])
+            out.b0s = b0s
+            left = sorted(set(range(b0s.shape[-1])) - set(own) - set(alone))
+            pev = getattr(s, "pe_vectors", None)
+            if left and pev is not None:
+                against = [v for v in left if np.sign(np.asarray(pev, float)[v, s.pe_axis]) == -np.sign(s.pe_sign)]
+                if against:
+                    warnings.warn(f"gibbs: {len(against)} b0s phase-encoded against the DWI keep their ringing (resampled "
+                                  "onto the DWI's grid, or the loader does not say they were not); the field is "
+                                  "estimated from corrected forward b0s against them", stacklevel=2)
+            counts = {"b0s from the DWI": len(own), "b0s corrected on their own": len(alone),
+                      "b0s left (resampled or not known)": int(b0s.shape[-1] - len(own) - len(alone))}
+    return out, counts
 
 
 def denoise_corrected(dwi, bval, timer: Timer, method="mppca", workers=None, mask=None):
@@ -580,8 +627,10 @@ def execute(s, cfg: PipelineConfig, timer: Timer, prefix="", device="mps", worke
     config's own (at its construction), the shell tracked, the CPU's main guard, the labeler against the bundles slot.
     Then, in SLOTS' order: denoise (when on; order "acquired" before the field, "corrected" after it), field (when on
     and the subject has a pair: correct; off: the DWI as acquired, the reason in Correction.note), mask, model (the
-    tracker's input), track, bundles (when on). labeler: an object for the bundles slot (needed for "caller-object";
-    otherwise made from the slot, or the caller's checked against it). device, workers, trx and release as run()'s:
+    tracker's input), track, bundles (when on). gibbs (when on) runs before the field (after denoising, in denoise's
+    order "acquired"), on the series as acquired and the b0s (gibbs_subject; its b0 counts in the Correction's gibbs);
+    its time is timer.seconds["gibbs"] (like "denoise", not among pipeline_stages). labeler: an object for the bundles
+    slot (needed for "caller-object"; otherwise made from the slot, or the caller's checked against it). device, workers, trx and release as run()'s:
     runtime, recorded beside the config, not in it. Times: timer.total(*pipeline_stages(prefix, cfg)), and "denoise".
     tissue: (X, Y, Z, 4) partial volumes (WM, GM, deep GM, CSF) on the DWI's grid, for track:ptt's stopping "act" and
     seeding "wm" (until the anatomy slots make them: section 7.2); an input like the DWI, recorded in the runtime record
@@ -614,6 +663,9 @@ def execute(s, cfg: PipelineConfig, timer: Timer, prefix="", device="mps", worke
     spec, order, dstats = (None, None, None) if dn is None else (_denoise_spec(dn), dn.opts()["order"], None)
     if order == "acquired":
         s, dstats = denoise_subject(s, timer, spec, workers)
+    gibbs_b0s = None
+    if cfg.is_on("gibbs"):                                     # before the field (after denoising "acquired": MRtrix's order)
+        s, gibbs_b0s = gibbs_subject(s, timer, cfg.opts("gibbs"), device)
     with exact_float32(device):
         if cfg.is_on("field"):
             corr = correct(s, timer, device)
@@ -623,7 +675,7 @@ def execute(s, cfg: PipelineConfig, timer: Timer, prefix="", device="mps", worke
                               note="not corrected: the field slot is off")
         if order == "corrected":
             corr.dwi, dstats = denoise_corrected(corr.dwi, s.bval, timer, spec, workers)
-        corr.denoise = dstats
+        corr.denoise, corr.gibbs = dstats, gibbs_b0s
         mask = brain_mask(corr.dwi, s.bval, timer, prefix, device)
         if ptt:
             tg = csd_ptt(s, corr.dwi, mask, cfg, timer, prefix, device, tissue)

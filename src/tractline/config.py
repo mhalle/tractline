@@ -37,9 +37,9 @@ from typing import Any, Mapping
 
 SCHEMA = "tractline.config/1"
 
-#: the slots, in the order they run. The design's later slots (gibbs, motion_eddy, bias, anatomy, register_t1, tissue,
+#: the slots, in the order they run. The design's later slots (motion_eddy, bias, anatomy, register_t1, tissue,
 #: filter, tractometry) are added here as their implementations arrive; a slot is off unless a config sets it.
-SLOTS = ("denoise", "field", "mask", "model", "track", "bundles")
+SLOTS = ("denoise", "gibbs", "field", "mask", "model", "track", "bundles")
 
 #: an implementation's status: "wrapper" runs the established tool itself; "experimental" is ours, not yet through both
 #: validation levels; "validated" is ours and through them (docs/sota-pipeline-design.md, section 5)
@@ -156,6 +156,16 @@ register(Implementation(
                                    "order": _DENOISE_ORDER},
     devices=("cpu",), oracle="dipy.denoise.patch2self", status="wrapper",
     doc="dipy's Patch2Self (version 3) in a process of its own (tractline.denoise)"))
+register(Implementation(
+    "gibbs", "subvoxel-shift", "1",
+    {"slice_axis": Option(2, int, low=0, high=2, doc="the axis across which the scan's 2D slices were acquired"),
+     "n_points": Option(3, int, low=1, high=10, doc="the neighbors whose oscillation the shift minimizes")},
+    oracle="DIPY gibbs_removal (Kellner et al. 2016)", status="experimental",
+    doc="Gibbs ringing removal by local subvoxel shifts (tractline.gibbs) on the scan as acquired (and the b0s that feed "
+        "the field on their own grid), after denoising and before the field. DIPY's method and choices: in float64 its "
+        "output to rounding but for shifts tied to rounding; the pipeline runs float32, where near-ties fall either "
+        "way, as in DIPY's own float32 (bench/gibbs_check.py). Assumes a full, symmetric k-space: not for partial "
+        "Fourier acquisitions without care"))
 register(Implementation(
     "field", "tractline", "1", {}, oracle="FSL topup", status="validated",
     doc="topup's model by Gauss-Newton (susceptibility.estimate), applied with the Jacobian (susceptibility.apply); runs "
@@ -311,6 +321,12 @@ class PipelineConfig:
                     raise ValueError(f"{slot}:{st.impl} requires the {need} slot, which is off")
                 if allowed and other.impl not in allowed:
                     raise ValueError(f"{slot}:{st.impl} requires {need} to be one of {allowed}, not {other.impl!r}")
+        dn = self["denoise"]
+        if self["gibbs"] is not None and dn is not None and dn.opts().get("order") == "corrected":
+            # Gibbs removal smooths the noise and correlates it between neighbors, against both denoisers' assumptions:
+            # denoise first (MRtrix's order), or not at all
+            raise ValueError("gibbs runs on the series as acquired, so denoising must come before it: denoise order "
+                             "'acquired', not 'corrected'")
 
     def __getitem__(self, slot) -> Stage | None:
         for s, st in self.stages:

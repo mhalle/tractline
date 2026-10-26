@@ -163,6 +163,8 @@ class Subject:
     b0_readout_s: np.ndarray | None   # (V,), each b0's series' readout time
     dwi_path: Path
     sidecar: dict
+    b0_native: np.ndarray | None = None   # (V,) bool: the b0 is on its own grid, not resampled onto the DWI's (the gibbs
+                                          # slot runs only on those); None: not known (other loaders)
 
 
 def _readout(side) -> tuple[float | None, str]:
@@ -266,6 +268,7 @@ def load(dwi_path, partners=None, name=None) -> Subject:
     checks, sources = [], {"diffusion TotalReadoutTime": ro_src}
     used, dropped = [], [r for r in notes if ": a GRE field map" in r]
     vols, pevs, ros = [dwi[..., b0i].astype(np.float64)], [pe0] * len(b0i), [readout] * len(b0i)
+    native = [True] * len(b0i)
     vox_w = _world_voxels(A, vox)
 
     def drop(p, why):
@@ -326,7 +329,8 @@ def load(dwi_path, partners=None, name=None) -> Subject:
             drop(p, "no b0 volume (b < 50)"); continue
         data = np.stack([np.asarray(pimg.dataobj[..., int(v)] if len(pimg.shape) > 3 else pimg.dataobj, np.float64)
                          for v in idx], -1)
-        if not (np.allclose(A, pimg.affine, atol=1e-3) and data.shape[:3] == shape):
+        on_grid = np.allclose(A, pimg.affine, atol=1e-3) and data.shape[:3] == shape
+        if not on_grid:
             M = np.linalg.inv(pimg.affine) @ A                               # diffusion voxel -> partner voxel
             cover = affine_transform(np.ones(pimg.shape[:3]), M[:3, :3], M[:3, 3], output_shape=shape, order=0,
                                      mode="constant", cval=0.0) > 0.5
@@ -337,6 +341,7 @@ def load(dwi_path, partners=None, name=None) -> Subject:
                                               mode="constant", cval=0.0) for v in range(data.shape[-1])], -1).clip(0, None)
             pv = (1.0 if cos > 0 else -1.0) * pe0                            # its direction on the diffusion grid
         vols.append(data); pevs += [pv] * data.shape[-1]; ros += [ro] * data.shape[-1]; used.append(p)
+        native += [on_grid] * data.shape[-1]
     pe_vectors = np.array(pevs)
     both = len({float(np.sign(v[pe_axis])) for v in pe_vectors}) == 2
     extra = (f"; not used: {'; '.join(dropped)}" if dropped else "") + (f"; {'; '.join(n for n in notes if n not in dropped)}"
@@ -361,4 +366,5 @@ def load(dwi_path, partners=None, name=None) -> Subject:
     return Subject(name=name or _stem(dwi_path), dwi=dwi, affine=A, vox=vox, bval=bval, bvec=bvec, pe_axis=pe_axis,
                    pe_sign=float(pe0[pe_axis]), readout_s=readout if readout is not None else float("nan"), pairing=pairing,
                    b0s=np.concatenate(vols, -1) if ok else None, pe_vectors=pe_vectors if ok else None,
-                   b0_readout_s=np.array(ros, float) if ok else None, dwi_path=dwi_path, sidecar=side)
+                   b0_readout_s=np.array(ros, float) if ok else None, dwi_path=dwi_path, sidecar=side,
+                   b0_native=np.array(native, bool) if ok else None)

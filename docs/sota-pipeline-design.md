@@ -520,6 +520,20 @@ interpolation) to understand it, and from Aydogan & Shi 2021. Our own implementa
 - **Was "still to run":** the phantom in both. Step 6's PTT advantage was measured with DIPY's units; how much of it survives
   in real units decides whether PTT earns its preset.
 
+### 7.3 Level-1-only elements (2026-10-26)
+
+Pipeline elements built and matched to an established tool already installed, opt-in and "experimental", with no claim
+about their effect on reproducibility or calibration (level 2), which stays a research question per element. In order:
+Gibbs removal, diffusion maps (DTI, DKI, free-water DTI), tract profiles, GPU MP-PCA, peaks and TractSeg in-process,
+DIPY-style CSD trackers, RecoBundles (its atlas is a download).
+
+- **`gibbs:subvoxel-shift`** (NOTES 2026-10-26): DIPY's `gibbs_removal` method and choices, in one process. In float64
+  its output matches DIPY's to rounding, except where two shifts tie to rounding (within 0.15 % of scale on cIIIs04).
+  The pipeline runs it in float32. There, near-ties can fall either way, as they do in DIPY's own float32: on cIIIs04,
+  678 of 76 million voxels differ from DIPY float64 by more than 0.1 % of scale, against 443 for DIPY float32. The
+  largest difference is 12 %: two shifts 0.52 apart scored within 1.3 parts per million. On cIIIs04 it takes 32 s on MPS and 83 s on the CPU in
+  float32, against DIPY's 99 s on 8 processes.
+
 ## 8. Licensing and the source policy
 
 The policy already set for FSL applies to every tool here:

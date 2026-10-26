@@ -1,0 +1,59 @@
+{
+ "scan": "cIIIs04 A as acquired",
+ "shape": [
+  112,
+  112,
+  54,
+  112
+ ],
+ "scale (99th percentile)": 132.0,
+ "cpu_count": 8,
+ "seconds": {
+  "DIPY float64 (processes: cpu_count)": 99.47,
+  "DIPY float32 (processes: cpu_count)": 80.37,
+  "ours, cpu float64": 261.7,
+  "ours, cpu float32": 83.0,
+  "ours, mps float32": 31.97
+ },
+ "DIPY float32": {
+  "max |difference| / scale": 0.06267723187023362,
+  "voxels differing by more than 0.1 % / 1 % / 5 % of scale": [
+   443,
+   19,
+   2
+  ],
+  "share differing by more than 0.1 % of scale": 6e-06,
+  "mean |change of the scan| / scale": 0.004445
+ },
+ "ours, cpu float64": {
+  "max |difference| / scale": 0.001467484403481184,
+  "voxels differing by more than 0.1 % / 1 % / 5 % of scale": [
+   2,
+   0,
+   0
+  ],
+  "share differing by more than 0.1 % of scale": 0.0,
+  "mean |change of the scan| / scale": 0.004445
+ },
+ "ours, cpu float32": {
+  "max |difference| / scale": 0.0407148022906995,
+  "voxels differing by more than 0.1 % / 1 % / 5 % of scale": [
+   549,
+   21,
+   0
+  ],
+  "share differing by more than 0.1 % of scale": 7e-06,
+  "mean |change of the scan| / scale": 0.004445
+ },
+ "ours, mps float32": {
+  "max |difference| / scale": 0.1169610158305797,
+  "voxels differing by more than 0.1 % / 1 % / 5 % of scale": [
+   678,
+   35,
+   2
+  ],
+  "share differing by more than 0.1 % of scale": 9e-06,
+  "mean |change of the scan| / scale": 0.004445
+ },
+ "DIPY: mean |change of the scan| / scale": 0.004445
+}
