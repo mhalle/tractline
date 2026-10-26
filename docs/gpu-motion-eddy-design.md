@@ -391,7 +391,8 @@ The predictions are recomputed after every resampling.
 
 ### 2.1 Prototype results (2026-10-20)
 
-**Script**: `bench/motion_eddy/proto.py` (results in `bench/results/motion_eddy/proto_*.json`), on MPS.
+**Script**: `bench/motion_eddy/proto.py`, on MPS. It writes `bench/results/motion_eddy/proto_*.json`, which are
+working files of the tuning runs and are not kept in the repository; the numbers below are from them.
 
 **Setup**:
 - The truth is the b = 2000 shell of ON-Harmony sub-16974's OXF1PRI001 scan (104 x 104 x 72, 2 mm, 50 directions over

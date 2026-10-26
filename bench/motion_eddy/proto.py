@@ -10,7 +10,7 @@ known rigid transform and distorted along PE by a known eddy polynomial, linear 
 
     uv run --group dipy bench/motion_eddy/proto.py --device mps|cpu [--acq-cost --cubic --outer 15 --inner 1]   # the final form
     uv run --group dipy bench/motion_eddy/proto.py --device mps --save-synth $TRACTOGRAPHY_DATA/derived/motion_eddy_synth   # the scan eddy ran on
-Writes results/motion_eddy/proto_<device>[...].json.
+Writes results/motion_eddy/proto_<device>[...].json (working files: ignored by git, not kept).
 """
 import argparse, json, math, time, sys
 import numpy as np, torch, torch.nn.functional as F

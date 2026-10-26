@@ -5,3 +5,6 @@ __pycache__/
 dist/
 build/
 .DS_Store
+
+# working files of the motion/eddy prototype's tuning runs (bench/motion_eddy/proto.py)
+bench/results/motion_eddy/proto_*.json
