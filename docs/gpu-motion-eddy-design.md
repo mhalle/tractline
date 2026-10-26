@@ -1335,8 +1335,10 @@ alternating variants as the 2026-10-02 notes do.
 
 ## 4. Outliers and within-volume motion
 
-**Phase 2: slice dropout detection and replacement**, the approach of eddy's `--repol` (Andersson et al. 2016). After
-each outer iteration:
+**Phase 2: slice dropout detection and replacement**, the approach of eddy's `--repol` (Andersson et al. 2016). Built
+2026-10-26 (NOTES, "outlier slices replaced"): the detection and imputation below, without the zero weights in the
+predictor's fit (imputation stands in for them, as in eddy) and without multiband groups. The plan, after each outer
+iteration:
 
 1. For each volume and slice (each multiband slice group when `SliceTiming` gives one), compute the mean residual
    against the prediction in the mask, standardized across that shell's volumes.

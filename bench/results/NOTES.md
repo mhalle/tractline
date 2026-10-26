@@ -7457,3 +7457,71 @@ out the left-out volumes.
   worst" warning can still fire on clean data. On the two real scans it did not.
 - The CPU path takes about 12-13 minutes per 105-volume scan (the review's estimate from 4 steps).
 - CUDA is untested.
+
+## 2026-10-26 motion_eddy: outlier slices replaced (eddy's --repol; the design's phase 2, first part)
+
+**What.** Slices that lost signal are found during the fit and replaced by their prediction, as eddy's `--repol`
+does (Andersson et al. 2016; the method, from the paper and eddy's documentation; our own implementation). The
+motion-eddy design's section 4 planned this.
+- **Detection.** For each volume and slice (along the acquisition's slice axis), the mean of data / gain minus
+  prediction over the brain's points, the prediction moved into acquisition space (`step_values`, a new kernel, and
+  its torch twin). This is turned into a robust z within the volume's shell: the median, and the MAD floored at 2 % of
+  the slice's mean prediction. A slice is an outlier when z < -4 (signal loss only) and it lost at least 10 % of its
+  predicted signal. A flagged slice stays flagged down to z = -3 (hysteresis: without it a borderline slice flipped
+  between passes).
+  - Detection runs at the first full-resolution step and every 5 steps after it, then once more with the final
+    parameters.
+  - The screen's dropout volumes are no longer left out: their dropout slices seed the outlier map, imputed from step
+    0 (no detection before any registration).
+- **Imputation.** At every pass, each flagged slice's points are replaced by gain x prediction, refreshed as the
+  registration improves, so the slice neither pulls its volume's registration nor enters the others' predictions. The
+  gain is computed outside the volume's outlier slices. A volume that leaves the fit is not imputed.
+- **Output** (`outliers`): "replace", the default, carries the replaced slices into the corrected series
+  (`MotionEddy.replacements`, applied by `apply_volumes`). "flag" reports them and leaves the output as acquired.
+  "off" turns detection off. The QC gains the outlier map (volume: slices), a per-volume count, the TSV column
+  `outlier_slices`, a panel in the plot, and a warning in the pipeline.
+
+**A review** of the first version found four faults, all fixed above.
+- **Stale imputation.** It was refreshed only when the map changed, so seeded slices kept values predicted before any
+  registration: the dropout volume's own error was 0.19 voxels, against 0.08 with refreshing.
+- **The gain was ignored.** A volume dim by 15 % throughout had 15 slices flagged; at 0.7, every brain slice. A
+  replaced slab came out 8 % brighter than its neighbors.
+- **A seeded volume that left the fit** had zeros written into its slices.
+- **Step-0 detection, before registration,** kept weak flags through the hysteresis.
+
+The minimum loss of 10 % was added after it counted 1-24 flagged slices on clean real scans, mostly at z -4.0 to -4.6
+with losses of 5-12 %.
+
+**Synthetic** (`tests/test_motion_eddy.py`):
+- The clean scan gives no outlier slices.
+- A slab of 10 slices at 30 % in one volume is found (slices 11-18 at least). Its corrected slices come back within
+  15 % of the truth.
+- Three zeroed slices in one volume: the volume keeps its place, the slices are replaced, and its own motion is
+  recovered (under 0.15 voxels).
+- A volume dim by 15 % throughout has no outlier slices.
+
+**Real**, with each scan's own field where it has a reversed pair (as the pipeline runs; `pipeline.correct_motion_eddy`,
+MPS). Flagged slices, by scan:
+
+| scan | flagged slices | where |
+|---|---|---|
+| ON-Harmony 16974 | 0 | |
+| ON-Harmony 03286 | 1 | |
+| ON-Harmony 14230 | 5 | inferior slices 13-15, in 5 volumes |
+| ON-Harmony 15320 | 9 | 4 in inferior slices 15-16 (pulsation, 10 % or more lost), the others at 41 and 49-50 |
+| ON-Harmony 10975 | 3 | volume 60: slices 19, 32, 43 (multiband dropout under motion) |
+| MASiVar cIs1 b3000 | 13 | volume 85: slab 13-15 and its multiband partner 32-34 (19 apart in 38 slices, multiband 2); volume 21: interleaved slices; 1 more |
+| MASiVar cIs1 b1000 | 10 | volume 1: slices 8-9 with their partners 26-28; a few more |
+| MASiVar cIIIs08 b2000 | 3 | |
+| ds001226 PAT05 | 3 | volume 98: interleaved slices 23, 25, 27 |
+| ds001226 PAT16 | 1 | |
+
+The cost is about 1.2 s more per fit (20 s for 105 volumes).
+
+**Not done.**
+- Multiband groups are not tied together: eddy treats a multiband group's slices as one unit (`--mb`). Here each slice
+  is judged alone, though the partners above came out flagged anyway.
+- No slice-to-volume motion (phase 3).
+- The thresholds (z < -4 as eddy's default, a 10 % loss, the 2 % floor) are not tuned on labeled data.
+- Memory: the original series is kept beside the imputed one (one more copy, within the 6x budget, not measured at
+  HCP size).

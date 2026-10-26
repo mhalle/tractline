@@ -309,6 +309,11 @@ def correct_motion_eddy(s, timer: Timer, device="mps", opts=None, field=True) ->
         warnings = warnings + [f"motion_eddy: volumes left out of the fit and of tracking (in the corrected series with "
                                "identity motion, b-vector as acquired): "
                                + "; ".join(f"{v}: {why}" for v, why in r.excluded.items())]
+    if r.outlier_slices:
+        n = sum(len(v) for v in r.outlier_slices.values())
+        how = "replaced by their prediction" if r.options["outliers"] == "replace" else "flagged, left as acquired"
+        warnings = warnings + [f"motion_eddy: {n} outlier slices (signal loss) in {len(r.outlier_slices)} volumes, {how}: "
+                               + "; ".join(f"{v}: {ks}" for v, ks in r.outlier_slices.items())]
     if r.qc.get("non-finite values set to 0"):
         warnings = warnings + [f"motion_eddy: {r.qc['non-finite values set to 0']} non-finite values in the series, set "
                                "to 0"]

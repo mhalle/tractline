@@ -13,8 +13,8 @@ DATA/ds001226/derived/<sub>/<sub>.trx). Prints the stage times and the streamlin
 --motion-eddy [rigid|linear|quadratic]: head motion and eddy-current correction (the motion_eddy slot; quadratic by
 default), composed with the field into one resample, the b-vectors rotated for the tracker. --qc DIR: its QC there -
 motion_eddy_qc.tsv (per volume: translations, rotations, displacement at the brain's edge from motion and from eddy
-currents, framewise displacement, the residual against the volume's prediction and its z within the shell, the eddy
-coefficients), motion_eddy_qc.json (the summary) and motion_eddy_qc.png (the traces, with matplotlib). The translation
+currents, framewise displacement, the residual against the volume's prediction and its z within the shell, the
+number of outlier slices (signal loss, replaced by their prediction), whether it was left out, the eddy coefficients), motion_eddy_qc.json (the summary) and motion_eddy_qc.png (the traces, with matplotlib). The translation
 along PE is what is left of each volume's PE offset after the part linear in its gradient is given to the eddy currents
 (eddy's split); its volume-to-volume jitter, and so part of the framewise displacement, can be that split's residue,
 not head motion;
@@ -31,7 +31,8 @@ from tractline.labelers import rapidparc
 
 def plot_qc(rec, path, name):
     """The motion_eddy QC traces per volume: translations, rotations, displacement at the brain's edge (motion, eddy),
-    framewise displacement, the residual z within the shell (matplotlib; skipped without it)."""
+    framewise displacement, the residual z within the shell, the outlier slices replaced and the volumes left out
+    (matplotlib; skipped without it)."""
     try:
         import matplotlib
         matplotlib.use("Agg")
@@ -43,7 +44,7 @@ def plot_qc(rec, path, name):
     rows = np.array([[np.nan if x is None else x for x in r] for r in ME.qc_rows(rec)], float)
     col = {c: i for i, c in enumerate(ME.QC_COLUMNS)}
     v = rows[:, 0]
-    fig, ax = plt.subplots(5, 1, figsize=(9, 11), sharex=True)
+    fig, ax = plt.subplots(6, 1, figsize=(9, 13), sharex=True)
     for c in ("tx_mm", "ty_mm", "tz_mm"):
         ax[0].plot(v, rows[:, col[c]], label=c[:2])
     ax[0].set_ylabel("translation (mm)")
@@ -58,7 +59,13 @@ def plot_qc(rec, path, name):
     ax[4].bar(v, rows[:, col["residual_z"]], color=np.where(rows[:, col["residual_z"]] > 4, "C3", "0.5"))
     ax[4].axhline(4, color="C3", lw=0.8, ls="--")
     ax[4].set_ylabel("residual z")
-    ax[4].set_xlabel("volume (as acquired)")
+    ax[5].bar(v, rows[:, col["outlier_slices"]], color="C1")
+    left = np.flatnonzero(rows[:, col["left_out"]] > 0)
+    if len(left):
+        ax[5].plot(v[left], np.zeros(len(left)), "kx", label="left out")
+        ax[5].legend(loc="upper right", fontsize=8)
+    ax[5].set_ylabel("outlier slices")
+    ax[5].set_xlabel("volume (as acquired)")
     for a in ax[:3]:
         a.legend(loc="upper right", fontsize=8, ncol=3)
     for bv, idx in rec["groups (b, volumes)"]:

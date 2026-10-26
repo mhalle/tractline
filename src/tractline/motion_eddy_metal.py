@@ -318,6 +318,32 @@ kernel void step_cost(
     }
 }
 
+// the prediction at each point y of the listed volumes, moved into acquisition space: P(phi^-1(y)) (outlier detection
+// and imputation)
+kernel void step_values(
+    device const float* coef    [[buffer(0)]],
+    device const float* pts     [[buffer(1)]],
+    device const float* pvol    [[buffer(2)]],    // (len(vols), NPV)
+    device const int*   vols    [[buffer(3)]],
+    device float*       out     [[buffer(4)]],    // (len(vols), N)
+    device const int*   ip      [[buffer(5)]],
+    device const float* fp      [[buffer(6)]],
+    device const float* dfield  [[buffer(7)]],
+    device const float* ddfield [[buffer(8)]],
+    device const int*   nl      [[buffer(9)]],    // len(vols)
+    uint tid [[thread_position_in_grid]])
+{
+    int N = ip[1], X = ip[3], Y = ip[4], Z = ip[5], pe = ip[6], nmon = ip[7], npass = ip[8];
+    int hf = ip[9], FX = ip[10], FY = ip[11], FZ = ip[12];
+    int li = int(tid) / N, n = int(tid) % N;
+    if (li >= nl[0]) return;
+    int g = vols[li];
+    float3 y = float3(pts[3 * n], pts[3 * n + 1], pts[3 * n + 2]);
+    float3 x = phi_inv(pvol + long(li) * NPV, y, fp, dfield, ddfield, pe, nmon, npass, hf, FX, FY, FZ);
+    float3 gr;
+    out[long(li) * N + n] = cubic_vg(coef + long(g) * X * Y * Z, x - float3(fp[25], fp[26], fp[27]), X, Y, Z, gr, false);
+}
+
 // the forward map phi(x) and a trilinear sample of the acquired volume there (zero outside: grid_sample's padding)
 kernel void resample(
     device const float* vols   [[buffer(0)]],    // (G, X, Y, Z) the acquired (smoothed) volumes, full grid
@@ -550,3 +576,13 @@ def step_cost(coef, obs, pts, pvol_sub, vols, nch, ip, fp, dfield, ddfield):
     library().step_cost(coef, obs, pts, pvol_sub, vols.int().contiguous(), part, ip, fp, dfield, ddfield,
                         threads=L * nch * TG, group_size=TG)
     return part.sum(1)
+
+
+def step_values(coef, pts, pvol_sub, vols, ip, fp, dfield, ddfield):
+    """The prediction moved into acquisition space at each point, for the listed volumes -> (len(vols), N)."""
+    L, N = vols.shape[0], pts.shape[0]
+    out = torch.empty(L, N, dtype=torch.float32, device=coef.device)
+    nl = torch.tensor([L], dtype=torch.int32, device=coef.device)
+    library().step_values(coef, pts, pvol_sub, vols.int().contiguous(), out, ip, fp, dfield, ddfield, nl,
+                          threads=_threads(L * N), group_size=TG)
+    return out

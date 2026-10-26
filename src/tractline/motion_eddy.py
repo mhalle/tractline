@@ -82,6 +82,12 @@ class Options:
                                      # (0.73 -> 0.09 voxel), on real scans it moves the maps 0.006-0.009 voxel
     max_motion_mm: float = 30.0      # a volume whose map moves the brain's edge more than this leaves the fit
     check_memory: bool = True        # on MPS, refuse a series too large for the recommended memory
+    outliers: str = "replace"        # outlier slices (signal loss against the prediction, eddy's --repol): "replace"
+                                     # (imputed by the prediction in the fit and in the output), "flag" (imputed in the
+                                     # fit, reported, the output as acquired), "off"
+    outlier_z: float = 4.0           # a slice is an outlier when its mean residual's robust z within its shell is under -z
+    outlier_min_loss: float = 0.1    # ... and it has lost at least this share of its predicted signal (mild losses, as
+                                     # cardiac pulsation leaves in inferior slices, are not replaced by a smoothed fit)
 
     def __post_init__(self):
         if self.model not in ORDERS:
@@ -92,6 +98,8 @@ class Options:
             raise ValueError(f"motion_eddy: reference {self.reference!r}")
         if self.backend not in ("auto", "metal", "torch"):
             raise ValueError(f"motion_eddy: backend {self.backend!r}")
+        if self.outliers not in ("replace", "flag", "off"):
+            raise ValueError(f"motion_eddy: outliers {self.outliers!r} is not 'replace', 'flag' or 'off'")
         if self.steps < 1 or self.sh_order < 0 or self.sh_order % 2 or self.sh_lambda < 0:
             raise ValueError("motion_eddy: steps >= 1, sh_order an even integer >= 0, sh_lambda >= 0")
 
@@ -131,6 +139,9 @@ class MotionEddy:
     seconds: dict = field(default_factory=dict)
     backend: str = ""                # "metal" or "torch": what ran
     excluded: dict = field(default_factory=dict)   # {volume: reason}: left out of the fit (identity motion and eddy)
+    outlier_slices: dict = field(default_factory=dict)  # {volume: [slices]} along slice_axis: signal loss, imputed
+    replacements: dict = field(default_factory=dict)    # {volume: (flat voxel indices, values)}: apply_volumes' imputation
+    slice_axis: int = 2
 
 
 # ------------------------------------------------------------------------------------------------- geometry
@@ -419,6 +430,16 @@ def t_step_cost(geo, coef, obs, ys, theta_sub, vols, offset, dfield=None, npass=
     return ((v - obs[vols]) ** 2).sum(1)
 
 
+def t_step_values(geo, coef, ys, theta_sub, vols, offset, dfield=None, npass=2, ddfield=None):
+    """The prediction moved into acquisition space at each point y, for the listed volumes -> (len(vols), N)."""
+    off = torch.as_tensor(offset, dtype=coef.dtype, device=coef.device)
+    out = []
+    for a in range(0, len(vols), 8):
+        x = phi_inv(geo, theta_sub[a:a + 8], ys, dfield, npass, ddfield)
+        out.append(cubic_value_grad(coef[vols[a:a + 8]], x - off, want_grad=False)[0])
+    return torch.cat(out)
+
+
 def t_apply_volumes(geo, vols, theta, dfield=None, ddfield=None, chunk=4):
     """The corrected volumes and their validity (G, X, Y, Z): sampled once at phi(x), times the Jacobian along PE."""
     G, X, Y, Z = vols.shape
@@ -553,7 +574,7 @@ def _masks(dwi, bval, dfield_np, pe_axis, mask):
 # ------------------------------------------------------------------------------------------------- the estimate
 
 def screen(dwi, bval, groups, m_pts, slice_axis=2, low=0.5, high=2.0, slice_low=0.55, local=0.7, min_slice_voxels=200,
-           min_slice_area=0.4, min_slice_group=5):
+           min_slice_area=0.4, min_slice_group=5, dropout=None):
     """Volumes to leave out of the fit, before it, as {volume: reason}: a volume whose mean over the brain (m_pts) is
     under `low` or over `high` times its group's median (corrupt, empty, or another contrast), or that has signal
     dropout (eddy's outlier replacement is phase 2 of the design, so such a volume is not registered at all rather
@@ -567,7 +588,9 @@ def screen(dwi, bval, groups, m_pts, slice_axis=2, low=0.5, high=2.0, slice_low=
     are not screened at all. slice_axis: the acquisition's slice axis.
     The thresholds were set on ON-Harmony 10975 (a multiband dropout at 0.40), MASiVar cIs1 (interleaved slices at
     0.46-0.49, a 3-slice slab at 0.47-0.52) and the SHORELine high-motion phantoms (no dropout; motion leaves dips under
-    0.55 only in slices under 0.4 of the largest area): a heuristic, until outlier replacement (phase 2)."""
+    0.55 only in slices under 0.4 of the largest area): a heuristic, until outlier replacement (phase 2).
+    dropout: a dict to receive {volume: [slices]} for the volumes with dropout, which are then not left out (the fit's
+    outlier slices replace those slices instead)."""
     out = {}
     pts = np.asarray(m_pts, bool)
     if not pts.any():
@@ -608,7 +631,9 @@ def screen(dwi, bval, groups, m_pts, slice_axis=2, low=0.5, high=2.0, slice_low=
                 if min(ml, mh) >= 0.75 and np.nanmax(r[k:e + 1]) < local * min(ml, mh):
                     bad += list(range(k, e + 1))
                 k = e + 1
-            if bad:
+            if bad and dropout is not None:
+                dropout[int(v)] = bad
+            elif bad:
                 out[int(v)] = (f"signal dropout in slices {bad} (axis {slice_axis}; under {slice_low} x the shell's "
                                f"median and under {local} x its neighbors')")
     return out
@@ -682,13 +707,21 @@ def estimate(dwi, bval, bvec, affine, pe_axis, field_hz=None, pe_sign=None, read
     t_mask = time.perf_counter() - t_m
     from scipy.ndimage import binary_erosion
     edge = m_ref & ~binary_erosion(m_ref, iterations=1)
-    excluded = screen(dwi, bval, groups, m_pts, slice_axis=slice_axis)
+    seeds = {}                                                            # screen's dropout: outlier slices to start with
+    excluded = screen(dwi, bval, groups, m_pts, slice_axis=slice_axis, dropout=seeds if opt.outliers != "off" else None)
     if has_field and isb0.any() and int(np.flatnonzero(isb0)[0]) in excluded:
         warnings.warn("motion_eddy: the first b0, the field's frame, was left out of the fit: the reference moves to "
                       "the next b0, and the field is off by the motion between them", stacklevel=2)
 
     acq = torch.tensor(np.ascontiguousarray(np.moveaxis(dwi, -1, 0)), dtype=dtype, device=dev)
+    acq_orig = acq                                                        # imputation works on a copy of it
     del dwi
+    S_n = (X, Y, Z)[slice_axis]
+    in_brain = torch.tensor(binary_erosion(m_pts, iterations=2)[m_pts], device=dev)     # the points inside the brain
+    outl = torch.zeros(G, S_n, dtype=torch.bool, device=dev)
+    for v, ks in seeds.items():
+        outl[v, ks] = True
+    outlier_log = []
     dfield = torch.tensor(dfield_np, dtype=dtype, device=dev) if has_field else None
     ddfield = (torch.gradient(torch.as_tensor(dfield_np), dim=pe_axis)[0].to(dev, dtype) if has_field else None)
     full = lambda m: torch.tensor(np.argwhere(m), dtype=dtype, device=dev).contiguous()     # noqa: E731
@@ -782,6 +815,64 @@ def estimate(dwi, bval, bvec, affine, pe_axis, field_hz=None, pe_sign=None, read
     else:
         smooth_fn, prefilter_fn = t_smooth, t_prefilter
 
+    slice_of = ye[:, slice_axis].long()
+
+    def predictions_at_points(coef_, th_):
+        """P(phi^-1(y)) for every volume at every point (G, N)."""
+        allv = torch.arange(G, device=dev)
+        if backend == "metal":
+            nch_, ipv, fpv = M.consts(geo, G, len(ye), tuple(coef_.shape[1:]), offset, npass, has_field)
+            return M.step_values(coef_.contiguous(), ye, pack(th_), allv, ipv, fpv, dfk, ddfk)
+        return t_step_values(geo, coef_, ye, th_, allv, offset, dfield, npass, ddfield)
+
+    def detect(Pv, gn, prev=None):
+        """Outlier slices: per volume and slice, the mean of (data / gain - prediction) over the brain's points, as a
+        robust z within the volume's shell (median, MAD floored at 2 % of the slice's mean prediction). An outlier: z
+        under -outlier_z, or for a slice already flagged (prev) under -outlier_z + 1 (hysteresis: a borderline slice
+        does not flip from pass to pass), and a loss of at least outlier_min_loss of the slice's mean prediction. gn:
+        each volume's intensity gain (G,), the fit's, so a volume's overall level is not read as slice loss."""
+        obs0 = acq_orig.reshape(G, -1)[:, lin_e] / gn[:, None]
+        w = in_brain.to(dtype)
+        cnt = torch.zeros(S_n, dtype=dtype, device=dev).scatter_add_(0, slice_of, w)
+        D = torch.zeros(G, S_n, dtype=dtype, device=dev).scatter_add_(1, slice_of.expand(G, -1), (obs0 - Pv) * w)
+        Pm = torch.zeros(G, S_n, dtype=dtype, device=dev).scatter_add_(1, slice_of.expand(G, -1), Pv * w)
+        ok_s = cnt >= max(100.0, 0.2 * float(cnt.max()))
+        D, Pm = D / cnt.clamp_min(1), Pm / cnt.clamp_min(1)
+        out = torch.zeros(G, S_n, dtype=torch.bool, device=dev)
+        for idx in groups:
+            idx = [int(i) for i in idx if int(i) not in excluded]
+            if len(idx) < 5:
+                continue
+            Dg = D[idx]
+            med = Dg.median(0).values
+            mad = 1.4826 * (Dg - med).abs().median(0).values
+            mad = torch.maximum(mad, 0.02 * Pm[idx].abs().median(0).values).clamp_min(1e-12)
+            zg = (Dg - med) / mad
+            hold = prev[idx] if prev is not None else torch.zeros_like(zg, dtype=torch.bool)
+            loss = Dg < -opt.outlier_min_loss * Pm[idx].abs()
+            out[idx] = ((zg < -opt.outlier_z) | (hold & (zg < -opt.outlier_z + 1))) & loss & ok_s
+        return out
+
+    def impute(Pv, gn):
+        """acq: the original series with every outlier slice's points replaced by the prediction, at the volume's own
+        intensity (gain x prediction)."""
+        nonlocal acq
+        acq = acq_orig.clone()
+        for v in torch.nonzero(outl.any(1))[:, 0].tolist():
+            sel = outl[v][slice_of]
+            acq[v].view(-1)[lin_e[sel]] = gn[v] * Pv[v, sel]
+
+    def gains_of(pv_, flagged):
+        """Each volume's intensity relative to its prediction over the fit's points outside its outlier slices (flagged;
+        a dropout slab would pull it down), as the fit's gain does; ones without the gain option."""
+        if not opt.gain:
+            return torch.ones(G, dtype=dtype, device=dev)
+        use = (~flagged[:, slice_of]).to(dtype)                                   # (G, N)
+        o = (acq_orig.reshape(G, -1)[:, lin_e] * use).sum(1)
+        p = (pv_[:, lin_e] * use).sum(1)
+        gn = torch.where(p > 0, o / p.clamp_min(1e-12), torch.ones_like(p))
+        return torch.where(torch.isfinite(gn) & (gn > 0), gn, torch.ones_like(gn))
+
     vox_t = torch.as_tensor(vox, dtype=dtype, device=dev)
     th = torch.zeros(G, P, dtype=dtype, device=dev)
     mu = torch.full((G,), 1e-3, dtype=dtype, device=dev)
@@ -814,6 +905,21 @@ def estimate(dwi, bval, bvec, affine, pe_axis, field_hz=None, pe_sign=None, read
                 gains = torch.where(torch.isfinite(gains) & (gains > 0), gains, torch.ones_like(gains))
                 obs = obs / gains[:, None]
             coef = prefilter_fn(pv.reshape(G, X, Y, Z)[crop])
+            first_full = len([f for f in fw_steps if f > 0])
+            if opt.outliers != "off" and ((it == 0 and bool(outl.any())) or
+                                         (fw == 0 and not c_ and it >= first_full and (it - first_full) % 5 == 0)):
+                gn = gains_of(pv, outl)
+                Pv = predictions_at_points(coef, th)
+                if it > 0:                       # step 0 (seeds only): no detection before any registration
+                    outl = detect(Pv, gn, outl)
+                for v, ks in seeds.items():                                  # the screen's dropout stays flagged
+                    if v not in excluded:
+                        outl[v, ks] = True
+                outl[[int(v) for v in excluded]] = False
+                impute(Pv, gn)                   # every pass: the predictions improve as the registration does
+                cached = (None, None)                                           # re-smooth the imputed series
+                outlier_log.append({"step": it, "outlier slices": int(outl.sum())})
+                del Pv
             del pv
             if backend == "metal":
                 if c_ not in mcache:
@@ -896,7 +1002,35 @@ def estimate(dwi, bval, bvec, affine, pe_axis, field_hz=None, pe_sign=None, read
                 progress(rec)
             if quiet >= 2:
                 break
-    cached = None
+    cached = vols = None
+    replacements = {}
+    if opt.outliers != "off":
+        # the last pass, with the final parameters: the outlier map reported, and the values that replace its slices
+        with torch.no_grad():
+            if backend == "metal":
+                u = M.resample(acq.contiguous(), xp, pack(th), rs[1], rs[2], dfk)
+            else:
+                u = t_resample(geo, acq, xp, th, dfield)
+            pv = torch.zeros(G, X * Y * Z, dtype=dtype, device=dev)
+            pv[:, lin_p] = W @ u
+            del u
+            gn = gains_of(pv, outl)
+            Pv = predictions_at_points(prefilter_fn(pv.reshape(G, X, Y, Z)[crop]), th)
+            del pv
+            outl = detect(Pv, gn, outl)
+            for v, ks in seeds.items():
+                if v not in excluded:
+                    outl[v, ks] = True
+            outl[[int(v) for v in excluded]] = False                               # a left-out volume is not imputed
+            outlier_log.append({"step": "final", "outlier slices": int(outl.sum())})
+            if opt.outliers == "replace":
+                lin_np = lin_e.cpu().numpy()
+                for v in torch.nonzero(outl.any(1))[:, 0].tolist():
+                    sel = outl[v][slice_of]
+                    replacements[int(v)] = (lin_np[sel.cpu().numpy()],
+                                            (gn[v] * Pv[v, sel]).cpu().numpy().astype(np.float32))
+            del Pv
+    acq = acq_orig = None
     if backend == "metal":
         torch.mps.synchronize()
     t_fit = time.perf_counter() - t_all - t_mask
@@ -927,6 +1061,12 @@ def estimate(dwi, bval, bvec, affine, pe_axis, field_hz=None, pe_sign=None, read
         f_last = np.where(out_v, np.nan, f_last)
     qc = _qc(geo, thn, th_fit, xedge, groups, group_b, isb0, f_last, steps_run, opt, history, sh_orders, ntrials)
     qc["non-finite values set to 0"] = n_nonfinite
+    ol = {int(v): torch.nonzero(outl[v])[:, 0].tolist() for v in torch.nonzero(outl.any(1))[:, 0].tolist()}
+    qc["outlier slices (volume: slices along the slice axis)"] = {str(k): v for k, v in ol.items()}
+    qc["outlier slices per volume"] = outl.sum(1).cpu().numpy().astype(int).tolist()
+    qc["outlier slices"] = {"mode": opt.outliers, "slice axis": int(slice_axis), "total": int(outl.sum()),
+                            "volumes": len(ol), "seeded by the screen's dropout": {str(k): v for k, v in seeds.items()},
+                            "passes": outlier_log}
     qc["volumes left out of the fit (identity motion, b-vector as acquired)"] = {str(k): v for k, v in sorted(excluded.items())}
     qc["volumes fitted rigid only (a shell of 2-4: no gauge for its eddy field)"] = sorted(rigid_only)
     if gains is not None:
@@ -934,7 +1074,8 @@ def estimate(dwi, bval, bvec, affine, pe_axis, field_hz=None, pe_sign=None, read
     return MotionEddy(theta=thn, theta_fit=th_fit, bvec=bv_out, model=opt.model, pe_axis=int(pe_axis), shape=(X, Y, Z),
                       vox=vox, groups=[np.asarray(i) for i in groups], group_b=group_b, reference=reference,
                       field_used=has_field, pe_scale=pe_scale, anchors=anchors, qc=_finite(qc), options=asdict(opt),
-                      seconds=seconds, backend=backend, excluded=dict(sorted(excluded.items())))
+                      seconds=seconds, backend=backend, excluded=dict(sorted(excluded.items())), outlier_slices=ol,
+                      replacements=replacements, slice_axis=int(slice_axis))
 
 
 def _finite(o):
@@ -1058,6 +1199,9 @@ def apply_volumes(dwi, result: MotionEddy, field_hz=None, device="mps", dtype=to
     backend = backend if backend != "auto" else ("metal" if dev.type == "mps" else "torch")
     geo = Geometry(result.shape, result.vox, result.pe_axis, ORDERS[result.model], dev, dtype)
     vols = torch.tensor(np.ascontiguousarray(np.moveaxis(np.asarray(dwi), -1, 0)), dtype=dtype, device=dev)
+    vols = torch.nan_to_num(vols, nan=0.0, posinf=0.0, neginf=0.0)
+    for v, (lin, vals) in (getattr(result, "replacements", None) or {}).items():   # outlier slices, by their prediction
+        vols[int(v)].view(-1)[torch.as_tensor(lin, device=dev)] = torch.as_tensor(vals, dtype=dtype, device=dev)
     th = torch.tensor(result.theta_fit, dtype=dtype, device=dev)
     dfield = ddfield = None
     if field_hz is not None:
@@ -1135,12 +1279,13 @@ def record(r: MotionEddy) -> dict:
             "groups (b, volumes)": [[int(b), [int(i) for i in idx]] for b, idx in zip(r.group_b, r.groups)],
             "theta": np.round(r.theta, 6).tolist(), "theta_fit": np.round(r.theta_fit, 6).tolist(),
             "shell anchors": r.anchors, "qc": r.qc, "options": r.options, "seconds": r.seconds, "backend": r.backend,
-            "left out": {str(k): v for k, v in r.excluded.items()}}
+            "left out": {str(k): v for k, v in r.excluded.items()},
+            "outlier slices": {str(k): v for k, v in r.outlier_slices.items()}, "slice axis": r.slice_axis}
 
 
 QC_COLUMNS = ("volume", "b", "tx_mm", "ty_mm", "tz_mm", "rx_deg", "ry_deg", "rz_deg", "rigid_edge_rms_mm",
               "rigid_edge_max_mm", "eddy_edge_rms_mm", "eddy_edge_max_mm", "framewise_displacement_mm",
-              "residual_rms", "residual_z")
+              "residual_rms", "residual_z", "outlier_slices", "left_out")
 
 
 def qc_rows(rec: dict) -> list:
@@ -1155,10 +1300,13 @@ def qc_rows(rec: dict) -> list:
     fd = q["framewise displacement, mm per volume"]
     res = q.get("residual vs prediction, rms per volume", [None] * len(th))
     z = q.get("residual z within group per volume", [None] * len(th))
+    nol = q.get("outlier slices per volume", [0] * len(th))
+    left = rec.get("left out", {})
     rows = []
     for v in range(len(th)):
         row = [v, int(b[v]), *np.round(th[v, :3], 4), *np.round(np.degrees(th[v, 3:6]), 4), *np.round(rig[v], 4),
-               *np.round(edd[v], 4), round(fd[v], 4), res[v], z[v], *np.round(th[v, 6:], 4)]
+               *np.round(edd[v], 4), round(fd[v], 4), res[v], z[v], int(nol[v]), int(str(v) in left),
+               *np.round(th[v, 6:], 4)]
         rows.append([float(x) if isinstance(x, (np.floating, float)) else x for x in row])
     return rows
 
@@ -1203,6 +1351,8 @@ def write_qc(rec: dict, folder) -> dict:
                "volumes fitted rigid only (a shell of 2-4)":
                    q.get("volumes fitted rigid only (a shell of 2-4: no gauge for its eddy field)"),
                "non-finite values set to 0": q.get("non-finite values set to 0"),
+               "outlier slices (volume: slices)": q.get("outlier slices (volume: slices along the slice axis)"),
+               "outlier slices": {k: v for k, v in (q.get("outlier slices") or {}).items() if k != "passes"},
                "groups": q["groups"], "shell anchors": rec["shell anchors"], "seconds": rec["seconds"],
                "options": rec["options"], "table": "motion_eddy_qc.tsv"}
     summary = _finite(summary)

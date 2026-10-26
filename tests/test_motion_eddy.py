@@ -359,17 +359,21 @@ def corrupt(t, how):
     return d
 
 
-@pytest.mark.parametrize("how", ["nan voxel", "zero volume", "dropout"])
+@pytest.mark.parametrize("how", ["nan voxel", "zero volume", "dropout", "dropout, outliers off"])
 def test_one_bad_volume_stays_local(scan, how):
-    """A NaN voxel is set to 0 and counted; an empty volume and a volume with dropout slices are left out of the fit
-    (identity motion, b-vector as acquired, the reason recorded); every other volume is still recovered, and the left-out
-    volume crops nobody else's output."""
-    d = corrupt(scan, how)
-    r = ME.estimate(d, scan["bval"], scan["bvec"], scan["affine"], 1, device=DEV, options={"steps": 25})
+    """A NaN voxel is set to 0 and counted; an empty volume is left out of the fit (identity motion, b-vector as
+    acquired, the reason recorded); a volume with dropout slices keeps its place, its slices flagged as outliers and
+    imputed (or, with outliers off, it is left out). Every other volume is still recovered, and nothing crops the
+    others' output."""
+    d = corrupt(scan, how.split(",")[0])
+    opts = {"steps": 25, **({"outliers": "off"} if "off" in how else {})}
+    r = ME.estimate(d, scan["bval"], scan["bvec"], scan["affine"], 1, device=DEV, options=opts)
     assert np.isfinite(r.theta_fit).all()
-    bad = {"nan voxel": None, "zero volume": 20, "dropout": 40}[how]
-    if bad is None:
+    bad = {"nan voxel": None, "zero volume": 20, "dropout": None, "dropout, outliers off": 40}[how]
+    if how == "nan voxel":
         assert r.qc["non-finite values set to 0"] == 1 and not r.excluded
+    elif how == "dropout":
+        assert not r.excluded and set(r.outlier_slices) == {40} and set(r.outlier_slices[40]) >= {15, 16, 17}
     else:
         assert list(r.excluded) == [bad] and not r.theta_fit[bad].any()
         assert np.array_equal(r.bvec[:, bad], scan["bvec"][:, bad])
@@ -382,6 +386,24 @@ def test_one_bad_volume_stays_local(scan, how):
     _, valid = ME.apply_volumes(d, r, device=DEV)
     assert valid[binary_erosion(scan["brain"], iterations=2)].mean() > 0.99
     json.dumps(ME.record(r), allow_nan=False)
+
+
+def test_outlier_slices_replaced(scan):
+    """Dropout slices are found and replaced: the corrected volume's slices come back near the truth, the clean data
+    gives no outlier slices, and "flag" reports them but leaves the output as acquired there."""
+    clean = ME.estimate(scan["dwi"], scan["bval"], scan["bvec"], scan["affine"], 1, device=DEV, options={"steps": 25})
+    assert not clean.outlier_slices
+    d = scan["dwi"].copy()
+    d[:, :, 10:20, 50] *= 0.3                                               # a slab of signal loss in volume 50
+    r = ME.estimate(d, scan["bval"], scan["bvec"], scan["affine"], 1, device=DEV, options={"steps": 25})
+    assert set(r.outlier_slices) == {50} and set(range(11, 19)) <= set(r.outlier_slices[50])
+    corr, valid = ME.apply_volumes(d, r, device=DEV, mask_output=False)
+    core = binary_erosion(scan["brain"], iterations=3) & valid
+    core[:, :, :11] = core[:, :, 19:] = False
+    err = np.abs(corr[..., 50] - scan["sig"][..., 50])[core].mean()
+    assert err < 0.15 * scan["sig"][..., 50][core].mean(), err
+    f = ME.estimate(d, scan["bval"], scan["bvec"], scan["affine"], 1, device=DEV, options={"steps": 25, "outliers": "flag"})
+    assert set(f.outlier_slices) == {50} and not f.replacements
 
 
 def test_runaway_guard(scan):
@@ -472,3 +494,20 @@ def test_screen_finds_a_slab():
     d[:, :, 10:18, 4] *= 0.3
     out = ME.screen(d, np.full(G, 1000.0), [np.arange(G)], np.mean(d[..., :3], -1) > 50)
     assert set(out) == {4} and "slices [10, 11, 12, 13, 14, 15, 16, 17]" in out[4]
+
+
+def test_outliers_respect_gain_and_left_out(scan):
+    """The review of the outlier slices: a volume dim throughout (its gain) has no outlier slices; a dropout volume's
+    imputation is refreshed as the registration improves, so its own motion is recovered; a seeded volume that later
+    leaves the fit gets no replacements."""
+    d = scan["dwi"].copy()
+    d[..., 30] *= 0.85                                                      # dim throughout: a gain, not slice loss
+    d[:, :, 15:18, 40] = 0                                                  # dropout: seeded by the screen
+    r = ME.estimate(d, scan["bval"], scan["bvec"], scan["affine"], 1, device=DEV, options={"steps": 25})
+    assert 30 not in r.outlier_slices and 40 in r.outlier_slices
+    one = ME.MotionEddy(**{**r.__dict__, "theta_fit": r.theta_fit[[40]]})
+    assert edge_error({**scan, "theta": scan["theta"][[40]]}, one) < 0.15, "the dropout volume's own motion"
+    r2 = ME.estimate(d, scan["bval"], scan["bvec"], scan["affine"], 1, device=DEV,
+                     options={"steps": 6, "max_motion_mm": 2.0})
+    for v in r2.excluded:
+        assert v not in r2.replacements and v not in r2.outlier_slices

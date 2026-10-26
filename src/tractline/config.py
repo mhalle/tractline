@@ -184,7 +184,11 @@ register(Implementation(
      "mask_output": Option(True, bool, doc="zero voxels outside some volume's field of view (eddy's output mask)"),
      "gain": Option(True, bool, doc="a per-volume intensity gain, refitted every step"),
      "max_motion_mm": Option(30.0, float, low=1.0, doc="a volume moving the brain's edge more than this leaves the fit"),
-     "check_memory": Option(True, bool, doc="on MPS, refuse a series too large for the recommended memory")},
+     "check_memory": Option(True, bool, doc="on MPS, refuse a series too large for the recommended memory"),
+     "outliers": Option("replace", str, choices=("replace", "flag", "off"),
+                        doc="outlier slices (signal loss): replaced by the prediction, flagged only, or not sought"),
+     "outlier_z": Option(4.0, float, low=1.0, doc="an outlier slice's robust z within its shell is under -outlier_z"),
+     "outlier_min_loss": Option(0.1, float, low=0.0, high=1.0, doc="... and it lost at least this share of its signal")},
     oracle="FSL eddy (Andersson & Sotiropoulos 2016)", status="experimental",
     doc="head motion and eddy currents per volume (tractline.motion_eddy): rigid + a polynomial along PE, each volume "
         "registered to a leave-one-out prediction from the others; the field (when the field slot corrects) composed "
