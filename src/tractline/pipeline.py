@@ -123,9 +123,10 @@ def threads(n):
 
 
 class Timer:
-    """Named stage times (s); with `echo`, each printed as it ends, prefixed by echo."""
-    def __init__(self, echo=None):
-        self.seconds, self.echo = {}, echo
+    """Named stage times (s); with `echo`, each printed as it ends, prefixed by echo, to `stream` (standard output by
+    default; the tractline command prints them to standard error, keeping standard output for --json -)."""
+    def __init__(self, echo=None, stream=None):
+        self.seconds, self.echo, self.stream = {}, echo, stream
 
     @contextmanager
     def __call__(self, name):
@@ -137,13 +138,13 @@ class Timer:
             torch.cuda.synchronize()
         self.seconds[name] = round(time.time() - t0, 2)
         if self.echo is not None:
-            print(f"{self.echo} {name} {self.seconds[name]} s", flush=True)
+            print(f"{self.echo} {name} {self.seconds[name]} s", flush=True, file=self.stream)
 
     def skip(self, name):
         """A stage that did not run: recorded as 0 s, so totals over it stay exact and a misspelled name still fails."""
         self.seconds[name] = 0.0
         if self.echo is not None:
-            print(f"{self.echo} {name} skipped", flush=True)
+            print(f"{self.echo} {name} skipped", flush=True, file=self.stream)
 
     def total(self, *names):
         return round(sum(self.seconds[n] for n in names), 1)

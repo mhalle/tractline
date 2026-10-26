@@ -7555,3 +7555,43 @@ fed tractline's own field (`--field`) on phase 0's prepared series: 16974 OXF1PR
 
 **So** the pipeline's way (one resample, the field in the map, the first b0 as the reference) is the one that agrees
 with eddy. One scan, and a low-motion one: a high-motion scan (10975) would be a stronger test.
+
+## 2026-10-26 The tractline command (click), runnable with uvx
+
+**What.** A console script, `tractline` (`tractline.cli`, click), so the pipeline runs without a checkout:
+`uvx --from "tractline[cli] @ git+https://github.com/mhalle/tractline@<ref>" tractline run <series> --motion-eddy
+--trx out.trx --qc qc/`.
+- `run`: `pipeline.run` behind options (`--partners`, `--motion-eddy [model]`, `--outliers`, `--trx`, `--float16`,
+  `--labeled-only`, `--qc`, `--write-corrected`, `--shell` (default: the shell with the most volumes), `--labeler`,
+  `--device auto|mps|cuda|cpu` (auto: MPS, then CUDA, then the CPU), `--workers`, `--json`, `--quiet`). Output
+  folders are created before the run; a first try lost a two-minute run to a missing TRX folder. Progress goes to
+  standard error, so `--json -` is JSON alone; the summary is strict JSON (non-finite values as null). Errors from
+  the input, the disk or the network end in one line, not a traceback (the memory refusal adds `--device cpu` or
+  `--no-memory-check`). The default shell is the median of the largest cluster of b-values (grouped to the nearest
+  100), so a shell stored as 1050 is tracked as 1050, inside the tracker's +-50 selection, not as 1000.
+  `--labeler tractcloud` needs a checkout (TractCloud's code and weights) and says so when they are missing.
+  TRACTLINE_DEBUG=1 shows the traceback behind a one-line error. The default shell is motion_eddy.shell_groups'
+  largest group (not rounding, which split 1145-1155 in two and picked 2000 instead).
+- motion_eddy's `check_memory` is now an unhashed option (`Option(hashed=False)`: a guard that refuses a run but never
+  changes its outputs), so `--no-memory-check` keeps the config's hash. Every motion_eddy config's hash changes once
+  with this (none was recorded); the default's, 28d01a1d, does not (motion_eddy off).
+- `fetch`: RapidParc's weights into the cache ahead of a run.
+- `tractline.fetch`: weights on first use. The checkout's `$TRACTOGRAPHY_DATA/RapidParc` if present, else a user
+  cache, downloaded from RapidParc's v1.0.0 release, hashed while streaming, refused past the declared size or on a
+  wrong sha256, renamed into place whole. TRACTLINE_OFFLINE=1 refuses to download. The rules follow haversack's
+  fetchlib (a named User-Agent, no credentials sent).
+- The QC plot moved from `bench/run_pipeline.py` into `motion_eddy.plot_qc` (matplotlib, the `plot` extra).
+- Packaging: click a dependency (only `tractline.cli` imports it; the pipeline still runs on numpy and torch alone);
+  extras `plot` (matplotlib) and `cli` (nibabel, scipy, matplotlib).
+- haversack's torch-free checkpoint reader (`torchfree.py`) was considered for TractCloud's weights. It reads them
+  identically to `torch.load` (70 tensors, bit for bit), but upstream's `load_model` already uses
+  `torch.load(weights_only=True)`, so it was not brought over.
+
+**Checked.** `tests/test_cli.py`: the fetch (once, verified, capped, nothing half-written, offline, the checkout's copy
+preferred, a network error as FetchError, the pinned hashes equal to the labeler's); usage errors; a file that is
+not NIfTI as a one-line error; the default shell; `--json -` beside progress output; `run` end to end on the test phantom as BIDS (an AP series and a PA b0 pair), on the CPU:
+TRX, QC files and the corrected series written. On ON-Harmony 16974 (MPS): 98,044 streamlines, 81,077 labeled, 112 s
+(field 15 s, motion and eddy 27 s, UKF 64 s), TRX 64 MB, QC files and plot.
+
+**Not done.** uvx itself was not run: the branch is not pushed, and a first uvx run downloads PyTorch.
+

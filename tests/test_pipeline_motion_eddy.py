@@ -38,6 +38,8 @@ def test_default_untouched():
     assert not cfg.is_on("motion_eddy") and "motion_eddy" not in P.pipeline_stages("", cfg)
     on = P.config_for(motion_eddy=True)
     assert on.hash() != cfg.hash() and on.opts("motion_eddy")["model"] == "quadratic"
+    unchecked = P.config_for(motion_eddy={"model": "quadratic", "check_memory": False})
+    assert unchecked.hash() == on.hash() and not unchecked.opts("motion_eddy")["check_memory"]   # a guard: not hashed
     assert P.pipeline_stages("", on)[:3] == ["field_estimate", "motion_eddy", "field_apply"]
     with pytest.raises(ValueError):
         P.config_for(motion_eddy="cubic")

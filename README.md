@@ -62,6 +62,23 @@ the rest: `triton-cache/`, `ukf/hardi/` (`dwi.nhdr`, `mask.nrrd`), `TrainedModel
 `TrainData_800clu800ol/HCP_mass_center.npy`, `hcp/feat.npy`, `variants/f64.npz`, as each script's docstring
 names them; `modal_gpu_pipeline.py --save-fibers` writes to its `tractline/`.
 
+## The command
+
+`tractline run` takes one dMRI series (NIfTI, BIDS) to labeled UKF tractography: corrected (the susceptibility field;
+with `--motion-eddy`, head motion and eddy currents too), tracked, labeled, written as TRX. With uv it runs without an
+install step:
+
+```
+uvx --from "tractline[cli] @ git+https://github.com/mhalle/tractline@modular-pipeline" \
+    tractline run sub-01/dwi/sub-01_dir-AP_dwi.nii.gz --motion-eddy --trx out/sub-01.trx --qc qc/sub-01
+```
+
+The URL names a branch or tag on GitHub, so it resolves only once that ref has been pushed. The chosen RapidParc
+model's weights (6.6 MB) are downloaded on first use into a user cache, checked against a pinned sha256
+(`tractline fetch` gets both models ahead; `tractline.fetch`). `--labeler tractcloud` needs a checkout with
+TractCloud's code and weights (below), not `uvx`. `tractline run --help` lists the options;
+`docs/motion-eddy-qc-guide.md` describes the run and its QC files. From a checkout, `uv run tractline ...`.
+
 ## Your own data
 
 A diffusion series in BIDS form - NIfTI with `.bval`, `.bvec` and the JSON sidecar, in a BIDS folder tree - is

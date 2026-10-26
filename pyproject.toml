@@ -14,13 +14,19 @@ requires-python = ">=3.11"
 dependencies = [
     "numpy>=2",
     "torch>=2.7",
+    "click>=8.1",                              # the tractline command only (tractline.cli); the pipeline never imports it
 ]
+
+[project.scripts]
+tractline = "tractline.cli:main"
 
 [project.optional-dependencies]
 nrrd = ["pynrrd"]                              # tracker input/output as NRRD files (prep.prep, ukf.load)
 triton = ["triton; sys_platform == 'linux'"]   # the UKF kernel on CUDA (Linux; torch's CUDA wheels bring it too)
 t1check = ["scipy"]                            # t1check: the distortion left against the T1 (a measurement)
 bids = ["nibabel", "scipy"]                    # tractline.bids: BIDS (and dcm2niix) input, the correcting series found and checked
+plot = ["matplotlib"]                          # motion_eddy.plot_qc: the QC plot
+cli = ["nibabel", "scipy", "matplotlib"]       # the tractline command: BIDS input and the QC plot
 
 # What the bench's scripts need beyond the package, as dependency groups: they never reach the published
 # metadata. `dev` is uv's default group - `uv sync` / `uv run` install it - and holds what most scripts

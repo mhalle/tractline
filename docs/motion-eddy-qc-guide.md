@@ -14,19 +14,27 @@ for susceptibility distortion, head motion and eddy currents; two-tensor UKF tra
 streamline as one of the ORG atlas's tracts. Each step is a reimplementation in PyTorch, checked against the tool it
 reproduces, and the whole sequence runs on an Apple GPU, a CUDA GPU, or the CPU. On a laptop GPU (Apple M2), a
 105-volume scan takes about two minutes from the raw series to labeled streamlines, of which the motion and eddy
-current correction takes 20 to 25 seconds. Section 2 shows how to run it; the rest of the guide describes what each
+current correction takes 20 to 30 seconds. Section 2 shows how to run it; the rest of the guide describes what each
 step does and how to read the QC outputs.
 
 The pipeline is research software. It is not approved for clinical use.
 
 ## 2. Running it
-From the root of the repository, the pipeline runs on one BIDS dMRI series. This command corrects the scan for
-susceptibility distortion, head motion and eddy currents, runs UKF tractography, labels the streamlines and writes
-them to a TRX file:
+
+tractline installs a command, `tractline`. With uv, it runs without a separate install step: `uvx` builds an
+environment for it on first use, keeps it, and reuses it afterwards. This command corrects one dMRI series for
+susceptibility distortion, head motion and eddy currents, runs UKF tractography, labels the streamlines and writes them
+to a TRX file:
 
 ```
-uv run bench/run_pipeline.py --bids sub-01/dwi/sub-01_dir-AP_dwi.nii.gz --motion-eddy --trx out/sub-01.trx
+uvx --from "tractline[cli] @ git+https://github.com/mhalle/tractline@modular-pipeline" \
+    tractline run sub-01/dwi/sub-01_dir-AP_dwi.nii.gz --motion-eddy --trx out/sub-01.trx
 ```
+
+The URL names the branch on GitHub, so the command works once that branch has been published there. The first run
+downloads PyTorch and the trained weights of the labeler (6.6 MB, from RapidParc's release, checked
+against a pinned checksum), so it takes longer than later runs. `tractline fetch` downloads the weights of both
+RapidParc models ahead of time. From a checkout of the repository, `uv run tractline run ...` does the same.
 
 The TRX file holds every streamline the tracker kept, in RAS millimeters, grouped by tract. For each streamline it
 also stores the tract label (one of the 42 tracts or "Other"), the most probable atlas cluster, the probability of
@@ -35,15 +43,25 @@ labelers were trained on longer ones. trx-python reads the file and can convert 
 
 Two options add further output. `--qc qc/sub-01` writes the QC files of the motion and eddy current correction
 (section 5) into that folder. `--write-corrected` also writes the corrected dMRI series there, with its b-values and
-rotated b-vectors, for use with other tools.
+rotated b-vectors, for use with other tools. `--json summary.json` saves a summary of the run.
 
-The reversed phase-encoding series used for the susceptibility field is found automatically. If none is found, the
-motion and eddy current correction still runs, without the field, and the printed note says so. The eddy current
-model is quadratic by default; `--motion-eddy linear` or `--motion-eddy rigid` select the simpler models. `--shell`
-sets the b-value tracked (by default the shell with the most volumes), and `--labeler tractcloud` labels with
-TractCloud in place of RapidParc.
+The reversed phase-encoding series used for the susceptibility field is found from the BIDS sidecars, or can be named
+with `--partners`. If none is found, the motion and eddy current correction still runs, without the field, and the
+printed note says so. The motion and eddy current correction is off unless `--motion-eddy` is given; without it,
+only the susceptibility field is corrected. The eddy current model is quadratic by default; `--motion-eddy linear`
+selects the linear model, and `--motion-eddy rigid` corrects head motion alone, with no eddy current model.
+`--outliers off` keeps the correction but turns off the replacement of outlier slices. `--shell` sets the b-value
+tracked (by default the shell with the most volumes). `--labeler tractcloud` labels with TractCloud in place of
+RapidParc; this needs a checkout of the repository with TractCloud's code and weights beside it (see its README), and
+does not work from `uvx`. `tractline run --help` lists every option.
 
-From Python, the same run is
+The command runs on an Apple GPU when there is one, then on a CUDA GPU, then on the CPU (`--device` chooses). On a
+laptop GPU a 105-volume scan takes about two minutes. On the CPU the motion and eddy current correction gives the same
+result but takes 12 to 13 minutes for a 105-volume scan. On an Apple GPU, a series too large for the available memory
+is refused before the run starts, with a message; this applies to HCP-sized acquisitions on a 16 GB machine. The
+correction has not yet been tested on CUDA.
+
+The same run from Python:
 
 ```python
 from tractline import bids, pipeline as P, motion_eddy as ME
@@ -52,13 +70,6 @@ corr, tractogram, labels = P.run(s, None, P.Timer(), shell=2000.0, motion_eddy=T
 ME.write_qc(corr.motion_eddy, "qc/sub-01")            # the QC files, if wanted
 print(corr.note, corr.warnings)
 ```
-
-`tractogram.fibers` holds the streamlines and `labels` their tract assignments, if they are needed in memory.
-
-The pipeline runs on an Apple GPU by default (`--device cuda` or `--device cpu` elsewhere). On the CPU the motion and
-eddy current correction gives the same result but takes 12 to 13 minutes for a 105-volume scan. On an Apple GPU, a
-series too large for the available memory is refused before the run starts, with a message; this applies to
-HCP-sized acquisitions on a 16 GB machine. The correction has not yet been tested on CUDA.
 
 ## 3. The steps
 

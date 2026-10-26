@@ -157,12 +157,14 @@ def _verified(path, model):
 
 class Labeler:
     def __init__(self, device="mps", model="rapidparc", batch=16):
-        """model: "rapidparc" or "hemiaug" (DATA/RapidParc/<model>.safetensors, sha256-checked). batch:
+        """model: "rapidparc" or "hemiaug" (DATA/RapidParc/<model>.safetensors, else tractline.fetch's cache,
+        downloaded from RapidParc's release on first use; sha256-checked either way). batch:
         groups of 2,000 streamlines per forward pass (attention memory: ~16 MB a group a layer)."""
         assert model in MODELS, model
         self.device, self.model_name, self.batch = torch.device(device), model, batch
         self.model = Model(**SETTINGS)
-        self.model.load_state_dict(read_safetensors(_verified(WEIGHTS / f"{model}.safetensors", model)))
+        from ..fetch import weights                                       # the checkout's, or the cache's (downloaded once)
+        self.model.load_state_dict(read_safetensors(_verified(weights(model), model)))
         self.model = self.model.eval().to(self.device)
         self.lut = LUT                                                     # RapidParc's mapping file, identical (base.py)
 

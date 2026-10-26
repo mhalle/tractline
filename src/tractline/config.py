@@ -12,7 +12,8 @@ option is checked when the config is built, before any work: unknown slots, impl
 raise ValueError, as do implementations whose required slots are off or set otherwise.
 
 The hash covers each slot that is on: its implementation, the implementation's version and every option, defaults
-filled in, as canonical JSON. Slots that are off are left out, so a slot added later does not change the hash of a
+filled in, as canonical JSON (except the options marked hashed=False: runtime guards, such as motion_eddy's
+check_memory, that refuse a run but never change its outputs). Slots that are off are left out, so a slot added later does not change the hash of a
 config that leaves it off. Runtime choices (device, workers, batch sizes, the TRX file) are not part of a config;
 pipeline.execute records them beside it. The device is left out on purpose (docs/sota-pipeline-design.md, decision
 6), so a calibration map learned on one device is meant to apply on another. Metal, Triton and the CPU's fast step are
@@ -55,6 +56,7 @@ class Option:
     low: float | None = None                   # inclusive bounds, for int and float
     high: float | None = None
     doc: str = ""
+    hashed: bool = True                        # False: a runtime guard that never changes the outputs, not hashed
 
     def check(self, where: str, value):
         """value, normalized (an int given for a float option becomes a float, so the hash does not depend on it)."""
@@ -184,7 +186,8 @@ register(Implementation(
      "mask_output": Option(True, bool, doc="zero voxels outside some volume's field of view (eddy's output mask)"),
      "gain": Option(True, bool, doc="a per-volume intensity gain, refitted every step"),
      "max_motion_mm": Option(30.0, float, low=1.0, doc="a volume moving the brain's edge more than this leaves the fit"),
-     "check_memory": Option(True, bool, doc="on MPS, refuse a series too large for the recommended memory"),
+     "check_memory": Option(True, bool, hashed=False,
+                            doc="on MPS, refuse a series too large for the recommended memory (not hashed)"),
      "outliers": Option("replace", str, choices=("replace", "flag", "off"),
                         doc="outlier slices (signal loss): replaced by the prediction, flagged only, or not sought"),
      "outlier_z": Option(4.0, float, low=1.0, doc="an outlier slice's robust z within its shell is under -outlier_z"),
@@ -390,9 +393,12 @@ class PipelineConfig:
         return {} if st is None else st.opts()
 
     def canonical(self) -> dict:
-        """What changes the outputs: the slots that are on, each {impl, version, options}."""
+        """What changes the outputs: the slots that are on, each {impl, version, options} (the hashed options)."""
+        def hashed(s, st):
+            spec = implementation(s, st.impl).options
+            return {k: v for k, v in st.opts().items() if spec[k].hashed}
         return {"schema": SCHEMA, "slots": {s: {"impl": st.impl, "version": implementation(s, st.impl).version,
-                                                "options": st.opts()} for s, st in self.stages if st is not None}}
+                                                "options": hashed(s, st)} for s, st in self.stages if st is not None}}
 
     def hash(self) -> str | None:
         """sha256 of canonical() as sorted, compact JSON; None when a slot's implementation is not hashable."""

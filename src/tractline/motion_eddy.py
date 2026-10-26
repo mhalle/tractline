@@ -684,8 +684,8 @@ def estimate(dwi, bval, bvec, affine, pe_axis, field_hz=None, pe_sign=None, read
         have = torch.mps.recommended_max_memory()
         if need > 0.9 * have:
             raise ValueError(f"motion_eddy: about {need / 2 ** 30:.1f} GB needed on MPS, {have / 2 ** 30:.1f} GB "
-                             "recommended: run on the CPU (device='cpu', slow) or on CUDA, or crop the field of view "
-                             "(or pass check_memory=False to try anyway)")
+                             "recommended: run on the CPU (slow) or on CUDA, or crop the field of view; or turn the "
+                             "check off to try anyway (the option check_memory)")
 
     dwi = np.array(dwi, np.float32)
     bad_vals = ~np.isfinite(dwi)
@@ -1358,3 +1358,52 @@ def write_qc(rec: dict, folder) -> dict:
     summary = _finite(summary)
     (folder / "motion_eddy_qc.json").write_text(json.dumps(summary, indent=1, allow_nan=False))
     return summary
+
+
+def plot_qc(rec: dict, path, name: str = "") -> bool:
+    """The motion_eddy QC traces per volume: translations, rotations, displacement at the brain's edge (motion, eddy),
+    framewise displacement, the residual z within the shell, the outlier slices replaced and the volumes left out
+    (matplotlib, the `plot` extra; skipped without it). True when written."""
+    try:
+        from matplotlib.backends.backend_agg import FigureCanvasAgg
+        from matplotlib.figure import Figure
+    except ImportError:
+        return False
+    rows = np.array([[np.nan if x is None else x for x in r] for r in qc_rows(rec)], float)
+    col = {c: i for i, c in enumerate(QC_COLUMNS)}
+    v = rows[:, 0]
+    fig = Figure(figsize=(9, 13))                         # no pyplot: the caller's backend is left alone
+    FigureCanvasAgg(fig)
+    ax = fig.subplots(6, 1, sharex=True)
+    for c in ("tx_mm", "ty_mm", "tz_mm"):
+        ax[0].plot(v, rows[:, col[c]], label=c[:2])
+    ax[0].set_ylabel("translation (mm)")
+    for c in ("rx_deg", "ry_deg", "rz_deg"):
+        ax[1].plot(v, rows[:, col[c]], label=c[:2])
+    ax[1].set_ylabel("rotation (deg)")
+    ax[2].plot(v, rows[:, col["rigid_edge_rms_mm"]], label="motion (RMS)")
+    ax[2].plot(v, rows[:, col["eddy_edge_rms_mm"]], label="eddy (RMS)")
+    ax[2].set_ylabel("at the edge (mm)")
+    ax[3].bar(v, rows[:, col["framewise_displacement_mm"]], color="0.5")
+    ax[3].set_ylabel("framewise (mm)")
+    ax[4].bar(v, rows[:, col["residual_z"]], color=np.where(rows[:, col["residual_z"]] > 4, "C3", "0.5"))
+    ax[4].axhline(4, color="C3", lw=0.8, ls="--")
+    ax[4].set_ylabel("residual z")
+    ax[5].bar(v, rows[:, col["outlier_slices"]], color="C1")
+    left = np.flatnonzero(rows[:, col["left_out"]] > 0)
+    if len(left):
+        ax[5].plot(v[left], np.zeros(len(left)), "kx", label="left out")
+        ax[5].legend(loc="upper right", fontsize=8)
+    ax[5].set_ylabel("outlier slices")
+    ax[5].set_xlabel("volume (as acquired)")
+    for a in ax[:3]:
+        a.legend(loc="upper right", fontsize=8, ncol=3)
+    for bv, idx in rec["groups (b, volumes)"]:
+        if bv == 0:
+            for a in ax:
+                for i in idx:
+                    a.axvline(i, color="C2", lw=0.4, alpha=0.5)
+    ax[0].set_title(f"{name + ': ' if name else ''}head motion and eddy currents ({rec['model']}; green lines: b0s)")
+    fig.tight_layout()
+    fig.savefig(path, dpi=110)
+    return True
