@@ -1,0 +1,29 @@
+{
+ "device": "mps",
+ "mask_fraction": 0.3,
+ "reps": 5,
+ "sizes": {
+  "96x96x50x100": {
+   "G": 100,
+   "box_voxels": 460800,
+   "mask_voxels": 138240,
+   "gn_iteration_ms": 397.5,
+   "sample_and_grad_ms": 169.2,
+   "cost_eval_ms": 108.7,
+   "loo_predict_ms": 5.6,
+   "final_cubic_resample_ms": 7071.5,
+   "mps_driver_mb": 2095
+  },
+  "104x104x72x105": {
+   "G": 105,
+   "box_voxels": 778752,
+   "mask_voxels": 233625,
+   "gn_iteration_ms": 741.5,
+   "sample_and_grad_ms": 302.0,
+   "cost_eval_ms": 192.1,
+   "loo_predict_ms": 8.7,
+   "final_cubic_resample_ms": 12715.2,
+   "mps_driver_mb": 3703
+  }
+ }
+}

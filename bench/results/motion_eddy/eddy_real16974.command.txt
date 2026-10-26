@@ -1,0 +1,1 @@
+eddy_cpu --imain=imain --mask=mask --acqp=acqp.txt --index=index.txt --bvecs=bvecs --bvals=bvals --out=eddy --flm=quadratic --slm=none --dfields --nthr=6 --data_is_shelled

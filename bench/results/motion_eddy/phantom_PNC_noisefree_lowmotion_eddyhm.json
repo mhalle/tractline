@@ -1,0 +1,67 @@
+{
+ "scan": "PNC noisefree lowmotion",
+ "volumes": 35,
+ "groups": [
+  3,
+  32
+ ],
+ "true motion at the edge, rms (voxels)": 1.68,
+ "as acquired": {
+  "edge_error_rms_p95": [
+   1.68,
+   2.702
+  ],
+  "within_shell_rms": 1.654,
+  "between_shell_rms": 0.525,
+  "worst_volume_rms": 2.376
+ },
+ "ours, rigid": {
+  "edge_error_rms_p95": [
+   0.267,
+   0.485
+  ],
+  "within_shell_rms": 0.265,
+  "between_shell_rms": 0.056,
+  "worst_volume_rms": 0.52
+ },
+ "ours, rigid, as fitted (PE offset all in the translation)": {
+  "edge_error_rms_p95": [
+   0.114,
+   0.193
+  ],
+  "within_shell_rms": 0.109,
+  "between_shell_rms": 0.056,
+  "worst_volume_rms": 0.225
+ },
+ "ours, rotation error after the frame (deg), rms / max": [
+  0.184,
+  0.412
+ ],
+ "ours, with eddy terms": {
+  "edge_error_rms_p95": [
+   0.113,
+   0.194
+  ],
+  "within_shell_rms": 0.108,
+  "between_shell_rms": 0.056,
+  "worst_volume_rms": 0.197
+ },
+ "eddy, displacement fields (x sign -1, overall sign 1)": {
+  "edge_error_rms_p95": [
+   0.349,
+   0.574
+  ],
+  "within_shell_rms": 0.348,
+  "between_shell_rms": 0.064,
+  "worst_volume_rms": 0.504
+ },
+ "eddy, rigid parameters (best-fitting convention: rotation sign -1, inverse False, x-flip True)": {
+  "edge_error_rms_p95": [
+   0.405,
+   0.658
+  ],
+  "within_shell_rms": 0.404,
+  "between_shell_rms": 0.063,
+  "worst_volume_rms": 0.664
+ }
+}

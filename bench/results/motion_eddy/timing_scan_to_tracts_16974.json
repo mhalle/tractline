@@ -1,0 +1,74 @@
+{
+ "load_s": 1.0,
+ "passes": [
+  {
+   "seconds": {
+    "field_estimate": 12.94,
+    "field_apply": 1.07,
+    "prep": 4.34,
+    "load": 0.42,
+    "ukf": 63.58,
+    "label": 1.97
+   },
+   "total_s": 84.8,
+   "fibers": 98068
+  },
+  {
+   "seconds": {
+    "field_estimate": 12.55,
+    "field_apply": 1.2,
+    "prep": 4.33,
+    "load": 0.41,
+    "ukf": 63.78,
+    "label": 1.8
+   },
+   "total_s": 84.6,
+   "fibers": 98068
+  },
+  {
+   "seconds": {
+    "field_estimate": 13.16,
+    "field_apply": 1.2,
+    "prep": 4.33,
+    "load": 0.42,
+    "ukf": 63.59,
+    "label": 1.72
+   },
+   "total_s": 85.0,
+   "fibers": 98068
+  }
+ ],
+ "bootstrap_setup_s": 1.4,
+ "replicate_generation_s": [
+  0.83,
+  0.79
+ ],
+ "scan": "ON-Harmony sub-16974 ses-OXF1PRI001 dir-AP, ensemble series (5 b0s + b2000, 55 volumes; field from 5 AP + 3 PA b0s), tracked at b = 2000",
+ "machine": "Apple M2 (MPS), idle (no other jobs), 2026-10-22; not after a reboot",
+ "motion_eddy (proto.py, 40 steps, rigid MI anchor, --mask-output, lambda 0.06)": {
+  "55 volumes": {
+   "estimate_s": [
+    18.33,
+    18.16
+   ],
+   "final_resample_s": [
+    0.41,
+    0.41
+   ]
+  },
+  "105 volumes (b0s, b1000, b2000)": {
+   "estimate_s": [
+    30.64,
+    29.8
+   ],
+   "final_resample_s": [
+    0.54,
+    0.91
+   ]
+  }
+ },
+ "FSL eddy for reference (eddy_cpu 2602.0, 6 threads, 105 volumes)": {
+  "sub-16974 OXF1PRI001 (low motion)": "79 min",
+  "sub-10975 OXF2PRI001 (high motion)": "104 min"
+ }
+}

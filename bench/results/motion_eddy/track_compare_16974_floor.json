@@ -1,0 +1,33 @@
+{
+ "per set": {
+  "as acquired": {
+   "fibers": 99040,
+   "labeled": 80437,
+   "other_share": 0.5272,
+   "seconds": {
+    "prep": 4.69,
+    "load": 0.47,
+    "ukf": 61.95,
+    "label": 1.83
+   }
+  },
+  "as acquired, moved 0.05 voxel": {
+   "fibers": 98974,
+   "labeled": 80380,
+   "other_share": 0.5265,
+   "seconds": {
+    "prep": 4.38,
+    "load": 0.46,
+    "ukf": 66.22,
+    "label": 1.69
+   }
+  }
+ },
+ "pairs": {
+  "as acquired vs as acquired, moved 0.05 voxel": {
+   "density correlation": 0.9907,
+   "support Dice (>= 5 streamlines)": 0.9387,
+   "tract count difference": 0.0215
+  }
+ }
+}

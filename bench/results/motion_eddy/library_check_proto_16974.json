@@ -1,0 +1,62 @@
+{
+ "scan": "16974 OXF1PRI001 (all 105 volumes, as acquired)",
+ "shape": [
+  104,
+  104,
+  72,
+  105
+ ],
+ "prototype seconds": {
+  "estimate": 12.49,
+  "final resample": 0.55,
+  "subprocess wall": 29.5
+ },
+ "library seconds": {
+  "estimate": 22.3,
+  "apply": 0.52,
+  "inside": {
+   "masks": 4.6,
+   "fit": 17.54,
+   "total": 22.14
+  }
+ },
+ "motion and eddy found (prototype), voxels at the edge (rms, p95)": [
+  0.2942,
+  0.5539
+ ],
+ "library against prototype (exact Jacobian, Newton inverse, gauges as the prototype without a field): the maps, voxels at the edge (rms, p95)": [
+  0.0015,
+  0.0031
+ ],
+ "library against prototype: eddy-split parameters, max |difference| (mm, rad, vox)": [
+  0.009,
+  1.1e-05,
+  0.0137
+ ],
+ "library against prototype: rotated b-vectors, deg (median, max)": [
+  0.0002,
+  0.0006
+ ],
+ "library against prototype: corrected series in the mask, |difference| / 99th pct (mean, p99, max)": [
+  3.6e-05,
+  0.00025,
+  0.0021
+ ],
+ "leave-one-out residual in the brain (library, prototype)": {
+  "library": {
+   "b0": 119.256,
+   "b1000": 89.204,
+   "b2000": 89.726
+  },
+  "prototype": {
+   "b0": 119.259,
+   "b1000": 89.206,
+   "b2000": 89.728
+  }
+ },
+ "qc (library): framewise displacement mm (mean, max)": [
+  0.2609,
+  0.5887
+ ],
+ "qc (library): volumes with residual z > 4": []
+}

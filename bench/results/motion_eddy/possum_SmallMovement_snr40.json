@@ -1,0 +1,27 @@
+{
+ "case": "SmallMovement+EC SNR 40",
+ "volumes": 108,
+ "groups": [
+  12,
+  32,
+  64
+ ],
+ "as acquired": {
+  "edge_error_rms_p95": [
+   0.789,
+   1.352
+  ],
+  "within_shell_rms": 0.72,
+  "between_shell_rms": 0.298,
+  "worst_volume_rms": 1.233
+ },
+ "lam 0.02": {
+  "edge_error_rms_p95": [
+   0.124,
+   0.22
+  ],
+  "within_shell_rms": 0.113,
+  "between_shell_rms": 0.052,
+  "worst_volume_rms": 0.194
+ }
+}

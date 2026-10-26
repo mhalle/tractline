@@ -1,0 +1,51 @@
+{
+ "scan": "HCP realistic highmotion",
+ "volumes": 288,
+ "groups": [
+  18,
+  90,
+  90,
+  90
+ ],
+ "true motion at the edge, rms (voxels)": 5.739,
+ "as acquired": {
+  "edge_error_rms_p95": [
+   5.739,
+   9.803
+  ],
+  "within_shell_rms": 5.674,
+  "between_shell_rms": 1.2,
+  "worst_volume_rms": 9.214
+ },
+ "ours, rigid": {
+  "edge_error_rms_p95": [
+   0.658,
+   1.169
+  ],
+  "within_shell_rms": 0.596,
+  "between_shell_rms": 0.35,
+  "worst_volume_rms": 1.275
+ },
+ "ours, rigid, as fitted (PE offset all in the translation)": {
+  "edge_error_rms_p95": [
+   0.62,
+   1.11
+  ],
+  "within_shell_rms": 0.555,
+  "between_shell_rms": 0.349,
+  "worst_volume_rms": 1.252
+ },
+ "ours, rotation error after the frame (deg), rms / max": [
+  0.773,
+  1.787
+ ],
+ "ours, with eddy terms": {
+  "edge_error_rms_p95": [
+   1.38,
+   2.56
+  ],
+  "within_shell_rms": 1.348,
+  "between_shell_rms": 0.369,
+  "worst_volume_rms": 2.242
+ }
+}
