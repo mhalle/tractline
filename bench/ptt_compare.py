@@ -19,7 +19,7 @@ Each run: RapidParc labels; on the phantom, the 2023 ROI scoring (robust_phantom
 Records: DATA/ensemble/benchmark/ptt_ours/<variant>/<subject>/; the summary sets them beside DIPY's step 6 records and, on
 cIIIs04, beside DIPY's reruns with other seeds (its own spread).
 """
-import argparse, json, os, subprocess, sys, time
+import argparse, json, os, re, subprocess, sys, time
 from pathlib import Path
 import numpy as np
 HERE = Path(__file__).resolve().parent
@@ -92,7 +92,8 @@ def run(args):
     n = args.seeds or RB.SEEDS["phantom" if scan == "phantom" else "cIIIs04"]
     name = run_name(variant, args.probe_length, args.max_angle)
     d = OUT / name / subject
-    out = d / ("record.npz" if scan == "phantom" else f"{scan}.npz")
+    stem = scan if args.track_seed == 1 else f"{scan}_track{args.track_seed}"   # another tracking seed: run to run
+    out = d / ("record.npz" if scan == "phantom" else f"{stem}.npz")
     if out.exists() and not args.pilot:
         raise SystemExit(f"{out} exists; not overwritten")
     RB.guard(RB.OUT)
@@ -116,7 +117,7 @@ def run(args):
         tracker = ptt.Tracker(pmf, act, affine, vox, ptt.Params(min_len=20.0, max_len=250.0, probe_length=args.probe_length,
                                                                   max_angle=args.max_angle), DEVICE,
                               _dipy_compat=variant == "compat", backend=args.backend)
-        fibers, tinfo = tracker.track(seeds, seed=1)
+        fibers, tinfo = tracker.track(seeds, seed=args.track_seed)
     if args.pilot:                                                       # a timing and sanity run: nothing written
         _, _, lens = lengths(fibers)
         print(json.dumps({"variant": variant, "scan": scan, "backend": args.backend, "seeds": len(seeds), "tracker": tinfo,
@@ -138,8 +139,8 @@ def run(args):
                         "units": "DIPY 1.12's (validation switch)" if variant == "compat" else "real",
                         "constraint sphere": "ours (hemisphere 181)" if variant == "mm-own" else "DIPY's small_sphere",
                         "pmf sphere": "DIPY's default_sphere", "seeds": "DIPY random_seeds_from_mask, wm >= 0.5, random_seed 1",
-                        "tracking random numbers": ("Philox, counter-based, seed 1" if args.backend == "metal"
-                                                    else "torch generator, seed 1"),
+                        "tracking random numbers": ("Philox, counter-based" if args.backend == "metal"
+                                                    else "torch generator") + f", seed {args.track_seed}",
                         "backend": args.backend, "device": DEVICE},
            "seconds": timer.seconds}
     rec = RB.record_of(fibers, labels, affine, mask.shape)
@@ -152,7 +153,7 @@ def run(args):
     rec.save(tmp, compact=True)
     RB.place(tmp, out)
     log["total_s"] = round(time.time() - t0, 1)
-    RB.log_update(d / "runs.json", scan, log)
+    RB.log_update(d / "runs.json", stem if scan != "phantom" else scan, log)
     print(name, scan, json.dumps({k: log[k] for k in ("streamlines", "labeled", "Other share", "seconds")}), flush=True)
     if scan == "phantom":
         import robust_phantom as RP
@@ -265,12 +266,60 @@ def subsample(args):
         print(name, json.dumps({k: log[k] for k in ("streamlines", "of", "labeled")}), flush=True)
 
 
+def rescan(args):
+    """cIIIs04's rescan agreement, as step 6 measured it (robust_benchmark.analyze): per method, A against each rescan
+    (within, session3, session5) on A's grid - presence Dice of CST, AF and UF and the landmark sites (tracker_measures),
+    raw and with each scan's labeled streamlines subsampled to today's UKF count on that scan; the count-matched per-tract
+    Dice against UKF (matched_rescan_dice); and, where a run with another tracking seed exists, run to run on A. Methods:
+    DIPY's PTT (step 6's records), today's UKF, and every run of ours that has all four scans. results/ptt_rescan.json."""
+    from robust_ukf_score import Presence
+    from tractline import ensemble as E
+    d = RB.DATA / "ensemble" / RB.SUBJECT / "retest" / RB.PAIR
+    affine = np.load(d / "landmarks.npz")["affine"]
+    A0 = E.RunRecord.load(d / "A.npz", logp=False)
+    presence = Presence(affine, A0.shape)
+    sites = json.loads((HERE / "results/ensemble_landmarks_smooth.json").read_text())["sites"]
+    load = lambda p: E.RunRecord.load(p, logp=False, fibers=True)  # noqa: E731
+    ukf = {s: load(d / ("A.npz" if s == "A" else f"{s}_onA.npz")) for s in RB.CIII_SCANS}
+    counts = {s: len(r.keys) for s, r in ukf.items()}
+    methods = {"DIPY (step 6)": RB.OUT / "ptt" / RB.SUBJECT}
+    methods.update({p.parent.name: p.parent for p in sorted(OUT.glob(f"*/{RB.SUBJECT}"))
+                    if all((p.parent / RB.SUBJECT / f"{s}.npz").exists() for s in RB.CIII_SCANS)})
+    out = {"pair": RB.PAIR, "focus": list(RB.FOCUS), "site radius mm": RB.SITE_MM, "landmark sites": len(sites),
+           "ukf (today)": RB.tracker_measures(ukf, presence, sites), "methods": {}}
+    for name, md in methods.items():
+        base = md if name == "DIPY (step 6)" else md / RB.SUBJECT
+        recs = {s: load(base / f"{s}.npz") for s in RB.CIII_SCANS}
+        m = {"raw": RB.tracker_measures(recs, presence, sites),
+             "count-matched to today's UKF labeled count per scan": RB.tracker_measures(
+                 {s: RB.subsample(r, counts[s]) for s, r in recs.items()}, presence, sites),
+             "count-matched per tract against UKF": RB.matched_rescan_dice(presence, ukf, recs)}
+        reps = sorted(p for p in base.glob("A_track*.npz") if re.fullmatch(r"A_track\d+", p.stem)) \
+            if name != "DIPY (step 6)" else \
+            [base / "replicates" / "A_seed1_track2.npz"]
+        reps = [p for p in reps if p.exists()]
+        if reps:
+            pa = presence(recs["A"])
+            m["run to run on A (the same seeds, another tracking seed)"] = {}
+            for p in reps:
+                pb = presence(load(p))
+                m["run to run on A (the same seeds, another tracking seed)"][p.stem] = {
+                    n: round(2 * float((pa[k] & pb[k]).sum()) / max(float(pa[k].sum() + pb[k].sum()), 1), 4)
+                    for n in RB.FOCUS for k in [RB.TRACT_NAMES.index(n)] if k in pa and k in pb}
+        out["methods"][name] = m
+        del recs
+    (HERE / "results" / "ptt_rescan.json").write_text(json.dumps(out, indent=1, default=str))
+    print(json.dumps({n: {s: v["presence Dice"] for s, v in m["raw"]["rescans"].items()} for n, m in out["methods"].items()},
+                     indent=1))
+
+
 TRACT_LUT = None
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("what", choices=("run", "summary", "subsample"))
-    ap.add_argument("--scan", choices=("phantom", "A"))
+    ap.add_argument("what", choices=("run", "summary", "subsample", "rescan"))
+    ap.add_argument("--scan", choices=("phantom",) + RB.CIII_SCANS)
+    ap.add_argument("--track-seed", type=int, default=1, help="the tracking's random numbers (seeds stay step 6's)")
     ap.add_argument("--variant", choices=VARIANTS)
     ap.add_argument("--seeds", type=int, help="the first N of step 6's seeds (a pilot); default: all of them")
     ap.add_argument("--pilot", action="store_true", help="track and report; write nothing")
@@ -280,4 +329,4 @@ if __name__ == "__main__":
     ap.add_argument("--n", type=int, help="subsample: the common streamline count")
     ap.add_argument("--sources", nargs="+", help="subsample: dipy, ukf, or our run names")
     args = ap.parse_args()
-    {"run": run, "summary": summary, "subsample": subsample}[args.what](args)
+    {"run": run, "summary": summary, "subsample": subsample, "rescan": rescan}[args.what](args)

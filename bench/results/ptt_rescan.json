@@ -1,0 +1,1136 @@
+{
+ "pair": "cIIIs04-2.1",
+ "focus": [
+  "CST",
+  "AF",
+  "UF"
+ ],
+ "site radius mm": 8.0,
+ "landmark sites": 8,
+ "ukf (today)": {
+  "streamlines labeled": {
+   "A": 64378,
+   "within": 64275,
+   "session3": 64776,
+   "session5": 64179
+  },
+  "focus volume mL": {
+   "A": {
+    "CST": 51.8,
+    "AF": 53.6,
+    "UF": 41.8
+   },
+   "within": {
+    "CST": 56.8,
+    "AF": 54.7,
+    "UF": 40.7
+   },
+   "session3": {
+    "CST": 59.8,
+    "AF": 57.6,
+    "UF": 39.4
+   },
+   "session5": {
+    "CST": 58.1,
+    "AF": 54.1,
+    "UF": 35.1
+   }
+  },
+  "rescans": {
+   "within": {
+    "presence Dice": {
+     "CST": 0.7754,
+     "AF": 0.811,
+     "UF": 0.7885
+    },
+    "landmark sites: the same main named tract within 8 mm": 6,
+    "landmark sites": 8
+   },
+   "session3": {
+    "presence Dice": {
+     "CST": 0.7828,
+     "AF": 0.7886,
+     "UF": 0.7628
+    },
+    "landmark sites: the same main named tract within 8 mm": 6,
+    "landmark sites": 8
+   },
+   "session5": {
+    "presence Dice": {
+     "CST": 0.7495,
+     "AF": 0.7696,
+     "UF": 0.7339
+    },
+    "landmark sites: the same main named tract within 8 mm": 5,
+    "landmark sites": 8
+   }
+  },
+  "landmark sites: main named tract": {
+   "A": [
+    "TF",
+    "CR-F",
+    "AF",
+    "Sup-F",
+    "IOFF",
+    "UF",
+    "CC2",
+    "CC6"
+   ],
+   "within": [
+    "CST",
+    "CR-F",
+    "AF",
+    "Sup-F",
+    "IOFF",
+    "IOFF",
+    "CC2",
+    "CC6"
+   ],
+   "session3": [
+    "TF",
+    "CST",
+    "AF",
+    "Sup-F",
+    "IOFF",
+    "IOFF",
+    "CC2",
+    "CC6"
+   ],
+   "session5": [
+    "CST",
+    "CST",
+    "AF",
+    "Sup-F",
+    "IOFF",
+    "IOFF",
+    "CC2",
+    "CC6"
+   ]
+  }
+ },
+ "methods": {
+  "DIPY (step 6)": {
+   "raw": {
+    "streamlines labeled": {
+     "A": 65003,
+     "within": 60553,
+     "session3": 66661,
+     "session5": 62326
+    },
+    "focus volume mL": {
+     "A": {
+      "CST": 87.2,
+      "AF": 44.7,
+      "UF": 16.6
+     },
+     "within": {
+      "CST": 46.3,
+      "AF": 43.7,
+      "UF": 17.6
+     },
+     "session3": {
+      "CST": 89.3,
+      "AF": 45.4,
+      "UF": 19.0
+     },
+     "session5": {
+      "CST": 77.2,
+      "AF": 43.4,
+      "UF": 14.0
+     }
+    },
+    "rescans": {
+     "within": {
+      "presence Dice": {
+       "CST": 0.6624,
+       "AF": 0.8219,
+       "UF": 0.7346
+      },
+      "landmark sites: the same main named tract within 8 mm": 7,
+      "landmark sites": 8
+     },
+     "session3": {
+      "presence Dice": {
+       "CST": 0.8553,
+       "AF": 0.8107,
+       "UF": 0.732
+      },
+      "landmark sites: the same main named tract within 8 mm": 8,
+      "landmark sites": 8
+     },
+     "session5": {
+      "presence Dice": {
+       "CST": 0.8434,
+       "AF": 0.8049,
+       "UF": 0.6836
+      },
+      "landmark sites: the same main named tract within 8 mm": 7,
+      "landmark sites": 8
+     }
+    },
+    "landmark sites: main named tract": {
+     "A": [
+      "CST",
+      "CST",
+      "Sup-F",
+      "Sup-F",
+      "IOFF",
+      "UF",
+      "CC2",
+      "CC7"
+     ],
+     "within": [
+      "CST",
+      "CST",
+      "Sup-F",
+      "Sup-F",
+      "IOFF",
+      "UF",
+      "CC2",
+      "CC6"
+     ],
+     "session3": [
+      "CST",
+      "CST",
+      "Sup-F",
+      "Sup-F",
+      "IOFF",
+      "UF",
+      "CC2",
+      "CC7"
+     ],
+     "session5": [
+      "CST",
+      "CST",
+      "Sup-F",
+      "Sup-F",
+      "UF",
+      "UF",
+      "CC2",
+      "CC7"
+     ]
+    }
+   },
+   "count-matched to today's UKF labeled count per scan": {
+    "streamlines labeled": {
+     "A": 64378,
+     "within": 60553,
+     "session3": 64776,
+     "session5": 62326
+    },
+    "focus volume mL": {
+     "A": {
+      "CST": 86.7,
+      "AF": 44.4,
+      "UF": 16.5
+     },
+     "within": {
+      "CST": 46.3,
+      "AF": 43.7,
+      "UF": 17.6
+     },
+     "session3": {
+      "CST": 87.8,
+      "AF": 44.8,
+      "UF": 18.8
+     },
+     "session5": {
+      "CST": 77.2,
+      "AF": 43.4,
+      "UF": 14.0
+     }
+    },
+    "rescans": {
+     "within": {
+      "presence Dice": {
+       "CST": 0.664,
+       "AF": 0.8215,
+       "UF": 0.7337
+      },
+      "landmark sites: the same main named tract within 8 mm": 7,
+      "landmark sites": 8
+     },
+     "session3": {
+      "presence Dice": {
+       "CST": 0.8539,
+       "AF": 0.8072,
+       "UF": 0.7332
+      },
+      "landmark sites: the same main named tract within 8 mm": 8,
+      "landmark sites": 8
+     },
+     "session5": {
+      "presence Dice": {
+       "CST": 0.8431,
+       "AF": 0.8044,
+       "UF": 0.6826
+      },
+      "landmark sites: the same main named tract within 8 mm": 7,
+      "landmark sites": 8
+     }
+    },
+    "landmark sites: main named tract": {
+     "A": [
+      "CST",
+      "CST",
+      "Sup-F",
+      "Sup-F",
+      "IOFF",
+      "UF",
+      "CC2",
+      "CC7"
+     ],
+     "within": [
+      "CST",
+      "CST",
+      "Sup-F",
+      "Sup-F",
+      "IOFF",
+      "UF",
+      "CC2",
+      "CC6"
+     ],
+     "session3": [
+      "CST",
+      "CST",
+      "Sup-F",
+      "Sup-F",
+      "IOFF",
+      "UF",
+      "CC2",
+      "CC7"
+     ],
+     "session5": [
+      "CST",
+      "CST",
+      "Sup-F",
+      "Sup-F",
+      "UF",
+      "UF",
+      "CC2",
+      "CC7"
+     ]
+    }
+   },
+   "count-matched per tract against UKF": {
+    "ukf": {
+     "within": {
+      "CST": [
+       0.776,
+       0.7741,
+       0.7782
+      ],
+      "AF": [
+       0.8071,
+       0.8054,
+       0.8097
+      ],
+      "UF": [
+       0.6631,
+       0.6475,
+       0.672
+      ]
+     },
+     "session3": {
+      "CST": [
+       0.7828,
+       0.7828,
+       0.7828
+      ],
+      "AF": [
+       0.7848,
+       0.7816,
+       0.7891
+      ],
+      "UF": [
+       0.6666,
+       0.6453,
+       0.6821
+      ]
+     },
+     "session5": {
+      "CST": [
+       0.7495,
+       0.7495,
+       0.7495
+      ],
+      "AF": [
+       0.7687,
+       0.7652,
+       0.7721
+      ],
+      "UF": [
+       0.6389,
+       0.616,
+       0.6583
+      ]
+     }
+    },
+    "ptt": {
+     "within": {
+      "CST": [
+       0.756,
+       0.7504,
+       0.7634
+      ],
+      "AF": [
+       0.8219,
+       0.8219,
+       0.8219
+      ],
+      "UF": [
+       0.7346,
+       0.7346,
+       0.7346
+      ]
+     },
+     "session3": {
+      "CST": [
+       0.7926,
+       0.7861,
+       0.8002
+      ],
+      "AF": [
+       0.8107,
+       0.8107,
+       0.8107
+      ],
+      "UF": [
+       0.732,
+       0.732,
+       0.732
+      ]
+     },
+     "session5": {
+      "CST": [
+       0.802,
+       0.7975,
+       0.8044
+      ],
+      "AF": [
+       0.8049,
+       0.8049,
+       0.8049
+      ],
+      "UF": [
+       0.6836,
+       0.6836,
+       0.6836
+      ]
+     }
+    },
+    "counts": {
+     "A": {
+      "CST": 523,
+      "AF": 738,
+      "UF": 286
+     },
+     "within": {
+      "CST": 554,
+      "AF": 740,
+      "UF": 294
+     },
+     "session3": {
+      "CST": 673,
+      "AF": 783,
+      "UF": 341
+     },
+     "session5": {
+      "CST": 638,
+      "AF": 727,
+      "UF": 255
+     }
+    }
+   },
+   "run to run on A (the same seeds, another tracking seed)": {
+    "A_seed1_track2": {
+     "CST": 0.8662,
+     "AF": 0.8215,
+     "UF": 0.7371
+    }
+   }
+  },
+  "mm-own": {
+   "raw": {
+    "streamlines labeled": {
+     "A": 40306,
+     "within": 39238,
+     "session3": 42405,
+     "session5": 39428
+    },
+    "focus volume mL": {
+     "A": {
+      "CST": 73.8,
+      "AF": 58.4,
+      "UF": 10.5
+     },
+     "within": {
+      "CST": 67.4,
+      "AF": 60.2,
+      "UF": 11.4
+     },
+     "session3": {
+      "CST": 76.9,
+      "AF": 63.1,
+      "UF": 14.3
+     },
+     "session5": {
+      "CST": 68.2,
+      "AF": 56.4,
+      "UF": 7.5
+     }
+    },
+    "rescans": {
+     "within": {
+      "presence Dice": {
+       "CST": 0.8439,
+       "AF": 0.827,
+       "UF": 0.6358
+      },
+      "landmark sites: the same main named tract within 8 mm": 8,
+      "landmark sites": 8
+     },
+     "session3": {
+      "presence Dice": {
+       "CST": 0.8523,
+       "AF": 0.8105,
+       "UF": 0.662
+      },
+      "landmark sites: the same main named tract within 8 mm": 8,
+      "landmark sites": 8
+     },
+     "session5": {
+      "presence Dice": {
+       "CST": 0.8512,
+       "AF": 0.8201,
+       "UF": 0.6085
+      },
+      "landmark sites: the same main named tract within 8 mm": 8,
+      "landmark sites": 8
+     }
+    },
+    "landmark sites: main named tract": {
+     "A": [
+      "CST",
+      "CST",
+      "Sup-F",
+      "Sup-F",
+      "IOFF",
+      "IOFF",
+      "CC2",
+      "CC6"
+     ],
+     "within": [
+      "CST",
+      "CST",
+      "Sup-F",
+      "Sup-F",
+      "IOFF",
+      "IOFF",
+      "CC2",
+      "CC6"
+     ],
+     "session3": [
+      "CST",
+      "CST",
+      "Sup-F",
+      "Sup-F",
+      "IOFF",
+      "IOFF",
+      "CC2",
+      "CC6"
+     ],
+     "session5": [
+      "CST",
+      "CST",
+      "Sup-F",
+      "Sup-F",
+      "IOFF",
+      "IOFF",
+      "CC2",
+      "CC6"
+     ]
+    }
+   },
+   "count-matched to today's UKF labeled count per scan": {
+    "streamlines labeled": {
+     "A": 40306,
+     "within": 39238,
+     "session3": 42405,
+     "session5": 39428
+    },
+    "focus volume mL": {
+     "A": {
+      "CST": 73.8,
+      "AF": 58.4,
+      "UF": 10.5
+     },
+     "within": {
+      "CST": 67.4,
+      "AF": 60.2,
+      "UF": 11.4
+     },
+     "session3": {
+      "CST": 76.9,
+      "AF": 63.1,
+      "UF": 14.3
+     },
+     "session5": {
+      "CST": 68.2,
+      "AF": 56.4,
+      "UF": 7.5
+     }
+    },
+    "rescans": {
+     "within": {
+      "presence Dice": {
+       "CST": 0.8439,
+       "AF": 0.827,
+       "UF": 0.6358
+      },
+      "landmark sites: the same main named tract within 8 mm": 8,
+      "landmark sites": 8
+     },
+     "session3": {
+      "presence Dice": {
+       "CST": 0.8523,
+       "AF": 0.8105,
+       "UF": 0.662
+      },
+      "landmark sites: the same main named tract within 8 mm": 8,
+      "landmark sites": 8
+     },
+     "session5": {
+      "presence Dice": {
+       "CST": 0.8512,
+       "AF": 0.8201,
+       "UF": 0.6085
+      },
+      "landmark sites: the same main named tract within 8 mm": 8,
+      "landmark sites": 8
+     }
+    },
+    "landmark sites: main named tract": {
+     "A": [
+      "CST",
+      "CST",
+      "Sup-F",
+      "Sup-F",
+      "IOFF",
+      "IOFF",
+      "CC2",
+      "CC6"
+     ],
+     "within": [
+      "CST",
+      "CST",
+      "Sup-F",
+      "Sup-F",
+      "IOFF",
+      "IOFF",
+      "CC2",
+      "CC6"
+     ],
+     "session3": [
+      "CST",
+      "CST",
+      "Sup-F",
+      "Sup-F",
+      "IOFF",
+      "IOFF",
+      "CC2",
+      "CC6"
+     ],
+     "session5": [
+      "CST",
+      "CST",
+      "Sup-F",
+      "Sup-F",
+      "IOFF",
+      "IOFF",
+      "CC2",
+      "CC6"
+     ]
+    }
+   },
+   "count-matched per tract against UKF": {
+    "ukf": {
+     "within": {
+      "CST": [
+       0.7754,
+       0.7754,
+       0.7754
+      ],
+      "AF": [
+       0.811,
+       0.811,
+       0.811
+      ],
+      "UF": [
+       0.5979,
+       0.5753,
+       0.6226
+      ]
+     },
+     "session3": {
+      "CST": [
+       0.7828,
+       0.7828,
+       0.7828
+      ],
+      "AF": [
+       0.7886,
+       0.7886,
+       0.7886
+      ],
+      "UF": [
+       0.5937,
+       0.5682,
+       0.6028
+      ]
+     },
+     "session5": {
+      "CST": [
+       0.7495,
+       0.7495,
+       0.7495
+      ],
+      "AF": [
+       0.7676,
+       0.7666,
+       0.7689
+      ],
+      "UF": [
+       0.508,
+       0.4732,
+       0.5334
+      ]
+     }
+    },
+    "ptt": {
+     "within": {
+      "CST": [
+       0.8176,
+       0.8163,
+       0.819
+      ],
+      "AF": [
+       0.8232,
+       0.8222,
+       0.8241
+      ],
+      "UF": [
+       0.6358,
+       0.6358,
+       0.6358
+      ]
+     },
+     "session3": {
+      "CST": [
+       0.8157,
+       0.8096,
+       0.8223
+      ],
+      "AF": [
+       0.8117,
+       0.806,
+       0.8172
+      ],
+      "UF": [
+       0.662,
+       0.662,
+       0.662
+      ]
+     },
+     "session5": {
+      "CST": [
+       0.8257,
+       0.8169,
+       0.8315
+      ],
+      "AF": [
+       0.8178,
+       0.8157,
+       0.8202
+      ],
+      "UF": [
+       0.6085,
+       0.6085,
+       0.6085
+      ]
+     }
+    },
+    "counts": {
+     "A": {
+      "CST": 523,
+      "AF": 787,
+      "UF": 181
+     },
+     "within": {
+      "CST": 597,
+      "AF": 759,
+      "UF": 169
+     },
+     "session3": {
+      "CST": 673,
+      "AF": 817,
+      "UF": 253
+     },
+     "session5": {
+      "CST": 638,
+      "AF": 788,
+      "UF": 127
+     }
+    }
+   },
+   "run to run on A (the same seeds, another tracking seed)": {
+    "A_track2": {
+     "CST": 0.8708,
+     "AF": 0.8474,
+     "UF": 0.7089
+    }
+   }
+  },
+  "mm-own_probe1.5_angle20": {
+   "raw": {
+    "streamlines labeled": {
+     "A": 67346,
+     "within": 65498,
+     "session3": 69527,
+     "session5": 65640
+    },
+    "focus volume mL": {
+     "A": {
+      "CST": 85.2,
+      "AF": 76.8,
+      "UF": 17.4
+     },
+     "within": {
+      "CST": 77.7,
+      "AF": 77.5,
+      "UF": 20.8
+     },
+     "session3": {
+      "CST": 88.1,
+      "AF": 77.7,
+      "UF": 21.9
+     },
+     "session5": {
+      "CST": 78.4,
+      "AF": 73.0,
+      "UF": 13.5
+     }
+    },
+    "rescans": {
+     "within": {
+      "presence Dice": {
+       "CST": 0.8521,
+       "AF": 0.8554,
+       "UF": 0.7416
+      },
+      "landmark sites: the same main named tract within 8 mm": 7,
+      "landmark sites": 8
+     },
+     "session3": {
+      "presence Dice": {
+       "CST": 0.8538,
+       "AF": 0.8517,
+       "UF": 0.7393
+      },
+      "landmark sites: the same main named tract within 8 mm": 8,
+      "landmark sites": 8
+     },
+     "session5": {
+      "presence Dice": {
+       "CST": 0.8491,
+       "AF": 0.8374,
+       "UF": 0.6756
+      },
+      "landmark sites: the same main named tract within 8 mm": 7,
+      "landmark sites": 8
+     }
+    },
+    "landmark sites: main named tract": {
+     "A": [
+      "CST",
+      "CST",
+      "Sup-F",
+      "Sup-F",
+      "IOFF",
+      "IOFF",
+      "CC2",
+      "CC6"
+     ],
+     "within": [
+      "CST",
+      "CST",
+      "AF",
+      "Sup-F",
+      "IOFF",
+      "IOFF",
+      "CC2",
+      "CC6"
+     ],
+     "session3": [
+      "CST",
+      "CST",
+      "Sup-F",
+      "Sup-F",
+      "IOFF",
+      "IOFF",
+      "CC2",
+      "CC6"
+     ],
+     "session5": [
+      "CST",
+      "CST",
+      "Sup-F",
+      "Sup-F",
+      "IOFF",
+      "IOFF",
+      "CC2",
+      "CC7"
+     ]
+    }
+   },
+   "count-matched to today's UKF labeled count per scan": {
+    "streamlines labeled": {
+     "A": 64378,
+     "within": 64275,
+     "session3": 64776,
+     "session5": 64179
+    },
+    "focus volume mL": {
+     "A": {
+      "CST": 83.7,
+      "AF": 75.4,
+      "UF": 16.9
+     },
+     "within": {
+      "CST": 76.8,
+      "AF": 76.8,
+      "UF": 20.6
+     },
+     "session3": {
+      "CST": 84.5,
+      "AF": 75.3,
+      "UF": 21.0
+     },
+     "session5": {
+      "CST": 77.8,
+      "AF": 72.2,
+      "UF": 13.3
+     }
+    },
+    "rescans": {
+     "within": {
+      "presence Dice": {
+       "CST": 0.8513,
+       "AF": 0.8551,
+       "UF": 0.7338
+      },
+      "landmark sites: the same main named tract within 8 mm": 7,
+      "landmark sites": 8
+     },
+     "session3": {
+      "presence Dice": {
+       "CST": 0.8528,
+       "AF": 0.8507,
+       "UF": 0.7369
+      },
+      "landmark sites: the same main named tract within 8 mm": 8,
+      "landmark sites": 8
+     },
+     "session5": {
+      "presence Dice": {
+       "CST": 0.8502,
+       "AF": 0.8368,
+       "UF": 0.68
+      },
+      "landmark sites: the same main named tract within 8 mm": 7,
+      "landmark sites": 8
+     }
+    },
+    "landmark sites: main named tract": {
+     "A": [
+      "CST",
+      "CST",
+      "Sup-F",
+      "Sup-F",
+      "IOFF",
+      "IOFF",
+      "CC2",
+      "CC6"
+     ],
+     "within": [
+      "CST",
+      "CST",
+      "AF",
+      "Sup-F",
+      "IOFF",
+      "IOFF",
+      "CC2",
+      "CC6"
+     ],
+     "session3": [
+      "CST",
+      "CST",
+      "Sup-F",
+      "Sup-F",
+      "IOFF",
+      "IOFF",
+      "CC2",
+      "CC6"
+     ],
+     "session5": [
+      "CST",
+      "CST",
+      "Sup-F",
+      "Sup-F",
+      "IOFF",
+      "IOFF",
+      "CC2",
+      "CC7"
+     ]
+    }
+   },
+   "count-matched per tract against UKF": {
+    "ukf": {
+     "within": {
+      "CST": [
+       0.7754,
+       0.7754,
+       0.7754
+      ],
+      "AF": [
+       0.811,
+       0.811,
+       0.811
+      ],
+      "UF": [
+       0.6901,
+       0.6697,
+       0.7011
+      ]
+     },
+     "session3": {
+      "CST": [
+       0.7828,
+       0.7828,
+       0.7828
+      ],
+      "AF": [
+       0.7886,
+       0.7886,
+       0.7886
+      ],
+      "UF": [
+       0.6734,
+       0.6642,
+       0.687
+      ]
+     },
+     "session5": {
+      "CST": [
+       0.7495,
+       0.7495,
+       0.7495
+      ],
+      "AF": [
+       0.7696,
+       0.7696,
+       0.7696
+      ],
+      "UF": [
+       0.6229,
+       0.5891,
+       0.6457
+      ]
+     }
+    },
+    "ptt": {
+     "within": {
+      "CST": [
+       0.8133,
+       0.8071,
+       0.8157
+      ],
+      "AF": [
+       0.8246,
+       0.8202,
+       0.8341
+      ],
+      "UF": [
+       0.7416,
+       0.7416,
+       0.7416
+      ]
+     },
+     "session3": {
+      "CST": [
+       0.8028,
+       0.7958,
+       0.8112
+      ],
+      "AF": [
+       0.8225,
+       0.8146,
+       0.8302
+      ],
+      "UF": [
+       0.7393,
+       0.7393,
+       0.7393
+      ]
+     },
+     "session5": {
+      "CST": [
+       0.8078,
+       0.7991,
+       0.8149
+      ],
+      "AF": [
+       0.8094,
+       0.8069,
+       0.8137
+      ],
+      "UF": [
+       0.6756,
+       0.6756,
+       0.6756
+      ]
+     }
+    },
+    "counts": {
+     "A": {
+      "CST": 523,
+      "AF": 787,
+      "UF": 296
+     },
+     "within": {
+      "CST": 597,
+      "AF": 759,
+      "UF": 329
+     },
+     "session3": {
+      "CST": 673,
+      "AF": 817,
+      "UF": 386
+     },
+     "session5": {
+      "CST": 638,
+      "AF": 818,
+      "UF": 217
+     }
+    }
+   },
+   "run to run on A (the same seeds, another tracking seed)": {
+    "A_track2": {
+     "CST": 0.872,
+     "AF": 0.8616,
+     "UF": 0.74
+    }
+   }
+  }
+ }
+}

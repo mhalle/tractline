@@ -7007,3 +7007,70 @@ float32. `ptt.Tracker(..., backend="metal")` uses it; `backend="torch"` stays th
     like runs (DIPY's and `compat`) differs by 0.002, and the 0.563 against 0.567 gap is not shown to exceed the noise.
   - The 2023 scoring rewards valid streamlines and penalizes invalid bundles. It is not the calibration question
     (rescan agreement), which this does not touch.
+
+## 2026-10-25 The proposed PTT defaults on cIIIs04's rescan agreement
+
+**What ran** (`bench/ptt_compare.py run --scan A|within|session3|session5`, then `rescan`; `results/ptt_rescan.json`).
+- **Tracking:** our PTT with our own FODs (`mm-own`) in real units, probe 1.5 mm, at the stated 10° and at the proposed
+  20°, on cIIIs04's reference scan A and its three rescans on A's grid. Step 6's inputs: A's tissue maps and seed points
+  for every scan (as step 6's PTT; UKF re-derives its mask and seeds per scan), 130,000 seeds. Plus A again with a second
+  tracking seed (run to run).
+- **The measures** are step 6's (`robust_benchmark.tracker_measures`, `matched_rescan_dice`): presence Dice of CST, AF and
+  UF between A and each rescan, the 8 landmark sites, and the per-tract count-matched Dice against UKF (5 draws).
+- **Time:** 22–24 s of tracking a scan at 20°, 14–18 s at 10° (M2).
+
+**Presence Dice, A against each rescan** (within / session3 / session5):
+
+| method | CST | AF | UF | sites agreeing |
+|---|---|---|---|---|
+| UKF today | 0.775 / 0.783 / 0.750 | 0.811 / 0.789 / 0.770 | 0.788 / 0.763 / 0.734 | 6 / 6 / 5 of 8 |
+| DIPY PTT, step 6 | 0.662 / 0.855 / 0.843 | 0.822 / 0.811 / 0.805 | 0.735 / 0.732 / 0.684 | 7 / 8 / 7 |
+| ours, real, 10° (stated) | 0.844 / 0.852 / 0.851 | 0.827 / 0.810 / 0.820 | 0.636 / 0.662 / 0.609 | 8 / 8 / 8 |
+| **ours, real, 20° (proposed)** | 0.852 / 0.854 / 0.849 | 0.855 / 0.852 / 0.837 | 0.742 / 0.739 / 0.676 | 7 / 8 / 7 |
+
+**Count-matched per tract against UKF** (mean over the rescans; each method and UKF subsampled to the smaller count of
+that tract on that scan):
+
+| | CST | AF | UF |
+|---|---|---|---|
+| ours, 20° | 0.808 (UKF 0.769) | 0.819 (UKF 0.790) | 0.719 (UKF 0.662) |
+| ours, 10° | 0.820 (UKF 0.769) | 0.818 (UKF 0.789) | 0.635 (UKF 0.567) |
+| DIPY PTT, step 6 | 0.784 (UKF 0.769) | 0.812 (UKF 0.787) | 0.717 (UKF 0.656) |
+
+**Run to run on A** (the same seeds, another tracking seed): ours at 20°, CST 0.872, AF 0.862, UF 0.740; at 10°, 0.871,
+0.847, 0.709; DIPY's, 0.866, 0.822, 0.737.
+
+**Volumes on A** (mL; CST / AF / UF): ours at 20°, 85.2 / 76.8 / 17.4; at 10°, 73.8 / 58.4 / 10.5; DIPY, 87.2 / 44.7 /
+16.6; UKF, 51.8 / 53.6 / 41.8.
+
+**Reading.**
+- **The 20° default holds up on rescans; it is not shown to improve them.**
+  - 20° labels 67,000 streamlines against 10°'s 40,000, and presence Dice rises with the count, so the raw 20°-against-10°
+    comparison is confounded.
+  - Count-matched per tract, the AF agrees as well at 20° as at 10° (0.819 against 0.818) and the CST slightly worse
+    (0.808 against 0.820). The UF's matched counts differ between the two, so its comparison is confounded too.
+  - What holds: at 20° PTT tracks much more of the UF (17.4 against 10.5 mL, like DIPY's 16.6), with rescan agreement no
+    worse (0.676–0.742 against 0.609–0.662).
+  - Against UKF, count-matched per tract, it agrees better on all three tracts. Raw, UKF's UF agrees better
+    (0.734–0.788) and is 41.8 mL. And PTT reuses A's tissue maps and seeds on every scan (below), which favors it.
+- **Rescan Dice sits just below run to run.** CST 0.849–0.854, AF 0.837–0.855 and UF 0.676–0.742, against run to run
+  0.872 / 0.862 / 0.740. Run-to-run disagreement matches most of the rescan disagreement, as step 6 found for DIPY. With
+  A's tissue maps and seeds shared across scans, part of the rescan variation is removed, so this is an upper bound on
+  how much of a rescan the tracker's own randomness explains. It is a point for the ensemble: PTT's ensemble spread
+  should cover much of the rescan.
+- **A much smaller face effect.** DIPY's same-session CST (0.662) is step 6's face artifact: a rescan on A's grid leaves
+  A's lowest slice empty. Ours shows a much smaller form of it, on exactly the two scans with empty slices:
+  - its Dice stays 0.849–0.852;
+  - but the CST's volume drops: at 20°, within 77.7 and session5 78.4 mL against A's 85.2 and session3's 88.1; at 10°,
+    67.4 and 68.2 against 73.8 and 76.9.
+
+  Our tracker uses the same rule (a path that runs out of directions ends invalidly). Why DIPY's drop is larger (its
+  shifted points, perhaps) was not tested.
+- **Limits.**
+  - One subject, three rescans, one run each.
+  - PTT reuses A's tissue maps and seeds on every scan, while UKF re-derives its own. That favors PTT's agreement (step
+    6's caveat).
+  - RapidParc labels PTT's streamlines off its training domain: Other share 0.40, against UKF's 0.53 and DIPY's PTT's
+    0.48 on A.
+  - The 20° was chosen on the phantom; this is a second measure on other data, not a held-out test of a tuned
+    parameter.
