@@ -7200,3 +7200,76 @@ against 0.81–0.82, CC2 0.73 against 0.84–0.88). PTT with ACT reaches gray ma
   - The overlap is small for many tracts, and it is a biased subset.
   - The first version of this check (voters beyond the radius, one mixed suspects list) was corrected after an
     independent review.
+
+## 2026-10-26 Are RapidParc's names right on PTT's PTT-only paths? The phantom's truth
+
+**Why.** On cIIIs04 only 14 % of PTT's streamlines had a UKF-like counterpart, so only those could be checked against
+UKF (the entry above). The ISMRM 2015 phantom has a truth: the 2023 scoring's verdict per streamline, and each bundle's
+ORG counterparts (`robust_phantom.STRICT`, with `LOOSE` for the near ones).
+
+**What ran** (`bench/naming_phantom.py`, `results/naming_phantom.json`; existing scored runs; seconds).
+- **Runs:** today's UKF, and our PTT in real units at 20° (`mm_probe1.5_angle20`: DIPY's FODs, the phantom's closest
+  run to the proposed defaults).
+- **Groups:**
+  - A PTT streamline is UKF-like when a UKF streamline lies within 4 mm of it (RMS between the 20-point paths, the
+    closer orientation), else PTT-only: 21 % are UKF-like.
+  - As the control, UKF's own streamlines are split the same way: PTT-like (20 %) or UKF-only. A bundle's shared core
+    is named better than its periphery by either tracker, so PTT-only against UKF-only is the like-for-like comparison
+    (an independent review's control).
+  - The UKF-like share depends on the other run's density: with half of UKF's streamlines it falls to 15.6 %. It is not
+    comparable with cIIIs04's 14 %.
+- **Judged:** the valid, labeled streamlines of the 14 bundles with a counterpart. Is RapidParc's name a counterpart of
+  the true bundle?
+
+| | streamlines | a counterpart | or a near one | bundle mean |
+|---|---|---|---|---|
+| UKF, all | 16,471 | 0.576 | 0.640 | 0.635 |
+| UKF, PTT-like | 4,713 | 0.636 | 0.768 | 0.743 |
+| UKF, UKF-only | 11,758 | 0.552 | 0.588 | 0.587 |
+| PTT, all | 29,195 | 0.627 | 0.690 | 0.646 |
+| PTT, UKF-like | 6,531 | 0.594 | 0.728 | 0.716 |
+| PTT, PTT-only | 22,664 | 0.636 | 0.679 | 0.603 |
+
+**Per bundle, the periphery** (named a counterpart: UKF-only, then PTT-only):
+- CC 0.61 / 0.73;
+- cingulum left 0.80 / 0.76, right 0.63 / 0.83;
+- BPS left 0.21 / 0.43, right 0.25 / 0.19;
+- ICP left 0.56 / 0.41, right 0.76 / 0.47;
+- MCP 0.88 / 0.81;
+- ILF left 0.48 / 0.43, right 0.58 / 0.58;
+- SLF left 0.51 / 0.51, right 0.36 / 0.59;
+- UF left 0.82 / 0.90, right 0.77 / 0.80.
+
+**Named a tract the phantom cannot hold** (`FALSE_TRACTS`; share of labeled streamlines):
+
+| | all labeled | in a true bundle | IC or NC |
+|---|---|---|---|
+| UKF | 9.3 % | 8.1 % | 9.9 % |
+| PTT | 9.1 % | 4.5 % | 14.7 % |
+
+**Reading.**
+- **RapidParc names PTT's PTT-only paths as correctly as UKF's UKF-only paths:** bundle mean 0.60 against 0.59
+  (streamline-weighted 0.64 against 0.55). The shared cores are named better by both (0.72 and 0.74). On the phantom,
+  the domain shift costs no names overall.
+- **Where PTT's periphery is named worse:** the ICP (0.41 / 0.47 against 0.56 / 0.76), the MCP (0.81 against 0.88), the
+  right BPS (0.19 against 0.25), the left ILF slightly (0.43 against 0.48). These are the cerebellar and brainstem tracts,
+  as on cIIIs04.
+- **Where it is named better:** the CC, the right cingulum, the right SLF and the left BPS.
+- **False-tract names are equal overall** (9.1 % against 9.3 %). PTT's are lower inside true bundles (4.5 % against
+  8.1 %) and higher on the invalid streamlines (14.7 % against 9.9 %).
+- **Limits.**
+  - One phantom: one simulated brain, b = 1000 with 32 directions, 14 bundles with an ORG counterpart, none of the
+    superficial or thalamic tracts.
+  - Of cIIIs04's naming suspects only the cerebellar side is tested, through the ICP. Sup-O and Sup-PO have no phantom
+    bundle, CC1 is hidden (the strict mapping accepts any CC segment) and Intra-CBLM-I-P has no counterpart.
+  - "Truth" is the 2023 ROI segmentation's verdict, not each streamline's generating bundle.
+  - Both trackers' streamlines are named right only 55–65 % of the time here: "as correct as UKF" means as good and as
+    limited.
+  - DIPY's FODs, not ours.
+
+**For decision 5.**
+- The phantom supports RapidParc for PTT on the tracts it holds, at UKF's accuracy, but for the cerebellar and brainstem
+  tracts.
+- A PTT preset would ship with those flagged (ICP, MCP, BPS, Intra-CBLM-I-P) and with cIIIs04's cortical suspects
+  flagged (Sup-O, Sup-PO, CC1).
+- A check of those against a reference not derived from UKF (RecoBundles mapped to the ORG names) remains open.

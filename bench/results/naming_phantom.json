@@ -1,0 +1,415 @@
+{
+ "ukf (today), all streamlines": {
+  "streamlines": 16471,
+  "named a counterpart": 0.5759,
+  "named a counterpart or a near one": 0.6396,
+  "named Other": 0.2747,
+  "named a tract the phantom cannot hold": 0.083,
+  "per bundle": {
+   "CC": {
+    "streamlines": 5160,
+    "named a counterpart": 0.6446
+   },
+   "Cingulum_left": {
+    "streamlines": 616,
+    "named a counterpart": 0.8052
+   },
+   "Cingulum_right": {
+    "streamlines": 637,
+    "named a counterpart": 0.686
+   },
+   "BPS_left": {
+    "streamlines": 1146,
+    "named a counterpart": 0.4328
+   },
+   "BPS_right": {
+    "streamlines": 1591,
+    "named a counterpart": 0.2766
+   },
+   "ICP_left": {
+    "streamlines": 319,
+    "named a counterpart": 0.5987
+   },
+   "ICP_right": {
+    "streamlines": 244,
+    "named a counterpart": 0.8238
+   },
+   "MCP": {
+    "streamlines": 484,
+    "named a counterpart": 0.8946
+   },
+   "ILF_left": {
+    "streamlines": 1815,
+    "named a counterpart": 0.5829
+   },
+   "ILF_right": {
+    "streamlines": 1679,
+    "named a counterpart": 0.5551
+   },
+   "SLF_left": {
+    "streamlines": 1105,
+    "named a counterpart": 0.5448
+   },
+   "SLF_right": {
+    "streamlines": 1185,
+    "named a counterpart": 0.3983
+   },
+   "UF_left": {
+    "streamlines": 243,
+    "named a counterpart": 0.8642
+   },
+   "UF_right": {
+    "streamlines": 247,
+    "named a counterpart": 0.7773
+   }
+  },
+  "bundle mean": 0.6346
+ },
+ "ukf, PTT-like (a PTT path within 4 mm)": {
+  "streamlines": 4713,
+  "named a counterpart": 0.6357,
+  "named a counterpart or a near one": 0.7677,
+  "named Other": 0.1742,
+  "named a tract the phantom cannot hold": 0.0564,
+  "per bundle": {
+   "CC": {
+    "streamlines": 1041,
+    "named a counterpart": 0.7935
+   },
+   "Cingulum_left": {
+    "streamlines": 63,
+    "named a counterpart": 0.873
+   },
+   "Cingulum_right": {
+    "streamlines": 121,
+    "named a counterpart": 0.9339
+   },
+   "BPS_left": {
+    "streamlines": 725,
+    "named a counterpart": 0.56
+   },
+   "BPS_right": {
+    "streamlines": 894,
+    "named a counterpart": 0.2964
+   },
+   "ICP_left": {
+    "streamlines": 175,
+    "named a counterpart": 0.6286
+   },
+   "ICP_right": {
+    "streamlines": 128,
+    "named a counterpart": 0.8828
+   },
+   "MCP": {
+    "streamlines": 108,
+    "named a counterpart": 0.9537
+   },
+   "ILF_left": {
+    "streamlines": 562,
+    "named a counterpart": 0.8132
+   },
+   "ILF_right": {
+    "streamlines": 432,
+    "named a counterpart": 0.4838
+   },
+   "SLF_left": {
+    "streamlines": 227,
+    "named a counterpart": 0.6652
+   },
+   "SLF_right": {
+    "streamlines": 133,
+    "named a counterpart": 0.6992
+   },
+   "UF_left": {
+    "streamlines": 55,
+    "named a counterpart": 1.0
+   },
+   "UF_right": {
+    "streamlines": 49,
+    "named a counterpart": 0.8163
+   }
+  },
+  "bundle mean": 0.7428
+ },
+ "ukf, UKF-only": {
+  "streamlines": 11758,
+  "named a counterpart": 0.552,
+  "named a counterpart or a near one": 0.5883,
+  "named Other": 0.3149,
+  "named a tract the phantom cannot hold": 0.0936,
+  "per bundle": {
+   "CC": {
+    "streamlines": 4119,
+    "named a counterpart": 0.6069
+   },
+   "Cingulum_left": {
+    "streamlines": 553,
+    "named a counterpart": 0.7975
+   },
+   "Cingulum_right": {
+    "streamlines": 516,
+    "named a counterpart": 0.6279
+   },
+   "BPS_left": {
+    "streamlines": 421,
+    "named a counterpart": 0.2138
+   },
+   "BPS_right": {
+    "streamlines": 697,
+    "named a counterpart": 0.2511
+   },
+   "ICP_left": {
+    "streamlines": 144,
+    "named a counterpart": 0.5625
+   },
+   "ICP_right": {
+    "streamlines": 116,
+    "named a counterpart": 0.7586
+   },
+   "MCP": {
+    "streamlines": 376,
+    "named a counterpart": 0.8777
+   },
+   "ILF_left": {
+    "streamlines": 1253,
+    "named a counterpart": 0.4796
+   },
+   "ILF_right": {
+    "streamlines": 1247,
+    "named a counterpart": 0.5798
+   },
+   "SLF_left": {
+    "streamlines": 878,
+    "named a counterpart": 0.5137
+   },
+   "SLF_right": {
+    "streamlines": 1052,
+    "named a counterpart": 0.3603
+   },
+   "UF_left": {
+    "streamlines": 188,
+    "named a counterpart": 0.8245
+   },
+   "UF_right": {
+    "streamlines": 198,
+    "named a counterpart": 0.7677
+   }
+  },
+  "bundle mean": 0.5873
+ },
+ "ptt (mm_probe1.5_angle20), all streamlines": {
+  "streamlines": 29195,
+  "named a counterpart": 0.6267,
+  "named a counterpart or a near one": 0.6902,
+  "named Other": 0.2614,
+  "named a tract the phantom cannot hold": 0.0462,
+  "per bundle": {
+   "CC": {
+    "streamlines": 10115,
+    "named a counterpart": 0.7414
+   },
+   "Cingulum_left": {
+    "streamlines": 1290,
+    "named a counterpart": 0.769
+   },
+   "Cingulum_right": {
+    "streamlines": 1536,
+    "named a counterpart": 0.8411
+   },
+   "BPS_left": {
+    "streamlines": 2076,
+    "named a counterpart": 0.4547
+   },
+   "BPS_right": {
+    "streamlines": 2825,
+    "named a counterpart": 0.2202
+   },
+   "ICP_left": {
+    "streamlines": 624,
+    "named a counterpart": 0.5577
+   },
+   "ICP_right": {
+    "streamlines": 450,
+    "named a counterpart": 0.7644
+   },
+   "MCP": {
+    "streamlines": 1281,
+    "named a counterpart": 0.8205
+   },
+   "ILF_left": {
+    "streamlines": 1956,
+    "named a counterpart": 0.4872
+   },
+   "ILF_right": {
+    "streamlines": 1764,
+    "named a counterpart": 0.5465
+   },
+   "SLF_left": {
+    "streamlines": 2271,
+    "named a counterpart": 0.5341
+   },
+   "SLF_right": {
+    "streamlines": 1872,
+    "named a counterpart": 0.5908
+   },
+   "UF_left": {
+    "streamlines": 517,
+    "named a counterpart": 0.9226
+   },
+   "UF_right": {
+    "streamlines": 618,
+    "named a counterpart": 0.7945
+   }
+  },
+  "bundle mean": 0.646
+ },
+ "ptt, UKF-like (a UKF path within 4 mm)": {
+  "streamlines": 6531,
+  "named a counterpart": 0.5935,
+  "named a counterpart or a near one": 0.7282,
+  "named Other": 0.2234,
+  "named a tract the phantom cannot hold": 0.047,
+  "per bundle": {
+   "CC": {
+    "streamlines": 1111,
+    "named a counterpart": 0.8578
+   },
+   "Cingulum_left": {
+    "streamlines": 118,
+    "named a counterpart": 0.9068
+   },
+   "Cingulum_right": {
+    "streamlines": 141,
+    "named a counterpart": 0.9504
+   },
+   "BPS_left": {
+    "streamlines": 1121,
+    "named a counterpart": 0.479
+   },
+   "BPS_right": {
+    "streamlines": 1271,
+    "named a counterpart": 0.2557
+   },
+   "ICP_left": {
+    "streamlines": 432,
+    "named a counterpart": 0.6227
+   },
+   "ICP_right": {
+    "streamlines": 313,
+    "named a counterpart": 0.8914
+   },
+   "MCP": {
+    "streamlines": 114,
+    "named a counterpart": 0.9474
+   },
+   "ILF_left": {
+    "streamlines": 583,
+    "named a counterpart": 0.6141
+   },
+   "ILF_right": {
+    "streamlines": 523,
+    "named a counterpart": 0.4589
+   },
+   "SLF_left": {
+    "streamlines": 358,
+    "named a counterpart": 0.6676
+   },
+   "SLF_right": {
+    "streamlines": 255,
+    "named a counterpart": 0.6039
+   },
+   "UF_left": {
+    "streamlines": 113,
+    "named a counterpart": 0.9912
+   },
+   "UF_right": {
+    "streamlines": 78,
+    "named a counterpart": 0.7821
+   }
+  },
+  "bundle mean": 0.7164
+ },
+ "ptt, PTT-only": {
+  "streamlines": 22664,
+  "named a counterpart": 0.6363,
+  "named a counterpart or a near one": 0.6792,
+  "named Other": 0.2723,
+  "named a tract the phantom cannot hold": 0.046,
+  "per bundle": {
+   "CC": {
+    "streamlines": 9004,
+    "named a counterpart": 0.727
+   },
+   "Cingulum_left": {
+    "streamlines": 1172,
+    "named a counterpart": 0.7551
+   },
+   "Cingulum_right": {
+    "streamlines": 1395,
+    "named a counterpart": 0.8301
+   },
+   "BPS_left": {
+    "streamlines": 955,
+    "named a counterpart": 0.4262
+   },
+   "BPS_right": {
+    "streamlines": 1554,
+    "named a counterpart": 0.1911
+   },
+   "ICP_left": {
+    "streamlines": 192,
+    "named a counterpart": 0.4115
+   },
+   "ICP_right": {
+    "streamlines": 137,
+    "named a counterpart": 0.4745
+   },
+   "MCP": {
+    "streamlines": 1167,
+    "named a counterpart": 0.8081
+   },
+   "ILF_left": {
+    "streamlines": 1373,
+    "named a counterpart": 0.4334
+   },
+   "ILF_right": {
+    "streamlines": 1241,
+    "named a counterpart": 0.5834
+   },
+   "SLF_left": {
+    "streamlines": 1913,
+    "named a counterpart": 0.5091
+   },
+   "SLF_right": {
+    "streamlines": 1617,
+    "named a counterpart": 0.5887
+   },
+   "UF_left": {
+    "streamlines": 404,
+    "named a counterpart": 0.9035
+   },
+   "UF_right": {
+    "streamlines": 540,
+    "named a counterpart": 0.7963
+   }
+  },
+  "bundle mean": 0.6027
+ },
+ "named a tract the phantom cannot hold": {
+  "ukf": {
+   "all labeled": 0.0933,
+   "in a true bundle": 0.0814,
+   "IC or NC": 0.0986
+  },
+  "ptt": {
+   "all labeled": 0.0911,
+   "in a true bundle": 0.0454,
+   "IC or NC": 0.1467
+  }
+ },
+ "ukf streamlines that are PTT-like": 0.2046,
+ "ptt streamlines that are UKF-like": 0.212,
+ "ptt valid streamlines (a bundle) that are UKF-like": 0.2249,
+ "radius mm": 4.0,
+ "seconds": 13.1
+}

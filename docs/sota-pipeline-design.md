@@ -562,9 +562,13 @@ weights' license permits, and recorded as such in the implementation's record.
    - The two trackers cover different parts of most bundles: centers 5.6 mm apart against rescans' 1.3–1.9 mm.
    - Naming suspects, each a boundary shift to a neighbor: CC1, Intra-CBLM-I-P, Sup-O, Sup-PO. Several more tracts
      differ in coverage, not naming.
-   - Recommended now: keep the 42-tract vocabulary with RapidParc, flag the four suspects, and check PTT-only paths
-     against a reference not derived from UKF (the phantom, RecoBundles mapped to the ORG names) before any PTT preset
-     is released. Retraining stays a later study.
+   - *On the phantom's truth* (NOTES 2026-10-26): RapidParc names PTT's PTT-only paths as correctly as UKF's UKF-only
+     paths (bundle mean 0.60 against 0.59). It is worse for PTT on the cerebellar and brainstem tracts (ICP, MCP, right
+     BPS). False-tract names are equal overall (9.1 % against 9.3 %).
+   - Recommended now: keep the 42-tract vocabulary with RapidParc for PTT. The phantom supports it for the 14 tracts it
+     holds. The suspects ship flagged: ICP, MCP, BPS, Intra-CBLM-I-P, Sup-O, Sup-PO, CC1.
+   - A check of the suspects against a reference not derived from UKF (RecoBundles mapped to the ORG names) remains
+     open. Retraining stays a later study.
 6. **The hash's scope.** *Decided 2026-10-24:* the device stays out of the key.
    - **Per streamline, the devices differ.** On cIIIs04, a single run on the CPU against MPS gives 93.8 % the same tract
      and 31 % of paths more than 1 mm apart. That is about a fifth of a bootstrap replicate's difference.
