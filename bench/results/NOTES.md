@@ -7381,3 +7381,79 @@ accuracy is `tests/test_motion_eddy.py`'s.
   are not built.
 - eddy fed the same field, as a referee for the composed order.
 - CUDA is untested.
+
+## 2026-10-26 The motion_eddy slot, after an adversarial review: one bad volume stays local
+
+**Why.** An adversarial review of the committed slot (8932f65) found two failures that would have reached users
+silently.
+- **One NaN voxel, or one volume whose fit diverged, made every volume's parameters NaN.** The gauges subtract
+  group means, which spread one volume's NaN to its shell and then to every shell. On ON-Harmony 10975, one volume
+  zero-filled with the field given was enough. The corrected series came out all zeros, the warnings were empty, and
+  the QC JSON held bare NaN.
+- **A corrupt volume got a bogus transform.** An all-zero volume "moved" 47 voxels: the fit slid its prediction out
+  of the field of view. Through the common output mask, that one volume zeroed 61 % of the brain in every volume. A
+  slab of slices at 20 % intensity gave 3.3 mm of made-up motion.
+- **Lesser findings.** Intensity faults biased the fit: a first b0 30 % bright cost 0.73 voxels, one volume at 0.7
+  cost 1.1. Shells of 2-4 volumes made up eddy currents (1.3 voxels), because they have no gauge. The residual flag
+  fired on clean data. Shells straddling a multiple of 50 were split. Memory on MPS was about 5.4x the series.
+
+A second review, of the first round of fixes, found that the new shell grouping chained finely spaced b-values (a DSI
+grid) into one shell, that the first dropout test mistook motion through the slices for dropout (7-11 volumes of each
+noise-free high-motion SHORELine phantom), that left-out volumes were still tracked, and that the runaway check ran
+after the gauge. It also showed that some numbers here came from a run with the gain off. All are fixed below, and the
+numbers are from the code as committed.
+
+**What changed** (`motion_eddy.estimate`, `screen`; the pipeline):
+- Non-finite values are set to 0 and counted.
+- Volumes are left out of the fit, each with its reason.
+  - Before the fit (`screen`): a volume whose brain signal is under 0.5 or over 2 times its shell's median, or with
+    signal dropout. Dropout is a run of slices whose ratios to the shell's median for each slice are all under 0.55
+    and under 0.7 of the slices beyond each end of the run, those being normal (at least 0.75): a dip, of a slice or a
+    slab. The brain's end moved through the slices by motion falls toward one side only. Slices under 0.4 of the
+    largest slice's brain area, and shells of fewer than 5 volumes, are not judged. The slice axis comes from the
+    sidecar's SliceEncodingDirection.
+  - During the fit: a volume whose cost or step is not finite, or whose map moves the brain's edge more than 30 mm
+    (judged before the gauge, so one volume's jump does not carry its shell-mates over).
+  - A left-out volume keeps an identity motion and eddy (the field still applies) and its b-vector as acquired. It
+    leaves the predictions, the gauges and the common output mask. It stays in the corrected series but is not
+    tracked, and the warnings and the QC list it with the reason.
+  - A warning if the first b0, the field's frame, is left out.
+- Shells of 2-4 volumes fit rigid motion only. A shell is a run of b-values with no step over max(50, 5 %) and a span
+  of at most max(100, 10 %): 1049/1051 and 1985-2010 are one shell each, and a DSI grid keeps its shells.
+- The residual z-score's spread is floored at 5 % of the median. The QC JSON is strict, with no NaN tokens.
+- One smoothed copy of the series is kept at a time. The measured peak is 3.1-3.4x the series as allocated (9.9x with
+  the driver's reserve). On MPS, a series needing more than 0.9 of the recommended memory (6x the series, budgeted) is
+  refused up front with advice, unless check_memory=False. An HCP-sized series would need about 13-25 GB on a 16 GB
+  Mac.
+- A per-volume intensity gain, refitted every step, now on by default.
+  - On the synthetic faults it brings the error back to the clean level: first b0 x1.3, 0.147 -> 0.092 voxels
+    overall (that volume 0.73 -> 0.02); 20 % drift, 0.162 -> 0.092; one volume x0.7, 0.175 -> 0.092 (that volume
+    1.11 -> 0.11); clean, 0.102 -> 0.092.
+  - On real scans the change is small. Without a field the maps move 0.006 voxels (16974) and 0.009 (10975) RMS at
+    the edge, and the leave-one-out residuals agree to 0.1 %. With 10975's own field the review measured 0.012 on
+    average and 0.032 for the most-moved volume; the gains there span 0.94-1.01, the lowest two being b0s.
+
+**Rerun of the reviews' cases** (the gain on):
+- A NaN voxel, a NaN slab, int16 data, data scaled by 1e-3 or 300, a negative offset, a hot voxel: all finite, 0.092
+  voxels (the clean level).
+- An empty volume, zeroed slices, a 10-slice slab at 30 % and a 6-slice slab at 20 % (10975) are left out, and the
+  other volumes are untouched. With an empty volume or a NaN voxel, the valid fraction of the brain is 1.000.
+- 10975 with a zeroed volume and the field: finite.
+- Screening 26 scans (ON-Harmony, MASiVar cohorts I-III, ds001226, ds005123, the SHORELine high-motion phantoms):
+  three volumes are left out, all real. 10975 volume 60 has slices 19 and 43 at 0.40 and 0.39 of the shell's median,
+  24 slices apart in a 72-slice multiband-3 acquisition. cIs1 b3000 volume 21 has alternating bright and dark slices
+  (0.46 and 0.49 among 1.3-1.5): motion during an interleaved acquisition. Volume 85 has a slab at 0.47-0.52.
+
+**Tests:** `tests/test_motion_eddy.py`. A NaN voxel, an empty volume and dropout stay local. Motion is not dropout,
+and a slab is. The runaway guard; small shells and shell grouping; the memory refusal. In the pipeline, tracking leaves
+out the left-out volumes.
+
+**Still open.**
+- A bright artifact fixed in every volume (12 voxels at 10x, as a folding field's pile-up leaves) biases the fit by
+  0.56-0.80 voxels. A folding field the data were not corrected with leaves 0.27. Robust weighting or outlier
+  replacement (the design's phase 2) is the remedy.
+- The dropout screen's thresholds rest on a handful of scans: a heuristic until phase 2's slice outlier replacement.
+- With the gain on, one volume of the clean synthetic scan (22) has a residual z above 4, so the "fits its prediction
+  worst" warning can still fire on clean data. On the two real scans it did not.
+- The CPU path takes about 12-13 minutes per 105-volume scan (the review's estimate from 4 steps).
+- CUDA is untested.

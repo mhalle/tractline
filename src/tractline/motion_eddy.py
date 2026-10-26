@@ -54,6 +54,8 @@ import torch
 import torch.nn.functional as F
 
 ORDERS = {"rigid": 0, "linear": 4, "quadratic": 10}
+MEMORY_FACTOR = 6.0                  # the budget on MPS, in copies of the series in float32 (measured peak: 3.1 as
+                                     # allocated, 9.9 with the driver's reserve, on a 105-volume scan)
 
 
 @dataclass(frozen=True)
@@ -75,6 +77,11 @@ class Options:
     reference: str = "auto"          # "b0-mean", "first-b0", or "auto": first-b0 with a field, else b0-mean
     npass: int = 0                   # Newton steps of the inverse map (0: 2 without a field, 3 with one)
     backend: str = "auto"            # "metal" (MPS), "torch", or "auto": metal on MPS, else torch
+    gain: bool = True                # a per-volume intensity gain, refitted every step (signal drift, a first volume
+                                     # not yet at steady state): on synthetic intensity faults it removes their bias
+                                     # (0.73 -> 0.09 voxel), on real scans it moves the maps 0.006-0.009 voxel
+    max_motion_mm: float = 30.0      # a volume whose map moves the brain's edge more than this leaves the fit
+    check_memory: bool = True        # on MPS, refuse a series too large for the recommended memory
 
     def __post_init__(self):
         if self.model not in ORDERS:
@@ -123,6 +130,7 @@ class MotionEddy:
     options: dict
     seconds: dict = field(default_factory=dict)
     backend: str = ""                # "metal" or "torch": what ran
+    excluded: dict = field(default_factory=dict)   # {volume: reason}: left out of the fit (identity motion and eddy)
 
 
 # ------------------------------------------------------------------------------------------------- geometry
@@ -481,17 +489,31 @@ def loo_smoother(groups, isb0, g, sh_order, sh_lambda):
 
 
 def shell_groups(bval):
-    """The b0s (b < 50) first, then each DW shell, volumes grouped by b rounded to 100: (groups, nominal b-values)."""
+    """The b0s (b < 50) first, then each DW shell: (groups, nominal b-values). A shell is a run of the sorted b-values in
+    which no step exceeds max(50, 5 % of b) and the whole run spans at most max(100, 10 % of its first b): 1049 and
+    1051 are one shell, as are 1985-2010 or 3200 and 3300; 2000 and 3000 are two, and a finely spaced q-space grid
+    (200, 400, ..., 3200, 3400, 3600) does not chain into one. Each is named by its median rounded to 100."""
     bval = np.asarray(bval, np.float64)
     isb0 = bval < 50
     groups, bs = [], []
     if isb0.any():
         groups.append(np.flatnonzero(isb0))
         bs.append(0)
-    key = np.round(bval / 100) * 100
-    for b in sorted(set(key[~isb0])):
-        groups.append(np.flatnonzero(~isb0 & (key == b)))
-        bs.append(int(b))
+    dw = np.flatnonzero(~isb0)
+    if len(dw):
+        order = dw[np.argsort(bval[dw], kind="stable")]
+        b = bval[order]
+        runs, start = [[0]], b[0]
+        for i in range(1, len(b)):
+            if b[i] - b[i - 1] > max(50.0, 0.05 * b[i - 1]) or b[i] - start > max(100.0, 0.10 * start):
+                runs.append([i])
+                start = b[i]
+            else:
+                runs[-1].append(i)
+        for run in runs:
+            idx = np.sort(order[run])
+            groups.append(idx)
+            bs.append(int(np.round(np.median(bval[idx]) / 100) * 100))
     return groups, bs
 
 
@@ -530,15 +552,86 @@ def _masks(dwi, bval, dfield_np, pe_axis, mask):
 
 # ------------------------------------------------------------------------------------------------- the estimate
 
+def screen(dwi, bval, groups, m_pts, slice_axis=2, low=0.5, high=2.0, slice_low=0.55, local=0.7, min_slice_voxels=200,
+           min_slice_area=0.4, min_slice_group=5):
+    """Volumes to leave out of the fit, before it, as {volume: reason}: a volume whose mean over the brain (m_pts) is
+    under `low` or over `high` times its group's median (corrupt, empty, or another contrast), or that has signal
+    dropout (eddy's outlier replacement is phase 2 of the design, so such a volume is not registered at all rather
+    than registered wrongly).
+    Dropout is a run of one or more slices whose ratios to the group's median for each slice are all under `slice_low`
+    and under `local` times the median ratio of the slices beyond each end of the run (up to 3 each side), those being
+    normal (at least 0.75): a dip, of a slice or a slab. Motion through the slices moves the brain's end, whose ratios
+    fall toward one side, with no normal slices beyond it.
+    Not judged: slices with under min_slice_area of the largest slice's brain area or under min_slice_voxels, and the
+    slices of groups of fewer than min_slice_group volumes (a median of 3 says little). Groups of fewer than 3 volumes
+    are not screened at all. slice_axis: the acquisition's slice axis.
+    The thresholds were set on ON-Harmony 10975 (a multiband dropout at 0.40), MASiVar cIs1 (interleaved slices at
+    0.46-0.49, a 3-slice slab at 0.47-0.52) and the SHORELine high-motion phantoms (no dropout; motion leaves dips under
+    0.55 only in slices under 0.4 of the largest area): a heuristic, until outlier replacement (phase 2)."""
+    out = {}
+    pts = np.asarray(m_pts, bool)
+    if not pts.any():
+        return out
+    d = np.moveaxis(np.asarray(dwi, np.float32), -1, 0)                                   # (G, X, Y, Z)
+    means = d[:, pts].mean(1)
+    sl = np.moveaxis(pts, slice_axis, 0)
+    nvox = sl.reshape(sl.shape[0], -1).sum(1)
+    dd = np.moveaxis(d, 1 + slice_axis, 1)                                                # (G, S, ., .)
+    smeans = np.stack([(dd[:, k][:, sl[k]].mean(1) if nvox[k] else np.zeros(len(d))) for k in range(sl.shape[0])], 1)
+    for idx in groups:
+        if len(idx) < 3:
+            continue
+        med = np.median(means[idx])
+        smed = np.median(smeans[idx], 0)
+        for v in idx:
+            if not (low * med <= means[v] <= high * med):
+                out[int(v)] = f"mean signal {means[v] / med:.2f} x its shell's median"
+                continue
+            seen = (nvox >= min_slice_voxels) & (smed > 0)                     # a ratio for every slice with brain
+            r = np.where(seen, smeans[v] / np.where(smed > 0, smed, 1.0), np.nan)
+            judged = seen & (nvox >= min_slice_area * nvox.max()) & (len(idx) >= min_slice_group)
+            low_ = judged & (r < slice_low)
+            bad = []
+            k = 0
+            while k < len(r):                                                 # each run of low judged slices
+                if not low_[k]:
+                    k += 1
+                    continue
+                e = k
+                while e + 1 < len(r) and low_[e + 1]:
+                    e += 1
+                lo_, hi_ = r[max(0, k - 3):k], r[e + 1:e + 4]
+                lo_, hi_ = lo_[~np.isnan(lo_)], hi_[~np.isnan(hi_)]
+                ml, mh = (np.median(lo_), np.median(hi_)) if len(lo_) and len(hi_) else (0.0, 0.0)
+                # normal slices on both sides of the run, and the run well under them: dropout (one slice or a slab);
+                # the brain's end moved through the slices falls toward one side, with no normal slices beyond it
+                if min(ml, mh) >= 0.75 and np.nanmax(r[k:e + 1]) < local * min(ml, mh):
+                    bad += list(range(k, e + 1))
+                k = e + 1
+            if bad:
+                out[int(v)] = (f"signal dropout in slices {bad} (axis {slice_axis}; under {slice_low} x the shell's "
+                               f"median and under {local} x its neighbors')")
+    return out
+
+
 def estimate(dwi, bval, bvec, affine, pe_axis, field_hz=None, pe_sign=None, readout_s=None, mask=None, options=None,
-             device="mps", dtype=torch.float32, progress=None) -> MotionEddy:
+             device="mps", dtype=torch.float32, progress=None, slice_axis=2) -> MotionEddy:
     """Motion and eddy-current parameters for every volume of dwi (X, Y, Z, G), as acquired (module docstring).
     bval (G,), bvec (3, G) FSL; affine the voxel -> RAS mm map (its determinant sets FSL's x flip for the b-vectors);
     pe_axis the phase-encoding axis (0, 1, 2). field_hz (X, Y, Z): the susceptibility field (Hz, on the DWI's grid, in
     the frame of the DWI's first b0, as susceptibility.estimate returns it), with pe_sign (+1 / -1) and readout_s; None
     fits without one (as eddy without topup). mask: a brain mask of the data as acquired (with a field, its unwarped
     copy is the reference frame's), else median_otsu of the mean b0 (and of its unwarped copy).
-    options: an Options or a dict of its fields. progress: called with each step's record."""
+    options: an Options or a dict of its fields. progress: called with each step's record. slice_axis: the
+    acquisition's slice axis (the sidecar's SliceEncodingDirection), for screen()'s dropout test.
+
+    Robustness: non-finite values are set to 0 (counted in the QC). Volumes are left out of the fit (MotionEddy.excluded,
+    with the reason): before it, by screen() (corrupt signal, slice dropout); during it, a volume whose step or cost is
+    not finite, or whose map moves the brain's edge more than Options.max_motion_mm. A left-out volume keeps an identity
+    motion and eddy (the field still applies), its b-vector as acquired, and no part in the others' predictions, the
+    gauges or apply_volumes' common mask. A shell of 2-4 volumes fits rigid motion only (its common eddy field has no
+    gauge)."""
+    import warnings
     opt = Options.make(options)
     t_all = time.perf_counter()
     dev = torch.device(device)
@@ -561,14 +654,26 @@ def estimate(dwi, bval, bvec, affine, pe_axis, field_hz=None, pe_sign=None, read
     npass = opt.npass or (3 if has_field else 2)
     geo = Geometry((X, Y, Z), vox, pe_axis, ORDERS[opt.model], dev, dtype)
     P, NMON = geo.P, geo.nmon
+    if backend == "metal" and opt.check_memory:
+        need = G * X * Y * Z * 4 * MEMORY_FACTOR
+        have = torch.mps.recommended_max_memory()
+        if need > 0.9 * have:
+            raise ValueError(f"motion_eddy: about {need / 2 ** 30:.1f} GB needed on MPS, {have / 2 ** 30:.1f} GB "
+                             "recommended: run on the CPU (device='cpu', slow) or on CUDA, or crop the field of view "
+                             "(or pass check_memory=False to try anyway)")
+
+    dwi = np.array(dwi, np.float32)
+    bad_vals = ~np.isfinite(dwi)
+    n_nonfinite = int(bad_vals.sum())
+    if n_nonfinite:
+        dwi[bad_vals] = 0.0
+    del bad_vals
 
     isb0 = bval < 50
     groups, group_b = shell_groups(bval)
     g = np.zeros((G, 3))
     nrm = np.linalg.norm(bvec.T, axis=1)
     g[~isb0] = bvec.T[~isb0] / np.clip(nrm[~isb0, None], 1e-9, None)
-    W_np, sh_orders = loo_smoother(groups, isb0, g, opt.sh_order, opt.sh_lambda)
-    W = torch.tensor(W_np, dtype=dtype, device=dev)
 
     pe_scale = float(pe_sign) * float(readout_s) if has_field else None
     dfield_np = (pe_scale * np.asarray(field_hz, np.float64)) if has_field else None
@@ -577,8 +682,13 @@ def estimate(dwi, bval, bvec, affine, pe_axis, field_hz=None, pe_sign=None, read
     t_mask = time.perf_counter() - t_m
     from scipy.ndimage import binary_erosion
     edge = m_ref & ~binary_erosion(m_ref, iterations=1)
+    excluded = screen(dwi, bval, groups, m_pts, slice_axis=slice_axis)
+    if has_field and isb0.any() and int(np.flatnonzero(isb0)[0]) in excluded:
+        warnings.warn("motion_eddy: the first b0, the field's frame, was left out of the fit: the reference moves to "
+                      "the next b0, and the field is off by the motion between them", stacklevel=2)
 
     acq = torch.tensor(np.ascontiguousarray(np.moveaxis(dwi, -1, 0)), dtype=dtype, device=dev)
+    del dwi
     dfield = torch.tensor(dfield_np, dtype=dtype, device=dev) if has_field else None
     ddfield = (torch.gradient(torch.as_tensor(dfield_np), dim=pe_axis)[0].to(dev, dtype) if has_field else None)
     full = lambda m: torch.tensor(np.argwhere(m), dtype=dtype, device=dev).contiguous()     # noqa: E731
@@ -587,44 +697,63 @@ def estimate(dwi, bval, bvec, affine, pe_axis, field_hz=None, pe_sign=None, read
     lin_p = torch.tensor(np.flatnonzero(m_pred.reshape(-1)), device=dev)
     sub = torch.tensor(np.flatnonzero((np.argwhere(m_pts) % 2 == 0).all(1)), device=dev)
     probe = xedge[torch.randperm(len(xedge), generator=torch.Generator(device="cpu").manual_seed(1))[:2000].to(dev)]
-
-    # held out of the solve: the b0s' eddy terms (zero at b = 0) unless b0_ec; every volume's eddy constant (the PE
-    # translation by another name); a volume alone in its group (nothing predicts it); the first b0's rigid 6 when it is
-    # the reference
-    frozen = torch.zeros(G, P, dtype=torch.bool, device=dev)
     b0_t = torch.tensor(isb0, device=dev)
-    if NMON:
-        if isb0.any() and not opt.b0_ec:
-            frozen[b0_t, 6:] = True
-        frozen[:, 6] = True
-    for idx in groups:
-        if len(idx) < 2:
-            frozen[int(idx[0])] = True
+    rigid_only = []                                                                       # shells of 2-4: no eddy gauge
+    sh_orders = {}
+
+    def setup():
+        """The predictor, the held-out parameters and the gauges for the volumes still in the fit."""
+        nonlocal sh_orders, rigid_only
+        out_v = np.zeros(G, bool)
+        out_v[list(excluded)] = True
+        good = [i for i in (idx[~out_v[idx]] for idx in groups) if len(i)]          # a group may lose every volume
+        W_np, sh_orders = loo_smoother(good, isb0, g, opt.sh_order, opt.sh_lambda)
+        Wt = torch.tensor(W_np, dtype=dtype, device=dev)
+        # held out of the solve: the b0s' eddy terms (zero at b = 0) unless b0_ec; every volume's eddy constant (the PE
+        # translation by another name); a volume alone in its group or left out; the reference b0's rigid 6; the eddy
+        # terms of a shell of 2-4 volumes
+        fr = torch.zeros(G, P, dtype=torch.bool, device=dev)
+        if NMON:
+            if isb0.any() and not opt.b0_ec:
+                fr[b0_t, 6:] = True
+            fr[:, 6] = True
+        rigid_only = []
+        for idx in good:
+            if len(idx) == 1:
+                fr[int(idx[0])] = True
+            elif NMON and 2 <= len(idx) < 5 and not isb0[idx[0]]:
+                fr[torch.tensor(idx, device=dev), 6:] = True
+                rigid_only += [int(i) for i in idx]
+        fr[torch.tensor(np.flatnonzero(out_v), device=dev, dtype=torch.long)] = True
+        good_b0 = np.flatnonzero(isb0 & ~out_v)
+        if reference == "first-b0":
+            if not len(good_b0):
+                raise ValueError("motion_eddy: reference 'first-b0' needs a usable b0 (b < 50)")
+            fr[int(good_b0[0]), :6] = True
+        b0i = torch.tensor(good_b0, device=dev) if len(good_b0) else None
+        b0p = b0i if (b0i is not None and reference == "b0-mean") else None
+        shells = [torch.tensor(i, device=dev) for i in good if len(i) > 1 and not isb0[i[0]]]
+        ecg = []
+        if NMON > 1:
+            for idx in good:
+                if isb0[idx[0]] or len(idx) < 5:
+                    continue
+                Xg = np.c_[np.ones(len(idx)), g[idx]]
+                ecg.append((torch.tensor(idx, device=dev), torch.tensor(np.linalg.pinv(Xg)[0], dtype=dtype, device=dev)))
+        b0e = torch.tensor(good_b0, device=dev) if (opt.b0_ec and NMON and len(good_b0) > 1) else None
+        return Wt, fr, (~fr).to(dtype), b0i, b0p, shells, ecg, b0e
+
     if reference == "first-b0" and not isb0.any():
         raise ValueError("motion_eddy: reference 'first-b0' needs a b0 (b < 50)")
     if has_field and reference == "b0-mean":
-        import warnings
         warnings.warn("motion_eddy: reference 'b0-mean' with a field: the field is in the first b0's frame, and the "
                       "b0s' mean pose may differ from it", stacklevel=2)
-    ref_vol = int(np.flatnonzero(isb0)[0]) if isb0.any() else 0
-    if reference == "first-b0":
-        frozen[ref_vol, :6] = True
-    keep = (~frozen).to(dtype)
-    # each group's mean pose is invisible to its own predictor. The b0s: with reference "b0-mean" their mean pose is
-    # held at 0 (the location reference); with "first-b0" the first b0 is held instead and the others are free. Each DW
-    # shell's mean pose is held at the b0s' mean pose (interleaved b0s sample the session's mean position; a single b0
-    # does not), whichever the reference; without b0s, at 0
-    b0_idx = torch.tensor(np.flatnonzero(isb0), device=dev) if isb0.any() else None
-    b0_pose = b0_idx if (b0_idx is not None and reference == "b0-mean") else None
-    shell_poses = [torch.tensor(idx, device=dev) for idx in groups if not isb0[idx].all() and len(idx) > 1]
-    ec_gauge = []
-    if NMON > 1:
-        for idx in groups:
-            if isb0[idx].all() or len(idx) < 5:
-                continue
-            Xg = np.c_[np.ones(len(idx)), g[idx]]
-            ec_gauge.append((torch.tensor(idx, device=dev), torch.tensor(np.linalg.pinv(Xg)[0], dtype=dtype, device=dev)))
+    W, frozen, keep, b0_idx, b0_pose, shell_poses, ec_gauge, b0_ec_idx = setup()
 
+    # each group's mean pose is invisible to its own predictor. The b0s: with reference "b0-mean" their mean pose is
+    # held at 0 (the location reference); with "first-b0" the first usable b0 is held instead and the others are free.
+    # Each DW shell's mean pose is held at the b0s' mean pose (interleaved b0s sample the session's mean position; a
+    # single b0 does not), whichever the reference; without b0s, at 0. Left-out volumes take no part
     def gauge(th):
         for idx, w0 in ec_gauge:
             th[idx, 7:] -= w0 @ th[idx, 7:]
@@ -633,8 +762,8 @@ def estimate(dwi, bval, bvec, affine, pe_axis, field_hz=None, pe_sign=None, read
         target = th[b0_idx, :6].mean(0) if b0_idx is not None else 0.0
         for idx in shell_poses:
             th[idx, :6] -= th[idx, :6].mean(0) - target
-        if opt.b0_ec and NMON and int(b0_t.sum()) > 1:
-            th[b0_t, 7:] -= th[b0_t, 7:].mean(0)
+        if b0_ec_idx is not None:
+            th[b0_ec_idx, 7:] -= th[b0_ec_idx, 7:].mean(0)
         return th
 
     nz = np.argwhere(m_pred)
@@ -653,17 +782,19 @@ def estimate(dwi, bval, bvec, affine, pe_axis, field_hz=None, pe_sign=None, read
     else:
         smooth_fn, prefilter_fn = t_smooth, t_prefilter
 
+    vox_t = torch.as_tensor(vox, dtype=dtype, device=dev)
     th = torch.zeros(G, P, dtype=dtype, device=dev)
     mu = torch.full((G,), 1e-3, dtype=dtype, device=dev)
     fw_steps = ([2.0, 1.0][:opt.smooth_steps] + [0.0] * opt.steps)[:opt.steps]
-    smooth_cache = {}
+    cached = (None, None)                                                                 # (fwhm, volumes): one at a time
     history, quiet, steps_run, ntrials = [], 0, 0, 0
-    f_last = None
+    f_last, gains = None, None
     with torch.no_grad():
         for it, fw in enumerate(fw_steps):
-            if fw not in smooth_cache:
-                smooth_cache[fw] = smooth_fn(acq, fw)
-            vols = smooth_cache[fw]
+            if cached[0] != fw:
+                vols = cached = None                                                      # free the last before the next
+                cached = (fw, smooth_fn(acq, fw) if fw > 0 else acq)
+            vols = cached[1]
             obs_full = vols.reshape(G, -1)[:, lin_e]
             if backend == "metal":
                 u = M.resample(vols.contiguous(), xp, pack(th), rs[1], rs[2], dfk)
@@ -671,9 +802,19 @@ def estimate(dwi, bval, bvec, affine, pe_axis, field_hz=None, pe_sign=None, read
                 u = t_resample(geo, vols, xp, th, dfield)
             pv = torch.zeros(G, X * Y * Z, dtype=dtype, device=dev)
             pv[:, lin_p] = W @ u
-            coef = prefilter_fn(pv.reshape(G, X, Y, Z)[crop])
+            del u
             c_ = it < opt.coarse
             ys, obs = (ye[sub], obs_full[:, sub]) if c_ else (ye, obs_full)
+            if opt.gain:
+                # each volume's intensity relative to its prediction, over the fit's points (signal drift, a first
+                # volume not yet at steady state): the observations divided by it, so least squares does not trade it
+                # for position
+                psum = pv[:, lin_e][:, sub].sum(1) if c_ else pv[:, lin_e].sum(1)
+                gains = torch.where(psum > 0, obs.sum(1) / psum.clamp_min(1e-12), torch.ones_like(psum))
+                gains = torch.where(torch.isfinite(gains) & (gains > 0), gains, torch.ones_like(gains))
+                obs = obs / gains[:, None]
+            coef = prefilter_fn(pv.reshape(G, X, Y, Z)[crop])
+            del pv
             if backend == "metal":
                 if c_ not in mcache:
                     mcache[c_] = M.consts(geo, G, len(ys), tuple(coef.shape[1:]), offset, npass, has_field)
@@ -682,6 +823,19 @@ def estimate(dwi, bval, bvec, affine, pe_axis, field_hz=None, pe_sign=None, read
                 H, b, f0 = M.step_moments(coef_c, obs_c, ys_c, pack(th), nch, ipk, fpk, dfk, ddfk, P)
             else:
                 H, b, f0 = t_step_moments(geo, coef, obs, ys, th, offset, dfield, npass, ddfield=ddfield)
+            # a volume whose cost or system is not finite leaves the fit
+            sick = ~(torch.isfinite(f0) & torch.isfinite(H).all(2).all(1) & torch.isfinite(b).all(1))
+            sick &= keep.any(1).bool()
+            if bool(sick.any()):
+                for v in torch.nonzero(sick)[:, 0].tolist():
+                    excluded[int(v)] = f"its cost or step became non-finite at step {it}"
+                th[sick] = 0
+                W, frozen, keep, b0_idx, b0_pose, shell_poses, ec_gauge, b0_ec_idx = setup()
+                if rigid_only:
+                    th[torch.tensor(rigid_only, device=dev), 6:] = 0
+                H = torch.where(torch.isfinite(H), H, 0.0)
+                b = torch.where(torch.isfinite(b), b, 0.0)
+                f0 = torch.where(torch.isfinite(f0), f0, 0.0)
             Hd = torch.diagonal(H, dim1=1, dim2=2)
             accept = torch.zeros(G, dtype=torch.bool, device=dev)
             th_new = th.clone()
@@ -692,9 +846,7 @@ def estimate(dwi, bval, bvec, affine, pe_axis, field_hz=None, pe_sign=None, read
                 A_ = H + torch.diag_embed(mu[:, None] * Hd)
                 A_ = A_ * keep[:, :, None] * keep[:, None, :] + torch.diag_embed(frozen.to(dtype))
                 step = -torch.linalg.solve(A_.cpu(), (b * keep).cpu()[..., None])[..., 0].to(dev) * geo.scale
-                if NMON and isb0.any() and not opt.b0_ec:
-                    step[b0_t, 6:] = 0
-                step = step * keep
+                step = torch.where(torch.isfinite(step), step, 0.0) * keep
                 cand = th + step
                 big = (phi(geo, cand, probe) - phi(geo, th, probe)).norm(dim=-1).amax(1) > opt.trial_vox
                 need = todo & (big | (it < 2))
@@ -711,7 +863,7 @@ def estimate(dwi, bval, bvec, affine, pe_axis, field_hz=None, pe_sign=None, read
                     f1 = t_step_cost(geo, coef, obs, ys, cand[k], k, offset, dfield, npass, ddfield)
                 ntrials += 1
                 ok = torch.zeros(G, dtype=torch.bool, device=dev)
-                ok[k] = f1 < f0[k]
+                ok[k] = torch.isfinite(f1) & (f1 < f0[k])
                 th_new = torch.where(ok[:, None], cand, th_new)
                 accept |= ok
                 bad = need & ~ok
@@ -719,30 +871,49 @@ def estimate(dwi, bval, bvec, affine, pe_axis, field_hz=None, pe_sign=None, read
                 if not bool(bad.any()):
                     break
             moved = float((phi(geo, th_new, probe) - phi(geo, th, probe)).norm(dim=-1).amax())
+            # a volume whose map has run away (it moves the brain's edge more than max_motion_mm) leaves the fit; judged
+            # before the gauge, so its jump does not carry its shell-mates over the limit through their mean
+            reach = ((phi(geo, th_new, probe) - probe) * vox_t).norm(dim=-1).amax(1)
+            away = (~torch.isfinite(reach) | (reach > opt.max_motion_mm)) & keep.any(1).bool()
+            if bool(away.any()):
+                for v in torch.nonzero(away)[:, 0].tolist():
+                    excluded[int(v)] = (f"its map moved the brain's edge {float(reach[v]):.1f} mm (over "
+                                        f"{opt.max_motion_mm:g}) by step {it}: corrupt or not this scan's anatomy?")
+                th_new[away] = 0
+                W, frozen, keep, b0_idx, b0_pose, shell_poses, ec_gauge, b0_ec_idx = setup()
+                if rigid_only:
+                    th_new[torch.tensor(rigid_only, device=dev), 6:] = 0
             th = gauge(th_new)
             if not c_:
                 f_last = (f0 / len(ys)).cpu().numpy()
             quiet = quiet + 1 if (opt.tol and fw == 0 and moved < opt.tol) else 0
             steps_run = it + 1
             rec = {"step": it, "fwhm": fw, "coarse": bool(c_), "accepted": int(accept.sum()),
-                   "largest move (vox)": round(moved, 4)}
+                   "largest move (vox)": round(moved, 4) if math.isfinite(moved) else None,
+                   "left out": len(excluded)}
             history.append(rec)
             if progress:
                 progress(rec)
             if quiet >= 2:
                 break
+    cached = None
     if backend == "metal":
         torch.mps.synchronize()
     t_fit = time.perf_counter() - t_all - t_mask
 
     anchors = {}
     if opt.anchor == "mi" and isb0.any():
-        th, anchors = _shell_anchor(geo, acq, th, groups, isb0, group_b, m_ref, dfield, ddfield, opt, backend)
+        kept = [(i, b) for i, b in ((idx[~np.isin(idx, list(excluded))], b) for idx, b in zip(groups, group_b)) if len(i)]
+        th, anchors = _shell_anchor(geo, acq, th, [i for i, _ in kept], isb0, [b for _, b in kept], m_ref, dfield,
+                                    ddfield, opt, backend)
     seconds = {"masks": round(t_mask, 2), "fit": round(t_fit, 2), "total": round(time.perf_counter() - t_all, 2)}
 
+    out_v = np.zeros(G, bool)
+    out_v[list(excluded)] = True
     thn = th.cpu().double().numpy()
+    thn[out_v] = 0.0
     th_fit = thn.copy()
-    dw = ~isb0
+    dw = ~isb0 & ~out_v
     if NMON and dw.sum() > 3:                                                             # eddy's PE-offset split
         off = thn[dw, pe_axis] / vox[pe_axis] + thn[dw, 6]
         Xd = (bval[dw] / 1000.0)[:, None] * bvec[:, dw].T
@@ -751,12 +922,30 @@ def estimate(dwi, bval, bvec, affine, pe_axis, field_hz=None, pe_sign=None, read
         thn[dw, 6] = off_hat
         thn[dw, pe_axis] = (off - off_hat) * vox[pe_axis]
     bv_out = rotate_bvecs(bvec, thn[:, 3:6], affine)
-    bv_out[:, isb0] = bvec[:, isb0]
+    bv_out[:, isb0 | out_v] = bvec[:, isb0 | out_v]
+    if f_last is not None:
+        f_last = np.where(out_v, np.nan, f_last)
     qc = _qc(geo, thn, th_fit, xedge, groups, group_b, isb0, f_last, steps_run, opt, history, sh_orders, ntrials)
+    qc["non-finite values set to 0"] = n_nonfinite
+    qc["volumes left out of the fit (identity motion, b-vector as acquired)"] = {str(k): v for k, v in sorted(excluded.items())}
+    qc["volumes fitted rigid only (a shell of 2-4: no gauge for its eddy field)"] = sorted(rigid_only)
+    if gains is not None:
+        qc["intensity gain per volume (observed / predicted)"] = np.round(gains.cpu().double().numpy(), 4).tolist()
     return MotionEddy(theta=thn, theta_fit=th_fit, bvec=bv_out, model=opt.model, pe_axis=int(pe_axis), shape=(X, Y, Z),
                       vox=vox, groups=[np.asarray(i) for i in groups], group_b=group_b, reference=reference,
-                      field_used=has_field, pe_scale=pe_scale, anchors=anchors, qc=qc, options=asdict(opt),
-                      seconds=seconds, backend=backend)
+                      field_used=has_field, pe_scale=pe_scale, anchors=anchors, qc=_finite(qc), options=asdict(opt),
+                      seconds=seconds, backend=backend, excluded=dict(sorted(excluded.items())))
+
+
+def _finite(o):
+    """o with every non-finite float replaced by None (strict JSON)."""
+    if isinstance(o, dict):
+        return {k: _finite(v) for k, v in o.items()}
+    if isinstance(o, (list, tuple)):
+        return [_finite(v) for v in o]
+    if isinstance(o, float) and not math.isfinite(o):
+        return None
+    return o
 
 
 def rotate_bvecs(bvec, w, affine):
@@ -797,13 +986,16 @@ def _qc(geo, thn, th_fit, xedge, groups, group_b, isb0, f_last, steps_run, opt, 
         rms = np.sqrt(np.clip(np.asarray(f_last, np.float64), 0, None))
         z = np.zeros_like(rms)
         for idx in groups:
-            if len(idx) > 2:
-                med = np.median(rms[idx])
-                mad = 1.4826 * np.median(np.abs(rms[idx] - med)) or 1.0
+            ok = idx[np.isfinite(rms[idx])]
+            if len(ok) > 2:
+                med = np.median(rms[ok])
+                # the MAD, floored at 5 % of the median: on clean data the volumes' residuals can agree so closely that
+                # an ordinary spread reads as an outlier
+                mad = max(1.4826 * np.median(np.abs(rms[ok] - med)), 0.05 * med) or 1.0
                 z[idx] = (rms[idx] - med) / mad
         q["residual vs prediction, rms per volume"] = rms.round(4).tolist()
         q["residual z within group per volume"] = z.round(3).tolist()
-        q["volumes with residual z > 4"] = np.flatnonzero(z > 4).tolist()
+        q["volumes with residual z > 4"] = np.flatnonzero(np.nan_to_num(z) > 4).tolist()
     return q
 
 
@@ -874,7 +1066,10 @@ def apply_volumes(dwi, result: MotionEddy, field_hz=None, device="mps", dtype=to
         ddfield = (result.pe_scale * torch.gradient(h, dim=result.pe_axis)[0]).to(dev, dtype)
     with torch.no_grad():
         out, valid = _apply(geo, vols, th, dfield, backend, ddfield)
-    common = (valid.amin(0) > 0)
+    ok = torch.ones(valid.shape[0], dtype=torch.bool, device=valid.device)
+    if getattr(result, "excluded", None):
+        ok[[int(v) for v in result.excluded]] = False                     # a left-out volume crops nobody else
+    common = (valid[ok].amin(0) > 0) if bool(ok.any()) else torch.ones_like(valid[0], dtype=torch.bool)
     mo = result.options["mask_output"] if mask_output is None else mask_output
     if mo:
         out = out * common
@@ -939,7 +1134,8 @@ def record(r: MotionEddy) -> dict:
     return {"model": r.model, "reference": r.reference, "field used": r.field_used, "pe_axis": r.pe_axis,
             "groups (b, volumes)": [[int(b), [int(i) for i in idx]] for b, idx in zip(r.group_b, r.groups)],
             "theta": np.round(r.theta, 6).tolist(), "theta_fit": np.round(r.theta_fit, 6).tolist(),
-            "shell anchors": r.anchors, "qc": r.qc, "options": r.options, "seconds": r.seconds, "backend": r.backend}
+            "shell anchors": r.anchors, "qc": r.qc, "options": r.options, "seconds": r.seconds, "backend": r.backend,
+            "left out": {str(k): v for k, v in r.excluded.items()}}
 
 
 QC_COLUMNS = ("volume", "b", "tx_mm", "ty_mm", "tz_mm", "rx_deg", "ry_deg", "rz_deg", "rigid_edge_rms_mm",
@@ -1002,7 +1198,13 @@ def write_qc(rec: dict, folder) -> dict:
                "volumes with residual z > 4 (worst fit to their prediction)": q.get("volumes with residual z > 4"),
                "volumes not corrected (alone in their group)":
                    q.get("volumes not corrected (alone in their group: nothing predicts them)"),
+               "volumes left out of the fit (identity motion, b-vector as acquired)":
+                   q.get("volumes left out of the fit (identity motion, b-vector as acquired)"),
+               "volumes fitted rigid only (a shell of 2-4)":
+                   q.get("volumes fitted rigid only (a shell of 2-4: no gauge for its eddy field)"),
+               "non-finite values set to 0": q.get("non-finite values set to 0"),
                "groups": q["groups"], "shell anchors": rec["shell anchors"], "seconds": rec["seconds"],
                "options": rec["options"], "table": "motion_eddy_qc.tsv"}
-    (folder / "motion_eddy_qc.json").write_text(json.dumps(summary, indent=1))
+    summary = _finite(summary)
+    (folder / "motion_eddy_qc.json").write_text(json.dumps(summary, indent=1, allow_nan=False))
     return summary

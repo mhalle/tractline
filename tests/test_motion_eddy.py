@@ -1,10 +1,11 @@
 """tractline.motion_eddy: the Metal kernels against the float64 torch path, the inverse map, the field's resample
 against susceptibility.apply, the b-vectors' rotation, and the whole estimate on a synthetic scan with known motion,
 eddy currents and (optionally) a susceptibility field, on the CPU (torch) and on MPS (Metal), and its determinism."""
+import json
 import numpy as np
 import pytest
 import torch
-from scipy.ndimage import gaussian_filter
+from scipy.ndimage import binary_erosion, gaussian_filter
 from tractline import motion_eddy as ME
 from tractline import susceptibility as S
 
@@ -338,3 +339,136 @@ def test_correct_one_call():
     s.b0s = None                                                                           # no pair: motion and eddy only
     c2 = ME.correct(s, device="cpu", options={"steps": 2, "model": "rigid"})
     assert c2.field_hz is None and not c2.motion_eddy.field_used and c2.motion_eddy.reference == "b0-mean"
+
+
+# ------------------------------------------------------------------------------------------------ robustness
+# (the adversarial review of 2026-10-26: one bad volume or voxel had turned every volume's parameters NaN, or cropped
+# every corrected volume, without a warning)
+
+DEV = "mps" if MPS else "cpu"
+
+
+def corrupt(t, how):
+    d = t["dwi"].copy()
+    if how == "nan voxel":
+        d[20, 22, 17, 10] = np.nan
+    elif how == "zero volume":
+        d[..., 20] = 0
+    elif how == "dropout":
+        d[:, :, 15:18, 40] = 0
+    return d
+
+
+@pytest.mark.parametrize("how", ["nan voxel", "zero volume", "dropout"])
+def test_one_bad_volume_stays_local(scan, how):
+    """A NaN voxel is set to 0 and counted; an empty volume and a volume with dropout slices are left out of the fit
+    (identity motion, b-vector as acquired, the reason recorded); every other volume is still recovered, and the left-out
+    volume crops nobody else's output."""
+    d = corrupt(scan, how)
+    r = ME.estimate(d, scan["bval"], scan["bvec"], scan["affine"], 1, device=DEV, options={"steps": 25})
+    assert np.isfinite(r.theta_fit).all()
+    bad = {"nan voxel": None, "zero volume": 20, "dropout": 40}[how]
+    if bad is None:
+        assert r.qc["non-finite values set to 0"] == 1 and not r.excluded
+    else:
+        assert list(r.excluded) == [bad] and not r.theta_fit[bad].any()
+        assert np.array_equal(r.bvec[:, bad], scan["bvec"][:, bad])
+    keep = np.ones(len(scan["bval"]), bool)
+    if bad is not None:
+        keep[bad] = False
+    sub = ME.MotionEddy(**{**r.__dict__, "theta_fit": r.theta_fit[keep]})
+    t2 = {**scan, "theta": scan["theta"][keep]}
+    assert edge_error(t2, sub) < 0.15 * true_disp(t2)
+    _, valid = ME.apply_volumes(d, r, device=DEV)
+    assert valid[binary_erosion(scan["brain"], iterations=2)].mean() > 0.99
+    json.dumps(ME.record(r), allow_nan=False)
+
+
+def test_runaway_guard(scan):
+    """A volume whose map moves the brain's edge more than max_motion_mm leaves the fit (here the limit is set below
+    the real motion, so volumes that move are caught), and the fit stays finite."""
+    r = ME.estimate(scan["dwi"], scan["bval"], scan["bvec"], scan["affine"], 1, device=DEV,
+                    options={"steps": 6, "max_motion_mm": 2.0})
+    assert r.excluded and all("moved the brain's edge" in why for why in r.excluded.values())
+    assert np.isfinite(r.theta_fit).all() and not r.theta_fit[list(r.excluded)].any()
+
+
+def test_small_shell_rigid_only_and_shell_grouping():
+    """A shell of 2-4 volumes fits rigid motion only (its common eddy field has no gauge); b-values that straddle a
+    multiple of 50 stay one shell."""
+    groups, bs = ME.shell_groups(np.r_[0, 0, 1049, 1051, 1049, 2000, 2005, 3000])
+    assert bs == [0, 1000, 2000, 3000] and [len(i) for i in groups] == [2, 3, 2, 1]
+    t = tensor_scan(seed=6, shells=((500, 2), (1000, 30)), eddy=0.0)
+    r = ME.estimate(t["dwi"], t["bval"], t["bvec"], t["affine"], 1, device=DEV, options={"steps": 15})
+    small = [int(i) for i in np.flatnonzero(t["bval"] == 500)]
+    assert r.qc["volumes fitted rigid only (a shell of 2-4: no gauge for its eddy field)"] == small
+    assert not r.theta_fit[small, 6:].any()
+
+
+@pytest.mark.skipif(not MPS, reason="no MPS")
+def test_memory_check(scan, monkeypatch):
+    monkeypatch.setattr(torch.mps, "recommended_max_memory", lambda: 1 << 20)
+    with pytest.raises(ValueError, match="needed on MPS"):
+        ME.estimate(scan["dwi"], scan["bval"], scan["bvec"], scan["affine"], 1, device="mps", options={"steps": 1})
+
+
+def test_screen_motion_is_not_dropout():
+    """screen(): a slice-specific dip is dropout; the brain's end moving through the slices (motion) is not; a dark
+    volume is corrupt."""
+    rng = np.random.default_rng(0)
+    shape, G = (40, 40, 30), 12
+    x, y, z = np.meshgrid(*[np.arange(n) for n in shape], indexing="ij")
+    vols = []
+    for v in range(G):
+        shift = 3.0 if v == 3 else 0.0                                     # volume 3: the brain 3 slices lower
+        brain = ((x - 20) ** 2 + (y - 20) ** 2) / 15 ** 2 + ((z - 15 + shift) / 12.0) ** 2 < 1
+        vols.append(brain * 100.0 + rng.normal(0, 1, shape))
+    d = np.stack(vols, -1).astype(np.float32)
+    d[:, :, 14, 5] *= 0.3                                                   # volume 5: dropout in slice 14
+    d[..., 8] *= 0.3                                                        # volume 8: dark throughout
+    pts = np.mean(d[..., :3], -1) > 50
+    out = ME.screen(d, np.full(G, 1000.0), [np.arange(G)], pts)
+    assert set(out) == {5, 8} and "slices [14]" in out[5] and "mean signal" in out[8]
+
+
+def test_tracking_leaves_out_left_out_volumes(monkeypatch):
+    """The pipeline tracks without the volumes the step left out (they stay in Correction.dwi, uncorrected for
+    motion)."""
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).parent))
+    from phantom import subject
+    from tractline import pipeline as P
+    s = subject()
+    s.dwi = s.dwi.copy()
+    s.dwi[..., 7] = 0                                                       # an empty DW volume
+    seen = {}
+    real = P.prepare
+
+    def spy(dwi, affine, bval, bvec, **kw):
+        seen.update(n=dwi.shape[-1], bval=np.array(bval))
+        return real(dwi, affine, bval, bvec, **kw)
+    monkeypatch.setattr(P, "prepare", spy)
+
+    def stand_in(fibers, draws=(0,), logp=False):
+        from tractline.labelers.base import Labels, MIN_LENGTH_MM, lengths
+        _, _, length = lengths(fibers)
+        keep = length >= MIN_LENGTH_MM
+        return Labels(keep=keep, length_mm=length[keep], tract=np.zeros(int(keep.sum()), np.int64), logp=None)
+    cfg = P.config_for(stand_in, motion_eddy={"model": "rigid", "steps": 2})
+    r = P.execute(s, cfg, P.Timer(), device="cpu", workers=1, labeler=stand_in)
+    assert "7" in r.correction.motion_eddy["left out"] and seen["n"] == s.dwi.shape[-1] - 1
+    assert r.correction.dwi.shape == s.dwi.shape and any("left out of the fit and of tracking" in w
+                                                          for w in r.correction.warnings)
+
+
+def test_screen_finds_a_slab():
+    """A slab of several dark slices in the middle of the brain is dropout too (a run with normal slices both sides)."""
+    rng = np.random.default_rng(1)
+    shape, G = (40, 40, 30), 10
+    x, y, z = np.meshgrid(*[np.arange(n) for n in shape], indexing="ij")
+    brain = ((x - 20) ** 2 + (y - 20) ** 2) / 15 ** 2 + ((z - 15) / 12.0) ** 2 < 1
+    d = np.stack([brain * 100.0 + rng.normal(0, 1, shape) for _ in range(G)], -1).astype(np.float32)
+    d[:, :, 10:18, 4] *= 0.3
+    out = ME.screen(d, np.full(G, 1000.0), [np.arange(G)], np.mean(d[..., :3], -1) > 50)
+    assert set(out) == {4} and "slices [10, 11, 12, 13, 14, 15, 16, 17]" in out[4]

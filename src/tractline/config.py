@@ -181,7 +181,10 @@ register(Implementation(
      "sh_lambda": Option(0.06, float, low=0.0, doc="its Laplace-Beltrami weight"),
      "b0_ec": Option(False, bool, doc="the b0s fit the PE polynomial too (motion-by-susceptibility)"),
      "anchor": Option("none", str, choices=("none", "mi"), doc="each DW shell's corrected mean aligned to the mean b0"),
-     "mask_output": Option(True, bool, doc="zero voxels outside some volume's field of view (eddy's output mask)")},
+     "mask_output": Option(True, bool, doc="zero voxels outside some volume's field of view (eddy's output mask)"),
+     "gain": Option(True, bool, doc="a per-volume intensity gain, refitted every step"),
+     "max_motion_mm": Option(30.0, float, low=1.0, doc="a volume moving the brain's edge more than this leaves the fit"),
+     "check_memory": Option(True, bool, doc="on MPS, refuse a series too large for the recommended memory")},
     oracle="FSL eddy (Andersson & Sotiropoulos 2016)", status="experimental",
     doc="head motion and eddy currents per volume (tractline.motion_eddy): rigid + a polynomial along PE, each volume "
         "registered to a leave-one-out prediction from the others; the field (when the field slot corrects) composed "

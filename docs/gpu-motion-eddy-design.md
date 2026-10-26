@@ -1511,6 +1511,24 @@ resample. Not yet wired into the pipeline.
     0.075 voxels apart at the edge (0.13 before the gauge fix). That residual favors extra smoothing, so it cannot say
     which map is right. eddy fed the same field (phase 0's arm E inputs exist; eddy has not been run on them) is the
     referee.
+- **Robustness, after two adversarial reviews** (2026-10-26, NOTES; on the modular branch, where the step is wired):
+  - Before: one NaN voxel, or one volume whose fit diverged, made every volume's parameters NaN through the gauges, with
+    no warning. An empty volume escaped by sliding its prediction out of the field of view (88 mm) and, through the
+    common output mask, cropped 61 % of the brain in every volume.
+  - Now: non-finite values are set to 0 and counted. A volume is left out of the fit before it (`screen`: brain signal
+    under 0.5 or over 2 times its shell's median, or dropout - a run of slices under 0.55 of the shell's median, with
+    normal slices beyond both ends) or during it (a non-finite cost or step, or a map moving the brain's edge more than
+    30 mm). A left-out volume keeps an identity motion and eddy (the field still applies), its b-vector as acquired,
+    and no part in the predictions, the gauges, the common mask or the tracking. A shell of 2-4 volumes fits rigid
+    motion only. The QC lists all of these.
+  - A per-volume intensity gain is now on by default. On synthetic intensity faults (a first b0 30 % bright, a 20 %
+    drift, one volume at 0.7) it brings the error back to the clean 0.09 voxels from up to 0.18 overall (1.1 for the
+    faulty volume). On real scans it moves the maps by 0.006-0.012 voxels.
+  - Screening 26 real and phantom scans leaves out three volumes, all real dropouts (ON-Harmony 10975 volume 60, a
+    multiband-3 dropout; MASiVar cIs1 volumes 21 and 85, interleaved slices and a slab), and none of the SHORELine
+    high-motion phantoms' volumes.
+  - Still open: a bright artifact fixed in every volume (a pile-up, as a folding field leaves) biases the fit by
+    0.5-0.8 voxels. Robust weighting or outlier replacement (phase 2) is the remedy.
 - **A finding: coherent anisotropy biases the fit**, and the prototype alike.
   - On the synthetic scan with tensors of (1.1, 0.55) x 1e-3 mm^2/s throughout the brain and no motion at all, the fit
     drifts 0.25-0.34 voxels for every lambda from 0.002 to 0.2, with the exact Jacobian too (0.32). Isotropic: 0.02.

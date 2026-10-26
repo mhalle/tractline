@@ -299,10 +299,19 @@ def correct_motion_eddy(s, timer: Timer, device="mps", opts=None, field=True) ->
         # the unwarped mean b0, on the CPU: a few seconds, nearly the same mask)
         b0 = np.asarray(s.dwi)[..., np.asarray(s.bval) < 50].astype(np.float32).mean(-1)
         mask = median_otsu(b0, median_radius=4, numpass=4, device=device)[1]
+        sed = str((getattr(s, "sidecar", None) or {}).get("SliceEncodingDirection", "k"))[:1]
         r = ME.estimate(s.dwi, s.bval, s.bvec, s.affine, s.pe_axis, field_hz=h, pe_sign=s.pe_sign,
-                        readout_s=s.readout_s, mask=mask, options=dict(opts or {}), device=device)
+                        readout_s=s.readout_s, mask=mask, options=dict(opts or {}), device=device,
+                        slice_axis={"i": 0, "j": 1}.get(sed, 2))
     with timer("field_apply"):
         dwi, _valid = ME.apply_volumes(s.dwi, r, field_hz=h, device=device)
+    if r.excluded:
+        warnings = warnings + [f"motion_eddy: volumes left out of the fit and of tracking (in the corrected series with "
+                               "identity motion, b-vector as acquired): "
+                               + "; ".join(f"{v}: {why}" for v, why in r.excluded.items())]
+    if r.qc.get("non-finite values set to 0"):
+        warnings = warnings + [f"motion_eddy: {r.qc['non-finite values set to 0']} non-finite values in the series, set "
+                               "to 0"]
     if r.qc.get("volumes with residual z > 4"):
         warnings = warnings + [f"motion_eddy: volumes {r.qc['volumes with residual z > 4']} fit their prediction worst "
                                "(residual z > 4 within their shell): signal dropout or motion within the volume?"]
@@ -743,15 +752,19 @@ def execute(s, cfg: PipelineConfig, timer: Timer, prefix="", device="mps", worke
             corr.dwi, dstats = denoise_corrected(corr.dwi, s.bval, timer, spec, workers)
         corr.denoise, corr.gibbs = dstats, gibbs_b0s
         mask = brain_mask(corr.dwi, s.bval, timer, prefix, device)
-        st = s
+        st, tdwi = s, corr.dwi
         if corr.bvec is not None:                                          # the b-vectors turned with the head
             st = copy.copy(s)
             st.bvec = corr.bvec
+            left = [int(v) for v in (corr.motion_eddy or {}).get("left out", {})]
+            if left:                                                       # not tracked: not registered, or corrupt
+                use = np.setdiff1d(np.arange(len(s.bval)), left)
+                st.bval, st.bvec, tdwi = np.asarray(s.bval)[use], corr.bvec[:, use], corr.dwi[..., use]
         if ptt:
-            tg = csd_ptt(st, corr.dwi, mask, cfg, timer, prefix, device, tissue)
+            tg = csd_ptt(st, tdwi, mask, cfg, timer, prefix, device, tissue)
         else:
             with timer(prefix + "prep"):
-                t = prepare(corr.dwi, s.affine, s.bval, st.bvec, shell=shell, device=device, mask=mask)
+                t = prepare(tdwi, s.affine, st.bval, st.bvec, shell=shell, device=device, mask=mask)
             tg = _ukf(t, timer, prefix, device, workers, tracker)
         if labeler is None:
             labels = None
