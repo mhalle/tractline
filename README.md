@@ -69,11 +69,11 @@ with `--motion-eddy`, head motion and eddy currents too), tracked, labeled, writ
 install step:
 
 ```
-uvx --from "tractline[cli] @ git+https://github.com/mhalle/tractline@modular-pipeline" \
+uvx --from "tractline[cli] @ git+https://github.com/mhalle/tractline@main" \
     tractline run sub-01/dwi/sub-01_dir-AP_dwi.nii.gz --motion-eddy --trx out/sub-01.trx --qc qc/sub-01
 ```
 
-The URL names a branch or tag on GitHub, so it resolves only once that ref has been pushed. The chosen RapidParc
+`@main` is the latest code; a tag or commit hash in its place pins a version. The chosen RapidParc
 model's weights (6.6 MB) are downloaded on first use into a user cache, checked against a pinned sha256
 (`tractline fetch` gets both models ahead; `tractline.fetch`). `--labeler tractcloud` needs a checkout with
 TractCloud's code and weights (below), not `uvx`. `tractline run --help` lists the options;

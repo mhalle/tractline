@@ -4,8 +4,7 @@ This guide introduces tractline, a pipeline that takes a dMRI scan to two-tensor
 ORG atlas's tracts, with the scan corrected for susceptibility distortion, head motion and eddy currents on the way.
 It explains how to run it, what each step does, and how to read the quality control (QC) outputs the motion and eddy
 current correction writes alongside the tractography. It assumes familiarity with UKF tractography, the ORG atlas,
-and FSL's topup and eddy, and describes tractline in those terms. The code is on the `modular-pipeline` branch of the
-tractline repository.
+and FSL's topup and eddy, and describes tractline in those terms. The code is at https://github.com/mhalle/tractline.
 
 ## 1. What tractline is
 
@@ -27,13 +26,13 @@ susceptibility distortion, head motion and eddy currents, runs UKF tractography,
 to a TRX file:
 
 ```
-uvx --from "tractline[cli] @ git+https://github.com/mhalle/tractline@modular-pipeline" \
+uvx --from "tractline[cli] @ git+https://github.com/mhalle/tractline@main" \
     tractline run sub-01/dwi/sub-01_dir-AP_dwi.nii.gz --motion-eddy --trx out/sub-01.trx
 ```
 
-The URL names the branch on GitHub, so the command works once that branch has been published there. The first run
-downloads PyTorch and the trained weights of the labeler (6.6 MB, from RapidParc's release, checked
-against a pinned checksum), so it takes longer than later runs. `tractline fetch` downloads the weights of both
+`@main` runs the latest code; a commit hash in its place pins the version, so a set of scans can be processed
+with the same code throughout. The first run downloads PyTorch and the trained weights of the labeler (6.6 MB, from
+RapidParc's release, checked against a pinned checksum), so it takes longer than later runs. `tractline fetch` downloads the weights of both
 RapidParc models ahead of time. From a checkout of the repository, `uv run tractline run ...` does the same.
 
 The TRX file holds every streamline the tracker kept, in RAS millimeters, grouped by tract. For each streamline it
