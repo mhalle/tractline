@@ -29,6 +29,10 @@ Stages, and where they run:
             float32, ~18 s on the M2), then applied to the DWI (susceptibility.apply: CPU, float64, ~1 s);
             residual_left: how much of the pair's difference the field leaves - above RESIDUAL_WARN a
             warning (Correction.warnings), never a refusal. Skipped when there is no pair (can_correct).
+  motion_eddy  opt-in (run's motion_eddy=; the motion_eddy slot): each volume's head motion and eddy currents
+            (tractline.motion_eddy, the field in the map), then one resample of every volume composing field, motion
+            and eddy in place of susceptibility.apply, and the b-vectors rotated for the tracker
+            (correct_motion_eddy; ~20 s on the M2 for 105 volumes). Without a pair: motion and eddy only.
   mask      median_otsu of the mean b0 (brain_mask; exact in torch on the pipeline's device; ~3 s)
   track     the tracker's input (prep.prepare: b0s + the b = 2800 shell, gradients in RAS; ~0.1 s),
             UKF two-tensor with the
@@ -147,16 +151,18 @@ class Timer:
 
 @dataclass
 class Correction:
-    dwi: np.ndarray              # (X, Y, Z, G) float32, corrected (as acquired when not applied)
-    field_hz: np.ndarray | None  # (X, Y, Z); None when not applied
+    dwi: np.ndarray              # (X, Y, Z, G) float32, corrected (as acquired when neither the field nor motion_eddy ran)
+    field_hz: np.ndarray | None  # (X, Y, Z); None when the field was not applied
     motion: np.ndarray | None    # (V, 6) per b0: translations mm, rotations rad; None when not applied
     displacement_mm: np.ndarray | None   # (X, Y, Z): what the field did to the DWI as acquired
-    applied: bool = True
+    applied: bool = True         # the field was applied (motion_eddy without a field: False, and its note says so)
     note: str = ""               # what corrected it, or why nothing did (bids.Pairing.message)
     residual_left: float | None = None   # the pair's mean-b0 difference left after correction (residual_left)
     warnings: list = field(default_factory=list)
     denoise: dict | None = None  # the opt-in denoising's settings and what it estimated (denoise_subject); None: not denoised
     gibbs: dict | None = None    # the gibbs slot's b0 counts (gibbs_subject), when it ran on b0s; None otherwise
+    bvec: np.ndarray | None = None   # (3, G) FSL, rotated with the head by the motion_eddy slot; None when it is off
+    motion_eddy: dict | None = None  # the motion_eddy slot's parameters and QC (motion_eddy.record); None when off
     provenance: dict | None = None   # the run's config (PipelineConfig.to_dict) and runtime (execute); None: correct() alone
 
 
@@ -223,19 +229,36 @@ def correct(s, timer: Timer, device="mps") -> Correction:
     the same model on each, 18 s / 22.6 s on the M2. The CPU's levels get ESTIMATE_THREADS. Each b0's readout
     time is s.b0_readout_s's when the subject has one (bids.load), else s.readout_s for all.
     Without a pair to correct with (can_correct), the DWI as acquired, applied=False and the reason in note."""
-    pairing = getattr(s, "pairing", None)
     if not can_correct(s):
         timer.skip("field_estimate"); timer.skip("field_apply")
-        note = (pairing.message if pairing is not None and not pairing.ok
-                else "not corrected: no b0s from both phase-encoding polarities")
-        return Correction(np.array(s.dwi, np.float32), None, None, None, applied=False, note=note)
+        return Correction(np.array(s.dwi, np.float32), None, None, None, applied=False, note=_no_pair_note(s))
+    h, motion = _estimate_field(s, timer, device)
+    with timer("field_apply"):
+        dwi = S.apply(s.dwi, h, s.pe_axis, s.pe_sign, s.readout_s)
+    note, left, warnings = _field_note(s, h)
+    return Correction(dwi, h, motion, S.displacement_mm(h, s.readout_s, s.pe_sign, s.vox[s.pe_axis]), applied=True,
+                      note=note, residual_left=left, warnings=warnings)
+
+
+def _no_pair_note(s):
+    pairing = getattr(s, "pairing", None)
+    return (pairing.message if pairing is not None and not pairing.ok
+            else "not corrected: no b0s from both phase-encoding polarities")
+
+
+def _estimate_field(s, timer: Timer, device):
+    """(field Hz, the b0s' motion): susceptibility.estimate as correct() runs it."""
     f32 = torch.device(device).type in ("cpu", "cuda")
     ro = getattr(s, "b0_readout_s", None)
     with timer("field_estimate"), threads(min(ESTIMATE_THREADS, os.cpu_count() or 1)):
         h, motion, _ = S.estimate(s.b0s, s.vox, s.pe_vectors, s.readout_s if ro is None else ro, device=device,
                                   **(dict(dtype=torch.float32) if f32 else {}))
-    with timer("field_apply"):
-        dwi = S.apply(s.dwi, h, s.pe_axis, s.pe_sign, s.readout_s)
+    return h, motion
+
+
+def _field_note(s, h):
+    """(note, residual_left rounded or None, warnings) for a field: the pairing's message and the residual's verdict."""
+    pairing = getattr(s, "pairing", None)
     note, warnings = (pairing.message if pairing is not None else "corrected"), []
     try:                                                                     # a diagnostic: it never fails the run
         left = residual_left(s, h)
@@ -250,8 +273,42 @@ def correct(s, timer: Timer, device="mps") -> Correction:
         warnings = [f"the pair's difference left after correction is {left:.2f} (above {RESIDUAL_WARN}): head motion "
                     "between the series, or series that do not share one field (a re-shim, another protocol) - check "
                     "before relying on it"]
-    return Correction(dwi, h, motion, S.displacement_mm(h, s.readout_s, s.pe_sign, s.vox[s.pe_axis]), applied=True,
-                      note=note, residual_left=None if left is None else round(left, 3), warnings=warnings)
+    return note, None if left is None else round(left, 3), warnings
+
+
+def correct_motion_eddy(s, timer: Timer, device="mps", opts=None, field=True) -> Correction:
+    """The field slot (when `field` and the subject has a pair: the estimate as correct() makes it), then the motion_eddy
+    slot (tractline.motion_eddy.estimate: each volume's head motion and eddy currents, the field in the map), then one
+    resample of every volume composing all three (timed as "field_apply", the stage it replaces). Without a field,
+    motion and eddy currents only (as eddy without topup); the note says which. Correction.bvec: the rotated b-vectors;
+    Correction.motion_eddy: tractline.motion_eddy.record()'s. opts: the slot's options."""
+    from . import motion_eddy as ME
+    h = motion = None
+    note, left, warnings = "", None, []
+    if field and can_correct(s):
+        h, motion = _estimate_field(s, timer, device)
+        note, left, warnings = _field_note(s, h)
+        note += "; motion and eddy currents corrected with the field, one resample"
+    else:
+        timer.skip("field_estimate")
+        note = ("not corrected for the field: the field slot is off" if not field else _no_pair_note(s)) \
+            + "; motion and eddy currents corrected (no field)"
+    with timer("motion_eddy"):
+        # the brain mask of the data as acquired, by the pipeline's own median_otsu on the device (dipy's, exactly); with a
+        # field the library takes its unwarped copy as the reference frame's (its own default would rerun median_otsu on
+        # the unwarped mean b0, on the CPU: a few seconds, nearly the same mask)
+        b0 = np.asarray(s.dwi)[..., np.asarray(s.bval) < 50].astype(np.float32).mean(-1)
+        mask = median_otsu(b0, median_radius=4, numpass=4, device=device)[1]
+        r = ME.estimate(s.dwi, s.bval, s.bvec, s.affine, s.pe_axis, field_hz=h, pe_sign=s.pe_sign,
+                        readout_s=s.readout_s, mask=mask, options=dict(opts or {}), device=device)
+    with timer("field_apply"):
+        dwi, _valid = ME.apply_volumes(s.dwi, r, field_hz=h, device=device)
+    if r.qc.get("volumes with residual z > 4"):
+        warnings = warnings + [f"motion_eddy: volumes {r.qc['volumes with residual z > 4']} fit their prediction worst "
+                               "(residual z > 4 within their shell): signal dropout or motion within the volume?"]
+    disp = S.displacement_mm(h, s.readout_s, s.pe_sign, s.vox[s.pe_axis]) if h is not None else None
+    return Correction(dwi, h, motion, disp, applied=h is not None, note=note, residual_left=left, warnings=warnings,
+                      bvec=r.bvec, motion_eddy=ME.record(r))
 
 
 #: the opt-in denoisers (tractline.denoise; a name may carry a setting, "mppca:r3"), and where they run: "acquired", the
@@ -485,9 +542,11 @@ def _labeler(cfg: PipelineConfig, labeler, device):
     raise ValueError(f"execute: bundles {st.impl!r} needs the labeler object itself (labeler=)")
 
 
-def config_for(labeler=None, shell=2800.0, tracker=None, denoise=None, denoise_order="acquired") -> PipelineConfig:
+def config_for(labeler=None, shell=2800.0, tracker=None, denoise=None, denoise_order="acquired",
+               motion_eddy=None) -> PipelineConfig:
     """run()'s keywords as a config: the "default" preset with them applied. labeler: None for the preset's (RapidParc),
-    or an object (_bundles_of)."""
+    or an object (_bundles_of). motion_eddy: None (off), True (the slot's defaults), a model name ("rigid", "linear",
+    "quadratic"), or a dict of the slot's options."""
     changes = {"model": {"shell": float(shell)}}
     tracker = _check_tracker(tracker)
     if tracker:
@@ -498,6 +557,9 @@ def config_for(labeler=None, shell=2800.0, tracker=None, denoise=None, denoise_o
         changes["denoise"] = {"impl": method, **settings, "order": denoise_order}
     if labeler is not None:
         changes["bundles"] = _bundles_of(labeler)
+    if motion_eddy is not None and motion_eddy is not False:
+        opts = {} if motion_eddy is True else ({"model": motion_eddy} if isinstance(motion_eddy, str) else dict(motion_eddy))
+        changes["motion_eddy"] = {"impl": "tractline", **opts}
     return PipelineConfig.preset("default").with_(**changes)
 
 
@@ -626,7 +688,9 @@ def execute(s, cfg: PipelineConfig, timer: Timer, prefix="", device="mps", worke
     """The pipeline as cfg configures it (tractline.config), on subject s. Every check runs before any work: the
     config's own (at its construction), the shell tracked, the CPU's main guard, the labeler against the bundles slot.
     Then, in SLOTS' order: denoise (when on; order "acquired" before the field, "corrected" after it), field (when on
-    and the subject has a pair: correct; off: the DWI as acquired, the reason in Correction.note), mask, model (the
+    and the subject has a pair: correct; off: the DWI as acquired, the reason in Correction.note), motion_eddy (when on:
+    correct_motion_eddy in place of correct - the field estimate, then head motion and eddy currents, then one resample;
+    the rotated b-vectors to the tracker), mask, model (the
     tracker's input), track, bundles (when on). gibbs (when on) runs before the field (after denoising, in denoise's
     order "acquired"), on the series as acquired and the b0s (gibbs_subject; its b0 counts in the Correction's gibbs);
     its time is timer.seconds["gibbs"] (like "denoise", not among pipeline_stages). labeler: an object for the bundles
@@ -667,7 +731,9 @@ def execute(s, cfg: PipelineConfig, timer: Timer, prefix="", device="mps", worke
     if cfg.is_on("gibbs"):                                     # before the field (after denoising "acquired": MRtrix's order)
         s, gibbs_b0s = gibbs_subject(s, timer, cfg.opts("gibbs"), device)
     with exact_float32(device):
-        if cfg.is_on("field"):
+        if cfg.is_on("motion_eddy"):
+            corr = correct_motion_eddy(s, timer, device, cfg.opts("motion_eddy"), field=cfg.is_on("field"))
+        elif cfg.is_on("field"):
             corr = correct(s, timer, device)
         else:
             timer.skip("field_estimate"); timer.skip("field_apply")
@@ -677,11 +743,15 @@ def execute(s, cfg: PipelineConfig, timer: Timer, prefix="", device="mps", worke
             corr.dwi, dstats = denoise_corrected(corr.dwi, s.bval, timer, spec, workers)
         corr.denoise, corr.gibbs = dstats, gibbs_b0s
         mask = brain_mask(corr.dwi, s.bval, timer, prefix, device)
+        st = s
+        if corr.bvec is not None:                                          # the b-vectors turned with the head
+            st = copy.copy(s)
+            st.bvec = corr.bvec
         if ptt:
-            tg = csd_ptt(s, corr.dwi, mask, cfg, timer, prefix, device, tissue)
+            tg = csd_ptt(st, corr.dwi, mask, cfg, timer, prefix, device, tissue)
         else:
             with timer(prefix + "prep"):
-                t = prepare(corr.dwi, s.affine, s.bval, s.bvec, shell=shell, device=device, mask=mask)
+                t = prepare(corr.dwi, s.affine, s.bval, st.bvec, shell=shell, device=device, mask=mask)
             tg = _ukf(t, timer, prefix, device, workers, tracker)
         if labeler is None:
             labels = None
@@ -700,6 +770,8 @@ def execute(s, cfg: PipelineConfig, timer: Timer, prefix="", device="mps", worke
         import hashlib
         tz = np.ascontiguousarray(tissue, np.float32)
         runtime["tissue"] = {"shape": list(tz.shape), "sha256 (float32)": hashlib.sha256(tz.tobytes()).hexdigest()}
+    if corr.motion_eddy is not None:
+        runtime["motion_eddy backend"] = corr.motion_eddy["backend"]
     if ptt:                                                                # the CPU tracker's settings do not apply
         runtime.pop("workers", None)
         runtime.pop("torch_compile", None)
@@ -710,7 +782,7 @@ def execute(s, cfg: PipelineConfig, timer: Timer, prefix="", device="mps", worke
 
 
 def run(s, labeler, timer: Timer, prefix="", trx=None, device="mps", workers=None, release=True, shell=2800.0, tracker=None,
-        denoise=None, denoise_order="acquired", config=None, **trx_options):
+        denoise=None, denoise_order="acquired", config=None, motion_eddy=None, **trx_options):
     """The whole pipeline on a subject: (Correction, Tractogram, Labels). labeler: None for the default
     (default_labeler: RapidParc), or any labeler (labelers.tractcloud.Labeler, ...). Its time is
     timer.total(*pipeline_stages(prefix)). trx: also write the tractogram there as TRX (trx.write;
@@ -723,15 +795,20 @@ def run(s, labeler, timer: Timer, prefix="", trx=None, device="mps", workers=Non
     container's own); tracker: opt-in tracker settings (track), None for today's. denoise: opt-in, None for today's,
     or "mppca" / "patch2self" (denoise_subject; "mppca:r3" with a setting), its settings and estimates in Correction.denoise and its time in
     timer.seconds["denoise"] (not among pipeline_stages), and `workers` its processes too; denoise_order: "acquired" (before the field; the default)
-    or "corrected" (denoise_corrected, for comparison). config: a PipelineConfig instead of shell, tracker, denoise and
-    denoise_order (which must then be left as they are). Either way the run goes through execute, the config and runtime
+    or "corrected" (denoise_corrected, for comparison). motion_eddy: opt-in head motion and eddy-current correction
+    (correct_motion_eddy; config_for's values), its parameters and QC in Correction.motion_eddy, the rotated b-vectors
+    in Correction.bvec. config: a PipelineConfig instead of shell, tracker, denoise, denoise_order and motion_eddy
+    (which must then be left as they are). Either way the run goes through execute, the config and runtime
     recorded in Correction.provenance."""
+    if motion_eddy is False:
+        motion_eddy = None
     if config is None:
         if denoise is not None and denoise_order not in DENOISE_ORDERS:
             raise ValueError(f"denoise_order: {denoise_order!r} is not one of {DENOISE_ORDERS}")
-        config = config_for(labeler, shell, tracker, denoise, denoise_order)
-    elif (shell, tracker or None, denoise, denoise_order) != (2800.0, None, None, "acquired"):
-        raise ValueError("run: with config=, set shell, tracker and denoise in the config, not as keywords too")
+        config = config_for(labeler, shell, tracker, denoise, denoise_order, motion_eddy)
+    elif (shell, tracker or None, denoise, denoise_order, motion_eddy) != (2800.0, None, None, "acquired", None):
+        raise ValueError("run: with config=, set shell, tracker, denoise and motion_eddy in the config, not as keywords "
+                         "too")
     return tuple(execute(s, config, timer, prefix, device, workers, labeler, trx, release, **trx_options))
 
 
@@ -741,4 +818,6 @@ PTT_STAGES = ("field_estimate", "field_apply", "mask", "csd", "ptt", "label")
 def pipeline_stages(prefix="", cfg: PipelineConfig = None):
     """The timer's stage names for a run: today's UKF path, or (cfg with track:ptt) the CSD and PTT path's."""
     names = PTT_STAGES if cfg is not None and cfg.is_on("track") and cfg["track"].impl == "ptt" else STAGES
-    return [n if n.startswith("field_") else prefix + n for n in names]
+    if cfg is not None and cfg.is_on("motion_eddy"):
+        names = names[:1] + ("motion_eddy",) + names[1:]
+    return [n if n.startswith("field_") or n == "motion_eddy" else prefix + n for n in names]

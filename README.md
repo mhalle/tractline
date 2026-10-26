@@ -105,6 +105,7 @@ which re-import the script (the tracker checks, and refuses without one).
 | `labelers/tractcloud.py`, `resample.py` | TractCloud labels, at the context its model was trained with (optional) |
 | `labelers/base.py`, `labelers/scheme_43.json` | what labelers share: `Labels`, the 40 mm cut, the 43-class scheme |
 | `trx.py` | optional output: the tractogram as TRX, with tract labels and probabilities |
+| `motion_eddy.py`, `motion_eddy_metal.py`, `mi.py` | opt-in head motion and eddy-current correction (eddy's model, our own fit), the susceptibility field composed into the same single resample, the b-vectors rotated, a QC summary; `run(..., motion_eddy=True)` or the `motion_eddy` slot; `bench/run_pipeline.py --motion-eddy --qc DIR` writes the QC files |
 | `bids.py` | a BIDS diffusion series as the pipeline's subject: the series that correct it found (B0FieldIdentifier, IntendedFor, or the folder's reversed series) and checked - same axis, both polarities, identical shim, matching protocol, readout stated or safely assumed - or refused with the reason (the `bids` extra). DICOM through dcm2niix's output. |
 | `t1check.py` | measurement, not pipeline: the distortion left against the T1 (needs scipy: the `t1check` extra) |
 | `data.py` | where data and weights live |

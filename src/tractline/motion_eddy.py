@@ -122,6 +122,7 @@ class MotionEddy:
     qc: dict
     options: dict
     seconds: dict = field(default_factory=dict)
+    backend: str = ""                # "metal" or "torch": what ran
 
 
 # ------------------------------------------------------------------------------------------------- geometry
@@ -755,7 +756,7 @@ def estimate(dwi, bval, bvec, affine, pe_axis, field_hz=None, pe_sign=None, read
     return MotionEddy(theta=thn, theta_fit=th_fit, bvec=bv_out, model=opt.model, pe_axis=int(pe_axis), shape=(X, Y, Z),
                       vox=vox, groups=[np.asarray(i) for i in groups], group_b=group_b, reference=reference,
                       field_used=has_field, pe_scale=pe_scale, anchors=anchors, qc=qc, options=asdict(opt),
-                      seconds=seconds)
+                      seconds=seconds, backend=backend)
 
 
 def rotate_bvecs(bvec, w, affine):
@@ -793,7 +794,7 @@ def _qc(geo, thn, th_fit, xedge, groups, group_b, isb0, f_last, steps_run, opt, 
          "volumes not corrected (alone in their group: nothing predicts them)": sorted(
              int(i[0]) for i in groups if len(i) < 2)}
     if f_last is not None:
-        rms = np.sqrt(np.clip(f_last, 0, None))
+        rms = np.sqrt(np.clip(np.asarray(f_last, np.float64), 0, None))
         z = np.zeros_like(rms)
         for idx in groups:
             if len(idx) > 2:
@@ -927,3 +928,81 @@ def correct(s, device="mps", options=None, mask=None) -> Corrected:
     return Corrected(dwi=dwi, bvec=r.bvec, valid=valid, motion_eddy=r, field_hz=h, b0_motion=b0_motion, note=note,
                      seconds={"field": round(t1 - t0, 2), "motion_eddy": round(t2 - t1, 2),
                               "apply": round(time.perf_counter() - t2, 2)})
+
+
+# ------------------------------------------------------------------------------------------------- the record and QC files
+
+def record(r: MotionEddy) -> dict:
+    """What estimate() found, JSON-ready (pipeline's Correction.motion_eddy): the model and frame, each group's volumes,
+    the per-volume parameters (theta: translations mm, rotations rad, eddy coefficients voxels along PE, the PE offset
+    split as eddy splits it; theta_fit as fitted), the shell anchors, the QC summary, the options and the times."""
+    return {"model": r.model, "reference": r.reference, "field used": r.field_used, "pe_axis": r.pe_axis,
+            "groups (b, volumes)": [[int(b), [int(i) for i in idx]] for b, idx in zip(r.group_b, r.groups)],
+            "theta": np.round(r.theta, 6).tolist(), "theta_fit": np.round(r.theta_fit, 6).tolist(),
+            "shell anchors": r.anchors, "qc": r.qc, "options": r.options, "seconds": r.seconds, "backend": r.backend}
+
+
+QC_COLUMNS = ("volume", "b", "tx_mm", "ty_mm", "tz_mm", "rx_deg", "ry_deg", "rz_deg", "rigid_edge_rms_mm",
+              "rigid_edge_max_mm", "eddy_edge_rms_mm", "eddy_edge_max_mm", "framewise_displacement_mm",
+              "residual_rms", "residual_z")
+
+
+def qc_rows(rec: dict) -> list:
+    """One row per volume (QC_COLUMNS, then the eddy coefficients e0.. in voxels along PE) from a record()."""
+    th = np.asarray(rec["theta"], float)
+    q = rec["qc"]
+    b = np.zeros(len(th))
+    for bv, idx in rec["groups (b, volumes)"]:
+        b[idx] = bv
+    rig, edd = np.asarray(q["rigid displacement at edge, mm (rms, max) per volume"]), \
+        np.asarray(q["eddy displacement at edge, mm (rms, max) per volume"])
+    fd = q["framewise displacement, mm per volume"]
+    res = q.get("residual vs prediction, rms per volume", [None] * len(th))
+    z = q.get("residual z within group per volume", [None] * len(th))
+    rows = []
+    for v in range(len(th)):
+        row = [v, int(b[v]), *np.round(th[v, :3], 4), *np.round(np.degrees(th[v, 3:6]), 4), *np.round(rig[v], 4),
+               *np.round(edd[v], 4), round(fd[v], 4), res[v], z[v], *np.round(th[v, 6:], 4)]
+        rows.append([float(x) if isinstance(x, (np.floating, float)) else x for x in row])
+    return rows
+
+
+def write_qc(rec: dict, folder) -> dict:
+    """The QC files for a run with the motion_eddy slot, in `folder`: motion_eddy_qc.tsv (one row per volume:
+    QC_COLUMNS and the eddy coefficients) and motion_eddy_qc.json (the summary: model, frame, field, framewise
+    displacement, the largest displacements, the volumes that fit their prediction worst, the times, the options).
+    Returns the summary. The translation along PE is each volume's PE offset less the part linear in its gradient
+    (eddy's split, given to the eddy currents): its volume-to-volume jitter, and so part of the framewise
+    displacement, can be that split's residue rather than head motion."""
+    import json
+    from pathlib import Path
+    folder = Path(folder)
+    folder.mkdir(parents=True, exist_ok=True)
+    rows = qc_rows(rec)
+    ncoef = len(rec["theta"][0]) - 6
+    header = list(QC_COLUMNS) + [f"eddy_e{k}_vox" for k in range(ncoef)]
+    with open(folder / "motion_eddy_qc.tsv", "w") as f:
+        f.write("\t".join(header) + "\n")
+        for row in rows:
+            f.write("\t".join("" if x is None else str(x) for x in row) + "\n")
+    q = rec["qc"]
+    rig = np.asarray(q["rigid displacement at edge, mm (rms, max) per volume"])
+    edd = np.asarray(q["eddy displacement at edge, mm (rms, max) per volume"])
+    summary = {"model": rec["model"], "reference frame": rec["reference"], "field used": rec["field used"],
+               "volumes": q["volumes"], "steps run": q["steps run"],
+               "framewise displacement mm (mean, max)": q["framewise displacement, mm (mean, max)"],
+               "rigid displacement at the brain's edge, mm: median and largest RMS (volume, mm)": [
+                   round(float(np.median(rig[:, 0])), 3), int(rig[:, 0].argmax()), round(float(rig[:, 0].max()), 3)],
+               "rigid displacement at the brain's edge, mm: the largest at any edge point (volume, mm)": [
+                   int(rig[:, 1].argmax()), round(float(rig[:, 1].max()), 3)],
+               "eddy displacement at the brain's edge, mm: median and largest RMS (volume, mm)": [
+                   round(float(np.median(edd[:, 0])), 3), int(edd[:, 0].argmax()), round(float(edd[:, 0].max()), 3)],
+               "eddy displacement at the brain's edge, mm: the largest at any edge point (volume, mm; the quadratic's "
+               "corners)": [int(edd[:, 1].argmax()), round(float(edd[:, 1].max()), 3)],
+               "volumes with residual z > 4 (worst fit to their prediction)": q.get("volumes with residual z > 4"),
+               "volumes not corrected (alone in their group)":
+                   q.get("volumes not corrected (alone in their group: nothing predicts them)"),
+               "groups": q["groups"], "shell anchors": rec["shell anchors"], "seconds": rec["seconds"],
+               "options": rec["options"], "table": "motion_eddy_qc.tsv"}
+    (folder / "motion_eddy_qc.json").write_text(json.dumps(summary, indent=1))
+    return summary

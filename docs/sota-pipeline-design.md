@@ -49,7 +49,7 @@ rather than repeating it.
 | ingest | BIDS series, field-map pairing and refusals | `bids` | CPU |
 | denoise | opt-in MP-PCA or Patch2Self (dipy, its own process) | `denoise` | CPU |
 | field | topup's model, Gauss-Newton; apply with a cubic interpolation along PE and the Jacobian | `susceptibility` | GPU (estimate), CPU (apply) |
-| motion_eddy | prototype on `motion-eddy` (Metal kernels, MI anchor) | `bench/motion_eddy/` there | GPU |
+| motion_eddy | `motion_eddy:tractline` (tractline.motion_eddy: Metal kernels, plain torch elsewhere; the field in the same resample) | `tests/test_motion_eddy.py`, `bench/motion_eddy/library_check.py` | GPU |
 | mask | median_otsu, exactly as dipy's | `mask`, inside `prep` | GPU or CPU |
 | model | the UKF's two-tensor model, internal to the tracker; one shell (`shell=`) | `prep`, `ukf` | — |
 | track | UKF two-tensor, ORG settings | `ukf`, `ukf_metal`, `ukf_triton_block` | GPU |
@@ -254,7 +254,7 @@ Effort is one engineer's weeks for the accelerated implementation, after its ora
 | denoise | `mppca` (radius), `patch2self` | MRtrix `dwidenoise`; dipy | today's dipy wrapper. GPU MP-PCA: patches unfolded as in `mask.py`, batched covariance and `eigh`, MP threshold. Exact equality to dipy's patch weighting is a check, not a goal. Keep the correlated-noise caveat (NOTES 2026-10-17). | wrapper exists | 1–2 |
 | gibbs | `subvoxel-shift` (Kellner 2016) | MRtrix `mrdegibbs` | per-slice FFT, a set of subvoxel shifts, local minimal oscillation. `torch.fft` on any device. The record states the partial-Fourier caveat. | new | 0.5–1 |
 | field | `tractline` (today), `topup` (external) | FSL topup | done. 6 of 8 scans agree with topup (calibration_topup_check); 32-direction series caveat | validated | — |
-| motion_eddy | `rigid`, `linear`, `quadratic` | FSL eddy | the motion-eddy design; its sections 5.1–5.2 are this doc's integration plan for that slot | prototype | per its plan |
+| motion_eddy | `tractline` (model `rigid`, `linear`, `quadratic`) | FSL eddy | the motion-eddy design; its sections 5.1–5.2 are this doc's integration plan for that slot, 5.1a the library | experimental (wired 2026-10-26) | done |
 | bias | `n4` | ANTs `N4BiasFieldCorrection` (MRtrix `dwibiascorrect ants`) | N4's histogram sharpening plus a B-spline fit of the log-bias, on the mean b0, as a batched least-squares solve. Applied to all volumes. It matters for MSMT-CSD and intensity normalization, not for UKF (signal / b0) | new | 1–2 |
 | mask | `median-otsu` (today), `synthstrip` | FreeSurfer `mri_synthstrip`; MRtrix `dwi2mask` | SynthStrip is a CNN; its released weights run in torch on MPS or CUDA. On the mean b0, or on the T1 carried over | wrapper to write | 0.5–1 |
 | anatomy | `fastsurfer`, `synthseg` | FastSurfer, FreeSurfer | the networks themselves (torch, GPU). Labels only, no surfaces. The bench's `tissue_fs` uses FastSurfer already | bench | 1 |
@@ -533,6 +533,13 @@ DIPY-style CSD trackers, RecoBundles (its atlas is a download).
   678 of 76 million voxels differ from DIPY float64 by more than 0.1 % of scale, against 443 for DIPY float32. The
   largest difference is 12 %: two shifts 0.52 apart scored within 1.3 parts per million. On cIIIs04 it takes 32 s on MPS and 83 s on the CPU in
   float32, against DIPY's 99 s on 8 processes.
+
+- **`motion_eddy:tractline`** (NOTES 2026-10-26; the motion-eddy design's section 5.1a): head motion and eddy
+  currents per volume, with the field composed into one resample. Off by default. When on, it replaces
+  `susceptibility.apply` with one resample composing field, motion and eddy currents. The tracker gets the rotated
+  b-vectors. The parameters and a QC summary go in `Correction.motion_eddy`, and `run_pipeline.py --motion-eddy --qc`
+  writes them as files. It runs without a reversed pair too (motion and eddy currents only). On ON-Harmony 16974 (105
+  volumes) the step takes about 20 s on MPS.
 
 ## 8. Licensing and the source policy
 

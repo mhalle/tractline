@@ -7334,3 +7334,50 @@ research claim).
 - `slice_axis` is the caller's (default 2); it is not checked against the sidecar's `SliceEncodingDirection`.
 - A fused Metal kernel could go several times faster. Not needed: the slot runs once per scan, not per ensemble
   replicate.
+
+## 2026-10-26 The motion_eddy slot: head motion and eddy currents in the pipeline, for QC
+
+**What.** The motion-eddy library (branch `motion-eddy`, cafdafc; its design doc, section 5.1a) is merged here and wired
+as the opt-in `motion_eddy` slot, between the field estimate and the resample. Lauren and Yogesh asked for it, to
+quality-control their scans.
+- `pipeline.correct_motion_eddy`:
+  - the field estimate as `correct()` makes it (when the field slot is on and the subject has a pair);
+  - each volume's motion and eddy currents with the field in the map (`motion_eddy.estimate`; the brain mask by the
+    pipeline's torch `median_otsu` on the data as acquired);
+  - one resample composing all three, timed as `field_apply`, the stage it replaces.
+- The tracker (UKF and CSD/PTT alike) gets the rotated b-vectors (`Correction.bvec`). `Correction.motion_eddy` holds the
+  per-volume parameters and the QC summary (`motion_eddy.record`).
+- Without the field slot, or without a pair, it corrects motion and eddy currents only, and the note says so.
+- `run(..., motion_eddy=True | "rigid" | {...})` and `config_for(motion_eddy=...)`. The default config's hash is
+  unchanged. `Correction.applied` keeps its meaning, the field applied: motion and eddy currents without a field give
+  False, with the note saying what was corrected. The runtime record names the backend (Metal or torch).
+- The mask: the pipeline passes the acquired data's `median_otsu` (on the device), and with a field the library takes
+  its unwarped copy for the reference frame. The library's own default, used in its validation, reruns `median_otsu`
+  on the unwarped mean b0. On 16974 the two reference masks agree with a Dice of 0.98 (6,715 voxels differ).
+- QC files: `motion_eddy.write_qc` writes `motion_eddy_qc.tsv` and `motion_eddy_qc.json`. `bench/run_pipeline.py
+  --motion-eddy [model] --qc DIR [--write-corrected]` writes those plus `motion_eddy_qc.png` and, if asked, the
+  corrected series with its rotated b-vectors.
+
+**ON-Harmony 16974 OXF1PRI001** (105 volumes: 5 b0s, b1000, b2000; the reversed b0s found by `bids.load`), through
+`run_pipeline.py --motion-eddy --qc`:
+- The step took 19.4 s on MPS (40 steps).
+- Framewise displacement: mean 0.26 mm, max 0.58 mm.
+- Eddy displacement at the brain's edge, RMS: median 0.42 mm (b1000) and 0.64 mm (b2000), at most 1.0 mm. Its maximum
+  at any edge point reaches 5.3 mm, at the quadratic's corners (a yz term of -2.2 voxels), which is why the summary
+  leads with the RMS.
+- No volume had a residual z above 4.
+- The translation along PE changes by about 0.1-0.3 mm from volume to volume (median 0.14, 90th percentile 0.30). It
+  is what is left of each volume's PE offset after eddy's split (the part linear in the gradient goes to the eddy
+  currents), and it is about 60 % of the framewise displacement on this low-motion scan. The QC files' documentation
+  says so.
+
+**Tests:** `tests/test_pipeline_motion_eddy.py`. The slot runs with and without the field, the tracker receives the
+rotated b-vectors, the QC files are written, and the default config is unchanged. The phantom checks plumbing only;
+accuracy is `tests/test_motion_eddy.py`'s.
+
+**Not done.**
+- No calibration map with the slot on. The maps key on the config's hash, which the slot changes, so a map learned
+  without it is not one for runs with it (the motion-eddy design's decision 6). The ensemble's replicates for it (R1)
+  are not built.
+- eddy fed the same field, as a referee for the composed order.
+- CUDA is untested.

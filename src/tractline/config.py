@@ -37,9 +37,9 @@ from typing import Any, Mapping
 
 SCHEMA = "tractline.config/1"
 
-#: the slots, in the order they run. The design's later slots (motion_eddy, bias, anatomy, register_t1, tissue,
-#: filter, tractometry) are added here as their implementations arrive; a slot is off unless a config sets it.
-SLOTS = ("denoise", "gibbs", "field", "mask", "model", "track", "bundles")
+#: the slots, in the order they run. The design's later slots (bias, anatomy, register_t1, tissue, filter,
+#: tractometry) are added here as their implementations arrive; a slot is off unless a config sets it.
+SLOTS = ("denoise", "gibbs", "field", "motion_eddy", "mask", "model", "track", "bundles")
 
 #: an implementation's status: "wrapper" runs the established tool itself; "experimental" is ours, not yet through both
 #: validation levels; "validated" is ours and through them (docs/sota-pipeline-design.md, section 5)
@@ -171,6 +171,22 @@ register(Implementation(
     doc="topup's model by Gauss-Newton (susceptibility.estimate), applied with the Jacobian (susceptibility.apply); runs "
         "when the subject has b0s from both polarities and a pairing that passed (pipeline.can_correct), else the DWI "
         "as acquired, with the reason"))
+register(Implementation(
+    "motion_eddy", "tractline", "1",
+    {"model": Option("quadratic", str, choices=("rigid", "linear", "quadratic"),
+                     doc="the eddy-current polynomial along PE: none, linear (4 terms) or quadratic (10; eddy's --flm)"),
+     "steps": Option(40, int, low=1, high=500, doc="Gauss-Newton steps (the cap when tol > 0)"),
+     "tol": Option(0.0, float, low=0.0, doc="stop when no volume's step moves an edge point more than this (voxels)"),
+     "sh_order": Option(6, int, choices=(0, 2, 4, 6, 8, 10, 12), doc="the per-shell predictor's SH order (even)"),
+     "sh_lambda": Option(0.06, float, low=0.0, doc="its Laplace-Beltrami weight"),
+     "b0_ec": Option(False, bool, doc="the b0s fit the PE polynomial too (motion-by-susceptibility)"),
+     "anchor": Option("none", str, choices=("none", "mi"), doc="each DW shell's corrected mean aligned to the mean b0"),
+     "mask_output": Option(True, bool, doc="zero voxels outside some volume's field of view (eddy's output mask)")},
+    oracle="FSL eddy (Andersson & Sotiropoulos 2016)", status="experimental",
+    doc="head motion and eddy currents per volume (tractline.motion_eddy): rigid + a polynomial along PE, each volume "
+        "registered to a leave-one-out prediction from the others; the field (when the field slot corrects) composed "
+        "into the same map, so each volume is resampled once; the b-vectors rotated with the head. Runs without a "
+        "reversed pair too (motion and eddy only, as eddy without topup)"))
 register(Implementation(
     "mask", "median-otsu", "1", {}, oracle="dipy.segment.mask.median_otsu", status="validated",
     doc="median_otsu of the mean b0 (median radius 4, 4 passes), dipy's exactly (tractline.mask)"))
