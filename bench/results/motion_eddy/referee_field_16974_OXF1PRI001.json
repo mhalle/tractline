@@ -1,0 +1,76 @@
+{
+ "folder": "16974_OXF1PRI001",
+ "shape": [
+  104,
+  104,
+  72,
+  55
+ ],
+ "eddy": "eddy_cpu --flm=quadratic --slm=none --field (no --repol)",
+ "seconds": {
+  "composed": 20.6,
+  "two-step": 15.8
+ },
+ "image difference to eddy, RMS / brain mean (median over volumes)": {
+  "composed": 0.0206,
+  "two-step": 0.0361,
+  "as acquired": 0.1766
+ },
+ "volumes where the composed order is nearer eddy": "55 of 55",
+ "rotated b-vectors to eddy's, deg (median, max)": {
+  "composed": [
+   0.143,
+   0.322
+  ],
+  "two-step": [
+   0.251,
+   0.452
+  ],
+  "as given": [
+   0.248,
+   0.42
+  ]
+ },
+ "model fit": {
+  "as acquired": {
+   "leave-one-out residual": {
+    "b0": 127.171,
+    "b2000": 96.486
+   },
+   "tensor fit residual (DW)": 73.875
+  },
+  "eddy": {
+   "leave-one-out residual": {
+    "b0": 101.613,
+    "b2000": 91.02
+   },
+   "tensor fit residual (DW)": 64.778
+  },
+  "ours composed": {
+   "leave-one-out residual": {
+    "b0": 103.579,
+    "b2000": 91.445
+   },
+   "tensor fit residual (DW)": 65.23
+  },
+  "ours two-step": {
+   "leave-one-out residual": {
+    "b0": 102.822,
+    "b2000": 91.089
+   },
+   "tensor fit residual (DW)": 65.089
+  }
+ },
+ "the b0s' mean pose against the first b0 (composed run), mm and deg": [
+  [
+   0.01,
+   -0.06,
+   0.035
+  ],
+  [
+   0.065,
+   -0.107,
+   0.01
+  ]
+ ]
+}

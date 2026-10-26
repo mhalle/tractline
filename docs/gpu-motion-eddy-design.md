@@ -1511,8 +1511,9 @@ resample. Not yet wired into the pipeline.
   - **The field composed against phase 0's order** (field applied first, then the step: two interpolations), ON-Harmony
     16974 (b0s and b2000): equal leave-one-out residuals (b0 116.58 against 116.59, b2000 90.16 against 90.05), maps
     0.075 voxels apart at the edge (0.13 before the gauge fix). That residual favors extra smoothing, so it cannot say
-    which map is right. eddy fed the same field (phase 0's arm E inputs exist; eddy has not been run on them) is the
-    referee.
+    which map is right. eddy fed the same field settled it (NOTES 2026-10-26, "refereed by eddy"): the composed
+    order's images are nearer eddy's in all 55 volumes (2.1 % against 3.6 % of the brain's mean signal), and its
+    rotated b-vectors too (0.14 against 0.25 deg).
 - **Robustness, after two adversarial reviews** (2026-10-26, NOTES; on the modular branch, where the step is wired):
   - Before: one NaN voxel, or one volume whose fit diverged, made every volume's parameters NaN through the gauges, with
     no warning. An empty volume escaped by sliding its prediction out of the field of view (88 mm) and, through the

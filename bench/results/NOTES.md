@@ -7525,3 +7525,33 @@ The cost is about 1.2 s more per fit (20 s for 105 volumes).
 - The thresholds (z < -4 as eddy's default, a 10 % loss, the 2 % floor) are not tuned on labeled data.
 - Memory: the original series is kept beside the imputed one (one more copy, within the 6x budget, not measured at
   HCP size).
+
+## 2026-10-26 The field composed into one resample, refereed by eddy: eddy agrees with the composed order
+
+**Question.** On ON-Harmony 16974 the two ways of combining the susceptibility field with the motion and eddy-current
+step gave maps 0.075 voxels apart, with equal leave-one-out residuals, and that residual favors smoothing, so it could
+not say which was right. One way is the field composed into the single resample (the pipeline's way). The other is
+phase 0's two steps: the field applied, then the step on the field-corrected series.
+
+**Referee.** FSL eddy (`eddy_cpu` 2602.0, `--flm=quadratic --slm=none --data_is_shelled`, 6 threads, no `--repol`) was
+fed tractline's own field (`--field`) on phase 0's prepared series: 16974 OXF1PRI001, b0s and b2000, 55 volumes.
+- Field check first (`phase0.py fieldcheck`, 10 volumes, 1 iteration). eddy's corrected first b0 against ours (field
+  only) has an NCC of 0.9975, against 0.856 for the raw b0: eddy reads our field as we do.
+- The full run took 3524 s (59 min).
+- Ours, both orders, with the step's defaults but outliers off, to match eddy: `bench/motion_eddy/referee_field.py`,
+  results in `results/motion_eddy/referee_field_16974_OXF1PRI001.json`.
+
+**Result.**
+- **Images.** Each corrected volume against eddy's, RMS over the brain (eroded 2) relative to the brain's mean signal,
+  median over volumes: composed 0.021, two-step 0.036, as acquired 0.177. The composed order is the nearer in all 55
+  volumes.
+- **Rotated b-vectors** against eddy's (median, max): composed 0.14 and 0.32 deg; two-step 0.25 and 0.45 deg, no
+  nearer than the b-vectors as given (0.25 and 0.42 deg).
+- **Model fit.** Leave-one-out residuals (b0 / b2000) and the tensor fit's residual: eddy 101.6 / 91.0 and 64.8;
+  composed 103.6 / 91.4 and 65.2; two-step 102.8 / 91.1 and 65.1; as acquired 127.2 / 96.5 and 73.9. All three
+  corrections fit about equally; the two-step order's second interpolation smooths it slightly lower, as expected.
+- **Frames.** eddy and the composed order hold the first b0 fixed; the two-step order holds the b0s' mean pose. Here
+  that mean sits within 0.07 mm and 0.11 deg of the first b0, too little to explain the image differences.
+
+**So** the pipeline's way (one resample, the field in the map, the first b0 as the reference) is the one that agrees
+with eddy. One scan, and a low-motion one: a high-motion scan (10975) would be a stronger test.
