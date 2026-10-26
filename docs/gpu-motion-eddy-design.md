@@ -1456,6 +1456,78 @@ on main before the abstract is in.
 - The real-scan comparisons (sections 2.4-2.10) rerun at lambda 0.06.
 - Phase 0 (section 7): eddy on the extreme rescan pairs, to see whether correction moves the calibration gap.
 
+### 5.1a The library (step 2 of the merge plan, 2026-10-26)
+
+The prototype's final form is now a library module, with the susceptibility field composed into the same single
+resample. Not yet wired into the pipeline.
+
+- **Modules.**
+  - `src/tractline/motion_eddy.py`: `estimate()`, `apply_volumes()`, `correct()`, `Options`, `MotionEddy`, a QC summary,
+    and the plain-torch path (any device and dtype; the CPU and CUDA path, and in float64 the kernels' reference).
+  - `src/tractline/motion_eddy_metal.py`: the Metal kernels (from `bench/motion_eddy/metal_step.py`), extended with
+    the field.
+  - `src/tractline/mi.py`: the shell alignment's MI (from `mi_torch.register`).
+  - `tests/test_motion_eddy.py`: 14 tests.
+  - `bench/motion_eddy/library_check.py`: the real-scan checks below.
+- **One call for all three FSL-style corrections.** `correct(s)` estimates the field from the reversed b0s
+  (`susceptibility.estimate`, topup's model, as `pipeline.correct` does). It then fits motion and eddy currents with
+  that field in the sampling map, and resamples each volume once with all three composed. Without a pair it does motion
+  and eddy only (as eddy without topup).
+- **The field in the map.**
+  - The map is `phi_v(x) = c + (R_v (x - c) vox + t_v) / vox + [d_h(x) + e_v(x)] e_pe`, where `d_h = pe_sign *
+    readout_s * h` (as `susceptibility.apply`). The Jacobian is `1 + d/dx_pe (d_h + e_v)`.
+  - With a field, the location reference is the first b0 (the field's frame), held fixed; the other b0s are free.
+    Without one, the b0s' mean pose is the reference. Either way each DW shell's mean pose is held at the b0s' mean
+    pose.
+  - The inverse map takes Newton steps along PE (Sherman-Morrison on `A + e_pe s e_pe'`). Fixed-point passes converge
+    too slowly where a field is steep: 0.2 voxels left after 4 passes on a 4-voxel field. Newton leaves 5e-4 after 2
+    passes and 6e-6 after 3.
+- **Changed from the prototype, after review** (both in the torch path and the kernel):
+  - **The Jacobian is the chain rule through the inverse map**, at the reference point, with the map's full derivative
+    `A + e_pe w'` (w the displacement's gradient, eddy and field). The prototype took its columns at the acquired
+    point without that derivative: 3-15 % off without a field, up to 39 % with a steep one. Now they match central
+    differences to 4e-5 (no field) and 6e-4 (a 6-voxel field). Gauss-Newton converges where the given Jacobian says
+    the cost is flat, so a wrong Jacobian biases the answer wherever the model misfits. The cost: the fused kernel is
+    heavier, and the fit on a 105-volume scan takes 17.4 s against 12.7 s. Kernel tuning is a follow-up.
+  - **The shells' gauge with a field.** The first version held each shell's mean pose at the first b0's pose when a
+    field was given. On a synthetic scan whose b0s' mean sits 0.5 mm and 0.5 deg from the first b0, that left 0.41
+    voxels of error (review's measurement); with the shells at the b0s' mean, 0.11.
+- **Checks.**
+  - **Kernels against the float64 torch path**, with and without a field: H and b to 1e-4 relative, the cost to 1e-5;
+    resample, prefilter, smoothing and the final resample also agree.
+  - **The field's resample with no motion against `susceptibility.apply`:** 1e-3 relative away from the edges.
+  - **Against the prototype on ON-Harmony 16974** (105 volumes, as acquired, phase 0's settings; the changes above
+    included): the sampling maps agree to 0.0015 voxels at the edge, the corrected series to 4e-5 of scale on average,
+    the rotated b-vectors to 0.0006 deg. The leave-one-out residuals are equal to three decimals. The brain mask
+    (`median_otsu` on the CPU) adds 4.6 s; the pipeline can save that by passing its own mask.
+  - **A synthetic tensor scan with known truth** (64 volumes, isotropic diffusion, about 1 mm and 1 deg of motion, a
+    quadratic eddy field): 0.089 voxels of error from 0.847 of displacement, on the CPU (17 s) and MPS (1.4 s) alike.
+    The rotated b-vectors are within 0.067 deg of the directions the tissue saw (0.98 deg unrotated).
+  - **The same with a 3-voxel field composed in**, the b0s' mean 0.5 mm from the first b0: 0.110 voxels. The corrected
+    images come back to the noise level: RMS 0.94 against the truth, noise 1.0, 4.16 as acquired.
+  - **Determinism:** two MPS runs give the same parameters, bit for bit.
+  - **The field composed against phase 0's order** (field applied first, then the step: two interpolations), ON-Harmony
+    16974 (b0s and b2000): equal leave-one-out residuals (b0 116.58 against 116.59, b2000 90.16 against 90.05), maps
+    0.075 voxels apart at the edge (0.13 before the gauge fix). That residual favors extra smoothing, so it cannot say
+    which map is right. eddy fed the same field (phase 0's arm E inputs exist; eddy has not been run on them) is the
+    referee.
+- **A finding: coherent anisotropy biases the fit**, and the prototype alike.
+  - On the synthetic scan with tensors of (1.1, 0.55) x 1e-3 mm^2/s throughout the brain and no motion at all, the fit
+    drifts 0.25-0.34 voxels for every lambda from 0.002 to 0.2, with the exact Jacobian too (0.32). Isotropic: 0.02.
+    Sharper tensors (1.7, 0.3): 0.76 voxels of error from 0.85 of motion.
+  - The cause is the shells' leave-one-out prediction, which misfits in a spatially structured way. The test phantom (a
+    box crossed by a sharp band) drifts too.
+  - Real scans agreed with eddy (sections 2.4-2.10). That says the two methods agree there, not that the bias is absent:
+    if eddy's GP predictor shares it, both would carry it. eddy on this synthetic would tell. It belongs with section
+    2.11's open item (the predictor's weight per shell).
+- **Not done.**
+  - The plain-torch path runs on CUDA in principle but is untested there (no CUDA here). Its speed on CUDA is unknown;
+    the Triton port is still the plan for speed.
+  - Pipeline wiring is step 3, on the modular branch's `PipelineConfig`.
+  - `proto.py` does not call the library; it stays as the record of the validated prototype.
+  - No outlier slices (phase 2). The QC summary gives per-volume displacements, framewise displacement and a
+    per-volume residual z-score, not eddy_quad's full report.
+
 ### 5.2 Making the stages optional and configurable
 
 Today each optional stage is one more keyword on `run()` (`denoise`, `denoise_order`, `tracker`, `shell`, and now

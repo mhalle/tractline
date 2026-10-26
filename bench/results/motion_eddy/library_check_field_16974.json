@@ -1,0 +1,51 @@
+{
+ "scan": "16974_OXF1PRI001_PRISMA_UKB",
+ "shape": [
+  104,
+  104,
+  72,
+  55
+ ],
+ "field seconds": {
+  "field_estimate": 12.73,
+  "field_apply": 0.6
+ },
+ "field: displacement mm (max |.|)": 37.36,
+ "seconds (step + apply)": {
+  "field first, then the step": 13.91,
+  "composed": 19.62
+ },
+ "leave-one-out residual in the brain": {
+  "field only (no motion or eddy step)": {
+   "b0": 139.266,
+   "b2000": 96.256
+  },
+  "field first, then the step (two interpolations)": {
+   "b0": 116.592,
+   "b2000": 90.045
+  },
+  "composed (one interpolation)": {
+   "b0": 116.583,
+   "b2000": 90.155
+  }
+ },
+ "the two maps' difference, voxels at the edge (rms, p95), in the first b0's frame": [
+  0.0746,
+  0.1056
+ ],
+ "reference frames": {
+  "field first": "b0-mean",
+  "composed": "first-b0"
+ },
+ "framewise displacement mm (mean, max)": {
+  "field first": [
+   0.3018,
+   0.69
+  ],
+  "composed": [
+   0.2822,
+   0.6177
+  ]
+ },
+ "note": "field first: the step's location reference is the b0s' mean pose; composed: the first b0's (the field's frame); the maps are compared after moving the first into the second to first order, and the residuals do not depend on the frame"
+}
