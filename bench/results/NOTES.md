@@ -7074,3 +7074,55 @@ that tract on that scan):
     0.48 on A.
   - The 20° was chosen on the phantom; this is a second measure on other data, not a held-out test of a tuned
     parameter.
+
+## 2026-10-25 model:csd and track:ptt in the configurable pipeline
+
+**What.**
+- **`tractline.config`** registers `model:csd` (shell, order auto/6/8, lambda, tau, the response's FA threshold and
+  radius) and `track:ptt`. PTT's defaults are those proposed (real units, step 0.5 mm, probe 1.5 mm × 7, max angle
+  20°, PMF threshold 0.1, 20–250 mm). Its stopping is `act` or `mask`, its seeding `wm` or `fa` (with `fa_seed`), plus
+  `seed_count`, `seed_rng` and `track_rng`. Both implementations are "experimental". `track:ptt` requires `model:csd`;
+  `track:ukf` still requires `model:ukf-two-tensor`.
+- **`pipeline.execute`** runs them through `csd_ptt`:
+  - the b0s and the shell, b-vectors in image axes;
+  - the response and the FODs over the mask slot's mask;
+  - PTT (the Metal kernel on mps, the torch prototype elsewhere), with the PMF on our own 362 directions;
+  - ACT from `tissue=` (WM, GM, deep GM, CSF on the DWI's grid), or the mask's edge;
+  - seeds uniform in WM ≥ 0.5, or in FA ≥ `fa_seed`.
+
+  The tissue maps are an input, like the DWI: the runtime record holds their shape and sha256, not the config.
+  `pipeline_stages(prefix, cfg)` names the path's stages (`field_*`, `mask`, `csd`, `ptt`, `label`).
+- **The Tractogram** carries each streamline's seed index (for TRX). It has no seed voxels: PTT may seed a voxel more
+  than once, so they cannot be the ensemble's keys.
+
+**Checks.**
+- `tests/test_pipeline_ptt.py` (the synthetic band, CPU and MPS): the config's and inputs' refusals, tracking along the
+  band, provenance, stage times, and an exact repeat.
+- **cIIIs04 A through `execute`** (shell 2000, ACT and WM seeding from step 6's tissue maps, 130,000 seeds, RapidParc,
+  M2): 78,861 streamlines, 67,071 labeled, Other share 0.402. The bench's run (`ptt_compare.py`, DIPY's seed generator and
+  PMF sphere) gave 78,913, 67,346 and 0.402.
+- **Time:** field 28.1 s, mask 4.1 s, CSD 6.6 s, PTT 19.8 s, labels 2.2 s: 60.8 s from scan to labels. Today's UKF
+  pipeline took 89.3 s on this scan (step 6), most of it the UKF's 50 s.
+
+**Review** (an independent agent; nothing serious in the frames, ACT maps, seeds or the UKF path, which is unchanged).
+Fixed:
+- **A crash after the whole run.** `track:ptt` with RapidParc's hash groupings (which need seed voxels) now refuses
+  before any work.
+- **Tissue maps** given but unused by the config are refused. They are recorded (shape, sha256) only when used.
+- **The runtime record** names PTT's random numbers, and drops the CPU tracker's workers and torch.compile, which PTT
+  does not use. A warning is raised when MPS runs without the Metal kernel.
+- **Tests** cover ACT stopping and WM seeding on the phantom with synthetic tissue maps: every kept point but the seed is
+  a TRACKPOINT under the same ACT; ends lie at the GM caps.
+  - The seed is not tested, as in DIPY. Uniform in a WM voxel next to GM, it can sit where the interpolated include
+    exceeds 0.5 (1 of 28,915 points).
+  - They also cover the refusals.
+
+**The backends and the hash.** The Metal kernel (Philox numbers keyed by the seed's index) and the torch prototype (one
+generator, its stream depending on the batch) give different streamlines for the same config. Decision 6 (the device out
+of the hash) is thereby extended to PTT's two backends, a different random stream and not only rounding, without an
+ensemble-level check of its own. The runtime record says which ran.
+
+**Not yet.**
+- No preset: a released one is immutable and needs a name and a calibration map.
+- The anatomy slots (phase B) that would make the tissue maps.
+- PTT in the ensemble: replicates and voxel summaries; the calibration map.

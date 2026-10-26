@@ -484,21 +484,127 @@ class Run:
         return iter((self.correction, self.tractogram, self.labels))
 
 
+def _shell_volumes(dwi, bval, bvec, shell):
+    """The b0s and one shell, as prepare keeps them: (dwi, bval, bvec (3, G))."""
+    bval = np.asarray(bval, float)
+    keep = (bval < 50) | (np.abs(bval - shell) < 50)
+    return dwi[..., keep], bval[keep], np.asarray(bvec, float)[:, keep]
+
+
+def _image_axes(bvec, affine):
+    """FSL b-vectors in the image's axes: x flipped when the affine's determinant is positive (FSL's convention, as
+    prep.prepare reads it)."""
+    g = np.array(bvec, float)
+    if np.linalg.det(np.asarray(affine)[:3, :3]) > 0:
+        g[0] *= -1
+    return g
+
+
+def ptt_seeds(region, affine, count, rng):
+    """`count` seed points (RAS mm), each in a voxel of `region` drawn uniformly (with replacement) and uniform within
+    it (the voxel's center +- 0.5)."""
+    vox = np.argwhere(region)
+    if not len(vox):
+        raise ValueError("ptt: no voxel to seed in")
+    g = np.random.default_rng(rng)
+    p = vox[g.integers(len(vox), size=count)] + g.uniform(-0.5, 0.5, size=(count, 3))
+    A = np.asarray(affine, float)
+    return p @ A[:3, :3].T + A[:3, 3]
+
+
+def csd_ptt(s, dwi, mask, cfg: PipelineConfig, timer: Timer, prefix="", device="mps", tissue=None) -> Tractogram:
+    """The model slot's csd and the track slot's ptt (docs/sota-pipeline-design.md, section 7.2): the b0s and the shell
+    (b-vectors in image axes), the response and the FODs over the mask (tractline.csd), then PTT (tractline.ptt: the
+    Metal kernel on mps, the torch prototype elsewhere) with ACT from `tissue` (stopping "act": (X, Y, Z, 4) partial
+    volumes WM, GM, deep GM, CSF on the DWI's grid, as the bench's tissue maps; GM and the background end a path
+    validly, CSF invalidly, the field of view's faces validly) or the mask's edge (stopping "mask"), seeded uniformly in
+    WM >= 0.5 (seeding "wm") or in the mask where FA >= fa_seed ("fa"). The PMF is read on our own 362 directions."""
+    from . import csd as C, fields as F, ptt as PT
+    m, o = cfg.opts("model"), cfg.opts("track")
+    d, bval, bvec = _shell_volumes(dwi, s.bval, s.bvec, m["shell"])
+    g = _image_axes(bvec, s.affine)
+    with timer(prefix + "csd"):
+        resp = C.response_ssst(d, bval, g, roi_radius=m["roi_radius"], fa_threshold=m["fa_threshold"])
+        order = int(m["order"]) if m["order"] != "auto" else (8 if int((bval > 50).sum()) >= 45 else 6)
+        coeffs, cinfo = C.CSD(bval, g, resp, order=order, lambda_=m["lambda"], tau=m["tau"]).fit(d, mask, device=device)
+    with timer(prefix + "ptt"):
+        if o["stopping"] == "act":
+            pve = np.asarray(tissue, float)
+            include = pve[..., 1].copy()
+            include[pve.sum(-1) < 1e-6] = 1.0
+            for ax in range(3):                                            # the field of view's faces: a valid end
+                for idx in (0, -1):
+                    sl = [slice(None)] * 3
+                    sl[ax] = idx
+                    include[tuple(sl)] = 1.0
+            exclude = pve[..., 3].copy()
+        else:
+            include, exclude = (~mask).astype(float), np.zeros(mask.shape)
+        if o["seeding"] == "wm":
+            region = np.asarray(tissue)[..., 0] >= 0.5
+        else:
+            ev, _ = C.tensor_fit(d[mask].astype(np.float64), bval, g)
+            region = np.zeros(mask.shape, bool)
+            region[mask] = C.fa(ev) >= o["fa_seed"]
+        seeds = ptt_seeds(region, s.affine, o["seed_count"], o["seed_rng"])
+        v = C.hemisphere(181)
+        pmf = F.PmfField(coeffs, mask, np.r_[v, -v], device)
+        act = F.Act(include, exclude, device)
+        from . import ptt_metal
+        backend = "metal" if torch.device(device).type == "mps" and ptt_metal.available() else "torch"
+        if torch.device(device).type == "mps" and backend == "torch":
+            import warnings
+            warnings.warn("ptt: the Metal kernel is unavailable (torch.mps.compile_shader); the torch prototype runs, "
+                          "slower and with another random stream", stacklevel=2)
+        params = PT.Params(step_size=o["step_size"], max_angle=o["max_angle"], probe_length=o["probe_length"],
+                           probe_quality=o["probe_quality"], pmf_threshold=o["pmf_threshold"], min_len=o["min_len"],
+                           max_len=o["max_len"])
+        tracker = PT.Tracker(pmf, act, s.affine, np.linalg.norm(np.asarray(s.affine)[:3, :3], axis=0), params, device,
+                             backend=backend)
+        by_seed, tinfo = tracker.track(seeds, seed=o["track_rng"], keep_index=True)
+    order_ = sorted(by_seed)
+    fibers = [by_seed[i] for i in order_]
+    stats = {"seeds": int(len(seeds)), "seed_index": np.asarray(order_, np.int64), "backend": backend,
+             "random numbers": ("Philox, counter-based, keyed by the seed's index" if backend == "metal"
+                                else "a torch generator, its stream depending on the batch (20,000 seeds)"),
+             "seed voxels in the seeding region": int(region.sum()), **tinfo}
+    info = {"shell": m["shell"], "directions": int((bval > 50).sum()), "order": order,
+            "response": {"evals": resp.evals.tolist(), "S0": resp.S0, "voxels": resp.voxels}, "csd": cinfo,
+            "mask_voxels": int(mask.sum())}
+    return Tractogram(fibers, stats, mask, info)
+
+
 def execute(s, cfg: PipelineConfig, timer: Timer, prefix="", device="mps", workers=None, labeler=None, trx=None,
-            release=True, **trx_options) -> Run:
+            release=True, tissue=None, **trx_options) -> Run:
     """The pipeline as cfg configures it (tractline.config), on subject s. Every check runs before any work: the
     config's own (at its construction), the shell tracked, the CPU's main guard, the labeler against the bundles slot.
     Then, in SLOTS' order: denoise (when on; order "acquired" before the field, "corrected" after it), field (when on
     and the subject has a pair: correct; off: the DWI as acquired, the reason in Correction.note), mask, model (the
     tracker's input), track, bundles (when on). labeler: an object for the bundles slot (needed for "caller-object";
     otherwise made from the slot, or the caller's checked against it). device, workers, trx and release as run()'s:
-    runtime, recorded beside the config, not in it. Times: timer.total(*pipeline_stages(prefix)), and "denoise"."""
+    runtime, recorded beside the config, not in it. Times: timer.total(*pipeline_stages(prefix, cfg)), and "denoise".
+    tissue: (X, Y, Z, 4) partial volumes (WM, GM, deep GM, CSF) on the DWI's grid, for track:ptt's stopping "act" and
+    seeding "wm" (until the anatomy slots make them: section 7.2); an input like the DWI, recorded in the runtime record
+    by its shape and sha256, not in the config."""
     if not isinstance(cfg, PipelineConfig):
         raise TypeError(f"execute: cfg is a {type(cfg).__name__}, not a PipelineConfig")
     if not cfg.is_on("track"):
         raise ValueError("execute: the track slot is off; there is nothing to run without it yet")
     shell, tracker = cfg.opts("model")["shell"], cfg.opts("track")
     _check_shell(s.bval, shell)
+    ptt = cfg["track"].impl == "ptt"
+    uses_tissue = ptt and (tracker["stopping"] == "act" or tracker["seeding"] == "wm")
+    if uses_tissue:
+        if tissue is None:
+            raise ValueError("execute: track:ptt with stopping 'act' or seeding 'wm' needs tissue= (WM, GM, deep GM, CSF)")
+        if np.shape(tissue)[:3] != np.shape(s.dwi)[:3] or np.ndim(tissue) != 4 or np.shape(tissue)[3] < 4:
+            raise ValueError(f"execute: tissue of shape {np.shape(tissue)}: (X, Y, Z, 4) on the DWI's grid expected")
+    elif tissue is not None:
+        raise ValueError("execute: tissue= given, but this config does not use it (track:ptt with stopping 'act' or "
+                         "seeding 'wm' does)")
+    if ptt and cfg.is_on("bundles") and cfg.opts("bundles").get("grouping", "index") != "index":
+        raise ValueError("execute: track:ptt has no seed voxels (a voxel may seed several streamlines), so the bundles "
+                         "slot's grouping must be 'index'")
     if trx is not None and not cfg.is_on("bundles"):
         raise ValueError("execute: TRX output needs labels, and the bundles slot is off")
     if torch.device(device).type == "cpu" and (workers or os.cpu_count() or 1) > 1:
@@ -519,9 +625,12 @@ def execute(s, cfg: PipelineConfig, timer: Timer, prefix="", device="mps", worke
             corr.dwi, dstats = denoise_corrected(corr.dwi, s.bval, timer, spec, workers)
         corr.denoise = dstats
         mask = brain_mask(corr.dwi, s.bval, timer, prefix, device)
-        with timer(prefix + "prep"):
-            t = prepare(corr.dwi, s.affine, s.bval, s.bvec, shell=shell, device=device, mask=mask)
-        tg = _ukf(t, timer, prefix, device, workers, tracker)
+        if ptt:
+            tg = csd_ptt(s, corr.dwi, mask, cfg, timer, prefix, device, tissue)
+        else:
+            with timer(prefix + "prep"):
+                t = prepare(corr.dwi, s.affine, s.bval, s.bvec, shell=shell, device=device, mask=mask)
+            tg = _ukf(t, timer, prefix, device, workers, tracker)
         if labeler is None:
             labels = None
             timer.skip(prefix + "label")
@@ -535,6 +644,15 @@ def execute(s, cfg: PipelineConfig, timer: Timer, prefix="", device="mps", worke
     if release:
         release_memory(device)
     config, runtime = cfg.to_dict(), runtime_record(device, workers, labeler)
+    if uses_tissue:
+        import hashlib
+        tz = np.ascontiguousarray(tissue, np.float32)
+        runtime["tissue"] = {"shape": list(tz.shape), "sha256 (float32)": hashlib.sha256(tz.tobytes()).hexdigest()}
+    if ptt:                                                                # the CPU tracker's settings do not apply
+        runtime.pop("workers", None)
+        runtime.pop("torch_compile", None)
+        runtime["ptt backend"] = tg.stats["backend"]
+        runtime["ptt random numbers"] = tg.stats["random numbers"]
     corr.provenance = {"config": config, "runtime": runtime}
     return Run(corr, tg, labels, config, runtime)
 
@@ -565,5 +683,10 @@ def run(s, labeler, timer: Timer, prefix="", trx=None, device="mps", workers=Non
     return tuple(execute(s, config, timer, prefix, device, workers, labeler, trx, release, **trx_options))
 
 
-def pipeline_stages(prefix=""):
-    return [n if n.startswith("field_") else prefix + n for n in STAGES]
+PTT_STAGES = ("field_estimate", "field_apply", "mask", "csd", "ptt", "label")
+
+
+def pipeline_stages(prefix="", cfg: PipelineConfig = None):
+    """The timer's stage names for a run: today's UKF path, or (cfg with track:ptt) the CSD and PTT path's."""
+    names = PTT_STAGES if cfg is not None and cfg.is_on("track") and cfg["track"].impl == "ptt" else STAGES
+    return [n if n.startswith("field_") else prefix + n for n in names]

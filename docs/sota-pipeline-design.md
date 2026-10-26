@@ -511,8 +511,12 @@ interpolation) to understand it, and from Aydogan & Shi 2021. Our own implementa
     - Count-matched per tract, it agrees better than UKF on all three tracts. Raw, UKF's UF agrees better. PTT reuses
       A's tissue maps and seeds.
     - Against the stated 10°: no worse at matched counts, and much more UF tracked (17.4 against 10.5 mL).
-  - **Next for PTT:** the `model:csd` and `track:ptt` slots (and the `Scan` state they need), then a PTT ensemble and its
-    calibration map.
+  - **Wired** (NOTES 2026-10-25): `model:csd` and `track:ptt` are config slots, run by `pipeline.execute`. Tissue maps
+    come from the caller (`tissue=`) until phase B makes them. On cIIIs04 a run takes 60.8 s from scan to labels (UKF:
+    89 s). The `Scan` state was not needed yet: execute branches on the track slot.
+  - **Limits.** PTT has no seed voxels, so RapidParc's hash groupings are refused with it. Its Metal and torch backends
+    give different random streams under one config hash (decision 6 extended, not yet checked at the ensemble level).
+  - **Next for PTT:** a PTT ensemble (voxel summaries; replicates) and its calibration map, then a released preset.
 - **Was "still to run":** the phantom in both. Step 6's PTT advantage was measured with DIPY's units; how much of it survives
   in real units decides whether PTT earns its preset.
 

@@ -180,6 +180,41 @@ register(Implementation(
     doc="UKF two-tensor tractography with the ORG settings and the binary's seeds (ukf.track; Metal on mps, Triton on "
         "cuda, the fast float32 step on the CPU)"))
 register(Implementation(
+    "model", "csd", "1",
+    {"shell": Option(2800.0, float, low=1.0, doc="the b-value fitted, with the b0s"),
+     "order": Option("auto", str, ("auto", "6", "8"), doc="the SH order; auto: 8 from 45 directions, else 6 (as DIPY's "
+                                                        "benchmark chose)"),
+     "lambda": Option(1.0, float, low=0.0, doc="the constraint's weight (Tournier 2012's scaling)"),
+     "tau": Option(0.1, float, low=0.0, high=1.0, doc="the constraint's threshold, a share of the FOD's mean"),
+     "fa_threshold": Option(0.7, float, low=0.0, high=1.0, doc="the response's voxels: FA above this"),
+     "roi_radius": Option(10, int, low=1, doc="the response's voxels: within this many of the volume's center")},
+    requires={"mask": ()}, oracle="DIPY ConstrainedSphericalDeconvModel", status="experimental",
+    doc="single-shell CSD (tractline.csd): the response from the data, Tournier 2007's constrained fit on our own "
+        "181-axis constraint hemisphere; equal to DIPY's on DIPY's sphere (bench/csd_check.py)"))
+register(Implementation(
+    "track", "ptt", "1",
+    {"step_size": Option(0.5, float, low=0.01, doc="mm"),
+     "max_angle": Option(20.0, float, low=1.0, high=90.0, doc="degrees per step, real units (at 2 mm voxels, DIPY 1.12's "
+                                                              "stated 10; NOTES 2026-10-25)"),
+     "probe_length": Option(1.5, float, low=0.1, doc="mm"),
+     "probe_quality": Option(7, int, low=3, high=20, doc="points along the probe"),
+     "pmf_threshold": Option(0.1, float, low=0.0),
+     "min_len": Option(20.0, float, low=0.0, doc="mm"),
+     "max_len": Option(250.0, float, low=1.0, doc="mm"),
+     "stopping": Option("act", str, ("act", "mask"), doc="act: the anatomical constraint from tissue maps the caller gives "
+                                                        "execute (tissue=; GM and background end validly, CSF invalidly); "
+                                                        "mask: leaving the brain mask ends validly"),
+     "seeding": Option("wm", str, ("wm", "fa"), doc="wm: uniform in the voxels with WM >= 0.5 (tissue maps); fa: uniform "
+                                                    "in the mask's voxels with FA >= fa_seed"),
+     "fa_seed": Option(0.2, float, low=0.0, high=1.0),
+     "seed_count": Option(100_000, int, low=1),
+     "seed_rng": Option(1, int, low=0, doc="the seed points' generator"),
+     "track_rng": Option(1, int, low=0, doc="the tracking's random numbers")},
+    requires={"model": ("csd",), "mask": ()}, oracle="DIPY ptt_tracking (with its units: ptt's validation switch)",
+    status="experimental",
+    doc="parallel transport tractography with ACT (tractline.ptt; the Metal kernel on mps, the torch prototype "
+        "elsewhere), real units; the PMF on our own 362 directions (hemisphere(181) and its antipodes)"))
+register(Implementation(
     "bundles", "rapidparc", "1",
     {"model": Option("rapidparc", str, ("rapidparc", "hemiaug"), doc="the released weights' name (rapidparc.MODELS)"),
      "draw": Option(0, int, low=0, doc="the shuffle seed of the one draw labeled"),
