@@ -1,0 +1,3780 @@
+{
+ "records": {
+  "ukf A": 64378,
+  "ukf within": 64275,
+  "ours A": 67346,
+  "ours within": 65498,
+  "dipy A": 65003
+ },
+ "ours": "mm-own_probe1.5_angle20",
+ "draws": 3,
+ "naming: radius mm, voters at most, min overlapping for a suspect": [
+  4.0,
+  5,
+  30
+ ],
+ "tracts": {
+  "AF": {
+   "labeled on A": {
+    "ukf A": 787,
+    "ours A": 1478,
+    "dipy A": 738
+   },
+   "matched count": 738,
+   "across: ukf / ours (A)": 0.6835,
+   "across: ukf / dipy (A)": 0.6689,
+   "across: ours / dipy (A)": 0.7578,
+   "rescan: ukf (A / within)": 0.8068,
+   "rescan: ours (A / within)": 0.8212,
+   "center distance mm": {
+    "ukf / ours (A)": 7.21,
+    "ukf rescan": 2.58,
+    "ours rescan": 1.03
+   },
+   "naming (ours)": {
+    "streamlines": 1478,
+    "overlapping": 278,
+    "with a counterpart": 0.1881,
+    "agreement": 0.9964,
+    "voters gave instead": [
+     [
+      "Other",
+      1
+     ]
+    ]
+   },
+   "naming baseline (ukf rescan)": {
+    "overlapping": 533,
+    "agreement": 0.9831
+   },
+   "classes": []
+  },
+  "CB": {
+   "labeled on A": {
+    "ukf A": 767,
+    "ours A": 1400,
+    "dipy A": 1578
+   },
+   "matched count": 767,
+   "across: ukf / ours (A)": 0.5598,
+   "across: ukf / dipy (A)": 0.5142,
+   "across: ours / dipy (A)": 0.7684,
+   "rescan: ukf (A / within)": 0.7286,
+   "rescan: ours (A / within)": 0.8165,
+   "center distance mm": {
+    "ukf / ours (A)": 9.92,
+    "ukf rescan": 0.88,
+    "ours rescan": 1.74
+   },
+   "naming (ours)": {
+    "streamlines": 1400,
+    "overlapping": 52,
+    "with a counterpart": 0.0371,
+    "agreement": 0.9808,
+    "voters gave instead": [
+     [
+      "Other",
+      1
+     ]
+    ]
+   },
+   "naming baseline (ukf rescan)": {
+    "overlapping": 244,
+    "agreement": 0.9508
+   },
+   "classes": [
+    "coverage"
+   ]
+  },
+  "EC": {
+   "labeled on A": {
+    "ukf A": 201,
+    "ours A": 172,
+    "dipy A": 41
+   },
+   "matched count": 41,
+   "across: ukf / ours (A)": 0.3208,
+   "across: ukf / dipy (A)": 0.1973,
+   "across: ours / dipy (A)": 0.29,
+   "rescan: ukf (A / within)": 0.2675,
+   "rescan: ours (A / within)": 0.4162,
+   "center distance mm": {
+    "ukf / ours (A)": 21.75,
+    "ukf rescan": 20.08,
+    "ours rescan": 9.55
+   },
+   "naming (ours)": {
+    "streamlines": 172,
+    "overlapping": 5,
+    "with a counterpart": 0.0291,
+    "agreement": 1.0,
+    "voters gave instead": []
+   },
+   "naming baseline (ukf rescan)": {
+    "overlapping": 44,
+    "agreement": 0.9773
+   },
+   "classes": [
+    "coverage",
+    "UKF-unstable"
+   ]
+  },
+  "EmC": {
+   "labeled on A": {
+    "ukf A": 198,
+    "ours A": 98,
+    "dipy A": 72
+   },
+   "matched count": 72,
+   "across: ukf / ours (A)": 0.4258,
+   "across: ukf / dipy (A)": 0.4256,
+   "across: ours / dipy (A)": 0.5259,
+   "rescan: ukf (A / within)": 0.4849,
+   "rescan: ours (A / within)": 0.5239,
+   "center distance mm": {
+    "ukf / ours (A)": 9.63,
+    "ukf rescan": 6.65,
+    "ours rescan": 8.86
+   },
+   "naming (ours)": {
+    "streamlines": 98,
+    "overlapping": 3,
+    "with a counterpart": 0.0306,
+    "agreement": 1.0,
+    "voters gave instead": []
+   },
+   "naming baseline (ukf rescan)": {
+    "overlapping": 80,
+    "agreement": 0.8625
+   },
+   "classes": [
+    "coverage",
+    "UKF-unstable"
+   ]
+  },
+  "ILF": {
+   "labeled on A": {
+    "ukf A": 1002,
+    "ours A": 851,
+    "dipy A": 657
+   },
+   "matched count": 657,
+   "across: ukf / ours (A)": 0.6013,
+   "across: ukf / dipy (A)": 0.5951,
+   "across: ours / dipy (A)": 0.7794,
+   "rescan: ukf (A / within)": 0.7362,
+   "rescan: ours (A / within)": 0.8067,
+   "center distance mm": {
+    "ukf / ours (A)": 4.7,
+    "ukf rescan": 1.73,
+    "ours rescan": 0.6
+   },
+   "naming (ours)": {
+    "streamlines": 851,
+    "overlapping": 55,
+    "with a counterpart": 0.0646,
+    "agreement": 0.8909,
+    "voters gave instead": [
+     [
+      "Sup-OT",
+      3
+     ],
+     [
+      "Other",
+      1
+     ],
+     [
+      "MdLF",
+      1
+     ]
+    ]
+   },
+   "naming baseline (ukf rescan)": {
+    "overlapping": 406,
+    "agreement": 0.9064
+   },
+   "classes": []
+  },
+  "IOFF": {
+   "labeled on A": {
+    "ukf A": 444,
+    "ours A": 602,
+    "dipy A": 235
+   },
+   "matched count": 235,
+   "across: ukf / ours (A)": 0.6505,
+   "across: ukf / dipy (A)": 0.6352,
+   "across: ours / dipy (A)": 0.7072,
+   "rescan: ukf (A / within)": 0.7094,
+   "rescan: ours (A / within)": 0.7679,
+   "center distance mm": {
+    "ukf / ours (A)": 1.42,
+    "ukf rescan": 3.55,
+    "ours rescan": 1.31
+   },
+   "naming (ours)": {
+    "streamlines": 602,
+    "overlapping": 33,
+    "with a counterpart": 0.0548,
+    "agreement": 0.9091,
+    "voters gave instead": [
+     [
+      "EmC",
+      2
+     ],
+     [
+      "Other",
+      1
+     ]
+    ]
+   },
+   "naming baseline (ukf rescan)": {
+    "overlapping": 193,
+    "agreement": 0.9171
+   },
+   "classes": []
+  },
+  "MdLF": {
+   "labeled on A": {
+    "ukf A": 1137,
+    "ours A": 937,
+    "dipy A": 532
+   },
+   "matched count": 532,
+   "across: ukf / ours (A)": 0.6375,
+   "across: ukf / dipy (A)": 0.6056,
+   "across: ours / dipy (A)": 0.728,
+   "rescan: ukf (A / within)": 0.7085,
+   "rescan: ours (A / within)": 0.7574,
+   "center distance mm": {
+    "ukf / ours (A)": 4.94,
+    "ukf rescan": 2.21,
+    "ours rescan": 1.1
+   },
+   "naming (ours)": {
+    "streamlines": 937,
+    "overlapping": 132,
+    "with a counterpart": 0.1409,
+    "agreement": 0.9924,
+    "voters gave instead": [
+     [
+      "Sup-T",
+      1
+     ]
+    ]
+   },
+   "naming baseline (ukf rescan)": {
+    "overlapping": 672,
+    "agreement": 0.939
+   },
+   "classes": []
+  },
+  "SLF-I": {
+   "labeled on A": {
+    "ukf A": 640,
+    "ours A": 389,
+    "dipy A": 119
+   },
+   "matched count": 119,
+   "across: ukf / ours (A)": 0.424,
+   "across: ukf / dipy (A)": 0.3924,
+   "across: ours / dipy (A)": 0.5114,
+   "rescan: ukf (A / within)": 0.5315,
+   "rescan: ours (A / within)": 0.5523,
+   "center distance mm": {
+    "ukf / ours (A)": 10.91,
+    "ukf rescan": 5.34,
+    "ours rescan": 6.22
+   },
+   "naming (ours)": {
+    "streamlines": 389,
+    "overlapping": 21,
+    "with a counterpart": 0.054,
+    "agreement": 0.7619,
+    "voters gave instead": [
+     [
+      "AF",
+      2
+     ],
+     [
+      "SLF-II",
+      2
+     ],
+     [
+      "Other",
+      1
+     ]
+    ]
+   },
+   "naming baseline (ukf rescan)": {
+    "overlapping": 352,
+    "agreement": 0.9261
+   },
+   "classes": [
+    "coverage"
+   ]
+  },
+  "SLF-II": {
+   "labeled on A": {
+    "ukf A": 540,
+    "ours A": 553,
+    "dipy A": 221
+   },
+   "matched count": 221,
+   "across: ukf / ours (A)": 0.4701,
+   "across: ukf / dipy (A)": 0.4567,
+   "across: ours / dipy (A)": 0.6422,
+   "rescan: ukf (A / within)": 0.6815,
+   "rescan: ours (A / within)": 0.7119,
+   "center distance mm": {
+    "ukf / ours (A)": 9.48,
+    "ukf rescan": 2.82,
+    "ours rescan": 4.89
+   },
+   "naming (ours)": {
+    "streamlines": 553,
+    "overlapping": 67,
+    "with a counterpart": 0.1212,
+    "agreement": 0.9104,
+    "voters gave instead": [
+     [
+      "Other",
+      6
+     ]
+    ]
+   },
+   "naming baseline (ukf rescan)": {
+    "overlapping": 306,
+    "agreement": 0.8791
+   },
+   "classes": [
+    "coverage"
+   ]
+  },
+  "SLF-III": {
+   "labeled on A": {
+    "ukf A": 339,
+    "ours A": 295,
+    "dipy A": 350
+   },
+   "matched count": 295,
+   "across: ukf / ours (A)": 0.6167,
+   "across: ukf / dipy (A)": 0.5187,
+   "across: ours / dipy (A)": 0.7115,
+   "rescan: ukf (A / within)": 0.7196,
+   "rescan: ours (A / within)": 0.7876,
+   "center distance mm": {
+    "ukf / ours (A)": 7.34,
+    "ukf rescan": 2.63,
+    "ours rescan": 1.76
+   },
+   "naming (ours)": {
+    "streamlines": 295,
+    "overlapping": 39,
+    "with a counterpart": 0.1322,
+    "agreement": 0.8974,
+    "voters gave instead": [
+     [
+      "Other",
+      2
+     ],
+     [
+      "Sup-FP",
+      2
+     ]
+    ]
+   },
+   "naming baseline (ukf rescan)": {
+    "overlapping": 225,
+    "agreement": 0.8667
+   },
+   "classes": []
+  },
+  "UF": {
+   "labeled on A": {
+    "ukf A": 728,
+    "ours A": 296,
+    "dipy A": 286
+   },
+   "matched count": 286,
+   "across: ukf / ours (A)": 0.5395,
+   "across: ukf / dipy (A)": 0.5319,
+   "across: ours / dipy (A)": 0.7091,
+   "rescan: ukf (A / within)": 0.6678,
+   "rescan: ours (A / within)": 0.7398,
+   "center distance mm": {
+    "ukf / ours (A)": 5.82,
+    "ukf rescan": 2.39,
+    "ours rescan": 1.99
+   },
+   "naming (ours)": {
+    "streamlines": 296,
+    "overlapping": 46,
+    "with a counterpart": 0.1554,
+    "agreement": 0.8261,
+    "voters gave instead": [
+     [
+      "SF",
+      7
+     ],
+     [
+      "Other",
+      1
+     ]
+    ]
+   },
+   "naming baseline (ukf rescan)": {
+    "overlapping": 412,
+    "agreement": 0.9417
+   },
+   "classes": []
+  },
+  "CST": {
+   "labeled on A": {
+    "ukf A": 523,
+    "ours A": 1600,
+    "dipy A": 1730
+   },
+   "matched count": 523,
+   "across: ukf / ours (A)": 0.6916,
+   "across: ukf / dipy (A)": 0.6866,
+   "across: ours / dipy (A)": 0.7976,
+   "rescan: ukf (A / within)": 0.7739,
+   "rescan: ours (A / within)": 0.8141,
+   "center distance mm": {
+    "ukf / ours (A)": 6.62,
+    "ukf rescan": 2.88,
+    "ours rescan": 0.86
+   },
+   "naming (ours)": {
+    "streamlines": 1600,
+    "overlapping": 591,
+    "with a counterpart": 0.3694,
+    "agreement": 0.8697,
+    "voters gave instead": [
+     [
+      "CR-F",
+      56
+     ],
+     [
+      "Other",
+      21
+     ]
+    ]
+   },
+   "naming baseline (ukf rescan)": {
+    "overlapping": 336,
+    "agreement": 0.9167
+   },
+   "classes": []
+  },
+  "CR-F": {
+   "labeled on A": {
+    "ukf A": 663,
+    "ours A": 1417,
+    "dipy A": 1514
+   },
+   "matched count": 663,
+   "across: ukf / ours (A)": 0.6962,
+   "across: ukf / dipy (A)": 0.6898,
+   "across: ours / dipy (A)": 0.7971,
+   "rescan: ukf (A / within)": 0.7718,
+   "rescan: ours (A / within)": 0.8042,
+   "center distance mm": {
+    "ukf / ours (A)": 5.34,
+    "ukf rescan": 0.65,
+    "ours rescan": 1.53
+   },
+   "naming (ours)": {
+    "streamlines": 1417,
+    "overlapping": 265,
+    "with a counterpart": 0.187,
+    "agreement": 0.7774,
+    "voters gave instead": [
+     [
+      "Other",
+      53
+     ],
+     [
+      "CST",
+      6
+     ]
+    ]
+   },
+   "naming baseline (ukf rescan)": {
+    "overlapping": 311,
+    "agreement": 0.8971
+   },
+   "classes": []
+  },
+  "CR-P": {
+   "labeled on A": {
+    "ukf A": 68,
+    "ours A": 184,
+    "dipy A": 126
+   },
+   "matched count": 68,
+   "across: ukf / ours (A)": 0.4236,
+   "across: ukf / dipy (A)": 0.405,
+   "across: ours / dipy (A)": 0.5791,
+   "rescan: ukf (A / within)": 0.4208,
+   "rescan: ours (A / within)": 0.5479,
+   "center distance mm": {
+    "ukf / ours (A)": 2.53,
+    "ukf rescan": 6.79,
+    "ours rescan": 7.56
+   },
+   "naming (ours)": {
+    "streamlines": 184,
+    "overlapping": 15,
+    "with a counterpart": 0.0815,
+    "agreement": 0.9333,
+    "voters gave instead": [
+     [
+      "CST",
+      1
+     ]
+    ]
+   },
+   "naming baseline (ukf rescan)": {
+    "overlapping": 16,
+    "agreement": 0.875
+   },
+   "classes": [
+    "UKF-unstable"
+   ]
+  },
+  "SF": {
+   "labeled on A": {
+    "ukf A": 1137,
+    "ours A": 610,
+    "dipy A": 629
+   },
+   "matched count": 572,
+   "across: ukf / ours (A)": 0.3389,
+   "across: ukf / dipy (A)": 0.3098,
+   "across: ours / dipy (A)": 0.6018,
+   "rescan: ukf (A / within)": 0.6524,
+   "rescan: ours (A / within)": 0.6361,
+   "center distance mm": {
+    "ukf / ours (A)": 7.06,
+    "ukf rescan": 2.08,
+    "ours rescan": 1.44
+   },
+   "naming (ours)": {
+    "streamlines": 610,
+    "overlapping": 76,
+    "with a counterpart": 0.1246,
+    "agreement": 0.7632,
+    "voters gave instead": [
+     [
+      "Other",
+      12
+     ],
+     [
+      "TF",
+      3
+     ],
+     [
+      "SP",
+      1
+     ]
+    ]
+   },
+   "naming baseline (ukf rescan)": {
+    "overlapping": 856,
+    "agreement": 0.8727
+   },
+   "classes": []
+  },
+  "SO": {
+   "labeled on A": {
+    "ukf A": 28,
+    "ours A": 133,
+    "dipy A": 117
+   },
+   "matched count": 19,
+   "note": "fewer than 20 streamlines in some record: territory not compared",
+   "naming (ours)": {
+    "streamlines": 133,
+    "overlapping": 0,
+    "with a counterpart": 0.0,
+    "agreement": null,
+    "voters gave instead": []
+   },
+   "classes": [
+    "coverage"
+   ]
+  },
+  "SP": {
+   "labeled on A": {
+    "ukf A": 65,
+    "ours A": 248,
+    "dipy A": 195
+   },
+   "matched count": 65,
+   "across: ukf / ours (A)": 0.2408,
+   "across: ukf / dipy (A)": 0.1876,
+   "across: ours / dipy (A)": 0.5056,
+   "rescan: ukf (A / within)": 0.5873,
+   "rescan: ours (A / within)": 0.5001,
+   "center distance mm": {
+    "ukf / ours (A)": 8.47,
+    "ukf rescan": 3.59,
+    "ours rescan": 6.37
+   },
+   "naming (ours)": {
+    "streamlines": 248,
+    "overlapping": 35,
+    "with a counterpart": 0.1411,
+    "agreement": 0.8286,
+    "voters gave instead": [
+     [
+      "SF",
+      5
+     ],
+     [
+      "Other",
+      1
+     ]
+    ]
+   },
+   "naming baseline (ukf rescan)": {
+    "overlapping": 51,
+    "agreement": 0.7451
+   },
+   "classes": []
+  },
+  "TF": {
+   "labeled on A": {
+    "ukf A": 1325,
+    "ours A": 434,
+    "dipy A": 258
+   },
+   "matched count": 258,
+   "across: ukf / ours (A)": 0.3809,
+   "across: ukf / dipy (A)": 0.4004,
+   "across: ours / dipy (A)": 0.5983,
+   "rescan: ukf (A / within)": 0.4808,
+   "rescan: ours (A / within)": 0.5783,
+   "center distance mm": {
+    "ukf / ours (A)": 7.37,
+    "ukf rescan": 2.99,
+    "ours rescan": 2.03
+   },
+   "naming (ours)": {
+    "streamlines": 434,
+    "overlapping": 35,
+    "with a counterpart": 0.0806,
+    "agreement": 0.8286,
+    "voters gave instead": [
+     [
+      "Other",
+      5
+     ],
+     [
+      "SF",
+      1
+     ]
+    ]
+   },
+   "naming baseline (ukf rescan)": {
+    "overlapping": 552,
+    "agreement": 0.942
+   },
+   "classes": [
+    "UKF-unstable"
+   ]
+  },
+  "TO": {
+   "labeled on A": {
+    "ukf A": 90,
+    "ours A": 169,
+    "dipy A": 136
+   },
+   "matched count": 90,
+   "across: ukf / ours (A)": 0.2264,
+   "across: ukf / dipy (A)": 0.3081,
+   "across: ours / dipy (A)": 0.6264,
+   "rescan: ukf (A / within)": 0.4445,
+   "rescan: ours (A / within)": 0.6642,
+   "center distance mm": {
+    "ukf / ours (A)": 14.64,
+    "ukf rescan": 3.6,
+    "ours rescan": 8.32
+   },
+   "naming (ours)": {
+    "streamlines": 169,
+    "overlapping": 4,
+    "with a counterpart": 0.0237,
+    "agreement": 1.0,
+    "voters gave instead": []
+   },
+   "naming baseline (ukf rescan)": {
+    "overlapping": 32,
+    "agreement": 0.8438
+   },
+   "classes": [
+    "coverage",
+    "UKF-unstable"
+   ]
+  },
+  "TT": {
+   "labeled on A": {
+    "ukf A": 450,
+    "ours A": 80,
+    "dipy A": 90
+   },
+   "matched count": 79,
+   "across: ukf / ours (A)": 0.2869,
+   "across: ukf / dipy (A)": 0.2917,
+   "across: ours / dipy (A)": 0.4653,
+   "rescan: ukf (A / within)": 0.207,
+   "rescan: ours (A / within)": 0.4577,
+   "center distance mm": {
+    "ukf / ours (A)": 14.37,
+    "ukf rescan": 7.72,
+    "ours rescan": 13.04
+   },
+   "naming (ours)": {
+    "streamlines": 80,
+    "overlapping": 10,
+    "with a counterpart": 0.125,
+    "agreement": 1.0,
+    "voters gave instead": []
+   },
+   "naming baseline (ukf rescan)": {
+    "overlapping": 246,
+    "agreement": 0.9309
+   },
+   "classes": [
+    "coverage",
+    "UKF-unstable"
+   ]
+  },
+  "TP": {
+   "labeled on A": {
+    "ukf A": 409,
+    "ours A": 584,
+    "dipy A": 410
+   },
+   "matched count": 409,
+   "across: ukf / ours (A)": 0.4386,
+   "across: ukf / dipy (A)": 0.4265,
+   "across: ours / dipy (A)": 0.6678,
+   "rescan: ukf (A / within)": 0.6055,
+   "rescan: ours (A / within)": 0.6826,
+   "center distance mm": {
+    "ukf / ours (A)": 4.02,
+    "ukf rescan": 1.66,
+    "ours rescan": 1.55
+   },
+   "naming (ours)": {
+    "streamlines": 584,
+    "overlapping": 25,
+    "with a counterpart": 0.0428,
+    "agreement": 0.72,
+    "voters gave instead": [
+     [
+      "Other",
+      3
+     ],
+     [
+      "SF",
+      3
+     ],
+     [
+      "PLIC",
+      1
+     ]
+    ]
+   },
+   "naming baseline (ukf rescan)": {
+    "overlapping": 174,
+    "agreement": 0.8448
+   },
+   "classes": [
+    "coverage"
+   ]
+  },
+  "PLIC": {
+   "labeled on A": {
+    "ukf A": 70,
+    "ours A": 101,
+    "dipy A": 41
+   },
+   "matched count": 41,
+   "across: ukf / ours (A)": 0.2268,
+   "across: ukf / dipy (A)": 0.1319,
+   "across: ours / dipy (A)": 0.476,
+   "rescan: ukf (A / within)": 0.3927,
+   "rescan: ours (A / within)": 0.4618,
+   "center distance mm": {
+    "ukf / ours (A)": 14.26,
+    "ukf rescan": 5.04,
+    "ours rescan": 6.61
+   },
+   "naming (ours)": {
+    "streamlines": 101,
+    "overlapping": 3,
+    "with a counterpart": 0.0297,
+    "agreement": 0.3333,
+    "voters gave instead": [
+     [
+      "SF",
+      1
+     ],
+     [
+      "TP",
+      1
+     ]
+    ]
+   },
+   "naming baseline (ukf rescan)": {
+    "overlapping": 26,
+    "agreement": 0.9615
+   },
+   "classes": [
+    "coverage",
+    "UKF-unstable"
+   ]
+  },
+  "CC1": {
+   "labeled on A": {
+    "ukf A": 240,
+    "ours A": 596,
+    "dipy A": 647
+   },
+   "matched count": 215,
+   "across: ukf / ours (A)": 0.5057,
+   "across: ukf / dipy (A)": 0.4593,
+   "across: ours / dipy (A)": 0.7262,
+   "rescan: ukf (A / within)": 0.6501,
+   "rescan: ours (A / within)": 0.8503,
+   "center distance mm": {
+    "ukf / ours (A)": 7.24,
+    "ukf rescan": 1.86,
+    "ours rescan": 0.6
+   },
+   "naming (ours)": {
+    "streamlines": 596,
+    "overlapping": 102,
+    "with a counterpart": 0.1711,
+    "agreement": 0.7059,
+    "voters gave instead": [
+     [
+      "CC2",
+      30
+     ]
+    ]
+   },
+   "naming baseline (ukf rescan)": {
+    "overlapping": 133,
+    "agreement": 0.9323
+   },
+   "classes": [
+    "naming suspect",
+    "coverage"
+   ]
+  },
+  "CC2": {
+   "labeled on A": {
+    "ukf A": 1057,
+    "ours A": 3019,
+    "dipy A": 2592
+   },
+   "matched count": 1057,
+   "across: ukf / ours (A)": 0.7274,
+   "across: ukf / dipy (A)": 0.6796,
+   "across: ours / dipy (A)": 0.817,
+   "rescan: ukf (A / within)": 0.8353,
+   "rescan: ours (A / within)": 0.8788,
+   "center distance mm": {
+    "ukf / ours (A)": 3.27,
+    "ukf rescan": 0.49,
+    "ours rescan": 0.56
+   },
+   "naming (ours)": {
+    "streamlines": 3019,
+    "overlapping": 468,
+    "with a counterpart": 0.155,
+    "agreement": 0.9808,
+    "voters gave instead": [
+     [
+      "CC3",
+      8
+     ],
+     [
+      "Other",
+      1
+     ]
+    ]
+   },
+   "naming baseline (ukf rescan)": {
+    "overlapping": 651,
+    "agreement": 0.9462
+   },
+   "classes": []
+  },
+  "CC3": {
+   "labeled on A": {
+    "ukf A": 531,
+    "ours A": 1999,
+    "dipy A": 1650
+   },
+   "matched count": 531,
+   "across: ukf / ours (A)": 0.6597,
+   "across: ukf / dipy (A)": 0.604,
+   "across: ours / dipy (A)": 0.7482,
+   "rescan: ukf (A / within)": 0.8096,
+   "rescan: ours (A / within)": 0.8241,
+   "center distance mm": {
+    "ukf / ours (A)": 3.91,
+    "ukf rescan": 0.99,
+    "ours rescan": 1.14
+   },
+   "naming (ours)": {
+    "streamlines": 1999,
+    "overlapping": 290,
+    "with a counterpart": 0.1451,
+    "agreement": 0.969,
+    "voters gave instead": [
+     [
+      "CC2",
+      7
+     ],
+     [
+      "CC4",
+      2
+     ]
+    ]
+   },
+   "naming baseline (ukf rescan)": {
+    "overlapping": 382,
+    "agreement": 0.9058
+   },
+   "classes": []
+  },
+  "CC4": {
+   "labeled on A": {
+    "ukf A": 648,
+    "ours A": 1268,
+    "dipy A": 1188
+   },
+   "matched count": 635,
+   "across: ukf / ours (A)": 0.6319,
+   "across: ukf / dipy (A)": 0.4914,
+   "across: ours / dipy (A)": 0.7214,
+   "rescan: ukf (A / within)": 0.824,
+   "rescan: ours (A / within)": 0.8241,
+   "center distance mm": {
+    "ukf / ours (A)": 4.2,
+    "ukf rescan": 1.1,
+    "ours rescan": 0.68
+   },
+   "naming (ours)": {
+    "streamlines": 1268,
+    "overlapping": 299,
+    "with a counterpart": 0.2358,
+    "agreement": 0.9766,
+    "voters gave instead": [
+     [
+      "CC5",
+      5
+     ],
+     [
+      "CC3",
+      2
+     ]
+    ]
+   },
+   "naming baseline (ukf rescan)": {
+    "overlapping": 430,
+    "agreement": 0.9512
+   },
+   "classes": []
+  },
+  "CC5": {
+   "labeled on A": {
+    "ukf A": 540,
+    "ours A": 771,
+    "dipy A": 555
+   },
+   "matched count": 472,
+   "across: ukf / ours (A)": 0.6148,
+   "across: ukf / dipy (A)": 0.5451,
+   "across: ours / dipy (A)": 0.7821,
+   "rescan: ukf (A / within)": 0.7705,
+   "rescan: ours (A / within)": 0.8515,
+   "center distance mm": {
+    "ukf / ours (A)": 3.75,
+    "ukf rescan": 0.83,
+    "ours rescan": 1.24
+   },
+   "naming (ours)": {
+    "streamlines": 771,
+    "overlapping": 248,
+    "with a counterpart": 0.3217,
+    "agreement": 0.9274,
+    "voters gave instead": [
+     [
+      "CC4",
+      10
+     ],
+     [
+      "Other",
+      4
+     ],
+     [
+      "CC6",
+      4
+     ]
+    ]
+   },
+   "naming baseline (ukf rescan)": {
+    "overlapping": 300,
+    "agreement": 0.9133
+   },
+   "classes": []
+  },
+  "CC6": {
+   "labeled on A": {
+    "ukf A": 1564,
+    "ours A": 1859,
+    "dipy A": 1472
+   },
+   "matched count": 1422,
+   "across: ukf / ours (A)": 0.6248,
+   "across: ukf / dipy (A)": 0.5867,
+   "across: ours / dipy (A)": 0.7792,
+   "rescan: ukf (A / within)": 0.8192,
+   "rescan: ours (A / within)": 0.8342,
+   "center distance mm": {
+    "ukf / ours (A)": 10.76,
+    "ukf rescan": 0.55,
+    "ours rescan": 1.25
+   },
+   "naming (ours)": {
+    "streamlines": 1859,
+    "overlapping": 192,
+    "with a counterpart": 0.1033,
+    "agreement": 0.901,
+    "voters gave instead": [
+     [
+      "CC5",
+      13
+     ],
+     [
+      "Other",
+      6
+     ]
+    ]
+   },
+   "naming baseline (ukf rescan)": {
+    "overlapping": 593,
+    "agreement": 0.9494
+   },
+   "classes": [
+    "coverage"
+   ]
+  },
+  "CC7": {
+   "labeled on A": {
+    "ukf A": 419,
+    "ours A": 694,
+    "dipy A": 954
+   },
+   "matched count": 335,
+   "across: ukf / ours (A)": 0.6588,
+   "across: ukf / dipy (A)": 0.6254,
+   "across: ours / dipy (A)": 0.7673,
+   "rescan: ukf (A / within)": 0.7419,
+   "rescan: ours (A / within)": 0.8239,
+   "center distance mm": {
+    "ukf / ours (A)": 2.45,
+    "ukf rescan": 3.37,
+    "ours rescan": 0.7
+   },
+   "naming (ours)": {
+    "streamlines": 694,
+    "overlapping": 41,
+    "with a counterpart": 0.0591,
+    "agreement": 0.9268,
+    "voters gave instead": [
+     [
+      "CC6",
+      2
+     ],
+     [
+      "Other",
+      1
+     ]
+    ]
+   },
+   "naming baseline (ukf rescan)": {
+    "overlapping": 81,
+    "agreement": 0.9136
+   },
+   "classes": []
+  },
+  "CPC": {
+   "labeled on A": {
+    "ukf A": 111,
+    "ours A": 120,
+    "dipy A": 175
+   },
+   "matched count": 105,
+   "across: ukf / ours (A)": 0.3031,
+   "across: ukf / dipy (A)": 0.2706,
+   "across: ours / dipy (A)": 0.4941,
+   "rescan: ukf (A / within)": 0.4559,
+   "rescan: ours (A / within)": 0.444,
+   "center distance mm": {
+    "ukf / ours (A)": 1.89,
+    "ukf rescan": 2.1,
+    "ours rescan": 1.98
+   },
+   "naming (ours)": {
+    "streamlines": 120,
+    "overlapping": 0,
+    "with a counterpart": 0.0,
+    "agreement": null,
+    "voters gave instead": []
+   },
+   "naming baseline (ukf rescan)": {
+    "overlapping": 9,
+    "agreement": 0.7778
+   },
+   "classes": [
+    "coverage",
+    "UKF-unstable"
+   ]
+  },
+  "ICP": {
+   "labeled on A": {
+    "ukf A": 192,
+    "ours A": 149,
+    "dipy A": 83
+   },
+   "matched count": 83,
+   "across: ukf / ours (A)": 0.5503,
+   "across: ukf / dipy (A)": 0.5468,
+   "across: ours / dipy (A)": 0.7232,
+   "rescan: ukf (A / within)": 0.6257,
+   "rescan: ours (A / within)": 0.7507,
+   "center distance mm": {
+    "ukf / ours (A)": 2.55,
+    "ukf rescan": 1.72,
+    "ours rescan": 0.92
+   },
+   "naming (ours)": {
+    "streamlines": 149,
+    "overlapping": 89,
+    "with a counterpart": 0.5973,
+    "agreement": 0.9775,
+    "voters gave instead": [
+     [
+      "Other",
+      2
+     ]
+    ]
+   },
+   "naming baseline (ukf rescan)": {
+    "overlapping": 149,
+    "agreement": 0.9396
+   },
+   "classes": []
+  },
+  "Intra-CBLM-I-P": {
+   "labeled on A": {
+    "ukf A": 610,
+    "ours A": 717,
+    "dipy A": 642
+   },
+   "matched count": 560,
+   "across: ukf / ours (A)": 0.6119,
+   "across: ukf / dipy (A)": 0.59,
+   "across: ours / dipy (A)": 0.8401,
+   "rescan: ukf (A / within)": 0.7539,
+   "rescan: ours (A / within)": 0.846,
+   "center distance mm": {
+    "ukf / ours (A)": 5.19,
+    "ukf rescan": 0.68,
+    "ours rescan": 0.76
+   },
+   "naming (ours)": {
+    "streamlines": 717,
+    "overlapping": 61,
+    "with a counterpart": 0.0851,
+    "agreement": 0.3115,
+    "voters gave instead": [
+     [
+      "Other",
+      31
+     ],
+     [
+      "ICP",
+      11
+     ]
+    ]
+   },
+   "naming baseline (ukf rescan)": {
+    "overlapping": 289,
+    "agreement": 0.8131
+   },
+   "classes": [
+    "naming suspect"
+   ]
+  },
+  "Intra-CBLM-PaT": {
+   "labeled on A": {
+    "ukf A": 1915,
+    "ours A": 25,
+    "dipy A": 16
+   },
+   "matched count": 16,
+   "note": "fewer than 20 streamlines in some record: territory not compared",
+   "naming (ours)": {
+    "streamlines": 25,
+    "overlapping": 3,
+    "with a counterpart": 0.12,
+    "agreement": 0.0,
+    "voters gave instead": [
+     [
+      "Other",
+      1
+     ],
+     [
+      "Sup-OT",
+      1
+     ],
+     [
+      "Intra-CBLM-I-P",
+      1
+     ]
+    ]
+   },
+   "naming baseline (ukf rescan)": {
+    "overlapping": 1773,
+    "agreement": 0.9301
+   },
+   "classes": [
+    "coverage"
+   ]
+  },
+  "MCP": {
+   "labeled on A": {
+    "ukf A": 178,
+    "ours A": 737,
+    "dipy A": 689
+   },
+   "matched count": 171,
+   "across: ukf / ours (A)": 0.6382,
+   "across: ukf / dipy (A)": 0.6343,
+   "across: ours / dipy (A)": 0.7941,
+   "rescan: ukf (A / within)": 0.721,
+   "rescan: ours (A / within)": 0.8084,
+   "center distance mm": {
+    "ukf / ours (A)": 8.65,
+    "ukf rescan": 1.16,
+    "ours rescan": 0.51
+   },
+   "naming (ours)": {
+    "streamlines": 737,
+    "overlapping": 2,
+    "with a counterpart": 0.0027,
+    "agreement": 1.0,
+    "voters gave instead": []
+   },
+   "naming baseline (ukf rescan)": {
+    "overlapping": 18,
+    "agreement": 1.0
+   },
+   "classes": [
+    "coverage"
+   ]
+  },
+  "Sup-F": {
+   "labeled on A": {
+    "ukf A": 4779,
+    "ours A": 6971,
+    "dipy A": 5215
+   },
+   "matched count": 4769,
+   "across: ukf / ours (A)": 0.7522,
+   "across: ukf / dipy (A)": 0.7265,
+   "across: ours / dipy (A)": 0.8654,
+   "rescan: ukf (A / within)": 0.8848,
+   "rescan: ours (A / within)": 0.8981,
+   "center distance mm": {
+    "ukf / ours (A)": 6.05,
+    "ukf rescan": 0.48,
+    "ours rescan": 0.27
+   },
+   "naming (ours)": {
+    "streamlines": 6971,
+    "overlapping": 2250,
+    "with a counterpart": 0.3228,
+    "agreement": 0.9556,
+    "voters gave instead": [
+     [
+      "Other",
+      42
+     ],
+     [
+      "Sup-FP",
+      34
+     ],
+     [
+      "Sup-P",
+      20
+     ]
+    ]
+   },
+   "naming baseline (ukf rescan)": {
+    "overlapping": 4053,
+    "agreement": 0.9677
+   },
+   "classes": [
+    "coverage"
+   ]
+  },
+  "Sup-FP": {
+   "labeled on A": {
+    "ukf A": 376,
+    "ours A": 569,
+    "dipy A": 575
+   },
+   "matched count": 363,
+   "across: ukf / ours (A)": 0.5284,
+   "across: ukf / dipy (A)": 0.4743,
+   "across: ours / dipy (A)": 0.6273,
+   "rescan: ukf (A / within)": 0.746,
+   "rescan: ours (A / within)": 0.6885,
+   "center distance mm": {
+    "ukf / ours (A)": 3.36,
+    "ukf rescan": 1.87,
+    "ours rescan": 2.83
+   },
+   "naming (ours)": {
+    "streamlines": 569,
+    "overlapping": 113,
+    "with a counterpart": 0.1986,
+    "agreement": 0.823,
+    "voters gave instead": [
+     [
+      "Other",
+      7
+     ],
+     [
+      "SLF-I",
+      5
+     ],
+     [
+      "Sup-P",
+      4
+     ]
+    ]
+   },
+   "naming baseline (ukf rescan)": {
+    "overlapping": 285,
+    "agreement": 0.8667
+   },
+   "classes": []
+  },
+  "Sup-O": {
+   "labeled on A": {
+    "ukf A": 220,
+    "ours A": 463,
+    "dipy A": 392
+   },
+   "matched count": 220,
+   "across: ukf / ours (A)": 0.5309,
+   "across: ukf / dipy (A)": 0.5346,
+   "across: ours / dipy (A)": 0.6722,
+   "rescan: ukf (A / within)": 0.7911,
+   "rescan: ours (A / within)": 0.6833,
+   "center distance mm": {
+    "ukf / ours (A)": 2.51,
+    "ukf rescan": 0.84,
+    "ours rescan": 1.2
+   },
+   "naming (ours)": {
+    "streamlines": 463,
+    "overlapping": 185,
+    "with a counterpart": 0.3996,
+    "agreement": 0.5405,
+    "voters gave instead": [
+     [
+      "Sup-PO",
+      61
+     ],
+     [
+      "Other",
+      17
+     ],
+     [
+      "Sup-OT",
+      7
+     ]
+    ]
+   },
+   "naming baseline (ukf rescan)": {
+    "overlapping": 183,
+    "agreement": 0.9126
+   },
+   "classes": [
+    "naming suspect"
+   ]
+  },
+  "Sup-OT": {
+   "labeled on A": {
+    "ukf A": 703,
+    "ours A": 1079,
+    "dipy A": 976
+   },
+   "matched count": 680,
+   "across: ukf / ours (A)": 0.6507,
+   "across: ukf / dipy (A)": 0.6178,
+   "across: ours / dipy (A)": 0.7677,
+   "rescan: ukf (A / within)": 0.7673,
+   "rescan: ours (A / within)": 0.8066,
+   "center distance mm": {
+    "ukf / ours (A)": 2.99,
+    "ukf rescan": 0.33,
+    "ours rescan": 0.9
+   },
+   "naming (ours)": {
+    "streamlines": 1079,
+    "overlapping": 200,
+    "with a counterpart": 0.1854,
+    "agreement": 0.8,
+    "voters gave instead": [
+     [
+      "MdLF",
+      16
+     ],
+     [
+      "Other",
+      12
+     ],
+     [
+      "Sup-T",
+      12
+     ]
+    ]
+   },
+   "naming baseline (ukf rescan)": {
+    "overlapping": 453,
+    "agreement": 0.8918
+   },
+   "classes": []
+  },
+  "Sup-P": {
+   "labeled on A": {
+    "ukf A": 2168,
+    "ours A": 3235,
+    "dipy A": 2643
+   },
+   "matched count": 2154,
+   "across: ukf / ours (A)": 0.7281,
+   "across: ukf / dipy (A)": 0.6752,
+   "across: ours / dipy (A)": 0.8128,
+   "rescan: ukf (A / within)": 0.8535,
+   "rescan: ours (A / within)": 0.8631,
+   "center distance mm": {
+    "ukf / ours (A)": 3.11,
+    "ukf rescan": 0.95,
+    "ours rescan": 0.68
+   },
+   "naming (ours)": {
+    "streamlines": 3235,
+    "overlapping": 935,
+    "with a counterpart": 0.289,
+    "agreement": 0.9455,
+    "voters gave instead": [
+     [
+      "Other",
+      33
+     ],
+     [
+      "Sup-PT",
+      12
+     ],
+     [
+      "Sup-F",
+      3
+     ]
+    ]
+   },
+   "naming baseline (ukf rescan)": {
+    "overlapping": 1700,
+    "agreement": 0.9406
+   },
+   "classes": []
+  },
+  "Sup-PO": {
+   "labeled on A": {
+    "ukf A": 428,
+    "ours A": 709,
+    "dipy A": 485
+   },
+   "matched count": 428,
+   "across: ukf / ours (A)": 0.5754,
+   "across: ukf / dipy (A)": 0.5185,
+   "across: ours / dipy (A)": 0.7394,
+   "rescan: ukf (A / within)": 0.7832,
+   "rescan: ours (A / within)": 0.7694,
+   "center distance mm": {
+    "ukf / ours (A)": 2.79,
+    "ukf rescan": 1.56,
+    "ours rescan": 0.82
+   },
+   "naming (ours)": {
+    "streamlines": 709,
+    "overlapping": 241,
+    "with a counterpart": 0.3399,
+    "agreement": 0.5934,
+    "voters gave instead": [
+     [
+      "Sup-PT",
+      34
+     ],
+     [
+      "Sup-O",
+      22
+     ],
+     [
+      "Sup-P",
+      20
+     ]
+    ]
+   },
+   "naming baseline (ukf rescan)": {
+    "overlapping": 350,
+    "agreement": 0.8457
+   },
+   "classes": [
+    "naming suspect"
+   ]
+  },
+  "Sup-PT": {
+   "labeled on A": {
+    "ukf A": 1543,
+    "ours A": 2009,
+    "dipy A": 1657
+   },
+   "matched count": 1510,
+   "across: ukf / ours (A)": 0.6666,
+   "across: ukf / dipy (A)": 0.6267,
+   "across: ours / dipy (A)": 0.7886,
+   "rescan: ukf (A / within)": 0.8137,
+   "rescan: ours (A / within)": 0.8276,
+   "center distance mm": {
+    "ukf / ours (A)": 3.81,
+    "ukf rescan": 0.97,
+    "ours rescan": 0.52
+   },
+   "naming (ours)": {
+    "streamlines": 2009,
+    "overlapping": 540,
+    "with a counterpart": 0.2688,
+    "agreement": 0.9333,
+    "voters gave instead": [
+     [
+      "Sup-OT",
+      15
+     ],
+     [
+      "Other",
+      11
+     ],
+     [
+      "MdLF",
+      3
+     ]
+    ]
+   },
+   "naming baseline (ukf rescan)": {
+    "overlapping": 1121,
+    "agreement": 0.9197
+   },
+   "classes": []
+  },
+  "Sup-T": {
+   "labeled on A": {
+    "ukf A": 698,
+    "ours A": 645,
+    "dipy A": 842
+   },
+   "matched count": 645,
+   "across: ukf / ours (A)": 0.5016,
+   "across: ukf / dipy (A)": 0.4412,
+   "across: ours / dipy (A)": 0.7165,
+   "rescan: ukf (A / within)": 0.735,
+   "rescan: ours (A / within)": 0.7565,
+   "center distance mm": {
+    "ukf / ours (A)": 9.04,
+    "ukf rescan": 1.22,
+    "ours rescan": 3.66
+   },
+   "naming (ours)": {
+    "streamlines": 645,
+    "overlapping": 75,
+    "with a counterpart": 0.1163,
+    "agreement": 0.88,
+    "voters gave instead": [
+     [
+      "Sup-PT",
+      6
+     ],
+     [
+      "Other",
+      2
+     ],
+     [
+      "ILF",
+      1
+     ]
+    ]
+   },
+   "naming baseline (ukf rescan)": {
+    "overlapping": 568,
+    "agreement": 0.8944
+   },
+   "classes": [
+    "coverage"
+   ]
+  }
+ },
+ "naming where the paths overlap": {
+  "ukf within (the baseline: the same tracker, another scan)": {
+   "with a counterpart": 0.4596,
+   "agreement": 0.9137,
+   "agreement, named tracts only": 0.9283,
+   "by the nearest voter's distance (mm)": {
+    "0-2": {
+     "share of the overlapping": 0.3294,
+     "agreement, named": 0.9524
+    },
+    "2-3": {
+     "share of the overlapping": 0.3428,
+     "agreement, named": 0.9281
+    },
+    "3-4": {
+     "share of the overlapping": 0.3278,
+     "agreement, named": 0.8988
+    }
+   },
+   "voters, mean": 3.01,
+   "per tract": {
+    "AF": {
+     "streamlines": 759,
+     "overlapping": 533,
+     "with a counterpart": 0.7022,
+     "agreement": 0.9831,
+     "voters gave instead": [
+      [
+       "Other",
+       4
+      ],
+      [
+       "SLF-II",
+       2
+      ],
+      [
+       "Sup-PT",
+       1
+      ]
+     ]
+    },
+    "CB": {
+     "streamlines": 792,
+     "overlapping": 244,
+     "with a counterpart": 0.3081,
+     "agreement": 0.9508,
+     "voters gave instead": [
+      [
+       "Other",
+       10
+      ],
+      [
+       "SLF-I",
+       1
+      ],
+      [
+       "Sup-F",
+       1
+      ]
+     ]
+    },
+    "EC": {
+     "streamlines": 181,
+     "overlapping": 44,
+     "with a counterpart": 0.2431,
+     "agreement": 0.9773,
+     "voters gave instead": [
+      [
+       "EmC",
+       1
+      ]
+     ]
+    },
+    "EmC": {
+     "streamlines": 220,
+     "overlapping": 80,
+     "with a counterpart": 0.3636,
+     "agreement": 0.8625,
+     "voters gave instead": [
+      [
+       "Other",
+       5
+      ],
+      [
+       "IOFF",
+       5
+      ],
+      [
+       "EC",
+       1
+      ]
+     ]
+    },
+    "ILF": {
+     "streamlines": 990,
+     "overlapping": 406,
+     "with a counterpart": 0.4101,
+     "agreement": 0.9064,
+     "voters gave instead": [
+      [
+       "Other",
+       20
+      ],
+      [
+       "Sup-T",
+       12
+      ],
+      [
+       "MdLF",
+       4
+      ]
+     ]
+    },
+    "IOFF": {
+     "streamlines": 486,
+     "overlapping": 193,
+     "with a counterpart": 0.3971,
+     "agreement": 0.9171,
+     "voters gave instead": [
+      [
+       "EmC",
+       13
+      ],
+      [
+       "EC",
+       2
+      ],
+      [
+       "Other",
+       1
+      ]
+     ]
+    },
+    "MdLF": {
+     "streamlines": 1161,
+     "overlapping": 672,
+     "with a counterpart": 0.5788,
+     "agreement": 0.939,
+     "voters gave instead": [
+      [
+       "Other",
+       19
+      ],
+      [
+       "Sup-T",
+       8
+      ],
+      [
+       "Sup-PT",
+       7
+      ]
+     ]
+    },
+    "SLF-I": {
+     "streamlines": 648,
+     "overlapping": 352,
+     "with a counterpart": 0.5432,
+     "agreement": 0.9261,
+     "voters gave instead": [
+      [
+       "Other",
+       8
+      ],
+      [
+       "Sup-FP",
+       8
+      ],
+      [
+       "SLF-II",
+       7
+      ]
+     ]
+    },
+    "SLF-II": {
+     "streamlines": 489,
+     "overlapping": 306,
+     "with a counterpart": 0.6258,
+     "agreement": 0.8791,
+     "voters gave instead": [
+      [
+       "Other",
+       17
+      ],
+      [
+       "SLF-I",
+       12
+      ],
+      [
+       "SLF-III",
+       4
+      ]
+     ]
+    },
+    "SLF-III": {
+     "streamlines": 337,
+     "overlapping": 225,
+     "with a counterpart": 0.6677,
+     "agreement": 0.8667,
+     "voters gave instead": [
+      [
+       "Other",
+       24
+      ],
+      [
+       "SLF-II",
+       5
+      ],
+      [
+       "Sup-FP",
+       1
+      ]
+     ]
+    },
+    "UF": {
+     "streamlines": 684,
+     "overlapping": 412,
+     "with a counterpart": 0.6023,
+     "agreement": 0.9417,
+     "voters gave instead": [
+      [
+       "Other",
+       20
+      ],
+      [
+       "SF",
+       4
+      ]
+     ]
+    },
+    "CST": {
+     "streamlines": 597,
+     "overlapping": 336,
+     "with a counterpart": 0.5628,
+     "agreement": 0.9167,
+     "voters gave instead": [
+      [
+       "Other",
+       19
+      ],
+      [
+       "CR-F",
+       9
+      ]
+     ]
+    },
+    "CR-F": {
+     "streamlines": 666,
+     "overlapping": 311,
+     "with a counterpart": 0.467,
+     "agreement": 0.8971,
+     "voters gave instead": [
+      [
+       "Other",
+       30
+      ],
+      [
+       "CST",
+       2
+      ]
+     ]
+    },
+    "CR-P": {
+     "streamlines": 91,
+     "overlapping": 16,
+     "with a counterpart": 0.1758,
+     "agreement": 0.875,
+     "voters gave instead": [
+      [
+       "Other",
+       2
+      ]
+     ]
+    },
+    "SF": {
+     "streamlines": 1095,
+     "overlapping": 856,
+     "with a counterpart": 0.7817,
+     "agreement": 0.8727,
+     "voters gave instead": [
+      [
+       "Other",
+       86
+      ],
+      [
+       "Sup-F",
+       8
+      ],
+      [
+       "TF",
+       6
+      ]
+     ]
+    },
+    "SP": {
+     "streamlines": 66,
+     "overlapping": 51,
+     "with a counterpart": 0.7727,
+     "agreement": 0.7451,
+     "voters gave instead": [
+      [
+       "SF",
+       11
+      ],
+      [
+       "TF",
+       1
+      ],
+      [
+       "TP",
+       1
+      ]
+     ]
+    },
+    "TF": {
+     "streamlines": 1193,
+     "overlapping": 552,
+     "with a counterpart": 0.4627,
+     "agreement": 0.942,
+     "voters gave instead": [
+      [
+       "Other",
+       18
+      ],
+      [
+       "TP",
+       9
+      ],
+      [
+       "SF",
+       5
+      ]
+     ]
+    },
+    "TO": {
+     "streamlines": 95,
+     "overlapping": 32,
+     "with a counterpart": 0.3368,
+     "agreement": 0.8438,
+     "voters gave instead": [
+      [
+       "Other",
+       4
+      ],
+      [
+       "TP",
+       1
+      ]
+     ]
+    },
+    "TT": {
+     "streamlines": 418,
+     "overlapping": 246,
+     "with a counterpart": 0.5885,
+     "agreement": 0.9309,
+     "voters gave instead": [
+      [
+       "Other",
+       14
+      ],
+      [
+       "TP",
+       3
+      ]
+     ]
+    },
+    "TP": {
+     "streamlines": 444,
+     "overlapping": 174,
+     "with a counterpart": 0.3919,
+     "agreement": 0.8448,
+     "voters gave instead": [
+      [
+       "Other",
+       19
+      ],
+      [
+       "TF",
+       5
+      ],
+      [
+       "PLIC",
+       2
+      ]
+     ]
+    },
+    "PLIC": {
+     "streamlines": 86,
+     "overlapping": 26,
+     "with a counterpart": 0.3023,
+     "agreement": 0.9615,
+     "voters gave instead": [
+      [
+       "Other",
+       1
+      ]
+     ]
+    },
+    "CC1": {
+     "streamlines": 215,
+     "overlapping": 133,
+     "with a counterpart": 0.6186,
+     "agreement": 0.9323,
+     "voters gave instead": [
+      [
+       "CC2",
+       7
+      ],
+      [
+       "Other",
+       2
+      ]
+     ]
+    },
+    "CC2": {
+     "streamlines": 1066,
+     "overlapping": 651,
+     "with a counterpart": 0.6107,
+     "agreement": 0.9462,
+     "voters gave instead": [
+      [
+       "Other",
+       22
+      ],
+      [
+       "CC3",
+       7
+      ],
+      [
+       "CC1",
+       6
+      ]
+     ]
+    },
+    "CC3": {
+     "streamlines": 594,
+     "overlapping": 382,
+     "with a counterpart": 0.6431,
+     "agreement": 0.9058,
+     "voters gave instead": [
+      [
+       "CC2",
+       22
+      ],
+      [
+       "Other",
+       8
+      ],
+      [
+       "CC4",
+       6
+      ]
+     ]
+    },
+    "CC4": {
+     "streamlines": 635,
+     "overlapping": 430,
+     "with a counterpart": 0.6772,
+     "agreement": 0.9512,
+     "voters gave instead": [
+      [
+       "CC3",
+       14
+      ],
+      [
+       "CC5",
+       4
+      ],
+      [
+       "Other",
+       3
+      ]
+     ]
+    },
+    "CC5": {
+     "streamlines": 472,
+     "overlapping": 300,
+     "with a counterpart": 0.6356,
+     "agreement": 0.9133,
+     "voters gave instead": [
+      [
+       "CC4",
+       13
+      ],
+      [
+       "Other",
+       8
+      ],
+      [
+       "CC6",
+       5
+      ]
+     ]
+    },
+    "CC6": {
+     "streamlines": 1422,
+     "overlapping": 593,
+     "with a counterpart": 0.417,
+     "agreement": 0.9494,
+     "voters gave instead": [
+      [
+       "Other",
+       22
+      ],
+      [
+       "CC5",
+       6
+      ],
+      [
+       "CC7",
+       2
+      ]
+     ]
+    },
+    "CC7": {
+     "streamlines": 335,
+     "overlapping": 81,
+     "with a counterpart": 0.2418,
+     "agreement": 0.9136,
+     "voters gave instead": [
+      [
+       "Other",
+       5
+      ],
+      [
+       "CC6",
+       2
+      ]
+     ]
+    },
+    "CPC": {
+     "streamlines": 105,
+     "overlapping": 9,
+     "with a counterpart": 0.0857,
+     "agreement": 0.7778,
+     "voters gave instead": [
+      [
+       "Other",
+       2
+      ]
+     ]
+    },
+    "ICP": {
+     "streamlines": 178,
+     "overlapping": 149,
+     "with a counterpart": 0.8371,
+     "agreement": 0.9396,
+     "voters gave instead": [
+      [
+       "Intra-CBLM-I-P",
+       8
+      ],
+      [
+       "Other",
+       1
+      ]
+     ]
+    },
+    "Intra-CBLM-I-P": {
+     "streamlines": 560,
+     "overlapping": 289,
+     "with a counterpart": 0.5161,
+     "agreement": 0.8131,
+     "voters gave instead": [
+      [
+       "Other",
+       37
+      ],
+      [
+       "ICP",
+       16
+      ],
+      [
+       "Intra-CBLM-PaT",
+       1
+      ]
+     ]
+    },
+    "Intra-CBLM-PaT": {
+     "streamlines": 1810,
+     "overlapping": 1773,
+     "with a counterpart": 0.9796,
+     "agreement": 0.9301,
+     "voters gave instead": [
+      [
+       "Other",
+       122
+      ],
+      [
+       "Sup-OT",
+       1
+      ],
+      [
+       "Intra-CBLM-I-P",
+       1
+      ]
+     ]
+    },
+    "MCP": {
+     "streamlines": 171,
+     "overlapping": 18,
+     "with a counterpart": 0.1053,
+     "agreement": 1.0,
+     "voters gave instead": []
+    },
+    "Sup-F": {
+     "streamlines": 4769,
+     "overlapping": 4053,
+     "with a counterpart": 0.8499,
+     "agreement": 0.9677,
+     "voters gave instead": [
+      [
+       "Other",
+       111
+      ],
+      [
+       "Sup-P",
+       11
+      ],
+      [
+       "Sup-FP",
+       8
+      ]
+     ]
+    },
+    "Sup-FP": {
+     "streamlines": 363,
+     "overlapping": 285,
+     "with a counterpart": 0.7851,
+     "agreement": 0.8667,
+     "voters gave instead": [
+      [
+       "Sup-F",
+       13
+      ],
+      [
+       "SLF-I",
+       11
+      ],
+      [
+       "Sup-P",
+       5
+      ]
+     ]
+    },
+    "Sup-O": {
+     "streamlines": 228,
+     "overlapping": 183,
+     "with a counterpart": 0.8026,
+     "agreement": 0.9126,
+     "voters gave instead": [
+      [
+       "Sup-PO",
+       13
+      ],
+      [
+       "Other",
+       3
+      ]
+     ]
+    },
+    "Sup-OT": {
+     "streamlines": 680,
+     "overlapping": 453,
+     "with a counterpart": 0.6662,
+     "agreement": 0.8918,
+     "voters gave instead": [
+      [
+       "Other",
+       16
+      ],
+      [
+       "MdLF",
+       11
+      ],
+      [
+       "Sup-T",
+       7
+      ]
+     ]
+    },
+    "Sup-P": {
+     "streamlines": 2154,
+     "overlapping": 1700,
+     "with a counterpart": 0.7892,
+     "agreement": 0.9406,
+     "voters gave instead": [
+      [
+       "Other",
+       49
+      ],
+      [
+       "Sup-F",
+       20
+      ],
+      [
+       "Sup-FP",
+       16
+      ]
+     ]
+    },
+    "Sup-PO": {
+     "streamlines": 434,
+     "overlapping": 350,
+     "with a counterpart": 0.8065,
+     "agreement": 0.8457,
+     "voters gave instead": [
+      [
+       "Sup-O",
+       15
+      ],
+      [
+       "Sup-P",
+       13
+      ],
+      [
+       "Sup-PT",
+       11
+      ]
+     ]
+    },
+    "Sup-PT": {
+     "streamlines": 1510,
+     "overlapping": 1121,
+     "with a counterpart": 0.7424,
+     "agreement": 0.9197,
+     "voters gave instead": [
+      [
+       "Other",
+       35
+      ],
+      [
+       "Sup-OT",
+       17
+      ],
+      [
+       "Sup-P",
+       16
+      ]
+     ]
+    },
+    "Sup-T": {
+     "streamlines": 823,
+     "overlapping": 568,
+     "with a counterpart": 0.6902,
+     "agreement": 0.8944,
+     "voters gave instead": [
+      [
+       "ILF",
+       18
+      ],
+      [
+       "Other",
+       15
+      ],
+      [
+       "Sup-OT",
+       14
+      ]
+     ]
+    },
+    "Other": {
+     "streamlines": 34234,
+     "overlapping": 9946,
+     "with a counterpart": 0.2905,
+     "agreement": 0.8848,
+     "voters gave instead": [
+      [
+       "Sup-F",
+       187
+      ],
+      [
+       "Intra-CBLM-PaT",
+       107
+      ],
+      [
+       "SF",
+       98
+      ]
+     ]
+    }
+   }
+  },
+  "ours A": {
+   "with a counterpart": 0.1407,
+   "agreement": 0.8838,
+   "agreement, named tracts only": 0.9025,
+   "by the nearest voter's distance (mm)": {
+    "0-2": {
+     "share of the overlapping": 0.016,
+     "agreement, named": 0.9034
+    },
+    "2-3": {
+     "share of the overlapping": 0.242,
+     "agreement, named": 0.9091
+    },
+    "3-4": {
+     "share of the overlapping": 0.742,
+     "agreement, named": 0.9002
+    }
+   },
+   "voters, mean": 2.3,
+   "per tract": {
+    "AF": {
+     "streamlines": 1478,
+     "overlapping": 278,
+     "with a counterpart": 0.1881,
+     "agreement": 0.9964,
+     "voters gave instead": [
+      [
+       "Other",
+       1
+      ]
+     ]
+    },
+    "CB": {
+     "streamlines": 1400,
+     "overlapping": 52,
+     "with a counterpart": 0.0371,
+     "agreement": 0.9808,
+     "voters gave instead": [
+      [
+       "Other",
+       1
+      ]
+     ]
+    },
+    "EC": {
+     "streamlines": 172,
+     "overlapping": 5,
+     "with a counterpart": 0.0291,
+     "agreement": 1.0,
+     "voters gave instead": []
+    },
+    "EmC": {
+     "streamlines": 98,
+     "overlapping": 3,
+     "with a counterpart": 0.0306,
+     "agreement": 1.0,
+     "voters gave instead": []
+    },
+    "ILF": {
+     "streamlines": 851,
+     "overlapping": 55,
+     "with a counterpart": 0.0646,
+     "agreement": 0.8909,
+     "voters gave instead": [
+      [
+       "Sup-OT",
+       3
+      ],
+      [
+       "Other",
+       1
+      ],
+      [
+       "MdLF",
+       1
+      ]
+     ]
+    },
+    "IOFF": {
+     "streamlines": 602,
+     "overlapping": 33,
+     "with a counterpart": 0.0548,
+     "agreement": 0.9091,
+     "voters gave instead": [
+      [
+       "EmC",
+       2
+      ],
+      [
+       "Other",
+       1
+      ]
+     ]
+    },
+    "MdLF": {
+     "streamlines": 937,
+     "overlapping": 132,
+     "with a counterpart": 0.1409,
+     "agreement": 0.9924,
+     "voters gave instead": [
+      [
+       "Sup-T",
+       1
+      ]
+     ]
+    },
+    "SLF-I": {
+     "streamlines": 389,
+     "overlapping": 21,
+     "with a counterpart": 0.054,
+     "agreement": 0.7619,
+     "voters gave instead": [
+      [
+       "AF",
+       2
+      ],
+      [
+       "SLF-II",
+       2
+      ],
+      [
+       "Other",
+       1
+      ]
+     ]
+    },
+    "SLF-II": {
+     "streamlines": 553,
+     "overlapping": 67,
+     "with a counterpart": 0.1212,
+     "agreement": 0.9104,
+     "voters gave instead": [
+      [
+       "Other",
+       6
+      ]
+     ]
+    },
+    "SLF-III": {
+     "streamlines": 295,
+     "overlapping": 39,
+     "with a counterpart": 0.1322,
+     "agreement": 0.8974,
+     "voters gave instead": [
+      [
+       "Other",
+       2
+      ],
+      [
+       "Sup-FP",
+       2
+      ]
+     ]
+    },
+    "UF": {
+     "streamlines": 296,
+     "overlapping": 46,
+     "with a counterpart": 0.1554,
+     "agreement": 0.8261,
+     "voters gave instead": [
+      [
+       "SF",
+       7
+      ],
+      [
+       "Other",
+       1
+      ]
+     ]
+    },
+    "CST": {
+     "streamlines": 1600,
+     "overlapping": 591,
+     "with a counterpart": 0.3694,
+     "agreement": 0.8697,
+     "voters gave instead": [
+      [
+       "CR-F",
+       56
+      ],
+      [
+       "Other",
+       21
+      ]
+     ]
+    },
+    "CR-F": {
+     "streamlines": 1417,
+     "overlapping": 265,
+     "with a counterpart": 0.187,
+     "agreement": 0.7774,
+     "voters gave instead": [
+      [
+       "Other",
+       53
+      ],
+      [
+       "CST",
+       6
+      ]
+     ]
+    },
+    "CR-P": {
+     "streamlines": 184,
+     "overlapping": 15,
+     "with a counterpart": 0.0815,
+     "agreement": 0.9333,
+     "voters gave instead": [
+      [
+       "CST",
+       1
+      ]
+     ]
+    },
+    "SF": {
+     "streamlines": 610,
+     "overlapping": 76,
+     "with a counterpart": 0.1246,
+     "agreement": 0.7632,
+     "voters gave instead": [
+      [
+       "Other",
+       12
+      ],
+      [
+       "TF",
+       3
+      ],
+      [
+       "SP",
+       1
+      ]
+     ]
+    },
+    "SO": {
+     "streamlines": 133,
+     "overlapping": 0,
+     "with a counterpart": 0.0,
+     "agreement": null,
+     "voters gave instead": []
+    },
+    "SP": {
+     "streamlines": 248,
+     "overlapping": 35,
+     "with a counterpart": 0.1411,
+     "agreement": 0.8286,
+     "voters gave instead": [
+      [
+       "SF",
+       5
+      ],
+      [
+       "Other",
+       1
+      ]
+     ]
+    },
+    "TF": {
+     "streamlines": 434,
+     "overlapping": 35,
+     "with a counterpart": 0.0806,
+     "agreement": 0.8286,
+     "voters gave instead": [
+      [
+       "Other",
+       5
+      ],
+      [
+       "SF",
+       1
+      ]
+     ]
+    },
+    "TO": {
+     "streamlines": 169,
+     "overlapping": 4,
+     "with a counterpart": 0.0237,
+     "agreement": 1.0,
+     "voters gave instead": []
+    },
+    "TT": {
+     "streamlines": 80,
+     "overlapping": 10,
+     "with a counterpart": 0.125,
+     "agreement": 1.0,
+     "voters gave instead": []
+    },
+    "TP": {
+     "streamlines": 584,
+     "overlapping": 25,
+     "with a counterpart": 0.0428,
+     "agreement": 0.72,
+     "voters gave instead": [
+      [
+       "Other",
+       3
+      ],
+      [
+       "SF",
+       3
+      ],
+      [
+       "PLIC",
+       1
+      ]
+     ]
+    },
+    "PLIC": {
+     "streamlines": 101,
+     "overlapping": 3,
+     "with a counterpart": 0.0297,
+     "agreement": 0.3333,
+     "voters gave instead": [
+      [
+       "SF",
+       1
+      ],
+      [
+       "TP",
+       1
+      ]
+     ]
+    },
+    "CC1": {
+     "streamlines": 596,
+     "overlapping": 102,
+     "with a counterpart": 0.1711,
+     "agreement": 0.7059,
+     "voters gave instead": [
+      [
+       "CC2",
+       30
+      ]
+     ]
+    },
+    "CC2": {
+     "streamlines": 3019,
+     "overlapping": 468,
+     "with a counterpart": 0.155,
+     "agreement": 0.9808,
+     "voters gave instead": [
+      [
+       "CC3",
+       8
+      ],
+      [
+       "Other",
+       1
+      ]
+     ]
+    },
+    "CC3": {
+     "streamlines": 1999,
+     "overlapping": 290,
+     "with a counterpart": 0.1451,
+     "agreement": 0.969,
+     "voters gave instead": [
+      [
+       "CC2",
+       7
+      ],
+      [
+       "CC4",
+       2
+      ]
+     ]
+    },
+    "CC4": {
+     "streamlines": 1268,
+     "overlapping": 299,
+     "with a counterpart": 0.2358,
+     "agreement": 0.9766,
+     "voters gave instead": [
+      [
+       "CC5",
+       5
+      ],
+      [
+       "CC3",
+       2
+      ]
+     ]
+    },
+    "CC5": {
+     "streamlines": 771,
+     "overlapping": 248,
+     "with a counterpart": 0.3217,
+     "agreement": 0.9274,
+     "voters gave instead": [
+      [
+       "CC4",
+       10
+      ],
+      [
+       "Other",
+       4
+      ],
+      [
+       "CC6",
+       4
+      ]
+     ]
+    },
+    "CC6": {
+     "streamlines": 1859,
+     "overlapping": 192,
+     "with a counterpart": 0.1033,
+     "agreement": 0.901,
+     "voters gave instead": [
+      [
+       "CC5",
+       13
+      ],
+      [
+       "Other",
+       6
+      ]
+     ]
+    },
+    "CC7": {
+     "streamlines": 694,
+     "overlapping": 41,
+     "with a counterpart": 0.0591,
+     "agreement": 0.9268,
+     "voters gave instead": [
+      [
+       "CC6",
+       2
+      ],
+      [
+       "Other",
+       1
+      ]
+     ]
+    },
+    "CPC": {
+     "streamlines": 120,
+     "overlapping": 0,
+     "with a counterpart": 0.0,
+     "agreement": null,
+     "voters gave instead": []
+    },
+    "ICP": {
+     "streamlines": 149,
+     "overlapping": 89,
+     "with a counterpart": 0.5973,
+     "agreement": 0.9775,
+     "voters gave instead": [
+      [
+       "Other",
+       2
+      ]
+     ]
+    },
+    "Intra-CBLM-I-P": {
+     "streamlines": 717,
+     "overlapping": 61,
+     "with a counterpart": 0.0851,
+     "agreement": 0.3115,
+     "voters gave instead": [
+      [
+       "Other",
+       31
+      ],
+      [
+       "ICP",
+       11
+      ]
+     ]
+    },
+    "Intra-CBLM-PaT": {
+     "streamlines": 25,
+     "overlapping": 3,
+     "with a counterpart": 0.12,
+     "agreement": 0.0,
+     "voters gave instead": [
+      [
+       "Other",
+       1
+      ],
+      [
+       "Sup-OT",
+       1
+      ],
+      [
+       "Intra-CBLM-I-P",
+       1
+      ]
+     ]
+    },
+    "MCP": {
+     "streamlines": 737,
+     "overlapping": 2,
+     "with a counterpart": 0.0027,
+     "agreement": 1.0,
+     "voters gave instead": []
+    },
+    "Sup-F": {
+     "streamlines": 6971,
+     "overlapping": 2250,
+     "with a counterpart": 0.3228,
+     "agreement": 0.9556,
+     "voters gave instead": [
+      [
+       "Other",
+       42
+      ],
+      [
+       "Sup-FP",
+       34
+      ],
+      [
+       "Sup-P",
+       20
+      ]
+     ]
+    },
+    "Sup-FP": {
+     "streamlines": 569,
+     "overlapping": 113,
+     "with a counterpart": 0.1986,
+     "agreement": 0.823,
+     "voters gave instead": [
+      [
+       "Other",
+       7
+      ],
+      [
+       "SLF-I",
+       5
+      ],
+      [
+       "Sup-P",
+       4
+      ]
+     ]
+    },
+    "Sup-O": {
+     "streamlines": 463,
+     "overlapping": 185,
+     "with a counterpart": 0.3996,
+     "agreement": 0.5405,
+     "voters gave instead": [
+      [
+       "Sup-PO",
+       61
+      ],
+      [
+       "Other",
+       17
+      ],
+      [
+       "Sup-OT",
+       7
+      ]
+     ]
+    },
+    "Sup-OT": {
+     "streamlines": 1079,
+     "overlapping": 200,
+     "with a counterpart": 0.1854,
+     "agreement": 0.8,
+     "voters gave instead": [
+      [
+       "MdLF",
+       16
+      ],
+      [
+       "Other",
+       12
+      ],
+      [
+       "Sup-T",
+       12
+      ]
+     ]
+    },
+    "Sup-P": {
+     "streamlines": 3235,
+     "overlapping": 935,
+     "with a counterpart": 0.289,
+     "agreement": 0.9455,
+     "voters gave instead": [
+      [
+       "Other",
+       33
+      ],
+      [
+       "Sup-PT",
+       12
+      ],
+      [
+       "Sup-F",
+       3
+      ]
+     ]
+    },
+    "Sup-PO": {
+     "streamlines": 709,
+     "overlapping": 241,
+     "with a counterpart": 0.3399,
+     "agreement": 0.5934,
+     "voters gave instead": [
+      [
+       "Sup-PT",
+       34
+      ],
+      [
+       "Sup-O",
+       22
+      ],
+      [
+       "Sup-P",
+       20
+      ]
+     ]
+    },
+    "Sup-PT": {
+     "streamlines": 2009,
+     "overlapping": 540,
+     "with a counterpart": 0.2688,
+     "agreement": 0.9333,
+     "voters gave instead": [
+      [
+       "Sup-OT",
+       15
+      ],
+      [
+       "Other",
+       11
+      ],
+      [
+       "MdLF",
+       3
+      ]
+     ]
+    },
+    "Sup-T": {
+     "streamlines": 645,
+     "overlapping": 75,
+     "with a counterpart": 0.1163,
+     "agreement": 0.88,
+     "voters gave instead": [
+      [
+       "Sup-PT",
+       6
+      ],
+      [
+       "Other",
+       2
+      ],
+      [
+       "ILF",
+       1
+      ]
+     ]
+    },
+    "Other": {
+     "streamlines": 27081,
+     "overlapping": 1351,
+     "with a counterpart": 0.0499,
+     "agreement": 0.7713,
+     "voters gave instead": [
+      [
+       "Sup-F",
+       70
+      ],
+      [
+       "SF",
+       39
+      ],
+      [
+       "TF",
+       19
+      ]
+     ]
+    }
+   }
+  },
+  "dipy A": {
+   "with a counterpart": 0.0614,
+   "agreement": 0.8171,
+   "agreement, named tracts only": 0.855,
+   "by the nearest voter's distance (mm)": {
+    "0-2": {
+     "share of the overlapping": 0.0088,
+     "agreement, named": 0.8214
+    },
+    "2-3": {
+     "share of the overlapping": 0.1964,
+     "agreement, named": 0.8399
+    },
+    "3-4": {
+     "share of the overlapping": 0.7948,
+     "agreement, named": 0.8593
+    }
+   },
+   "voters, mean": 2.11,
+   "per tract": {
+    "AF": {
+     "streamlines": 738,
+     "overlapping": 60,
+     "with a counterpart": 0.0813,
+     "agreement": 0.9833,
+     "voters gave instead": [
+      [
+       "Other",
+       1
+      ]
+     ]
+    },
+    "CB": {
+     "streamlines": 1578,
+     "overlapping": 37,
+     "with a counterpart": 0.0234,
+     "agreement": 0.973,
+     "voters gave instead": [
+      [
+       "Other",
+       1
+      ]
+     ]
+    },
+    "EC": {
+     "streamlines": 41,
+     "overlapping": 2,
+     "with a counterpart": 0.0488,
+     "agreement": 1.0,
+     "voters gave instead": []
+    },
+    "EmC": {
+     "streamlines": 72,
+     "overlapping": 0,
+     "with a counterpart": 0.0,
+     "agreement": null,
+     "voters gave instead": []
+    },
+    "ILF": {
+     "streamlines": 657,
+     "overlapping": 17,
+     "with a counterpart": 0.0259,
+     "agreement": 0.8235,
+     "voters gave instead": [
+      [
+       "Sup-T",
+       2
+      ],
+      [
+       "Other",
+       1
+      ]
+     ]
+    },
+    "IOFF": {
+     "streamlines": 235,
+     "overlapping": 5,
+     "with a counterpart": 0.0213,
+     "agreement": 1.0,
+     "voters gave instead": []
+    },
+    "MdLF": {
+     "streamlines": 532,
+     "overlapping": 42,
+     "with a counterpart": 0.0789,
+     "agreement": 1.0,
+     "voters gave instead": []
+    },
+    "SLF-I": {
+     "streamlines": 119,
+     "overlapping": 1,
+     "with a counterpart": 0.0084,
+     "agreement": 0.0,
+     "voters gave instead": [
+      [
+       "Sup-FP",
+       1
+      ]
+     ]
+    },
+    "SLF-II": {
+     "streamlines": 221,
+     "overlapping": 9,
+     "with a counterpart": 0.0407,
+     "agreement": 0.6667,
+     "voters gave instead": [
+      [
+       "Other",
+       2
+      ],
+      [
+       "SLF-III",
+       1
+      ]
+     ]
+    },
+    "SLF-III": {
+     "streamlines": 350,
+     "overlapping": 7,
+     "with a counterpart": 0.02,
+     "agreement": 1.0,
+     "voters gave instead": []
+    },
+    "UF": {
+     "streamlines": 286,
+     "overlapping": 25,
+     "with a counterpart": 0.0874,
+     "agreement": 0.92,
+     "voters gave instead": [
+      [
+       "Other",
+       2
+      ]
+     ]
+    },
+    "CST": {
+     "streamlines": 1730,
+     "overlapping": 425,
+     "with a counterpart": 0.2457,
+     "agreement": 0.8165,
+     "voters gave instead": [
+      [
+       "CR-F",
+       59
+      ],
+      [
+       "Other",
+       19
+      ]
+     ]
+    },
+    "CR-F": {
+     "streamlines": 1514,
+     "overlapping": 212,
+     "with a counterpart": 0.14,
+     "agreement": 0.816,
+     "voters gave instead": [
+      [
+       "Other",
+       32
+      ],
+      [
+       "CST",
+       7
+      ]
+     ]
+    },
+    "CR-P": {
+     "streamlines": 126,
+     "overlapping": 7,
+     "with a counterpart": 0.0556,
+     "agreement": 0.4286,
+     "voters gave instead": [
+      [
+       "CST",
+       2
+      ],
+      [
+       "PLIC",
+       1
+      ],
+      [
+       "Other",
+       1
+      ]
+     ]
+    },
+    "SF": {
+     "streamlines": 629,
+     "overlapping": 43,
+     "with a counterpart": 0.0684,
+     "agreement": 0.8372,
+     "voters gave instead": [
+      [
+       "Other",
+       3
+      ],
+      [
+       "Sup-F",
+       2
+      ],
+      [
+       "TF",
+       1
+      ]
+     ]
+    },
+    "SO": {
+     "streamlines": 117,
+     "overlapping": 0,
+     "with a counterpart": 0.0,
+     "agreement": null,
+     "voters gave instead": []
+    },
+    "SP": {
+     "streamlines": 195,
+     "overlapping": 24,
+     "with a counterpart": 0.1231,
+     "agreement": 0.875,
+     "voters gave instead": [
+      [
+       "SF",
+       3
+      ]
+     ]
+    },
+    "TF": {
+     "streamlines": 258,
+     "overlapping": 18,
+     "with a counterpart": 0.0698,
+     "agreement": 1.0,
+     "voters gave instead": []
+    },
+    "TO": {
+     "streamlines": 136,
+     "overlapping": 2,
+     "with a counterpart": 0.0147,
+     "agreement": 1.0,
+     "voters gave instead": []
+    },
+    "TT": {
+     "streamlines": 90,
+     "overlapping": 8,
+     "with a counterpart": 0.0889,
+     "agreement": 1.0,
+     "voters gave instead": []
+    },
+    "TP": {
+     "streamlines": 410,
+     "overlapping": 9,
+     "with a counterpart": 0.022,
+     "agreement": 0.7778,
+     "voters gave instead": [
+      [
+       "Other",
+       2
+      ]
+     ]
+    },
+    "PLIC": {
+     "streamlines": 41,
+     "overlapping": 0,
+     "with a counterpart": 0.0,
+     "agreement": null,
+     "voters gave instead": []
+    },
+    "CC1": {
+     "streamlines": 647,
+     "overlapping": 15,
+     "with a counterpart": 0.0232,
+     "agreement": 0.6,
+     "voters gave instead": [
+      [
+       "CC2",
+       5
+      ],
+      [
+       "Other",
+       1
+      ]
+     ]
+    },
+    "CC2": {
+     "streamlines": 2592,
+     "overlapping": 152,
+     "with a counterpart": 0.0586,
+     "agreement": 0.9737,
+     "voters gave instead": [
+      [
+       "CC3",
+       2
+      ],
+      [
+       "Other",
+       1
+      ],
+      [
+       "CC1",
+       1
+      ]
+     ]
+    },
+    "CC3": {
+     "streamlines": 1650,
+     "overlapping": 45,
+     "with a counterpart": 0.0273,
+     "agreement": 0.9778,
+     "voters gave instead": [
+      [
+       "CC4",
+       1
+      ]
+     ]
+    },
+    "CC4": {
+     "streamlines": 1188,
+     "overlapping": 61,
+     "with a counterpart": 0.0513,
+     "agreement": 0.918,
+     "voters gave instead": [
+      [
+       "Other",
+       4
+      ],
+      [
+       "CC5",
+       1
+      ]
+     ]
+    },
+    "CC5": {
+     "streamlines": 555,
+     "overlapping": 50,
+     "with a counterpart": 0.0901,
+     "agreement": 0.98,
+     "voters gave instead": [
+      [
+       "CC6",
+       1
+      ]
+     ]
+    },
+    "CC6": {
+     "streamlines": 1472,
+     "overlapping": 36,
+     "with a counterpart": 0.0245,
+     "agreement": 0.9722,
+     "voters gave instead": [
+      [
+       "CC7",
+       1
+      ]
+     ]
+    },
+    "CC7": {
+     "streamlines": 954,
+     "overlapping": 18,
+     "with a counterpart": 0.0189,
+     "agreement": 1.0,
+     "voters gave instead": []
+    },
+    "CPC": {
+     "streamlines": 175,
+     "overlapping": 0,
+     "with a counterpart": 0.0,
+     "agreement": null,
+     "voters gave instead": []
+    },
+    "ICP": {
+     "streamlines": 83,
+     "overlapping": 48,
+     "with a counterpart": 0.5783,
+     "agreement": 1.0,
+     "voters gave instead": []
+    },
+    "Intra-CBLM-I-P": {
+     "streamlines": 642,
+     "overlapping": 30,
+     "with a counterpart": 0.0467,
+     "agreement": 0.1667,
+     "voters gave instead": [
+      [
+       "Other",
+       20
+      ],
+      [
+       "ICP",
+       5
+      ]
+     ]
+    },
+    "MCP": {
+     "streamlines": 689,
+     "overlapping": 2,
+     "with a counterpart": 0.0029,
+     "agreement": 1.0,
+     "voters gave instead": []
+    },
+    "Sup-F": {
+     "streamlines": 5215,
+     "overlapping": 914,
+     "with a counterpart": 0.1753,
+     "agreement": 0.9333,
+     "voters gave instead": [
+      [
+       "Other",
+       24
+      ],
+      [
+       "Sup-FP",
+       22
+      ],
+      [
+       "Sup-P",
+       11
+      ]
+     ]
+    },
+    "Sup-FP": {
+     "streamlines": 575,
+     "overlapping": 57,
+     "with a counterpart": 0.0991,
+     "agreement": 0.7368,
+     "voters gave instead": [
+      [
+       "Other",
+       10
+      ],
+      [
+       "Sup-F",
+       4
+      ],
+      [
+       "Sup-P",
+       1
+      ]
+     ]
+    },
+    "Sup-O": {
+     "streamlines": 392,
+     "overlapping": 101,
+     "with a counterpart": 0.2577,
+     "agreement": 0.4851,
+     "voters gave instead": [
+      [
+       "Sup-PO",
+       40
+      ],
+      [
+       "Other",
+       9
+      ],
+      [
+       "Sup-OT",
+       3
+      ]
+     ]
+    },
+    "Sup-OT": {
+     "streamlines": 976,
+     "overlapping": 68,
+     "with a counterpart": 0.0697,
+     "agreement": 0.8088,
+     "voters gave instead": [
+      [
+       "MdLF",
+       5
+      ],
+      [
+       "Other",
+       4
+      ],
+      [
+       "Sup-T",
+       3
+      ]
+     ]
+    },
+    "Sup-P": {
+     "streamlines": 2643,
+     "overlapping": 342,
+     "with a counterpart": 0.1294,
+     "agreement": 0.8626,
+     "voters gave instead": [
+      [
+       "Other",
+       30
+      ],
+      [
+       "Sup-PT",
+       9
+      ],
+      [
+       "Sup-FP",
+       3
+      ]
+     ]
+    },
+    "Sup-PO": {
+     "streamlines": 485,
+     "overlapping": 111,
+     "with a counterpart": 0.2289,
+     "agreement": 0.4414,
+     "voters gave instead": [
+      [
+       "Sup-PT",
+       25
+      ],
+      [
+       "Sup-P",
+       21
+      ],
+      [
+       "Sup-O",
+       9
+      ]
+     ]
+    },
+    "Sup-PT": {
+     "streamlines": 1657,
+     "overlapping": 162,
+     "with a counterpart": 0.0978,
+     "agreement": 0.9012,
+     "voters gave instead": [
+      [
+       "Sup-OT",
+       9
+      ],
+      [
+       "Other",
+       5
+      ],
+      [
+       "MdLF",
+       1
+      ]
+     ]
+    },
+    "Sup-T": {
+     "streamlines": 842,
+     "overlapping": 48,
+     "with a counterpart": 0.057,
+     "agreement": 0.7292,
+     "voters gave instead": [
+      [
+       "Other",
+       6
+      ],
+      [
+       "Sup-PT",
+       6
+      ],
+      [
+       "MdLF",
+       1
+      ]
+     ]
+    },
+    "Other": {
+     "streamlines": 31480,
+     "overlapping": 779,
+     "with a counterpart": 0.0247,
+     "agreement": 0.6611,
+     "voters gave instead": [
+      [
+       "Sup-F",
+       75
+      ],
+      [
+       "SF",
+       24
+      ],
+      [
+       "ICP",
+       21
+      ]
+     ]
+    }
+   }
+  }
+ },
+ "summary": {
+  "territory compared": 40,
+  "median across: ukf / ours (A)": 0.5676,
+  "median across: ukf / dipy (A)": 0.5253,
+  "median across: ours / dipy (A)": 0.7223,
+  "median rescan: ukf (A / within)": 0.7248,
+  "median rescan: ours (A / within)": 0.7687,
+  "median center distance mm (ukf / ours; ukf rescan; ours rescan)": [
+   5.58,
+   1.87,
+   1.28
+  ],
+  "naming (agreement; named only; with a counterpart)": {
+   "ukf within (the baseline: the same tracker, another scan)": [
+    0.9137,
+    0.9283,
+    0.4596
+   ],
+   "ours A": [
+    0.8838,
+    0.9025,
+    0.1407
+   ],
+   "dipy A": [
+    0.8171,
+    0.855,
+    0.0614
+   ]
+  },
+  "naming by distance band (named only)": {
+   "ukf within (the baseline: the same tracker, another scan)": {
+    "0-2": 0.9524,
+    "2-3": 0.9281,
+    "3-4": 0.8988
+   },
+   "ours A": {
+    "0-2": 0.9034,
+    "2-3": 0.9091,
+    "3-4": 0.9002
+   },
+   "dipy A": {
+    "0-2": 0.8214,
+    "2-3": 0.8399,
+    "3-4": 0.8593
+   }
+  },
+  "naming suspects": [
+   "CC1",
+   "Intra-CBLM-I-P",
+   "Sup-O",
+   "Sup-PO"
+  ],
+  "coverage": [
+   "CB",
+   "EC",
+   "EmC",
+   "SLF-I",
+   "SLF-II",
+   "SO",
+   "TO",
+   "TT",
+   "TP",
+   "PLIC",
+   "CC1",
+   "CC6",
+   "CPC",
+   "Intra-CBLM-PaT",
+   "MCP",
+   "Sup-F",
+   "Sup-T"
+  ],
+  "UKF-unstable": [
+   "EC",
+   "EmC",
+   "CR-P",
+   "TF",
+   "TO",
+   "TT",
+   "PLIC",
+   "CPC"
+  ],
+  "mean top probability, all streamlines": {
+   "ukf A": 0.9409,
+   "ours A": 0.9332,
+   "dipy A": 0.9231
+  },
+  "seconds": 71.3
+ }
+}

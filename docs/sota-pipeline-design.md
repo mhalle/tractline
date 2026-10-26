@@ -555,8 +555,16 @@ weights' license permits, and recorded as such in the implementation's record.
 4. **Installs and downloads.** MRtrix3, ANTs, FastSurfer weights, SynthStrip weights, and GPUStreamlines to read. Each
    needs your approval before downloading.
 5. **Labelers off their domain.** Options: retrain RapidParc on PTT and iFOD2 tractograms, or rely on
-   tractogram-agnostic bundling (RecoBundles, TractSeg) for those presets. Recommended: agnostic bundling first, with
-   retraining as a later study.
+   tractogram-agnostic bundling (RecoBundles, TractSeg) for those presets.
+   - *Measured 2026-10-26 on cIIIs04* (NOTES). Where PTT's paths overlap UKF's, RapidParc names them as consistently
+     as it names UKF's own rescan: 0.900 against 0.899 at matched distance. Only 14 % of PTT's streamlines overlap,
+     though.
+   - The two trackers cover different parts of most bundles: centers 5.6 mm apart against rescans' 1.3–1.9 mm.
+   - Naming suspects, each a boundary shift to a neighbor: CC1, Intra-CBLM-I-P, Sup-O, Sup-PO. Several more tracts
+     differ in coverage, not naming.
+   - Recommended now: keep the 42-tract vocabulary with RapidParc, flag the four suspects, and check PTT-only paths
+     against a reference not derived from UKF (the phantom, RecoBundles mapped to the ORG names) before any PTT preset
+     is released. Retraining stays a later study.
 6. **The hash's scope.** *Decided 2026-10-24:* the device stays out of the key.
    - **Per streamline, the devices differ.** On cIIIs04, a single run on the CPU against MPS gives 93.8 % the same tract
      and 31 % of paths more than 1 mm apart. That is about a fifth of a bootstrap replicate's difference.

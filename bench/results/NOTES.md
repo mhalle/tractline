@@ -7126,3 +7126,77 @@ ensemble-level check of its own. The runtime record says which ran.
 - No preset: a released one is immutable and needs a name and a calibration map.
 - The anatomy slots (phase B) that would make the tissue maps.
 - PTT in the ensemble: replicates and voxel summaries; the calibration map.
+
+## 2026-10-26 Do RapidParc's tract names hold on PTT's streamlines? (decision 5)
+
+**Why.** RapidParc (and TractCloud) were trained on UKF tractography. The pipeline names PTT's streamlines with the same
+labeler, off its domain. On cIIIs04 A the Other share is 0.40 for PTT against UKF's 0.53, and the mean top tract
+probability 0.933 against 0.941 (DIPY's PTT 0.923).
+
+**What ran** (`bench/naming_check.py`, `results/naming_check.json`; existing records, no new tracking; 71 s).
+- **Records:** cIIIs04's A and same-session rescan on A's grid, for today's UKF, our PTT (real units, 20°) and DIPY's
+  PTT (step 6).
+- **Territory** (coverage and naming together): per named tract, every record's streamlines subsampled to one count (3
+  draws).
+  - Across trackers on A: presence Dice and the distance between centers of mass.
+  - Within each tracker: A against its rescan, the scale for both.
+- **Naming where the paths overlap:** each streamline's RapidParc label against the majority label of the UKF-A
+  streamlines within 4 mm of it (RMS between the 20-point paths, the closer orientation; at most 5 voters, all within
+  the radius; ties to the smaller index). Baseline: UKF's own rescan against UKF A. Reported overall, by the nearest
+  voter's distance (the baseline's matches lie closer), and per tract with the number of overlapping streamlines.
+- **Classes:**
+  - naming suspect: at least 30 overlapping streamlines, and agreement more than 0.15 below the baseline's;
+  - coverage: under 5 % overlapping, a fourfold difference in count, or centers more than 5 mm farther apart than
+    UKF's own rescan's;
+  - UKF-unstable: UKF's rescan Dice under 0.5.
+
+**Territory: the trackers cover different parts of each bundle.**
+
+| count-matched presence, medians over 40 tracts | Dice | center distance |
+|---|---|---|
+| UKF / our PTT, same scan | 0.568 | 5.6 mm |
+| UKF / DIPY's PTT, same scan | 0.525 | |
+| our PTT / DIPY's PTT, same scan | 0.722 | |
+| UKF / its rescan | 0.725 | 1.9 mm |
+| our PTT / its rescan | 0.769 | 1.3 mm |
+
+The offset is nearly uniform across tracts, large ones included (CST 0.69 against the rescans' 0.77–0.81, AF 0.68
+against 0.81–0.82, CC2 0.73 against 0.84–0.88). PTT with ACT reaches gray matter; UKF stops elsewhere.
+
+**Naming where the paths overlap: consistent but for four boundary shifts.**
+
+| label against UKF-A's voters | with a counterpart | named tracts | at 0–2 / 2–3 / 3–4 mm |
+|---|---|---|---|
+| UKF's rescan (baseline) | 46 % | 0.928 | 0.952 / 0.928 / 0.899 |
+| our PTT | 14 % | 0.903 | 0.903 / 0.909 / 0.900 |
+| DIPY's PTT | 6 % | 0.855 | 0.821 / 0.840 / 0.859 |
+
+- **At the same distance our PTT's names agree as well as UKF's own rescan's.** In the 3–4 mm band, where most of our
+  matches lie, 0.900 against 0.899. The overall gap (0.903 against 0.928) is the baseline's closer matches.
+- **Naming suspects** (overlapping streamlines, agreement, the baseline's; what the voters said instead):
+  - CC1: 102, 0.71 against 0.93 (CC2);
+  - Intra-CBLM-I-P: 61, 0.31 against 0.81 (Other, ICP);
+  - Sup-O: 185, 0.54 against 0.91 (Sup-PO);
+  - Sup-PO: 241, 0.59 against 0.85 (Sup-PT, Sup-O, Sup-P).
+
+  Each is a shift across a boundary to a neighboring parcel, not a scrambled name.
+- **Coverage, not naming** (17 tracts): CB, EC, EmC, SLF-I, SLF-II, SO, TO, TT, TP, PLIC, CC1, CC6, CPC,
+  Intra-CBLM-PaT, MCP, Sup-F, Sup-T.
+  - For example, UKF names 1,915 streamlines Intra-CBLM-PaT and PTT 25, and none of UKF's has a PTT path within 4 mm
+    (the review's probe).
+    PTT does not track that path.
+- **UKF-unstable** (its rescan Dice under 0.5; no reference there): EC, EmC, CR-P, TF, TO, TT, PLIC, CPC.
+
+**Reading.**
+- Where a PTT streamline follows a path UKF also tracks, RapidParc names it as consistently as it names UKF's own
+  rescan, but for four boundary shifts (CC1, Intra-CBLM-I-P, Sup-O, Sup-PO). In the overlap, the domain shift does not
+  scramble names.
+- That covers 14 % of PTT's streamlines, the UKF-like ones. The other 86 % follow paths UKF does not produce. Their
+  names are unchecked here. They need a reference not derived from UKF: the phantom's truth (step 6: 64 % of PTT's
+  labeled streamlines matched it, against UKF's 58 %), or tractogram-agnostic bundling mapped to the ORG names.
+- **Limits.**
+  - One subject, A and one rescan.
+  - The radius (4 mm), voters (5) and thresholds were not varied.
+  - The overlap is small for many tracts, and it is a biased subset.
+  - The first version of this check (voters beyond the radius, one mixed suspects list) was corrected after an
+    independent review.
