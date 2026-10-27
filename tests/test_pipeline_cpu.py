@@ -71,9 +71,11 @@ def test_compiled_step(runs, monkeypatch):
 
 @pytest.mark.parametrize("backend", ["torch", "metal"])
 def test_observe_changes_nothing(backend):
-    """ukf.track's observe hook (a diagnostic, off by default) reads every step and changes no fiber: the same
-    fibers with it as without, on a subset of seeds (select) as on all of them; each half-fiber stops exactly once, and
-    its recorded points are one per observed step that went on at a multiple of record_length, after the seed."""
+    """ukf.track's observe hook (a diagnostic, off by default) reads every step and changes no fiber: on a subset of
+    seeds (select), the same fibers bit for bit with it as without; the subset's fibers are those of a run over all
+    seeds, to rounding (float32 products on x86 can round differently with the batch's size and threads, and the
+    tracker carries it along); each half-fiber stops exactly once, and its recorded points are one per observed step
+    that went on at a multiple of record_length, after the seed."""
     import torch
     from tractline import ukf as U, ukf_metal
     from tractline.prep import prepare
@@ -89,8 +91,13 @@ def test_observe_changes_nothing(backend):
     def observe(step, index, x, state, direction, stop, info):
         rows.append((step, index.cpu().numpy(), stop.cpu().numpy()))
     sub, sst = U.track(D, select=sel, observe=observe, **kw)
+    plain, pst = U.track(D, select=sel, **kw)                              # the same seeds, the same batches, no hook
+    assert len(sub) > 50 and list(sst["seed_index"]) == list(pst["seed_index"])
+    assert all(np.array_equal(f, g) for f, g in zip(sub, plain))
     byseed = dict(zip(st["seed_index"], ref))
-    assert len(sub) > 50 and all(np.array_equal(f, byseed[k]) for k, f in zip(sst["seed_index"], sub))
+    close = [k for k, f in zip(sst["seed_index"], sub)
+             if len(f) == len(byseed[k]) and np.abs(f - byseed[k]).max() < 0.1]
+    assert len(close) > 0.8 * len(sub)
     stops = np.concatenate([i[s_] for _, i, s_ in rows])
     assert len(stops) == 2 * len(sel) and len(np.unique(stops)) == len(stops)
     nrec = np.ones(2 * len(sel), int)                                       # the seed, then every 6th step that went on
