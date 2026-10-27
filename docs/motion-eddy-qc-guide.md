@@ -32,12 +32,13 @@ uvx --from "tractline[cli] @ git+https://github.com/mhalle/tractline@main" \
 
 `@main` runs the latest code; a commit hash in its place pins the version, so a set of scans can be processed
 with the same code throughout. The first run downloads PyTorch and the trained weights of the labeler (6.6 MB, from
-RapidParc's release, checked against a pinned checksum), so it takes longer than later runs. `tractline fetch` downloads the weights of both
-RapidParc models ahead of time. From a checkout of the repository, `uv run tractline run ...` does the same.
+RapidParc's release, checked against a pinned checksum), so it takes longer than later runs. `tractline fetch`
+downloads the weights of every labeler ahead of time, for example before working offline. From a checkout of the
+repository, `uv run tractline run ...` does the same.
 
 The TRX file holds every streamline the tracker kept, in RAS millimeters, grouped by tract. For each streamline it
 also stores the tract label (one of the 42 tracts or "Other"), the most probable atlas cluster, the probability of
-the assigned tract, the length, and the seed. Streamlines shorter than 40 mm are kept but left unlabeled, as the
+the assigned tract and its margin over the next most probable tract, the length, and the seed. Streamlines shorter than 40 mm are kept but left unlabeled, as the
 labelers were trained on longer ones. trx-python reads the file and can convert it to other streamline formats.
 
 Two options add further output. `--qc qc/sub-01` writes the QC files of the motion and eddy current correction
@@ -58,7 +59,8 @@ option.
 The command runs on an Apple GPU when there is one, then on a CUDA GPU, then on the CPU (`--device` chooses). On a
 laptop GPU a 105-volume scan takes about two minutes. On the CPU the motion and eddy current correction gives the same
 result but takes 12 to 13 minutes for a 105-volume scan. On an Apple GPU, a series too large for the available memory
-is refused before the run starts, with a message; this applies to HCP-sized acquisitions on a 16 GB machine. The
+is refused before the run starts, with a message; this applies to HCP-sized acquisitions on a 16 GB machine. Such a
+series can be run on the CPU (`--device cpu`), or tried on the GPU anyway with `--no-memory-check`. The
 correction has not yet been tested on CUDA.
 
 The same run from Python:
@@ -165,10 +167,12 @@ tractography.
 the mean and maximum framewise displacement, the median and largest displacement at the brain's edge from motion and
 from eddy currents, the outlier slices by volume, the excluded volumes with the reason for each, and the run time.
 
-`motion_eddy_qc.png` plots the same per-volume measures against volume index, with the b0 volumes marked.
+`motion_eddy_qc.png` plots the same per-volume measures against volume index, with the b0 volumes marked as gray
+bands.
 
-The pipeline also reports problems in `corr.warnings` (printed by `run_pipeline.py`): excluded volumes with their
-reasons, outlier slices, volumes whose residual z-score exceeds 4, and any non-numeric values found in the data.
+The command also prints warnings, which `--json` saves in the summary (`corr.warnings` from Python): excluded volumes
+with their reasons, outlier slices, volumes whose residual z-score exceeds 4, and any non-numeric values found in the
+data.
 
 ## 6. Reading the QC
 
