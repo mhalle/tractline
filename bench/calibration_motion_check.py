@@ -44,7 +44,7 @@ within subject (A fixed); pooled over strata by within-stratum ranks (a stratifi
 slope (gap per mm, and per within-stratum SD) with a bootstrap interval. Correlation only, small n, proxies not full
 eddy correction (module docstring of the output: "caveats").
 """
-import argparse, hashlib, json, logging, os, subprocess, sys, time
+import argparse, hashlib, json, logging, os, sys, time
 from pathlib import Path
 import numpy as np
 
@@ -663,7 +663,6 @@ def evaluate(args):
                 "n pairs": len(strata[k]), "subjects": sorted({p["subject"] for p in strata[k]}),
                 "table": table(strata[k], scans, groups_of=lambda p: p["subject"])}
     # cohort III, both terms, a subject's mean (term-centered gap)
-    c3 = [p for p in pairs if p["study"] == "cohort III"]
     # pooled: within-stratum ranks; strata of independent-ish pairs (the swapped and site 3 pairs share scans with B2000)
     pooled = {}
     sets = {"all strata": list(strata),
@@ -775,7 +774,7 @@ def validate(args):
         s, shell, study = load_scan(name)
         mask = brain_mask(s.dwi[..., s.b0_index].astype(np.float32).mean(-1))
         d = dw_proxies(s, shell, mask, keep_params=True)
-        P, sel, pred, sm, idx = d.pop("_params"), d.pop("_sel"), d.pop("_pred"), d.pop("_sm"), d.pop("_idx")
+        P, _, pred, sm, idx = d.pop("_params"), d.pop("_sel"), d.pop("_pred"), d.pop("_sm"), d.pop("_idx")
         nb = len(s.b0_index)
         vox, pe = np.asarray(s.vox, float), int(s.pe_axis)
         cen = idx.mean(0)

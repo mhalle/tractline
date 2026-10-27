@@ -375,7 +375,6 @@ def jacobian_cols(theta, x, gp):
     w = theta[:, 3:6].detach()
     cols = [gp / vox_t]                                                                   # translations: (G, N, 3)
     eps = 1e-4
-    R0 = rot(w)
     rc = []
     for j in range(3):                                                                    # dR/dw_j by central differences (tiny)
         dw = torch.zeros_like(w); dw[:, j] = eps

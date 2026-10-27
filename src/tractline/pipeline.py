@@ -307,7 +307,7 @@ def correct_motion_eddy(s, timer: Timer, device="mps", opts=None, field=True) ->
     with timer("field_apply"):
         dwi, _valid = ME.apply_volumes(s.dwi, r, field_hz=h, device=device)
     if r.excluded:
-        warnings = warnings + [f"motion_eddy: volumes left out of the fit and of tracking (in the corrected series with "
+        warnings = warnings + ["motion_eddy: volumes left out of the fit and of tracking (in the corrected series with "
                                "identity motion, b-vector as acquired): "
                                + "; ".join(f"{v}: {why}" for v, why in r.excluded.items())]
     if r.outlier_slices:

@@ -6,7 +6,7 @@
 
     python bench_fast.py --device mps|cpu [--check]
 """
-import argparse, json, time, sys
+import argparse, json, time
 import torch
 import torch.nn.functional as F
 from pathlib import Path
@@ -135,7 +135,7 @@ for (X, Y, Z, G) in [(96, 96, 50, 100), (104, 104, 72, 105)]:
         row["mps_driver_mb"] = round(torch.mps.driver_allocated_memory() / 2 ** 20)
     out["sizes"][f"{X}x{Y}x{Z}x{G}"] = row
     print(json.dumps({f"{X}x{Y}x{Z}x{G}": row}), flush=True)
-    del img, Gp
+    img = Gp = None                                                 # freed before the next size
     if dev.type == "mps":
         torch.mps.empty_cache()
 json.dump(out, open(OUT / f"bench_fast_{args.device}.json", "w"), indent=1)

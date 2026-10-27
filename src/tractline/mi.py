@@ -176,7 +176,7 @@ def register(mov, fixed, mask, vox, bins=256, levels=None, d0=None, tol=1e-5, pe
             if not math.isfinite(c1):                                                     # no finite step: stay at the last point
                 break
             s_ = a * p_; y_ = g1 - g
-            d, c_prev, c, g = d + s_, c, c1, g1
+            d, c, g = d + s_, c1, g1
             sy = float(s_ @ y_)
             if sy > 1e-12:                                                                # BFGS inverse-Hessian update
                 rho = 1.0 / sy

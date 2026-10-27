@@ -4,7 +4,7 @@ within each group (b0s, each shell) and between the groups' means; voxels.
 
     uv run --group dipy bench/motion_eddy/compare_eddy_all.py <synth dir> <eddy out basename>
 """
-import glob, json, sys, math
+import glob, json, sys
 import numpy as np, nibabel as nib
 
 D, base = sys.argv[1], sys.argv[2]

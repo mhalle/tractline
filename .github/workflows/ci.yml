@@ -14,9 +14,9 @@ jobs:
     env:
       TRACTOGRAPHY_DATA: /tmp/tractography-data
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v10.3.2                 # no major-version tags since v8
         with:
           enable-cache: true
 

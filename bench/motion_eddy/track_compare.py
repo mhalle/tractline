@@ -8,10 +8,10 @@ over the 42 tracts), and the Other share of each.
 
     uv run --group dipy bench/motion_eddy/track_compare.py <dir> [--floor]      # MPS; --floor: the scan against itself moved 0.05 voxel
 """
-import json, sys, time
+import json, sys
 from pathlib import Path
 from types import SimpleNamespace
-import numpy as np, nibabel as nib, torch
+import numpy as np, nibabel as nib
 
 from tractline import pipeline as P
 

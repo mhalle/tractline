@@ -17,7 +17,7 @@ Against the target T, for a shape S: coverage |S n T| / |T|, precision |S n T| /
 symmetric difference |S xor T| / |T|. Reported for the focus tracts (CST, AF, UF) and as medians over the named
 tracts whose target has at least MIN_VOXELS voxels. Writes results/ensemble_vorobev.json.
 """
-import json, sys, zipfile
+import json, sys
 from pathlib import Path
 import numpy as np
 

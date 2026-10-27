@@ -121,7 +121,6 @@ def proto_check(args):
 def field_check(args):
     import calibration_onharmony as CO
     from tractline import pipeline as P
-    from tractline import susceptibility as S
     s = CO.load_checked(args.subject, args.session)
     timer = P.Timer()
     with P.exact_float32("mps"):

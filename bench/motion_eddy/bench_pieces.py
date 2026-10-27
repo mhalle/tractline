@@ -5,7 +5,7 @@ and the final 3D cubic B-spline resample of every volume over the whole box (pre
 
     python bench_pieces.py --device mps|cpu [--reps 5] [--mask 0.3]
 """
-import argparse, json, math, time
+import argparse, json, time
 import torch
 import torch.nn.functional as F
 from pathlib import Path
@@ -152,7 +152,7 @@ for (X, Y, Z, G) in [(96, 96, 50, 100), (104, 104, 72, 105)]:
         row["mps_driver_mb"] = round(torch.mps.driver_allocated_memory() / 2 ** 20)
     results["sizes"][f"{X}x{Y}x{Z}x{G}"] = row
     print(json.dumps({f"{X}x{Y}x{Z}x{G}": row}), flush=True)
-    del img, vol
+    img = vol = None                                                # freed before the next size
     if dev.type == "mps":
         torch.mps.empty_cache()
 json.dump(results, open(OUT / f"bench_pieces_{args.device}.json", "w"), indent=1)

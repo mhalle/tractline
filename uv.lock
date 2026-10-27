@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.11"
 resolution-markers = [
     "python_full_version >= '3.12'",
@@ -2325,6 +2325,7 @@ wheels = [
 name = "tractline"
 source = { editable = "." }
 dependencies = [
+    { name = "click" },
     { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
     { name = "numpy", version = "2.5.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
     { name = "torch" },
@@ -2336,8 +2337,17 @@ bids = [
     { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
     { name = "scipy", version = "1.18.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
 ]
+cli = [
+    { name = "matplotlib" },
+    { name = "nibabel" },
+    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "scipy", version = "1.18.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+]
 nrrd = [
     { name = "pynrrd" },
+]
+plot = [
+    { name = "matplotlib" },
 ]
 t1check = [
     { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
@@ -2379,15 +2389,20 @@ vtk = [
 
 [package.metadata]
 requires-dist = [
+    { name = "click", specifier = ">=8.1" },
+    { name = "matplotlib", marker = "extra == 'cli'" },
+    { name = "matplotlib", marker = "extra == 'plot'" },
     { name = "nibabel", marker = "extra == 'bids'" },
+    { name = "nibabel", marker = "extra == 'cli'" },
     { name = "numpy", specifier = ">=2" },
     { name = "pynrrd", marker = "extra == 'nrrd'" },
     { name = "scipy", marker = "extra == 'bids'" },
+    { name = "scipy", marker = "extra == 'cli'" },
     { name = "scipy", marker = "extra == 't1check'" },
     { name = "torch", specifier = ">=2.7" },
     { name = "triton", marker = "sys_platform == 'linux' and extra == 'triton'" },
 ]
-provides-extras = ["bids", "nrrd", "t1check", "triton"]
+provides-extras = ["bids", "cli", "nrrd", "plot", "t1check", "triton"]
 
 [package.metadata.requires-dev]
 dev = [

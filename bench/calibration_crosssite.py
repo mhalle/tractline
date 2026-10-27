@@ -74,7 +74,7 @@ ismrm2027_figures.fig6_protocol_gap reads, under protocol name S3_2000 ("B2000 -
 
 Imports calibration_cohortII (no side effects on import: constants, imports and definitions only) and never writes it.
 """
-import argparse, json, re, subprocess, sys, time
+import argparse, json, subprocess, sys, time
 from dataclasses import replace
 from pathlib import Path
 import numpy as np
@@ -528,7 +528,7 @@ class Runner(CII.Runner):
             return
         tag = CII.rescan_tag("session2", registration)
         src = json.loads((self.R.reuse / "runs.json").read_text())
-        if registration == 3 and src.get(f"{tag}_scan", {}).get("record") == f"session2reg2_onA" and same_key(2) in self.log:
+        if registration == 3 and src.get(f"{tag}_scan", {}).get("record") == "session2reg2_onA" and same_key(2) in self.log:
             self.log[key] = {"same as": same_key(2), "why": "the source's mode 3 entry confirmed mode 2's transform"}
             self.save_log()
             return
@@ -710,7 +710,6 @@ def brief(chk):
 
 def evaluate_source(source, pat, registration=1):
     """(i)-(iv) for one source protocol, both pairs at one registration mode: {per subject, summary, fig6 rows}."""
-    stn = CII.statements_name(RUNS + 1, registration)
     tag, stag = CII.rescan_tag(TAG, registration), CII.rescan_tag("session2", registration)
     xf = {sub: CII.statements_file(Records(sub, source).dir, RUNS + 1, registration) for sub in SUBJECTS}
     X = {sub: CC.Subject(f) for sub, f in xf.items() if f.exists()}
