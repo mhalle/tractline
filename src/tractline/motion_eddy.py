@@ -1367,6 +1367,7 @@ def plot_qc(rec: dict, path, name: str = "") -> bool:
     try:
         from matplotlib.backends.backend_agg import FigureCanvasAgg
         from matplotlib.figure import Figure
+        from matplotlib.ticker import MaxNLocator
     except ImportError:
         return False
     rows = np.array([[np.nan if x is None else x for x in r] for r in qc_rows(rec)], float)
@@ -1389,7 +1390,12 @@ def plot_qc(rec: dict, path, name: str = "") -> bool:
     ax[4].bar(v, rows[:, col["residual_z"]], color=np.where(rows[:, col["residual_z"]] > 4, "C3", "0.5"))
     ax[4].axhline(4, color="C3", lw=0.8, ls="--")
     ax[4].set_ylabel("residual z")
-    ax[5].bar(v, rows[:, col["outlier_slices"]], color="C1")
+    nout = rows[:, col["outlier_slices"]]
+    ax[5].bar(v, nout, color="C1")
+    ax[5].set_ylim(0, max(1.0, np.nanmax(nout, initial=0) * 1.15))       # counts: from zero, whole numbers
+    ax[5].yaxis.set_major_locator(MaxNLocator(integer=True))
+    if not np.nansum(nout):
+        ax[5].text(0.5, 0.5, "none", transform=ax[5].transAxes, ha="center", va="center", color="0.4")
     left = np.flatnonzero(rows[:, col["left_out"]] > 0)
     if len(left):
         ax[5].plot(v[left], np.zeros(len(left)), "kx", label="left out")
@@ -1399,11 +1405,12 @@ def plot_qc(rec: dict, path, name: str = "") -> bool:
     for a in ax[:3]:
         a.legend(loc="upper right", fontsize=8, ncol=3)
     for bv, idx in rec["groups (b, volumes)"]:
-        if bv == 0:
+        if bv == 0:                                                      # behind the traces, in no trace's color
             for a in ax:
                 for i in idx:
-                    a.axvline(i, color="C2", lw=0.4, alpha=0.5)
-    ax[0].set_title(f"{name + ': ' if name else ''}head motion and eddy currents ({rec['model']}; green lines: b0s)")
+                    a.axvspan(i - 0.5, i + 0.5, color="0.88", lw=0, zorder=0)
+    ax[0].set_title(f"{name + chr(10) if name else ''}head motion and eddy currents ({rec['model']}; gray bands: b0s)",
+                    fontsize=10)                                         # the series' name on its own line: BIDS names run long
     fig.tight_layout()
     fig.savefig(path, dpi=110)
     return True
