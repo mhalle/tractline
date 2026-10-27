@@ -4,7 +4,7 @@ Releases are git tags (`uv add git+https://github.com/mhalle/tractline --tag vX.
 release and `dev` the work in progress (`docs/development.md`, "Branches and releases"). The experiments
 behind each change, with their numbers and later corrections, are in `bench/results/NOTES.md`.
 
-## Unreleased
+## 0.5.2 - 2026-10-27
 
 - **The README rewritten** for a first-time reader: what tractline does, a quick start with `uvx` and
   `uv tool install`, what it reads (DICOM through dcm2niix), the steps, timings, versions, use from Python

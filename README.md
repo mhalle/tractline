@@ -123,8 +123,8 @@ trx-python's `trx_convert_tractogram` converts it to `.tck`, `.trk` or `.vtk` fo
 ## Choosing a version
 
 - **No `@...`**, or `@main`: the newest release. The `main` branch moves only when a release is made.
-- **A tag** such as `@v0.5.1`: one release, permanently. Pin a tag when a study's scans must all run on the same
-  code: `uvx --from "tractline[cli] @ git+https://github.com/mhalle/tractline@v0.5.1" tractline ...`, or the same
+- **A tag** such as `@v0.5.2`: one release, permanently. Pin a tag when a study's scans must all run on the same
+  code: `uvx --from "tractline[cli] @ git+https://github.com/mhalle/tractline@v0.5.2" tractline ...`, or the same
   URL with `uv tool install`. `tractline --version` shows which version ran.
 - **`@dev`**: the newest code, ahead of the latest release.
 
@@ -137,10 +137,10 @@ tag until you install again with another. [CHANGELOG.md](CHANGELOG.md) lists wha
 Add tractline to a uv project, pinned to a release, with the `bids` extra for reading NIfTI and BIDS:
 
 ```
-uv add git+https://github.com/mhalle/tractline --tag v0.5.1 --extra bids
+uv add git+https://github.com/mhalle/tractline --tag v0.5.2 --extra bids
 ```
 
-Outside uv, `pip install "tractline[bids] @ git+https://github.com/mhalle/tractline@v0.5.1"` does the same.
+Outside uv, `pip install "tractline[bids] @ git+https://github.com/mhalle/tractline@v0.5.2"` does the same.
 
 ```python
 from tractline import bids, pipeline as P
