@@ -30,7 +30,7 @@ uvx --from "tractline[cli] @ git+https://github.com/mhalle/tractline@main" \
     tractline run sub-01/dwi/sub-01_dir-AP_dwi.nii.gz --motion-eddy --trx out/sub-01.trx
 ```
 
-`@main` runs the latest code; a release tag in its place, such as `@v0.4.0`, pins the version, so a set of scans can
+`@main` runs the latest code; a release tag in its place, such as `@v0.5.0`, pins the version, so a set of scans can
 be processed with the same code throughout (`tractline --version` reports it). The first run downloads PyTorch and
 the trained weights of the labeler (6.6 MB, from RapidParc's release, checked against a pinned checksum), so it takes
 longer than later runs. `tractline fetch` downloads the weights of every labeler ahead of time, for example before
@@ -59,12 +59,19 @@ at the version tractline was tested with, checked against pinned checksums). `tr
 option.
 
 The command runs on an Apple GPU when there is one, then on a CUDA GPU, then on the CPU (`--device` chooses). On a
-laptop GPU a 105-volume scan takes about two minutes. On the CPU the motion and eddy current correction runs the same
-model (its kernels checked against the GPU's); it has not yet been run end to end on a real scan there, and is
-estimated to take 12 to 13 minutes for a 105-volume scan. On an Apple GPU, a series too large for the available memory
-is refused before the run starts, with a message; this applies to HCP-sized acquisitions on a 16 GB machine. Such a
-series can be run on the CPU (`--device cpu`), or tried on the GPU anyway with `--no-memory-check`. The
-correction has not yet been tested on CUDA.
+laptop GPU (Apple M2) a 105-volume scan takes about two minutes. On an NVIDIA A10 the same scan, with `--motion-eddy`
+and `--gibbs`, takes 36 seconds from scan to labels (the motion and eddy current correction 4 seconds of it), and gives
+the same result: the motion parameters agree with the M2's to about 0.003 mm and 0.001 degrees. On CUDA the first run
+also compiles the GPU kernels, about two minutes; they are kept in Triton's cache (`~/.triton/cache`, or
+`TRITON_CACHE_DIR`), so later runs on that machine skip it. `tractline warm` compiles them ahead of time, and
+`tractline warm <series>` compiles what that series' protocol needs (for the eddy current model given
+with `--motion-eddy`, quadratic by default). On a cluster, set `TRITON_CACHE_DIR` to a
+shared folder so the nodes compile once. On the CPU the
+motion and eddy current correction runs the same model (its kernels checked against the GPU's); it has not yet been
+run end to end on a real scan there, and is estimated to take 12 to 13 minutes for a 105-volume scan. On a GPU, a
+series too large for its memory is refused before the run starts, with a message; this applies to HCP-sized
+acquisitions on a 16 GB machine. Such a series can be run on the CPU (`--device cpu`), or tried on the GPU anyway with
+`--no-memory-check`.
 
 The same run from Python:
 
@@ -91,7 +98,7 @@ sidecar's `SliceEncodingDirection` gives, or the third voxel axis when the sidec
 dcm2niix's output, not for an image reoriented after conversion). The step runs in single precision and agrees with
 DIPY's as closely as DIPY's own single precision does: a few voxels in a million differ where two shifts score
 almost equally (in double precision it matches DIPY's to 0.15 % of the scan's scale). It takes about 40 seconds on
-an Apple GPU for a 105-volume scan. Like those tools, the method assumes fully sampled k-space; on partial Fourier
+an Apple GPU for a 105-volume scan, 5 seconds on an NVIDIA A10. Like those tools, the method assumes fully sampled k-space; on partial Fourier
 acquisitions its result may be biased.
 
 **Susceptibility field.** The field is estimated from the b0 images of both phase-encoding directions with topup's

@@ -1,0 +1,45 @@
+                                                   Name    Self CPU %      Self CPU   CPU total %     CPU total  CPU time avg     Self CUDA   Self CUDA %    CUDA total  CUDA time avg    # of Calls  
+-------------------------------------------------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  
+                                              aten::mul         4.33%        4.250s         7.56%        7.416s      12.527us       31.777s        33.05%       31.777s      53.673us        592036  
+void at::native::elementwise_kernel<128, 2, at::nati...         0.00%       0.000us         0.00%       0.000us       0.000us       22.988s        23.91%       22.988s      68.905us        333625  
+                                              aten::add         2.59%        2.545s         4.59%        4.504s      12.177us       21.374s        22.23%       21.374s      57.788us        369875  
+                                              aten::bmm         1.02%     997.572ms         1.20%        1.181s      45.300us       18.907s        19.66%       18.907s     725.138us         26074  
+                                ampere_sgemm_128x128_nt         0.00%       0.000us         0.00%       0.000us       0.000us       13.491s        14.03%       13.491s      22.943ms           588  
+void at::native::vectorized_elementwise_kernel<4, at...         0.00%       0.000us         0.00%       0.000us       0.000us        9.638s        10.02%        9.638s      37.561us        256602  
+void at::native::elementwise_kernel<128, 2, at::nati...         0.00%       0.000us         0.00%       0.000us       0.000us        6.486s         6.75%        6.486s     106.359us         60984  
+void at::native::vectorized_elementwise_kernel<4, at...         0.00%       0.000us         0.00%       0.000us       0.000us        6.286s         6.54%        6.286s      33.085us        190006  
+                                              aten::sub         0.84%     825.956ms         1.39%        1.360s      12.769us        6.041s         6.28%        6.041s      56.740us        106472  
+                                           aten::einsum         0.19%     182.262ms         0.90%     884.766ms      96.369us       0.000us         0.00%        5.007s     545.331us          9181  
+void at::native::vectorized_elementwise_kernel<2, at...         0.00%       0.000us         0.00%       0.000us       0.000us        4.923s         5.12%        4.923s      84.759us         58080  
+                                            aten::clamp         0.53%     520.464ms         0.85%     835.888ms      13.699us        3.495s         3.64%        3.495s      57.281us         61020  
+void at::native::vectorized_elementwise_kernel<2, at...         0.00%       0.000us         0.00%       0.000us       0.000us        3.495s         3.64%        3.495s      57.315us         60984  
+void at::native::vectorized_elementwise_kernel<2, at...         0.00%       0.000us         0.00%       0.000us       0.000us        3.387s         3.52%        3.387s      55.547us         60984  
+                                              aten::cat         0.35%     343.526ms         0.58%     569.522ms      14.888us        3.124s         3.25%        3.124s      81.664us         38253  
+                                ampere_sgemm_128x128_tn         0.00%       0.000us         0.00%       0.000us       0.000us        3.120s         3.24%        3.120s     690.272us          4520  
+                                           aten::gather         0.48%     474.840ms         0.75%     737.716ms      15.819us        3.119s         3.24%        3.119s      66.888us         46634  
+void at::native::_scatter_gather_elementwise_kernel<...         0.00%       0.000us         0.00%       0.000us       0.000us        3.119s         3.24%        3.119s      66.945us         46594  
+                                              aten::div         0.36%     355.342ms         0.60%     589.538ms      14.251us        2.451s         2.55%        2.451s      59.259us         41368  
+void at::native::elementwise_kernel<128, 2, at::nati...         0.00%       0.000us         0.00%       0.000us       0.000us        2.129s         2.21%        2.129s      59.868us         35561  
+                                            aten::stack         0.29%     285.250ms         1.14%        1.118s      31.280us       0.000us         0.00%        2.070s      57.909us         35748  
+                                ampere_sgemm_128x128_nn         0.00%       0.000us         0.00%       0.000us       0.000us        1.965s         2.04%        1.965s     729.162us          2695  
+void at::native::elementwise_kernel<128, 2, at::nati...         0.00%       0.000us         0.00%       0.000us       0.000us        1.863s         1.94%        1.863s      69.241us         26901  
+void at::native::(anonymous namespace)::CatArrayBatc...         0.00%       0.000us         0.00%       0.000us       0.000us        1.438s         1.50%        1.438s       2.568ms           560  
+void at::native::(anonymous namespace)::CatArrayBatc...         0.00%       0.000us         0.00%       0.000us       0.000us        1.415s         1.47%        1.415s     631.561us          2240  
+                                 aten::_index_put_impl_         0.02%      23.053ms         0.09%      86.216ms     103.007us        1.358s         1.41%        1.363s       1.628ms           837  
+    autograd::engine::evaluate_function: IndexBackward0         0.00%       4.029ms         0.11%     104.719ms     179.007us       0.000us         0.00%        1.348s       2.304ms           585  
+                                         IndexBackward0         0.00%       3.765ms         0.10%     100.690ms     172.120us       0.000us         0.00%        1.348s       2.304ms           585  
+void (anonymous namespace)::indexing_backward_kernel...         0.00%       0.000us         0.00%       0.000us       0.000us        1.315s         1.37%        1.315s       2.247ms           585  
+void at::native::vectorized_elementwise_kernel<2, at...         0.00%       0.000us         0.00%       0.000us       0.000us        1.290s         1.34%        1.290s      54.170us         23817  
+void at::native::vectorized_elementwise_kernel<4, at...         0.00%       0.000us         0.00%       0.000us       0.000us        1.097s         1.14%        1.097s      35.636us         30777  
+                                           aten::median         0.00%       1.780ms         0.01%       7.053ms      26.517us     396.163ms         0.41%     792.327ms       2.979ms           266  
+void at::native::vectorized_elementwise_kernel<4, at...         0.00%       0.000us         0.00%       0.000us       0.000us     720.827ms         0.75%     720.827ms      38.264us         18838  
+                                              aten::pow         0.10%      97.064ms         0.15%     147.372ms      15.891us     641.929ms         0.67%     641.929ms      69.218us          9274  
+                                            aten::index         0.11%     103.950ms         0.18%     172.553ms      25.026us     560.904ms         0.58%     560.910ms      81.350us          6895  
+void at::native::index_elementwise_kernel<128, 4, at...         0.00%       0.000us         0.00%       0.000us       0.000us     545.143ms         0.57%     545.143ms      81.927us          6654  
+                                     aten::grid_sampler         0.02%      17.563ms         0.14%     133.918ms      21.551us       0.000us         0.00%     527.677ms      84.917us          6214  
+                                  aten::grid_sampler_3d         0.05%      48.309ms         0.12%     116.356ms      18.725us     527.677ms         0.55%     527.677ms      84.917us          6214  
+void at::native::(anonymous namespace)::grid_sampler...         0.00%       0.000us         0.00%       0.000us       0.000us     527.677ms         0.55%     527.677ms      84.917us          6214  
+void at::native::vectorized_elementwise_kernel<4, at...         0.00%       0.000us         0.00%       0.000us       0.000us     494.807ms         0.51%     494.807ms      57.737us          8570  
+-------------------------------------------------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  
+Self CPU time total: 98.144s
+Self CUDA time total: 96.154s

@@ -1,7 +1,8 @@
 """The tractline command: a dMRI series to labeled UKF tractography, from the shell.
 
     tractline run sub-01/dwi/sub-01_dir-AP_dwi.nii.gz --motion-eddy --trx out/sub-01.trx --qc qc/sub-01
-    tractline fetch                      # RapidParc's weights into the cache ahead of a run (tractline.fetch)
+    tractline fetch                      # the labelers' weights into the cache ahead of a run (tractline.fetch)
+    tractline warm                       # on CUDA: compile the GPU kernels ahead of the first run
 
 Installed with the `cli` extra (nibabel and scipy to read BIDS, matplotlib for the QC plot), or run without installing:
 
@@ -74,7 +75,7 @@ def main():
 @click.option("--workers", type=int, default=None,
               help="On the CPU: tracking processes (default: one per core; ignored on a GPU).")
 @click.option("--no-memory-check", is_flag=True,
-              help="With --motion-eddy on an Apple GPU: try a series larger than the recommended memory anyway.")
+              help="With --motion-eddy on a GPU: try a series larger than its memory allows anyway.")
 @click.option("--json", "json_path", type=click.Path(dir_okay=False), default=None,
               help="Also write the run's summary as JSON here ('-' for standard output).")
 @click.option("-q", "--quiet", is_flag=True, help="Print nothing but errors (and --json -).")
@@ -208,6 +209,73 @@ def _progress(what: str):
             click.echo(f"downloading {what}: {pct} %", err=True)
             state["last"] = pct
     return show
+
+
+@main.command()
+@click.argument("dwi", required=False, type=click.Path(exists=True, dir_okay=False))
+@click.option("--partners", multiple=True, type=click.Path(exists=True, dir_okay=False),
+              help="With DWI: the series that measures its field, as for run.")
+@click.option("--motion-eddy", "model", type=click.Choice(MODELS), default="quadratic", show_default=True,
+              help="The eddy current model to compile for.")
+@click.option("--all", "everything", is_flag=True,
+              help="Every phase-encoding axis, model and field case (18 combinations; about 20 CPU-minutes).")
+@click.option("--workers", type=int, default=None,
+              help="Compiling processes (default: one per kernel set, up to the CPUs this process may use).")
+def warm(dwi, partners, model, everything, workers):
+    """Compile the CUDA kernels ahead of the first run, into Triton's cache (TRITON_CACHE_DIR, by default
+    ~/.triton/cache), so no run pays for compiling: the tracker's (every gradient count) and the head motion and eddy
+    current correction's. With DWI: for that series' phase-encoding axis and whether it has a series that measures its
+    field (a study of one protocol needs only this). Without: AP/PA phase encoding with and without a field. On an Apple
+    GPU or the CPU there is nothing to compile ahead."""
+    import time
+    import torch
+    if everything and dwi:
+        raise click.UsageError("--all compiles every combination; give a series or --all, not both")
+    if partners and not dwi:
+        raise click.UsageError("--partners goes with a series")
+    if not torch.cuda.is_available():
+        click.echo("no CUDA GPU: nothing to compile ahead (Apple GPUs and the CPU compile nothing that is cached)",
+                   err=True)
+        return
+    from . import motion_eddy_triton as T
+    if not T.available():
+        raise click.ClickException("Triton is not installed, or this GPU is older than it supports (compute capability "
+                                   "7.0): on Linux, PyPI's torch brings Triton")
+    from . import ukf_triton_block as K
+    if workers is None:
+        workers = T.cpus()
+    try:
+        from nibabel.filebasedimages import ImageFileError
+    except ImportError:
+        ImageFileError = ValueError                                       # noqa: N806
+    try:
+        if dwi:
+            from . import bids, pipeline as P
+            s = bids.load(dwi, partners=list(partners) or None)
+            which = T.combos((s.pe_axis,), (model,), (P.can_correct(s),))
+            what = f"{s.name}: PE axis {s.pe_axis}, {model}, {'with' if P.can_correct(s) else 'without'} a field"
+        elif everything:
+            which = T.combos((0, 1, 2), tuple(T.MODELS), (True, False))
+            what = "every combination"
+        else:
+            which = T.combos((1,), (model,), (True, False))
+            what = f"AP/PA phase encoding, {model}, with and without a field"
+    except ImportError as e:
+        raise click.ClickException(f"reading a series needs nibabel and scipy ({e}): install tractline[cli]") from e
+    except (ValueError, OSError, ImageFileError) as e:
+        raise click.ClickException(str(e)) from e
+    from concurrent.futures.process import BrokenProcessPool
+    t0 = time.time()
+    try:
+        click.echo(f"the tracker: {len(K.NPADS)} gradient-count sizes", err=True)
+        K.warm(workers=min(workers, len(K.NPADS)))
+        click.echo(f"head motion and eddy currents: {what} ({len(which)} kernel set{'s' if len(which) > 1 else ''})",
+                   err=True)
+        T.warm(which, workers=min(workers, len(which)))
+    except BrokenProcessPool as e:
+        raise click.ClickException("a compiling process died (memory, or a GPU in exclusive-process mode): try "
+                                   "--workers 1") from e
+    click.echo(f"compiled into Triton's cache in {time.time() - t0:.0f} s", err=True)
 
 
 @main.command()

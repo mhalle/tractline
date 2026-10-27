@@ -7628,3 +7628,47 @@ warnings. Against the same run without it: mean framewise displacement 0.277 aga
 displacement 0.251 against 0.235 mm, median eddy 0.52 against 0.51 mm; 95,941 streamlines against 98,044 (-2.1 %),
 79,109 labeled against 81,077. One scan: whether the motion estimates move with the ringing's removal in general is
 not known.
+
+## 2026-10-26 motion_eddy on CUDA: Triton kernels, and `tractline warm`
+
+**Why.** On an NVIDIA A10 (Modal; `bench/motion_eddy/modal_cuda.py`), the plain torch path took 93.5 s for ON-Harmony
+16974's correction (104 x 104 x 72 x 105) against 27 s on the M2's Metal kernels, peak 5.56 GiB
+(`results/motion_eddy/modal_cuda_a10_torch.json`). Its profile (`modal_cuda_a10_torch_profile.txt`): about three
+quarters of the GPU time in small elementwise kernels (the cubic B-spline's 64 gathers and the Jacobian as chains of
+torch operations, over a million launches), most of the rest in batched products, J'J's skinny GEMM 23 ms a call.
+Gibbs on the A10 was already fast, 4.0-4.8 s across runs (38 s on the M2); its float32 result on 8 volumes against the
+CPU's: 1 voxel of 6.2 million above 0.1 % of scale, the largest 0.18 % (`modal_cuda_a10.json`).
+
+**What.**
+- `src/tractline/motion_eddy_triton.py`: step_moments, step_cost, step_values, resample and apply_volumes as Triton
+  kernels, the Metal kernels' computations per point (a program per volume and block of 256 points). step_moments
+  builds the block's J (256 x 16) and forms J'J with one `tl.dot` in IEEE float32 (not TF32); J'r and r^2 by sums;
+  written per block and summed by torch in a fixed order (deterministic). The PE axis, the eddy terms, the Newton
+  passes and the field are compile-time constants; no other argument is specialized on (sizes, pointer alignment), so
+  one copy serves every scan. Launches go to the tensors' device. The prefilter and the Gaussian smoothing stay torch.
+- `motion_eddy._backend`: "auto" is metal on MPS, triton on CUDA when Triton is installed and the GPU's compute
+  capability is 7.0 or more, else torch; a fused backend asked for where it cannot run is refused. The QC summary
+  records the backend.
+- The memory check covers CUDA: free + (reserved - allocated) device memory against 18 copies of the series
+  (triton) or 24 (torch), from the A10's allocated peaks of 13.8 and 18.2 copies with about 30 % for fragmentation.
+  On MPS only the Metal path is checked, as before (6 copies).
+- `motion_eddy_triton.warm()` and `tractline warm [series]`: compile the tracker's six sizes and motion_eddy's kernels
+  for a series' combination (its PE axis, the model, the field if it has a pair), by default AP/PA with and without a
+  field, or all 18 combinations (`--all`), into Triton's cache, in parallel processes.
+
+**Checked.**
+- `tests/test_motion_eddy.py` on the A10 (`modal_cuda.py --tests`): 28 passed. The kernels against the float64 torch
+  path with and without a field, the fused path deterministic bit for bit, the field case on CUDA, the memory check,
+  warm then a run.
+- 16974, the correction alone (`modal_cuda_a10.json`): 3.39 s and field_apply 0.38 s on the second run (82.7 s on the
+  first, Triton compiling), peak 4.19 GiB. Against the M2's record (`m2_record_16974.json`; `modal_cuda_a10_vs_m2.json`
+  by `compare_records.py`): translations within 0.0032 mm (median 0.0005), rotations 0.0011 degrees, eddy coefficients
+  0.0036 voxels; mean framewise displacement 0.2556 against 0.2554 mm.
+- The command, `--motion-eddy --gibbs` (`modal_cuda_cli_a10.json`): 35.6 s from scan to labels on the second run
+  (gibbs 4.5, field 4.9, motion_eddy 3.8, ukf 19.0 s), 147.9 s on the first (Triton compiling the motion_eddy and
+  tracker kernels); 95,949 streamlines, 79,097 labeled, no warnings. The M2 with the same options
+  (`m2_cli_gibbs_16974.json`): 152.6 s, 95,941 and 79,109.
+- `tractline warm <series>` then the command, each in its own process (`modal_cuda_cli_a10_warm.json`): warm 136 s;
+  the first run then 36.1 s (motion_eddy 3.7 s): nothing compiled.
+
+**Not done.** Other CUDA GPUs (one A10). The budget rests on one scan.

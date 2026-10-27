@@ -1,0 +1,20 @@
+{
+ "a": "modal_cuda_a10.json (A10, triton)",
+ "b": "m2_record_16974.json (M2, metal)",
+ "translation_mm_max": 0.0032,
+ "translation_mm_median": 0.00051,
+ "rotation_deg_max": 0.0011,
+ "eddy_vox_max": 0.0036,
+ "qc": {
+  "framewise displacement, mm (mean, max)": [
+   [
+    0.2556,
+    0.5775
+   ],
+   [
+    0.2554,
+    0.5758
+   ]
+  ]
+ }
+}

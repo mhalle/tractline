@@ -1,0 +1,247 @@
+[
+ {
+  "warm_s": 136.3,
+  "exit": 0,
+  "stderr": "the tracker: 6 gradient-count sizes\nhead motion and eddy currents: sub-16974_ses-OXF1PRI001_dir-AP_dwi: PE axis 1, quadratic, with a field (1 kernel set)\ncompiled into Triton's cache in 132 s\n"
+ },
+ {
+  "series": "/data/ds004712/sub-16974/ses-OXF1PRI001/dwi/sub-16974_ses-OXF1PRI001_dir-AP_dwi.nii.gz",
+  "corrected": true,
+  "note": "corrected with sub-16974_ses-OXF1PRI001_dir-PA_dwi.nii.gz (same folder); motion and eddy currents corrected with the field, one resample",
+  "residual_left": 0.241,
+  "warnings": [],
+  "shell": 2000.0,
+  "device": "cuda",
+  "gibbs": {
+   "b0s from the DWI": 5,
+   "b0s corrected on their own": 3,
+   "b0s left (resampled or not known)": 0
+  },
+  "seconds": {
+   "gibbs": 4.7,
+   "field_estimate": 5.2,
+   "motion_eddy": 3.72,
+   "field_apply": 0.4,
+   "mask": 0.39,
+   "prep": 0.1,
+   "load": 0.81,
+   "ukf": 19.03,
+   "label": 1.76,
+   "write_trx": 1.6
+  },
+  "scan_to_labels_s": 36.1,
+  "streamlines": 95949,
+  "labeled": 79097,
+  "trx": "/tmp/out.trx",
+  "motion_eddy": {
+   "model": "quadratic",
+   "reference frame": "first-b0",
+   "field used": true,
+   "volumes": 105,
+   "steps run": 40,
+   "framewise displacement mm (mean, max)": [
+    0.2766,
+    0.6383
+   ],
+   "rigid displacement at the brain's edge, mm: median and largest RMS (volume, mm)": [
+    0.251,
+    61,
+    0.481
+   ],
+   "rigid displacement at the brain's edge, mm: the largest at any edge point (volume, mm)": [
+    93,
+    0.847
+   ],
+   "eddy displacement at the brain's edge, mm: median and largest RMS (volume, mm)": [
+    0.52,
+    46,
+    1.0
+   ],
+   "eddy displacement at the brain's edge, mm: the largest at any edge point (volume, mm; the quadratic's corners)": [
+    92,
+    5.457
+   ],
+   "volumes with residual z > 4 (worst fit to their prediction)": [],
+   "volumes not corrected (alone in their group)": [],
+   "volumes left out of the fit (identity motion, b-vector as acquired)": {},
+   "volumes fitted rigid only (a shell of 2-4)": [],
+   "non-finite values set to 0": 0,
+   "outlier slices (volume: slices)": {},
+   "outlier slices": {
+    "mode": "replace",
+    "slice axis": 2,
+    "total": 0,
+    "volumes": 0,
+    "seeded by the screen's dropout": {}
+   },
+   "groups": [
+    {
+     "b": 0,
+     "volumes": 5,
+     "sh order": null
+    },
+    {
+     "b": 1000,
+     "volumes": 50,
+     "sh order": 6
+    },
+    {
+     "b": 2000,
+     "volumes": 50,
+     "sh order": 6
+    }
+   ],
+   "shell anchors": {},
+   "seconds": {
+    "masks": 0.06,
+    "fit": 2.93,
+    "total": 2.99
+   },
+   "options": {
+    "model": "quadratic",
+    "steps": 40,
+    "tol": 0.0,
+    "smooth_steps": 2,
+    "coarse": 0,
+    "trial_vox": 0.3,
+    "sh_order": 6,
+    "sh_lambda": 0.06,
+    "b0_ec": false,
+    "anchor": "none",
+    "anchor_eddy": false,
+    "anchor_bins": 256,
+    "mask_output": true,
+    "reference": "auto",
+    "npass": 0,
+    "backend": "auto",
+    "gain": true,
+    "max_motion_mm": 30.0,
+    "check_memory": true,
+    "outliers": "replace",
+    "outlier_z": 4.0,
+    "outlier_min_loss": 0.1
+   },
+   "table": "motion_eddy_qc.tsv"
+  }
+ },
+ {
+  "series": "/data/ds004712/sub-16974/ses-OXF1PRI001/dwi/sub-16974_ses-OXF1PRI001_dir-AP_dwi.nii.gz",
+  "corrected": true,
+  "note": "corrected with sub-16974_ses-OXF1PRI001_dir-PA_dwi.nii.gz (same folder); motion and eddy currents corrected with the field, one resample",
+  "residual_left": 0.241,
+  "warnings": [],
+  "shell": 2000.0,
+  "device": "cuda",
+  "gibbs": {
+   "b0s from the DWI": 5,
+   "b0s corrected on their own": 3,
+   "b0s left (resampled or not known)": 0
+  },
+  "seconds": {
+   "gibbs": 4.5,
+   "field_estimate": 5.0,
+   "motion_eddy": 3.79,
+   "field_apply": 0.4,
+   "mask": 0.39,
+   "prep": 0.09,
+   "load": 0.71,
+   "ukf": 19.21,
+   "label": 1.81,
+   "write_trx": 1.6
+  },
+  "scan_to_labels_s": 35.9,
+  "streamlines": 95949,
+  "labeled": 79097,
+  "trx": "/tmp/out.trx",
+  "motion_eddy": {
+   "model": "quadratic",
+   "reference frame": "first-b0",
+   "field used": true,
+   "volumes": 105,
+   "steps run": 40,
+   "framewise displacement mm (mean, max)": [
+    0.2766,
+    0.6383
+   ],
+   "rigid displacement at the brain's edge, mm: median and largest RMS (volume, mm)": [
+    0.251,
+    61,
+    0.481
+   ],
+   "rigid displacement at the brain's edge, mm: the largest at any edge point (volume, mm)": [
+    93,
+    0.847
+   ],
+   "eddy displacement at the brain's edge, mm: median and largest RMS (volume, mm)": [
+    0.52,
+    46,
+    1.0
+   ],
+   "eddy displacement at the brain's edge, mm: the largest at any edge point (volume, mm; the quadratic's corners)": [
+    92,
+    5.457
+   ],
+   "volumes with residual z > 4 (worst fit to their prediction)": [],
+   "volumes not corrected (alone in their group)": [],
+   "volumes left out of the fit (identity motion, b-vector as acquired)": {},
+   "volumes fitted rigid only (a shell of 2-4)": [],
+   "non-finite values set to 0": 0,
+   "outlier slices (volume: slices)": {},
+   "outlier slices": {
+    "mode": "replace",
+    "slice axis": 2,
+    "total": 0,
+    "volumes": 0,
+    "seeded by the screen's dropout": {}
+   },
+   "groups": [
+    {
+     "b": 0,
+     "volumes": 5,
+     "sh order": null
+    },
+    {
+     "b": 1000,
+     "volumes": 50,
+     "sh order": 6
+    },
+    {
+     "b": 2000,
+     "volumes": 50,
+     "sh order": 6
+    }
+   ],
+   "shell anchors": {},
+   "seconds": {
+    "masks": 0.06,
+    "fit": 2.97,
+    "total": 3.03
+   },
+   "options": {
+    "model": "quadratic",
+    "steps": 40,
+    "tol": 0.0,
+    "smooth_steps": 2,
+    "coarse": 0,
+    "trial_vox": 0.3,
+    "sh_order": 6,
+    "sh_lambda": 0.06,
+    "b0_ec": false,
+    "anchor": "none",
+    "anchor_eddy": false,
+    "anchor_bins": 256,
+    "mask_output": true,
+    "reference": "auto",
+    "npass": 0,
+    "backend": "auto",
+    "gain": true,
+    "max_motion_mm": 30.0,
+    "check_memory": true,
+    "outliers": "replace",
+    "outlier_z": 4.0,
+    "outlier_min_loss": 0.1
+   },
+   "table": "motion_eddy_qc.tsv"
+  }
+ }
+]

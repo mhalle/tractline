@@ -187,7 +187,7 @@ register(Implementation(
      "gain": Option(True, bool, doc="a per-volume intensity gain, refitted every step"),
      "max_motion_mm": Option(30.0, float, low=1.0, doc="a volume moving the brain's edge more than this leaves the fit"),
      "check_memory": Option(True, bool, hashed=False,
-                            doc="on MPS, refuse a series too large for the recommended memory (not hashed)"),
+                            doc="on a GPU, refuse a series too large for its memory (not hashed)"),
      "outliers": Option("replace", str, choices=("replace", "flag", "off"),
                         doc="outlier slices (signal loss): replaced by the prediction, flagged only, or not sought"),
      "outlier_z": Option(4.0, float, low=1.0, doc="an outlier slice's robust z within its shell is under -outlier_z"),

@@ -1,6 +1,6 @@
 """tractline.motion_eddy's inner loop and final resample as Metal kernels (torch.mps.compile_shader, as
-tractline.ukf_metal). The plain-torch versions of the same pieces are in tractline.motion_eddy (the CPU and CUDA path,
-and the float64 reference the tests hold these to).
+tractline.ukf_metal). The plain-torch versions of the same pieces are in tractline.motion_eddy (the CPU path, and the
+float64 reference the tests hold these to); tractline.motion_eddy_triton has them for CUDA.
 
 Per point y of each volume g, with no per-point array in memory:
   - x = phi_g^-1(y): the rigid part in closed form with the displacement along PE (the eddy polynomial plus, when a

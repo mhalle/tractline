@@ -1,0 +1,25 @@
+{
+ "series": "/Users/halazar/tmp/data/tractography/ds004712/sub-16974/ses-OXF1PRI001/dwi/sub-16974_ses-OXF1PRI001_dir-AP_dwi.nii.gz",
+ "device": "mps",
+ "gibbs": {
+  "b0s from the DWI": 5,
+  "b0s corrected on their own": 3,
+  "b0s left (resampled or not known)": 0
+ },
+ "seconds": {
+  "gibbs": 37.81,
+  "field_estimate": 14.77,
+  "motion_eddy": 28.25,
+  "field_apply": 0.84,
+  "mask": 4.38,
+  "prep": 0.2,
+  "load": 0.57,
+  "ukf": 63.67,
+  "label": 2.14,
+  "write_trx": 1.33
+ },
+ "scan_to_labels_s": 152.6,
+ "streamlines": 95941,
+ "labeled": 79109,
+ "warnings": []
+}

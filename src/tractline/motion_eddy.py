@@ -3,7 +3,8 @@ single resample (docs/gpu-motion-eddy-design.md). The method follows FSL eddy's 
 each volume is registered to a leave-one-out prediction from the others, with a rigid transform and an eddy-current
 displacement along the phase-encoding axis that is a polynomial of position, and the b-vectors are rotated with the
 head. The implementation is ours: one batched Levenberg-Marquardt Gauss-Newton fit over all volumes at once, in
-PyTorch, with fused Metal kernels on Apple GPUs (tractline.motion_eddy_metal) and plain torch on the CPU or CUDA.
+PyTorch, with fused kernels on Apple GPUs (Metal, tractline.motion_eddy_metal) and on CUDA (Triton,
+tractline.motion_eddy_triton), and plain torch elsewhere.
 
     r = estimate(dwi, bval, bvec, affine, pe_axis, field_hz=h, pe_sign=+1, readout_s=0.069, device="mps")
     corrected, valid = apply_volumes(dwi, r, field_hz=h)        # one cubic resample per volume: motion, eddy and field
@@ -56,6 +57,10 @@ import torch.nn.functional as F
 ORDERS = {"rigid": 0, "linear": 4, "quadratic": 10}
 MEMORY_FACTOR = 6.0                  # the budget on MPS, in copies of the series in float32 (measured peak: 3.1 as
                                      # allocated, 9.9 with the driver's reserve, on a 105-volume scan)
+MEMORY_FACTOR_CUDA = {"triton": 18.0, "torch": 24.0}   # on CUDA, against the free memory: the A10's allocated peaks on
+                                     # ON-Harmony 16974 (correct_motion_eddy, the field's steps included) were 13.8 and
+                                     # 18.2 copies (results/motion_eddy/modal_cuda_a10.json, _a10_torch.json), with
+                                     # about 30 % for the allocator's fragmentation
 
 
 @dataclass(frozen=True)
@@ -76,12 +81,12 @@ class Options:
     mask_output: bool = True         # apply_volumes zeroes voxels not inside every volume's field of view (eddy's)
     reference: str = "auto"          # "b0-mean", "first-b0", or "auto": first-b0 with a field, else b0-mean
     npass: int = 0                   # Newton steps of the inverse map (0: 2 without a field, 3 with one)
-    backend: str = "auto"            # "metal" (MPS), "torch", or "auto": metal on MPS, else torch
+    backend: str = "auto"            # "metal" (MPS), "triton" (CUDA), "torch", or "auto": the fused kernels where they run
     gain: bool = True                # a per-volume intensity gain, refitted every step (signal drift, a first volume
                                      # not yet at steady state): on synthetic intensity faults it removes their bias
                                      # (0.73 -> 0.09 voxel), on real scans it moves the maps 0.006-0.009 voxel
     max_motion_mm: float = 30.0      # a volume whose map moves the brain's edge more than this leaves the fit
-    check_memory: bool = True        # on MPS, refuse a series too large for the recommended memory
+    check_memory: bool = True        # on a GPU, refuse a series too large for its memory (MPS: the recommended; CUDA: free)
     outliers: str = "replace"        # outlier slices (signal loss against the prediction, eddy's --repol): "replace"
                                      # (imputed by the prediction in the fit and in the output), "flag" (imputed in the
                                      # fit, reported, the output as acquired), "off"
@@ -96,7 +101,7 @@ class Options:
             raise ValueError(f"motion_eddy: anchor {self.anchor!r} is not 'none' or 'mi'")
         if self.reference not in ("auto", "b0-mean", "first-b0"):
             raise ValueError(f"motion_eddy: reference {self.reference!r}")
-        if self.backend not in ("auto", "metal", "torch"):
+        if self.backend not in ("auto", "metal", "triton", "torch"):
             raise ValueError(f"motion_eddy: backend {self.backend!r}")
         if self.outliers not in ("replace", "flag", "off"):
             raise ValueError(f"motion_eddy: outliers {self.outliers!r} is not 'replace', 'flag' or 'off'")
@@ -137,7 +142,7 @@ class MotionEddy:
     qc: dict
     options: dict
     seconds: dict = field(default_factory=dict)
-    backend: str = ""                # "metal" or "torch": what ran
+    backend: str = ""                # "metal", "triton" or "torch": what ran
     excluded: dict = field(default_factory=dict)   # {volume: reason}: left out of the fit (identity motion and eddy)
     outlier_slices: dict = field(default_factory=dict)  # {volume: [slices]} along slice_axis: signal loss, imputed
     replacements: dict = field(default_factory=dict)    # {volume: (flat voxel indices, values)}: apply_volumes' imputation
@@ -159,6 +164,52 @@ class Geometry:
         self.P = 6 + self.nmon
         self.scale = torch.cat([torch.ones(3), torch.full((3,), 0.01), torch.ones(self.nmon)]).to(device, dtype)
         self.e_pe = torch.eye(3, dtype=dtype, device=device)[self.pe_axis]
+
+
+def _backend(name, dev, dtype=torch.float32):
+    """The backend that runs: "auto" is the fused kernels where they run (Metal on MPS; Triton on CUDA when Triton is
+    installed), in float32, else plain torch. A fused backend asked for where it cannot run is refused."""
+    if name == "auto":
+        name = "torch"
+        if dtype == torch.float32 and dev.type == "mps":
+            name = "metal"
+        elif dtype == torch.float32 and dev.type == "cuda":                       # Triton imported only for CUDA
+            from . import motion_eddy_triton as T
+            name = "triton" if T.available(dev) else "torch"
+    if name == "metal" and (dev.type != "mps" or dtype != torch.float32):
+        raise ValueError("motion_eddy: the metal backend runs on MPS in float32")
+    if name == "triton":
+        from . import motion_eddy_triton as T
+        if dev.type != "cuda" or dtype != torch.float32 or not T.available(dev):
+            raise ValueError("motion_eddy: the triton backend runs on CUDA in float32, with Triton installed")
+    return name
+
+
+def _exact_float32(fn):
+    """fn run with TF32 off on CUDA (pipeline.exact_float32: cuDNN's convolutions, the smoothing here, would otherwise
+    take a 10-bit mantissa on Ampere and newer), for callers that do not go through the pipeline."""
+    import functools
+    import inspect
+    sig = inspect.signature(fn)
+
+    @functools.wraps(fn)
+    def run(*args, **kwargs):
+        from .pipeline import exact_float32
+        bound = sig.bind_partial(*args, **kwargs)
+        with exact_float32(bound.arguments.get("device", sig.parameters["device"].default)):
+            return fn(*args, **kwargs)
+    return run
+
+
+def _kernels(backend):
+    """The fused kernels' module for a backend, None for plain torch."""
+    if backend == "metal":
+        from . import motion_eddy_metal as M
+        return M
+    if backend == "triton":
+        from . import motion_eddy_triton as T
+        return T
+    return None
 
 
 def rot(w):
@@ -266,8 +317,8 @@ def phi_inv(geo, theta, y, dfield=None, npass=2, ddfield=None):
 
 
 # ------------------------------------------------------------------------------------------------- plain torch backend
-# The same pieces as tractline.motion_eddy_metal's kernels, in torch on any device and dtype (the CPU and CUDA path, and
-# in float64 the reference the kernels are held to).
+# The same pieces as tractline.motion_eddy_metal's and motion_eddy_triton's kernels, in torch on any device and dtype
+# (the CPU path, CUDA's without Triton, and in float64 the reference the kernels are held to).
 
 def _bspline(t):
     w = [(1 - t) ** 3 / 6, (3 * t ** 3 - 6 * t ** 2 + 4) / 6, (-3 * t ** 3 + 3 * t ** 2 + 3 * t + 1) / 6, t ** 3 / 6]
@@ -639,6 +690,7 @@ def screen(dwi, bval, groups, m_pts, slice_axis=2, low=0.5, high=2.0, slice_low=
     return out
 
 
+@_exact_float32
 def estimate(dwi, bval, bvec, affine, pe_axis, field_hz=None, pe_sign=None, readout_s=None, mask=None, options=None,
              device="mps", dtype=torch.float32, progress=None, slice_axis=2) -> MotionEddy:
     """Motion and eddy-current parameters for every volume of dwi (X, Y, Z, G), as acquired (module docstring).
@@ -660,9 +712,7 @@ def estimate(dwi, bval, bvec, affine, pe_axis, field_hz=None, pe_sign=None, read
     opt = Options.make(options)
     t_all = time.perf_counter()
     dev = torch.device(device)
-    backend = opt.backend if opt.backend != "auto" else ("metal" if dev.type == "mps" else "torch")
-    if backend == "metal" and (dev.type != "mps" or dtype != torch.float32):
-        raise ValueError("motion_eddy: the metal backend runs on MPS in float32")
+    backend = _backend(opt.backend, dev, dtype)
     dwi = np.asarray(dwi)
     if dwi.ndim != 4:
         raise ValueError("motion_eddy: dwi (X, Y, Z, G)")
@@ -679,13 +729,18 @@ def estimate(dwi, bval, bvec, affine, pe_axis, field_hz=None, pe_sign=None, read
     npass = opt.npass or (3 if has_field else 2)
     geo = Geometry((X, Y, Z), vox, pe_axis, ORDERS[opt.model], dev, dtype)
     P, NMON = geo.P, geo.nmon
-    if backend == "metal" and opt.check_memory:
-        need = G * X * Y * Z * 4 * MEMORY_FACTOR
-        have = torch.mps.recommended_max_memory()
+    if opt.check_memory and (backend == "metal" or dev.type == "cuda"):     # MPS's plain torch path: unchecked, as before
+        factor = MEMORY_FACTOR if backend == "metal" else MEMORY_FACTOR_CUDA[backend]
+        need = G * X * Y * Z * (torch.finfo(dtype).bits // 8) * factor
+        if dev.type == "mps":
+            have, what = torch.mps.recommended_max_memory(), "recommended"
+        else:                                  # free, plus what torch's allocator holds in reserve but has not handed out
+            have = torch.cuda.mem_get_info(dev)[0] + torch.cuda.memory_reserved(dev) - torch.cuda.memory_allocated(dev)
+            what = "free"
         if need > 0.9 * have:
-            raise ValueError(f"motion_eddy: about {need / 2 ** 30:.1f} GB needed on MPS, {have / 2 ** 30:.1f} GB "
-                             "recommended: run on the CPU (slow) or on CUDA, or crop the field of view; or turn the "
-                             "check off to try anyway (the option check_memory)")
+            raise ValueError(f"motion_eddy: about {need / 2 ** 30:.1f} GB needed on {dev.type.upper()}, "
+                             f"{have / 2 ** 30:.1f} GB {what}: run on the CPU (slow) or a larger GPU, or crop the field of "
+                             "view; or turn the check off to try anyway (the option check_memory)")
 
     dwi = np.array(dwi, np.float32)
     bad_vals = ~np.isfinite(dwi)
@@ -804,8 +859,8 @@ def estimate(dwi, bval, bvec, affine, pe_axis, field_hz=None, pe_sign=None, read
     hi = np.minimum(nz.max(0) + 5, [X, Y, Z])
     crop = (slice(None),) + tuple(slice(int(a), int(b)) for a, b in zip(lo, hi))
     offset = tuple(float(a) for a in lo)
-    if backend == "metal":
-        from . import motion_eddy_metal as M
+    M = _kernels(backend)
+    if M is not None:
         dummy = torch.zeros(1, dtype=torch.float32, device=dev)
         dfk = dfield.contiguous() if has_field else dummy
         ddfk = ddfield.contiguous() if has_field else dummy
@@ -820,7 +875,7 @@ def estimate(dwi, bval, bvec, affine, pe_axis, field_hz=None, pe_sign=None, read
     def predictions_at_points(coef_, th_):
         """P(phi^-1(y)) for every volume at every point (G, N)."""
         allv = torch.arange(G, device=dev)
-        if backend == "metal":
+        if M is not None:
             nch_, ipv, fpv = M.consts(geo, G, len(ye), tuple(coef_.shape[1:]), offset, npass, has_field)
             return M.step_values(coef_.contiguous(), ye, pack(th_), allv, ipv, fpv, dfk, ddfk)
         return t_step_values(geo, coef_, ye, th_, allv, offset, dfield, npass, ddfield)
@@ -887,7 +942,7 @@ def estimate(dwi, bval, bvec, affine, pe_axis, field_hz=None, pe_sign=None, read
                 cached = (fw, smooth_fn(acq, fw) if fw > 0 else acq)
             vols = cached[1]
             obs_full = vols.reshape(G, -1)[:, lin_e]
-            if backend == "metal":
+            if M is not None:
                 u = M.resample(vols.contiguous(), xp, pack(th), rs[1], rs[2], dfk)
             else:
                 u = t_resample(geo, vols, xp, th, dfield)
@@ -921,7 +976,7 @@ def estimate(dwi, bval, bvec, affine, pe_axis, field_hz=None, pe_sign=None, read
                 outlier_log.append({"step": it, "outlier slices": int(outl.sum())})
                 del Pv
             del pv
-            if backend == "metal":
+            if M is not None:
                 if c_ not in mcache:
                     mcache[c_] = M.consts(geo, G, len(ys), tuple(coef.shape[1:]), offset, npass, has_field)
                 nch, ipk, fpk = mcache[c_]
@@ -963,7 +1018,7 @@ def estimate(dwi, bval, bvec, affine, pe_axis, field_hz=None, pe_sign=None, read
                 if not bool(need.any()):
                     break
                 k = torch.nonzero(need)[:, 0]
-                if backend == "metal":
+                if M is not None:
                     f1 = M.step_cost(coef_c, obs_c, ys_c, pack(cand[k]), k, nch, ipk, fpk, dfk, ddfk)
                 else:
                     f1 = t_step_cost(geo, coef, obs, ys, cand[k], k, offset, dfield, npass, ddfield)
@@ -1007,7 +1062,7 @@ def estimate(dwi, bval, bvec, affine, pe_axis, field_hz=None, pe_sign=None, read
     if opt.outliers != "off":
         # the last pass, with the final parameters: the outlier map reported, and the values that replace its slices
         with torch.no_grad():
-            if backend == "metal":
+            if M is not None:
                 u = M.resample(acq.contiguous(), xp, pack(th), rs[1], rs[2], dfk)
             else:
                 u = t_resample(geo, acq, xp, th, dfield)
@@ -1031,8 +1086,10 @@ def estimate(dwi, bval, bvec, affine, pe_axis, field_hz=None, pe_sign=None, read
                                             (gn[v] * Pv[v, sel]).cpu().numpy().astype(np.float32))
             del Pv
     acq = acq_orig = None
-    if backend == "metal":
+    if dev.type == "mps":
         torch.mps.synchronize()
+    elif dev.type == "cuda":
+        torch.cuda.synchronize(dev)
     t_fit = time.perf_counter() - t_all - t_mask
 
     anchors = {}
@@ -1176,8 +1233,8 @@ def _shell_anchor(geo, acq, th, groups, isb0, group_b, m_ref, dfield, ddfield, o
 # ------------------------------------------------------------------------------------------------- applying
 
 def _apply(geo, vols, theta, dfield, backend, ddfield=None):
-    if backend == "metal":
-        from . import motion_eddy_metal as M
+    M = _kernels(backend)
+    if M is not None:
         dummy = torch.zeros(1, dtype=torch.float32, device=vols.device)
         nch, ip, fp = M.consts(geo, vols.shape[0], 1, tuple(vols.shape[1:]), has_field=dfield is not None)
         return M.apply_volumes(vols.contiguous(), pack(theta), ip, fp,
@@ -1186,6 +1243,7 @@ def _apply(geo, vols, theta, dfield, backend, ddfield=None):
     return t_apply_volumes(geo, vols, theta, dfield, ddfield)
 
 
+@_exact_float32
 def apply_volumes(dwi, result: MotionEddy, field_hz=None, device="mps", dtype=torch.float32, mask_output=None,
                   backend="auto"):
     """The corrected series (X, Y, Z, G) float32 and its validity (X, Y, Z) bool: each volume resampled once (3D cubic
@@ -1196,7 +1254,7 @@ def apply_volumes(dwi, result: MotionEddy, field_hz=None, device="mps", dtype=to
     if (field_hz is not None) != result.field_used:
         raise ValueError("motion_eddy.apply_volumes: give the field estimate() was given (or none, if none)")
     dev = torch.device(device)
-    backend = backend if backend != "auto" else ("metal" if dev.type == "mps" else "torch")
+    backend = _backend(backend, dev, dtype)
     geo = Geometry(result.shape, result.vox, result.pe_axis, ORDERS[result.model], dev, dtype)
     vols = torch.tensor(np.ascontiguousarray(np.moveaxis(np.asarray(dwi), -1, 0)), dtype=dtype, device=dev)
     vols = torch.nan_to_num(vols, nan=0.0, posinf=0.0, neginf=0.0)
@@ -1332,7 +1390,8 @@ def write_qc(rec: dict, folder) -> dict:
     q = rec["qc"]
     rig = np.asarray(q["rigid displacement at edge, mm (rms, max) per volume"])
     edd = np.asarray(q["eddy displacement at edge, mm (rms, max) per volume"])
-    summary = {"model": rec["model"], "reference frame": rec["reference"], "field used": rec["field used"],
+    summary = {"model": rec["model"], "backend": rec.get("backend"), "reference frame": rec["reference"],
+               "field used": rec["field used"],
                "volumes": q["volumes"], "steps run": q["steps run"],
                "framewise displacement mm (mean, max)": q["framewise displacement, mm (mean, max)"],
                "rigid displacement at the brain's edge, mm: median and largest RMS (volume, mm)": [

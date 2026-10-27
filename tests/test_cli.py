@@ -292,3 +292,11 @@ def test_run_gibbs(tmp_path):
     summary = json.loads(r.stdout)
     assert summary["seconds"]["gibbs"] > 0 and summary["gibbs"]["b0s from the DWI"] >= 1
     assert summary["scan_to_labels_s"] >= summary["seconds"]["gibbs"] and summary["streamlines"] > 0
+
+
+def test_warm_without_cuda(monkeypatch):
+    """`tractline warm` where there is no CUDA GPU: says there is nothing to compile ahead, and succeeds."""
+    import torch
+    monkeypatch.setattr(torch.cuda, "is_available", lambda: False)
+    r = CliRunner().invoke(cli.main, ["warm"])
+    assert r.exit_code == 0 and "nothing to compile" in r.output

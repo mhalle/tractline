@@ -3,6 +3,20 @@
 Releases are git tags (`uv add "tractline @ git+https://github.com/mhalle/tractline@vX.Y.Z"`). The experiments
 behind each change, with their numbers and later corrections, are in `bench/results/NOTES.md`.
 
+## 0.5.0 - 2026-10-27
+
+- **Head motion and eddy current correction on CUDA, with fused kernels** (`tractline.motion_eddy_triton`): Triton
+  versions of the Metal kernels (the Gauss-Newton moments, the cost, the predictions, the forward resample and the
+  final resample), chosen automatically on CUDA when Triton is installed (`Options.backend`: `triton`). On an NVIDIA A10,
+  ON-Harmony 16974's correction takes 3.4 s against 94 s for the plain torch path (27 s on an M2), with 4.2 GiB of
+  device memory, and agrees with the M2's to about 0.003 mm and 0.001 degrees. The kernels compile on first use (about
+  80 s), cached by Triton; none of their arguments is specialized on, so one copy serves every scan size. The memory
+  check before a run covers CUDA too (the free device memory, with a budget measured on the A10).
+- **`tractline warm [series]`**: on CUDA, compiles the tracker's kernels and the motion and eddy correction's ahead of
+  the first run, into Triton's cache (`TRITON_CACHE_DIR`): for a series' protocol, for AP/PA phase encoding with and
+  without a field (the default), or every combination (`--all`); `motion_eddy_triton.warm()` from Python.
+- `tractline run --motion-eddy --gibbs` on the A10: 36 s from scan to labels (the M2: 153 s).
+
 ## 0.4.0 - 2026-10-26
 
 - **`tractline run --gibbs`**: Gibbs ringing removed first (the `gibbs` slot, experimental), from the series as

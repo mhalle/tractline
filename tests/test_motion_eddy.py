@@ -10,6 +10,10 @@ from tractline import motion_eddy as ME
 from tractline import susceptibility as S
 
 MPS = torch.backends.mps.is_available()
+CUDA = torch.cuda.is_available()
+from tractline import motion_eddy_triton as _T                             # noqa: E402
+FUSED = [b for b, ok in (("metal", MPS), ("triton", _T.available())) if ok]   # the fused kernels this machine runs
+FUSED_DEV = {"metal": "mps", "triton": "cuda"}
 
 
 def geo64(shape=(30, 34, 26), vox=(2.2, 2.2, 2.5), pe=1, nmon=10):
@@ -115,23 +119,25 @@ def test_sh_smoother_is_basis_free():
 
 # ------------------------------------------------------------------------------------------------ the kernels
 
-@pytest.mark.skipif(not MPS, reason="no MPS")
+@pytest.mark.skipif(not FUSED, reason="no MPS or CUDA")
+@pytest.mark.parametrize("backend", FUSED or ["none"])
 @pytest.mark.parametrize("with_field", [False, True])
-def test_kernels_are_torch(with_field):
-    """motion_eddy_metal's kernels (float32) against the torch path in float64: step_moments' H, b and cost, step_cost,
-    resample, prefilter, smooth and apply_volumes."""
-    from tractline import motion_eddy_metal as M
+def test_kernels_are_torch(with_field, backend):
+    """The fused kernels (motion_eddy_metal's on MPS, motion_eddy_triton's on CUDA; float32) against the torch path in
+    float64: step_moments' H, b and cost, step_cost, step_values, resample, prefilter, smooth and apply_volumes."""
+    M = ME._kernels(backend)
+    dev = FUSED_DEV[backend]
     torch.manual_seed(0)
     shape, G, N = (36, 40, 28), 6, 3000
     g64 = geo64(shape)
-    g32 = ME.Geometry(shape, g64.vox.numpy(), 1, 10, "mps", torch.float32)
+    g32 = ME.Geometry(shape, g64.vox.numpy(), 1, 10, dev, torch.float32)
     coef = torch.randn(G, *shape, dtype=torch.float64)
     pts = torch.rand(N, 3, dtype=torch.float64) * (torch.tensor(shape) - 10) + 5
     obs = torch.randn(G, N, dtype=torch.float64)
     th = torch.cat([torch.randn(G, 3), torch.randn(G, 3) * 0.02, torch.randn(G, 10) * 0.3], 1).double()
     df = torch.tensor(smooth_field(shape, 2.5)) if with_field else None
-    m = lambda t: t.float().to("mps").contiguous()                                       # noqa: E731
-    dfk = m(df) if with_field else torch.zeros(1, device="mps")
+    m = lambda t: t.float().to(dev).contiguous()                                         # noqa: E731
+    dfk = m(df) if with_field else torch.zeros(1, device=dev)
     ddf = torch.gradient(df, dim=1)[0] if with_field else None
     ddfk = m(ddf) if with_field else dfk
     H, b, f = ME.t_step_moments(g64, coef, obs, pts, th, (0, 0, 0), df, npass=3, ddfield=ddf)
@@ -141,8 +147,10 @@ def test_kernels_are_torch(with_field):
     assert rel(Hm, H) < 1e-4 and rel(bm, b) < 1e-4 and rel(fm, f) < 1e-5
     k = torch.tensor([1, 4])
     fc = ME.t_step_cost(g64, coef, obs, pts, th[k], k, (0, 0, 0), df, npass=3, ddfield=ddf)
-    fcm = M.step_cost(m(coef), m(obs), m(pts), ME.pack(m(th[k])), k.to("mps"), nch, ip, fp, dfk, ddfk)
+    fcm = M.step_cost(m(coef), m(obs), m(pts), ME.pack(m(th[k])), k.to(dev), nch, ip, fp, dfk, ddfk)
     assert rel(fcm, fc) < 1e-5
+    sv = ME.t_step_values(g64, coef, pts, th[k], k, (0, 0, 0), df, npass=3, ddfield=ddf)
+    assert rel(M.step_values(m(coef), m(pts), ME.pack(m(th[k])), k.to(dev), ip, fp, dfk, ddfk), sv) < 1e-5
     vols = torch.rand(G, *shape, dtype=torch.float64) * 100
     nch2, ip2, fp2 = M.consts(g32, G, N, shape, has_field=with_field)
     rs = ME.t_resample(g64, vols, pts, th, df)
@@ -288,18 +296,21 @@ def test_estimate_cpu(scan):
     assert corr.shape == scan["dwi"].shape and valid.any()
 
 
-@pytest.mark.skipif(not MPS, reason="no MPS")
-def test_estimate_mps_deterministic(scan):
-    """The Metal path: as accurate as the CPU's, and the same parameters on a second run, bit for bit."""
-    a = ME.estimate(scan["dwi"], scan["bval"], scan["bvec"], scan["affine"], scan["pe_axis"], device="mps",
+@pytest.mark.skipif(not FUSED, reason="no MPS or CUDA")
+@pytest.mark.parametrize("backend", FUSED or ["none"])
+def test_estimate_fused_deterministic(scan, backend):
+    """The fused path (Metal on MPS, Triton on CUDA): as accurate as the CPU's, and the same parameters on a second
+    run, bit for bit."""
+    dev = FUSED_DEV[backend]
+    a = ME.estimate(scan["dwi"], scan["bval"], scan["bvec"], scan["affine"], scan["pe_axis"], device=dev,
                     options={"steps": 25})
-    b = ME.estimate(scan["dwi"], scan["bval"], scan["bvec"], scan["affine"], scan["pe_axis"], device="mps",
+    b = ME.estimate(scan["dwi"], scan["bval"], scan["bvec"], scan["affine"], scan["pe_axis"], device=dev,
                     options={"steps": 25})
-    assert np.array_equal(a.theta_fit, b.theta_fit)
+    assert a.backend == backend and np.array_equal(a.theta_fit, b.theta_fit)
     assert edge_error(scan, a) < 0.15 * true_disp(scan)
 
 
-@pytest.mark.parametrize("device", ["cpu"] + (["mps"] if MPS else []))
+@pytest.mark.parametrize("device", ["cpu"] + (["mps"] if MPS else []) + (["cuda"] if CUDA else []))
 def test_estimate_with_field(device):
     """With a susceptibility field (up to 3 voxels) composed into the map: the motion and eddy fields are recovered
     with the field given, and apply_volumes' single resample brings back the truth better than the data as acquired."""
@@ -511,3 +522,26 @@ def test_outliers_respect_gain_and_left_out(scan):
                      options={"steps": 6, "max_motion_mm": 2.0})
     for v in r2.excluded:
         assert v not in r2.replacements and v not in r2.outlier_slices
+
+
+@pytest.mark.skipif(not CUDA, reason="no CUDA")
+def test_memory_check_cuda(scan, monkeypatch):
+    monkeypatch.setattr(torch.cuda, "mem_get_info", lambda *a: (1 << 20, 1 << 30))
+    monkeypatch.setattr(torch.cuda, "memory_reserved", lambda *a: 0)
+    with pytest.raises(ValueError, match="needed on CUDA"):
+        ME.estimate(scan["dwi"], scan["bval"], scan["bvec"], scan["affine"], 1, device="cuda", options={"steps": 1})
+
+
+def test_warm_combos():
+    """The combinations warm() compiles: the estimator's default Newton passes for each field case."""
+    assert _T.combos() == [(1, 10, 1, 3), (1, 10, 0, 2)]
+    assert len(_T.combos((0, 1, 2), tuple(_T.MODELS), (True, False))) == 18
+
+
+@pytest.mark.skipif(not _T.available(), reason="no CUDA with Triton")
+def test_warm_then_run(scan):
+    """warm() compiles a combination without running it; an estimate with those settings then runs as before."""
+    secs = _T.warm(_T.combos((1,), ("quadratic",), (False,)), workers=1)
+    assert list(secs) == [(1, 10, 0, 2)]
+    r = ME.estimate(scan["dwi"], scan["bval"], scan["bvec"], scan["affine"], 1, device="cuda", options={"steps": 3})
+    assert r.backend == "triton"
