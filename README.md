@@ -130,8 +130,8 @@ that ran.
 ## Choosing a version
 
 - **No `@...`**, or `@main`: the newest release. The `main` branch moves only when a release is made.
-- **A tag** such as `@v0.5.2`: one release, permanently. Pin a tag when a study's scans must all run on the same
-  code: `uvx --from "tractline[cli] @ git+https://github.com/mhalle/tractline@v0.5.2" tractline ...`, or the same
+- **A tag** such as `@v0.6.0`: one release, permanently. Pin a tag when a study's scans must all run on the same
+  code: `uvx --from "tractline[cli] @ git+https://github.com/mhalle/tractline@v0.6.0" tractline ...`, or the same
   URL with `uv tool install`. `tractline --version` shows which version ran.
 - **`@dev`**: the newest code, ahead of the latest release.
 
@@ -140,12 +140,11 @@ tractline's code, but `uvx` and `uv tool install` resolve the newest versions of
 `uv.lock` pins every package, and running from a clone of the tag uses it:
 
 ```
-git clone --branch v0.5.2 https://github.com/mhalle/tractline && cd tractline
+git clone --branch v0.6.0 https://github.com/mhalle/tractline && cd tractline
 uv run --locked --no-dev --extra cli tractline run ../sub-01/dwi/sub-01_dir-AP_dwi.nii.gz --motion-eddy --trx ../out/sub-01.trx
 ```
 
-From release 0.6.0 on, the provenance file also records the lock's checksum, so the environment can be rebuilt
-later.
+The provenance file also records the lock's checksum, so the environment can be rebuilt later.
 
 `uvx` reuses the environment it built first, so after a new release `uvx --refresh --from ...` picks it up. An
 unpinned `uv tool install` moves to the newest release with `uv tool upgrade tractline`; a pinned one stays on its
@@ -156,10 +155,10 @@ tag until you install again with another. [CHANGELOG.md](CHANGELOG.md) lists wha
 Add tractline to a uv project, pinned to a release, with the `bids` extra for reading NIfTI and BIDS:
 
 ```
-uv add git+https://github.com/mhalle/tractline --tag v0.5.2 --extra bids
+uv add git+https://github.com/mhalle/tractline --tag v0.6.0 --extra bids
 ```
 
-Outside uv, `pip install "tractline[bids] @ git+https://github.com/mhalle/tractline@v0.5.2"` does the same.
+Outside uv, `pip install "tractline[bids] @ git+https://github.com/mhalle/tractline@v0.6.0"` does the same.
 
 ```python
 from tractline import bids, pipeline as P

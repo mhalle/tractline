@@ -4,7 +4,7 @@ Releases are git tags (`uv add git+https://github.com/mhalle/tractline --tag vX.
 release and `dev` the work in progress (`docs/development.md`, "Branches and releases"). The experiments
 behind each change, with their numbers and later corrections, are in `bench/results/NOTES.md`.
 
-## Unreleased
+## 0.6.0 - 2026-10-27
 
 - **A provenance record beside every TRX** (`tractline.provenance`): `<name>.tractline.json` holds the pipeline's
   configuration, each step's status and the tool it is checked against, the runtime (versions, device and its model,
