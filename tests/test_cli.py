@@ -10,6 +10,12 @@ from click.testing import CliRunner
 from tractline import cli, fetch as FE
 
 
+@pytest.fixture(autouse=True)
+def _online(monkeypatch):
+    """The fetch tests serve their own bytes: TRACTLINE_OFFLINE from the caller's environment does not apply."""
+    monkeypatch.delenv("TRACTLINE_OFFLINE", raising=False)
+
+
 class _Body(io.BytesIO):
     def __enter__(self):
         return self
@@ -160,3 +166,115 @@ def test_json_to_stdout_with_progress(tmp_path):
     assert r.exit_code == 0, r.output
     summary = json.loads(r.stdout)
     assert summary["streamlines"] > 0 and "streamlines" in r.stderr         # the progress went to standard error
+
+
+def _targz(files):
+    """A .tar.gz in memory: {name: bytes}, in order."""
+    import tarfile
+    buf = io.BytesIO()
+    with tarfile.open(fileobj=buf, mode="w:gz") as tar:
+        for name, data in files.items():
+            info = tarfile.TarInfo(name)
+            info.size = len(data)
+            tar.addfile(info, io.BytesIO(data))
+    return buf.getvalue()
+
+
+def test_members_streamed(tmp_path, monkeypatch):
+    """Only the named members are written, each verified; the rest is read past; a wrong digest, a missing member or
+    an oversized archive is refused with nothing half-written."""
+    import hashlib
+    sha = lambda b: hashlib.sha256(b).hexdigest()                          # noqa: E731
+    a, b = b"model" * 100, b"args"
+    blob = _targz({"./M/skip.bin": b"x" * 5000, "./M/a.bin": a, "M/b.txt": b, "./M/after.bin": b"y" * 10})
+    calls = []
+    _serve(monkeypatch, blob, calls)
+    want = {"M/a.bin": (sha(a), "M/a.bin"), "M/b.txt": (sha(b), "M/b.txt")}
+    out = FE.members("https://example.org/m.tgz", len(blob), want, tmp_path)
+    assert out["M/a.bin"].read_bytes() == a and out["M/b.txt"].read_bytes() == b
+    assert sorted(p.name for p in (tmp_path / "M").iterdir()) == ["a.bin", "b.txt"]
+    FE.members("https://example.org/m.tgz", len(blob), want, tmp_path)
+    assert len(calls) == 1                                                  # kept: not fetched again
+    with pytest.raises(FE.FetchError, match="sha256"):
+        FE.members("https://example.org/m.tgz", len(blob), {"M/a.bin": ("0" * 64, "N/a.bin")}, tmp_path)
+    with pytest.raises(FE.FetchError, match="not in the archive"):
+        FE.members("https://example.org/m.tgz", len(blob), {"M/zz": ("0" * 64, "N/zz")}, tmp_path)
+    with pytest.raises(FE.FetchError, match="more than"):
+        FE.members("https://example.org/m.tgz", 100, {"M/a.bin": (sha(a), "N/a.bin")}, tmp_path)
+    with pytest.raises(FE.FetchError, match="ended early"):                # a body cut short, quietly by urllib
+        FE.members("https://example.org/m.tgz", len(blob) + 1000, {"M/zz": ("0" * 64, "N/zz")}, tmp_path)
+    assert not (tmp_path / "N").exists() or list((tmp_path / "N").iterdir()) == []
+
+
+def test_tractcloud_checkout_else_cache(tmp_path, monkeypatch):
+    """TractCloud's code, model and centroid: fetched into the cache when the data folder lacks them (the source
+    files at the pinned commit, the members from the release archives), the checkout's when present."""
+    import hashlib
+    import tractline.data as D
+    sha = lambda b: hashlib.sha256(b).hexdigest()                          # noqa: E731
+    monkeypatch.setattr(D, "DATA", tmp_path / "data")
+    monkeypatch.setenv("TRACTLINE_CACHE", str(tmp_path / "cache"))
+    src = {"__init__.py": b"", "inference.py": b"# inference"}
+    pth, args, ctr = b"weights", b"args", b"centroid"
+    tgz_model = _targz({"./TrainedModel/cli_args.txt": args, "./TrainedModel/best_tract_f1_model.pth": pth})
+    tgz_ctr = _targz({"TrainData_800clu800ol/HCP_mass_center.npy": ctr, "TrainData_800clu800ol/big.pickle": b"z" * 99})
+    monkeypatch.setattr(FE, "TRACTCLOUD_SOURCE", {k: (sha(v), len(v)) for k, v in src.items()})
+    monkeypatch.setattr(FE, "TRACTCLOUD_ARCHIVES", {
+        "model": ("https://example.org/model.tgz", len(tgz_model), {
+            "TrainedModel/best_tract_f1_model.pth": (sha(pth), "TrainedModel/best_tract_f1_model.pth"),
+            "TrainedModel/cli_args.txt": (sha(args), "TrainedModel/cli_args.txt")}),
+        "centroid": ("https://example.org/train.tgz", len(tgz_ctr), {
+            "TrainData_800clu800ol/HCP_mass_center.npy": (sha(ctr), "TrainData_800clu800ol/HCP_mass_center.npy")})})
+    calls = []
+
+    def fake(url, timeout=60):
+        calls.append(url)
+        if url.endswith("model.tgz"):
+            return _Body(tgz_model)
+        if url.endswith("train.tgz"):
+            return _Body(tgz_ctr)
+        return _Body(src[url.rsplit("/", 1)[1]])
+    monkeypatch.setattr(FE, "urlopen", fake)
+    s, m, c = FE.tractcloud()
+    root = tmp_path / "cache" / "TractCloud"
+    assert (s / "tractcloud" / "inference.py").read_bytes() == b"# inference" and FE.TRACTCLOUD_COMMIT in calls[0]
+    assert m == root / "TrainedModel" and (m / "best_tract_f1_model.pth").read_bytes() == pth
+    assert c.read_bytes() == ctr and len(calls) == 4
+    FE.tractcloud()
+    assert len(calls) == 4                                                  # all kept
+    for p in ("TractCloud/src/tractcloud", "TrainedModel", "TrainData_800clu800ol"):
+        (tmp_path / "data" / p).mkdir(parents=True)
+    for p in ("TrainedModel/best_tract_f1_model.pth", "TrainedModel/cli_args.txt",
+              "TrainData_800clu800ol/HCP_mass_center.npy"):
+        (tmp_path / "data" / p).write_bytes(b"x")
+    s, m, c = FE.tractcloud()
+    assert s == tmp_path / "data" / "TractCloud" / "src" and m == tmp_path / "data" / "TrainedModel"
+    assert c == tmp_path / "data" / "TrainData_800clu800ol" / "HCP_mass_center.npy" and len(calls) == 4
+
+
+def test_tractcloud_pins_match_the_checkout():
+    """The pinned digests are the checkout's files (TractCloud at the pinned commit, its v1.0.0 release)."""
+    from tractline.data import DATA
+    src = DATA / "TractCloud" / "src" / "tractcloud"
+    if not (src / "inference.py").exists() or not (DATA / "TrainedModel" / "best_tract_f1_model.pth").exists():
+        pytest.skip("no TractCloud checkout in $TRACTOGRAPHY_DATA")
+    for name, (sha, size) in FE.TRACTCLOUD_SOURCE.items():
+        assert FE.sha256_of(src / name) == sha and (src / name).stat().st_size == size, name
+    for _, _, wanted in FE.TRACTCLOUD_ARCHIVES.values():
+        for sha, rel in wanted.values():
+            assert FE.sha256_of(DATA / rel) == sha, rel
+
+
+def test_run_tractcloud(tmp_path):
+    """`tractline run --labeler tractcloud` on the phantom (the checkout's TractCloud; the test does not download)."""
+    from tractline.data import DATA
+    if not all(p.exists() for p in (DATA / "TractCloud" / "src" / "tractcloud", DATA / "TrainedModel" / "cli_args.txt",
+                                    DATA / "TrainedModel" / "best_tract_f1_model.pth",
+                                    DATA / "TrainData_800clu800ol" / "HCP_mass_center.npy")):
+        pytest.skip("no complete TractCloud checkout in $TRACTOGRAPHY_DATA")
+    dwi, s = _bids(tmp_path)
+    r = CliRunner().invoke(cli.main, ["run", dwi, "--device", "cpu", "--workers", "1", "--labeler", "tractcloud",
+                                      "--json", "-", "-q"])
+    assert r.exit_code == 0, r.output
+    summary = json.loads(r.stdout)
+    assert summary["streamlines"] > 0 and 0 <= summary["labeled"] <= summary["streamlines"]

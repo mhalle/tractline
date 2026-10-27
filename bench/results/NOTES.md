@@ -7595,3 +7595,20 @@ TRX, QC files and the corrected series written. On ON-Harmony 16974 (MPS): 98,04
 
 **Not done.** uvx itself was not run: the branch is not pushed, and a first uvx run downloads PyTorch.
 
+
+## 2026-10-26 TractCloud from the command, without a checkout (uvx)
+
+**What.** `--labeler tractcloud` works from an installed tractline (`uvx`). `fetch.tractcloud()` returns TractCloud's
+source folder, model folder and atlas centroid: the checkout's when `$TRACTOGRAPHY_DATA` has them, else the cache's,
+fetched on first use and checked against pinned sha256s. It fetches the four package modules `labelers.tractcloud`
+imports (`__init__`, `inference`, `models`, `tract_mapping`) as raw files at commit 94de627, the checkout's commit.
+It takes the model (`best_tract_f1_model.pth`, `cli_args.txt`) from the v1.0.0 release's `TrainedModel.tar.gz` (8.4 MB).
+The 308-byte `HCP_mass_center.npy` is inside `TrainData_800clu800ol.tar.gz` (166 MB). `fetch.members` streams the
+archive and stops once the file has passed, 33.3 MB in (1.5 s here). Other members are read past and never written.
+That is about 42 MB downloaded and 8.9 MB kept. TractCloud's own package needs vtk, but this path does not: the
+labeler's vtk stub still applies. `tractline fetch` gets TractCloud with the others (`--model tractcloud`).
+
+**Checked.** `tests/test_cli.py`: archive members streamed (only the named ones written, verified; wrong digest,
+missing member and oversized archive refused, nothing half-written); the checkout preferred, else the cache, nothing
+fetched twice; the pins equal the checkout's files; `run --labeler tractcloud` end to end on the phantom. A real fetch
+into an empty cache (data folder hidden) got all seven files, verified.

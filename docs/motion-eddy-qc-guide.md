@@ -51,8 +51,9 @@ only the susceptibility field is corrected. The eddy current model is quadratic 
 selects the linear model, and `--motion-eddy rigid` corrects head motion alone, with no eddy current model.
 `--outliers off` keeps the correction but turns off the replacement of outlier slices. `--shell` sets the b-value
 tracked (by default the shell with the most volumes). `--labeler tractcloud` labels with TractCloud in place of
-RapidParc; this needs a checkout of the repository with TractCloud's code and weights beside it (see its README), and
-does not work from `uvx`. `tractline run --help` lists every option.
+RapidParc (section 3); its code and trained model are downloaded from TractCloud's GitHub on first use (about 42 MB,
+at the version tractline was tested with, checked against pinned checksums). `tractline run --help` lists every
+option.
 
 The command runs on an Apple GPU when there is one, then on a CUDA GPU, then on the CPU (`--device` chooses). On a
 laptop GPU a 105-volume scan takes about two minutes. On the CPU the motion and eddy current correction gives the same
@@ -107,8 +108,12 @@ less than the streamlines from two acquisitions of the same subject differ from 
 **Tract labels.** Each streamline of 40 mm or more is assigned to one of the ORG atlas's 800 fiber clusters (Zhang et
 al. 2018), which are then mapped to 42 named tracts and "Other", the same mapping TractCloud uses. The default
 labeler is RapidParc (Bisten et al. 2026), which on TractCloud's labeled test set reaches 94.5 % tract accuracy;
-TractCloud itself (Xue et al. 2023) is available as an alternative. The output can be written as a TRX file with each
-streamline's tract label and cluster probabilities.
+TractCloud itself (Xue et al. 2023) is available as an alternative, with its released network and weights. tractline
+runs it with the context its model was trained with: each streamline with its 19 nearest among 10,000 streamlines
+drawn from the whole tractogram, and 500 global streamlines. TractCloud's packaged inference uses a smaller context
+(80 global streamlines, local neighbors from consecutive chunks of about 10,000); on TractCloud's labeled test set
+the trained context reaches 92.0 % tract accuracy and the packaged one 86.6 %. The output can be written as a TRX
+file with each streamline's tract label and cluster probabilities.
 
 ## 4. Head motion and eddy current correction
 

@@ -17,15 +17,19 @@ import numpy as np, torch
 import torch.nn.functional as F
 from ..resample import resample
 from .base import Labels, MIN_LENGTH_MM, OTHER, LogMean, empty, lengths      # noqa: F401 - shared by the labelers; re-exported here
-from ..data import DATA, MODEL, MASS_CENTER
+from ..data import DATA
+from ..fetch import tractcloud as _locate
 
 import os
-# Importing this module: TractCloud's code goes on sys.path (DATA/TractCloud/src) and TRACTCLOUD_DATA_DIR
-# defaults to DATA (its own model-cache lookup). Its modules import vtk for file input/output this
-# labeler does not use: when vtk is not already imported, a stub stands in during TractCloud's import
-# and is removed after it, so a later `import vtk` gets the real one.
+# Importing this module: TractCloud's code goes on sys.path and TRACTCLOUD_DATA_DIR defaults to DATA (its own
+# model-cache lookup). The code, the trained model (MODEL) and the atlas centroid (MASS_CENTER) are the checkout's
+# ($TRACTOGRAPHY_DATA: TractCloud/src, TrainedModel, TrainData_800clu800ol) when present, else fetched from TractCloud's
+# GitHub into tractline's cache on first use (fetch.tractcloud: a pinned commit and release, sha256-checked). Its
+# modules import vtk for file input/output this labeler does not use: when vtk is not already imported, a stub stands
+# in during TractCloud's import and is removed after it, so a later `import vtk` gets the real one.
 os.environ.setdefault("TRACTCLOUD_DATA_DIR", str(DATA))
-sys.path.insert(0, str(DATA / "TractCloud/src"))
+_SOURCE, MODEL, MASS_CENTER = _locate()
+sys.path.insert(0, str(_SOURCE))
 _stub = None if "vtk" in sys.modules else sys.modules.setdefault("vtk", types.ModuleType("vtk"))
 try:
     from tractcloud import inference as inf

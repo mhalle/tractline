@@ -64,8 +64,8 @@ def main():
               help="With --qc: also the corrected series, its b-values and rotated b-vectors, into that folder.")
 @click.option("--shell", type=float, default=None, help="The b-value tracked (default: the shell with the most volumes).")
 @click.option("--labeler", type=click.Choice(["rapidparc", "hemiaug", "tractcloud"]), default="rapidparc",
-              show_default=True, help="RapidParc, its model trained for lesions and surgery, or TractCloud (which "
-                                      "needs its code and weights in $TRACTOGRAPHY_DATA, as in a checkout).")
+              show_default=True, help="RapidParc, its model trained for lesions and surgery, or TractCloud (its code "
+                                      "and model fetched from its GitHub on first use, about 42 MB).")
 @click.option("--device", type=click.Choice(["auto", "mps", "cuda", "cpu"]), default="auto", show_default=True,
               help="Where to run: auto picks the Apple GPU, then CUDA, then the CPU.")
 @click.option("--workers", type=int, default=None,
@@ -134,12 +134,14 @@ def _run(dwi, partners, motion_eddy, outliers, trx, float16, labeled_only, qc, w
     if shell is None:
         shell = auto_shell(s.bval)
     if labeler == "tractcloud":
+        from .fetch import tractcloud as fetch_tractcloud
+        fetch_tractcloud(progress_for=None if quiet else _progress)       # with progress, before the import needs it
         try:
             from .labelers import tractcloud
-            lab = tractcloud.Labeler(dev)
-        except (ImportError, OSError) as e:
-            raise click.ClickException(f"TractCloud needs its code and weights in $TRACTOGRAPHY_DATA (TractCloud/src, "
-                                       f"TrainedModel; see docs/labelers.md), which this installation lacks ({e})")
+        except ImportError as e:                                          # a partial checkout in $TRACTOGRAPHY_DATA
+            raise click.ClickException(f"TractCloud's code could not be loaded ({e}); a checkout's TractCloud/src "
+                                       f"is used when present") from e
+        lab = tractcloud.Labeler(dev)
     else:
         from .labelers import rapidparc
         from .fetch import weights
@@ -202,14 +204,20 @@ def _progress(what: str):
 
 
 @main.command()
-@click.option("--model", type=click.Choice(["rapidparc", "hemiaug", "all"]), default="all", show_default=True)
+@click.option("--model", type=click.Choice(["rapidparc", "hemiaug", "tractcloud", "all"]), default="all",
+              show_default=True)
 def fetch(model):
-    """Download RapidParc's weights into the cache now (they are otherwise fetched on first use)."""
-    from .fetch import FetchError, weights
-    for name in (["rapidparc", "hemiaug"] if model == "all" else [model]):     # each 6.6 MB, sha256-checked
+    """Download the labelers' weights into the cache now (they are otherwise fetched on first use): RapidParc's two
+    models (6.6 MB each) and TractCloud's code and model (about 42 MB), each sha256-checked."""
+    from . import fetch as FE
+    for name in (["rapidparc", "hemiaug", "tractcloud"] if model == "all" else [model]):
         try:
-            click.echo(f"{name}: {weights(name, progress=_progress(name))}")
-        except (FetchError, OSError) as e:                                  # the network, or the cache's folder
+            if name == "tractcloud":
+                src, mod, centroid = FE.tractcloud(progress_for=_progress)
+                click.echo(f"tractcloud: {src}, {mod}, {centroid}")
+            else:
+                click.echo(f"{name}: {FE.weights(name, progress=_progress(name))}")
+        except (FE.FetchError, OSError) as e:                               # the network, or the cache's folder
             raise click.ClickException(str(e)) from e
 
 

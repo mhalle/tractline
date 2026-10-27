@@ -40,7 +40,8 @@ layout in `src/tractline/data.py`):
   6.6 MB each, from https://github.com/MedVisBonn/RapidParc/releases/tag/v1.0.0; checked against their
   sha256 when loaded.
 - **TractCloud** (optional labeler): its code in `TractCloud/src` (github.com/SlicerDMRI/TractCloud), its
-  weights `TrainedModel/` and `TrainData_800clu800ol/HCP_mass_center.npy` from its release v1.0.0.
+  weights `TrainedModel/` and `TrainData_800clu800ol/HCP_mass_center.npy` from its release v1.0.0. Without
+  them, the pinned commit's modules and those files are fetched into the user cache on first use.
 - **The bench's data**: OpenNeuro ds001226 (BTC_preop, CC0) in `ds001226/`; the Stanford HARDI scan in
   `ukf/hardi/`; TractCloud's test split (`TrainData_800clu800ol/test.pickle`) and HCP test tractogram
   (`TestData/`) from its release. For `topup_ref.py` and `cohort_topup.py`: `fsl-env/`, FSL's topup
@@ -75,8 +76,8 @@ uvx --from "tractline[cli] @ git+https://github.com/mhalle/tractline@main" \
 
 `@main` is the latest code; a tag or commit hash in its place pins a version. The chosen RapidParc
 model's weights (6.6 MB) are downloaded on first use into a user cache, checked against a pinned sha256
-(`tractline fetch` gets both models ahead; `tractline.fetch`). `--labeler tractcloud` needs a checkout with
-TractCloud's code and weights (below), not `uvx`. `tractline run --help` lists the options;
+(`tractline fetch` gets every labeler's ahead; `tractline.fetch`). `--labeler tractcloud` fetches TractCloud's code
+at a pinned commit and its model from its release the same way (about 42 MB). `tractline run --help` lists the options;
 `docs/motion-eddy-qc-guide.md` describes the run and its QC files. From a checkout, `uv run tractline ...`.
 
 ## Your own data
