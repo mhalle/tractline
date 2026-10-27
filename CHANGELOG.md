@@ -3,6 +3,13 @@
 Releases are git tags (`uv add "tractline @ git+https://github.com/mhalle/tractline@vX.Y.Z"`). The experiments
 behind each change, with their numbers and later corrections, are in `bench/results/NOTES.md`.
 
+## 0.4.0 - 2026-10-26
+
+- **`tractline run --gibbs`**: Gibbs ringing removed first (the `gibbs` slot, experimental), from the series as
+  acquired and from the reversed phase-encoding b0s on their own grid; the slice axis from the sidecar's
+  `SliceEncodingDirection` (`pipeline.slice_axis_of`). Its time and b0 counts are in the JSON summary, and the scan's
+  total includes it. `pipeline.run(gibbs=)` and `config_for(gibbs=)` turn the slot on from Python.
+
 ## 0.3.0 - 2026-10-26
 
 New methods are opt-in. The default pipeline (preset `default`, `ukf-rapidparc@1`, config hash 28d01a1d...) runs

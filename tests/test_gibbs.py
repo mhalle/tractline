@@ -169,3 +169,20 @@ def test_gibbs_subject_b0s():
     s.b0_native = np.array([True])                                          # flags of the wrong length: not known
     with pytest.warns(UserWarning, match="2 b0s"):
         P.gibbs_subject(s, P.Timer(), opts, "cpu")
+
+
+def test_gibbs_keyword():
+    """run()'s and config_for()'s gibbs keyword: the slot on with its options (the slice axis), the same config as
+    with_(gibbs=...); refused beside config=; the sidecar's SliceEncodingDirection gives the slice axis."""
+    import types
+    import pytest
+    from tractline import pipeline as P
+    on = P.config_for(gibbs={"slice_axis": 1})
+    assert on.opts("gibbs")["slice_axis"] == 1 and on.hash() == P.config_for().with_(
+        gibbs={"impl": "subvoxel-shift", "slice_axis": 1}).hash()
+    assert P.config_for(gibbs=True).opts("gibbs")["slice_axis"] == 2 and P.config_for(gibbs=False).opts("gibbs") == {}
+    with pytest.raises(ValueError, match="gibbs"):
+        P.run(None, None, P.Timer(), config=P.config_for(), gibbs=True)
+    for sed, axis in (("i", 0), ("j-", 1), ("k", 2), (None, 2)):
+        s = types.SimpleNamespace(sidecar={} if sed is None else {"SliceEncodingDirection": sed})
+        assert P.slice_axis_of(s) == axis

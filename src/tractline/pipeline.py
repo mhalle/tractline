@@ -300,10 +300,9 @@ def correct_motion_eddy(s, timer: Timer, device="mps", opts=None, field=True) ->
         # the unwarped mean b0, on the CPU: a few seconds, nearly the same mask)
         b0 = np.asarray(s.dwi)[..., np.asarray(s.bval) < 50].astype(np.float32).mean(-1)
         mask = median_otsu(b0, median_radius=4, numpass=4, device=device)[1]
-        sed = str((getattr(s, "sidecar", None) or {}).get("SliceEncodingDirection", "k"))[:1]
         r = ME.estimate(s.dwi, s.bval, s.bvec, s.affine, s.pe_axis, field_hz=h, pe_sign=s.pe_sign,
                         readout_s=s.readout_s, mask=mask, options=dict(opts or {}), device=device,
-                        slice_axis={"i": 0, "j": 1}.get(sed, 2))
+                        slice_axis=slice_axis_of(s))
     with timer("field_apply"):
         dwi, _valid = ME.apply_volumes(s.dwi, r, field_hz=h, device=device)
     if r.excluded:
@@ -369,6 +368,13 @@ def denoise_subject(s, timer: Timer, method="mppca", workers=None, mask=None):
              "b0s denoised (the DWI's own), of those feeding the field": [replaced, n_b0s],
              "b0s phase-encoded as the DWI": forward}
     return out, stats
+
+
+def slice_axis_of(s) -> int:
+    """The acquisition's slice axis (0, 1 or 2) from the BIDS sidecar's SliceEncodingDirection (i, j, k; k when the
+    sidecar does not say): where the gibbs slot's 2D slices and motion_eddy's outlier slices lie."""
+    sed = str((getattr(s, "sidecar", None) or {}).get("SliceEncodingDirection", "k"))[:1]
+    return {"i": 0, "j": 1}.get(sed, 2)
 
 
 def gibbs_subject(s, timer: Timer, opts: dict, device="cpu"):
@@ -558,10 +564,11 @@ def _labeler(cfg: PipelineConfig, labeler, device):
 
 
 def config_for(labeler=None, shell=2800.0, tracker=None, denoise=None, denoise_order="acquired",
-               motion_eddy=None) -> PipelineConfig:
+               motion_eddy=None, gibbs=None) -> PipelineConfig:
     """run()'s keywords as a config: the "default" preset with them applied. labeler: None for the preset's (RapidParc),
     or an object (_bundles_of). motion_eddy: None (off), True (the slot's defaults), a model name ("rigid", "linear",
-    "quadratic"), or a dict of the slot's options."""
+    "quadratic"), or a dict of the slot's options. gibbs: None (off), True (the slot's defaults: slice axis 2), or a
+    dict of its options ({"slice_axis": slice_axis_of(s)} for a BIDS series)."""
     changes = {"model": {"shell": float(shell)}}
     tracker = _check_tracker(tracker)
     if tracker:
@@ -575,6 +582,8 @@ def config_for(labeler=None, shell=2800.0, tracker=None, denoise=None, denoise_o
     if motion_eddy is not None and motion_eddy is not False:
         opts = {} if motion_eddy is True else ({"model": motion_eddy} if isinstance(motion_eddy, str) else dict(motion_eddy))
         changes["motion_eddy"] = {"impl": "tractline", **opts}
+    if gibbs is not None and gibbs is not False:
+        changes["gibbs"] = {"impl": "subvoxel-shift", **({} if gibbs is True else dict(gibbs))}
     return PipelineConfig.preset("default").with_(**changes)
 
 
@@ -801,7 +810,7 @@ def execute(s, cfg: PipelineConfig, timer: Timer, prefix="", device="mps", worke
 
 
 def run(s, labeler, timer: Timer, prefix="", trx=None, device="mps", workers=None, release=True, shell=2800.0, tracker=None,
-        denoise=None, denoise_order="acquired", config=None, motion_eddy=None, **trx_options):
+        denoise=None, denoise_order="acquired", config=None, motion_eddy=None, gibbs=None, **trx_options):
     """The whole pipeline on a subject: (Correction, Tractogram, Labels). labeler: None for the default
     (default_labeler: RapidParc), or any labeler (labelers.tractcloud.Labeler, ...). Its time is
     timer.total(*pipeline_stages(prefix)). trx: also write the tractogram there as TRX (trx.write;
@@ -816,18 +825,22 @@ def run(s, labeler, timer: Timer, prefix="", trx=None, device="mps", workers=Non
     timer.seconds["denoise"] (not among pipeline_stages), and `workers` its processes too; denoise_order: "acquired" (before the field; the default)
     or "corrected" (denoise_corrected, for comparison). motion_eddy: opt-in head motion and eddy-current correction
     (correct_motion_eddy; config_for's values), its parameters and QC in Correction.motion_eddy, the rotated b-vectors
-    in Correction.bvec. config: a PipelineConfig instead of shell, tracker, denoise, denoise_order and motion_eddy
-    (which must then be left as they are). Either way the run goes through execute, the config and runtime
-    recorded in Correction.provenance."""
+    in Correction.bvec. gibbs: opt-in Gibbs ringing removal (gibbs_subject; config_for's values), first, on the
+    series as acquired; its time in timer.seconds["gibbs"] (not among pipeline_stages). config: a PipelineConfig
+    instead of shell, tracker, denoise, denoise_order, motion_eddy and gibbs (which must then be left as they are).
+    Either way the run goes through execute, the config and runtime recorded in Correction.provenance."""
     if motion_eddy is False:
         motion_eddy = None
+    if gibbs is False:
+        gibbs = None
     if config is None:
         if denoise is not None and denoise_order not in DENOISE_ORDERS:
             raise ValueError(f"denoise_order: {denoise_order!r} is not one of {DENOISE_ORDERS}")
-        config = config_for(labeler, shell, tracker, denoise, denoise_order, motion_eddy)
-    elif (shell, tracker or None, denoise, denoise_order, motion_eddy) != (2800.0, None, None, "acquired", None):
-        raise ValueError("run: with config=, set shell, tracker, denoise and motion_eddy in the config, not as keywords "
-                         "too")
+        config = config_for(labeler, shell, tracker, denoise, denoise_order, motion_eddy, gibbs)
+    elif (shell, tracker or None, denoise, denoise_order, motion_eddy, gibbs) != (2800.0, None, None, "acquired", None,
+                                                                                    None):
+        raise ValueError("run: with config=, set shell, tracker, denoise, motion_eddy and gibbs in the config, not as "
+                         "keywords too")
     return tuple(execute(s, config, timer, prefix, device, workers, labeler, trx, release, **trx_options))
 
 

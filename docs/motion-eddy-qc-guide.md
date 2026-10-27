@@ -30,7 +30,7 @@ uvx --from "tractline[cli] @ git+https://github.com/mhalle/tractline@main" \
     tractline run sub-01/dwi/sub-01_dir-AP_dwi.nii.gz --motion-eddy --trx out/sub-01.trx
 ```
 
-`@main` runs the latest code; a release tag in its place, such as `@v0.3.0`, pins the version, so a set of scans can
+`@main` runs the latest code; a release tag in its place, such as `@v0.4.0`, pins the version, so a set of scans can
 be processed with the same code throughout (`tractline --version` reports it). The first run downloads PyTorch and
 the trained weights of the labeler (6.6 MB, from RapidParc's release, checked against a pinned checksum), so it takes
 longer than later runs. `tractline fetch` downloads the weights of every labeler ahead of time, for example before
@@ -51,8 +51,9 @@ with `--partners`. If none is found, the motion and eddy current correction stil
 printed note says so. The motion and eddy current correction is off unless `--motion-eddy` is given; without it,
 only the susceptibility field is corrected. The eddy current model is quadratic by default; `--motion-eddy linear`
 selects the linear model, and `--motion-eddy rigid` corrects head motion alone, with no eddy current model.
-`--outliers off` keeps the correction but turns off the replacement of outlier slices. `--shell` sets the b-value
-tracked (by default the shell with the most volumes). `--labeler tractcloud` labels with TractCloud in place of
+`--outliers off` keeps the correction but turns off the replacement of outlier slices. `--gibbs` removes Gibbs
+ringing before any other step (section 3; new in release 0.4.0). `--shell` sets the b-value tracked (by default the
+shell with the most volumes). `--labeler tractcloud` labels with TractCloud in place of
 RapidParc (section 3); its code and trained model are downloaded from TractCloud's GitHub on first use (about 42 MB,
 at the version tractline was tested with, checked against pinned checksums). `tractline run --help` lists every
 option.
@@ -82,6 +83,16 @@ The series acquired with the opposite phase-encoding direction, used for the sus
 sidecars (`B0FieldIdentifier`, `IntendedFor`, or a series in the same folder acquired the other way) and checked: the
 same phase-encoding axis, both polarities, the same shim settings, and a stated or safely assumed readout time. A
 scan without a usable pair is processed without susceptibility correction, and the output says why.
+
+**Gibbs ringing (optional).** With `--gibbs`, ringing is removed first, from the series as acquired, by local
+subvoxel shifts (Kellner et al. 2016), the method of DIPY's `gibbs_removal` and MRtrix's `mrdegibbs`. The reversed
+phase-encoding b0 images are corrected too when they are on their own grid. The slices are taken across the axis the
+sidecar's `SliceEncodingDirection` gives, or the third voxel axis when the sidecar does not say (right for
+dcm2niix's output, not for an image reoriented after conversion). The step runs in single precision and agrees with
+DIPY's as closely as DIPY's own single precision does: a few voxels in a million differ where two shifts score
+almost equally (in double precision it matches DIPY's to 0.15 % of the scan's scale). It takes about 40 seconds on
+an Apple GPU for a 105-volume scan. Like those tools, the method assumes fully sampled k-space; on partial Fourier
+acquisitions its result may be biased.
 
 **Susceptibility field.** The field is estimated from the b0 images of both phase-encoding directions with topup's
 model (Andersson et al. 2003): a B-spline field fitted by Gauss-Newton on a coarse-to-fine schedule, with the
@@ -251,6 +262,9 @@ parcellation. *Imaging Neuroscience*. 2026.
 Cetin-Karayumak S, Zhang F, Zurrin R, Billah T, Zekelman L, Makris N, Pieper S, O'Donnell LJ, Rathi Y. Harmonized
 diffusion MRI data and white matter measures from the Adolescent Brain Cognitive Development Study. *Scientific
 Data*. 2024;11:249.
+
+Kellner E, Dhital B, Kiselev VG, Reisert M. Gibbs-ringing artifact removal based on local subvoxel-shifts.
+*Magnetic Resonance in Medicine*. 2016;76(5):1574-1581.
 
 Malcolm JG, Shenton ME, Rathi Y. Filtered multitensor tractography. *IEEE Transactions on Medical Imaging*.
 2010;29(9):1664-1675.

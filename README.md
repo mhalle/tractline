@@ -23,9 +23,9 @@ uv run bench/run_pipeline.py --sub PAT16
 As a dependency of another project (the bench's groups stay behind - they are not in the package's metadata):
 
 ```
-uv add "tractline @ git+https://github.com/mhalle/tractline@v0.3.0"
-uv add "tractline[nrrd,triton] @ git+https://github.com/mhalle/tractline@v0.3.0"   # NRRD input/output, CUDA kernel
-uv add "tractline[bids] @ git+https://github.com/mhalle/tractline@v0.3.0"          # + reading BIDS (nibabel, scipy)
+uv add "tractline @ git+https://github.com/mhalle/tractline@v0.4.0"
+uv add "tractline[nrrd,triton] @ git+https://github.com/mhalle/tractline@v0.4.0"   # NRRD input/output, CUDA kernel
+uv add "tractline[bids] @ git+https://github.com/mhalle/tractline@v0.4.0"          # + reading BIDS (nibabel, scipy)
 ```
 
 `pip install` works too, from the same URL. On CUDA the tracker's Triton kernel compiles on first use, once per
@@ -74,7 +74,7 @@ uvx --from "tractline[cli] @ git+https://github.com/mhalle/tractline@main" \
     tractline run sub-01/dwi/sub-01_dir-AP_dwi.nii.gz --motion-eddy --trx out/sub-01.trx --qc qc/sub-01
 ```
 
-`@main` is the latest code; a release tag (`@v0.3.0`) or a commit hash in its place pins a version. The chosen RapidParc
+`@main` is the latest code; a release tag (`@v0.4.0`) or a commit hash in its place pins a version. The chosen RapidParc
 model's weights (6.6 MB) are downloaded on first use into a user cache, checked against a pinned sha256
 (`tractline fetch` gets every labeler's ahead; `tractline.fetch`). `--labeler tractcloud` fetches TractCloud's code
 at a pinned commit and its model from its release the same way (about 42 MB). `tractline run --help` lists the options;

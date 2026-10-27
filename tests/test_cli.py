@@ -278,3 +278,17 @@ def test_run_tractcloud(tmp_path):
     assert r.exit_code == 0, r.output
     summary = json.loads(r.stdout)
     assert summary["streamlines"] > 0 and 0 <= summary["labeled"] <= summary["streamlines"]
+
+
+def test_run_gibbs(tmp_path):
+    """`tractline run --gibbs --motion-eddy rigid`: Gibbs removal first, timed and counted in the summary."""
+    from tractline.data import DATA
+    if not (DATA / "RapidParc" / "rapidparc.safetensors").exists():
+        pytest.skip("RapidParc's weights are not in $TRACTOGRAPHY_DATA (the test does not download)")
+    dwi, s = _bids(tmp_path)
+    r = CliRunner().invoke(cli.main, ["run", dwi, "--device", "cpu", "--workers", "1", "--gibbs", "--motion-eddy",
+                                      "rigid", "--json", "-", "-q"])
+    assert r.exit_code == 0, r.output
+    summary = json.loads(r.stdout)
+    assert summary["seconds"]["gibbs"] > 0 and summary["gibbs"]["b0s from the DWI"] >= 1
+    assert summary["scan_to_labels_s"] >= summary["seconds"]["gibbs"] and summary["streamlines"] > 0

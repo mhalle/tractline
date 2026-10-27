@@ -51,6 +51,9 @@ def main():
 @click.option("--motion-eddy", type=click.Choice(MODELS), is_flag=False, flag_value="quadratic", default=None,
               help="Correct head motion and eddy currents; the eddy current model (quadratic without a value; "
                    "rigid: head motion alone). Off unless given. Name the series before it, or give the model.")
+@click.option("--gibbs", is_flag=True,
+              help="Remove Gibbs ringing first, from the series as acquired (DIPY's subvoxel-shift method; the slice "
+                   "axis from the sidecar's SliceEncodingDirection, the third axis if it has none). Off unless given.")
 @click.option("--outliers", type=click.Choice(["replace", "flag", "off"]), default=None,
               help="With --motion-eddy: outlier slices replaced by their prediction (the default), flagged only, or "
                    "not sought.")
@@ -75,8 +78,8 @@ def main():
 @click.option("--json", "json_path", type=click.Path(dir_okay=False), default=None,
               help="Also write the run's summary as JSON here ('-' for standard output).")
 @click.option("-q", "--quiet", is_flag=True, help="Print nothing but errors (and --json -).")
-def run(dwi, partners, motion_eddy, outliers, trx, float16, labeled_only, qc, write_corrected, shell, labeler, device,
-        workers, no_memory_check, json_path, quiet):
+def run(dwi, partners, motion_eddy, gibbs, outliers, trx, float16, labeled_only, qc, write_corrected, shell, labeler,
+        device, workers, no_memory_check, json_path, quiet):
     """Correct, track and label one dMRI series (NIfTI, BIDS). Errors end in one line; TRACTLINE_DEBUG=1 shows the
     traceback."""
     import os
@@ -86,8 +89,8 @@ def run(dwi, partners, motion_eddy, outliers, trx, float16, labeled_only, qc, wr
     except ImportError:                                                   # reported below, as the extra to install
         ImageFileError = ValueError                                       # noqa: N806
     try:
-        _run(dwi, partners, motion_eddy, outliers, trx, float16, labeled_only, qc, write_corrected, shell, labeler,
-             device, workers, no_memory_check, json_path, quiet)
+        _run(dwi, partners, motion_eddy, gibbs, outliers, trx, float16, labeled_only, qc, write_corrected, shell,
+             labeler, device, workers, no_memory_check, json_path, quiet)
     except (ValueError, OSError, FetchError, ImageFileError) as e:        # the input, the disk, the network: one line
         if os.environ.get("TRACTLINE_DEBUG") == "1":
             raise
@@ -109,8 +112,8 @@ def auto_shell(bval) -> float:
     return max(dw)[1]
 
 
-def _run(dwi, partners, motion_eddy, outliers, trx, float16, labeled_only, qc, write_corrected, shell, labeler, device,
-         workers, no_memory_check, json_path, quiet):
+def _run(dwi, partners, motion_eddy, gibbs, outliers, trx, float16, labeled_only, qc, write_corrected, shell, labeler,
+         device, workers, no_memory_check, json_path, quiet):
     if (qc or write_corrected or outliers) and not motion_eddy:
         raise click.UsageError("--qc, --write-corrected and --outliers need --motion-eddy")
     if write_corrected and not qc:
@@ -151,14 +154,18 @@ def _run(dwi, partners, motion_eddy, outliers, trx, float16, labeled_only, qc, w
     if motion_eddy:
         me = {"model": motion_eddy, **({"outliers": outliers} if outliers else {}),
               **({"check_memory": False} if no_memory_check else {})}
+    gb = {"slice_axis": P.slice_axis_of(s)} if gibbs else None
     timer = P.Timer(echo=None if quiet else "  ", stream=sys.stderr)       # standard output stays for --json -
-    say(f"running on {dev}: shell b = {shell:g}" + (f", head motion and eddy currents ({motion_eddy})" if me else ""))
+    say(f"running on {dev}: shell b = {shell:g}" + (", Gibbs ringing removed" if gb else "")
+        + (f", head motion and eddy currents ({motion_eddy})" if me else ""))
     corr, tg, labels = P.run(s, lab, timer, trx=trx, device=dev, workers=workers, shell=shell, motion_eddy=me,
-                             positions="float16" if float16 else "float32", labeled_only=labeled_only)
-    cfg = P.config_for(motion_eddy=me)
+                             gibbs=gb, positions="float16" if float16 else "float32", labeled_only=labeled_only)
+    cfg = P.config_for(motion_eddy=me, gibbs=gb)
+    first = timer.seconds.get("gibbs", 0)                                 # before the field: not among pipeline_stages
     summary = {"series": str(dwi), "corrected": corr.applied, "note": corr.note, "residual_left": corr.residual_left,
-               "warnings": corr.warnings, "shell": shell, "device": dev,
-               "seconds": timer.seconds, "scan_to_labels_s": timer.total(*P.pipeline_stages("", cfg)),
+               "warnings": corr.warnings, "shell": shell, "device": dev, "gibbs": corr.gibbs,
+               "seconds": timer.seconds,
+               "scan_to_labels_s": round(timer.total(*P.pipeline_stages("", cfg)) + first, 1),
                "streamlines": len(tg.fibers), "labeled": int(labels.keep.sum()), "trx": str(trx) if trx else None}
     if qc:
         from . import motion_eddy as ME

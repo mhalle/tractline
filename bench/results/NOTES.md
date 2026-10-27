@@ -7332,6 +7332,7 @@ research claim).
 - Partial Fourier acquisitions: the method assumes a full, symmetric k-space. The slot does not check, and its
   documentation says so.
 - `slice_axis` is the caller's (default 2); it is not checked against the sidecar's `SliceEncodingDirection`.
+  (Later the same day: `tractline run --gibbs` takes it from the sidecar, `pipeline.slice_axis_of`.)
 - A fused Metal kernel could go several times faster. Not needed: the slot runs once per scan, not per ensemble
   replicate.
 
@@ -7612,3 +7613,18 @@ labeler's vtk stub still applies. `tractline fetch` gets TractCloud with the oth
 missing member and oversized archive refused, nothing half-written); the checkout preferred, else the cache, nothing
 fetched twice; the pins equal the checkout's files; `run --labeler tractcloud` end to end on the phantom. A real fetch
 into an empty cache (data folder hidden) got all seven files, verified.
+
+## 2026-10-26 `tractline run --gibbs`
+
+**What.** The gibbs slot from the command and from `pipeline.run` / `config_for` (`gibbs=`), with the slice axis from
+the sidecar's `SliceEncodingDirection` (`pipeline.slice_axis_of`, now shared with motion_eddy's outlier slices). The
+JSON summary records its b0 counts, and `scan_to_labels_s` includes its time (it runs before the field, outside
+`pipeline_stages`).
+
+**Checked.** `tests/test_gibbs.py` (the keyword, the hash, the slice axis); `tests/test_cli.py` (`--gibbs
+--motion-eddy rigid` end to end). ON-Harmony 16974 on MPS with `--gibbs --motion-eddy`: gibbs 37.8 s (cIIIs04's 31-33 s
+above; this scan's 105 volumes and the 3 PA b0s), all 8 b0s corrected (5 from the DWI, 3 on their own grid), no
+warnings. Against the same run without it: mean framewise displacement 0.277 against 0.255 mm, median rigid edge
+displacement 0.251 against 0.235 mm, median eddy 0.52 against 0.51 mm; 95,941 streamlines against 98,044 (-2.1 %),
+79,109 labeled against 81,077. One scan: whether the motion estimates move with the ringing's removal in general is
+not known.
