@@ -2370,6 +2370,7 @@ dev = [
 ]
 dipy = [
     { name = "dipy" },
+    { name = "scikit-learn" },
 ]
 rankfield = [
     { name = "numcodecs", version = "0.16.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
@@ -2414,7 +2415,10 @@ dev = [
     { name = "scipy" },
     { name = "trx-python", specifier = ">=0.6" },
 ]
-dipy = [{ name = "dipy", specifier = ">=1.12" }]
+dipy = [
+    { name = "dipy", specifier = ">=1.12" },
+    { name = "scikit-learn", specifier = ">=1.9" },
+]
 rankfield = [
     { name = "numcodecs", specifier = ">=0.15" },
     { name = "rankfield", extras = ["torch"], marker = "python_full_version >= '3.12'", git = "https://github.com/mhalle/rankfield.git?rev=v0.3.11" },

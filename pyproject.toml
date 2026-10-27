@@ -43,8 +43,9 @@ dev = [
     "pytest>=8",               # tests/: uv run pytest
     "ruff>=0.6",               # uv run ruff check
 ]
-dipy = ["dipy>=1.12"]          # the reference median_otsu (median_check.py); the bootstrap's spherical harmonics
-                               # (_bootstrap.py: label_noise_floor.py, ukf_noise_floor.py)
+dipy = ["dipy>=1.12",           # the reference median_otsu (median_check.py); the bootstrap's spherical harmonics
+        "scikit-learn>=1.9"]   # (_bootstrap.py: label_noise_floor.py, ukf_noise_floor.py); the denoise slot's
+                               # Patch2Self, whose regression is scikit-learn's (CI installs this group)
 vtk = ["vtk>=9.7"]             # 0.5 GB: VTK tractography files (ukf_compare.py, ukf_bench.py, resample_check.py)
 sklearn = ["scikit-learn>=1.9"]   # accuracy_tractcloud_test.py's macro F1
 # ensemble_pilot.py: the ensemble's fields encoded (streamline and voxel), and their decoded margins; and compact
