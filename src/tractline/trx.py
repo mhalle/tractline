@@ -41,6 +41,7 @@ def write(path, s, tg, labels, positions="float32", labeled_only=False):
     if labels.logp is None:
         raise ValueError("trx.write needs the labels' cluster log-probabilities: label with logp=True (pipeline.run does)")
     path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
     keep = labels.keep
     which = np.flatnonzero(keep) if labeled_only else np.arange(len(tg.fibers))
     fibers = [tg.fibers[i] for i in which]

@@ -1,240 +1,199 @@
 # tractline
 
-Diffusion MRI to named white-matter tracts, in torch: susceptibility correction from a reversed
-phase-encoding pair, UKF two-tensor tractography, and tract labeling, as one pipeline from the scan
-to labeled streamlines, on an Apple GPU, a CUDA GPU or the CPU. The correction (FSL topup's model) and
-the tracker (the Slicer UKFTractography algorithm, with Metal and Triton kernels) are our own
-implementations, each checked against its original; labeling uses RapidParc (its inference written here,
-its released weights; the default) or TractCloud (its model code and weights, the context built here).
+tractline turns a diffusion MRI scan into labeled white-matter tractography. One command corrects the scan's
+distortions, runs two-tensor UKF tractography, and assigns each streamline to one of 42 white-matter tracts, or to
+"Other". The tracts are those defined on the fiber clusters of the ORG atlas (Zhang et al. 2018), and the labels come
+from deep-learning tract labelers (RapidParc by default, or TractCloud). tractline runs on an Apple GPU, an NVIDIA GPU
+or the CPU, and writes a TRX file, an open tractography format that other tools read.
 
-Research software, under active development: not reviewed or approved by any regulatory agency, and not for
-clinical use. It was incubated in another repository; this one keeps that history.
+tractline is research software under active development. It is not reviewed or approved by any regulatory agency
+and is not for clinical use.
 
-## Install
+## Quick start
 
-With [uv](https://docs.astral.sh/uv/), from a checkout:
-
-```
-uv sync                       # the package (numpy, torch) and the bench's (the dev group)
-uv sync --extra triton        # + the tracker's kernel on CUDA (Linux with an NVIDIA GPU)
-uv run bench/run_pipeline.py --sub PAT16
-```
-
-As a dependency of another project (the bench's groups stay behind - they are not in the package's metadata):
+You need [uv](https://docs.astral.sh/uv/getting-started/installation/) and git. This runs tractline on one diffusion
+series without a separate install step:
 
 ```
-uv add "tractline @ git+https://github.com/mhalle/tractline@v0.5.1"
-uv add "tractline[nrrd,triton] @ git+https://github.com/mhalle/tractline@v0.5.1"   # NRRD input/output, CUDA kernel
-uv add "tractline[bids] @ git+https://github.com/mhalle/tractline@v0.5.1"          # + reading BIDS (nibabel, scipy)
-```
-
-`pip install` works too, from the same URL. On CUDA the tracker's Triton kernel compiles on first use, once per
-power of two of the gradient count (27-56 s); `python -c "from tractline import ukf_triton_block as K; print(K.warm())"`
-compiles all six sizes ahead, in parallel (75 s on an L4), into Triton's cache (`TRITON_CACHE_DIR`). On Linux, PyPI's torch is the CUDA build (Triton included).
-Use 0.2.0 or later: in 0.1.0, `pipeline.run(device="cpu")` fails with UnboundLocalError. Changes by
-release: `CHANGELOG.md`.
-
-Data and weights live outside the repository, in `$TRACTOGRAPHY_DATA` (default `~/tmp/data/tractography`;
-layout in `src/tractline/data.py`):
-- **RapidParc's weights** (the default labeler): `RapidParc/rapidparc.safetensors` (and `hemiaug.safetensors`),
-  6.6 MB each, from https://github.com/MedVisBonn/RapidParc/releases/tag/v1.0.0; checked against their
-  sha256 when loaded.
-- **TractCloud** (optional labeler): its code in `TractCloud/src` (github.com/SlicerDMRI/TractCloud), its
-  weights `TrainedModel/` and `TrainData_800clu800ol/HCP_mass_center.npy` from its release v1.0.0. Without
-  them, the pinned commit's modules and those files are fetched into the user cache on first use.
-- **The bench's data**: OpenNeuro ds001226 (BTC_preop, CC0) in `ds001226/`; the Stanford HARDI scan in
-  `ukf/hardi/`; TractCloud's test split (`TrainData_800clu800ol/test.pickle`) and HCP test tractogram
-  (`TestData/`) from its release. For `topup_ref.py` and `cohort_topup.py`: `fsl-env/`, FSL's topup
-  (conda, from FSL's channel - FSL is not a Python package).
-
-The bench needs more than the package: pynrrd, trx-python and matplotlib, the `dev` dependency group,
-which `uv sync` and `uv run` install by default. Four packages are opt-in groups, each needed by a few
-scripts: `dipy` (DIPY as the mask's reference, `median_check.py`; the bootstrap's spherical harmonics,
-`label_noise_floor.py`, `ukf_noise_floor.py`, `ensemble_pilot.py`), `vtk` (0.5 GB; VTK tractography files: `ukf_compare.py`,
-`ukf_bench.py`, `resample_check.py`), `sklearn` (`accuracy_tractcloud_test.py`) and `rankfield` (Python 3.12+;
-`ensemble_pilot.py`, `ensemble_votes_test.py`) -
-`uv run --group vtk bench/ukf_compare.py`. `rapidparc_check.py` runs RapidParc's
-own package in an isolated environment uv builds for it (`uv run --with RapidParc==1.0.4`; its pins would not
-fit the project's). The `modal_*.py` scripts run through the modal CLI, a uv tool (`uv tool install modal`;
-`modal run bench/modal_gpu_pipeline.py`); their images install with uv, torch pinned at 2.14.1 (every committed
-Modal result's). They use a Modal Volume `tractography-bench` for inputs and the Triton
-compile cache; most scripts ship their inputs from `$TRACTOGRAPHY_DATA` in the image, and the Volume holds
-the rest: `triton-cache/`, `ukf/hardi/` (`dwi.nhdr`, `mask.nrrd`), `TrainedModel/`,
-`TrainData_800clu800ol/HCP_mass_center.npy`, `hcp/feat.npy`, `variants/f64.npz`, as each script's docstring
-names them; `modal_gpu_pipeline.py --save-fibers` writes to its `tractline/`.
-
-## The command
-
-`tractline run` takes one dMRI series (NIfTI, BIDS) to labeled UKF tractography: corrected (the susceptibility field;
-with `--motion-eddy`, head motion and eddy currents too), tracked, labeled, written as TRX. With uv it runs without an
-install step:
-
-```
-uvx --from "tractline[cli] @ git+https://github.com/mhalle/tractline@main" \
+uvx --from "tractline[cli] @ git+https://github.com/mhalle/tractline" \
     tractline run sub-01/dwi/sub-01_dir-AP_dwi.nii.gz --motion-eddy --trx out/sub-01.trx --qc qc/sub-01
 ```
 
-`@main` (or no `@...` at all) is the newest release; a release tag (`@v0.5.0`) pins one; `@dev` is the newest code
-(see "Versions and releases" below). The chosen RapidParc
-model's weights (6.6 MB) are downloaded on first use into a user cache, checked against a pinned sha256
-(`tractline fetch` gets every labeler's ahead; `tractline.fetch`). On CUDA the first run also compiles the GPU kernels
-(about two minutes, kept in Triton's cache); `tractline warm [series]` compiles them ahead. `--labeler tractcloud` fetches TractCloud's code
-at a pinned commit and its model from its release the same way (about 42 MB). `tractline run --help` lists the options;
-`docs/motion-eddy-qc-guide.md` describes the run and its QC files; `tractline docs` prints both documents and every command's
-help as one Markdown text (for an LLM, say). From a checkout, `uv run tractline ...`.
+This corrects the series for head motion and eddy currents, and for susceptibility distortion when it finds a series
+acquired with the opposite phase encoding (see "What it reads"). It then tracks, labels, and writes:
 
-## Versions and releases
+- `out/sub-01.trx`: every streamline, in millimeters, grouped by tract. Each one also carries its tract label, the
+  probability of that label and its margin over the next most likely tract, its atlas cluster, its length and its
+  seed. Streamlines shorter than 40 mm are kept but belong to no tract.
+- `qc/sub-01/`: the head motion and eddy current correction's QC: a table per volume (`motion_eddy_qc.tsv`), a
+  summary (`motion_eddy_qc.json`) and a plot (`motion_eddy_qc.png`).
 
-Three kinds of reference, for three uses:
+Without `--trx`, nothing is saved; `--json summary.json` also saves a summary of the run. The first run takes longer:
+uv builds an environment for tractline, which includes PyTorch (a few hundred MB, a few GB on Linux with its CUDA
+libraries), and tractline downloads its labeler's weights (6.6 MB). Both are cached, so later runs start at once.
 
-- **`main`**: the newest release. It moves only when a release is cut, so `@main` (or a URL with no `@...`) gets
-  code that has been through the release checks below.
-- **Tags** (`v0.5.0`, ...): every release, permanent. Pin one for a study, so all its scans run on the same code;
-  `tractline --version` reports which. `CHANGELOG.md` lists what each has.
-- **`dev`**: where work lands. CI runs on every push to it; it can be ahead of the newest release, and between
-  releases it is the only place a fix is.
+**A shortcut for regular use.** `uvx` is uv's short form of `uv tool run`: it runs a tool from a cached environment
+without installing it. If you use tractline often, install it once as a tool, and `tractline` becomes an ordinary
+command:
 
-A release: on `dev`, CI green; the GPU tests (`modal run bench/motion_eddy/modal_cuda.py --tests` on CUDA, the test
-suite on an Apple GPU) and one real scan through the command; the version in `src/tractline/__init__.py` and
-`CHANGELOG.md` set; then the tag on that commit and `main` fast-forwarded to it (`git push origin dev:main` and the
-tag).
+```
+uv tool install "tractline[cli] @ git+https://github.com/mhalle/tractline"
+tractline run sub-01/dwi/sub-01_dir-AP_dwi.nii.gz --motion-eddy --trx out/sub-01.trx --qc qc/sub-01
+uv tool upgrade tractline           # later: move to the newest release
+uv tool uninstall tractline         # remove it
+```
 
-## Your own data
+If the shell then cannot find `tractline`, `uv tool update-shell` adds uv's tool folder to your PATH.
 
-A diffusion series in BIDS form - NIfTI with `.bval`, `.bvec` and the JSON sidecar, in a BIDS folder tree - is
-read by `tractline.bids`. From DICOM, dcm2niix converts, and runs with `uvx` too (into an empty folder per session):
+`tractline run --help` lists every option. `tractline docs` prints this README, the user guide and the help of every
+command as one Markdown text, which is handy to give to an LLM.
+
+## What it reads
+
+A diffusion series as NIfTI (`.nii` or `.nii.gz`) with its `.bval`, `.bvec` and JSON sidecar, usually in a BIDS
+folder. The sidecar supplies what the corrections need: the phase-encoding direction, the readout time, the echo time
+and the shim settings. tractline tracks one shell: the one with the most volumes, unless `--shell` names another.
+
+The susceptibility correction needs a second series acquired with the opposite phase encoding, such as an AP/PA pair.
+tractline finds it from the sidecars (`B0FieldIdentifier`, `IntendedFor`, or a reversed diffusion series in the same
+folder), checks that the two really match, and tells you why if it cannot use them. You can also name it with
+`--partners`. Without a usable pair, the scan is tracked without that correction, and the output says so.
+
+**From DICOM**, convert with [dcm2niix](https://github.com/rordenlab/dcm2niix) first. It also runs with `uvx`:
 
 ```
 mkdir -p nifti/sub-01
-uvx dcm2niix@1.0.20260724 -b y -z y -f %p_%s_dwi -o nifti/sub-01 dicom_folder/
-uvx --from "tractline[cli] @ git+https://github.com/mhalle/tractline@main" tractline run nifti/sub-01/DTI_AP_10_dwi.nii.gz --motion-eddy
+uvx dcm2niix@1.0.20260724 -b y -z y -f %p_%s_dwi -o nifti/sub-01 dicom/sub-01/
+uvx --from "tractline[cli] @ git+https://github.com/mhalle/tractline" \
+    tractline run nifti/sub-01/DTI_AP_10_dwi.nii.gz --motion-eddy --trx out/sub-01.trx
 ```
 
-Names ending in `_dwi` let a diffusion series phase-encoded the other way in the same folder be found; a reversed
-series without a `.bval` (a spin-echo field map) is renamed to end in `_epi` and given with `--partners`, and is used
-when its echo time and voxel sizes match. dcm2bids or heudiconv arrange the output as BIDS instead, with the links
-between series in the sidecars. The QC guide (`docs/motion-eddy-qc-guide.md`, section 2) has the details and the
-cases to watch. From a checkout, `uv run tractline run ...` or `uv run bench/run_pipeline.py --bids <series> [--partners <series>]`.
+The file names end in `_dwi` so that a reversed series in the same folder is found and paired. Section 2 of the
+[user guide](docs/motion-eddy-qc-guide.md) covers the cases that need a step more, such as a spin-echo field map as
+the reversed series.
 
-The series that correct its distortion are found from the sidecars (`B0FieldIdentifier`/`B0FieldSource`,
-`IntendedFor`, or a diffusion series in the same folder phase-encoded the other way) and checked first: the
-same phase-encoding axis, both polarities, an identical `ShimSetting`, a matching protocol, a readout time
-stated or safely assumed. When a check fails, or nothing is found, the series is tracked as acquired and the
-reason printed; after a correction, how much of the pair's difference the field leaves is reported, with a
-warning above 0.5 (motion between the series, or series that do not share one field). Why these checks:
-`bench/results/NOTES.md`, 2026-10-03.
+## What it does
 
-## The package (`src/tractline`)
+1. **Gibbs ringing removal** (`--gibbs`, optional), DIPY's method, on the series as acquired, before the other steps.
+2. **Susceptibility correction** with FSL topup's model, estimated from the b0 images of both phase-encoding
+   directions. It agrees with topup and takes about 15 seconds on an Apple GPU, where topup takes about 11 minutes.
+3. **Head motion and eddy current correction** (`--motion-eddy`, optional): FSL eddy's model with tractline's own
+   fit, combined with the susceptibility correction into a single resampling of each volume. Slices with signal
+   loss are replaced, as eddy's `--repol` does.
+4. **Tractography**: two-tensor UKF tractography as Slicer's UKFTractography does it, with the settings used to build
+   the ORG atlas: a seed in every voxel of the brain mask whose FA is above 0.1.
+5. **Tract labels** from RapidParc (the default; 94.5 % tract accuracy on TractCloud's labeled test set) or
+   TractCloud (`--labeler tractcloud`).
 
-`pipeline.py` runs it in memory: correct → track → label, then optionally TRX. Its docstring states the
-subject it takes (the fields `run(s, ...)` reads) and the conventions every module follows (array
-layouts, units, devices). Two defaults to know: `device="mps"` (pass `"cuda"` or `"cpu"` elsewhere) and
-`shell=2800.0` (ds001226's b-value; pass the scan's own). On the CPU the tracker's workers share their
-input through shared memory; `TRACTOGRAPHY_SHARE=0` sends copies instead, for systems without it. The default path needs numpy,
-torch and RapidParc's weights, nothing more - no scipy, no nibabel, no TractCloud code
-(`bench/dependency_check.py`); reading the scan is the caller's, or `tractline.bids`'s (the `bids` extra). A
-script using the CPU path needs an `if __name__ == "__main__":` guard: the tracker spawns worker processes,
-which re-import the script (the tracker checks, and refuses without one).
+Each step is tractline's own implementation, checked against the original tool. The
+[user guide](docs/motion-eddy-qc-guide.md) explains each one and how to read the QC.
 
-| module | stage |
+Times for one scan (ON-Harmony sub-16974: 105 volumes at 2 mm) with `--motion-eddy --gibbs`, from the scan to
+labeled streamlines:
+
+| hardware | time |
 |---|---|
-| `susceptibility.py` | `estimate` (FSL topup's model by Gauss-Newton, with HySCO's anti-folding penalty; GPU or CPU), `apply`, `displacement_mm` |
-| `prep.py`, `mask.py` | the tracker's input: one shell, gradients in RAS, DIPY's `median_otsu` mask (exactly, in torch) |
-| `ukf.py`, `ukf_metal.py`, `ukf_triton_block.py` | UKF two-tensor tractography as the Slicer binary does it; the Metal (Apple) and Triton (CUDA) kernels for the steps (`ukf_triton.py`, the unrolled first attempt, compiles too slowly to use) |
-| `labelers/rapidparc.py` | RapidParc labels - the default |
-| `labelers/tractcloud.py`, `resample.py` | TractCloud labels, at the context its model was trained with (optional) |
-| `labelers/base.py`, `labelers/scheme_43.json` | what labelers share: `Labels`, the 40 mm cut, the 43-class scheme |
-| `trx.py` | optional output: the tractogram as TRX, with tract labels and probabilities |
-| `motion_eddy.py`, `motion_eddy_metal.py`, `mi.py` | opt-in head motion and eddy-current correction (eddy's model, our own fit), the susceptibility field composed into the same single resample, the b-vectors rotated, a QC summary; `run(..., motion_eddy=True)` or the `motion_eddy` slot; `bench/run_pipeline.py --motion-eddy --qc DIR` writes the QC files |
-| `bids.py` | a BIDS diffusion series as the pipeline's subject: the series that correct it found (B0FieldIdentifier, IntendedFor, or the folder's reversed series) and checked - same axis, both polarities, identical shim, matching protocol, readout stated or safely assumed - or refused with the reason (the `bids` extra). DICOM through dcm2niix's output. |
-| `t1check.py` | measurement, not pipeline: the distortion left against the T1 (needs scipy: the `t1check` extra) |
-| `data.py` | where data and weights live |
+| Apple M2 laptop (GPU) | 153 s |
+| NVIDIA A10 | 36 s |
 
-## Tests (`tests/`)
+On an NVIDIA GPU the first run also compiles the GPU kernels, about two minutes. They are kept in Triton's cache
+(`~/.triton/cache`), and `tractline warm` compiles them ahead of time. On the CPU every step runs, but slowly: the
+motion and eddy correction there is estimated at 12 to 13 minutes, and has not yet been run end to end on a real
+scan. A series too large for the GPU's memory (an HCP-sized acquisition on a 16 GB laptop, for example) is refused
+before the run starts, with a message.
+
+**On a cluster:** `tractline fetch` downloads the labelers' weights ahead of time, for nodes without internet access
+(`TRACTLINE_CACHE` sets where they are kept; `TRACTLINE_OFFLINE=1` forbids downloads). Set `TRITON_CACHE_DIR` to a
+folder the nodes share, so the GPU kernels are compiled once for all of them.
+
+## Using the output
+
+The TRX file is a zip of arrays, readable with [trx-python](https://github.com/tee-ar-ex/trx-python):
+
+```python
+from trx.trx_file_memmap import load
+
+t = load("out/sub-01.trx")
+print(sorted(t.groups))                     # the tract names
+af = t.streamlines[t.groups["AF"]]          # the arcuate fasciculus's streamlines, in RAS millimeters
+```
+
+trx-python's `trx_convert_tractogram` converts it to `.tck`, `.trk` or `.vtk` for tools that do not read TRX.
+
+## Choosing a version
+
+- **No `@...`**, or `@main`: the newest release. The `main` branch moves only when a release is made.
+- **A tag** such as `@v0.5.1`: one release, permanently. Pin a tag when a study's scans must all run on the same
+  code: `uvx --from "tractline[cli] @ git+https://github.com/mhalle/tractline@v0.5.1" tractline ...`, or the same
+  URL with `uv tool install`. `tractline --version` shows which version ran.
+- **`@dev`**: the newest code, ahead of the latest release.
+
+`uvx` reuses the environment it built first, so after a new release `uvx --refresh --from ...` picks it up. An
+unpinned `uv tool install` moves to the newest release with `uv tool upgrade tractline`; a pinned one stays on its
+tag until you install again with another. [CHANGELOG.md](CHANGELOG.md) lists what each release changed.
+
+## Using it from Python
+
+Add tractline to a uv project, pinned to a release, with the `bids` extra for reading NIfTI and BIDS:
 
 ```
-uv run ruff check src bench tests    # pyflakes: undefined, shadowed and unused names
-uv run pytest                        # about a minute
+uv add git+https://github.com/mhalle/tractline --tag v0.5.1 --extra bids
 ```
 
-The whole pipeline on the CPU path, on a synthetic phantom (`tests/phantom.py`: a band of fibers in a
-block of brain, a reversed-phase pair with no distortion): it runs with the default worker count and
-with two (the same fibers), repeats bit for bit, tracks the band and estimates no field; the package
-with numpy and torch alone (the optional packages blocked); the labelers' edge cases (RapidParc's with its
-weights; skipped without them); the inputs the modules refuse. The GitHub workflow (`.github/workflows/ci.yml`)
-runs both on Linux on every push. The Metal and CUDA paths need their GPUs: the bench checks them
-(`cohort.py`, `dependency_check.py`, the Modal scripts).
+Outside uv, `pip install "tractline[bids] @ git+https://github.com/mhalle/tractline@v0.5.1"` does the same.
 
-## The bench (`bench/`)
+```python
+from tractline import bids, pipeline as P
 
-Run from the repository root with `uv run` (it syncs the environment first), e.g. `uv run bench/cohort.py --sub PAT16`.
-Results and the running journal are in `bench/results/` (`NOTES.md`, newest entries last). Some committed
-results predate a change of default (the field estimate's optimizer, the labeler); `bench/results/README.md`
-says which, and what re-running their scripts would now produce.
+s = bids.load("sub-01/dwi/sub-01_dir-AP_dwi.nii.gz")
+print(s.pairing.message)                        # which series correct it, or why none can
+corr, tractogram, labels = P.run(s, None, P.Timer(), device="mps",   # "cuda" or "cpu" elsewhere
+                                 shell=2000.0, motion_eddy=True, trx="out/sub-01.trx")
+```
 
-- `run_pipeline.py --sub PATnn [--trx [PATH]] [--labeler rapidparc|hemiaug|tractcloud]`: the pipeline on
-  one subject; `trx_check.py` reads the TRX back with trx-python and checks it.
-- `cohort.py --sub PATnn`: one ds001226 patient (`_ds001226.py`) - the pipeline, the scan as acquired
-  for comparison, both against the T1 and tumor; `cohort_summary.py` tabulates `results/cohort/`;
-  `cohort_topup.py` adds FSL topup as a second reference. Changes to the pipeline are checked against the
-  committed 12-patient cohort.
-- Against the originals: `ukf_compare.py` / `modal_ukf_track.py` (the Slicer binary),
-  `ukf_metal_check.py` and `modal_ukf_triton.py` (the GPU kernels against `ukf`), `ukf32_compare.py`,
-  `ukf_noise_floor.py` and `modal_ukf_labels.py` (float32 against the scan's noise),
-  `median_check.py` (DIPY), `susc_check.py` and `t1_alignment.py` (topup, the T1; PAT16),
-  `rapidparc_check.py` / `modal_rapidparc_check.py` (RapidParc's package).
-- The labelers: `accuracy_tractcloud_test.py` (accuracy on TractCloud's labeled test split),
-  `labeler_compare.py` (12 patients, four labelers), `label_noise_floor.py`, `label_draws.py`,
-  `label_context.py`, `label_kglobal.py`, `label_trained_check.py` (TractCloud's context and stability),
-  `memory_batch.py` (memory across patients in one process).
-- Uncertainty: `ensemble_pilot.py` (the pipeline run with every stage resampled - the scan bootstrapped, its field,
-  tracking, the draw - summarized per streamline and per voxel by `tractline.ensemble` and encoded with rankfield;
-  `docs/uncertainty-ensemble.md`); `ensemble_votes_test.py` (whether votes are needed beside the mixture: regrouping,
-  information beyond it, runs, voxel merges, with block-bootstrap intervals).
-- The field estimate: `susc_held_out.py` (+ `susc_held_out_summary.py`: split-half, held-out prediction
-  and drift from each scan's own b0s, 12 patients - the test that picks its settings),
-  `susc_stability.py`, `susc_convergence.py`, `readout_polarity.py` (+ `_summary`: what the correction needs to
-  know of the acquisition - absolute polarity, readout time, relative polarity from the images).
-- Speed: `cpu_timing.py`, `modal_cpu_scaling.py` (x86, CPU only), `modal_gpu_pipeline.py` (+
-  `gpu_pipeline_compare.py`: the pipeline on CUDA GPUs and CPUs against the M2), `hardi_paths.py` +
-  `modal_hardi_paths.py` (the HARDI brain on the M2, an L40S and a Modal CPU container), `ukf_cpu_check.py`,
-  `timing_matrix.py` + `modal_timing_matrix.py` (stage times on HARDI, PAT16 and ds005123: the M2, an L4, an A10,
-  an L40S and a 32-worker CPU container), `cpu_profile.py` + `modal_cpu_profile.py` (where the CPU tracker's and
-  the field estimate's time goes), `ukf_cpu_tune.py` (tracker-step variants: speed and agreement with float64),
-  `modal_cpu_compare.py` (the CPU pipeline, committed against working copy, in one x86 container; worker scaling),
-  `modal_estimate_compare.py` (the field estimate, committed against working copy, per GPU), `timing_table.py` (the
-  cross-platform table from timing_matrix's results), `gpu_track_profile.py` + `modal_gpu_track_profile.py` (the GPU
-  tracker's steps against the fibers they carry; block sizes compared bit for bit).
-- Helpers: `_ds001226.py` (the patients' loader), `_fibercmp.py` (fibers compared by seed), `_bootstrap.py`
-  (bootstrap replicates of a scan).
+`shell` is the b-value tracked; from Python give the scan's own (the default is 2800). On the CPU, put the code under
+`if __name__ == "__main__":`: the tracker starts worker processes that re-import the script.
 
-Records kept because committed results came from them (their inputs are not all reproducible from this
-repository): `pat16_prep.py`, `susc_apply.py`, `topup_ref.py`, `pat16_topup_compare.py`, `pat16_seeding.py`,
-`mac_labels.py`, `ukf_bench.py`, `ukf_step_bench.py`, `modal_ukf_step.py`, `compare_variant.py`,
-`t1_alignment_figure.py`, `resample_check.py` and `modal_infer_opt.py` (TractCloud inference; both need
-`hcp/feat.npy`, made by a script that stayed in the incubation repository), `ukf_hotspots.cc` (the binary's
-profile, `results/ukf_hotspots.json`). `t1_alignment.py` and `median_check.py` read files those records
-made (`susc_apply.py`, `pat16_prep.py`).
+The core package needs numpy and torch (and click, for the command). The extras add what the optional parts need:
 
-## Documents (`docs/`)
+| extra | for |
+|---|---|
+| `bids` | reading NIfTI and BIDS (nibabel, scipy) |
+| `cli` | the `tractline` command (nibabel, scipy, matplotlib) |
+| `plot` | the QC plot (matplotlib) |
+| `nrrd` | the tracker's input and output as NRRD files (pynrrd) |
+| `triton` | the GPU kernels on Linux with an NVIDIA GPU (PyPI's torch for Linux already includes it) |
 
-`pipeline.md` (the pipeline as built, its timings, what is open), `labelers.md` (the labelers),
-`duckn-proposal.md` (what a duckn 2.0 store would need to carry for tractline to read it), `dcm2niix-dmri-map.md`
-(where dcm2niix keeps each vendor's diffusion facts, for checking duckn's `dwmri` against),
-`prior-art.md` (the incubation's survey: streamline storage, the confidence of streamline parcellation,
-compact soft output - some of its references point to format work that is not in this repository).
+The pipeline's steps can also be chosen one by one through a configuration (`tractline.config`), including opt-in
+methods that the command does not expose yet: denoising (Patch2Self or MP-PCA) and CSD with parallel transport
+tractography. See [docs/sota-pipeline-design.md](docs/sota-pipeline-design.md).
 
-## Not here
+## Documentation
 
-The compact format work (the rank field, predictive geometry, the viewers, DeepMultiConnectome's field
-test) stayed in the incubation repository; when it returns it will be wired into an exporter from the
-labeler's in-memory probabilities, not through the TRX.
+- [User guide](docs/motion-eddy-qc-guide.md): running tractline, what each step does, and reading the motion and eddy
+  QC.
+- [CHANGELOG.md](CHANGELOG.md): what changed in each release.
+- [docs/labelers.md](docs/labelers.md): RapidParc and TractCloud as tractline runs them.
+- [docs/pipeline.md](docs/pipeline.md): the pipeline as built, with timings.
+- [docs/development.md](docs/development.md): working on tractline: setup, tests, data, releases.
+- [bench/README.md](bench/README.md): the scripts behind the measurements, and their results.
 
-## Contributors
+## Development
 
-Ron Kikinis contributed to tractline.
+```
+git clone https://github.com/mhalle/tractline && cd tractline
+git switch dev                      # work happens on dev; main holds the newest release
+uv sync                             # the package and the development tools
+uv run pytest                       # the test suite (about ten minutes)
+uv run tractline run ...            # the command from the checkout
+```
 
-## Licenses
+[docs/development.md](docs/development.md) has the rest: the data the tests and the bench use, the optional
+dependency groups, the GPU tests and the release steps.
 
-Apache License 2.0 (`LICENSE`): all of tractline's code. The originals it implements, and the one file it
-redistributes (RapidParc's tract scheme, with its notice), are credited in `THIRD_PARTY_NOTICES.md`.
+## Credits and license
+
+Ron Kikinis contributed to tractline. tractline implements methods from FSL (topup, eddy), Slicer's
+UKFTractography, DIPY, RapidParc and TractCloud; [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) credits them,
+including the one file tractline redistributes (RapidParc's tract scheme). tractline's own code is under the
+Apache License 2.0 ([LICENSE](LICENSE)).

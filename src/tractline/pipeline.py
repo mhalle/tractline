@@ -65,6 +65,7 @@ from __future__ import annotations
 import copy, os, time
 from contextlib import contextmanager
 from dataclasses import dataclass, field
+from pathlib import Path
 import numpy as np, torch
 from . import susceptibility as S
 from . import ukf as U
@@ -744,6 +745,8 @@ def execute(s, cfg: PipelineConfig, timer: Timer, prefix="", device="mps", worke
                          "slot's grouping must be 'index'")
     if trx is not None and not cfg.is_on("bundles"):
         raise ValueError("execute: TRX output needs labels, and the bundles slot is off")
+    if trx is not None:
+        Path(trx).parent.mkdir(parents=True, exist_ok=True)               # before the work, not after it
     if torch.device(device).type == "cpu" and (workers or os.cpu_count() or 1) > 1:
         U.require_main_guard()                                             # before the 20 s field estimate
     labeler = _labeler(cfg, labeler, device)

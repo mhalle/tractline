@@ -119,6 +119,7 @@ def test_trx_roundtrip(tmp_path):
     z = trx.write(tmp_path / "t.trx", s, tg, labels)
     import zipfile
     assert zipfile.ZipFile(z).read("offsets.uint64") == (d / "offsets.uint64").read_bytes()
+    assert trx.write(tmp_path / "new" / "deeper" / "t.trx", s, tg, labels).exists()     # its folders made
 
 
 # ---------------------------------------------------------------- RapidParc's plumbing, without weights

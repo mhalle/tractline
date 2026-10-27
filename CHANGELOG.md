@@ -1,8 +1,17 @@
 # Changelog
 
-Releases are git tags (`uv add "tractline @ git+https://github.com/mhalle/tractline@vX.Y.Z"`); `main` is the newest
-release and `dev` the work in progress (README, "Versions and releases"). The experiments
+Releases are git tags (`uv add git+https://github.com/mhalle/tractline --tag vX.Y.Z`); `main` is the newest
+release and `dev` the work in progress (`docs/development.md`, "Branches and releases"). The experiments
 behind each change, with their numbers and later corrections, are in `bench/results/NOTES.md`.
+
+## Unreleased
+
+- **The README rewritten** for a first-time reader: what tractline does, a quick start with `uvx` and
+  `uv tool install`, what it reads (DICOM through dcm2niix), the steps, timings, versions, use from Python
+  (`uv add ... --tag`) and the documentation. The developer material moved to `docs/development.md` (setup, data,
+  tests, branches and releases, the package's modules) and the bench's catalog to `bench/README.md`.
+- **Fixed: `pipeline.run(trx=...)` into a folder that does not exist** failed when writing the TRX, after the whole
+  run; the folder is now made before the work starts (and by `trx.write` itself).
 
 ## 0.5.1 - 2026-10-27
 
