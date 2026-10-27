@@ -23,9 +23,9 @@ uv run bench/run_pipeline.py --sub PAT16
 As a dependency of another project (the bench's groups stay behind - they are not in the package's metadata):
 
 ```
-uv add "tractline @ git+https://github.com/mhalle/tractline@v0.5.0"
-uv add "tractline[nrrd,triton] @ git+https://github.com/mhalle/tractline@v0.5.0"   # NRRD input/output, CUDA kernel
-uv add "tractline[bids] @ git+https://github.com/mhalle/tractline@v0.5.0"          # + reading BIDS (nibabel, scipy)
+uv add "tractline @ git+https://github.com/mhalle/tractline@v0.5.1"
+uv add "tractline[nrrd,triton] @ git+https://github.com/mhalle/tractline@v0.5.1"   # NRRD input/output, CUDA kernel
+uv add "tractline[bids] @ git+https://github.com/mhalle/tractline@v0.5.1"          # + reading BIDS (nibabel, scipy)
 ```
 
 `pip install` works too, from the same URL. On CUDA the tracker's Triton kernel compiles on first use, once per
@@ -80,8 +80,8 @@ model's weights (6.6 MB) are downloaded on first use into a user cache, checked 
 (`tractline fetch` gets every labeler's ahead; `tractline.fetch`). On CUDA the first run also compiles the GPU kernels
 (about two minutes, kept in Triton's cache); `tractline warm [series]` compiles them ahead. `--labeler tractcloud` fetches TractCloud's code
 at a pinned commit and its model from its release the same way (about 42 MB). `tractline run --help` lists the options;
-`docs/motion-eddy-qc-guide.md` describes the run and its QC files; `tractline docs` (after 0.5.0) prints both documents and
-every command's help as one Markdown text (for an LLM, say). From a checkout, `uv run tractline ...`.
+`docs/motion-eddy-qc-guide.md` describes the run and its QC files; `tractline docs` prints both documents and every command's
+help as one Markdown text (for an LLM, say). From a checkout, `uv run tractline ...`.
 
 ## Versions and releases
 

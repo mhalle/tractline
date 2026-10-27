@@ -36,8 +36,7 @@ place, such as `@v0.5.0`, pins the version, so a set of scans can be processed w
 the trained weights of the labeler (6.6 MB, from RapidParc's release, checked against a pinned checksum), so it takes
 longer than later runs. `tractline fetch` downloads the weights of every labeler ahead of time, for example before
 working offline. From a checkout of the
-repository, `uv run tractline run ...` does the same. `tractline docs` (after release 0.5.0: `@main` or a later
-release) prints this guide, the README and every command's help as one Markdown text, for example to give to an LLM.
+repository, `uv run tractline run ...` does the same. `tractline docs` prints this guide, the README and every command's help as one Markdown text, for example to give to an LLM.
 
 The TRX file holds every streamline the tracker kept, in RAS millimeters, grouped by tract. For each streamline it
 also stores the tract label (one of the 42 tracts or "Other"), the most probable atlas cluster, the probability of

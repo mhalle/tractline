@@ -4,7 +4,7 @@ Releases are git tags (`uv add "tractline @ git+https://github.com/mhalle/tractl
 release and `dev` the work in progress (README, "Versions and releases"). The experiments
 behind each change, with their numbers and later corrections, are in `bench/results/NOTES.md`.
 
-## Unreleased
+## 0.5.1 - 2026-10-27
 
 - **`tractline docs`**: the version, every command's help, the README and the QC guide as one Markdown text (or one of
   them: `readme`, `guide`, `help`), for reading or for an LLM. The wheel carries both documents (`tractline/_docs`), so
