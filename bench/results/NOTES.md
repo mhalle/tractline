@@ -7672,3 +7672,25 @@ CPU's: 1 voxel of 6.2 million above 0.1 % of scale, the largest 0.18 % (`modal_c
   the first run then 36.1 s (motion_eddy 3.7 s): nothing compiled.
 
 **Not done.** Other CUDA GPUs (one A10). The budget rests on one scan.
+
+## 2026-10-27 From DICOM: the dcm2niix recipe in the docs (no DICOM reader in tractline)
+
+**What.** The QC guide (section 2, "From DICOM") and the README give a recipe instead of a front end:
+`uvx dcm2niix@1.0.20260724 -b y -z y -f %p_%s_dwi -o nifti/ <dicom>`, then `tractline run` on the diffusion series.
+NRRD input and a dcm2niix wrapper were weighed and set aside: NRRD carries no phase encoding or readout time, and a
+wrapper adds a process and files for one command's worth of convenience.
+
+**Checked.**
+- dcm2niix 1.0.20260724 from PyPI by uvx (wheels for macOS, Linux, Windows) on dcm_qa_ge's `01_Ax_DWI_TENSOR_R2`
+  (GE, `$TRACTOGRAPHY_DATA/dicom/`): NIfTI, `.bval`, `.bvec` and a sidecar with PhaseEncodingDirection, TotalReadoutTime,
+  EchoTime and ShimSetting; `bids.load` reads it (b 0 and 1000, PE axis 1, readout 0.122 s) and, with no reversed
+  series, tracks as acquired and says why.
+- Pairing in a flat folder of dcm2niix-style names (ON-Harmony 16974's AP and PA series linked as `DTI_AP_10_dwi` and
+  `DTI_PA_11_dwi`): found and paired ("same folder"). A reversed series without `.bval` (as dcm2niix writes a spin-echo
+  field map) named `_dwi` is refused, also when given with `partners=`; renamed `_epi` and given with `partners=`, it
+  pairs, all its volumes taken as b0s. Hence the recipe's rename step.
+- `-f %p` alone can name several series of a session alike; `%s` (the series number) keeps them apart.
+- After review: dcm2niix needs its output folder to exist ("Output folder invalid" otherwise), and into a folder that
+  already holds a conversion it suffixes the new names (`_dwia`), which the `*_dwi` glob skips: hence an empty folder
+  per session. An `_epi` partner pairs only within the echo-time (1 ms) and voxel-size (0.01 mm) checks. dcm_qa_polar's
+  GE epi_pepolar modes 2 and 3 give the series and its +1000 reversed series, neither with a `.bval`.

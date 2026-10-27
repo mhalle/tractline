@@ -300,3 +300,14 @@ def test_warm_without_cuda(monkeypatch):
     monkeypatch.setattr(torch.cuda, "is_available", lambda: False)
     r = CliRunner().invoke(cli.main, ["warm"])
     assert r.exit_code == 0 and "nothing to compile" in r.output
+
+
+def test_docs():
+    """`tractline docs`: the commands' help, the README and the QC guide, as one Markdown text or one at a time."""
+    r = CliRunner().invoke(cli.main, ["docs"])
+    assert r.exit_code == 0, r.output
+    for part in ("## tractline run --help", "# tractline\n", "Head motion and eddy current correction"):
+        assert part in r.stdout, part
+    readme = CliRunner().invoke(cli.main, ["docs", "readme"]).stdout
+    assert readme.startswith("# tractline") and "--help\n\n```" not in readme
+    assert "## 5. The QC files" in CliRunner().invoke(cli.main, ["docs", "guide"]).stdout

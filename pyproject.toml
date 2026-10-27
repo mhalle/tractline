@@ -68,10 +68,15 @@ path = "src/tractline/__init__.py"
 # The sdist: the package, its tests and the documents a user reads - not the bench, its results or journal.
 [tool.hatch.build.targets.sdist]
 include = ["/src", "/tests", "/README.md", "/CHANGELOG.md", "/LICENSE", "/THIRD_PARTY_NOTICES.md", "/pyproject.toml", "/uv.lock",
-           "/.python-version", "/docs/pipeline.md", "/docs/labelers.md"]
+           "/.python-version", "/docs/pipeline.md", "/docs/labelers.md", "/docs/motion-eddy-qc-guide.md"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/tractline"]
+
+# The README and the QC guide inside the package, for `tractline docs` in an installed tractline (uvx, pip)
+[tool.hatch.build.targets.wheel.force-include]
+"README.md" = "tractline/_docs/README.md"
+"docs/motion-eddy-qc-guide.md" = "tractline/_docs/motion-eddy-qc-guide.md"
 
 [tool.ruff]
 line-length = 150

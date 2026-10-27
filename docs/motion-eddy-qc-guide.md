@@ -30,12 +30,14 @@ uvx --from "tractline[cli] @ git+https://github.com/mhalle/tractline@main" \
     tractline run sub-01/dwi/sub-01_dir-AP_dwi.nii.gz --motion-eddy --trx out/sub-01.trx
 ```
 
-`@main` runs the latest code; a release tag in its place, such as `@v0.5.0`, pins the version, so a set of scans can
-be processed with the same code throughout (`tractline --version` reports it). The first run downloads PyTorch and
+`@main` runs the newest release (the repository's `main` moves only when a release is cut). A release tag in its
+place, such as `@v0.5.0`, pins the version, so a set of scans can be processed with the same code throughout
+(`tractline --version` reports it); `CHANGELOG.md` lists the releases. The first run downloads PyTorch and
 the trained weights of the labeler (6.6 MB, from RapidParc's release, checked against a pinned checksum), so it takes
 longer than later runs. `tractline fetch` downloads the weights of every labeler ahead of time, for example before
 working offline. From a checkout of the
-repository, `uv run tractline run ...` does the same.
+repository, `uv run tractline run ...` does the same. `tractline docs` (after release 0.5.0: `@main` or a later
+release) prints this guide, the README and every command's help as one Markdown text, for example to give to an LLM.
 
 The TRX file holds every streamline the tracker kept, in RAS millimeters, grouped by tract. For each streamline it
 also stores the tract label (one of the 42 tracts or "Other"), the most probable atlas cluster, the probability of
@@ -57,6 +59,39 @@ shell with the most volumes). `--labeler tractcloud` labels with TractCloud in p
 RapidParc (section 3); its code and trained model are downloaded from TractCloud's GitHub on first use (about 42 MB,
 at the version tractline was tested with, checked against pinned checksums). `tractline run --help` lists every
 option.
+
+**From DICOM.** tractline reads NIfTI with its `.bval`, `.bvec` and JSON sidecar. dcm2niix converts a session's
+DICOM to that form, and also runs with `uvx`. It writes into an existing folder, so make an empty one per session
+first:
+
+```
+mkdir -p nifti/sub-01
+uvx dcm2niix@1.0.20260724 -b y -z y -f %p_%s_dwi -o nifti/sub-01 dicom/sub-01/
+uvx --from "tractline[cli] @ git+https://github.com/mhalle/tractline@main" \
+    tractline run nifti/sub-01/DTI_AP_10_dwi.nii.gz --motion-eddy --trx out/sub-01.trx --qc qc/sub-01
+```
+
+`-b y` writes the sidecar beside each series: the phase-encoding direction, readout time, echo time and shim settings
+that the corrections need and the pairing checks. `-f %p_%s_dwi` names each series by its protocol and series number
+(the protocol name alone can be the same for several series), ending in `_dwi`: a diffusion series in the same folder
+acquired with the opposite phase encoding is then found and paired without being named. Every series of the session
+is converted under the same pattern, the T1 and localizers too (they are not used: their echo time and voxels
+differ). Give `tractline run` the series that has a `.bval` and the full set of directions, not a derived map
+(Siemens's ADC, TRACEW or FA series carry the same protocol name). A folder that already holds a conversion makes
+dcm2niix add a letter to the new files' names (`..._dwia.nii.gz`), which the pairing then skips, hence the empty folder.
+With several diffusion runs in one session, every reversed series in the folder is used; name the one that belongs
+with `--partners`. Pinning dcm2niix's version (`@1.0.20260724`) keeps the conversion the same across a study; the
+sidecar records it.
+
+A reversed series with no `.bval` beside it, usually a spin-echo field map, is refused under a `_dwi` name. Rename its
+`.nii.gz` and `.json` to end in `_epi` and name it with `--partners nifti/sub-01/SE_PA_12_epi.nii.gz`; all its volumes
+are then taken as b0 images. It is used only if its echo time is within 1 ms of the diffusion series' and its voxel
+sizes within 0.01 mm: a field map of another resolution or echo time is refused, and the reason printed. (A b0 series
+acquired with the diffusion sequence itself often comes with a `.bval` of zeros, and pairs under its `_dwi` name.) On
+GE's `epi_pepolar` sequence in its modes that acquire both polarities, dcm2niix writes the reversed volumes as a
+series of their own, numbered 1000 above it and without a `.bval`: rename that one to `_epi` in the same way.
+Alternatively, dcm2bids or heudiconv arrange dcm2niix's output as BIDS, with `IntendedFor` or `B0FieldIdentifier`
+linking the series, and the pairing follows those links.
 
 The command runs on an Apple GPU when there is one, then on a CUDA GPU, then on the CPU (`--device` chooses). On a
 laptop GPU (Apple M2) a 105-volume scan takes about two minutes. On an NVIDIA A10 the same scan, with `--motion-eddy`

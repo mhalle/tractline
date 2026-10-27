@@ -3,6 +3,7 @@
     tractline run sub-01/dwi/sub-01_dir-AP_dwi.nii.gz --motion-eddy --trx out/sub-01.trx --qc qc/sub-01
     tractline fetch                      # the labelers' weights into the cache ahead of a run (tractline.fetch)
     tractline warm                       # on CUDA: compile the GPU kernels ahead of the first run
+    tractline docs                       # the commands' help, the README and the QC guide as one Markdown text
 
 Installed with the `cli` extra (nibabel and scipy to read BIDS, matplotlib for the QC plot), or run without installing:
 
@@ -294,6 +295,48 @@ def fetch(model):
                 click.echo(f"{name}: {FE.weights(name, progress=_progress(name))}")
         except (FE.FetchError, OSError) as e:                               # the network, or the cache's folder
             raise click.ClickException(str(e)) from e
+
+
+DOCS = {"readme": "README.md", "guide": "motion-eddy-qc-guide.md"}
+
+
+def _doc(name: str) -> str:
+    """A document's Markdown: the copy inside the installed package (tractline/_docs, put there by the wheel build), else
+    the repository's (a checkout)."""
+    from importlib.resources import files
+    packaged = files("tractline") / "_docs" / DOCS[name]
+    if packaged.is_file():
+        return packaged.read_text(encoding="utf-8")
+    root = Path(__file__).resolve().parents[2]
+    local = root / (DOCS[name] if name == "readme" else f"docs/{DOCS[name]}")
+    if local.is_file():
+        return local.read_text(encoding="utf-8")
+    raise click.ClickException(f"{DOCS[name]} is not in this installation")
+
+
+def _helps() -> str:
+    """Every command's --help, as the terminal shows it."""
+    out = []
+    for name, cmd in [("", main)] + sorted(main.commands.items()):
+        prog = f"tractline {name}".strip()
+        with cmd.make_context(prog, [], resilient_parsing=True) as ctx:
+            out.append(f"## {prog} --help\n\n```\n{cmd.get_help(ctx)}\n```")
+    return "\n\n".join(out)
+
+
+@main.command()
+@click.argument("what", type=click.Choice(["all", "readme", "guide", "help"]), default="all")
+def docs(what):
+    """Print tractline's documentation as one Markdown text, for reading or for an LLM: its version, every command's
+    help, the README and the QC guide (all: the default), or one of them. Pipe it on, e.g. `tractline docs | pbcopy`."""
+    parts = []
+    if what in ("all", "help"):
+        parts.append(f"# tractline {_version()}: the commands\n\n{_helps()}")
+    if what in ("all", "readme"):
+        parts.append(_doc("readme"))
+    if what in ("all", "guide"):
+        parts.append(_doc("guide"))
+    click.echo("\n\n---\n\n".join(parts))
 
 
 if __name__ == "__main__":

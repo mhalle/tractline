@@ -74,26 +74,47 @@ uvx --from "tractline[cli] @ git+https://github.com/mhalle/tractline@main" \
     tractline run sub-01/dwi/sub-01_dir-AP_dwi.nii.gz --motion-eddy --trx out/sub-01.trx --qc qc/sub-01
 ```
 
-`@main` is the latest code; a release tag (`@v0.5.0`) or a commit hash in its place pins a version. The chosen RapidParc
+`@main` (or no `@...` at all) is the newest release; a release tag (`@v0.5.0`) pins one; `@dev` is the newest code
+(see "Versions and releases" below). The chosen RapidParc
 model's weights (6.6 MB) are downloaded on first use into a user cache, checked against a pinned sha256
 (`tractline fetch` gets every labeler's ahead; `tractline.fetch`). On CUDA the first run also compiles the GPU kernels
 (about two minutes, kept in Triton's cache); `tractline warm [series]` compiles them ahead. `--labeler tractcloud` fetches TractCloud's code
 at a pinned commit and its model from its release the same way (about 42 MB). `tractline run --help` lists the options;
-`docs/motion-eddy-qc-guide.md` describes the run and its QC files. From a checkout, `uv run tractline ...`.
+`docs/motion-eddy-qc-guide.md` describes the run and its QC files; `tractline docs` (after 0.5.0) prints both documents and
+every command's help as one Markdown text (for an LLM, say). From a checkout, `uv run tractline ...`.
+
+## Versions and releases
+
+Three kinds of reference, for three uses:
+
+- **`main`**: the newest release. It moves only when a release is cut, so `@main` (or a URL with no `@...`) gets
+  code that has been through the release checks below.
+- **Tags** (`v0.5.0`, ...): every release, permanent. Pin one for a study, so all its scans run on the same code;
+  `tractline --version` reports which. `CHANGELOG.md` lists what each has.
+- **`dev`**: where work lands. CI runs on every push to it; it can be ahead of the newest release, and between
+  releases it is the only place a fix is.
+
+A release: on `dev`, CI green; the GPU tests (`modal run bench/motion_eddy/modal_cuda.py --tests` on CUDA, the test
+suite on an Apple GPU) and one real scan through the command; the version in `src/tractline/__init__.py` and
+`CHANGELOG.md` set; then the tag on that commit and `main` fast-forwarded to it (`git push origin dev:main` and the
+tag).
 
 ## Your own data
 
 A diffusion series in BIDS form - NIfTI with `.bval`, `.bvec` and the JSON sidecar, in a BIDS folder tree - is
-read by `tractline.bids`. From DICOM, dcm2niix converts (`dcm2niix -b y -z y -f %p_%s -o out/ dicom_folder/`);
-dcm2bids or heudiconv arrange its output as BIDS, so the correcting series are found from the sidecars. With
-dcm2niix's flat output instead, name them:
+read by `tractline.bids`. From DICOM, dcm2niix converts, and runs with `uvx` too (into an empty folder per session):
 
 ```
-uv run bench/run_pipeline.py --bids bids/sub-01/dwi/sub-01_dwi.nii.gz [--shell 1000] [--device cuda|cpu]
-uv run bench/run_pipeline.py --bids out/DWI_AP_5.nii.gz --partners out/DWI_PA_6.nii.gz --device cpu
+mkdir -p nifti/sub-01
+uvx dcm2niix@1.0.20260724 -b y -z y -f %p_%s_dwi -o nifti/sub-01 dicom_folder/
+uvx --from "tractline[cli] @ git+https://github.com/mhalle/tractline@main" tractline run nifti/sub-01/DTI_AP_10_dwi.nii.gz --motion-eddy
 ```
 
-(`--device` defaults to `mps`, the Apple GPU.)
+Names ending in `_dwi` let a diffusion series phase-encoded the other way in the same folder be found; a reversed
+series without a `.bval` (a spin-echo field map) is renamed to end in `_epi` and given with `--partners`, and is used
+when its echo time and voxel sizes match. dcm2bids or heudiconv arrange the output as BIDS instead, with the links
+between series in the sidecars. The QC guide (`docs/motion-eddy-qc-guide.md`, section 2) has the details and the
+cases to watch. From a checkout, `uv run tractline run ...` or `uv run bench/run_pipeline.py --bids <series> [--partners <series>]`.
 
 The series that correct its distortion are found from the sidecars (`B0FieldIdentifier`/`B0FieldSource`,
 `IntendedFor`, or a diffusion series in the same folder phase-encoded the other way) and checked first: the

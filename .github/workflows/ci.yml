@@ -5,7 +5,7 @@ name: ci
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]                         # dev: where work lands; main: moved only at a release
   pull_request:
 
 jobs:
