@@ -3,8 +3,67 @@
 Releases are git tags (`uv add "tractline @ git+https://github.com/mhalle/tractline@vX.Y.Z"`). The experiments
 behind each change, with their numbers and later corrections, are in `bench/results/NOTES.md`.
 
-## Unreleased
+## 0.3.0 - 2026-10-26
 
+New methods are opt-in. The default pipeline (preset `default`, `ukf-rapidparc@1`, config hash 28d01a1d...) runs
+0.2.0's methods; its output differs only as the speed-ups at the end of this list say. Methods marked experimental are checked against their oracles but have been used on few scans.
+
+- **The `tractline` command** (`tractline.cli`, click): `tractline run` takes one dMRI series (NIfTI, BIDS) to labeled
+  UKF tractography as TRX, with options for the correction, the shell, the labeler, the device, QC files, the
+  corrected series and a JSON summary; `tractline fetch` gets the labelers' weights ahead of a run. It tracks the
+  shell with the most volumes unless `--shell` says otherwise (the default preset tracks b = 2800, so the command's
+  config hash differs from the preset's on other shells). It runs without a
+  checkout: `uvx --from "tractline[cli] @ git+https://github.com/mhalle/tractline@v0.3.0" tractline run ...`.
+  Progress goes to standard error and errors end in one line (`TRACTLINE_DEBUG=1` shows the traceback).
+- **Weights fetched on first use** (`tractline.fetch`): RapidParc's from its release (6.6 MB a model) and TractCloud's
+  code and model from its GitHub (about 42 MB: four modules at a pinned commit, the v1.0.0 model, and the atlas
+  centroid streamed out of the training-data archive), each checked against a pinned sha256 and kept in a user cache
+  (`TRACTLINE_CACHE`; `TRACTLINE_OFFLINE=1` refuses to download). A checkout's `$TRACTOGRAPHY_DATA` copies are used
+  when present. `--labeler tractcloud` no longer needs a checkout; importing `labelers.tractcloud` fetches what is
+  missing.
+- **A configurable pipeline** (`tractline.config`, `pipeline.execute`, `pipeline.config_for`): eight slots (`denoise`,
+  `gibbs`, `field`, `motion_eddy`, `mask`, `model`, `track`, `bundles`), each off or one implementation with checked
+  options. A config hashes to sha256 over its canonical JSON; slots that are off are left out, so a new slot does not
+  change an existing config's hash, and runtime guards (`Option(hashed=False)`) are not hashed. A run records its
+  config and its runtime choices beside it.
+- **Head motion and eddy current correction** (`motion_eddy` slot, `tractline.motion_eddy`; experimental): per volume,
+  a rigid motion and a polynomial along the phase-encoding axis (linear, or quadratic as eddy's `--flm`), each volume
+  registered to a leave-one-out prediction from its shell, fitted by Gauss-Newton on the GPU (Metal kernels on Apple
+  GPUs). The susceptibility field is composed into the same map, so each volume is resampled once, and the b-vectors
+  are rotated with the head. Outlier slices (signal loss) are replaced by the prediction, as eddy's `--repol`, or
+  flagged; corrupt, empty or runaway volumes are left out of the fit and of tracking. QC files: `write_qc` (TSV, JSON)
+  and `plot_qc`. With eddy given the same field on ON-Harmony 16974 (one low-motion scan), the composed correction is
+  nearer eddy's than the correction applied in sequence in all 55 volumes compared. The CPU runs the same model (its
+  kernels checked against the GPU's) but has not been run end to end on a real scan; an estimated 12-13 minutes for
+  105 volumes. Not yet tested on CUDA. Needs scipy >= 1.15 (the `bids` or `cli` extra).
+- **Gibbs ringing removal** (`gibbs` slot, `tractline.gibbs`; experimental): DIPY's subvoxel-shift method (Kellner et
+  al. 2016) in torch, in one process.
+- **Denoising** (`denoise` slot, `tractline.denoise`): DIPY's Patch2Self or MP-PCA, run in a subprocess, before or
+  after the correction (`order`). Needs DIPY, and scikit-learn for Patch2Self.
+- **CSD and PTT** (`model: csd`, `track: ptt`; experimental): single-shell constrained spherical deconvolution in
+  torch, matching DIPY's fit, and parallel transport tractography, checked against DIPY's in a compatibility mode and
+  run in real units (DIPY mixes voxels and millimeters); a Metal kernel on Apple GPUs. Its default stopping and
+  seeding (ACT, white matter) need tissue maps from the caller (`tissue=`).
+- **Opt-in settings from the robustness study**: RapidParc's context groups keyed by seed (`grouping`:
+  `hash-sorted`, `hash-bucket`), and a UKF tie-break between the two tensors (`ukf.track(tie_angle=, tie_sw2=)`).
+- **Uncertainty prototypes**: `tractline.ensemble` (several runs of the pipeline with every stage resampled, summarized
+  per streamline and per voxel) and `tractline.compact` (compact run records; needs numcodecs and rankfield, a
+  dependency group of the repository, not an extra). The calibration studies built on them
+  are in `bench/` and `docs/data-product.md`.
+- **Changed**:
+  - The mask is its own timed stage (`pipeline.STAGES`; `pipeline_stages(prefix, cfg)` follows the config), with the
+    same voxels as before; `pipeline.brain_mask` and `pipeline.correct_motion_eddy` are new.
+  - New parameters: `pipeline.run(tracker=, denoise=, denoise_order=, config=, motion_eddy=)`, `pipeline.track(tracker=)`,
+    `label(draw=, grouping=)`, `prepare(mask=)`, `Timer(stream=)`; `ukf.track(observe=, compile=)`, and
+    `stream=True` its GPU default (the same fibers).
+  - `pipeline.execute` returns a `Run`, which still unpacks as `corr, tg, labels`.
+  - `Correction` gains `denoise`, `gibbs`, `bvec`, `motion_eddy` and `provenance`; `applied` means the field was
+    applied, so it is False for a motion and eddy correction without a field. `bids.Subject` gains `b0_native`.
+  - click is a dependency; new extras `cli` (nibabel, scipy >= 1.15, matplotlib) and `plot` (matplotlib); the `bids`
+    extra now asks for scipy >= 1.15.
+- **Documentation**: a guide to running tractline with head motion and eddy current correction and reading its QC
+  (`docs/motion-eddy-qc-guide.md`); the designs of the configurable pipeline and of the correction
+  (`docs/sota-pipeline-design.md`, `docs/gpu-motion-eddy-design.md`); American spelling throughout.
 - **GPU tracking faster, the fibers bit for bit the same**: the seed tensors fitted through one pseudo-inverse instead
   of a least squares per seed on the host (HARDI's tracking on an L40S 35.9 → 16.8 s, an L4 72.7 → 42.4 s); one stream
   of up to 200,000 half-fibers topped up as they stop instead of blocks of 50,000 run down to their longest fiber
@@ -25,7 +84,7 @@ behind each change, with their numbers and later corrections, are in `bench/resu
 - **The Triton tracker compiles one copy per gradient-count size** instead of 6-8 (its integer arguments no longer
   specialized): a new protocol's first CUDA run pays 27-56 s instead of up to 7 min. `ukf_triton_block.warm()`
   compiles all six sizes ahead (75 s on an L4, in parallel).
-- **Documentation**: this changelog; the README warns that 0.1.0's CPU path fails.
+- **This changelog**; the README warns that 0.1.0's CPU path fails.
 
 ## 0.2.0 - 2026-10-03
 

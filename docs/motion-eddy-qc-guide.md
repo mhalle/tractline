@@ -30,10 +30,11 @@ uvx --from "tractline[cli] @ git+https://github.com/mhalle/tractline@main" \
     tractline run sub-01/dwi/sub-01_dir-AP_dwi.nii.gz --motion-eddy --trx out/sub-01.trx
 ```
 
-`@main` runs the latest code; a commit hash in its place pins the version, so a set of scans can be processed
-with the same code throughout. The first run downloads PyTorch and the trained weights of the labeler (6.6 MB, from
-RapidParc's release, checked against a pinned checksum), so it takes longer than later runs. `tractline fetch`
-downloads the weights of every labeler ahead of time, for example before working offline. From a checkout of the
+`@main` runs the latest code; a release tag in its place, such as `@v0.3.0`, pins the version, so a set of scans can
+be processed with the same code throughout (`tractline --version` reports it). The first run downloads PyTorch and
+the trained weights of the labeler (6.6 MB, from RapidParc's release, checked against a pinned checksum), so it takes
+longer than later runs. `tractline fetch` downloads the weights of every labeler ahead of time, for example before
+working offline. From a checkout of the
 repository, `uv run tractline run ...` does the same.
 
 The TRX file holds every streamline the tracker kept, in RAS millimeters, grouped by tract. For each streamline it
@@ -57,8 +58,9 @@ at the version tractline was tested with, checked against pinned checksums). `tr
 option.
 
 The command runs on an Apple GPU when there is one, then on a CUDA GPU, then on the CPU (`--device` chooses). On a
-laptop GPU a 105-volume scan takes about two minutes. On the CPU the motion and eddy current correction gives the same
-result but takes 12 to 13 minutes for a 105-volume scan. On an Apple GPU, a series too large for the available memory
+laptop GPU a 105-volume scan takes about two minutes. On the CPU the motion and eddy current correction runs the same
+model (its kernels checked against the GPU's); it has not yet been run end to end on a real scan there, and is
+estimated to take 12 to 13 minutes for a 105-volume scan. On an Apple GPU, a series too large for the available memory
 is refused before the run starts, with a message; this applies to HCP-sized acquisitions on a 16 GB machine. Such a
 series can be run on the CPU (`--device cpu`), or tried on the GPU anyway with `--no-memory-check`. The
 correction has not yet been tested on CUDA.
