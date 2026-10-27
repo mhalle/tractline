@@ -7743,3 +7743,46 @@ in the message. Two separate processes gave the same execution ID.
 
 **Not done (from the review).** CUDA tests in CI (needs a Modal token as a GitHub secret: the owner's step); Metal in
 CI (needs a self-hosted Mac runner); the stage-execution interface and static type checking (0.7).
+
+## 2026-10-27 Provenance tightened; cross-device tests; a GPU workflow waiting for a token
+
+**Why.** A second outside review of 0.6.0: the execution_id hashed the device's type and name but not the operating
+system's build (an update can change Metal's compiler) nor CUDA's runtime and driver; it truncated the dirty-checkout
+hash to 16 characters; TractCloud's local copies were reported with the pinned hashes though they are loaded unverified;
+absolute paths made the record awkward to share; and GPU checks were not automated. All five checked in the code.
+
+**What.** device_info adds the OS build (sw_vers; the kernel's version elsewhere) and, on CUDA, torch.version.cuda and
+the driver's version from the driver library (cuDriverGetVersion: no subprocess, the same answer each time; a first
+version used nvidia-smi, which a review found could time out or print an error into the record); all of them are in
+the execution_id. The change hash is full length. weights() hashes the
+files a labeler loaded (RapidParc's via fetch.weights; TractCloud's four modules, model, args and centroid via the
+labeler module's paths) and marks each pinned or not. Paths: relative to the BIDS dataset (`dataset`, `path`), the file
+name outside one, or absolute with `absolute_paths=True` / `--record-absolute-paths`; the record says which
+(`"paths"`). The CUDA runner runs test_motion_eddy, test_devices and test_gibbs, exits non-zero on a failure, and no
+longer needs the 16974 scan in its image; `.github/workflows/gpu.yml` runs it on pushes to dev when the secrets
+MODAL_TOKEN_ID and MODAL_TOKEN_SECRET exist, and otherwise posts a notice and succeeds.
+
+**Found on the way.** The pipeline's phantom (one straight band, 32 x 44 x 20 x 32, one shell) is ill-posed for motion
+and eddy correction: on both the CPU and the M2 it returned translations up to 9 mm, rotations up to 14 degrees and
+eddy terms up to 17 voxels, and left out 5 volumes, each device differently (63 % of shared streamlines in the same
+tract). The output flags it (volumes left out, with warnings). On `tests/test_motion_eddy.py`'s textured scan with
+known motion the CPU and the M2 agree to 8e-5 mm, 0.001 degrees and 2e-4 voxels, with and without a field, and both
+reach the truth to the same 0.062 edge error; the new cross-device test (`test_devices_agree`) uses that scan, with
+bounds 25x the measured differences.
+
+**On CUDA, test_devices' first run** (A10): the field differed from the CPU's by 0.74 Hz at the 99th percentile,
+over the 0.5 Hz bound set from the M2 (0.075 Hz). CUDA runs every level of the field estimate on the GPU; MPS runs the
+coarse levels on the CPU, as the CPU run does. On this near-zero phantom field it is 0.037 voxel of displacement
+(readout 0.05 s), so the check is now on displacement (under 0.1 voxel at the 99th percentile). With it the whole
+test passes on CUDA: mask, density, matched paths and labels. The Modal image now has dipy, so test_gibbs' reference
+comparisons run there too (14 passed, 1 MPS-only skipped).
+
+**After a review of the change.** A path quoted in a message (another series' bad sidecar) reached the "shareable"
+record: messages now name files, and a shareable record has the folders above the dataset and the home folder taken
+out of every string. Paths are made absolute without following links (a DataLad/annex input had recorded its annex
+key). The labelers are matched by tractline's exact module names (a caller's `mylab.labelers.rapidparc` could have
+triggered a download). Labeler device "cuda" is recorded as "cuda:0". Schema bumped to tractline.provenance/2. Gibbs
+gained a CUDA test (test_gpu_float32_close, MPS and CUDA), and the CUDA runner fails when Triton is unavailable.
+
+**Not done.** The token itself (the owner's step); Metal in CI (a self-hosted Mac runner); making the GPU workflow a
+required check.

@@ -115,8 +115,8 @@ def _try_sidecar(p: Path) -> tuple[dict, str | None]:
     partner with one is dropped with the reason."""
     try:
         return _sidecar(p), None
-    except ValueError as e:
-        return {}, str(e)
+    except ValueError as e:                              # the message names the file, not the folders above it
+        return {}, str(e).replace(str(p.parent) + "/", "").replace(str(p.parent.parent) + "/", "")
 
 
 def _table(p: Path, ext: str):

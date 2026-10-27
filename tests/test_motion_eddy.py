@@ -545,3 +545,24 @@ def test_warm_then_run(scan):
     assert list(secs) == [(1, 10, 0, 2)]
     r = ME.estimate(scan["dwi"], scan["bval"], scan["bvec"], scan["affine"], 1, device="cuda", options={"steps": 3})
     assert r.backend == "triton"
+
+
+@pytest.mark.skipif(not FUSED, reason="no MPS or CUDA")
+@pytest.mark.parametrize("backend", FUSED or ["none"])
+@pytest.mark.parametrize("with_field", [False, True])
+def test_devices_agree(backend, with_field):
+    """The fused kernels (Metal, Triton) against the CPU's torch path on a scan with known motion, with and without a
+    field: the parameters agree far inside the estimate's own error (measured on the M2: 8e-5 mm, 0.001 degrees,
+    0.0002 voxels of eddy; the edge error against the truth 0.062 on both). The pipeline's phantom is not used here: a
+    single straight band leaves the registration ill-posed, and both devices then return large, different motions."""
+    kw = {"field_peak": 3.0, "reference": "first-b0", "seed": 4} if with_field else {}
+    t = tensor_scan(**kw)
+    extra = dict(field_hz=t["dfield"] / (-1.0 * 0.05), pe_sign=-1.0, readout_s=0.05) if with_field else {}
+    est = {d: ME.estimate(t["dwi"], t["bval"], t["bvec"], t["affine"], t["pe_axis"], device=d, options={"steps": 25}, **extra)
+           for d in ("cpu", FUSED_DEV[backend])}
+    a, b = est["cpu"].theta_fit, est[FUSED_DEV[backend]].theta_fit
+    assert est[FUSED_DEV[backend]].backend == backend
+    assert np.abs(a[:, :3] - b[:, :3]).max() < 2e-3                                          # mm
+    assert np.degrees(np.abs(a[:, 3:6] - b[:, 3:6]).max()) < 0.025                            # degrees
+    assert np.abs(a[:, 6:] - b[:, 6:]).max() < 5e-3                                           # voxels along PE
+    assert abs(edge_error(t, est["cpu"]) - edge_error(t, est[FUSED_DEV[backend]])) < 0.005

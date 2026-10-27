@@ -100,13 +100,18 @@ def test_removes_ringing():
     assert np.abs(np.diff(out, axis=0)).mean() < 0.85 * np.abs(np.diff(vol, axis=0)).mean()
 
 
-@pytest.mark.skipif(not torch.backends.mps.is_available(), reason="no MPS")
-def test_mps_float32_close():
-    """Float32: a few near-ties between shifts fall the other way (measured 2026-10-26: 0.1 % of voxels beyond 1e-3;
-    on cIIIs04's full scan 9 voxels in a million beyond 0.1 % of its scale, against DIPY float64; NOTES)."""
+GPUS = [d for d, ok in (("mps", torch.backends.mps.is_available()), ("cuda", torch.cuda.is_available())) if ok]
+
+
+@pytest.mark.skipif(not GPUS, reason="no GPU")
+@pytest.mark.parametrize("device", GPUS or ["none"])
+def test_gpu_float32_close(device):
+    """Float32 on a GPU: a few near-ties between shifts fall the other way (measured 2026-10-26 on MPS: 0.1 % of voxels
+    beyond 1e-3; on cIIIs04's full scan 9 voxels in a million beyond 0.1 % of its scale, against DIPY float64; NOTES).
+    On CUDA (an A10, 2026-10-27, 8 volumes of 16974 against the CPU in float32): 1 voxel in 6.2 million beyond 0.1 %."""
     vol = ringing()
     a = dipy_gibbs(vol, 2)
-    b = G.gibbs_removal(vol.astype(np.float32), 2, device="mps")
+    b = G.gibbs_removal(vol.astype(np.float32), 2, device=device)
     d = np.abs(b - a)
     assert b.dtype == np.float32 and (d > 1e-3 * a.max()).mean() < 0.005 and d.max() < 0.05 * a.max()
 

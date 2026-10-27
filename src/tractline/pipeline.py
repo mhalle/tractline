@@ -741,7 +741,7 @@ def csd_ptt(s, dwi, mask, cfg: PipelineConfig, timer: Timer, prefix="", device="
 
 
 def execute(s, cfg: PipelineConfig, timer: Timer, prefix="", device="auto", workers=None, labeler=None, trx=None,
-            release=True, tissue=None, **trx_options) -> Run:
+            release=True, tissue=None, absolute_paths=False, **trx_options) -> Run:
     """The pipeline as cfg configures it (tractline.config), on subject s. Every check runs before any work: the
     config's own (at its construction), the shell tracked, the CPU's main guard, the labeler against the bundles slot.
     Then, in SLOTS' order: denoise (when on; order "acquired" before the field, "corrected" after it), field (when on
@@ -850,7 +850,7 @@ def execute(s, cfg: PipelineConfig, timer: Timer, prefix="", device="auto", work
     run = Run(corr, tg, labels, config, runtime)
     from . import provenance as PV
     try:
-        run.provenance = PV.record(run, s_in, device, labeler, timer, trx, trx_options)
+        run.provenance = PV.record(run, s_in, device, labeler, timer, trx, trx_options, absolute_paths)
     except Exception as e:                                                 # noqa: BLE001 - bookkeeping never costs the run
         import warnings
         warnings.warn(f"provenance: the run's record is incomplete ({type(e).__name__}: {e})", stacklevel=2)
@@ -863,10 +863,11 @@ def execute(s, cfg: PipelineConfig, timer: Timer, prefix="", device="auto", work
 
 
 def run(s, labeler, timer: Timer, prefix="", trx=None, device="auto", workers=None, release=True, shell=None, tracker=None,
-        denoise=None, denoise_order="acquired", config=None, motion_eddy=None, gibbs=None, **trx_options):
+        denoise=None, denoise_order="acquired", config=None, motion_eddy=None, gibbs=None, absolute_paths=False,
+        **trx_options):
     """The whole pipeline on a subject: a Run, which unpacks and indexes as (Correction, Tractogram, Labels) and also
     holds the config, the runtime and the provenance record (written beside the TRX, when there is one, as
-    <name>.tractline.json: tractline.provenance). labeler: None for the default
+    <name>.tractline.json: tractline.provenance; absolute_paths=True records full paths in place of shareable ones). labeler: None for the default
     (default_labeler: RapidParc), or any labeler (labelers.tractcloud.Labeler, ...). Its time is
     timer.total(*pipeline_stages(prefix)). trx: also write the tractogram there as TRX (trx.write;
     trx_options: positions= "float32" (default) or "float16", labeled_only= False (default) or True),
@@ -898,7 +899,8 @@ def run(s, labeler, timer: Timer, prefix="", trx=None, device="auto", workers=No
     elif (shell, tracker or None, denoise, denoise_order, motion_eddy, gibbs) != (None, None, None, "acquired", None, None):
         raise ValueError("run: with config=, set shell, tracker, denoise, motion_eddy and gibbs in the config, not as "
                          "keywords too")
-    return execute(s, config, timer, prefix, device, workers, labeler, trx, release, **trx_options)
+    return execute(s, config, timer, prefix, device, workers, labeler, trx, release, absolute_paths=absolute_paths,
+                   **trx_options)
 
 
 PTT_STAGES = ("field_estimate", "field_apply", "mask", "csd", "ptt", "label")

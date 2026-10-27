@@ -62,8 +62,12 @@ GitHub's CI (`.github/workflows/ci.yml`) runs lint and the suite on Linux, on th
 `main` and on every pull request. The GPU paths need their GPUs:
 
 - **Apple GPU (Metal)**: run the suite on a Mac.
-- **CUDA (Triton)**: `modal run bench/motion_eddy/modal_cuda.py --tests` runs the motion and eddy tests on an
-  NVIDIA A10 through [Modal](https://modal.com) (a uv tool: `uv tool install modal`). The `bench/modal_*.py` scripts
+- **CUDA (Triton)**: `modal run bench/motion_eddy/modal_cuda.py --tests` runs the GPU tests (motion and eddy, CPU
+  against GPU, Gibbs) on an NVIDIA A10 through [Modal](https://modal.com) (a uv tool: `uv tool install modal`) and
+  exits non-zero on a failure. The workflow `.github/workflows/gpu.yml` runs it on every push to `dev` once the
+  repository has the secrets `MODAL_TOKEN_ID` and `MODAL_TOKEN_SECRET` (from `modal token new`); until then it
+  notes that it did not run, and succeeds. It is not yet a required check: with the secrets set, making it one
+  in the repository's branch rules gates releases on it. The `bench/modal_*.py` scripts
   time and check the rest of the pipeline on CUDA. From Python, `ukf_triton_block.warm()` and
   `motion_eddy_triton.warm()` compile the CUDA kernels ahead, as `tractline warm` does.
 

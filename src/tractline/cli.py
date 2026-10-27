@@ -73,11 +73,14 @@ def main():
               help="On the CPU: tracking processes (default: one per core; ignored on a GPU).")
 @click.option("--no-memory-check", is_flag=True,
               help="With --motion-eddy on a GPU: try a series larger than its memory allows anyway.")
+@click.option("--record-absolute-paths", is_flag=True,
+              help="Record full file paths in the provenance file (<trx>.tractline.json), not paths relative to the "
+                   "dataset: for local bookkeeping, not for sharing.")
 @click.option("--json", "json_path", type=click.Path(dir_okay=False), default=None,
               help="Also write the run's summary as JSON here ('-' for standard output).")
 @click.option("-q", "--quiet", is_flag=True, help="Print nothing but errors (and --json -).")
 def run(dwi, partners, motion_eddy, gibbs, outliers, trx, float16, labeled_only, qc, write_corrected, shell, labeler,
-        device, workers, no_memory_check, json_path, quiet):
+        device, workers, no_memory_check, record_absolute_paths, json_path, quiet):
     """Correct, track and label one dMRI series (NIfTI, BIDS). Errors end in one line; TRACTLINE_DEBUG=1 shows the
     traceback."""
     import os
@@ -88,7 +91,7 @@ def run(dwi, partners, motion_eddy, gibbs, outliers, trx, float16, labeled_only,
         ImageFileError = ValueError                                       # noqa: N806
     try:
         _run(dwi, partners, motion_eddy, gibbs, outliers, trx, float16, labeled_only, qc, write_corrected, shell,
-             labeler, device, workers, no_memory_check, json_path, quiet)
+             labeler, device, workers, no_memory_check, record_absolute_paths, json_path, quiet)
     except (ValueError, OSError, FetchError, ImageFileError) as e:        # the input, the disk, the network: one line
         if os.environ.get("TRACTLINE_DEBUG") == "1":
             raise
@@ -106,7 +109,7 @@ def auto_shell(bval) -> float:
 
 
 def _run(dwi, partners, motion_eddy, gibbs, outliers, trx, float16, labeled_only, qc, write_corrected, shell, labeler,
-         device, workers, no_memory_check, json_path, quiet):
+         device, workers, no_memory_check, record_absolute_paths, json_path, quiet):
     if (qc or write_corrected or outliers) and not motion_eddy:
         raise click.UsageError("--qc, --write-corrected and --outliers need --motion-eddy")
     if write_corrected and not qc:
@@ -156,7 +159,8 @@ def _run(dwi, partners, motion_eddy, gibbs, outliers, trx, float16, labeled_only
     for step in PV.experimental(cfg.to_dict()):
         say(f"experimental: {step}")
     r = P.run(s, lab, timer, trx=trx, device=dev, workers=workers, shell=shell, motion_eddy=me,
-              gibbs=gb, positions="float16" if float16 else "float32", labeled_only=labeled_only)
+              gibbs=gb, positions="float16" if float16 else "float32", labeled_only=labeled_only,
+              absolute_paths=record_absolute_paths)
     corr, tg, labels = r
     first = timer.seconds.get("gibbs", 0)                                 # before the field: not among pipeline_stages
     summary = {"series": str(dwi), "corrected": corr.applied, "note": corr.note, "residual_left": corr.residual_left,

@@ -27,21 +27,29 @@ SES = "ds004712/sub-16974/ses-OXF1PRI001/dwi"
 SERIES = f"/data/{SES}/sub-16974_ses-OXF1PRI001_dir-AP_dwi.nii.gz"
 
 image = (modal.Image.debian_slim(python_version="3.12")
-         .uv_pip_install("torch==2.14.1", "numpy>=2", "scipy>=1.15", "nibabel", "pytest", "click", "matplotlib")
-         .env({"PYTHONPATH": "/root/pkg", "TRACTOGRAPHY_DATA": "/data"})
-         .add_local_dir(str(DATA / SES), remote_path=f"/data/{SES}")
-         .add_local_dir(str(HERE.parent.parent / "tests"), remote_path="/root/tests")
+         .uv_pip_install("torch==2.14.1", "numpy>=2", "scipy>=1.15", "nibabel", "pytest", "click", "matplotlib", "dipy")
+         .env({"PYTHONPATH": "/root/pkg", "TRACTOGRAPHY_DATA": "/data"}))
+if (DATA / SES).is_dir():                       # the real scan, where it is (the tests do not need it: CI has none)
+    image = image.add_local_dir(str(DATA / SES), remote_path=f"/data/{SES}")
+image = (image.add_local_dir(str(HERE.parent.parent / "tests"), remote_path="/root/tests")
          .add_local_dir(str(PKG), remote_path="/root/pkg/tractline"))
 app = modal.App("tractline-motion-eddy-cuda", image=image)
 
 
 @app.function(gpu="A10", timeout=3600, memory=32768, cpu=8)
 def tests_gpu(select: str = "") -> str:
-    """tests/test_motion_eddy.py on the GPU (the CUDA-only tests run; -k select narrows)."""
+    """The GPU tests on CUDA: tests/test_motion_eddy.py (the kernels, determinism, CPU against GPU on a scan with known
+    motion), test_devices.py (the pipeline on the GPU against the CPU) and test_gibbs.py (-k select narrows). RapidParc's
+    weights are fetched from its release (tractline.fetch) for test_devices."""
     import subprocess
-    cmd = ["python", "-m", "pytest", "-q", "-rs", "-p", "no:cacheprovider", "/root/tests/test_motion_eddy.py"]
+    pre = subprocess.run(["python", "-c", "import tractline.motion_eddy_triton as T; assert T.available(), 'no Triton'"],
+                         capture_output=True, text=True)
+    if pre.returncode != 0:                              # every fused test would skip, and the job would pass
+        return json.dumps({"code": 1, "out": "Triton is not available on this GPU: " + pre.stderr[-2000:]})
+    cmd = ["python", "-m", "pytest", "-q", "-rs", "-p", "no:cacheprovider", "/root/tests/test_motion_eddy.py",
+           "/root/tests/test_devices.py", "/root/tests/test_gibbs.py", "/root/tests/test_provenance.py"]
     r = subprocess.run(cmd + (["-k", select] if select else []), capture_output=True, text=True, cwd="/root")
-    return r.stdout[-6000:] + r.stderr[-3000:]
+    return json.dumps({"code": r.returncode, "out": r.stdout[-6000:] + r.stderr[-3000:]})
 
 
 @app.function(gpu="A10", timeout=3600, memory=32768, cpu=8)
@@ -120,9 +128,15 @@ def main(gpus: str = "A10", runs: int = 2, profile: bool = False, backend: str =
          select: str = "", cli: bool = False, warm: bool = False):
     """Writes results/motion_eddy/modal_cuda_<gpu>[_<backend>].json; compare_records.py compares its record with an
     MPS run's (record() saved as JSON)."""
-    if tests:
+    if tests:                                    # a failure exits non-zero, for CI (.github/workflows/gpu.yml)
+        failed = []
         for g in gpus.split(","):
-            print(g, tests_gpu.with_options(gpu=g).remote(select))
+            res = json.loads(tests_gpu.with_options(gpu=g).remote(select))
+            print(g, res["out"])
+            if res["code"] != 0:
+                failed.append(g)
+        if failed:
+            raise SystemExit(f"GPU tests failed on {', '.join(failed)}")
         return
     if cli:
         for g in gpus.split(","):

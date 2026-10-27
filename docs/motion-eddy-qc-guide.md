@@ -52,8 +52,10 @@ pipeline's configuration and each step's status (validated, or experimental with
 versions of tractline, PyTorch and the rest, the device and the GPU code each step ran, the checksums of the input
 files, of the labeler's weights and of the TRX itself, the pairing decision, the warnings and the stage times. Two
 identifiers summarize it: the pipeline ID names the algorithm and its settings, the same on any machine; the
-execution ID also covers the device, the software versions and the weights, so two runs on the same input with the
-same execution ID should give the same streamlines. A run that uses an experimental step, such as `--motion-eddy` or `--gibbs`, says so
+execution ID also covers the device, the operating system's build, the software versions and the weights, so two
+runs on the same input with the same execution ID should give the same streamlines. Files are identified by their
+checksums; their paths are recorded relative to the BIDS dataset, or by file name outside one, so the record can be
+attached to a paper without your folder names (`--record-absolute-paths` records full paths instead). A run that uses an experimental step, such as `--motion-eddy` or `--gibbs`, says so
 when it starts.
 
 The reversed phase-encoding series used for the susceptibility field is found from the BIDS sidecars, or can be named

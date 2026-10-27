@@ -37,6 +37,7 @@ def test_sidecar_written(phantom_runs):
                                      "oracle": "Slicer UKFTractography"}
     assert rec["runtime"]["ukf backend"] == "torch (fast step)" and rec["device"]["type"] == "cpu"
     assert rec["weights"][0]["sha256"] == "6a158dad6a0b6124946da102b6037a6f7f8a16fb24e7caec15eaf95213e7b793"
+    assert rec["weights"][0]["pinned"] and rec["paths"] == "shareable" and "/" not in rec["output"]["path"]
     assert rec["inputs"] == [] and rec["experimental"] == []          # a subject from arrays; the default pipeline
     assert not [p for p in trx.parent.iterdir() if p.suffix == ".part" or p.name.startswith("tmp")]
 
@@ -53,6 +54,8 @@ def test_ids_stable_and_specific(phantom_runs):
     assert PV.execution_id(pid, {**rt, "torch": "0.0"}, dev, w) != base
     assert PV.execution_id(pid, rt, dev, [{"name": "x", "sha256": "0" * 64}]) != base
     assert PV.execution_id("other", rt, dev, w) != base
+    assert PV.execution_id(pid, rt, {**dev, "os build": "other"}, w) != base               # an OS update
+    assert PV.execution_id(pid, rt, {**dev, "driver": "999.1"}, w) != base
     assert PV.execution_id(pid, {**rt, "workers": 99}, dev, w) == base           # the CPU's workers: the same fibers
 
 
@@ -185,3 +188,94 @@ def test_record_failure_never_costs_the_run(tmp_path, monkeypatch):
         r = P.run(subject(), None, P.Timer(), trx=tmp_path / "o.trx", device="cpu", workers=1)
     side = json.loads(PV.sidecar_path(tmp_path / "o.trx").read_text())
     assert "simulated" in side["error"] and side["pipeline_id"] == r.config["sha256"] and len(r.tractogram.fibers)
+
+
+def test_paths_shareable_unless_asked(tmp_path):
+    """Inside a BIDS dataset: the dataset folder's name and the path in it; outside: the file's name; absolute=True:
+    the full path."""
+    import sys
+    sys.path.insert(0, str(Path(__file__).parent))
+    from test_cli import _bids
+    from tractline import bids
+    dwi, _ = _bids(tmp_path / "study")
+    s = bids.load(dwi)
+    assert [f["path"] for f in PV.inputs(s)][0] == Path(dwi).name and "dataset" not in PV.inputs(s)[0]
+    (tmp_path / "study" / "dataset_description.json").write_text('{"Name": "x", "BIDSVersion": "1.9.0"}')
+    s = bids.load(dwi)
+    first = PV.inputs(s)[0]
+    assert first["dataset"] == "study" and first["path"] == "sub-01/dwi/" + Path(dwi).name
+    assert PV.inputs(s, absolute=True)[0]["path"] == str(Path(dwi).resolve())
+
+
+def test_tractcloud_files_as_loaded(tmp_path, monkeypatch):
+    """TractCloud's record hashes the files it loaded: a local copy that differs from the pins is flagged, and moves the
+    execution_id."""
+    import sys
+    import types
+    from tractline import fetch as FE
+    src = tmp_path / "src" / "tractcloud"
+    src.mkdir(parents=True)
+    for k in FE.TRACTCLOUD_SOURCE:
+        (src / k).write_text("# " + k)
+    model = tmp_path / "TrainedModel"
+    model.mkdir()
+    (model / "best_tract_f1_model.pth").write_bytes(b"weights")
+    (model / "cli_args.txt").write_text("args")
+    centroid = tmp_path / "HCP_mass_center.npy"
+    centroid.write_bytes(b"centroid")
+    mod = types.ModuleType("tractline.labelers.tractcloud")              # the module's paths, as the real one has
+    mod._SOURCE, mod.MODEL, mod.MASS_CENTER = tmp_path / "src", model, centroid
+    monkeypatch.setitem(sys.modules, "tractline.labelers.tractcloud", mod)
+    Labeler = type("Labeler", (), {"__module__": "tractline.labelers.tractcloud"})
+    w = PV.weights(Labeler())
+    assert len(w) == 7 and not any(x["pinned"] for x in w)
+    assert w[-1]["sha256"] == PV.sha256_file(centroid) and w[-1]["path"] == "HCP_mass_center.npy"
+    dev = {"type": "cpu", "name": "x"}
+    a = PV.execution_id("p", {}, dev, w)
+    centroid.write_bytes(b"changed")
+    assert PV.execution_id("p", {}, dev, PV.weights(Labeler())) != a
+
+
+def test_shareable_record_has_no_folders(tmp_path, monkeypatch):
+    """A path quoted in a message (another series' bad sidecar) does not carry the folders above the dataset into a
+    shareable record; absolute_paths keeps them. A symlinked input (DataLad, git-annex) keeps its dataset path."""
+    import sys
+    sys.path.insert(0, str(Path(__file__).parent))
+    from test_cli import _bids
+    from tractline import bids
+    from types import SimpleNamespace
+    study = tmp_path / "private-project-123" / "study"
+    dwi, _ = _bids(study)
+    (study / "dataset_description.json").write_text('{"Name": "x", "BIDSVersion": "1.9.0"}')
+    fmap = study / "sub-01" / "fmap"
+    fmap.mkdir()
+    (fmap / "sub-01_dir-PA_epi.json").write_text("{bad")
+    (fmap / "sub-01_dir-PA_epi.nii.gz").write_bytes(Path(dwi).read_bytes())
+    s = bids.load(dwi)
+    run = SimpleNamespace(config={"sha256": "p", "slots": {}}, runtime={}, correction=SimpleNamespace(
+        applied=True, note=s.pairing.message, warnings=[], residual_left=None), labels=None, tractogram=None)
+    monkeypatch.setattr(PV, "statuses", lambda c: {})
+    rec = PV.record(run, s, "cpu", None)
+    text = json.dumps(rec)
+    assert "private-project-123" not in text and str(tmp_path) not in text
+    assert "private-project-123" in json.dumps(PV.record(run, s, "cpu", None, absolute_paths=True))
+    link = tmp_path / "annex" / "object.nii.gz"
+    link.parent.mkdir()
+    Path(dwi).rename(link)
+    Path(dwi).symlink_to(link)
+    assert PV._where(dwi)["path"] == "sub-01/dwi/" + Path(dwi).name
+
+
+def test_lookalike_labeler_is_not_ours():
+    """A caller's labeler in a module whose name merely ends like tractline's: recorded by its class, no download."""
+    Labeler = type("Labeler", (), {"__module__": "mylab.labelers.rapidparc"})
+    assert PV.weights(Labeler()) == [{"name": "mylab.labelers.rapidparc.Labeler", "sha256": None}]
+
+
+@pytest.mark.skipif(not __import__("torch").cuda.is_available(), reason="no CUDA")
+def test_cuda_device_record():
+    """On CUDA: the runtime and the driver (from the driver library itself) are recorded, the same on every call, and
+    "cuda" and "cuda:0" describe one device."""
+    import re
+    a, b = PV.device_info("cuda"), PV.device_info("cuda:0")
+    assert a == b and re.fullmatch(r"\d+\.\d+", a["driver"] or "") and a["cuda runtime"]

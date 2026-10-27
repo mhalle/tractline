@@ -117,7 +117,7 @@ def test_run_end_to_end(tmp_path):
     assert len(summary["execution_id"]) == 64 and summary["pipeline_id"]
     assert any(x.startswith("motion_eddy") for x in summary["experimental"])
     side = json.loads(Path(summary["provenance"]).read_text())
-    assert side["execution_id"] == summary["execution_id"] and side["output"]["path"] == str(out.resolve())
+    assert side["execution_id"] == summary["execution_id"] and side["output"]["path"] == out.name     # shareable
     assert [f["role"] for f in side["inputs"]].count("diffusion series") == 4
     assert out.exists() and (qc / "motion_eddy_qc.tsv").exists() and (qc / "motion_eddy_qc.json").exists()
     import nibabel as nib

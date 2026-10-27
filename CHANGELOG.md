@@ -4,6 +4,27 @@ Releases are git tags (`uv add git+https://github.com/mhalle/tractline --tag vX.
 release and `dev` the work in progress (`docs/development.md`, "Branches and releases"). The experiments
 behind each change, with their numbers and later corrections, are in `bench/results/NOTES.md`.
 
+## 0.6.1 - 2026-10-27
+
+- **The execution_id covers more of what changes the numbers**: the operating system's version and build (an update
+  can change Metal's compiler) and, on CUDA, the runtime and driver versions (the driver's from the driver library,
+  cuDriverGetVersion); a dirty checkout's full change hash, no longer truncated; "cuda" and "cuda:0" as one device.
+  The record's schema is `tractline.provenance/2`.
+- **TractCloud's files are hashed as loaded**: a local copy in `$TRACTOGRAPHY_DATA` that differs from the pinned
+  release is recorded with its own sha256 and `pinned: false`, and changes the execution_id (RapidParc already
+  verified its weights before loading).
+- **Shareable provenance by default**: paths are recorded relative to the BIDS dataset (with its folder's name), or
+  as file names outside one, without following links (a DataLad or git-annex input keeps its dataset path); files
+  are identified by their sha256; the folders above the dataset and the home folder are taken out of any message the
+  record quotes. `--record-absolute-paths` (Python:
+  `absolute_paths=True`) records full paths for local bookkeeping.
+- **Cross-device tests**: the motion and eddy correction on the fused kernels (Metal, Triton) against the CPU on a
+  scan with known motion, with and without a field; the pipeline test now also checks that the pipeline_id matches
+  across devices and the execution_id differs; Gibbs removal on CUDA against DIPY. The CUDA runner
+  (`bench/motion_eddy/modal_cuda.py --tests`) runs the device, Gibbs and provenance tests too, fails when Triton is
+  unavailable (rather than skipping every fused test), and exits non-zero on a failure. `.github/workflows/gpu.yml` runs it on Modal once the
+  repository has a Modal token as secrets; until then it says so and succeeds.
+
 ## 0.6.0 - 2026-10-27
 
 - **A provenance record beside every TRX** (`tractline.provenance`): `<name>.tractline.json` holds the pipeline's

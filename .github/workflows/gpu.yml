@@ -1,0 +1,33 @@
+# The GPU tests on CUDA, through Modal (bench/motion_eddy/modal_cuda.py --tests, on an NVIDIA A10): the motion and eddy
+# kernels against the float64 torch path, CPU against GPU on a scan with known motion and on the pipeline's phantom,
+# and Gibbs removal. GitHub's runners have no GPU, so the work runs on Modal, which needs a token: the repository
+# secrets MODAL_TOKEN_ID and MODAL_TOKEN_SECRET (`modal token new`). Until they are set, the job says so and succeeds,
+# so this workflow can sit here until then. The Apple GPU (Metal) is checked by running the suite on a Mac.
+name: gpu
+
+on:
+  push:
+    branches: [dev]
+  workflow_dispatch:
+
+jobs:
+  cuda:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      MODAL_TOKEN_ID: ${{ secrets.MODAL_TOKEN_ID }}
+      MODAL_TOKEN_SECRET: ${{ secrets.MODAL_TOKEN_SECRET }}
+    steps:
+      - name: Without a Modal token
+        if: env.MODAL_TOKEN_ID == ''
+        run: echo "::notice::No Modal token in this repository's secrets (MODAL_TOKEN_ID, MODAL_TOKEN_SECRET); the CUDA tests did not run."
+
+      - uses: actions/checkout@v7
+        if: env.MODAL_TOKEN_ID != ''
+
+      - uses: astral-sh/setup-uv@v10.3.2
+        if: env.MODAL_TOKEN_ID != ''
+
+      - name: CUDA tests on Modal (an A10)
+        if: env.MODAL_TOKEN_ID != ''
+        run: uvx modal@1.5.4 run bench/motion_eddy/modal_cuda.py --tests
