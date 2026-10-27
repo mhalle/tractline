@@ -7694,3 +7694,52 @@ wrapper adds a process and files for one command's worth of convenience.
   already holds a conversion it suffixes the new names (`_dwia`), which the `*_dwi` glob skips: hence an empty folder
   per session. An `_epi` partner pairs only within the echo-time (1 ms) and voxel-size (0.01 mm) checks. dcm_qa_polar's
   GE epi_pepolar modes 2 and 3 give the series and its +1000 reversed series, neither with a `.bval`.
+
+## 2026-10-27 Provenance beside every TRX; pipeline_id and execution_id (after an outside review)
+
+**Why.** An engineering review of 0.5.2 found the run's config and runtime records built in memory but lost at the
+output: neither the TRX nor the command's summary carried them. It also found the config hash asked to answer two
+questions: which algorithm (deliberately device-free, decision 6) and which computation (it is not: a CPU and an M2
+agree on 93.8 % of shared seeds' tracts, not bit for bit). Its other points, all checked in the code: `run()`
+discarded the `Run`; the Python API's defaults (`device="mps"`, `shell=2800`) were not the command's; a malformed
+sidecar was taken as absent; a tag does not pin the dependencies; user-facing asserts; wall-clock timers; a TRX zip
+written in place.
+
+**What.** `tractline.provenance`: `<name>.tractline.json` beside every TRX (module docstring for its fields).
+`pipeline_id` = the config's sha256; `execution_id` = sha256 over it, the device type and model, each step's backend
+(ukf: metal, triton_block or torch's fast step; motion_eddy; ptt), the CPU tracker's compiled step, tractline, torch,
+numpy, Python and Triton versions, and the weights' sha256 (not the CPU's worker count, which gives the same fibers,
+nor the time). `run()` returns the `Run` (unpacks and indexes as before) with `run.provenance`; `device="auto"` and
+`shell=None` (`default_shell`, moved from the command) by default; `execute(device="auto")`. The command prints the
+experimental steps and the provenance path, and its summary carries both IDs. Sidecars that cannot be read or are not
+a JSON object raise ValueError naming the file. TRX written whole (zip built in the temporary folder, then renamed;
+a directory moved into place). The README gives a locked study install (`uv run --locked --no-dev --extra cli` in a
+clone of the tag), checked from a clean clone of v0.5.2: torch 2.14.1, numpy 2.5.3, Python 3.12, from uv.lock.
+
+**Checked.** `tests/test_provenance.py`: the sidecar written and equal to `run.provenance`; pipeline_id = the
+config's hash; the output's sha256; the same execution_id for two runs at different times; another one for another
+device, torch version, weights or pipeline, the same for another worker count; BIDS inputs hashed (the series and
+its partner); `Run` unpacks and indexes; defaults resolved; a malformed or non-object sidecar refused with its name.
+`tests/test_cli.py`: the command's summary has both IDs and the experimental steps, and the sidecar its inputs.
+
+**After an adversarial review of the change.** The execution_id now also covers the labeler's device, the chip's
+model (`platform.machine()` is arm64 on every Apple Silicon Mac; now sysctl's brand string, or /proc/cpuinfo's), the
+git commit in a checkout (a dev build shares its version number), scipy and, with denoising, dipy. The output
+records `positions` and `labeled_only`, and counts what the TRX holds; a TRX directory gets a digest over its files.
+The record is written with the umask's mode (mkstemp's 0600 had hidden it from colleagues), and an older record
+beside the TRX is removed before writing, so a failed run never leaves a stale one. Inputs include BIDS-inherited
+tables and sidecars. The sidecar error applies to the diffusion series' own sidecar only: other series' (a T1w, a
+bold, a partner) are read leniently, a partner with a bad one is dropped and the message says why; a UTF-8
+byte-order mark is accepted (`json.loads` of bytes). All 169 sidecars of ds004712 and ds001226 parse.
+
+**Own adversarial pass, on a real run** (ON-Harmony 16974 through the command on the M2): the record held both
+IDs (matching the command's summary), motion_eddy listed as experimental, the device as "Apple M2", the eight input
+files of the pair with sizes and hashes, the weights' pinned hash, uv.lock's hash and the commit; the TRX's hash
+matched the file. Fixed from it: a failure while building the record no longer fails a finished run (a minimal record
+with the error, and a warning); the chip and git facts are computed once per process; a dirty checkout's execution
+ID now covers a hash of the uncommitted changes (`git diff HEAD` and untracked files under src/), since "+modified"
+alone gave two runs of different code one ID; a partner skipped through B0FieldIdentifier for a bad sidecar is named
+in the message. Two separate processes gave the same execution ID.
+
+**Not done (from the review).** CUDA tests in CI (needs a Modal token as a GitHub secret: the owner's step); Metal in
+CI (needs a self-hosted Mac runner); the stage-execution interface and static type checking (0.7).

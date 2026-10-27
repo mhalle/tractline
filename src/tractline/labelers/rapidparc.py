@@ -132,7 +132,8 @@ def keyed_groups(keys, draw, grouping) -> list:
     if grouping == "hash-sorted":
         m = -(-n // CONTEXT) * CONTEXT
         return list(np.resize(order, m).reshape(-1, CONTEXT))             # np.resize repeats the order cyclically
-    assert grouping == "hash-bucket", grouping
+    if grouping != "hash-bucket":
+        raise ValueError(f"grouping {grouping!r}: one of {GROUPINGS}")
     G = -(-n // CONTEXT)
     b = ((h[order] >> np.uint64(11)).astype(np.float64) * 2.0 ** -53 * G).astype(np.int64)
     return [g for g in np.split(order, np.searchsorted(b, np.arange(1, G))) if len(g)]
@@ -160,7 +161,8 @@ class Labeler:
         """model: "rapidparc" or "hemiaug" (DATA/RapidParc/<model>.safetensors, else tractline.fetch's cache,
         downloaded from RapidParc's release on first use; sha256-checked either way). batch:
         groups of 2,000 streamlines per forward pass (attention memory: ~16 MB a group a layer)."""
-        assert model in MODELS, model
+        if model not in MODELS:
+            raise ValueError(f"RapidParc model {model!r}: one of {sorted(MODELS)}")
         self.device, self.model_name, self.batch = torch.device(device), model, batch
         self.model = Model(**SETTINGS)
         from ..fetch import weights                                       # the checkout's, or the cache's (downloaded once)

@@ -136,7 +136,7 @@ def _mppca_slab(path, axis, a, b, lo, hi, r):
 
 def _main(tmp: Path):
     args = json.loads((tmp / "args.json").read_text())
-    t0 = time.time()
+    t0 = time.perf_counter()
     method = args["method"]
     if method == "mppca":
         r = args["patch_radius"]
@@ -169,7 +169,7 @@ def _main(tmp: Path):
         info = {"method": "patch2self", **{k: (list(v) if isinstance(v, tuple) else v) for k, v in settings.items()},
                 "sketch seed": args["sketch_seed"], "volumes": int(arr.shape[-1])}
     import dipy
-    info.update({"dipy": dipy.__version__, "seconds": round(time.time() - t0, 1)})
+    info.update({"dipy": dipy.__version__, "seconds": round(time.perf_counter() - t0, 1)})
     np.save(tmp / "out.npy", out)
     (tmp / "info.json").write_text(json.dumps(info))
 

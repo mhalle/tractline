@@ -554,13 +554,13 @@ def _warm_combo(combo) -> float:
     f = lambda: torch.zeros(1, dtype=torch.float32, device=dev)                       # noqa: E731
     i = torch.zeros(1, dtype=torch.int32, device=dev)
     sw = dict(PE=pe, NMON=nmon, HF=hf, BLOCK=BLOCK)
-    t0 = time.time()
+    t0 = time.perf_counter()
     _step_moments.warmup(f(), f(), f(), f(), f(), f(), f(), f(), 1, 1, 1, 1, 1, 1, 1, 1, NPASS=npass, grid=(1, 1), **sw)
     _step_cost.warmup(f(), f(), f(), f(), i, f(), f(), f(), f(), 1, 1, 1, 1, 1, 1, 1, 1, NPASS=npass, grid=(1, 1), **sw)
     _step_values.warmup(f(), f(), f(), i, f(), f(), f(), f(), 1, 1, 1, 1, 1, 1, 1, NPASS=npass, grid=(1, 1), **sw)
     _resample.warmup(f(), f(), f(), f(), f(), f(), 1, 1, 1, 1, 1, 1, 1, grid=(1, 1), **sw)
     _apply_volumes.warmup(f(), f(), f(), f(), f(), f(), f(), 1, 1, 1, 1, 1, 1, grid=(1, 1), **sw)
-    return round(time.time() - t0, 1)
+    return round(time.perf_counter() - t0, 1)
 
 
 def warm(which=None, workers=None) -> dict:

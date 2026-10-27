@@ -4,6 +4,31 @@ Releases are git tags (`uv add git+https://github.com/mhalle/tractline --tag vX.
 release and `dev` the work in progress (`docs/development.md`, "Branches and releases"). The experiments
 behind each change, with their numbers and later corrections, are in `bench/results/NOTES.md`.
 
+## Unreleased
+
+- **A provenance record beside every TRX** (`tractline.provenance`): `<name>.tractline.json` holds the pipeline's
+  configuration, each step's status and the tool it is checked against, the runtime (versions, device and its model,
+  the backend each step ran), the inputs' sha256 (the series, its .bval, .bvec and sidecar, the series that measured
+  the field), the labeler's weights' sha256, the pairing decision, the correction's note and warnings, the stage times,
+  the output's sha256, and in a checkout uv.lock's sha256. The command's JSON summary names it.
+- **Two identities**: the `pipeline_id` is the config's hash (the algorithm and its settings; deliberately the same
+  on any device), and a new `execution_id` also covers the device type and model (the GPU's name, or the chip), the
+  labeler's device, each step's backend, the versions (tractline and, in a checkout, its git commit; torch, numpy,
+  scipy, Python, Triton, dipy with denoising) and the weights' hashes. Runs on the same input with the same
+  `execution_id` are expected to give the same streamlines.
+- **Experimental steps are said**: the command prints the experimental steps a run uses (`--motion-eddy`, `--gibbs`),
+  and the record lists them.
+- **Changed: `pipeline.run` returns a `Run`** (it unpacks and indexes as the old `(correction, tractogram, labels)`
+  tuple, and also holds `config`, `runtime` and `provenance`). **Its defaults are now the command's**: `device="auto"`
+  (the Apple GPU, then CUDA, then the CPU) and `shell=None` (the shell with the most volumes: `pipeline.default_shell`),
+  in place of `"mps"` and 2800. `pipeline.execute` takes `device="auto"` too.
+- **Changed: a diffusion series' sidecar that is not valid JSON is an error** naming the file, where it was taken as
+  missing metadata. Another series' bad sidecar does not stop the load: a partner with one is dropped, and the
+  message says why. A UTF-8 byte-order mark is accepted.
+- TRX files are written whole (built beside the target, then renamed), never half-written. RapidParc's input checks
+  raise ValueError instead of asserting; the stage times use `time.perf_counter`.
+- README: a locked install for a reproducible study (`uv run --locked --no-dev --extra cli` in a clone of a tag).
+
 ## 0.5.2 - 2026-10-27
 
 - **The README rewritten** for a first-time reader: what tractline does, a quick start with `uvx` and

@@ -131,13 +131,13 @@ class Timer:
 
     @contextmanager
     def __call__(self, name):
-        t0 = time.time()
+        t0 = time.perf_counter()
         yield
         if torch.backends.mps.is_available():
             torch.mps.synchronize()
         if torch.cuda.is_available():
             torch.cuda.synchronize()
-        self.seconds[name] = round(time.time() - t0, 2)
+        self.seconds[name] = round(time.perf_counter() - t0, 2)
         if self.echo is not None:
             print(f"{self.echo} {name} {self.seconds[name]} s", flush=True, file=self.stream)
 
@@ -594,6 +594,31 @@ def _denoise_spec(st) -> str:
     return f"mppca:r{o['patch_radius']}" if st.impl == "mppca" else f"patch2self:s{o['sketch_seed']}"
 
 
+def resolve_device(device="auto") -> str:
+    """"auto": the Apple GPU when there is one, then CUDA, then the CPU; any other name as given."""
+    if device != "auto":
+        return device
+    if torch.backends.mps.is_available():
+        return "mps"
+    return "cuda" if torch.cuda.is_available() else "cpu"
+
+
+def default_shell(bval) -> float:
+    """The b-value to track when none is given: the shell with the most volumes (motion_eddy.shell_groups, the larger
+    b on a tie), as the median of its own b-values, so a shell stored as 1050 or jittered about 1150 is tracked at its
+    own value, inside the tracker's +-50 selection, not at a rounded one."""
+    from .motion_eddy import shell_groups
+    b = np.asarray(bval, float)
+    groups, nominal = shell_groups(b)
+    dw = [(len(g), float(np.median(b[g]))) for g, n in zip(groups, nominal) if n > 0]
+    if not dw:
+        raise ValueError("the series has no diffusion-weighted volumes")
+    return max(dw)[1]
+
+
+UKF_BACKENDS = {"mps": "metal", "cuda": "triton_block", "cpu": "torch (fast step)"}
+
+
 def runtime_record(device, workers, labeler) -> dict:
     """What a run's config leaves out because it does not change the outputs (or should not): where and how it ran."""
     import platform
@@ -613,9 +638,16 @@ class Run:
     labels: Labels | None        # None: the bundles slot is off
     config: dict                 # PipelineConfig.to_dict(): the slots, their versions and options, origin, sha256
     runtime: dict                # runtime_record
+    provenance: dict | None = None   # provenance.record: also written beside the TRX as <name>.tractline.json
 
-    def __iter__(self):          # corr, tg, labels = execute(...), as run() returns them
+    def __iter__(self):          # corr, tg, labels = run(...): a Run unpacks, and indexes, as the tuple it once was
         return iter((self.correction, self.tractogram, self.labels))
+
+    def __getitem__(self, i):
+        return (self.correction, self.tractogram, self.labels)[i]
+
+    def __len__(self):
+        return 3
 
 
 def _shell_volumes(dwi, bval, bvec, shell):
@@ -708,7 +740,7 @@ def csd_ptt(s, dwi, mask, cfg: PipelineConfig, timer: Timer, prefix="", device="
     return Tractogram(fibers, stats, mask, info)
 
 
-def execute(s, cfg: PipelineConfig, timer: Timer, prefix="", device="mps", workers=None, labeler=None, trx=None,
+def execute(s, cfg: PipelineConfig, timer: Timer, prefix="", device="auto", workers=None, labeler=None, trx=None,
             release=True, tissue=None, **trx_options) -> Run:
     """The pipeline as cfg configures it (tractline.config), on subject s. Every check runs before any work: the
     config's own (at its construction), the shell tracked, the CPU's main guard, the labeler against the bundles slot.
@@ -726,6 +758,8 @@ def execute(s, cfg: PipelineConfig, timer: Timer, prefix="", device="mps", worke
     by its shape and sha256, not in the config."""
     if not isinstance(cfg, PipelineConfig):
         raise TypeError(f"execute: cfg is a {type(cfg).__name__}, not a PipelineConfig")
+    device = resolve_device(device)
+    s_in = s                                                               # the subject as given: its files, for provenance
     if not cfg.is_on("track"):
         raise ValueError("execute: the track slot is off; there is nothing to run without it yet")
     shell, tracker = cfg.opts("model")["shell"], cfg.opts("track")
@@ -792,6 +826,8 @@ def execute(s, cfg: PipelineConfig, timer: Timer, prefix="", device="mps", worke
             labels = label(tg, labeler, timer, prefix, draw=b.get("draw", 0), grouping=b.get("grouping", "index"))
     if trx is not None:
         from . import trx as _trx
+        from .provenance import sidecar_path
+        sidecar_path(trx).unlink(missing_ok=True)                          # never an older run's record beside it
         with timer(prefix + "write_trx"):
             _trx.write(trx, s, tg, labels, **trx_options)
     if release:
@@ -803,25 +839,42 @@ def execute(s, cfg: PipelineConfig, timer: Timer, prefix="", device="mps", worke
         runtime["tissue"] = {"shape": list(tz.shape), "sha256 (float32)": hashlib.sha256(tz.tobytes()).hexdigest()}
     if corr.motion_eddy is not None:
         runtime["motion_eddy backend"] = corr.motion_eddy["backend"]
+    if not ptt:
+        runtime["ukf backend"] = UKF_BACKENDS[torch.device(device).type]
     if ptt:                                                                # the CPU tracker's settings do not apply
         runtime.pop("workers", None)
         runtime.pop("torch_compile", None)
         runtime["ptt backend"] = tg.stats["backend"]
         runtime["ptt random numbers"] = tg.stats["random numbers"]
     corr.provenance = {"config": config, "runtime": runtime}
-    return Run(corr, tg, labels, config, runtime)
+    run = Run(corr, tg, labels, config, runtime)
+    from . import provenance as PV
+    try:
+        run.provenance = PV.record(run, s_in, device, labeler, timer, trx, trx_options)
+    except Exception as e:                                                 # noqa: BLE001 - bookkeeping never costs the run
+        import warnings
+        warnings.warn(f"provenance: the run's record is incomplete ({type(e).__name__}: {e})", stacklevel=2)
+        run.provenance = {"schema": PV.SCHEMA, "pipeline_id": config.get("sha256"), "execution_id": None,
+                          "pipeline": config, "runtime": runtime, "experimental": [],
+                          "error": f"{type(e).__name__}: {e}"}
+    if trx is not None:
+        PV.write(PV.sidecar_path(trx), run.provenance)
+    return run
 
 
-def run(s, labeler, timer: Timer, prefix="", trx=None, device="mps", workers=None, release=True, shell=2800.0, tracker=None,
+def run(s, labeler, timer: Timer, prefix="", trx=None, device="auto", workers=None, release=True, shell=None, tracker=None,
         denoise=None, denoise_order="acquired", config=None, motion_eddy=None, gibbs=None, **trx_options):
-    """The whole pipeline on a subject: (Correction, Tractogram, Labels). labeler: None for the default
+    """The whole pipeline on a subject: a Run, which unpacks and indexes as (Correction, Tractogram, Labels) and also
+    holds the config, the runtime and the provenance record (written beside the TRX, when there is one, as
+    <name>.tractline.json: tractline.provenance). labeler: None for the default
     (default_labeler: RapidParc), or any labeler (labelers.tractcloud.Labeler, ...). Its time is
     timer.total(*pipeline_stages(prefix)). trx: also write the tractogram there as TRX (trx.write;
     trx_options: positions= "float32" (default) or "float16", labeled_only= False (default) or True),
     timed apart as prefix + "write_trx". release: return
     the GPU allocator's cache after the run (release_memory: batches stay flat). device: where
-    the estimate and the tracking run ("mps", "cuda" or "cpu"; the labeler has its own); shell: the b-value
-    tracked (track); workers: the CPU
+    the estimate and the tracking run ("auto", the default: the Apple GPU, then CUDA, then the CPU; or "mps",
+    "cuda", "cpu"; the labeler has its own); shell: the b-value tracked (track; None, the default: the shell with the
+    most volumes, as the command chooses it: default_shell); workers: the CPU
     tracker's processes (default one per core as os.cpu_count() sees them - in a container, pass the
     container's own); tracker: opt-in tracker settings (track), None for today's. denoise: opt-in, None for today's,
     or "mppca" / "patch2self" (denoise_subject; "mppca:r3" with a setting), its settings and estimates in Correction.denoise and its time in
@@ -837,14 +890,15 @@ def run(s, labeler, timer: Timer, prefix="", trx=None, device="mps", workers=Non
     if gibbs is False:
         gibbs = None
     if config is None:
+        if shell is None:
+            shell = default_shell(s.bval)
         if denoise is not None and denoise_order not in DENOISE_ORDERS:
             raise ValueError(f"denoise_order: {denoise_order!r} is not one of {DENOISE_ORDERS}")
         config = config_for(labeler, shell, tracker, denoise, denoise_order, motion_eddy, gibbs)
-    elif (shell, tracker or None, denoise, denoise_order, motion_eddy, gibbs) != (2800.0, None, None, "acquired", None,
-                                                                                    None):
+    elif (shell, tracker or None, denoise, denoise_order, motion_eddy, gibbs) != (None, None, None, "acquired", None, None):
         raise ValueError("run: with config=, set shell, tracker, denoise, motion_eddy and gibbs in the config, not as "
                          "keywords too")
-    return tuple(execute(s, config, timer, prefix, device, workers, labeler, trx, release, **trx_options))
+    return execute(s, config, timer, prefix, device, workers, labeler, trx, release, **trx_options)
 
 
 PTT_STAGES = ("field_estimate", "field_apply", "mask", "csd", "ptt", "label")

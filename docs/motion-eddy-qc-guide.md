@@ -47,6 +47,15 @@ Two options add further output. `--qc qc/sub-01` writes the QC files of the moti
 (section 5) into that folder. `--write-corrected` also writes the corrected dMRI series there, with its b-values and
 rotated b-vectors, for use with other tools. `--json summary.json` saves a summary of the run.
 
+Beside the TRX file, tractline writes a record of how it was made: `out/sub-01.tractline.json`. It holds the
+pipeline's configuration and each step's status (validated, or experimental with the tool it is checked against), the
+versions of tractline, PyTorch and the rest, the device and the GPU code each step ran, the checksums of the input
+files, of the labeler's weights and of the TRX itself, the pairing decision, the warnings and the stage times. Two
+identifiers summarize it: the pipeline ID names the algorithm and its settings, the same on any machine; the
+execution ID also covers the device, the software versions and the weights, so two runs on the same input with the
+same execution ID should give the same streamlines. A run that uses an experimental step, such as `--motion-eddy` or `--gibbs`, says so
+when it starts.
+
 The reversed phase-encoding series used for the susceptibility field is found from the BIDS sidecars, or can be named
 with `--partners`. If none is found, the motion and eddy current correction still runs, without the field, and the
 printed note says so. The motion and eddy current correction is off unless `--motion-eddy` is given; without it,
@@ -112,9 +121,10 @@ The same run from Python:
 ```python
 from tractline import bids, pipeline as P, motion_eddy as ME
 s = bids.load("sub-01/dwi/sub-01_dir-AP_dwi.nii.gz")
-corr, tractogram, labels = P.run(s, None, P.Timer(), shell=2000.0, motion_eddy=True, trx="out/sub-01.trx")
+r = P.run(s, None, P.Timer(), motion_eddy=True, trx="out/sub-01.trx")   # device and shell chosen as the command does
+corr, tractogram, labels = r
 ME.write_qc(corr.motion_eddy, "qc/sub-01")            # the QC files, if wanted
-print(corr.note, corr.warnings)
+print(corr.note, corr.warnings, r.provenance["execution_id"])
 ```
 
 ## 3. The steps

@@ -26,12 +26,8 @@ MODELS = ("quadratic", "linear", "rigid")
 
 
 def _device(name: str) -> str:
-    if name != "auto":
-        return name
-    import torch
-    if torch.backends.mps.is_available():
-        return "mps"
-    return "cuda" if torch.cuda.is_available() else "cpu"
+    from .pipeline import resolve_device
+    return resolve_device(name)
 
 
 def _version() -> str:
@@ -101,17 +97,12 @@ def run(dwi, partners, motion_eddy, gibbs, outliers, trx, float16, labeled_only,
 
 
 def auto_shell(bval) -> float:
-    """The b-value to track when none is given: the shell with the most volumes (motion_eddy.shell_groups, the larger
-    b on a tie), as the median of its own b-values, so a shell stored as 1050 or jittered about 1150 is tracked at its
-    own value, inside the tracker's +-50 selection, not at a rounded one."""
-    import numpy as np
-    from .motion_eddy import shell_groups
-    b = np.asarray(bval, float)
-    groups, nominal = shell_groups(b)
-    dw = [(len(g), float(np.median(b[g]))) for g, n in zip(groups, nominal) if n > 0]
-    if not dw:
-        raise click.ClickException("the series has no diffusion-weighted volumes")
-    return max(dw)[1]
+    """The b-value to track when none is given (pipeline.default_shell)."""
+    from .pipeline import default_shell
+    try:
+        return default_shell(bval)
+    except ValueError as e:
+        raise click.ClickException(str(e)) from e
 
 
 def _run(dwi, partners, motion_eddy, gibbs, outliers, trx, float16, labeled_only, qc, write_corrected, shell, labeler,
@@ -158,17 +149,24 @@ def _run(dwi, partners, motion_eddy, gibbs, outliers, trx, float16, labeled_only
               **({"check_memory": False} if no_memory_check else {})}
     gb = {"slice_axis": P.slice_axis_of(s)} if gibbs else None
     timer = P.Timer(echo=None if quiet else "  ", stream=sys.stderr)       # standard output stays for --json -
+    from . import provenance as PV
+    cfg = P.config_for(shell=shell, motion_eddy=me, gibbs=gb)
     say(f"running on {dev}: shell b = {shell:g}" + (", Gibbs ringing removed" if gb else "")
         + (f", head motion and eddy currents ({motion_eddy})" if me else ""))
-    corr, tg, labels = P.run(s, lab, timer, trx=trx, device=dev, workers=workers, shell=shell, motion_eddy=me,
-                             gibbs=gb, positions="float16" if float16 else "float32", labeled_only=labeled_only)
-    cfg = P.config_for(motion_eddy=me, gibbs=gb)
+    for step in PV.experimental(cfg.to_dict()):
+        say(f"experimental: {step}")
+    r = P.run(s, lab, timer, trx=trx, device=dev, workers=workers, shell=shell, motion_eddy=me,
+              gibbs=gb, positions="float16" if float16 else "float32", labeled_only=labeled_only)
+    corr, tg, labels = r
     first = timer.seconds.get("gibbs", 0)                                 # before the field: not among pipeline_stages
     summary = {"series": str(dwi), "corrected": corr.applied, "note": corr.note, "residual_left": corr.residual_left,
                "warnings": corr.warnings, "shell": shell, "device": dev, "gibbs": corr.gibbs,
                "seconds": timer.seconds,
                "scan_to_labels_s": round(timer.total(*P.pipeline_stages("", cfg)) + first, 1),
-               "streamlines": len(tg.fibers), "labeled": int(labels.keep.sum()), "trx": str(trx) if trx else None}
+               "streamlines": len(tg.fibers), "labeled": int(labels.keep.sum()), "trx": str(trx) if trx else None,
+               "pipeline_id": r.provenance["pipeline_id"], "execution_id": r.provenance["execution_id"],
+               "experimental": r.provenance["experimental"],
+               "provenance": str(PV.sidecar_path(trx)) if trx else None}
     if qc:
         from . import motion_eddy as ME
         summary["motion_eddy"] = ME.write_qc(corr.motion_eddy, qc)
@@ -180,6 +178,9 @@ def _run(dwi, partners, motion_eddy, gibbs, outliers, trx, float16, labeled_only
         say(f"warning: {w}")
     say(f"{summary['streamlines']} streamlines, {summary['labeled']} labeled; {summary['scan_to_labels_s']} s"
         + (f"; TRX {trx}" if trx else "") + (f"; QC in {qc}" if qc else ""))
+    if trx:
+        say(f"provenance: {PV.sidecar_path(trx)} (pipeline {r.provenance['pipeline_id'][:12]}, "
+            f"execution {r.provenance['execution_id'][:12]})")
     from .motion_eddy import _finite
     text = json.dumps(_finite(json.loads(json.dumps(summary, default=str))), indent=1, allow_nan=False)
     if json_path == "-":
@@ -266,7 +267,7 @@ def warm(dwi, partners, model, everything, workers):
     except (ValueError, OSError, ImageFileError) as e:
         raise click.ClickException(str(e)) from e
     from concurrent.futures.process import BrokenProcessPool
-    t0 = time.time()
+    t0 = time.perf_counter()
     try:
         click.echo(f"the tracker: {len(K.NPADS)} gradient-count sizes", err=True)
         K.warm(workers=min(workers, len(K.NPADS)))
@@ -276,7 +277,7 @@ def warm(dwi, partners, model, everything, workers):
     except BrokenProcessPool as e:
         raise click.ClickException("a compiling process died (memory, or a GPU in exclusive-process mode): try "
                                    "--workers 1") from e
-    click.echo(f"compiled into Triton's cache in {time.time() - t0:.0f} s", err=True)
+    click.echo(f"compiled into Triton's cache in {time.perf_counter() - t0:.0f} s", err=True)
 
 
 @main.command()

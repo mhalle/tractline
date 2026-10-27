@@ -20,7 +20,7 @@ the labeled streamlines alone.
 """
 from __future__ import annotations
 
-import json, shutil, tempfile, zipfile
+import json, os, shutil, tempfile, zipfile
 from pathlib import Path
 import numpy as np, torch
 from .labelers.base import TRACT_NAMES, LUT
@@ -76,13 +76,16 @@ def write(path, s, tg, labels, positions="float32", labeled_only=False):
             idx = np.flatnonzero(tract == t).astype(np.uint32)
             if len(idx):
                 idx.tofile(d / "groups" / f"{name}.uint32")
-        if path.suffix == ".trx":
-            with zipfile.ZipFile(path, "w", zipfile.ZIP_STORED) as z:
+        if path.suffix == ".trx":                          # whole or not at all: built beside it, then renamed
+            part = Path(tmp) / "out.trx"
+            with zipfile.ZipFile(part, "w", zipfile.ZIP_STORED) as z:
                 for f in sorted(d.rglob("*")):
                     if f.is_file():
                         z.write(f, f.relative_to(d).as_posix())
+            os.replace(part, path)
         else:
             if path.exists() and (not path.is_dir() or (any(path.iterdir()) and not (path / "header.json").exists())):
                 raise FileExistsError(f"{path} exists and is not a TRX directory: not overwriting it")
-            shutil.rmtree(path, ignore_errors=True); shutil.copytree(d, path)
+            shutil.rmtree(path, ignore_errors=True)
+            os.replace(d, path)                            # the finished directory, moved into place
     return path

@@ -4,6 +4,7 @@ small BIDS series (the test phantom, with a reversed b0 pair beside it) to a TRX
 series; usage errors are refused before any work."""
 import io
 import json
+from pathlib import Path
 import numpy as np
 import pytest
 from click.testing import CliRunner
@@ -113,6 +114,11 @@ def test_run_end_to_end(tmp_path):
     assert r.exit_code == 0, r.output
     summary = json.loads(r.stdout)
     assert summary["corrected"] and summary["streamlines"] > 0 and summary["shell"] == 2800.0
+    assert len(summary["execution_id"]) == 64 and summary["pipeline_id"]
+    assert any(x.startswith("motion_eddy") for x in summary["experimental"])
+    side = json.loads(Path(summary["provenance"]).read_text())
+    assert side["execution_id"] == summary["execution_id"] and side["output"]["path"] == str(out.resolve())
+    assert [f["role"] for f in side["inputs"]].count("diffusion series") == 4
     assert out.exists() and (qc / "motion_eddy_qc.tsv").exists() and (qc / "motion_eddy_qc.json").exists()
     import nibabel as nib
     assert nib.load(str(qc / "corrected.nii.gz")).shape == s.dwi.shape

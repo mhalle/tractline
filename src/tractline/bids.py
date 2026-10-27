@@ -93,13 +93,30 @@ def _inherited(p: Path, ext: str) -> list[Path]:
 
 
 def _sidecar(p: Path) -> dict:
+    """The series' sidecar, merged with those it inherits. A sidecar that cannot be read or is not valid JSON is an
+    error naming it, not missing metadata: what it holds decides whether and how the scan is corrected."""
     merged = {}
     for f in _inherited(p, ".json"):
         try:
-            merged.update(json.loads(f.read_text()))
-        except (OSError, ValueError):
-            pass
+            d = json.loads(f.read_bytes())                                # bytes: a UTF-8 byte-order mark is accepted
+        except OSError as e:
+            raise ValueError(f"{f}: the sidecar cannot be read ({e})") from e
+        except ValueError as e:
+            raise ValueError(f"{f}: the sidecar is not valid JSON ({e})") from e
+        if not isinstance(d, dict):
+            raise ValueError(f"{f}: the sidecar is not a JSON object")
+        merged.update(d)
     return merged
+
+
+def _try_sidecar(p: Path) -> tuple[dict, str | None]:
+    """Another series' sidecar, for finding and checking partners: (metadata, None), or ({}, why) when it cannot be
+    read, so a malformed sidecar of an unrelated series (a T1w, a bold) does not stop the diffusion series' load and a
+    partner with one is dropped with the reason."""
+    try:
+        return _sidecar(p), None
+    except ValueError as e:
+        return {}, str(e)
 
 
 def _table(p: Path, ext: str):
@@ -195,7 +212,10 @@ def _candidates(dwi: Path, side: dict, w0: np.ndarray) -> tuple[str, list[Path],
         want = {src} if isinstance(src, str) else set(src)
         hits = []
         for p in niis:
-            ident = _sidecar(p).get("B0FieldIdentifier")
+            ps, bad = _try_sidecar(p)
+            if bad and p.parent.name in ("fmap", "dwi"):                  # a possible partner: say why it was skipped
+                notes.append(f"{p.name} not considered: {bad}")
+            ident = ps.get("B0FieldIdentifier")
             have = {ident} if isinstance(ident, str) else set(ident or [])
             if want & have:
                 suffix = _entities(_stem(p))[1]
@@ -207,14 +227,19 @@ def _candidates(dwi: Path, side: dict, w0: np.ndarray) -> tuple[str, list[Path],
             return "B0FieldIdentifier", hits, refused
         notes.append(f"B0FieldSource {sorted(want)} names no series here")
     def intended(p):
-        x = _sidecar(p).get("IntendedFor", [])
+        x = _try_sidecar(p)[0].get("IntendedFor", [])
         return any(_names(i, dwi) for i in ([x] if isinstance(x, str) else x))
     hits = [p for p in niis if p.parent.name == "fmap" and _entities(_stem(p))[1] == "epi" and intended(p)]
     if hits:
         return "IntendedFor", hits, notes
     hits = []
     for p in sorted(folder.glob("*_dwi.nii*")):
-        v = _pe(_sidecar(p).get("PhaseEncodingDirection")) if p != dwi else None
+        if p == dwi:
+            continue
+        ps, bad = _try_sidecar(p)
+        if bad:
+            notes.append(f"{p.name} not considered: {bad}")
+        v = _pe(ps.get("PhaseEncodingDirection"))
         if v is not None and float(_world(nib.load(p).affine, v) @ w0) < -np.cos(np.radians(10)):
             hits.append(p)
     return ("same folder", hits, notes) if hits else ("none", [], notes)
@@ -275,7 +300,9 @@ def load(dwi_path, partners=None, name=None) -> Subject:
         dropped.append(f"{p.name}: {why}")
 
     for p in cands:
-        ps, label = _sidecar(p), p.name
+        (ps, bad), label = _try_sidecar(p), p.name
+        if bad:
+            drop(p, bad); continue
         try:
             pimg = nib.load(p)
         except Exception as e:                                               # noqa: BLE001
@@ -349,7 +376,7 @@ def load(dwi_path, partners=None, name=None) -> Subject:
     if readout is None:
         msg, ok = "not corrected: the diffusion series states no TotalReadoutTime" + extra, False
     elif not cands:
-        others = [f"{p.name} ({_sidecar(p).get('PhaseEncodingDirection', '?')})" for p in sorted(dwi_path.parent.glob("*_dwi.nii*"))
+        others = [f"{p.name} ({_try_sidecar(p)[0].get('PhaseEncodingDirection', '?')})" for p in sorted(dwi_path.parent.glob("*_dwi.nii*"))
                   if p != dwi_path]
         msg, ok = ("not corrected: " + ("no partner series given" if how == "given" else
                    "no series to measure the field with (no B0FieldIdentifier/IntendedFor partner, and no diffusion series "

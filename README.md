@@ -120,6 +120,13 @@ af = t.streamlines[t.groups["AF"]]          # the arcuate fasciculus's streamlin
 
 trx-python's `trx_convert_tractogram` converts it to `.tck`, `.trk` or `.vtk` for tools that do not read TRX.
 
+Beside each TRX file, `out/sub-01.tractline.json` records how it was made: the pipeline's configuration, each step's
+status (validated or experimental), the software versions, the device and GPU code each step ran, and the checksums
+of the inputs, the labeler's weights and the TRX itself. Its `pipeline_id` names the algorithm and settings, the same
+on any machine; its `execution_id` also covers the device, versions and weights, so two runs on the same input with
+the same `execution_id` should give the same streamlines. The record's file paths are absolute, as on the machine
+that ran.
+
 ## Choosing a version
 
 - **No `@...`**, or `@main`: the newest release. The `main` branch moves only when a release is made.
@@ -127,6 +134,18 @@ trx-python's `trx_convert_tractogram` converts it to `.tck`, `.trk` or `.vtk` fo
   code: `uvx --from "tractline[cli] @ git+https://github.com/mhalle/tractline@v0.5.2" tractline ...`, or the same
   URL with `uv tool install`. `tractline --version` shows which version ran.
 - **`@dev`**: the newest code, ahead of the latest release.
+
+**For a study that must be reproducible exactly,** pin the dependencies too, not only tractline. A tag fixes
+tractline's code, but `uvx` and `uv tool install` resolve the newest versions of PyTorch and the rest. The repository's
+`uv.lock` pins every package, and running from a clone of the tag uses it:
+
+```
+git clone --branch v0.5.2 https://github.com/mhalle/tractline && cd tractline
+uv run --locked --no-dev --extra cli tractline run ../sub-01/dwi/sub-01_dir-AP_dwi.nii.gz --motion-eddy --trx ../out/sub-01.trx
+```
+
+From release 0.6.0 on, the provenance file also records the lock's checksum, so the environment can be rebuilt
+later.
 
 `uvx` reuses the environment it built first, so after a new release `uvx --refresh --from ...` picks it up. An
 unpinned `uv tool install` moves to the newest release with `uv tool upgrade tractline`; a pinned one stays on its
@@ -147,12 +166,13 @@ from tractline import bids, pipeline as P
 
 s = bids.load("sub-01/dwi/sub-01_dir-AP_dwi.nii.gz")
 print(s.pairing.message)                        # which series correct it, or why none can
-corr, tractogram, labels = P.run(s, None, P.Timer(), device="mps",   # "cuda" or "cpu" elsewhere
-                                 shell=2000.0, motion_eddy=True, trx="out/sub-01.trx")
+r = P.run(s, None, P.Timer(), motion_eddy=True, trx="out/sub-01.trx")
+corr, tractogram, labels = r                    # r.provenance: the record also written beside the TRX
 ```
 
-`shell` is the b-value tracked; from Python give the scan's own (the default is 2800). On the CPU, put the code under
-`if __name__ == "__main__":`: the tracker starts worker processes that re-import the script.
+As with the command, the device (`device=`) and the shell tracked (`shell=`) are chosen automatically unless given. On
+the CPU, put the code under `if __name__ == "__main__":`: the tracker starts worker processes that re-import the
+script.
 
 The core package needs numpy and torch (and click, for the command). The extras add what the optional parts need:
 

@@ -324,12 +324,12 @@ def warm(npads=NPADS, F=None, num_warps=None, workers=None) -> dict:
     f32 = lambda *n: torch.empty(n, dtype=torch.float32, device=dev)
     out = {}
     for n in npads:
-        t0 = time.time()
+        t0 = time.perf_counter()
         ukf_step_block.warmup(f32(1), torch.empty(1, dtype=torch.int8, device=dev), f32(1), f32(1), f32(1), f32(1),
                               f32(1), f32(1), f32(1), torch.empty(1, dtype=torch.int32, device=dev), f32(1), f32(1),
                               1, 1, 1, 1, 1, 1, 1, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
                               F=F, NPAD=n, TIE=False, TIE_SW2=False, num_warps=num_warps, enable_fp_fusion=False, grid=(1,))
-        out[n] = round(time.time() - t0, 1)
+        out[n] = round(time.perf_counter() - t0, 1)
     return out
 
 

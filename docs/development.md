@@ -108,6 +108,7 @@ shared memory; `TRACTOGRAPHY_SHARE=0` sends copies instead, for systems without 
 | `labelers/` | RapidParc (the default) and TractCloud; `base.py` holds what they share (the 40 mm cut, the 43-class scheme) |
 | `resample.py` | TractCloud's streamline features |
 | `trx.py` | the tractogram as TRX, with tract labels and probabilities |
+| `provenance.py` | the run record written beside every TRX (`<name>.tractline.json`): the pipeline and execution IDs, steps' statuses, versions, device, inputs' and output's checksums |
 | `fetch.py`, `data.py` | the weights downloaded on first use; where data lives |
 | `ensemble.py`, `compact.py` | uncertainty from repeated runs, and compact run records (prototypes) |
 | `t1check.py` | a measurement, not a pipeline step: the distortion left against the T1 (the `t1check` extra) |
