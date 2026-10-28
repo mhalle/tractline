@@ -4,6 +4,21 @@ Releases are git tags (`uv add git+https://github.com/mhalle/tractline --tag vX.
 release and `dev` the work in progress (`docs/development.md`, "Branches and releases"). The experiments
 behind each change, with their numbers and later corrections, are in `bench/results/NOTES.md`.
 
+## 0.7.0 - 2026-10-27
+
+- **A SynthStrip brain mask, opt-in** (`--mask synthstrip`; Python `mask="synthstrip"`; experimental): SynthStrip's
+  mask of the mean b0 (Hoopes et al. 2022), on the DWI itself - no T1, no registration. The default `median_otsu` is an
+  intensity threshold and cuts through the lower brainstem on ON-Harmony's scans (and on Ron Kikinis's), so the
+  tracts that run through it lose most of their streamlines: on sub-16974, 0 MCP and 386 CST streamlines with
+  `median_otsu`, 332 and 847 with SynthStrip's mask (NOTES 2026-10-27). The mask's border is a setting (`border`, mm).
+- **`tractline.skullstrip`**: an independent code base for SynthStrip's network and test-time conform, written from
+  the paper and its released weights' shapes - no FreeSurfer code, torch and numpy only; its authors' weights (MIT) are fetched on first use and
+  checked against a pinned sha256 (`tractline fetch` includes them). Its masks agree with a port of the released tool
+  (synthstrip-torch 0.1.1) at Dice 0.988-0.992 on five scans; on a tilted head it takes about 6 s on an Apple GPU and
+  26 s on the CPU. That port, in runs while developing this, needed a CUDA GPU at that size (on MPS it returned a
+  constant field; on a 16 GB CPU it ran out of memory).
+- The provenance record lists the mask's weights with the labeler's.
+
 ## 0.6.1 - 2026-10-27
 
 - **The execution_id covers more of what changes the numbers**: the operating system's version and build (an update

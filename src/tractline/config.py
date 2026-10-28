@@ -201,6 +201,15 @@ register(Implementation(
     "mask", "median-otsu", "1", {}, oracle="dipy.segment.mask.median_otsu", status="validated",
     doc="median_otsu of the mean b0 (median radius 4, 4 passes), dipy's exactly (tractline.mask)"))
 register(Implementation(
+    "mask", "synthstrip", "1",
+    {"border": Option(1.0, float, low=-4.0, high=4.0,
+                      doc="mm: the mask is where SynthStrip's signed distance is below this (1: its own default; 3 "
+                          "grows the mask by 2 mm; the network's distances are banded at about 5 mm)")},
+    oracle="SynthStrip (Hoopes et al. 2022), its authors' released model", status="experimental",
+    doc="SynthStrip's brain mask of the mean b0, on the DWI itself (no T1, no registration): its network with its "
+        "authors' weights (MIT), run by tractline.skullstrip, an independent code base written from the paper and the "
+        "weight file's shapes"))
+register(Implementation(
     "model", "ukf-two-tensor", "1", {"shell": Option(2800.0, float, low=1.0, doc="the b-value tracked, with the b0s")},
     status="validated",
     doc="the tracker's input: the b0s and one shell, gradients in RAS (prep.prepare); the two-tensor model itself is "

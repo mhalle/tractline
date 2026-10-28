@@ -1,0 +1,313 @@
+{
+ "tracking": {
+  "scan": "ON-Harmony sub-16974 OXF1PRI001, uncorrected",
+  "shell": 2000.0,
+  "A": {
+   "stopping mask ml": 1467,
+   "seeds": 111015,
+   "streamlines": 99045,
+   "labeled": 80430,
+   "Other": 42355,
+   "ukf s": 61.6,
+   "CST": 386,
+   "CPC": 99,
+   "MCP": 0,
+   "ICP": 260,
+   "Intra-CBLM-I-P": 921,
+   "Intra-CBLM-PaT": 1795,
+   "PLIC": 275,
+   "AF": 871,
+   "CC4": 497
+  },
+  "C": {
+   "stopping mask ml": 2704,
+   "seeds": 111015,
+   "streamlines": 101051,
+   "labeled": 83948,
+   "Other": 46893,
+   "ukf s": 69.3,
+   "CST": 793,
+   "CPC": 192,
+   "MCP": 299,
+   "ICP": 260,
+   "Intra-CBLM-I-P": 954,
+   "Intra-CBLM-PaT": 2823,
+   "PLIC": 202,
+   "AF": 826,
+   "CC4": 496
+  },
+  "C2": {
+   "stopping mask ml": 1701,
+   "seeds": 127515,
+   "streamlines": 104864,
+   "labeled": 85265,
+   "Other": 45290,
+   "ukf s": 67.9,
+   "CST": 693,
+   "CPC": 168,
+   "MCP": 189,
+   "ICP": 259,
+   "Intra-CBLM-I-P": 970,
+   "Intra-CBLM-PaT": 2744,
+   "PLIC": 263,
+   "AF": 852,
+   "CC4": 518
+  },
+  "D1": {
+   "stopping mask ml": 1739,
+   "seeds": 125476,
+   "streamlines": 107190,
+   "labeled": 87061,
+   "Other": 46531,
+   "ukf s": 70.9,
+   "CST": 847,
+   "CPC": 217,
+   "MCP": 332,
+   "ICP": 262,
+   "Intra-CBLM-I-P": 982,
+   "Intra-CBLM-PaT": 3255,
+   "PLIC": 240,
+   "AF": 849,
+   "CC4": 494
+  },
+  "D3": {
+   "stopping mask ml": 1880,
+   "seeds": 136366,
+   "streamlines": 108682,
+   "labeled": 87969,
+   "Other": 47744,
+   "ukf s": 73.1,
+   "CST": 836,
+   "CPC": 199,
+   "MCP": 333,
+   "ICP": 255,
+   "Intra-CBLM-I-P": 960,
+   "Intra-CBLM-PaT": 3508,
+   "PLIC": 236,
+   "AF": 854,
+   "CC4": 486
+  }
+ },
+ "coverage (ON-Harmony)": {
+  "03286 OXF1PRI001": {
+   "A": {
+    "ml": 1517,
+    "WM-like left out, ml": 44.1
+   },
+   "A2": {
+    "ml": 1209,
+    "WM-like left out, ml": 212.4
+   },
+   "C2": {
+    "ml": 1700,
+    "WM-like left out, ml": 15.4
+   },
+   "D1": {
+    "ml": 1785,
+    "WM-like left out, ml": 5.6
+   },
+   "D3": {
+    "ml": 1926,
+    "WM-like left out, ml": 4.4
+   }
+  },
+  "03286 OXF2PRI001": {
+   "A": {
+    "ml": 1606,
+    "WM-like left out, ml": 26.6
+   },
+   "A2": {
+    "ml": 1335,
+    "WM-like left out, ml": 192.2
+   },
+   "C2": {
+    "ml": 1775,
+    "WM-like left out, ml": 7.8
+   },
+   "D1": {
+    "ml": 1771,
+    "WM-like left out, ml": 8.1
+   },
+   "D3": {
+    "ml": 1911,
+    "WM-like left out, ml": 5.4
+   }
+  },
+  "10975 OXF1PRI001": {
+   "A": {
+    "ml": 1473,
+    "WM-like left out, ml": 18.3
+   },
+   "A2": {
+    "ml": 1445,
+    "WM-like left out, ml": 86.3
+   },
+   "C2": {
+    "ml": 1678,
+    "WM-like left out, ml": 7.6
+   },
+   "D1": {
+    "ml": 1684,
+    "WM-like left out, ml": 8.2
+   },
+   "D3": {
+    "ml": 1820,
+    "WM-like left out, ml": 6.4
+   }
+  },
+  "10975 OXF2PRI001": {
+   "A": {
+    "ml": 1492,
+    "WM-like left out, ml": 53.3
+   },
+   "A2": {
+    "ml": 1456,
+    "WM-like left out, ml": 125.3
+   },
+   "C2": {
+    "ml": 1719,
+    "WM-like left out, ml": 24.7
+   },
+   "D1": {
+    "ml": 1690,
+    "WM-like left out, ml": 33.5
+   },
+   "D3": {
+    "ml": 1826,
+    "WM-like left out, ml": 25.5
+   }
+  },
+  "14221 OXF1PRI001": {
+   "A": {
+    "ml": 1392,
+    "WM-like left out, ml": 12.0
+   },
+   "A2": {
+    "ml": 1454,
+    "WM-like left out, ml": 35.4
+   },
+   "C2": {
+    "ml": 1574,
+    "WM-like left out, ml": 3.2
+   },
+   "D1": {
+    "ml": 1609,
+    "WM-like left out, ml": 2.8
+   },
+   "D3": {
+    "ml": 1738,
+    "WM-like left out, ml": 2.0
+   }
+  },
+  "14221 OXF2PRI001": {
+   "A": {
+    "ml": 1412,
+    "WM-like left out, ml": 10.8
+   },
+   "A2": {
+    "ml": 1458,
+    "WM-like left out, ml": 38.9
+   },
+   "C2": {
+    "ml": 1590,
+    "WM-like left out, ml": 3.3
+   },
+   "D1": {
+    "ml": 1616,
+    "WM-like left out, ml": 4.3
+   },
+   "D3": {
+    "ml": 1747,
+    "WM-like left out, ml": 2.7
+   }
+  },
+  "15320 OXF1PRI001": {
+   "A": {
+    "ml": 1114,
+    "WM-like left out, ml": 17.1
+   },
+   "A2": {
+    "ml": 1207,
+    "WM-like left out, ml": 33.6
+   },
+   "C2": {
+    "ml": 1322,
+    "WM-like left out, ml": 5.7
+   },
+   "D1": {
+    "ml": 1345,
+    "WM-like left out, ml": 7.1
+   },
+   "D3": {
+    "ml": 1466,
+    "WM-like left out, ml": 5.4
+   }
+  },
+  "15320 OXF2PRI001": {
+   "A": {
+    "ml": 1149,
+    "WM-like left out, ml": 30.0
+   },
+   "A2": {
+    "ml": 1246,
+    "WM-like left out, ml": 39.5
+   },
+   "C2": {
+    "ml": 1376,
+    "WM-like left out, ml": 8.7
+   },
+   "D1": {
+    "ml": 1375,
+    "WM-like left out, ml": 12.9
+   },
+   "D3": {
+    "ml": 1497,
+    "WM-like left out, ml": 9.8
+   }
+  },
+  "16974 OXF1PRI001": {
+   "A": {
+    "ml": 1467,
+    "WM-like left out, ml": 18.6
+   },
+   "A2": {
+    "ml": 1513,
+    "WM-like left out, ml": 67.2
+   },
+   "C2": {
+    "ml": 1701,
+    "WM-like left out, ml": 6.5
+   },
+   "D1": {
+    "ml": 1739,
+    "WM-like left out, ml": 4.2
+   },
+   "D3": {
+    "ml": 1880,
+    "WM-like left out, ml": 3.4
+   }
+  },
+  "16974 OXF2PRI001": {
+   "A": {
+    "ml": 1499,
+    "WM-like left out, ml": 32.7
+   },
+   "A2": {
+    "ml": 1584,
+    "WM-like left out, ml": 60.0
+   },
+   "C2": {
+    "ml": 1731,
+    "WM-like left out, ml": 10.1
+   },
+   "D1": {
+    "ml": 1740,
+    "WM-like left out, ml": 13.1
+   },
+   "D3": {
+    "ml": 1879,
+    "WM-like left out, ml": 8.8
+   }
+  }
+ }
+}

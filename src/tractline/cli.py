@@ -52,6 +52,10 @@ def main():
 @click.option("--gibbs", is_flag=True,
               help="Remove Gibbs ringing first, from the series as acquired (DIPY's subvoxel-shift method; the slice "
                    "axis from the sidecar's SliceEncodingDirection, the third axis if it has none). Off unless given.")
+@click.option("--mask", "mask", type=click.Choice(["median-otsu", "synthstrip"]), default="median-otsu",
+              show_default=True,
+              help="The brain mask: median_otsu of the mean b0, or SynthStrip's (experimental; its released weights, "
+                   "31 MB, fetched on first use). The tracker seeds in the mask and stops at its edge.")
 @click.option("--outliers", type=click.Choice(["replace", "flag", "off"]), default=None,
               help="With --motion-eddy: outlier slices replaced by their prediction (the default), flagged only, or "
                    "not sought.")
@@ -79,8 +83,8 @@ def main():
 @click.option("--json", "json_path", type=click.Path(dir_okay=False), default=None,
               help="Also write the run's summary as JSON here ('-' for standard output).")
 @click.option("-q", "--quiet", is_flag=True, help="Print nothing but errors (and --json -).")
-def run(dwi, partners, motion_eddy, gibbs, outliers, trx, float16, labeled_only, qc, write_corrected, shell, labeler,
-        device, workers, no_memory_check, record_absolute_paths, json_path, quiet):
+def run(dwi, partners, motion_eddy, gibbs, mask, outliers, trx, float16, labeled_only, qc, write_corrected, shell,
+        labeler, device, workers, no_memory_check, record_absolute_paths, json_path, quiet):
     """Correct, track and label one dMRI series (NIfTI, BIDS). Errors end in one line; TRACTLINE_DEBUG=1 shows the
     traceback."""
     import os
@@ -90,8 +94,8 @@ def run(dwi, partners, motion_eddy, gibbs, outliers, trx, float16, labeled_only,
     except ImportError:                                                   # reported below, as the extra to install
         ImageFileError = ValueError                                       # noqa: N806
     try:
-        _run(dwi, partners, motion_eddy, gibbs, outliers, trx, float16, labeled_only, qc, write_corrected, shell,
-             labeler, device, workers, no_memory_check, record_absolute_paths, json_path, quiet)
+        _run(dwi, partners, motion_eddy, gibbs, mask, outliers, trx, float16, labeled_only, qc, write_corrected,
+             shell, labeler, device, workers, no_memory_check, record_absolute_paths, json_path, quiet)
     except (ValueError, OSError, FetchError, ImageFileError) as e:        # the input, the disk, the network: one line
         if os.environ.get("TRACTLINE_DEBUG") == "1":
             raise
@@ -108,8 +112,8 @@ def auto_shell(bval) -> float:
         raise click.ClickException(str(e)) from e
 
 
-def _run(dwi, partners, motion_eddy, gibbs, outliers, trx, float16, labeled_only, qc, write_corrected, shell, labeler,
-         device, workers, no_memory_check, record_absolute_paths, json_path, quiet):
+def _run(dwi, partners, motion_eddy, gibbs, mask, outliers, trx, float16, labeled_only, qc, write_corrected, shell,
+         labeler, device, workers, no_memory_check, record_absolute_paths, json_path, quiet):
     if (qc or write_corrected or outliers) and not motion_eddy:
         raise click.UsageError("--qc, --write-corrected and --outliers need --motion-eddy")
     if write_corrected and not qc:
@@ -151,15 +155,19 @@ def _run(dwi, partners, motion_eddy, gibbs, outliers, trx, float16, labeled_only
         me = {"model": motion_eddy, **({"outliers": outliers} if outliers else {}),
               **({"check_memory": False} if no_memory_check else {})}
     gb = {"slice_axis": P.slice_axis_of(s)} if gibbs else None
+    mk = None if mask == "median-otsu" else mask
+    if mk:
+        from .fetch import weights as fetch_weights
+        fetch_weights("synthstrip", progress=None if quiet else _progress("SynthStrip's weights"))
     timer = P.Timer(echo=None if quiet else "  ", stream=sys.stderr)       # standard output stays for --json -
     from . import provenance as PV
-    cfg = P.config_for(shell=shell, motion_eddy=me, gibbs=gb)
+    cfg = P.config_for(shell=shell, motion_eddy=me, gibbs=gb, mask=mk)
     say(f"running on {dev}: shell b = {shell:g}" + (", Gibbs ringing removed" if gb else "")
-        + (f", head motion and eddy currents ({motion_eddy})" if me else ""))
+        + (f", head motion and eddy currents ({motion_eddy})" if me else "") + (f", {mk} mask" if mk else ""))
     for step in PV.experimental(cfg.to_dict()):
         say(f"experimental: {step}")
     r = P.run(s, lab, timer, trx=trx, device=dev, workers=workers, shell=shell, motion_eddy=me,
-              gibbs=gb, positions="float16" if float16 else "float32", labeled_only=labeled_only,
+              gibbs=gb, mask=mk, positions="float16" if float16 else "float32", labeled_only=labeled_only,
               absolute_paths=record_absolute_paths)
     corr, tg, labels = r
     first = timer.seconds.get("gibbs", 0)                                 # before the field: not among pipeline_stages
@@ -285,13 +293,14 @@ def warm(dwi, partners, model, everything, workers):
 
 
 @main.command()
-@click.option("--model", type=click.Choice(["rapidparc", "hemiaug", "tractcloud", "all"]), default="all",
+@click.option("--model", type=click.Choice(["rapidparc", "hemiaug", "tractcloud", "synthstrip", "all"]), default="all",
               show_default=True)
 def fetch(model):
-    """Download the labelers' weights into the cache now (they are otherwise fetched on first use): RapidParc's two
-    models (6.6 MB each) and TractCloud's code and model (about 42 MB), each sha256-checked."""
+    """Download the weights into the cache now (they are otherwise fetched on first use): RapidParc's two models (6.6
+    MB each), TractCloud's code and model (about 42 MB) and SynthStrip's model (31 MB, for --mask synthstrip), each
+    sha256-checked."""
     from . import fetch as FE
-    for name in (["rapidparc", "hemiaug", "tractcloud"] if model == "all" else [model]):
+    for name in (["rapidparc", "hemiaug", "tractcloud", "synthstrip"] if model == "all" else [model]):
         try:
             if name == "tractcloud":
                 src, mod, centroid = FE.tractcloud(progress_for=_progress)

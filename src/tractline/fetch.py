@@ -44,7 +44,13 @@ WEIGHTS = {
                   "6a158dad6a0b6124946da102b6037a6f7f8a16fb24e7caec15eaf95213e7b793", 6574128),
     "hemiaug": ("https://github.com/MedVisBonn/RapidParc/releases/download/v1.0.0/hemiaug.safetensors",
                 "b66dfce6135aac56c3f835264e5ae9630b2497859425ad98cdc6d842c6f94435", 6574128),
+    # SynthStrip's released model (Hoopes et al. 2022), offered by its authors under MIT or CC BY 4.0; taken under MIT
+    "synthstrip": ("https://surfer.nmr.mgh.harvard.edu/docs/synthstrip/requirements/synthstrip.1.pt",
+                   "37417f802196186441aae3e7f385d94f8a98c64a88acaeaa2723af995c653e33", 30851709),
 }
+#: name -> (folder, file name): where each weights file sits under $TRACTOGRAPHY_DATA (a checkout) or the cache
+WEIGHT_FILES = {"rapidparc": ("RapidParc", "rapidparc.safetensors"), "hemiaug": ("RapidParc", "hemiaug.safetensors"),
+                "synthstrip": ("SynthStrip", "synthstrip.1.pt")}
 
 #: TractCloud: the commit whose package modules labelers.tractcloud runs (name -> (sha256, size)), and the release
 #: archives with the members it needs (archive -> (url, size, {member: (sha256, path under the cache's TractCloud/)}))
@@ -228,13 +234,14 @@ def tractcloud(progress_for=None) -> tuple:
 
 
 def weights(name: str, progress=None) -> Path:
-    """The path of a weights file: the checkout's ($TRACTOGRAPHY_DATA/RapidParc/<name>.safetensors) when present, else
-    the cache's, downloaded there on first use."""
+    """The path of a weights file: the checkout's ($TRACTOGRAPHY_DATA/<folder>/<file>, WEIGHT_FILES) when present,
+    else the cache's, downloaded there on first use."""
     from .data import DATA
     if name not in WEIGHTS:
         raise KeyError(f"no weights named {name!r}: {sorted(WEIGHTS)}")
-    local = DATA / "RapidParc" / f"{name}.safetensors"
+    folder, file = WEIGHT_FILES[name]
+    local = DATA / folder / file
     if local.exists():
         return local
     url, sha, size = WEIGHTS[name]
-    return fetch(url, sha, cache_dir() / "RapidParc" / f"{name}.safetensors", size, progress)
+    return fetch(url, sha, cache_dir() / folder / file, size, progress)

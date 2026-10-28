@@ -81,7 +81,9 @@ the reversed series.
    fit, combined with the susceptibility correction into a single resampling of each volume. Slices with signal
    loss are replaced, as eddy's `--repol` does.
 4. **Tractography**: two-tensor UKF tractography as Slicer's UKFTractography does it, with the settings used to build
-   the ORG atlas: a seed in every voxel of the brain mask whose FA is above 0.1.
+   the ORG atlas: a seed in every voxel of the brain mask whose FA is above 0.1. The mask is DIPY's `median_otsu` of
+   the mean b0, or SynthStrip's (`--mask synthstrip`, experimental), which kept the lower brainstem on ON-Harmony's
+   scans, where `median_otsu` cut through it.
 5. **Tract labels** from RapidParc (the default; 94.5 % tract accuracy on TractCloud's labeled test set) or
    TractCloud (`--labeler tractcloud`).
 
@@ -102,7 +104,7 @@ motion and eddy correction there is estimated at 12 to 13 minutes, and has not y
 scan. A series too large for the GPU's memory (an HCP-sized acquisition on a 16 GB laptop, for example) is refused
 before the run starts, with a message.
 
-**On a cluster:** `tractline fetch` downloads the labelers' weights ahead of time, for nodes without internet access
+**On a cluster:** `tractline fetch` downloads the weights ahead of time, for nodes without internet access
 (`TRACTLINE_CACHE` sets where they are kept; `TRACTLINE_OFFLINE=1` forbids downloads). Set `TRITON_CACHE_DIR` to a
 folder the nodes share, so the GPU kernels are compiled once for all of them.
 
@@ -132,8 +134,8 @@ records full paths for local bookkeeping.
 ## Choosing a version
 
 - **No `@...`**, or `@main`: the newest release. The `main` branch moves only when a release is made.
-- **A tag** such as `@v0.6.1`: one release, permanently. Pin a tag when a study's scans must all run on the same
-  code: `uvx --from "tractline[cli] @ git+https://github.com/mhalle/tractline@v0.6.1" tractline ...`, or the same
+- **A tag** such as `@v0.7.0`: one release, permanently. Pin a tag when a study's scans must all run on the same
+  code: `uvx --from "tractline[cli] @ git+https://github.com/mhalle/tractline@v0.7.0" tractline ...`, or the same
   URL with `uv tool install`. `tractline --version` shows which version ran.
 - **`@dev`**: the newest code, ahead of the latest release.
 
@@ -142,7 +144,7 @@ tractline's code, but `uvx` and `uv tool install` resolve the newest versions of
 `uv.lock` pins every package, and running from a clone of the tag uses it:
 
 ```
-git clone --branch v0.6.1 https://github.com/mhalle/tractline && cd tractline
+git clone --branch v0.7.0 https://github.com/mhalle/tractline && cd tractline
 uv run --locked --no-dev --extra cli tractline run ../sub-01/dwi/sub-01_dir-AP_dwi.nii.gz --motion-eddy --trx ../out/sub-01.trx
 ```
 
@@ -157,10 +159,10 @@ tag until you install again with another. [CHANGELOG.md](CHANGELOG.md) lists wha
 Add tractline to a uv project, pinned to a release, with the `bids` extra for reading NIfTI and BIDS:
 
 ```
-uv add git+https://github.com/mhalle/tractline --tag v0.6.1 --extra bids
+uv add git+https://github.com/mhalle/tractline --tag v0.7.0 --extra bids
 ```
 
-Outside uv, `pip install "tractline[bids] @ git+https://github.com/mhalle/tractline@v0.6.1"` does the same.
+Outside uv, `pip install "tractline[bids] @ git+https://github.com/mhalle/tractline@v0.7.0"` does the same.
 
 ```python
 from tractline import bids, pipeline as P
@@ -215,6 +217,6 @@ dependency groups, the GPU tests and the release steps.
 ## Credits and license
 
 Ron Kikinis contributed to tractline. tractline implements methods from FSL (topup, eddy), Slicer's
-UKFTractography, DIPY, RapidParc and TractCloud; [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) credits them,
+UKFTractography, DIPY, SynthStrip, RapidParc and TractCloud; [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) credits them,
 including the one file tractline redistributes (RapidParc's tract scheme). tractline's own code is under the
 Apache License 2.0 ([LICENSE](LICENSE)).

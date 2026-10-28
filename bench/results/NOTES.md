@@ -7786,3 +7786,85 @@ gained a CUDA test (test_gpu_float32_close, MPS and CUDA), and the CUDA runner f
 
 **Not done.** The token itself (the owner's step); Metal in CI (a self-hosted Mac runner); making the GPU workflow a
 required check.
+
+## 2026-10-27 The mask and the brainstem; SynthStrip on the b0, written from the paper
+
+**The report.** Ron Kikinis, on a multi-shell scan of his: CST almost missing (34 streamlines against ~1,400 in his
+other pipeline), MCP none; `median_otsu` of the mean b0 left out about 40 % of the brainstem; with FastSurfer's brain
+grown 2 mm as the mask, nothing else changed, CST 616, CPC 511, MCP 265. He asked for a mask from the T1 (SynthStrip
+through haversack).
+
+**The cause is the threshold, not the filter.** `median_otsu`'s nine-voxel median filter, four passes, looked like it
+could erode the narrow brainstem; a lighter filter (radius 2, one pass) loses more of it, not less (cIIIs04's brainstem
+covered 0.905 against 0.999, `skullstrip_check.py`; on ON-Harmony 34-212 ml of white-matter-like tissue left out
+against 11-53 ml, `mask_study.py`'s A2). The lower
+brainstem is dim in the b0 - the coil's sensitivity falls off at the skull base - and sits near Otsu's threshold. On
+ON-Harmony's mid-sagittal slices `median_otsu` cuts through the pons and medulla on both coils (Head_32, HeadNeck_64).
+
+**What the atlas was trained on** (Zhang et al. 2018, NeuroImage, Appendix A): the 100 HCP subjects' processed data,
+the b = 3000 shell alone (90 directions) and the b0s; UKF seeded in "all voxels within the brain mask" with FA > 0.1,
+stopping at FA < 0.08 or normalized mean signal < 0.06. The mask is not named; HCP's processed data carries
+`nodif_brain_mask`, which HCP's pipeline (`DiffusionToStructural.sh`) makes from FreeSurfer's `brainmask_fs` (the T1)
+resampled and grown one voxel, with the data zeroed outside six voxels. So very likely a T1 brain mask that keeps the
+brainstem: Ron's fix is the training condition. Worth confirming with Lauren O'Donnell.
+
+**Five masks, tracked** (`mask_study.py` -> `results/mask_study.json`; sub-16974 OXF1, uncorrected, b = 2000; seeds
+and stop in the mask unless said):
+
+| mask | stop mask ml | seeds | labeled | Other | UKF s | CST | CPC | MCP | ICP | CBLM-PaT | PLIC | AF |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| A `median_otsu` (today) | 1467 | 111,015 | 80,430 | 42,355 | 62 | 386 | 99 | 0 | 260 | 1795 | 275 | 871 |
+| C seeds in A, stop where the b0 is noise | 2704 | 111,015 | 83,948 | 46,893 | 69 | 793 | 192 | 299 | 260 | 2823 | 202 | 826 |
+| C2 A grown <= 10 mm through brain-like MD | 1701 | 127,515 | 85,265 | 45,290 | 68 | 693 | 168 | 189 | 259 | 2744 | 263 | 852 |
+| D1 SynthStrip on the b0 (border 1 mm) | 1739 | 125,476 | 87,061 | 46,531 | 71 | 847 | 217 | 332 | 262 | 3255 | 240 | 849 |
+| D3 SynthStrip, border 3 mm | 1880 | 136,366 | 87,969 | 47,744 | 73 | 836 | 199 | 333 | 255 | 3508 | 236 | 854 |
+
+- **SynthStrip on the b0 is the best of them.** MCP 0 -> 332, CST 386 -> 847, CPC 99 -> 217, at 9 s more tracking and
+  4,200 more Other. Growing it 2 mm adds nothing to the brainstem tracts. In an exploratory projection (not kept),
+  arm C's points outside today's mask sat in the pons and medulla (down to z = -60 mm), the lower cerebellum and the
+  vertex.
+- **C (no brain mask for stopping)** recovers most of it too, but has no boundary of its own (in an exploratory
+  projection, not kept, its extra Other streamlines ran into the orbit and face); **C2** (a brain-like-diffusion
+  region grown from A) cannot reach the cut through the pons within 10 mm, and in an exploratory run grown 30 mm with
+  hole filling it leaked into the scalp (a 2.7 L mask).
+- **PLIC drops** (275 -> 240) as streamlines once cut short at the pons run on as CST - an assumption, not checked.
+- **Coverage on ON-Harmony** (five subjects, both coils; white-matter-like tissue left out, ml): A 11-53, C2 3-25,
+  D1 3-34, D3 2-26 (A2, the lighter filter, 34-212). On cIIIs04 against FastSurfer (`skullstrip_check.py`): SynthStrip
+  covers brainstem / cerebellum / cortex 0.97 / 0.95 / 0.96 against A's 1.00 / 0.89 / 0.79 (that field of view ends
+  at the pons), and misses 28 ml of the brain against A's 139.
+- **One scan tracked.** A default change needs more subjects, the CST endpoint rule against FastSurfer
+  (`ensemble_endpoints.py`) and scan-rescan stability, and would be a new preset (ukf-rapidparc@2).
+
+**SynthStrip, an independent code base** (`tractline.skullstrip`; `--mask synthstrip`, experimental). The port the
+first comparisons used (mhalle/synthstrip-torch 0.1.1, FreeSurfer-licensed, needs surfa and a C compiler) returned a
+constant field on MPS at a tilted head's conformed size (256 x 192 x 256) and was killed for memory on the 16 GB CPU,
+in runs while developing this (not recorded); it ran on Modal only, and is now the bench's reference (`skullstrip_reference_modal.py`), not FreeSurfer's own
+`mri_synthstrip`, which was not run. The weights are offered by their authors under MIT or CC BY 4.0. tractline's code
+is written from the paper (seven levels, two 3x3x3 convolutions each, leaky ReLU 0.2, max-pooling, concatenated skips,
+a linear SDT; 1 mm conform, intensities to [0, 1]) and the weight file's shapes; what the paper leaves open was settled
+against the reference's outputs, not its code (`skullstrip_check.py` -> `results/skullstrip_check.json`):
+- **Nearest upsampling**: on the reference's own conformed input the network gives its output to 0.007 mm. The
+  reference ran on an A10, where torch likely lets cuDNN's convolutions use TF32; an earlier, unrecorded run of it on
+  MPS agreed to 6e-5 mm. An exploratory run with trilinear upsampling did not reproduce it.
+- **Conform**: the input's own axes permuted and flipped to the nearest LIA (oblique stays oblique), 1 mm, trilinear;
+  intensities minus the minimum, over the 99th percentile clipped, to [0, 1]. The grid's extent is ours: the nonzero
+  box plus a margin, rounded up to 64. **The margin matters**: with none, on cIIIs04 (cut at the pons) brainstem
+  coverage was 0.914 and cerebellum 0.863 (reference 0.987, 0.954); with 16 mm, 0.969 and 0.946, and masks agree with
+  the reference's at Dice 0.988-0.992 on the five check scans (16974 OXF1 the lowest, its mask 28 ml larger).
+- **Memory**: no full-resolution tensor wider than one channel held whole (the first level computed in slabs and
+  pooled as it goes, recomputed slab by slab where the last level needs it; the two finest decoder levels in slabs
+  with halos), every convolution in slabs, and off CUDA each 3x3x3 convolution as three 2D ones: on a 32-slice slab
+  of the 48-channel full-resolution layer, 15x faster than torch's conv3d on MPS (48 against 724 ms) and 5.4x on the
+  CPU (493 against 2,675 ms; 9.6x in an earlier run: the CPU's conv3d time varies), agreeing to 6e-6. While developing it, two MPS behaviors showed up: a strided (non-contiguous) slab fed
+  to the 2D path made Metal allocate about 16 GB (a contiguous copy fixed it), and MPS returned zeros, not an error,
+  when memory ran short; the module refuses a constant field. `tests/test_skullstrip.py` checks the slabbed network
+  against the network run whole (four shapes, slabs that do and do not divide the volume, one-slice slabs, batch 2),
+  with random weights at unit scale: correct code agrees to 3e-5 of the output's spread, and a halo one slice short
+  anywhere or an upsampling one slice off is off by 1.6-5.4 (first written with scaled-down weights, the test missed
+  three such mutations; a second review caught it).
+- **Speed** (16974's tilted grid, cold, one process): MPS 5.5 s with a 2.3 GB peak memory footprint (Metal's buffers
+  counted), CPU 26 s with a 2.7 GB peak resident.
+
+**Not done.** The default (above); the shell rule Ron also raised (most volumes picked b = 1500 over b = 3000 on his
+scan; the atlas used b = 3000); `--mask PATH` for a mask the user brings (from a T1); haversack using this module
+in place of synthstrip-torch.

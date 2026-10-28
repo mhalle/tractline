@@ -458,10 +458,28 @@ def _check_shell(bval, shell):
         raise ValueError(f"prepare: no b = {shell:g} shell or no b0 in this scan (b-values: {sorted(set(np.round(bval).astype(int)))})")
 
 
-def brain_mask(dwi, bval, timer: Timer, prefix="", device="mps") -> np.ndarray:
-    """The mask slot's median-otsu: dipy's median_otsu (median radius 4, 4 passes; tractline.mask) of the mean b0. It is
-    prep.prepare's own mask, voxel for voxel: prepare keeps every b0, in order, so the mean is of the same volumes."""
+def brain_mask(dwi, bval, timer: Timer, prefix="", device="mps", impl="median-otsu", opts=None,
+               affine=None) -> np.ndarray:
+    """The mask slot. median-otsu (the default): dipy's median_otsu (median radius 4, 4 passes; tractline.mask) of the
+    mean b0 - prep.prepare's own mask, voxel for voxel (prepare keeps every b0, in order, so the mean is of the same
+    volumes). synthstrip: SynthStrip's signed distance of the mean b0 (tractline.skullstrip, its released weights:
+    fetch.weights("synthstrip")) below opts["border"] mm; needs the series' affine."""
     bval = np.asarray(bval)
+    if impl == "synthstrip":
+        from . import skullstrip
+        from .fetch import weights
+        if affine is None:
+            raise ValueError("brain_mask: synthstrip needs the series' affine")
+        border = float((opts or {}).get("border", 1.0))
+        w = weights("synthstrip")
+        with timer(prefix + "mask"):
+            b0 = dwi[..., bval < 50].astype(np.float32).mean(-1)
+            mask = skullstrip.signed_distance(b0, affine, w, device) < border
+        if not mask.any():
+            raise ValueError("brain_mask: SynthStrip found no brain in the mean b0 (an empty or constant image?)")
+        return mask
+    if impl != "median-otsu":
+        raise ValueError(f"brain_mask: no mask {impl!r}")
     with timer(prefix + "mask"):
         b0 = dwi[..., bval < 50].astype(np.float32).mean(-1)
         return median_otsu(b0, median_radius=4, numpass=4, device=device)[1]
@@ -565,11 +583,12 @@ def _labeler(cfg: PipelineConfig, labeler, device):
 
 
 def config_for(labeler=None, shell=2800.0, tracker=None, denoise=None, denoise_order="acquired",
-               motion_eddy=None, gibbs=None) -> PipelineConfig:
+               motion_eddy=None, gibbs=None, mask=None) -> PipelineConfig:
     """run()'s keywords as a config: the "default" preset with them applied. labeler: None for the preset's (RapidParc),
     or an object (_bundles_of). motion_eddy: None (off), True (the slot's defaults), a model name ("rigid", "linear",
     "quadratic"), or a dict of the slot's options. gibbs: None (off), True (the slot's defaults: slice axis 2), or a
-    dict of its options ({"slice_axis": slice_axis_of(s)} for a BIDS series)."""
+    dict of its options ({"slice_axis": slice_axis_of(s)} for a BIDS series). mask: None (the preset's, median-otsu),
+    a mask name ("synthstrip"), or {"impl": name, **options}."""
     changes = {"model": {"shell": float(shell)}}
     tracker = _check_tracker(tracker)
     if tracker:
@@ -585,6 +604,8 @@ def config_for(labeler=None, shell=2800.0, tracker=None, denoise=None, denoise_o
         changes["motion_eddy"] = {"impl": "tractline", **opts}
     if gibbs is not None and gibbs is not False:
         changes["gibbs"] = {"impl": "subvoxel-shift", **({} if gibbs is True else dict(gibbs))}
+    if mask is not None and mask is not False:
+        changes["mask"] = {"impl": mask} if isinstance(mask, str) else dict(mask)
     return PipelineConfig.preset("default").with_(**changes)
 
 
@@ -784,6 +805,9 @@ def execute(s, cfg: PipelineConfig, timer: Timer, prefix="", device="auto", work
     if torch.device(device).type == "cpu" and (workers or os.cpu_count() or 1) > 1:
         U.require_main_guard()                                             # before the 20 s field estimate
     labeler = _labeler(cfg, labeler, device)
+    if cfg["mask"].impl == "synthstrip":                                   # its weights now, after every check and
+        from .fetch import weights                                         # before any work, not after the corrections
+        weights("synthstrip")
     dn = cfg["denoise"]
     spec, order, dstats = (None, None, None) if dn is None else (_denoise_spec(dn), dn.opts()["order"], None)
     if order == "acquired":
@@ -803,7 +827,7 @@ def execute(s, cfg: PipelineConfig, timer: Timer, prefix="", device="auto", work
         if order == "corrected":
             corr.dwi, dstats = denoise_corrected(corr.dwi, s.bval, timer, spec, workers)
         corr.denoise, corr.gibbs = dstats, gibbs_b0s
-        mask = brain_mask(corr.dwi, s.bval, timer, prefix, device)
+        mask = brain_mask(corr.dwi, s.bval, timer, prefix, device, cfg["mask"].impl, cfg.opts("mask"), s.affine)
         st, tdwi = s, corr.dwi
         if corr.bvec is not None:                                          # the b-vectors turned with the head
             st = copy.copy(s)
@@ -863,8 +887,8 @@ def execute(s, cfg: PipelineConfig, timer: Timer, prefix="", device="auto", work
 
 
 def run(s, labeler, timer: Timer, prefix="", trx=None, device="auto", workers=None, release=True, shell=None, tracker=None,
-        denoise=None, denoise_order="acquired", config=None, motion_eddy=None, gibbs=None, absolute_paths=False,
-        **trx_options):
+        denoise=None, denoise_order="acquired", config=None, motion_eddy=None, gibbs=None, mask=None,
+        absolute_paths=False, **trx_options):
     """The whole pipeline on a subject: a Run, which unpacks and indexes as (Correction, Tractogram, Labels) and also
     holds the config, the runtime and the provenance record (written beside the TRX, when there is one, as
     <name>.tractline.json: tractline.provenance; absolute_paths=True records full paths in place of shareable ones). labeler: None for the default
@@ -883,22 +907,27 @@ def run(s, labeler, timer: Timer, prefix="", trx=None, device="auto", workers=No
     or "corrected" (denoise_corrected, for comparison). motion_eddy: opt-in head motion and eddy-current correction
     (correct_motion_eddy; config_for's values), its parameters and QC in Correction.motion_eddy, the rotated b-vectors
     in Correction.bvec. gibbs: opt-in Gibbs ringing removal (gibbs_subject; config_for's values), first, on the
-    series as acquired; its time in timer.seconds["gibbs"] (not among pipeline_stages). config: a PipelineConfig
-    instead of shell, tracker, denoise, denoise_order, motion_eddy and gibbs (which must then be left as they are).
+    series as acquired; its time in timer.seconds["gibbs"] (not among pipeline_stages). mask: opt-in, None for
+    today's (median-otsu), or "synthstrip" / {"impl": "synthstrip", "border": mm} (brain_mask; config_for's values).
+    config: a PipelineConfig instead of shell, tracker, denoise, denoise_order, motion_eddy, gibbs and mask (which must
+    then be left as they are).
     Either way the run goes through execute, the config and runtime recorded in Correction.provenance."""
     if motion_eddy is False:
         motion_eddy = None
     if gibbs is False:
         gibbs = None
+    if mask is False:
+        mask = None
     if config is None:
         if shell is None:
             shell = default_shell(s.bval)
         if denoise is not None and denoise_order not in DENOISE_ORDERS:
             raise ValueError(f"denoise_order: {denoise_order!r} is not one of {DENOISE_ORDERS}")
-        config = config_for(labeler, shell, tracker, denoise, denoise_order, motion_eddy, gibbs)
-    elif (shell, tracker or None, denoise, denoise_order, motion_eddy, gibbs) != (None, None, None, "acquired", None, None):
-        raise ValueError("run: with config=, set shell, tracker, denoise, motion_eddy and gibbs in the config, not as "
-                         "keywords too")
+        config = config_for(labeler, shell, tracker, denoise, denoise_order, motion_eddy, gibbs, mask)
+    elif (shell, tracker or None, denoise, denoise_order, motion_eddy, gibbs, mask) != (None, None, None, "acquired",
+                                                                                         None, None, None):
+        raise ValueError("run: with config=, set shell, tracker, denoise, motion_eddy, gibbs and mask in the config, "
+                         "not as keywords too")
     return execute(s, config, timer, prefix, device, workers, labeler, trx, release, absolute_paths=absolute_paths,
                    **trx_options)
 

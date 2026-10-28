@@ -1,0 +1,127 @@
+{
+ "margin mm": 16.0,
+ "scans": {
+  "cIIIs04": {
+   "dice with the reference": 0.9917,
+   "|SDT difference| in the band, max / p99 (mm)": [
+    3.551,
+    0.972
+   ],
+   "mask ml (ours / reference)": [
+    1483,
+    1486
+   ]
+  },
+  "16974_OXF1PRI001": {
+   "dice with the reference": 0.9875,
+   "|SDT difference| in the band, max / p99 (mm)": [
+    5.422,
+    1.261
+   ],
+   "mask ml (ours / reference)": [
+    1739,
+    1711
+   ]
+  },
+  "16974_OXF2PRI001": {
+   "dice with the reference": 0.9902,
+   "|SDT difference| in the band, max / p99 (mm)": [
+    3.898,
+    0.987
+   ],
+   "mask ml (ours / reference)": [
+    1740,
+    1738
+   ]
+  },
+  "03286_OXF1PRI001": {
+   "dice with the reference": 0.9904,
+   "|SDT difference| in the band, max / p99 (mm)": [
+    3.898,
+    0.968
+   ],
+   "mask ml (ours / reference)": [
+    1785,
+    1784
+   ]
+  },
+  "03286_OXF2PRI001": {
+   "dice with the reference": 0.991,
+   "|SDT difference| in the band, max / p99 (mm)": [
+    3.972,
+    0.936
+   ],
+   "mask ml (ours / reference)": [
+    1771,
+    1774
+   ]
+  }
+ },
+ "cIIIs04 against FastSurfer": {
+  "reference (synthstrip-torch 0.1.1)": {
+   "dice with FastSurfer's brain": 0.9063,
+   "brainstem covered": 0.987,
+   "cerebellum covered": 0.954,
+   "cortex covered": 0.965,
+   "ml outside the brain": 234,
+   "ml of the brain missed": 25
+  },
+  "tractline (margin 16 mm)": {
+   "dice with FastSurfer's brain": 0.9055,
+   "brainstem covered": 0.969,
+   "cerebellum covered": 0.946,
+   "cortex covered": 0.963,
+   "ml outside the brain": 233,
+   "ml of the brain missed": 28
+  },
+  "tractline (margin 0)": {
+   "dice with FastSurfer's brain": 0.9022,
+   "brainstem covered": 0.914,
+   "cerebellum covered": 0.863,
+   "cortex covered": 0.963,
+   "ml outside the brain": 227,
+   "ml of the brain missed": 41
+  },
+  "median_otsu (radius 4, 4 passes: today's)": {
+   "dice with FastSurfer's brain": 0.8867,
+   "brainstem covered": 0.999,
+   "cerebellum covered": 0.885,
+   "cortex covered": 0.793,
+   "ml outside the brain": 152,
+   "ml of the brain missed": 139
+  },
+  "median_otsu (radius 2, 1 pass: a lighter filter)": {
+   "dice with FastSurfer's brain": 0.905,
+   "brainstem covered": 0.905,
+   "cerebellum covered": 0.9,
+   "cortex covered": 0.901,
+   "ml outside the brain": 183,
+   "ml of the brain missed": 71
+  }
+ },
+ "network on the reference's conformed input (CPU): max |difference| (mm)": 0.007211506366729736,
+ "time and peak memory (16974 OXF1, cold, one process each)": {
+  "cpu": {
+   "seconds": 25.7,
+   "peak resident MB": 2664,
+   "peak memory footprint MB": 1442
+  },
+  "mps": {
+   "seconds": 5.5,
+   "peak resident MB": 560,
+   "peak memory footprint MB": 2328
+  }
+ },
+ "a 32-slice slab of one full-resolution layer, ms (conv3d vs the 2D path)": {
+  "cpu": {
+   "conv3d": 2675,
+   "three conv2d": 493,
+   "max |difference|": 6.198883056640625e-06
+  },
+  "mps": {
+   "conv3d": 724,
+   "three conv2d": 48,
+   "max |difference|": 5.245208740234375e-06
+  }
+ }
+}

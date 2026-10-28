@@ -138,8 +138,9 @@ def test_fetch_network_error_is_a_fetch_error(tmp_path, monkeypatch):
 
 def test_fetch_hashes_match_the_labeler():
     from tractline.labelers import rapidparc
-    for name, (_, sha, _) in FE.WEIGHTS.items():
-        assert rapidparc.HASHES[name] == sha
+    assert set(rapidparc.HASHES) <= set(FE.WEIGHTS)
+    for name, sha in rapidparc.HASHES.items():
+        assert FE.WEIGHTS[name][1] == sha
 
 
 def test_auto_shell():

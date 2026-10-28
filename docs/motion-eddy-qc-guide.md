@@ -34,7 +34,7 @@ uvx --from "tractline[cli] @ git+https://github.com/mhalle/tractline@main" \
 place, such as `@v0.5.0`, pins the version, so a set of scans can be processed with the same code throughout
 (`tractline --version` reports it); `CHANGELOG.md` lists the releases. The first run downloads PyTorch and
 the trained weights of the labeler (6.6 MB, from RapidParc's release, checked against a pinned checksum), so it takes
-longer than later runs. `tractline fetch` downloads the weights of every labeler ahead of time, for example before
+longer than later runs. `tractline fetch` downloads every weights file ahead of time (the labelers' and SynthStrip's), for example before
 working offline. From a checkout of the
 repository, `uv run tractline run ...` does the same. `tractline docs` prints this guide, the README and every command's help as one Markdown text, for example to give to an LLM.
 
@@ -164,8 +164,15 @@ current distortion combined into a single map, and scaled by the map's Jacobian.
 head.
 
 **Tractography input.** A brain mask is computed from the mean b0 image (DIPY's `median_otsu`, reproduced exactly).
-One shell is tracked, together with the b0 images: `run_pipeline.py` picks the shell with the most volumes unless
-`--shell` names another, and from Python the shell is given as `shell=`.
+The tracker seeds in the mask and stops at its edge, so the mask decides how far tracts reach. `median_otsu` is an
+intensity threshold, and the lower brainstem is dim in the b0 (the coil's sensitivity falls off at the skull base): on
+ON-Harmony's scans it cuts through the pons and medulla, and CST, MCP and CPC lose most of their streamlines.
+`--mask synthstrip` (experimental; `mask="synthstrip"` from Python) uses SynthStrip's brain mask of the same mean b0
+instead (Hoopes et al. 2022; its authors' released model, 31 MB, fetched on first use; about 6 s on an Apple GPU),
+which kept the brainstem on the scans checked and needs no T1. From Python its border is a setting
+(`mask={"impl": "synthstrip", "border": 3.0}` grows the mask by 2 mm). One shell is tracked, together with the b0 images:
+`tractline run` picks the shell with the most volumes unless `--shell` names another, and from Python the shell is
+given as `shell=`.
 
 **UKF tractography.** The tracker is the two-tensor unscented Kalman filter of Malcolm et al. (2010), reimplemented
 from pnlbwh/ukftractography with the settings used to build the ORG atlas (two tensors, its seeding and stopping

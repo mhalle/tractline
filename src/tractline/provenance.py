@@ -194,6 +194,15 @@ def weights(labeler, absolute=False) -> list:
     return out
 
 
+def mask_weights(config, absolute=False) -> list:
+    """The mask slot's weights, when it has any (synthstrip: SynthStrip's released model), with its sha256 as on disk."""
+    if (config.get("slots", {}).get("mask") or {}).get("impl") != "synthstrip":
+        return []
+    from . import fetch
+    rec = _file(fetch.weights("synthstrip"), absolute) or {"sha256": None}
+    return [{"name": "SynthStrip synthstrip.1.pt", **rec, "pinned": rec["sha256"] == fetch.WEIGHTS["synthstrip"][1]}]
+
+
 def _where(path, absolute=False) -> dict:
     """Where a file is, as the record says it: relative to its BIDS dataset (and the dataset folder's name), or its
     name alone outside one; absolute=True: the full path."""
@@ -301,7 +310,7 @@ def record(run, s, device, labeler, timer=None, trx=None, trx_options=None, abso
             ld = torch.device("cuda", torch.cuda.current_device())
         runtime["labeler device"] = str(ld)
     dev = device_info(device)
-    w = weights(labeler, absolute_paths)
+    w = weights(labeler, absolute_paths) + mask_weights(config, absolute_paths)
     pid = config.get("sha256")
     if pid is None:                                      # a caller's labeler object: the config is not hashable
         pid = "unhashed:" + hashlib.sha256(json.dumps({k: v for k, v in config.items() if k != "sha256"},

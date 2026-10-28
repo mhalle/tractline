@@ -39,15 +39,17 @@ app = modal.App("tractline-motion-eddy-cuda", image=image)
 @app.function(gpu="A10", timeout=3600, memory=32768, cpu=8)
 def tests_gpu(select: str = "") -> str:
     """The GPU tests on CUDA: tests/test_motion_eddy.py (the kernels, determinism, CPU against GPU on a scan with known
-    motion), test_devices.py (the pipeline on the GPU against the CPU) and test_gibbs.py (-k select narrows). RapidParc's
-    weights are fetched from its release (tractline.fetch) for test_devices."""
+    motion), test_devices.py (the pipeline on the GPU against the CPU), test_gibbs.py, test_provenance.py and
+    test_skullstrip.py (-k select narrows). RapidParc's weights are fetched from its release (tractline.fetch) for
+    test_devices."""
     import subprocess
     pre = subprocess.run(["python", "-c", "import tractline.motion_eddy_triton as T; assert T.available(), 'no Triton'"],
                          capture_output=True, text=True)
     if pre.returncode != 0:                              # every fused test would skip, and the job would pass
         return json.dumps({"code": 1, "out": "Triton is not available on this GPU: " + pre.stderr[-2000:]})
     cmd = ["python", "-m", "pytest", "-q", "-rs", "-p", "no:cacheprovider", "/root/tests/test_motion_eddy.py",
-           "/root/tests/test_devices.py", "/root/tests/test_gibbs.py", "/root/tests/test_provenance.py"]
+           "/root/tests/test_devices.py", "/root/tests/test_gibbs.py", "/root/tests/test_provenance.py",
+           "/root/tests/test_skullstrip.py"]
     r = subprocess.run(cmd + (["-k", select] if select else []), capture_output=True, text=True, cwd="/root")
     return json.dumps({"code": r.returncode, "out": r.stdout[-6000:] + r.stderr[-3000:]})
 

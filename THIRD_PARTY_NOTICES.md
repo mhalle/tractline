@@ -64,6 +64,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   susceptibility model of Andersson, Skare & Ashburner (NeuroImage 2003) and follows the multi-resolution
   schedule of topup's `b02b0.cnf` (knot spacing, subsampling, smoothing, iterations, regularization). FSL
   itself is used only in `bench/`, as a test reference.
+- **SynthStrip** (Hoopes, Mora, Dalca, Fischl & Hoffmann, NeuroImage 2022; FreeSurfer's `mri_synthstrip`, under the
+  FreeSurfer Software License Agreement): `skullstrip.py` is an independent code base for its network and test-time
+  conform, written from the paper and the tensor shapes of its released weights; it is not copied or translated from `mri_synthstrip` or
+  from ports of it. A port (mhalle/synthstrip-torch) is run in `bench/` only, as a test reference.
 - **TractCloud** (3D Slicer Contribution and Software License Agreement, BSD style;
   github.com/SlicerDMRI/TractCloud; Xue et al., MICCAI 2023): `labelers/tractcloud.py`'s `MatmulDGCNN`
   re-expresses its network's arithmetic for the CPU, and `trained_context` builds the context its released
@@ -74,6 +78,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 - **TractCloud's code and weights**: the optional TractCloud labeler imports its code and loads its
   weights from the user's `$TRACTOGRAPHY_DATA`, under its own license.
 - **RapidParc's weights**: loaded from `$TRACTOGRAPHY_DATA`, under its own license.
+- **SynthStrip's weights** (`synthstrip.1.pt`, for `--mask synthstrip`): downloaded by the user from its authors'
+  page (surfer.nmr.mgh.harvard.edu/docs/synthstrip), which offers them under the MIT license or CC BY 4.0;
+  tractline uses them under MIT and makes no copies of them (the license's notice travels with copies).
 
 ## Data and results in `bench/`
 
