@@ -7956,3 +7956,52 @@ border 3 kept a little more of the brainstem's tracts there, as border 2 and 3 t
 default stays `median_otsu`: four scans, one subject per site. Next: the medulla-reaching CST by name, FastSurfer on
 Ron's T1 for the same anatomy checks, and the preset study with these criteria (anatomical validity, streamlines out
 of the brain, reach into the lower brainstem, scan-rescan stability).
+
+## 2026-10-28 Motion and eddy correction in less memory
+
+On branch `motion-eddy-memory`. The step's memory check refuses an HCP-sized series (1.25 mm, 288 volumes, 3.4 GB a
+copy in float32; GB here are 2^30 bytes) on a 16 GB Mac. This entry is the first part of the fix: the copies the step
+held that it did not need. `bench/motion_eddy/memory_profile.py` -> `results/motion_eddy/memory_before_16974.json`
+and `memory_after_16974.json`; ON-Harmony 16974 OXF1PRI001 (104 x 104 x 72 x 105, 0.30 GB a copy), corrected as
+`tractline run --motion-eddy` does it (the field, then the step), on the M2 (MPS), each version in its own process.
+
+| 16974 on MPS, peaks | before | after |
+|---|---|---|
+| allocated by torch (sampled) | 2.06 GB (6.8 copies) | **1.54 GB (5.1 copies)** |
+| held by Metal's driver (sampled) | 3.34 GB (11.0 copies) | **2.02 GB (6.6 copies)** |
+| process footprint (`/usr/bin/time -l`) | 4.37 GB (14.6 copies) | **2.79 GB (9.3 copies)** |
+| time | 42.7 s | 43.0 s |
+
+The fitted parameters (`theta_fit`, full precision) and the corrected series are bit-identical (sha256 5078305b...
+and bbac8749... in both). The two sampled peaks are lower bounds (every 5 ms; the new code frees memory as it goes, so
+it has shorter peaks to miss than the old); the footprint is a true peak and agrees on the size of the drop. One scan,
+on MPS with a field; the CPU and CUDA paths are covered by the tests (CUDA on Modal: 75 passed, 13 skipped), not by a
+digest.
+
+**What changed** (`motion_eddy.py`, `motion_eddy_metal.py`):
+
+- The series is uploaded a volume at a time into its (G, X, Y, Z) layout on the device; the host-side transposed
+  copy of the whole series is gone.
+- The outlier imputation keeps only the original values at the points it fits (`orig_pts`), not a second full copy,
+  and restores them in place.
+- The prediction volume is allocated on the brain's bounding box (the crop the fit already used), not the full grid.
+- The Metal prefilter runs in place; the smoothing runs 16 volumes at a time.
+- The final resample (`apply_volumes`) runs 16 volumes at a time into a host array; the common mask is the
+  intersection over the kept volumes, as before.
+- On MPS, the allocator's cache is released at the start of the step (what the field's estimate left), after each
+  fit iteration and after the fit. Not on CUDA, whose memory factors were measured without it.
+- `MEMORY_FACTOR` (the check's budget on MPS) is 7.0, from 6.0: it covers the driver's sampled peak (6.6 copies),
+  with little margin; the old 6.0 sat below the old driver peak (11.0). A series of about 1.4-1.6 GB a copy that
+  passed the check on 16 GB before is now refused (the check was too lenient for it).
+
+Found by the review and fixed with it: the shell anchor (`anchor="mi"`, not a default) crashed, the series dropped
+before it ran (already so before this branch; `test_anchor_mi`); `apply_volumes` in float64 rounded its input to
+float32; replacement keys read back as strings would have been skipped.
+
+**Not done: HCP size still does not fit 16 GB.** At 6.6 copies held by the driver, the HCP-sized series would need
+about 22 GB from Metal alone (an extrapolation from 16974's copies, not run; `--hcp` is in the script, not run on
+16 GB). What is left is in the fit's full-grid inputs (the series and its smoothed copy on the device, which the fit
+resamples), by reading the code, not by a per-phase measurement. The next step is to resample only the cropped box
+inside the fit: the resample kernels (Metal, Triton, torch) take an offset into the full grid, plus a margin for the
+motion, and a fallback to the full grid when the motion leaves the margin. That is a kernel change, measured for
+identical results before it lands.

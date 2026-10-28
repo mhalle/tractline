@@ -55,8 +55,10 @@ import torch
 import torch.nn.functional as F
 
 ORDERS = {"rigid": 0, "linear": 4, "quadratic": 10}
-MEMORY_FACTOR = 6.0                  # the budget on MPS, in copies of the series in float32 (measured peak: 3.1 as
-                                     # allocated, 9.9 with the driver's reserve, on a 105-volume scan)
+MEMORY_FACTOR = 7.0                  # the budget on MPS, in copies of the series in float32: on ON-Harmony 16974 (105
+                                     # volumes; the field's estimate and the resample included) the sampled peaks are
+                                     # 5.1 copies allocated and 6.6 held by Metal's driver (6.8 and 11.0 before; NOTES
+                                     # 2026-10-28, results/motion_eddy/memory_after_16974.json)
 MEMORY_FACTOR_CUDA = {"triton": 18.0, "torch": 24.0}   # on CUDA, against the free memory: the A10's allocated peaks on
                                      # ON-Harmony 16974 (correct_motion_eddy, the field's steps included) were 13.8 and
                                      # 18.2 copies (results/motion_eddy/modal_cuda_a10.json, _a10_torch.json), with
@@ -712,6 +714,7 @@ def estimate(dwi, bval, bvec, affine, pe_axis, field_hz=None, pe_sign=None, read
     opt = Options.make(options)
     t_all = time.perf_counter()
     dev = torch.device(device)
+    _release(dev)                                                         # what earlier steps left cached (the field's)
     backend = _backend(opt.backend, dev, dtype)
     dwi = np.asarray(dwi)
     if dwi.ndim != 4:
@@ -768,8 +771,7 @@ def estimate(dwi, bval, bvec, affine, pe_axis, field_hz=None, pe_sign=None, read
         warnings.warn("motion_eddy: the first b0, the field's frame, was left out of the fit: the reference moves to "
                       "the next b0, and the field is off by the motion between them", stacklevel=2)
 
-    acq = torch.tensor(np.ascontiguousarray(np.moveaxis(dwi, -1, 0)), dtype=dtype, device=dev)
-    acq_orig = acq                                                        # imputation works on a copy of it
+    acq = _upload(dwi, dtype, dev)                                        # (G, X, Y, Z), a volume at a time
     del dwi
     S_n = (X, Y, Z)[slice_axis]
     in_brain = torch.tensor(binary_erosion(m_pts, iterations=2)[m_pts], device=dev)     # the points inside the brain
@@ -782,7 +784,6 @@ def estimate(dwi, bval, bvec, affine, pe_axis, field_hz=None, pe_sign=None, read
     full = lambda m: torch.tensor(np.argwhere(m), dtype=dtype, device=dev).contiguous()     # noqa: E731
     ye, xp, xedge = full(m_pts), full(m_pred), full(edge)
     lin_e = torch.tensor(np.flatnonzero(m_pts.reshape(-1)), device=dev)
-    lin_p = torch.tensor(np.flatnonzero(m_pred.reshape(-1)), device=dev)
     sub = torch.tensor(np.flatnonzero((np.argwhere(m_pts) % 2 == 0).all(1)), device=dev)
     probe = xedge[torch.randperm(len(xedge), generator=torch.Generator(device="cpu").manual_seed(1))[:2000].to(dev)]
     b0_t = torch.tensor(isb0, device=dev)
@@ -857,8 +858,13 @@ def estimate(dwi, bval, bvec, affine, pe_axis, field_hz=None, pe_sign=None, read
     nz = np.argwhere(m_pred)
     lo = np.maximum(nz.min(0) - 4, 0)
     hi = np.minimum(nz.max(0) + 5, [X, Y, Z])
-    crop = (slice(None),) + tuple(slice(int(a), int(b)) for a, b in zip(lo, hi))
     offset = tuple(float(a) for a in lo)
+    cshape = tuple(int(b - a) for a, b in zip(lo, hi))
+    # the predictions are kept on the crop alone (all that is read of them), indexed there: lin_pc and lin_ec are lin_p's
+    # and lin_e's points, in the same order
+    lin_pc = torch.tensor(np.ravel_multi_index((nz - lo).T, cshape), device=dev)
+    lin_ec = torch.tensor(np.ravel_multi_index((np.argwhere(m_pts) - lo).T, cshape), device=dev)
+    ncrop = int(np.prod(cshape))
     M = _kernels(backend)
     if M is not None:
         dummy = torch.zeros(1, dtype=torch.float32, device=dev)
@@ -869,6 +875,8 @@ def estimate(dwi, bval, bvec, affine, pe_axis, field_hz=None, pe_sign=None, read
         smooth_fn, prefilter_fn = M.smooth, M.prefilter
     else:
         smooth_fn, prefilter_fn = t_smooth, t_prefilter
+    # the fit's prediction is prefiltered in place where the kernel can (Metal): its values are read first (at the points)
+    prefilter_own = (lambda v: M.prefilter(v, inplace=True)) if backend == "metal" else prefilter_fn
 
     slice_of = ye[:, slice_axis].long()
 
@@ -886,7 +894,7 @@ def estimate(dwi, bval, bvec, affine, pe_axis, field_hz=None, pe_sign=None, read
         under -outlier_z, or for a slice already flagged (prev) under -outlier_z + 1 (hysteresis: a borderline slice
         does not flip from pass to pass), and a loss of at least outlier_min_loss of the slice's mean prediction. gn:
         each volume's intensity gain (G,), the fit's, so a volume's overall level is not read as slice loss."""
-        obs0 = acq_orig.reshape(G, -1)[:, lin_e] / gn[:, None]
+        obs0 = orig_pts / gn[:, None]
         w = in_brain.to(dtype)
         cnt = torch.zeros(S_n, dtype=dtype, device=dev).scatter_add_(0, slice_of, w)
         D = torch.zeros(G, S_n, dtype=dtype, device=dev).scatter_add_(1, slice_of.expand(G, -1), (obs0 - Pv) * w)
@@ -910,24 +918,26 @@ def estimate(dwi, bval, bvec, affine, pe_axis, field_hz=None, pe_sign=None, read
 
     def impute(Pv, gn):
         """acq: the original series with every outlier slice's points replaced by the prediction, at the volume's own
-        intensity (gain x prediction)."""
-        nonlocal acq
-        acq = acq_orig.clone()
+        intensity (gain x prediction). In place: the points get their original values back (orig_pts), then the
+        outliers' replacements; nothing else of acq is ever changed, so no second copy of the series is needed."""
+        flat = acq.view(G, -1)
+        flat[:, lin_e] = orig_pts
         for v in torch.nonzero(outl.any(1))[:, 0].tolist():
             sel = outl[v][slice_of]
-            acq[v].view(-1)[lin_e[sel]] = gn[v] * Pv[v, sel]
+            flat[v, lin_e[sel]] = gn[v] * Pv[v, sel]
 
-    def gains_of(pv_, flagged):
+    def gains_of(pv_pts, flagged):
         """Each volume's intensity relative to its prediction over the fit's points outside its outlier slices (flagged;
         a dropout slab would pull it down), as the fit's gain does; ones without the gain option."""
         if not opt.gain:
             return torch.ones(G, dtype=dtype, device=dev)
         use = (~flagged[:, slice_of]).to(dtype)                                   # (G, N)
-        o = (acq_orig.reshape(G, -1)[:, lin_e] * use).sum(1)
-        p = (pv_[:, lin_e] * use).sum(1)
+        o = (orig_pts * use).sum(1)
+        p = (pv_pts * use).sum(1)
         gn = torch.where(p > 0, o / p.clamp_min(1e-12), torch.ones_like(p))
         return torch.where(torch.isfinite(gn) & (gn > 0), gn, torch.ones_like(gn))
 
+    orig_pts = acq.reshape(G, -1)[:, lin_e].clone()                       # the series as acquired, at the points
     vox_t = torch.as_tensor(vox, dtype=dtype, device=dev)
     th = torch.zeros(G, P, dtype=dtype, device=dev)
     mu = torch.full((G,), 1e-3, dtype=dtype, device=dev)
@@ -946,24 +956,26 @@ def estimate(dwi, bval, bvec, affine, pe_axis, field_hz=None, pe_sign=None, read
                 u = M.resample(vols.contiguous(), xp, pack(th), rs[1], rs[2], dfk)
             else:
                 u = t_resample(geo, vols, xp, th, dfield)
-            pv = torch.zeros(G, X * Y * Z, dtype=dtype, device=dev)
-            pv[:, lin_p] = W @ u
+            pv = torch.zeros(G, ncrop, dtype=dtype, device=dev)
+            pv[:, lin_pc] = W @ u
             del u
+            pv_pts = pv[:, lin_ec]                                                # the prediction at the points
             c_ = it < opt.coarse
             ys, obs = (ye[sub], obs_full[:, sub]) if c_ else (ye, obs_full)
             if opt.gain:
                 # each volume's intensity relative to its prediction, over the fit's points (signal drift, a first
                 # volume not yet at steady state): the observations divided by it, so least squares does not trade it
                 # for position
-                psum = pv[:, lin_e][:, sub].sum(1) if c_ else pv[:, lin_e].sum(1)
+                psum = pv_pts[:, sub].sum(1) if c_ else pv_pts.sum(1)
                 gains = torch.where(psum > 0, obs.sum(1) / psum.clamp_min(1e-12), torch.ones_like(psum))
                 gains = torch.where(torch.isfinite(gains) & (gains > 0), gains, torch.ones_like(gains))
                 obs = obs / gains[:, None]
-            coef = prefilter_fn(pv.reshape(G, X, Y, Z)[crop])
+            coef = prefilter_own(pv.reshape(G, *cshape))
+            pv = None
             first_full = len([f for f in fw_steps if f > 0])
             if opt.outliers != "off" and ((it == 0 and bool(outl.any())) or
                                          (fw == 0 and not c_ and it >= first_full and (it - first_full) % 5 == 0)):
-                gn = gains_of(pv, outl)
+                gn = gains_of(pv_pts, outl)
                 Pv = predictions_at_points(coef, th)
                 if it > 0:                       # step 0 (seeds only): no detection before any registration
                     outl = detect(Pv, gn, outl)
@@ -975,7 +987,7 @@ def estimate(dwi, bval, bvec, affine, pe_axis, field_hz=None, pe_sign=None, read
                 cached = (None, None)                                           # re-smooth the imputed series
                 outlier_log.append({"step": it, "outlier slices": int(outl.sum())})
                 del Pv
-            del pv
+            del pv_pts
             if M is not None:
                 if c_ not in mcache:
                     mcache[c_] = M.consts(geo, G, len(ys), tuple(coef.shape[1:]), offset, npass, has_field)
@@ -1055,6 +1067,7 @@ def estimate(dwi, bval, bvec, affine, pe_axis, field_hz=None, pe_sign=None, read
             history.append(rec)
             if progress:
                 progress(rec)
+            _release(dev)                                                         # the step's buffers back to the driver
             if quiet >= 2:
                 break
     cached = vols = None
@@ -1066,11 +1079,11 @@ def estimate(dwi, bval, bvec, affine, pe_axis, field_hz=None, pe_sign=None, read
                 u = M.resample(acq.contiguous(), xp, pack(th), rs[1], rs[2], dfk)
             else:
                 u = t_resample(geo, acq, xp, th, dfield)
-            pv = torch.zeros(G, X * Y * Z, dtype=dtype, device=dev)
-            pv[:, lin_p] = W @ u
+            pv = torch.zeros(G, ncrop, dtype=dtype, device=dev)
+            pv[:, lin_pc] = W @ u
             del u
-            gn = gains_of(pv, outl)
-            Pv = predictions_at_points(prefilter_fn(pv.reshape(G, X, Y, Z)[crop]), th)
+            gn = gains_of(pv[:, lin_ec], outl)
+            Pv = predictions_at_points(prefilter_own(pv.reshape(G, *cshape)), th)
             del pv
             outl = detect(Pv, gn, outl)
             for v, ks in seeds.items():
@@ -1085,11 +1098,14 @@ def estimate(dwi, bval, bvec, affine, pe_axis, field_hz=None, pe_sign=None, read
                     replacements[int(v)] = (lin_np[sel.cpu().numpy()],
                                             (gn[v] * Pv[v, sel]).cpu().numpy().astype(np.float32))
             del Pv
-    acq = acq_orig = None
+    orig_pts = None
+    if opt.anchor != "mi":                                                # the shell anchor resamples the series
+        acq = None
     if dev.type == "mps":
         torch.mps.synchronize()
     elif dev.type == "cuda":
         torch.cuda.synchronize(dev)
+    _release(dev)
     t_fit = time.perf_counter() - t_all - t_mask
 
     anchors = {}
@@ -1097,6 +1113,7 @@ def estimate(dwi, bval, bvec, affine, pe_axis, field_hz=None, pe_sign=None, read
         kept = [(i, b) for i, b in ((idx[~np.isin(idx, list(excluded))], b) for idx, b in zip(groups, group_b)) if len(i)]
         th, anchors = _shell_anchor(geo, acq, th, [i for i, _ in kept], isb0, [b for _, b in kept], m_ref, dfield,
                                     ddfield, opt, backend)
+    acq = None
     seconds = {"masks": round(t_mask, 2), "fit": round(t_fit, 2), "total": round(time.perf_counter() - t_all, 2)}
 
     out_v = np.zeros(G, bool)
@@ -1232,6 +1249,29 @@ def _shell_anchor(geo, acq, th, groups, isb0, group_b, m_ref, dfield, ddfield, o
 
 # ------------------------------------------------------------------------------------------------- applying
 
+def _upload(dwi, dtype, dev, volumes=None):
+    """dwi (X, Y, Z, G) as a (g, X, Y, Z) tensor on dev, a volume at a time (no transposed copy of the whole series on
+    the host); non-finite values as 0. volumes: which (default all)."""
+    idx = range(dwi.shape[-1]) if volumes is None else volumes
+    host = np.float64 if dtype == torch.float64 else np.float32
+    out = torch.empty((len(idx), *dwi.shape[:3]), dtype=dtype, device=dev)
+    for i, v in enumerate(idx):
+        out[i] = torch.from_numpy(np.nan_to_num(np.asarray(dwi[..., v], host), nan=0.0, posinf=0.0, neginf=0.0))
+    return out
+
+
+def _release(dev):
+    """Return freed blocks to the driver: MPS's allocator otherwise keeps every size it has seen (NOTES 2026-10-28). MPS
+    only: CUDA's caching allocator reuses its blocks, and its memory factors were measured without this."""
+    if dev.type == "mps":
+        torch.mps.empty_cache()
+
+
+#: volumes corrected at a time by apply_volumes: the output goes to the host a chunk at a time, so the device holds
+#: one chunk's input and output, not the whole series twice
+APPLY_CHUNK = 16
+
+
 def _apply(geo, vols, theta, dfield, backend, ddfield=None):
     M = _kernels(backend)
     if M is not None:
@@ -1256,26 +1296,43 @@ def apply_volumes(dwi, result: MotionEddy, field_hz=None, device="mps", dtype=to
     dev = torch.device(device)
     backend = _backend(backend, dev, dtype)
     geo = Geometry(result.shape, result.vox, result.pe_axis, ORDERS[result.model], dev, dtype)
-    vols = torch.tensor(np.ascontiguousarray(np.moveaxis(np.asarray(dwi), -1, 0)), dtype=dtype, device=dev)
-    vols = torch.nan_to_num(vols, nan=0.0, posinf=0.0, neginf=0.0)
-    for v, (lin, vals) in (getattr(result, "replacements", None) or {}).items():   # outlier slices, by their prediction
-        vols[int(v)].view(-1)[torch.as_tensor(lin, device=dev)] = torch.as_tensor(vals, dtype=dtype, device=dev)
+    dwi = np.asarray(dwi)
+    G = dwi.shape[-1]
+    reps = {int(v): r for v, r in (getattr(result, "replacements", None) or {}).items()}
     th = torch.tensor(result.theta_fit, dtype=dtype, device=dev)
     dfield = ddfield = None
     if field_hz is not None:
         h = torch.as_tensor(np.asarray(field_hz, np.float64))
         dfield = (result.pe_scale * h).to(dev, dtype)
         ddfield = (result.pe_scale * torch.gradient(h, dim=result.pe_axis)[0]).to(dev, dtype)
-    with torch.no_grad():
-        out, valid = _apply(geo, vols, th, dfield, backend, ddfield)
-    ok = torch.ones(valid.shape[0], dtype=torch.bool, device=valid.device)
-    if getattr(result, "excluded", None):
-        ok[[int(v) for v in result.excluded]] = False                     # a left-out volume crops nobody else
-    common = (valid[ok].amin(0) > 0) if bool(ok.any()) else torch.ones_like(valid[0], dtype=torch.bool)
+    left = {int(v) for v in (getattr(result, "excluded", None) or {})}   # a left-out volume crops nobody else
+    out = np.empty(dwi.shape[:3] + (G,), np.float32)
+    common = None
+    # a chunk of volumes at a time: each volume is resampled on its own, so chunking changes nothing in its values; the
+    # common mask is the intersection over the chunks' kept volumes, as over the whole series
+    for a in range(0, G, APPLY_CHUNK):
+        b = min(G, a + APPLY_CHUNK)
+        vols = _upload(dwi, dtype, dev, range(a, b))
+        for v in range(a, b):                                             # outlier slices, by their prediction
+            if v in reps:
+                lin, vals = reps[v]
+                vols[v - a].view(-1)[torch.as_tensor(lin, device=dev)] = torch.as_tensor(vals, dtype=dtype, device=dev)
+        with torch.no_grad():
+            o, valid = _apply(geo, vols, th[a:b], dfield, backend, ddfield)
+        keep = [v - a for v in range(a, b) if v not in left]
+        if keep:
+            c = valid[keep].amin(0) > 0
+            common = c if common is None else common & c
+        out[..., a:b] = o.permute(1, 2, 3, 0).cpu().numpy()
+        del vols, o, valid
+        _release(dev)
+    if common is None:
+        common = torch.ones(dwi.shape[:3], dtype=torch.bool, device=dev)
+    common = common.cpu().numpy()
     mo = result.options["mask_output"] if mask_output is None else mask_output
     if mo:
-        out = out * common
-    return np.moveaxis(out.cpu().numpy(), 0, -1).astype(np.float32), common.cpu().numpy()
+        out *= common[..., None]
+    return out, common
 
 
 # ------------------------------------------------------------------------------------------------- all three, one resample

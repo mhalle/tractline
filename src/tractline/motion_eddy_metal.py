@@ -511,9 +511,10 @@ def consts(geo, G, N, grid, offset=(0, 0, 0), npass=2, has_field=False):
     return nch, ip, fp
 
 
-def prefilter(vols):
-    """Cubic B-spline coefficients of vols (G, X, Y, Z), mirrored edges, by the recursive filter on three axes (a copy)."""
-    c = vols.contiguous().clone()
+def prefilter(vols, inplace=False):
+    """Cubic B-spline coefficients of vols (G, X, Y, Z), mirrored edges, by the recursive filter on three axes: a copy,
+    or with inplace (vols contiguous) in vols itself, when the caller no longer needs its values."""
+    c = vols if inplace and vols.is_contiguous() else vols.contiguous().clone()
     G, X, Y, Z = c.shape
     lib = library()
     for ax, nl in ((2, G * X * Y), (1, G * X * Z), (0, G * Y * Z)):
@@ -522,11 +523,25 @@ def prefilter(vols):
     return c
 
 
+#: volumes smoothed at a time: each is smoothed on its own, so the passes' two scratch buffers are a chunk's, not the
+#: series' (the result is the same)
+SMOOTH_CHUNK = 16
+
+
 def smooth(vols, fwhm_vox):
     """vols (G, X, Y, Z) smoothed by a Gaussian of `fwhm_vox` voxels (FWHM) on each axis, replicate edges (radius
-    ceil(3 sigma)), as three passes of gauss_axis."""
+    ceil(3 sigma)), as three passes of gauss_axis, SMOOTH_CHUNK volumes at a time into one output."""
     if fwhm_vox <= 0:
         return vols
+    if vols.shape[0] > SMOOTH_CHUNK:
+        out = torch.empty_like(vols)
+        for a in range(0, vols.shape[0], SMOOTH_CHUNK):
+            out[a:a + SMOOTH_CHUNK] = _smooth(vols[a:a + SMOOTH_CHUNK], fwhm_vox)
+        return out
+    return _smooth(vols, fwhm_vox)
+
+
+def _smooth(vols, fwhm_vox):
     sd = fwhm_vox / 2.3548
     r = int(math.ceil(3 * sd))
     k = torch.exp(-0.5 * (torch.arange(-r, r + 1, dtype=torch.float32) / sd) ** 2)

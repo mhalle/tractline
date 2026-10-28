@@ -417,6 +417,13 @@ def test_outlier_slices_replaced(scan):
     assert set(f.outlier_slices) == {50} and not f.replacements
 
 
+def test_anchor_mi(scan):
+    """The shell anchor (options anchor="mi") runs on the series the fit kept: it needs the series after the fit."""
+    r = ME.estimate(scan["dwi"], scan["bval"], scan["bvec"], scan["affine"], 1, device=DEV,
+                    options={"steps": 5, "anchor": "mi"})
+    assert r.anchors and np.isfinite(r.theta_fit).all()
+
+
 def test_runaway_guard(scan):
     """A volume whose map moves the brain's edge more than max_motion_mm leaves the fit (here the limit is set below
     the real motion, so volumes that move are caught), and the fit stays finite."""

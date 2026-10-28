@@ -1,0 +1,20 @@
+{
+ "tag": "after_16974",
+ "shape": [
+  104,
+  104,
+  72,
+  105
+ ],
+ "one copy GB": 0.3,
+ "seconds": 43.0,
+ "allocated peak GB": 1.54,
+ "allocated peak, copies": 5.06,
+ "Metal driver peak GB": 2.02,
+ "Metal driver peak, copies": 6.63,
+ "process peak resident GB": 1.57,
+ "theta_fit sha256": "5078305bcb2e5d3f609fe924810ee2069d4d1268a1d3bdeb11c28b11f2ca75ba",
+ "corrected sha256": "bbac874988b392f9adda8f2c1360ba7c67c1bf70c2ba7899b21b4cf81dcca6cb",
+ "process peak footprint GB": 2.79,
+ "process peak footprint, copies": 9.3
+}
