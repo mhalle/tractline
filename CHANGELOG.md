@@ -4,6 +4,13 @@ Releases are git tags (`uv add git+https://github.com/mhalle/tractline --tag vX.
 release and `dev` the work in progress (`docs/development.md`, "Branches and releases"). The experiments
 behind each change, with their numbers and later corrections, are in `bench/results/NOTES.md`.
 
+## 0.7.2 - 2026-10-28
+
+- **TractCloud's atlas centroid ships with tractline** (`labelers/tractcloud_data/HCP_mass_center.npy`, 308 bytes,
+  unmodified, its sha256 checked on use). The TractCloud labeler no longer reads 33 MB into its release's 166 MB
+  training-data archive for it: its first use downloads about 8.4 MB, down from about 42 MB. THIRD_PARTY_NOTICES.md
+  carries the file's license (3D Slicer, Part B).
+
 ## 0.7.1 - 2026-10-27
 
 - **Which shell to track, documented** (the user guide's "Tractography input", the README, `--shell`'s help): the ORG

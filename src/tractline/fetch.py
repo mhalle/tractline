@@ -13,13 +13,14 @@ capped at a size it declares, and a file appears in the cache only whole and ver
 beside it, hashed while streaming, renamed into place).
 
     path = weights("rapidparc")         # $TRACTOGRAPHY_DATA/RapidParc/rapidparc.safetensors if there, else the cache
-    src, model, centroid = tractcloud() # TractCloud's code, trained model and atlas centroid, the same way
+    src, model, centroid = tractcloud() # TractCloud's code and trained model the same way; the centroid: the packaged copy
 
 TractCloud (Xue et al. 2023, the optional labeler) comes the same way, from its authors' GitHub: the four modules of its
 package that labelers.tractcloud imports, at a pinned commit, each checked against its sha256; its trained model from
-its v1.0.0 release (TrainedModel.tar.gz, 8.4 MB); and the atlas centroid its inputs are centered on, a 308-byte file
-inside the release's training data (TrainData_800clu800ol.tar.gz, 166 MB), streamed until that file has passed (about
-33 MB in) and no further. Its code is under 3D Slicer's BSD-style license, as published there.
+its v1.0.0 release (TrainedModel.tar.gz, 8.4 MB). The atlas centroid its inputs are centered on (HCP_mass_center.npy,
+308 bytes: 15 points of a mean streamline, from inside the release's 166 MB TrainData_800clu800ol.tar.gz) ships with
+tractline instead (labelers/tractcloud_data/, byte for byte, its sha256 checked on use), under 3D Slicer's license,
+whose Part B THIRD_PARTY_NOTICES.md carries. Its code is under the same license, as published there.
 
 Where the cache is: $TRACTLINE_CACHE if set; else ~/Library/Caches/tractline (macOS), %LOCALAPPDATA%\\tractline
 (Windows), $XDG_CACHE_HOME/tractline or ~/.cache/tractline (elsewhere). TRACTLINE_OFFLINE=1 refuses to download.
@@ -68,12 +69,11 @@ TRACTCLOUD_ARCHIVES = {
                                                  "TrainedModel/best_tract_f1_model.pth"),
         "TrainedModel/cli_args.txt": ("fd521ca95673fb440a84c14078e287f42214975be60b7ff523e6b0df90480fda",
                                       "TrainedModel/cli_args.txt")}),
-    "centroid": (f"{_TC}/TrainData_800clu800ol.tar.gz", 166375409, {                     # read to 33.3 MB, CENTROID_READ
-        "TrainData_800clu800ol/HCP_mass_center.npy": ("62cbbae3dcf1c8d3792af3453c338bbce6fceed4705810a10e23b75b8d4b0fa9",
-                                                      "TrainData_800clu800ol/HCP_mass_center.npy")}),
 }
 
-CENTROID_READ = 33280000             # where the centroid's archive has been read when HCP_mass_center.npy has passed
+#: TractCloud's atlas centroid, shipped with tractline (labelers/tractcloud_data/HCP_mass_center.npy; its release's
+#: TrainData_800clu800ol.tar.gz holds the original): (sha256, size)
+TRACTCLOUD_CENTROID = ("62cbbae3dcf1c8d3792af3453c338bbce6fceed4705810a10e23b75b8d4b0fa9", 308)
 
 
 class FetchError(RuntimeError):
@@ -208,9 +208,10 @@ def members(url: str, size: int, wanted: dict, root: Path, progress=None) -> dic
 def tractcloud(progress_for=None) -> tuple:
     """(source, model, centroid) for labelers.tractcloud: the folder to put on sys.path (holding the package
     `tractcloud`), the trained model's folder (best_tract_f1_model.pth, cli_args.txt) and the atlas centroid
-    (HCP_mass_center.npy). Each is the checkout's ($TRACTOGRAPHY_DATA/TractCloud/src, TrainedModel,
-    TrainData_800clu800ol/HCP_mass_center.npy) when present, else the cache's, fetched there on first use (about
-    42 MB). progress_for(what) -> a progress(done, size) callback, for the release archives."""
+    (HCP_mass_center.npy). The source and the model are the checkout's ($TRACTOGRAPHY_DATA/TractCloud/src,
+    TrainedModel) when present, else the cache's, fetched there on first use (about 8.4 MB); the centroid is the copy
+    shipped with tractline (centroid()). progress_for(what) -> a progress(done, size) callback, for the release
+    archive."""
     from .data import DATA
     root = cache_dir() / "TractCloud"
     src = DATA / "TractCloud" / "src"
@@ -224,13 +225,19 @@ def tractcloud(progress_for=None) -> tuple:
         url, size, wanted = TRACTCLOUD_ARCHIVES["model"]
         members(url, size, wanted, root, progress_for and progress_for("TractCloud's model"))
         model = root / "TrainedModel"
-    centroid = DATA / "TrainData_800clu800ol" / "HCP_mass_center.npy"
-    if not centroid.exists():
-        url, size, wanted = TRACTCLOUD_ARCHIVES["centroid"]
-        shown = progress_for and progress_for("TractCloud's atlas centroid (the first 33 MB of a 166 MB archive)")
-        progress = shown and (lambda done, _: shown(min(done, CENTROID_READ), CENTROID_READ))
-        centroid = next(iter(members(url, size, wanted, root, progress).values()))
-    return src, model, centroid
+    return src, model, centroid()
+
+
+def centroid() -> Path:
+    """TractCloud's atlas centroid as shipped with tractline (labelers/tractcloud_data/HCP_mass_center.npy), checked
+    against its pinned sha256 (TRACTCLOUD_CENTROID)."""
+    from importlib.resources import files
+    p = Path(str(files("tractline.labelers") / "tractcloud_data" / "HCP_mass_center.npy"))
+    sha, size = TRACTCLOUD_CENTROID
+    if not p.is_file() or p.stat().st_size != size or sha256_of(p) != sha:
+        raise FetchError(f"{p}: not TractCloud's centroid (sha256 {sha[:12]}..., {size} bytes) - the installation is "
+                         "damaged; reinstall tractline")
+    return p
 
 
 def weights(name: str, progress=None) -> Path:

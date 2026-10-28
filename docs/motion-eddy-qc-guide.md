@@ -68,7 +68,7 @@ ringing before any other step (section 3; new in release 0.4.0). `--mask synthst
 (`median_otsu`) with SynthStrip's, which kept the lower brainstem on the scans checked (section 3, "Tractography input"; new in release
 0.7.0; its weights, 31 MB, are downloaded on first use). `--shell` sets the b-value tracked (by default the
 shell with the most volumes; section 3, "Tractography input", on which to choose). `--labeler tractcloud` labels with TractCloud in place of
-RapidParc (section 3); its code and trained model are downloaded from TractCloud's GitHub on first use (about 42 MB,
+RapidParc (section 3); its code and trained model are downloaded from TractCloud's GitHub on first use (about 8.4 MB,
 at the version tractline was tested with, checked against pinned checksums). `tractline run --help` lists every
 option.
 

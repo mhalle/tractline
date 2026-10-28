@@ -72,7 +72,7 @@ def main():
                    "was built on b = 3000: on a multi-shell scan, 3000 or the nearest shell matches it.")
 @click.option("--labeler", type=click.Choice(["rapidparc", "hemiaug", "tractcloud"]), default="rapidparc",
               show_default=True, help="RapidParc, its model trained for lesions and surgery, or TractCloud (its code "
-                                      "and model fetched from its GitHub on first use, about 42 MB).")
+                                      "and model fetched from its GitHub on first use, about 8.4 MB).")
 @click.option("--device", type=click.Choice(["auto", "mps", "cuda", "cpu"]), default="auto", show_default=True,
               help="Where to run: auto picks the Apple GPU, then CUDA, then the CPU.")
 @click.option("--workers", type=int, default=None,
@@ -299,7 +299,7 @@ def warm(dwi, partners, model, everything, workers):
               show_default=True)
 def fetch(model):
     """Download the weights into the cache now (they are otherwise fetched on first use): RapidParc's two models (6.6
-    MB each), TractCloud's code and model (about 42 MB) and SynthStrip's model (31 MB, for --mask synthstrip), each
+    MB each), TractCloud's code and model (about 8.4 MB) and SynthStrip's model (31 MB, for --mask synthstrip), each
     sha256-checked."""
     from . import fetch as FE
     for name in (["rapidparc", "hemiaug", "tractcloud", "synthstrip"] if model == "all" else [model]):

@@ -184,6 +184,7 @@ def weights(labeler, absolute=False) -> list:
         src = Path(tc._SOURCE) / "tractcloud"
         files = [(f"TractCloud {k}", src / k, sha) for k, (sha, _) in fetch.TRACTCLOUD_SOURCE.items()]
         pins = {Path(rel).name: sha for _, _, wanted in fetch.TRACTCLOUD_ARCHIVES.values() for sha, rel in wanted.values()}
+        pins["HCP_mass_center.npy"] = fetch.TRACTCLOUD_CENTROID[0]
         files += [(f"TractCloud {f.name}", f, pins[f.name]) for f in (Path(tc.MODEL) / "best_tract_f1_model.pth",
                                                                     Path(tc.MODEL) / "cli_args.txt", Path(tc.MASS_CENTER))]
     else:

@@ -8,7 +8,8 @@ Layout under DATA:
                                          TractCloud labeler
     TrainedModel/                        TractCloud's weights (its release v1.0.0, TrainedModel.tar.gz)
     TrainData_800clu800ol/               from its TrainData_800clu800ol.tar.gz: HCP_mass_center.npy (the labeler's
-                                         centering); test.pickle (its labeled test split, bench/accuracy_tractcloud_test.py)
+                                         centering; tractline ships its own copy, fetch.centroid); test.pickle
+                                         (its labeled test split, bench/accuracy_tractcloud_test.py)
     TestData/HCP/101006_ukf_pp_with_region.vtp   from its TestData.tar.gz (bench/resample_check.py)
     ds001226/                            OpenNeuro ds001226 (BTC_preop, CC0) and what the bench derives from it
     ukf/hardi/                           the Stanford HARDI scan (dipy's stanford_hardi) for the tracker's checks

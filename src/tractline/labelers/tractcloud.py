@@ -22,9 +22,10 @@ from ..fetch import tractcloud as _locate
 
 import os
 # Importing this module: TractCloud's code goes on sys.path and TRACTCLOUD_DATA_DIR defaults to DATA (its own
-# model-cache lookup). The code, the trained model (MODEL) and the atlas centroid (MASS_CENTER) are the checkout's
-# ($TRACTOGRAPHY_DATA: TractCloud/src, TrainedModel, TrainData_800clu800ol) when present, else fetched from TractCloud's
-# GitHub into tractline's cache on first use (fetch.tractcloud: a pinned commit and release, sha256-checked). Its
+# model-cache lookup). The code and the trained model (MODEL) are the checkout's ($TRACTOGRAPHY_DATA: TractCloud/src,
+# TrainedModel) when present, else fetched from TractCloud's GitHub into tractline's cache on first use
+# (fetch.tractcloud: a pinned commit and release, sha256-checked); the atlas centroid (MASS_CENTER) is the copy shipped
+# with tractline (fetch.centroid, sha256-checked). Its
 # modules import vtk for file input/output this labeler does not use: when vtk is not already imported, a stub stands
 # in during TractCloud's import and is removed after it, so a later `import vtk` gets the real one.
 os.environ.setdefault("TRACTCLOUD_DATA_DIR", str(DATA))

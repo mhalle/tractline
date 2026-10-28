@@ -40,8 +40,8 @@ cache, `TRACTLINE_OFFLINE=1` refuses to download). In a checkout, copies under `
   6.6 MB each, from [RapidParc's release](https://github.com/MedVisBonn/RapidParc/releases/tag/v1.0.0), checked
   against their sha256 when loaded. The tests use `rapidparc.safetensors` and skip without it.
 - **TractCloud** (the optional labeler): its code in `TractCloud/src`
-  ([SlicerDMRI/TractCloud](https://github.com/SlicerDMRI/TractCloud)), its weights `TrainedModel/` and
-  `TrainData_800clu800ol/HCP_mass_center.npy` from its v1.0.0 release.
+  ([SlicerDMRI/TractCloud](https://github.com/SlicerDMRI/TractCloud)) and its weights `TrainedModel/` from its v1.0.0
+  release (its atlas centroid ships with tractline; the bench's own scripts read `TrainData_800clu800ol/` too).
 - **The bench's data**: OpenNeuro ds001226 (BTC_preop, CC0) in `ds001226/`; ON-Harmony (ds004712) in `ds004712/`;
   the Stanford HARDI scan in `ukf/hardi/`; TractCloud's test split and HCP test tractogram from its release;
   dcm2niix's validation DICOM in `dicom/`. FSL's topup (for `topup_ref.py` and `cohort_topup.py`) in `fsl-env/`,

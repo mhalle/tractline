@@ -51,9 +51,10 @@ Xue, Zhang, O'Donnell et al., MICCAI 2023; github.com/SlicerDMRI/TractCloud. Nee
 (`$TRACTOGRAPHY_DATA/TractCloud/src`; checked at commit 94de627 - this labeler uses two of its private names,
 `_fiber_distance_efficient` and `_CLUSTER_TO_TRACT_LUT`) and weights (`TrainedModel/`, `HCP_mass_center.npy`).
 Without a checkout, `fetch.tractcloud` gets them into the user cache on first use: the four package modules the
-labeler imports, at that commit (raw files from GitHub), the model from the v1.0.0 release's `TrainedModel.tar.gz`,
-and the centroid from its `TrainData_800clu800ol.tar.gz`, streamed only until that file has passed (about 33 of
-166 MB), each against a pinned sha256 (about 42 MB downloaded, 8.9 MB kept).
+labeler imports, at that commit (raw files from GitHub), and the model from the v1.0.0 release's
+`TrainedModel.tar.gz`, each against a pinned sha256 (about 8.4 MB downloaded, 8.9 MB kept). The centroid, 308 bytes
+from inside the release's 166 MB `TrainData_800clu800ol.tar.gz`, ships with tractline
+(`labelers/tractcloud_data/`, unmodified, its sha256 checked on use; THIRD_PARTY_NOTICES.md carries its license).
 Importing `labelers.tractcloud` puts that directory on `sys.path` and sets `TRACTCLOUD_DATA_DIR` (if unset)
 to `$TRACTOGRAPHY_DATA`; TractCloud's modules import vtk, which a stub replaces during the import when vtk is
 not already loaded (removed afterwards). It refuses a tractogram with fewer than 20 streamlines of 40 mm or

@@ -1,7 +1,7 @@
 # Third-party notices
 
 tractline's code and files are its own, licensed under the Apache License 2.0 (`LICENSE`), except the
-one file under Redistributed. Several modules implement published methods independently, following the original software's
+two files under Redistributed. Several modules implement published methods independently, following the original software's
 behavior so they can be checked against it; they are not distributed under the originals' licenses.
 This file credits those originals and records their licenses for reference, lists the third-party
 material the package redistributes with the notices its licenses require, and names the software and
@@ -47,6 +47,124 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ```
 
 
+### TractCloud's atlas centroid (3D Slicer license, Part B)
+
+`labelers/tractcloud_data/HCP_mass_center.npy` (308 bytes: 15 points of a mean streamline that the TractCloud
+labeler centers its inputs on) is TractCloud's file, unmodified, from its v1.0.0 release
+(github.com/SlicerDMRI/TractCloud, `TrainData_800clu800ol.tar.gz`; Xue et al., MICCAI 2023). It was computed by its
+authors from Human Connectome Project tractography. TractCloud is distributed under the 3D Slicer Contribution and
+Software License Agreement, whose Part B requires the following to accompany any copy:
+
+All or portions of this licensed product (such portions are the "Software") have been obtained under license from
+The Brigham and Women's Hospital, Inc. and are subject to the following terms and conditions:
+
+```
+PART B. DOWNLOADING AGREEMENT - License from Brigham with Right to
+Sublicense ("Software License").
+
+1. As used in this Software License, "you" means the individual
+   downloading and/or using, reproducing, modifying, displaying and/or
+   distributing the Software and the institution or entity which
+   employs or is otherwise affiliated with such individual in
+   connection therewith. The Brigham and Women's Hospital,
+   Inc. ("Brigham") hereby grants you, with right to sublicense, with
+   respect to Brigham's rights in the software, and data, if any,
+   which is the subject of this Software License (collectively, the
+   "Software"), a royalty-free, non-exclusive license to use,
+   reproduce, make derivative works of, display and distribute the
+   Software, provided that:
+
+(a) you accept and adhere to all of the terms and conditions of this
+Software License;
+
+(b) in connection with any copy of or sublicense of all or any portion
+of the Software, all of the terms and conditions in this Software
+License shall appear in and shall apply to such copy and such
+sublicense, including without limitation all source and executable
+forms and on any user documentation, prefaced with the following
+words: "All or portions of this licensed product (such portions are
+the "Software") have been obtained under license from The Brigham and
+Women's Hospital, Inc. and are subject to the following terms and
+conditions:"
+
+(c) you preserve and maintain all applicable attributions, copyright
+notices and licenses included in or applicable to the Software;
+
+(d) modified versions of the Software must be clearly identified and
+marked as such, and must not be misrepresented as being the original
+Software; and
+
+(e) you consider making, but are under no obligation to make, the
+source code of any of your modifications to the Software freely
+available to others on an open source basis.
+
+2. The license granted in this Software License includes without
+   limitation the right to (i) incorporate the Software into
+   proprietary programs (subject to any restrictions applicable to
+   such programs), (ii) add your own copyright statement to your
+   modifications of the Software, and (iii) provide additional or
+   different license terms and conditions in your sublicenses of
+   modifications of the Software; provided that in each case your use,
+   reproduction or distribution of such modifications otherwise
+   complies with the conditions stated in this Software License.
+
+3. This Software License does not grant any rights with respect to
+   third party software, except those rights that Brigham has been
+   authorized by a third party to grant to you, and accordingly you
+   are solely responsible for (i) obtaining any permissions from third
+   parties that you need to use, reproduce, make derivative works of,
+   display and distribute the Software, and (ii) informing your
+   sublicensees, including without limitation your end-users, of their
+   obligations to secure any such required permissions.
+
+4. The Software has been designed for research purposes only and has
+   not been reviewed or approved by the Food and Drug Administration
+   or by any other agency. YOU ACKNOWLEDGE AND AGREE THAT CLINICAL
+   APPLICATIONS ARE NEITHER RECOMMENDED NOR ADVISED. Any
+   commercialization of the Software is at the sole risk of the party
+   or parties engaged in such commercialization. You further agree to
+   use, reproduce, make derivative works of, display and distribute
+   the Software in compliance with all applicable governmental laws,
+   regulations and orders, including without limitation those relating
+   to export and import control.
+
+5. The Software is provided "AS IS" and neither Brigham nor any
+   contributor to the software (each a "Contributor") shall have any
+   obligation to provide maintenance, support, updates, enhancements
+   or modifications thereto. BRIGHAM AND ALL CONTRIBUTORS SPECIFICALLY
+   DISCLAIM ALL EXPRESS AND IMPLIED WARRANTIES OF ANY KIND INCLUDING,
+   BUT NOT LIMITED TO, ANY WARRANTIES OF MERCHANTABILITY, FITNESS FOR
+   A PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL
+   BRIGHAM OR ANY CONTRIBUTOR BE LIABLE TO ANY PARTY FOR DIRECT,
+   INDIRECT, SPECIAL, INCIDENTAL, EXEMPLARY OR CONSEQUENTIAL DAMAGES
+   HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY ARISING IN ANY WAY
+   RELATED TO THE SOFTWARE, EVEN IF BRIGHAM OR ANY CONTRIBUTOR HAS
+   BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES. TO THE MAXIMUM
+   EXTENT NOT PROHIBITED BY LAW OR REGULATION, YOU FURTHER ASSUME ALL
+   LIABILITY FOR YOUR USE, REPRODUCTION, MAKING OF DERIVATIVE WORKS,
+   DISPLAY, LICENSE OR DISTRIBUTION OF THE SOFTWARE AND AGREE TO
+   INDEMNIFY AND HOLD HARMLESS BRIGHAM AND ALL CONTRIBUTORS FROM AND
+   AGAINST ANY AND ALL CLAIMS, SUITS, ACTIONS, DEMANDS AND JUDGMENTS
+   ARISING THEREFROM.
+
+6. None of the names, logos or trademarks of Brigham or any of
+   Brigham's affiliates or any of the Contributors, or any funding
+   agency, may be used to endorse or promote products produced in
+   whole or in part by operation of the Software or derived from or
+   based on the Software without specific prior written permission
+   from the applicable party.
+
+7. Any use, reproduction or distribution of the Software which is not
+   in accordance with this Software License shall automatically revoke
+   all rights granted to you under this Software License and render
+   Paragraphs 1 and 2 of this Software License null and void.
+
+8. This Software License does not grant any rights in or to any
+   intellectual property owned by Brigham or any Contributor except
+   those rights expressly granted hereunder.
+```
+
+
 ## Independent implementations (tractline's code; the originals credited)
 
 - **RapidParc** (BSD 3-Clause, the notice above): `labelers/rapidparc.py` implements its inference
@@ -76,7 +194,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ## Used at run time, not distributed
 
 - **TractCloud's code and weights**: the optional TractCloud labeler imports its code and loads its
-  weights from the user's `$TRACTOGRAPHY_DATA`, under its own license.
+  weights from the user's `$TRACTOGRAPHY_DATA` or tractline's cache (downloaded from its GitHub on first use), under
+  its own license; its atlas centroid ships with tractline (Redistributed, above).
 - **RapidParc's weights**: loaded from `$TRACTOGRAPHY_DATA`, under its own license.
 - **SynthStrip's weights** (`synthstrip.1.pt`, for `--mask synthstrip`): downloaded by the user from its authors'
   page (surfer.nmr.mgh.harvard.edu/docs/synthstrip), which offers them under the MIT license or CC BY 4.0;
