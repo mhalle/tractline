@@ -55,7 +55,7 @@ identifiers summarize it: the pipeline ID names the algorithm and its settings, 
 execution ID also covers the device, the operating system's build, the software versions and the weights, so two
 runs on the same input with the same execution ID should give the same streamlines. Files are identified by their
 checksums; their paths are recorded relative to the BIDS dataset, or by file name outside one, so the record can be
-attached to a paper without your folder names (`--record-absolute-paths` records full paths instead). A run that uses an experimental step, such as `--motion-eddy` or `--gibbs`, says so
+attached to a paper without your folder names (`--record-absolute-paths` records full paths instead). A run that uses an experimental step, such as `--motion-eddy`, `--gibbs` or `--mask synthstrip`, says so
 when it starts.
 
 The reversed phase-encoding series used for the susceptibility field is found from the BIDS sidecars, or can be named
@@ -64,7 +64,9 @@ printed note says so. The motion and eddy current correction is off unless `--mo
 only the susceptibility field is corrected. The eddy current model is quadratic by default; `--motion-eddy linear`
 selects the linear model, and `--motion-eddy rigid` corrects head motion alone, with no eddy current model.
 `--outliers off` keeps the correction but turns off the replacement of outlier slices. `--gibbs` removes Gibbs
-ringing before any other step (section 3; new in release 0.4.0). `--shell` sets the b-value tracked (by default the
+ringing before any other step (section 3; new in release 0.4.0). `--mask synthstrip` replaces the default brain mask
+(`median_otsu`) with SynthStrip's, which kept the lower brainstem on the scans checked (section 3, "Tractography input"; new in release
+0.7.0; its weights, 31 MB, are downloaded on first use). `--shell` sets the b-value tracked (by default the
 shell with the most volumes). `--labeler tractcloud` labels with TractCloud in place of
 RapidParc (section 3); its code and trained model are downloaded from TractCloud's GitHub on first use (about 42 MB,
 at the version tractline was tested with, checked against pinned checksums). `tractline run --help` lists every
@@ -322,6 +324,9 @@ parcellation. *Imaging Neuroscience*. 2026.
 Cetin-Karayumak S, Zhang F, Zurrin R, Billah T, Zekelman L, Makris N, Pieper S, O'Donnell LJ, Rathi Y. Harmonized
 diffusion MRI data and white matter measures from the Adolescent Brain Cognitive Development Study. *Scientific
 Data*. 2024;11:249.
+
+Hoopes A, Mora JS, Dalca AV, Fischl B, Hoffmann M. SynthStrip: skull-stripping for any brain image. *NeuroImage*.
+2022;260:119474.
 
 Kellner E, Dhital B, Kiselev VG, Reisert M. Gibbs-ringing artifact removal based on local subvoxel-shifts.
 *Magnetic Resonance in Medicine*. 2016;76(5):1574-1581.
