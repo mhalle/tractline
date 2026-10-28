@@ -196,12 +196,15 @@ def weights(labeler, absolute=False) -> list:
 
 
 def mask_weights(config, absolute=False) -> list:
-    """The mask slot's weights, when it has any (synthstrip: SynthStrip's released model), with its sha256 as on disk."""
-    if (config.get("slots", {}).get("mask") or {}).get("impl") != "synthstrip":
+    """The mask slot's weights, when it has any (synthstrip, synthstrip-nocsf: SynthStrip's released models), with
+    their sha256 as on disk."""
+    from .pipeline import SYNTHSTRIP
+    impl = (config.get("slots", {}).get("mask") or {}).get("impl")
+    if impl not in SYNTHSTRIP:
         return []
     from . import fetch
-    rec = _file(fetch.weights("synthstrip"), absolute) or {"sha256": None}
-    return [{"name": "SynthStrip synthstrip.1.pt", **rec, "pinned": rec["sha256"] == fetch.WEIGHTS["synthstrip"][1]}]
+    rec = _file(fetch.weights(impl), absolute) or {"sha256": None}
+    return [{"name": f"SynthStrip {fetch.WEIGHT_FILES[impl][1]}", **rec, "pinned": rec["sha256"] == fetch.WEIGHTS[impl][1]}]
 
 
 def _where(path, absolute=False) -> dict:

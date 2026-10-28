@@ -458,20 +458,25 @@ def _check_shell(bval, shell):
         raise ValueError(f"prepare: no b = {shell:g} shell or no b0 in this scan (b-values: {sorted(set(np.round(bval).astype(int)))})")
 
 
+#: the SynthStrip masks: implementation (also its weights' name in fetch) -> default border, mm
+SYNTHSTRIP = {"synthstrip": 1.0, "synthstrip-nocsf": 2.0}
+
+
 def brain_mask(dwi, bval, timer: Timer, prefix="", device="mps", impl="median-otsu", opts=None,
                affine=None) -> np.ndarray:
     """The mask slot. median-otsu (the default): dipy's median_otsu (median radius 4, 4 passes; tractline.mask) of the
     mean b0 - prep.prepare's own mask, voxel for voxel (prepare keeps every b0, in order, so the mean is of the same
-    volumes). synthstrip: SynthStrip's signed distance of the mean b0 (tractline.skullstrip, its released weights:
-    fetch.weights("synthstrip")) below opts["border"] mm; needs the series' affine."""
+    volumes). synthstrip, synthstrip-nocsf: SynthStrip's signed distance of the mean b0 (tractline.skullstrip; the
+    released main model, brain and CSF, or its no-CSF model: fetch.weights(impl)) below opts["border"] mm (defaults 1
+    and 2); needs the series' affine."""
     bval = np.asarray(bval)
-    if impl == "synthstrip":
+    if impl in SYNTHSTRIP:
         from . import skullstrip
         from .fetch import weights
         if affine is None:
-            raise ValueError("brain_mask: synthstrip needs the series' affine")
-        border = float((opts or {}).get("border", 1.0))
-        w = weights("synthstrip")
+            raise ValueError(f"brain_mask: {impl} needs the series' affine")
+        border = float((opts or {}).get("border", SYNTHSTRIP[impl]))
+        w = weights(impl)
         with timer(prefix + "mask"):
             b0 = dwi[..., bval < 50].astype(np.float32).mean(-1)
             mask = skullstrip.signed_distance(b0, affine, w, device) < border
@@ -588,7 +593,7 @@ def config_for(labeler=None, shell=2800.0, tracker=None, denoise=None, denoise_o
     or an object (_bundles_of). motion_eddy: None (off), True (the slot's defaults), a model name ("rigid", "linear",
     "quadratic"), or a dict of the slot's options. gibbs: None (off), True (the slot's defaults: slice axis 2), or a
     dict of its options ({"slice_axis": slice_axis_of(s)} for a BIDS series). mask: None (the preset's, median-otsu),
-    a mask name ("synthstrip"), or {"impl": name, **options}."""
+    a mask name ("synthstrip", "synthstrip-nocsf"), or {"impl": name, **options}."""
     changes = {"model": {"shell": float(shell)}}
     tracker = _check_tracker(tracker)
     if tracker:
@@ -805,9 +810,9 @@ def execute(s, cfg: PipelineConfig, timer: Timer, prefix="", device="auto", work
     if torch.device(device).type == "cpu" and (workers or os.cpu_count() or 1) > 1:
         U.require_main_guard()                                             # before the 20 s field estimate
     labeler = _labeler(cfg, labeler, device)
-    if cfg["mask"].impl == "synthstrip":                                   # its weights now, after every check and
+    if cfg["mask"].impl in SYNTHSTRIP:                                     # its weights now, after every check and
         from .fetch import weights                                         # before any work, not after the corrections
-        weights("synthstrip")
+        weights(cfg["mask"].impl)
     dn = cfg["denoise"]
     spec, order, dstats = (None, None, None) if dn is None else (_denoise_spec(dn), dn.opts()["order"], None)
     if order == "acquired":
@@ -908,7 +913,8 @@ def run(s, labeler, timer: Timer, prefix="", trx=None, device="auto", workers=No
     (correct_motion_eddy; config_for's values), its parameters and QC in Correction.motion_eddy, the rotated b-vectors
     in Correction.bvec. gibbs: opt-in Gibbs ringing removal (gibbs_subject; config_for's values), first, on the
     series as acquired; its time in timer.seconds["gibbs"] (not among pipeline_stages). mask: opt-in, None for
-    today's (median-otsu), or "synthstrip" / {"impl": "synthstrip", "border": mm} (brain_mask; config_for's values).
+    today's (median-otsu), or "synthstrip" / "synthstrip-nocsf" / {"impl": name, "border": mm} (brain_mask; config_for's
+    values).
     config: a PipelineConfig instead of shell, tracker, denoise, denoise_order, motion_eddy, gibbs and mask (which must
     then be left as they are).
     Either way the run goes through execute, the config and runtime recorded in Correction.provenance."""

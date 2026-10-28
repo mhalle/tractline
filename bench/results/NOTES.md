@@ -7872,3 +7872,87 @@ against the reference's outputs, not its code (`skullstrip_check.py` -> `results
 **Not done.** The default (above); the shell rule Ron also raised (most volumes picked b = 1500 over b = 3000 on his
 scan; the atlas used b = 3000); `--mask PATH` for a mask the user brings (from a T1); haversack using this module
 in place of synthstrip-torch.
+
+## 2026-10-28 Ron's claims checked; the masks with and without CSF; CST traced, whatever its name; Ron's scan
+
+Three claims from Ron Kikinis's description of Albula's pipeline (2026-10-28) and two of Lauren O'Donnell's questions,
+checked on tractline, then the masks compared on a scan Ron shared. All runs distortion-corrected (the field slot's
+default; no `--motion-eddy`), the shell nearest b = 3000.
+
+**"Four in five streamlines named CST run through a thalamus"** (`cst_thalamus_outside.py` ->
+`results/cst_thalamus_outside.json`; PAT16 and cIIIs04, FastSurfer labels with their T1-to-DWI rigid fits). Of the
+streamlines named CST, the share with 2 or more points in a thalamus: 30-33 % counting the whole label, 10-15 % in its
+core 3 mm in; the thalamic classes (TF) stay at 59-69 % at 3 mm. So about one in three, mostly at the thalamus's edge
+beside the internal capsule, where 1-2 mm of alignment decides; not reproduced. On cIIIs04 those streamlines fit the
+CST endpoint rule as often as the rest (0.69-0.78, by arm); on PAT16 less often (0.52-0.57 against 0.73-0.74).
+
+**Named streamlines outside the brain** (the same script: a run of 3 or more points more than 2 mm outside
+FastSurfer's brain, label 0 or 24). Already common with `median_otsu`: 1,238 named on PAT16, 836 on cIIIs04, tens to
+about a hundred per tract within 15 mm of the brainstem (CR-F 115, CST 50, TF 46 on cIIIs04), where cranial nerves
+leave it (whether they are nerves is not shown). SynthStrip with CSF (border 1) did not change PAT16 but tripled
+cIIIs04's named ones (2,325), led by classes that end at the convexity (Sup-F 455, CC6 248; no location was
+recorded): tracking into the CSF its mask includes. That retracts the claim (2026-10-27
+to the user) that CSF in the mask is harmless to UKF.
+
+**The masks, six arms** (same script; `fetch` now pins SynthStrip's no-CSF model, `synthstrip.nocsf.1.pt`, the same
+network with other weights, sha256 62bf0113...):
+
+| PAT16 / cIIIs04 | CST fitting the endpoint rule | named streamlines out of the brain | of those near the brainstem |
+|---|---|---|---|
+| median_otsu | 320 / 404 | 1,238 / 836 | 143 / 360 |
+| with CSF, border 1 | 316 / 385 | 1,258 / 2,325 | 125 / 355 |
+| with CSF, border 0 | 351 / 403 | 912 / 1,690 | 96 / 280 |
+| no-CSF, border 1 | 357 / 334 | 35 / 119 | 1 / 5 |
+| no-CSF, border 2 | 410 / 417 | 134 / 363 | 15 / 25 |
+| no-CSF (border 1) or median_otsu | 316 / 420 | 1,258 / 834 | 146 / 343 |
+
+On cIIIs04's FastSurfer coverage (`skullstrip_check.py`'s comparison run interactively for these borders, not
+recorded): no-CSF at border 2 covers the brainstem 0.88, the cerebellum 0.92, the cortex 0.95 (with CSF, border 1:
+0.97, 0.95, 0.96); border 1 trims the brainstem to 0.83. The "out of the brain" count partly rewards FastSurfer's own
+definition (it excludes CSF); the CST count does not.
+
+**CST traced, whatever its name** (Lauren's question 2; `cst_traced.py` -> `results/cst_traced.json`): every
+streamline held to the CST endpoint rule. PAT16 1,339 (median_otsu) / 1,644 (no-CSF, border 2), cIIIs04 2,161 / 2,291,
+of which 610 / 707 and 1,409 / **784** reach the lowest third of the brainstem label (mostly medulla). RapidParc names
+18-25 % of them CST; the rest Other (27-48 %), CR-F and TF. So the tracing is there and the naming is the bottleneck.
+The rule is broad (premotor and sensory cortex count, and the pons), so it includes corticopontine fibers; the
+medulla-reaching subset is the CST proper, by name next. On cIIIs04 the no-CSF mask reached the lowest brainstem
+less often (784 against 1,409): the edge trimming at work, or that field of view's floor near the pons; on PAT16 more.
+
+**What upstream had** (HCP's code read, for the question of which mask is faithful): the ORG atlas's tractography was
+on HCP's processed data, corrected by topup, eddy (outlier replacement) and gradient-nonlinearity correction, in T1
+space. HCP's `nodif_brain_mask` (`DiffusionToStructural.sh`) is `brainmask_fs` resampled to 1.25 mm and grown one
+voxel; `brainmask_fs` (`FreeSurfer2CaretConvertAndRegisterNonlinear.sh`) is FreeSurfer's `wmparc` binarized, dilated
+three times, eroded twice and hole-filled. So tissue (brainstem included, the CSF around the brain not) plus about 2 mm:
+the no-CSF arm at border 2 in kind. Inferred, not stated by the atlas paper.
+
+**Ron's scan** (one subject he shared, not in the repository; `mask_compare_scan.py`, its results kept outside the
+repository; the acquisition from its sidecars): Siemens Prisma Fit, Head_32, 1.5 mm, multiband 4, partial Fourier 6/8,
+b = 1500 and 3000 (47 and 46 volumes), **no Prescan Normalize** (no NORM in ImageType). Its series named `dir99_PA` was
+acquired AP: its sidecar says `j-`, and its mean b0 correlates 0.986 with `dir99_AP` against 0.61 with `dir98_PA`
+(measured interactively, not recorded). tractline refused it and
+paired `dir99_AP` with `dir98_PA`, the session's one true reversed series; a pairing by file name would be wrong.
+Corrected, b = 3000:
+
+| | mask ml | CST | MCP | CPC | PLIC | Other |
+|---|---|---|---|---|---|---|
+| median_otsu | 1,558 | 6 | 0 | 13 | 264 | 89,320 |
+| with CSF, border 1 | 1,758 | 1,282 | 846 | 601 | 546 | 103,856 |
+| no-CSF, border 2 | 1,609 | 1,286 | 841 | 653 | 583 | 99,339 |
+| no-CSF, border 3 | 1,715 | 1,289 | 838 | 635 | 571 | 101,979 |
+
+On the corrected mean b0, `median_otsu` leaves out the whole brainstem and part of the diencephalon: without the
+scanner's normalization the coil's falloff leaves them darker than the threshold, and the correction cannot change
+that. Either SynthStrip mask restores the tracts through the brainstem; without CSF with a mask 150 ml smaller and
+4,500 fewer Other.
+
+**A correction:** the 0.7.0 entries' sub-16974 numbers (MCP 0 and CST 386 with median_otsu) came from
+`mask_study.py`, which tracks without the field. Corrected, as tractline runs by default (`mask_compare_scan.py` ->
+`results/mask_compare_16974.json`): median_otsu 582 CST / 165 MCP, SynthStrip with CSF 893 / 277, without 831 / 254 at
+border 2 and 862 / 266 at border 3 (with 1,072 more Other). The default's gap there is smaller than first said; and
+border 3 kept a little more of the brainstem's tracts there, as border 2 and 3 tied on Ron's scan.
+
+**So** `--mask synthstrip-nocsf` (border 2) is added beside `--mask synthstrip` (unchanged), both experimental. The
+default stays `median_otsu`: four scans, one subject per site. Next: the medulla-reaching CST by name, FastSurfer on
+Ron's T1 for the same anatomy checks, and the preset study with these criteria (anatomical validity, streamlines out
+of the brain, reach into the lower brainstem, scan-rescan stability).

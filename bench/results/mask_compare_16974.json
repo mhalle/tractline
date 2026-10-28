@@ -1,0 +1,97 @@
+{
+ "series": "sub-16974_ses-OXF1PRI001_dir-AP_dwi.nii.gz",
+ "pairing": "corrected with sub-16974_ses-OXF1PRI001_dir-PA_dwi.nii.gz (same folder)",
+ "shell": 2000.0,
+ "shells (volumes)": {
+  "0": 5,
+  "1000": 50,
+  "2000": 50
+ },
+ "voxel mm": [
+  2.02,
+  2.02,
+  2.0
+ ],
+ "acquisition": {
+  "Manufacturer": "Siemens",
+  "ManufacturersModelName": "Prisma",
+  "ReceiveCoilName": "Head_32",
+  "ImageType": [
+   "ORIGINAL",
+   "PRIMARY",
+   "DIFFUSION",
+   "NONE",
+   "MB",
+   "ND",
+   "MOSAIC"
+  ],
+  "MultibandAccelerationFactor": 3,
+  "PartialFourier": 0.75,
+  "PhaseEncodingDirection": "j-",
+  "TotalReadoutTime": 0.0690115
+ },
+ "median-otsu": {
+  "field applied": true,
+  "mask ml": 1463,
+  "streamlines": 98080,
+  "labeled": 80979,
+  "Other": 43466,
+  "CST": 582,
+  "CPC": 174,
+  "MCP": 165,
+  "ICP": 301,
+  "Intra-CBLM-I-P": 896,
+  "Intra-CBLM-PaT": 1664,
+  "PLIC": 266,
+  "AF": 927,
+  "CC4": 481
+ },
+ "synthstrip (border 1)": {
+  "field applied": true,
+  "mask ml": 1737,
+  "streamlines": 104405,
+  "labeled": 85358,
+  "Other": 45401,
+  "CST": 893,
+  "CPC": 184,
+  "MCP": 277,
+  "ICP": 291,
+  "Intra-CBLM-I-P": 977,
+  "Intra-CBLM-PaT": 3309,
+  "PLIC": 192,
+  "AF": 922,
+  "CC4": 511
+ },
+ "no-CSF, border 2": {
+  "field applied": true,
+  "mask ml": 1530,
+  "streamlines": 102663,
+  "labeled": 84176,
+  "Other": 43107,
+  "CST": 831,
+  "CPC": 196,
+  "MCP": 254,
+  "ICP": 291,
+  "Intra-CBLM-I-P": 1025,
+  "Intra-CBLM-PaT": 3160,
+  "PLIC": 203,
+  "AF": 930,
+  "CC4": 535
+ },
+ "no-CSF, border 3": {
+  "field applied": true,
+  "mask ml": 1630,
+  "streamlines": 103783,
+  "labeled": 85083,
+  "Other": 44179,
+  "CST": 862,
+  "CPC": 199,
+  "MCP": 266,
+  "ICP": 294,
+  "Intra-CBLM-I-P": 970,
+  "Intra-CBLM-PaT": 3422,
+  "PLIC": 209,
+  "AF": 922,
+  "CC4": 530
+ }
+}

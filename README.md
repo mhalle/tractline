@@ -84,8 +84,8 @@ the reversed series.
    loss are replaced, as eddy's `--repol` does.
 4. **Tractography**: two-tensor UKF tractography as Slicer's UKFTractography does it, with the settings used to build
    the ORG atlas: a seed in every voxel of the brain mask whose FA is above 0.1. The mask is DIPY's `median_otsu` of
-   the mean b0, or SynthStrip's (`--mask synthstrip`, experimental), which kept the lower brainstem on ON-Harmony's
-   scans, where `median_otsu` cut through it.
+   the mean b0, or SynthStrip's without or with the CSF around the brain (`--mask synthstrip-nocsf`, `--mask
+   synthstrip`; experimental), which kept the lower brainstem on the scans checked where `median_otsu` cut through it.
 5. **Tract labels** from RapidParc (the default; 94.5 % tract accuracy on TractCloud's labeled test set) or
    TractCloud (`--labeler tractcloud`).
 
@@ -136,8 +136,8 @@ records full paths for local bookkeeping.
 ## Choosing a version
 
 - **No `@...`**, or `@main`: the newest release. The `main` branch moves only when a release is made.
-- **A tag** such as `@v0.7.2`: one release, permanently. Pin a tag when a study's scans must all run on the same
-  code: `uvx --from "tractline[cli] @ git+https://github.com/mhalle/tractline@v0.7.2" tractline ...`, or the same
+- **A tag** such as `@v0.8.0`: one release, permanently. Pin a tag when a study's scans must all run on the same
+  code: `uvx --from "tractline[cli] @ git+https://github.com/mhalle/tractline@v0.8.0" tractline ...`, or the same
   URL with `uv tool install`. `tractline --version` shows which version ran.
 - **`@dev`**: the newest code, ahead of the latest release.
 
@@ -146,7 +146,7 @@ tractline's code, but `uvx` and `uv tool install` resolve the newest versions of
 `uv.lock` pins every package, and running from a clone of the tag uses it:
 
 ```
-git clone --branch v0.7.2 https://github.com/mhalle/tractline && cd tractline
+git clone --branch v0.8.0 https://github.com/mhalle/tractline && cd tractline
 uv run --locked --no-dev --extra cli tractline run ../sub-01/dwi/sub-01_dir-AP_dwi.nii.gz --motion-eddy --trx ../out/sub-01.trx
 ```
 
@@ -161,10 +161,10 @@ tag until you install again with another. [CHANGELOG.md](CHANGELOG.md) lists wha
 Add tractline to a uv project, pinned to a release, with the `bids` extra for reading NIfTI and BIDS:
 
 ```
-uv add git+https://github.com/mhalle/tractline --tag v0.7.2 --extra bids
+uv add git+https://github.com/mhalle/tractline --tag v0.8.0 --extra bids
 ```
 
-Outside uv, `pip install "tractline[bids] @ git+https://github.com/mhalle/tractline@v0.7.2"` does the same.
+Outside uv, `pip install "tractline[bids] @ git+https://github.com/mhalle/tractline@v0.8.0"` does the same.
 
 ```python
 from tractline import bids, pipeline as P

@@ -52,10 +52,12 @@ def main():
 @click.option("--gibbs", is_flag=True,
               help="Remove Gibbs ringing first, from the series as acquired (DIPY's subvoxel-shift method; the slice "
                    "axis from the sidecar's SliceEncodingDirection, the third axis if it has none). Off unless given.")
-@click.option("--mask", "mask", type=click.Choice(["median-otsu", "synthstrip"]), default="median-otsu",
-              show_default=True,
-              help="The brain mask: median_otsu of the mean b0, or SynthStrip's (experimental; its released weights, "
-                   "31 MB, fetched on first use). The tracker seeds in the mask and stops at its edge.")
+@click.option("--mask", "mask", type=click.Choice(["median-otsu", "synthstrip", "synthstrip-nocsf"]),
+              default="median-otsu", show_default=True,
+              help="The brain mask, where the tracker seeds and whose edge stops it: median_otsu of the mean b0; "
+                   "SynthStrip's brain with CSF (border 1 mm); or SynthStrip's brain without CSF (border 2 mm; fewer "
+                   "streamlines run out of the brain with it; see the user guide). Both SynthStrip masks are "
+                   "experimental; their released weights (31 MB each) are fetched on first use.")
 @click.option("--outliers", type=click.Choice(["replace", "flag", "off"]), default=None,
               help="With --motion-eddy: outlier slices replaced by their prediction (the default), flagged only, or "
                    "not sought.")
@@ -160,7 +162,7 @@ def _run(dwi, partners, motion_eddy, gibbs, mask, outliers, trx, float16, labele
     mk = None if mask == "median-otsu" else mask
     if mk:
         from .fetch import weights as fetch_weights
-        fetch_weights("synthstrip", progress=None if quiet else _progress("SynthStrip's weights"))
+        fetch_weights(mk, progress=None if quiet else _progress(f"SynthStrip's weights ({mk})"))
     timer = P.Timer(echo=None if quiet else "  ", stream=sys.stderr)       # standard output stays for --json -
     from . import provenance as PV
     cfg = P.config_for(shell=shell, motion_eddy=me, gibbs=gb, mask=mk)
@@ -295,14 +297,15 @@ def warm(dwi, partners, model, everything, workers):
 
 
 @main.command()
-@click.option("--model", type=click.Choice(["rapidparc", "hemiaug", "tractcloud", "synthstrip", "all"]), default="all",
-              show_default=True)
+@click.option("--model", default="all", show_default=True,
+              type=click.Choice(["rapidparc", "hemiaug", "tractcloud", "synthstrip", "synthstrip-nocsf", "all"]))
 def fetch(model):
     """Download the weights into the cache now (they are otherwise fetched on first use): RapidParc's two models (6.6
-    MB each), TractCloud's code and model (about 8.4 MB) and SynthStrip's model (31 MB, for --mask synthstrip), each
-    sha256-checked."""
+    MB each), TractCloud's code and model (about 8.4 MB) and SynthStrip's two models (31 MB each, for --mask synthstrip
+    and synthstrip-nocsf), each sha256-checked."""
     from . import fetch as FE
-    for name in (["rapidparc", "hemiaug", "tractcloud", "synthstrip"] if model == "all" else [model]):
+    every = ["rapidparc", "hemiaug", "tractcloud", "synthstrip", "synthstrip-nocsf"]
+    for name in (every if model == "all" else [model]):
         try:
             if name == "tractcloud":
                 src, mod, centroid = FE.tractcloud(progress_for=_progress)

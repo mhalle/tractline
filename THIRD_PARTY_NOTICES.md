@@ -197,7 +197,8 @@ available to others on an open source basis.
   weights from the user's `$TRACTOGRAPHY_DATA` or tractline's cache (downloaded from its GitHub on first use), under
   its own license; its atlas centroid ships with tractline (Redistributed, above).
 - **RapidParc's weights**: loaded from `$TRACTOGRAPHY_DATA`, under its own license.
-- **SynthStrip's weights** (`synthstrip.1.pt`, for `--mask synthstrip`): downloaded by the user from its authors'
+- **SynthStrip's weights** (`synthstrip.1.pt` and `synthstrip.nocsf.1.pt`, for `--mask synthstrip` and
+  `--mask synthstrip-nocsf`): downloaded by the user from its authors'
   page (surfer.nmr.mgh.harvard.edu/docs/synthstrip), which offers them under the MIT license or CC BY 4.0;
   tractline uses them under MIT and makes no copies of them (the license's notice travels with copies).
 

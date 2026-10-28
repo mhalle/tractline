@@ -48,10 +48,14 @@ WEIGHTS = {
     # SynthStrip's released model (Hoopes et al. 2022), offered by its authors under MIT or CC BY 4.0; taken under MIT
     "synthstrip": ("https://surfer.nmr.mgh.harvard.edu/docs/synthstrip/requirements/synthstrip.1.pt",
                    "37417f802196186441aae3e7f385d94f8a98c64a88acaeaa2723af995c653e33", 30851709),
+    # its model trained for masks without CSF (the same network, other weights; the same licenses)
+    "synthstrip-nocsf": ("https://surfer.nmr.mgh.harvard.edu/docs/synthstrip/requirements/synthstrip.nocsf.1.pt",
+                         "62bf01137c45b5f0cc04d59dbaed5b9ac138b3f25b766c062a7c1a0d696ecb28", 30851709),
 }
 #: name -> (folder, file name): where each weights file sits under $TRACTOGRAPHY_DATA (a checkout) or the cache
 WEIGHT_FILES = {"rapidparc": ("RapidParc", "rapidparc.safetensors"), "hemiaug": ("RapidParc", "hemiaug.safetensors"),
-                "synthstrip": ("SynthStrip", "synthstrip.1.pt")}
+                "synthstrip": ("SynthStrip", "synthstrip.1.pt"),
+                "synthstrip-nocsf": ("SynthStrip", "synthstrip.nocsf.1.pt")}
 
 #: TractCloud: the commit whose package modules labelers.tractcloud runs (name -> (sha256, size)), and the release
 #: archives with the members it needs (archive -> (url, size, {member: (sha256, path under the cache's TractCloud/)}))

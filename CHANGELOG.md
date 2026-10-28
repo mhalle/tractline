@@ -4,6 +4,21 @@ Releases are git tags (`uv add git+https://github.com/mhalle/tractline --tag vX.
 release and `dev` the work in progress (`docs/development.md`, "Branches and releases"). The experiments
 behind each change, with their numbers and later corrections, are in `bench/results/NOTES.md`.
 
+## 0.8.0 - 2026-10-28
+
+- **A SynthStrip mask without CSF** (`--mask synthstrip-nocsf`; Python `mask="synthstrip-nocsf"`; experimental):
+  SynthStrip's no-CSF model, brain tissue plus 2 mm. Compared on four scans with `median_otsu` and with the 0.7.0
+  `--mask synthstrip` (brain and CSF, unchanged), it kept the brainstem as well; on the two scans with FastSurfer
+  labels it gave as many anatomically valid corticospinal streamlines as the best of the masks (within 1 %) and let a
+  tenth to under half as many named streamlines run out of the brain as `median_otsu` did (a sixth as many as with
+  CSF); on one of them fewer streamlines reached the lowest brainstem. On a 1.5 mm multiband Prisma scan without the
+  scanner's intensity normalization, distortion-corrected, `median_otsu` left out the whole brainstem (CST 6, MCP 0
+  streamlines) and either SynthStrip mask restored it (about 1,285 and 840). `tractline fetch` gets both models. The
+  default is unchanged (NOTES 2026-10-28).
+- **A correction to 0.7.0's notes:** the sub-16974 numbers given there (0 MCP and 386 CST streamlines with
+  `median_otsu`, 332 and 847 with SynthStrip's mask) were tracked without distortion correction. With the correction
+  tractline applies by default, they are 165 and 582 against 277 and 893: a smaller gap, the same direction.
+
 ## 0.7.2 - 2026-10-28
 
 - **TractCloud's atlas centroid ships with tractline** (`labelers/tractcloud_data/HCP_mass_center.npy`, 308 bytes,

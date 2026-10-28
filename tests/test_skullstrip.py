@@ -215,3 +215,37 @@ def test_devices_agree(device):
         got = net.to(device)(x.to(device)).cpu()
     rel = float((got - ref).abs().max() / ref.std())
     assert rel <= 1e-3, f"{device} against the CPU: {rel:.2e} of the output's spread"   # float32: summation order only
+
+
+def test_nocsf_mask_registration_and_config():
+    impl = C.implementation("mask", "synthstrip-nocsf")
+    assert impl.status == "experimental" and impl.options["border"].default == 2.0
+    from tractline import pipeline as P
+    a, b = P.config_for(mask="synthstrip"), P.config_for(mask="synthstrip-nocsf")
+    assert b["mask"].impl == "synthstrip-nocsf" and b.opts("mask")["border"] == 2.0
+    assert a.to_dict()["sha256"] != b.to_dict()["sha256"]
+    assert set(P.SYNTHSTRIP) <= set(fetch.WEIGHTS)                       # each mask's weights are pinned
+
+
+@pytest.mark.parametrize("impl,border", [("synthstrip", 1.0), ("synthstrip-nocsf", 2.0)])
+def test_brain_mask_uses_its_weights_and_border(monkeypatch, impl, border):
+    """Each SynthStrip mask runs its own model's weights and thresholds at its own default border (stubbed: no
+    network, no download)."""
+    from tractline import pipeline as P
+    seen = {}
+    monkeypatch.setattr(fetch, "weights", lambda name, progress=None: seen.setdefault("weights", name))
+    sdt = np.linspace(-5, 5, 6 * 6 * 6, dtype=np.float32).reshape(6, 6, 6)
+    monkeypatch.setattr(K, "signed_distance", lambda b0, affine, w, device="cpu": sdt)
+    dwi = np.ones((6, 6, 6, 3), np.float32)
+    m = P.brain_mask(dwi, np.array([0, 1000, 1000]), P.Timer(), device="cpu", impl=impl, affine=np.eye(4))
+    assert seen["weights"] == impl and np.array_equal(m, sdt < border)
+
+
+def test_provenance_records_the_nocsf_weights():
+    from tractline import pipeline as P
+    from tractline import provenance as PV
+    folder, name = fetch.WEIGHT_FILES["synthstrip-nocsf"]
+    if not (fetch.cache_dir() / folder / name).is_file():
+        pytest.skip("SynthStrip's no-CSF weights not downloaded")
+    (rec,) = PV.mask_weights(P.config_for(mask="synthstrip-nocsf").to_dict())
+    assert rec["pinned"] and rec["name"] == "SynthStrip synthstrip.nocsf.1.pt"

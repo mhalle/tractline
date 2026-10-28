@@ -64,9 +64,10 @@ printed note says so. The motion and eddy current correction is off unless `--mo
 only the susceptibility field is corrected. The eddy current model is quadratic by default; `--motion-eddy linear`
 selects the linear model, and `--motion-eddy rigid` corrects head motion alone, with no eddy current model.
 `--outliers off` keeps the correction but turns off the replacement of outlier slices. `--gibbs` removes Gibbs
-ringing before any other step (section 3; new in release 0.4.0). `--mask synthstrip` replaces the default brain mask
-(`median_otsu`) with SynthStrip's, which kept the lower brainstem on the scans checked (section 3, "Tractography input"; new in release
-0.7.0; its weights, 31 MB, are downloaded on first use). `--shell` sets the b-value tracked (by default the
+ringing before any other step (section 3; new in release 0.4.0). `--mask synthstrip-nocsf` (new in release 0.8.0)
+or `--mask synthstrip` (0.7.0) replaces the default brain mask (`median_otsu`) with SynthStrip's, without or with the
+CSF around the brain; both kept the lower brainstem on the scans checked (section 3, "Tractography input"; their
+weights, 31 MB each, are downloaded on first use). `--shell` sets the b-value tracked (by default the
 shell with the most volumes; section 3, "Tractography input", on which to choose). `--labeler tractcloud` labels with TractCloud in place of
 RapidParc (section 3); its code and trained model are downloaded from TractCloud's GitHub on first use (about 8.4 MB,
 at the version tractline was tested with, checked against pinned checksums). `tractline run --help` lists every
@@ -167,12 +168,24 @@ head.
 
 **Tractography input.** A brain mask is computed from the mean b0 image (DIPY's `median_otsu`, reproduced exactly).
 The tracker seeds in the mask and stops at its edge, so the mask decides how far tracts reach. `median_otsu` is an
-intensity threshold, and the lower brainstem is dim in the b0 (the coil's sensitivity falls off at the skull base): on
-ON-Harmony's scans it cuts through the pons and medulla, and CST, MCP and CPC lose most of their streamlines.
-`--mask synthstrip` (experimental; `mask="synthstrip"` from Python) uses SynthStrip's brain mask of the same mean b0
-instead (Hoopes et al. 2022; its authors' released model, 31 MB, fetched on first use; about 6 s on an Apple GPU),
-which kept the brainstem on the scans checked and needs no T1. From Python its border is a setting
-(`mask={"impl": "synthstrip", "border": 3.0}` grows the mask by 2 mm). One shell is tracked, together with the b0 images:
+intensity threshold, and the lower brainstem is dim in the b0 (the coil's sensitivity falls off at the skull base,
+the more so when the scanner's intensity normalization, Siemens' Prescan Normalize, is off). Distortion correction does
+not change that: on a 1.5 mm multiband Prisma scan without Prescan Normalize, corrected, `median_otsu` left out the whole
+brainstem, and the tracts through it (CST, MCP, CPC) all but vanished. Two experimental masks from SynthStrip (Hoopes et
+al. 2022; its authors' released models, 31 MB each, fetched on first use; about 6 s on an Apple GPU) use the same
+mean b0 instead, need no T1, and kept the brainstem on every scan checked:
+- `--mask synthstrip-nocsf` (`mask="synthstrip-nocsf"` from Python): brain tissue without the CSF around it, plus 2 mm.
+  On the two scans with FastSurfer labels it gave as many anatomically valid corticospinal streamlines as the best of
+  the masks compared (within 1 %) and a tenth to under half of the named streamlines that ran out of the brain with
+  `median_otsu`; on the other two it restored the brainstem's tracts as the CSF-inclusive mask did (on one, with 7 %
+  fewer CST). It is also the closest to the mask the ORG atlas's HCP tractography most likely had (FreeSurfer's
+  tissue, grown about 2 mm). On one scan fewer streamlines reached the lowest part of the brainstem with it, and it
+  leaves out the ventricles, so fibers that run along them (the fornix) are not measured.
+- `--mask synthstrip` (`mask="synthstrip"`): brain and CSF, plus 1 mm, SynthStrip's own default. It reached as much of
+  the brainstem, but on one scan about three times as many named streamlines ran out over the cortex, into the CSF.
+
+From Python the border is a setting (`mask={"impl": "synthstrip-nocsf", "border": 3.0}`; 1 mm trims the brainstem).
+The default stays `median_otsu` until a larger comparison (NOTES 2026-10-28). One shell is tracked, together with the b0 images:
 `tractline run` picks the shell with the most volumes unless `--shell` names another, and from Python the shell is
 given as `shell=`. Which shell is tracked can matter on a multi-shell scan. The ORG atlas, whose clusters the labelers
 assign, was built from HCP tractography tracked on the b = 3000 shell alone (Zhang et al. 2018), and both labelers were

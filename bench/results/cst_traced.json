@@ -1,0 +1,86 @@
+{
+ "PAT16": {
+  "brainstem label, z range in the T1 (mm)": [
+   -74.2,
+   -6.3
+  ],
+  "median-otsu": {
+   "streamlines": 42168,
+   "motor cortex to brainstem by FastSurfer's anatomy, whatever the name": 1339,
+   "of them reaching below the brainstem's middle": 692,
+   "of them reaching its lowest third (mostly medulla)": 610,
+   "their names (top 8)": {
+    "Other": 386,
+    "CST": 320,
+    "CR-F": 309,
+    "TF": 227,
+    "TP": 74,
+    "SF": 10,
+    "PLIC": 6,
+    "SP": 4
+   },
+   "named CST (all)": 464,
+   "named CST that fit the anatomy": 320
+  },
+  "no-CSF, border 2": {
+   "streamlines": 42987,
+   "motor cortex to brainstem by FastSurfer's anatomy, whatever the name": 1644,
+   "of them reaching below the brainstem's middle": 837,
+   "of them reaching its lowest third (mostly medulla)": 707,
+   "their names (top 8)": {
+    "Other": 436,
+    "CST": 410,
+    "CR-F": 388,
+    "TF": 295,
+    "TP": 90,
+    "SF": 14,
+    "PLIC": 5,
+    "SP": 3
+   },
+   "named CST (all)": 481,
+   "named CST that fit the anatomy": 410
+  }
+ },
+ "cIIIs04": {
+  "brainstem label, z range in the T1 (mm)": [
+   -36.3,
+   35.5
+  ],
+  "median-otsu": {
+   "streamlines": 78187,
+   "motor cortex to brainstem by FastSurfer's anatomy, whatever the name": 2161,
+   "of them reaching below the brainstem's middle": 1534,
+   "of them reaching its lowest third (mostly medulla)": 1409,
+   "their names (top 8)": {
+    "Other": 1038,
+    "CST": 404,
+    "CR-F": 362,
+    "TF": 267,
+    "TP": 53,
+    "CPC": 24,
+    "SF": 8,
+    "PLIC": 4
+   },
+   "named CST (all)": 523,
+   "named CST that fit the anatomy": 404
+  },
+  "no-CSF, border 2": {
+   "streamlines": 80436,
+   "motor cortex to brainstem by FastSurfer's anatomy, whatever the name": 2291,
+   "of them reaching below the brainstem's middle": 1265,
+   "of them reaching its lowest third (mostly medulla)": 784,
+   "their names (top 8)": {
+    "Other": 1018,
+    "TF": 430,
+    "CST": 417,
+    "CR-F": 286,
+    "TP": 98,
+    "CPC": 22,
+    "SF": 10,
+    "PLIC": 7
+   },
+   "named CST (all)": 526,
+   "named CST that fit the anatomy": 417
+  }
+ }
+}

@@ -210,6 +210,16 @@ register(Implementation(
         "authors' weights (MIT), run by tractline.skullstrip, an independent code base written from the paper and the "
         "weight file's shapes"))
 register(Implementation(
+    "mask", "synthstrip-nocsf", "1",
+    {"border": Option(2.0, float, low=-4.0, high=4.0,
+                      doc="mm: the mask is where the no-CSF model's signed distance is below this (2: tissue plus about "
+                          "2 mm; better than 1, which trims the brainstem, on two scans; 3 tied on one scan and kept a "
+                          "little more of the brainstem's tracts on another; NOTES 2026-10-28)")},
+    oracle="SynthStrip (Hoopes et al. 2022), its authors' released no-CSF model", status="experimental",
+    doc="SynthStrip's no-CSF brain mask of the mean b0 (brain tissue, not the CSF around it), at a 2 mm border: on the "
+        "DWI itself, by tractline.skullstrip with its authors' no-CSF weights (MIT). Closest of the masks tried to the "
+        "HCP tissue mask the ORG atlas's tractography most likely used"))
+register(Implementation(
     "model", "ukf-two-tensor", "1", {"shell": Option(2800.0, float, low=1.0, doc="the b-value tracked, with the b0s")},
     status="validated",
     doc="the tracker's input: the b0s and one shell, gradients in RAS (prep.prepare); the two-tensor model itself is "

@@ -328,3 +328,11 @@ def test_docs():
     readme = CliRunner().invoke(cli.main, ["docs", "readme"]).stdout
     assert readme.startswith("# tractline") and "--help\n\n```" not in readme
     assert "## 5. The QC files" in CliRunner().invoke(cli.main, ["docs", "guide"]).stdout
+
+
+def test_mask_choices_offered():
+    """--mask offers the two SynthStrip masks beside the default, and tractline fetch can get both models."""
+    r = CliRunner().invoke(cli.main, ["run", "--help"])
+    assert r.exit_code == 0 and "synthstrip-nocsf" in r.output and "median-otsu" in r.output
+    r = CliRunner().invoke(cli.main, ["fetch", "--help"])
+    assert r.exit_code == 0 and "synthstrip-nocsf" in r.output

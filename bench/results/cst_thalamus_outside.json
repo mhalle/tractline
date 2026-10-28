@@ -1,0 +1,1088 @@
+{
+ "PAT16": {
+  "shell": 2800.0,
+  "median-otsu": {
+   "field applied": true,
+   "streamlines": 42168,
+   "mask voxels": 94936,
+   "CST fitting the endpoint rule": 320,
+   "seconds": 40.4,
+   "thalamus": {
+    "CST": {
+     "n": 464,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.317,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.272,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.2,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.142,
+     "fits the CST endpoint rule": 0.69,
+     "fits the rule: through the thalamus / not": [
+      0.571,
+      0.744
+     ]
+    },
+    "PLIC": {
+     "n": 87,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.345,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.333,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.322,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.299
+    },
+    "TF": {
+     "n": 1185,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.846,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.825,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.783,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.684
+    },
+    "TP": {
+     "n": 469,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.742,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.736,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.695,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.614
+    },
+    "TO": {
+     "n": 86,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.721,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.628,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.477,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.256
+    },
+    "TT": {
+     "n": 265,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.615,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.445,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.332,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.192
+    }
+   },
+   "outside the brain": {
+    "labeled": 32242,
+    "flagged (a run of 3+ points more than 2 mm outside FastSurfer's brain)": 2629,
+    "flagged and named (not Other)": 1238,
+    "named, by tract (top 12)": {
+     "Sup-F": 189,
+     "CC6": 153,
+     "TF": 82,
+     "CC4": 74,
+     "CST": 72,
+     "CR-F": 63,
+     "CC3": 60,
+     "Sup-P": 48,
+     "CC5": 47,
+     "SF": 44,
+     "SLF-II": 40,
+     "CC2": 39
+    },
+    "Other": 1391,
+    "outside run within 15 mm of the brainstem: named, by tract": {
+     "CR-F": 37,
+     "CR-P": 8,
+     "CST": 41,
+     "ICP": 2,
+     "PLIC": 2,
+     "TF": 46,
+     "TO": 1,
+     "TP": 3,
+     "TT": 2,
+     "UF": 1
+    },
+    "outside run within 15 mm of the brainstem: Other": 244
+   }
+  },
+  "synthstrip (border 1)": {
+   "field applied": true,
+   "streamlines": 43067,
+   "mask voxels": 100476,
+   "CST fitting the endpoint rule": 316,
+   "seconds": 46.7,
+   "thalamus": {
+    "CST": {
+     "n": 476,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.315,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.267,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.208,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.147,
+     "fits the CST endpoint rule": 0.664,
+     "fits the rule: through the thalamus / not": [
+      0.52,
+      0.73
+     ]
+    },
+    "PLIC": {
+     "n": 94,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.362,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.351,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.34,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.319
+    },
+    "TF": {
+     "n": 1217,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.848,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.827,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.786,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.689
+    },
+    "TP": {
+     "n": 466,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.717,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.706,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.667,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.575
+    },
+    "TO": {
+     "n": 88,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.693,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.602,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.477,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.25
+    },
+    "TT": {
+     "n": 288,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.58,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.413,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.319,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.188
+    }
+   },
+   "outside the brain": {
+    "labeled": 32488,
+    "flagged (a run of 3+ points more than 2 mm outside FastSurfer's brain)": 2586,
+    "flagged and named (not Other)": 1258,
+    "named, by tract (top 12)": {
+     "Sup-F": 183,
+     "CC6": 171,
+     "ILF": 75,
+     "TF": 75,
+     "CST": 59,
+     "Sup-P": 53,
+     "CC5": 51,
+     "Sup-PT": 47,
+     "CC3": 43,
+     "SF": 42,
+     "CR-F": 40,
+     "CC4": 39
+    },
+    "Other": 1328,
+    "outside run within 15 mm of the brainstem: named, by tract": {
+     "CR-F": 21,
+     "CR-P": 12,
+     "CST": 36,
+     "PLIC": 2,
+     "TF": 46,
+     "TP": 6,
+     "TT": 2
+    },
+    "outside run within 15 mm of the brainstem: Other": 168
+   }
+  },
+  "synthstrip, border 0": {
+   "field applied": true,
+   "streamlines": 42960,
+   "mask voxels": 97260,
+   "CST fitting the endpoint rule": 351,
+   "seconds": 45.7,
+   "thalamus": {
+    "CST": {
+     "n": 486,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.321,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.276,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.216,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.154,
+     "fits the CST endpoint rule": 0.722,
+     "fits the rule: through the thalamus / not": [
+      0.609,
+      0.776
+     ]
+    },
+    "PLIC": {
+     "n": 97,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.371,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.361,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.351,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.32
+    },
+    "TF": {
+     "n": 1199,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.859,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.837,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.796,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.701
+    },
+    "TP": {
+     "n": 455,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.725,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.716,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.675,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.589
+    },
+    "TO": {
+     "n": 83,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.699,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.614,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.494,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.277
+    },
+    "TT": {
+     "n": 283,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.576,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.41,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.314,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.18
+    }
+   },
+   "outside the brain": {
+    "labeled": 32432,
+    "flagged (a run of 3+ points more than 2 mm outside FastSurfer's brain)": 1849,
+    "flagged and named (not Other)": 912,
+    "named, by tract (top 12)": {
+     "CC6": 162,
+     "Sup-F": 109,
+     "TF": 59,
+     "Sup-PT": 48,
+     "ILF": 44,
+     "CST": 41,
+     "Sup-P": 40,
+     "CC7": 34,
+     "MdLF": 30,
+     "CR-F": 28,
+     "CC5": 28,
+     "CC4": 25
+    },
+    "Other": 937,
+    "outside run within 15 mm of the brainstem: named, by tract": {
+     "CR-F": 12,
+     "CR-P": 6,
+     "CST": 25,
+     "PLIC": 1,
+     "TF": 44,
+     "TP": 6,
+     "TT": 2
+    },
+    "outside run within 15 mm of the brainstem: Other": 118
+   }
+  },
+  "no-CSF, border 1": {
+   "field applied": true,
+   "streamlines": 42622,
+   "mask voxels": 82284,
+   "CST fitting the endpoint rule": 357,
+   "seconds": 44.3,
+   "thalamus": {
+    "CST": {
+     "n": 416,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.375,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.325,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.262,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.178,
+     "fits the CST endpoint rule": 0.858,
+     "fits the rule: through the thalamus / not": [
+      0.808,
+      0.888
+     ]
+    },
+    "PLIC": {
+     "n": 115,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.426,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.417,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.409,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.339
+    },
+    "TF": {
+     "n": 1279,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.845,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.824,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.779,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.679
+    },
+    "TP": {
+     "n": 531,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.719,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.68,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.621,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.525
+    },
+    "TO": {
+     "n": 145,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.648,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.434,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.303,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.152
+    },
+    "TT": {
+     "n": 301,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.588,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.432,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.329,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.193
+    }
+   },
+   "outside the brain": {
+    "labeled": 31944,
+    "flagged (a run of 3+ points more than 2 mm outside FastSurfer's brain)": 74,
+    "flagged and named (not Other)": 35,
+    "named, by tract (top 12)": {
+     "CC7": 10,
+     "ILF": 9,
+     "IOFF": 4,
+     "Sup-OT": 3,
+     "Sup-F": 2,
+     "MCP": 1,
+     "Sup-PO": 1,
+     "SO": 1,
+     "Sup-T": 1,
+     "CC6": 1,
+     "TF": 1,
+     "SLF-I": 1
+    },
+    "Other": 39,
+    "outside run within 15 mm of the brainstem: named, by tract": {
+     "TF": 1
+    },
+    "outside run within 15 mm of the brainstem: Other": 1
+   }
+  },
+  "no-CSF, border 2": {
+   "field applied": true,
+   "streamlines": 42987,
+   "mask voxels": 88883,
+   "CST fitting the endpoint rule": 410,
+   "seconds": 45.2,
+   "thalamus": {
+    "CST": {
+     "n": 481,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.339,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.295,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.229,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.156,
+     "fits the CST endpoint rule": 0.852,
+     "fits the rule: through the thalamus / not": [
+      0.81,
+      0.874
+     ]
+    },
+    "PLIC": {
+     "n": 107,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.346,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.336,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.336,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.299
+    },
+    "TF": {
+     "n": 1240,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.851,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.83,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.786,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.69
+    },
+    "TP": {
+     "n": 459,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.723,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.702,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.658,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.569
+    },
+    "TO": {
+     "n": 116,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.69,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.466,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.371,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.181
+    },
+    "TT": {
+     "n": 289,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.578,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.415,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.315,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.183
+    }
+   },
+   "outside the brain": {
+    "labeled": 32296,
+    "flagged (a run of 3+ points more than 2 mm outside FastSurfer's brain)": 266,
+    "flagged and named (not Other)": 134,
+    "named, by tract (top 12)": {
+     "ILF": 32,
+     "Sup-F": 21,
+     "IOFF": 11,
+     "TF": 11,
+     "CC7": 11,
+     "Sup-OT": 8,
+     "MdLF": 6,
+     "CC6": 5,
+     "Sup-PO": 4,
+     "Sup-PT": 4,
+     "CB": 3,
+     "TO": 3
+    },
+    "Other": 132,
+    "outside run within 15 mm of the brainstem: named, by tract": {
+     "CR-F": 1,
+     "CST": 2,
+     "TF": 11,
+     "TT": 1
+    },
+    "outside run within 15 mm of the brainstem: Other": 8
+   }
+  },
+  "no-CSF (border 1) or median_otsu": {
+   "field applied": true,
+   "streamlines": 43124,
+   "mask voxels": 98385,
+   "CST fitting the endpoint rule": 316,
+   "seconds": 48.9,
+   "thalamus": {
+    "CST": {
+     "n": 465,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.316,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.271,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.206,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.144,
+     "fits the CST endpoint rule": 0.68,
+     "fits the rule: through the thalamus / not": [
+      0.558,
+      0.736
+     ]
+    },
+    "PLIC": {
+     "n": 86,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.337,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.326,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.314,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.291
+    },
+    "TF": {
+     "n": 1210,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.846,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.825,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.782,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.685
+    },
+    "TP": {
+     "n": 473,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.729,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.721,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.681,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.594
+    },
+    "TO": {
+     "n": 88,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.739,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.648,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.5,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.261
+    },
+    "TT": {
+     "n": 278,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.59,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.421,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.324,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.191
+    }
+   },
+   "outside the brain": {
+    "labeled": 32519,
+    "flagged (a run of 3+ points more than 2 mm outside FastSurfer's brain)": 2651,
+    "flagged and named (not Other)": 1258,
+    "named, by tract (top 12)": {
+     "Sup-F": 192,
+     "CC6": 159,
+     "TF": 86,
+     "CC4": 77,
+     "CST": 71,
+     "CR-F": 65,
+     "CC3": 60,
+     "CC5": 48,
+     "SF": 46,
+     "Sup-P": 46,
+     "SLF-II": 43,
+     "CC2": 38
+    },
+    "Other": 1393,
+    "outside run within 15 mm of the brainstem: named, by tract": {
+     "CR-F": 38,
+     "CR-P": 8,
+     "CST": 41,
+     "ICP": 2,
+     "PLIC": 2,
+     "SF": 1,
+     "SO": 1,
+     "TF": 46,
+     "TO": 1,
+     "TP": 3,
+     "TT": 2,
+     "UF": 1
+    },
+    "outside run within 15 mm of the brainstem: Other": 242
+   }
+  }
+ },
+ "cIIIs04": {
+  "shell": 2000.0,
+  "median-otsu": {
+   "field applied": true,
+   "streamlines": 78187,
+   "mask voxels": 133017,
+   "CST fitting the endpoint rule": 404,
+   "seconds": 83.1,
+   "thalamus": {
+    "CST": {
+     "n": 523,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.329,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.275,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.189,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.124,
+     "fits the CST endpoint rule": 0.772,
+     "fits the rule: through the thalamus / not": [
+      0.779,
+      0.769
+     ]
+    },
+    "PLIC": {
+     "n": 70,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.5,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.486,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.343,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.214
+    },
+    "TF": {
+     "n": 1325,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.768,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.751,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.695,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.625
+    },
+    "TP": {
+     "n": 409,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.628,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.601,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.535,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.445
+    },
+    "TO": {
+     "n": 90,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.756,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.689,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.6,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.467
+    },
+    "TT": {
+     "n": 450,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.5,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.458,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.324,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.207
+    }
+   },
+   "outside the brain": {
+    "labeled": 64378,
+    "flagged (a run of 3+ points more than 2 mm outside FastSurfer's brain)": 3571,
+    "flagged and named (not Other)": 836,
+    "named, by tract (top 12)": {
+     "CC6": 142,
+     "CR-F": 121,
+     "CST": 51,
+     "TF": 48,
+     "CC7": 40,
+     "Intra-CBLM-PaT": 38,
+     "CB": 31,
+     "ICP": 30,
+     "Sup-PT": 30,
+     "Sup-T": 30,
+     "Sup-F": 29,
+     "Sup-P": 24
+    },
+    "Other": 2735,
+    "outside run within 15 mm of the brainstem: named, by tract": {
+     "CB": 15,
+     "CC6": 17,
+     "CC7": 1,
+     "CPC": 7,
+     "CR-F": 115,
+     "CR-P": 13,
+     "CST": 50,
+     "ICP": 30,
+     "ILF": 4,
+     "Intra-CBLM-I-P": 12,
+     "MCP": 5,
+     "PLIC": 7,
+     "SO": 1,
+     "Sup-PT": 1,
+     "Sup-T": 6,
+     "TF": 46,
+     "TO": 1,
+     "TP": 8,
+     "TT": 17,
+     "UF": 4
+    },
+    "outside run within 15 mm of the brainstem: Other": 1658
+   }
+  },
+  "synthstrip (border 1)": {
+   "field applied": true,
+   "streamlines": 81421,
+   "mask voxels": 154188,
+   "CST fitting the endpoint rule": 385,
+   "seconds": 90.4,
+   "thalamus": {
+    "CST": {
+     "n": 554,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.3,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.256,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.166,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.105,
+     "fits the CST endpoint rule": 0.695,
+     "fits the rule: through the thalamus / not": [
+      0.687,
+      0.698
+     ]
+    },
+    "PLIC": {
+     "n": 72,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.5,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.486,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.389,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.264
+    },
+    "TF": {
+     "n": 1378,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.74,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.721,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.663,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.59
+    },
+    "TP": {
+     "n": 436,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.603,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.576,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.491,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.411
+    },
+    "TO": {
+     "n": 91,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.725,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.659,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.582,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.429
+    },
+    "TT": {
+     "n": 478,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.502,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.458,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.314,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.201
+    }
+   },
+   "outside the brain": {
+    "labeled": 66497,
+    "flagged (a run of 3+ points more than 2 mm outside FastSurfer's brain)": 7345,
+    "flagged and named (not Other)": 2325,
+    "named, by tract (top 12)": {
+     "Sup-F": 455,
+     "CC6": 248,
+     "Sup-P": 123,
+     "CC5": 114,
+     "CR-F": 112,
+     "CC3": 108,
+     "CC2": 106,
+     "TF": 99,
+     "CC4": 78,
+     "CC7": 69,
+     "Sup-PT": 63,
+     "CST": 62
+    },
+    "Other": 5020,
+    "outside run within 15 mm of the brainstem: named, by tract": {
+     "CB": 15,
+     "CC6": 21,
+     "CC7": 2,
+     "CPC": 8,
+     "CR-F": 99,
+     "CR-P": 12,
+     "CST": 52,
+     "ICP": 23,
+     "ILF": 2,
+     "Intra-CBLM-I-P": 6,
+     "MCP": 3,
+     "PLIC": 8,
+     "SF": 5,
+     "SO": 2,
+     "Sup-T": 1,
+     "TF": 62,
+     "TP": 11,
+     "TT": 18,
+     "UF": 5
+    },
+    "outside run within 15 mm of the brainstem: Other": 1697
+   }
+  },
+  "synthstrip, border 0": {
+   "field applied": true,
+   "streamlines": 80401,
+   "mask voxels": 148605,
+   "CST fitting the endpoint rule": 403,
+   "seconds": 89.5,
+   "thalamus": {
+    "CST": {
+     "n": 546,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.299,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.26,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.168,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.103,
+     "fits the CST endpoint rule": 0.738,
+     "fits the rule: through the thalamus / not": [
+      0.699,
+      0.755
+     ]
+    },
+    "PLIC": {
+     "n": 77,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.494,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.481,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.39,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.26
+    },
+    "TF": {
+     "n": 1349,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.738,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.718,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.663,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.592
+    },
+    "TP": {
+     "n": 439,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.615,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.59,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.51,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.431
+    },
+    "TO": {
+     "n": 94,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.734,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.66,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.585,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.436
+    },
+    "TT": {
+     "n": 464,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.526,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.476,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.33,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.207
+    }
+   },
+   "outside the brain": {
+    "labeled": 66058,
+    "flagged (a run of 3+ points more than 2 mm outside FastSurfer's brain)": 5673,
+    "flagged and named (not Other)": 1690,
+    "named, by tract (top 12)": {
+     "Sup-F": 293,
+     "CC6": 225,
+     "Sup-P": 89,
+     "CC5": 89,
+     "TF": 85,
+     "CC3": 82,
+     "CR-F": 79,
+     "CC7": 63,
+     "CC2": 63,
+     "Sup-PT": 58,
+     "Sup-PO": 51,
+     "CC4": 50
+    },
+    "Other": 3983,
+    "outside run within 15 mm of the brainstem: named, by tract": {
+     "CB": 11,
+     "CC6": 20,
+     "CC7": 1,
+     "CPC": 7,
+     "CR-F": 73,
+     "CR-P": 5,
+     "CST": 33,
+     "ICP": 19,
+     "Intra-CBLM-I-P": 6,
+     "MCP": 2,
+     "PLIC": 8,
+     "SF": 3,
+     "SO": 1,
+     "Sup-T": 1,
+     "TF": 63,
+     "TP": 7,
+     "TT": 16,
+     "UF": 4
+    },
+    "outside run within 15 mm of the brainstem: Other": 1545
+   }
+  },
+  "no-CSF, border 1": {
+   "field applied": true,
+   "streamlines": 78842,
+   "mask voxels": 135092,
+   "CST fitting the endpoint rule": 334,
+   "seconds": 84.6,
+   "thalamus": {
+    "CST": {
+     "n": 402,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.443,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.388,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.269,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.187,
+     "fits the CST endpoint rule": 0.831,
+     "fits the rule: through the thalamus / not": [
+      0.809,
+      0.848
+     ]
+    },
+    "PLIC": {
+     "n": 102,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.52,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.49,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.333,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.235
+    },
+    "TF": {
+     "n": 2148,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.659,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.641,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.578,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.51
+    },
+    "TP": {
+     "n": 765,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.605,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.558,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.456,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.344
+    },
+    "TO": {
+     "n": 180,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.739,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.644,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.456,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.294
+    },
+    "TT": {
+     "n": 924,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.538,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.479,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.337,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.17
+    }
+   },
+   "outside the brain": {
+    "labeled": 64532,
+    "flagged (a run of 3+ points more than 2 mm outside FastSurfer's brain)": 373,
+    "flagged and named (not Other)": 119,
+    "named, by tract (top 12)": {
+     "CC6": 50,
+     "Sup-P": 15,
+     "PLIC": 14,
+     "CB": 7,
+     "MdLF": 6,
+     "Sup-PT": 5,
+     "UF": 5,
+     "CC7": 5,
+     "ILF": 3,
+     "Intra-CBLM-PaT": 2,
+     "TP": 2,
+     "TT": 1
+    },
+    "Other": 254,
+    "outside run within 15 mm of the brainstem: named, by tract": {
+     "CB": 1,
+     "SO": 1,
+     "TP": 2,
+     "TT": 1
+    },
+    "outside run within 15 mm of the brainstem: Other": 14
+   }
+  },
+  "no-CSF, border 2": {
+   "field applied": true,
+   "streamlines": 80436,
+   "mask voxels": 144379,
+   "CST fitting the endpoint rule": 417,
+   "seconds": 88.8,
+   "thalamus": {
+    "CST": {
+     "n": 526,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.357,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.31,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.205,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.139,
+     "fits the CST endpoint rule": 0.793,
+     "fits the rule: through the thalamus / not": [
+      0.755,
+      0.814
+     ]
+    },
+    "PLIC": {
+     "n": 90,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.511,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.489,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.367,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.244
+    },
+    "TF": {
+     "n": 1878,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.654,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.635,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.577,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.511
+    },
+    "TP": {
+     "n": 608,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.617,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.569,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.487,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.39
+    },
+    "TO": {
+     "n": 148,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.757,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.689,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.534,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.338
+    },
+    "TT": {
+     "n": 811,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.54,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.485,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.335,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.173
+    }
+   },
+   "outside the brain": {
+    "labeled": 65796,
+    "flagged (a run of 3+ points more than 2 mm outside FastSurfer's brain)": 1134,
+    "flagged and named (not Other)": 363,
+    "named, by tract (top 12)": {
+     "CC6": 111,
+     "CC7": 31,
+     "Sup-P": 30,
+     "Sup-PT": 22,
+     "PLIC": 18,
+     "CB": 16,
+     "MdLF": 14,
+     "Sup-F": 14,
+     "ILF": 13,
+     "UF": 12,
+     "Sup-PO": 10,
+     "TF": 10
+    },
+    "Other": 771,
+    "outside run within 15 mm of the brainstem: named, by tract": {
+     "CB": 1,
+     "CC6": 1,
+     "CR-P": 1,
+     "CST": 3,
+     "SO": 1,
+     "TF": 7,
+     "TO": 1,
+     "TP": 4,
+     "TT": 5,
+     "UF": 1
+    },
+    "outside run within 15 mm of the brainstem: Other": 75
+   }
+  },
+  "no-CSF (border 1) or median_otsu": {
+   "field applied": true,
+   "streamlines": 80485,
+   "mask voxels": 143211,
+   "CST fitting the endpoint rule": 420,
+   "seconds": 93.8,
+   "thalamus": {
+    "CST": {
+     "n": 549,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.306,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.26,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.169,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.111,
+     "fits the CST endpoint rule": 0.765,
+     "fits the rule: through the thalamus / not": [
+      0.738,
+      0.777
+     ]
+    },
+    "PLIC": {
+     "n": 75,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.493,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.48,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.36,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.213
+    },
+    "TF": {
+     "n": 1366,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.75,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.733,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.677,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.605
+    },
+    "TP": {
+     "n": 415,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.612,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.59,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.508,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.422
+    },
+    "TO": {
+     "n": 90,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.744,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.678,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.589,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.444
+    },
+    "TT": {
+     "n": 471,
+     "through thalamus (>= 2 points deeper than 0 mm)": 0.51,
+     "through thalamus (>= 2 points deeper than 1 mm)": 0.467,
+     "through thalamus (>= 2 points deeper than 2 mm)": 0.323,
+     "through thalamus (>= 2 points deeper than 3 mm)": 0.21
+    }
+   },
+   "outside the brain": {
+    "labeled": 65992,
+    "flagged (a run of 3+ points more than 2 mm outside FastSurfer's brain)": 3674,
+    "flagged and named (not Other)": 834,
+    "named, by tract (top 12)": {
+     "CC6": 149,
+     "CR-F": 101,
+     "TF": 54,
+     "CST": 50,
+     "CC7": 42,
+     "Intra-CBLM-PaT": 41,
+     "CB": 33,
+     "Sup-T": 32,
+     "Sup-F": 30,
+     "Sup-PT": 28,
+     "ICP": 24,
+     "ILF": 23
+    },
+    "Other": 2840,
+    "outside run within 15 mm of the brainstem: named, by tract": {
+     "CB": 14,
+     "CC6": 22,
+     "CC7": 1,
+     "CPC": 7,
+     "CR-F": 99,
+     "CR-P": 11,
+     "CST": 49,
+     "ICP": 24,
+     "ILF": 3,
+     "Intra-CBLM-I-P": 8,
+     "MCP": 3,
+     "PLIC": 7,
+     "SF": 3,
+     "SO": 2,
+     "Sup-PT": 2,
+     "Sup-T": 6,
+     "TF": 52,
+     "TP": 7,
+     "TT": 18,
+     "UF": 5
+    },
+    "outside run within 15 mm of the brainstem: Other": 1710
+   }
+  }
+ }
+}
