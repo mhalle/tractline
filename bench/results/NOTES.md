@@ -7864,6 +7864,10 @@ against the reference's outputs, not its code (`skullstrip_check.py` -> `results
   three such mutations; a second review caught it).
 - **Speed** (16974's tilted grid, cold, one process): MPS 5.5 s with a 2.3 GB peak memory footprint (Metal's buffers
   counted), CPU 26 s with a 2.7 GB peak resident.
+- **On CUDA** the release's GPU run failed the device test (unit-scale weights, 1e-3 of the output's spread): torch
+  lets cuDNN's convolutions use TF32 by default on Ampere and later (~1e-3 relative). The network now turns TF32 off
+  for its call, so CUDA does the same float32 arithmetic as the CPU and MPS; the skullstrip tests pass on the A10.
+  The same is the likely reason the reference, run on the A10, differs from the network by 0.007 mm.
 
 **Not done.** The default (above); the shell rule Ron also raised (most volumes picked b = 1500 over b = 3000 on his
 scan; the atlas used b = 3000); `--mask PATH` for a mask the user brings (from a T1); haversack using this module

@@ -133,7 +133,14 @@ class Net(nn.Module):
         a halo of one slice per convolution it runs, so every voxel is computed from what it sees in the whole volume;
         at the volume's own ends the slab's ends are the volume's, zero-padded the same way. The tensors held whole are
         the input, the coarser levels' outputs and skips, and the half-resolution decoder's output; the peak measured
-        is in bench/results/skullstrip_check.json."""
+        is in bench/results/skullstrip_check.json. On CUDA, cuDNN's TF32 is turned off for the call (torch allows it
+        by default on Ampere and later, ~1e-3 relative): the same float32 arithmetic as on the CPU and MPS."""
+        if x.is_cuda:
+            with torch.backends.cudnn.flags(enabled=True, allow_tf32=False):
+                return self._forward(x)
+        return self._forward(x)
+
+    def _forward(self, x):
         h = self._level0_pooled(x)
         _release(x.device)
         skips = [None]                                                    # level 0: recomputed in _full_resolution

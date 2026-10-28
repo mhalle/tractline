@@ -213,4 +213,5 @@ def test_devices_agree(device):
     with torch.inference_mode():
         ref = net(x)
         got = net.to(device)(x.to(device)).cpu()
-    assert _close(got, ref)                                                # float32 on another device: summation order
+    rel = float((got - ref).abs().max() / ref.std())
+    assert rel <= 1e-3, f"{device} against the CPU: {rel:.2e} of the output's spread"   # float32: summation order only
