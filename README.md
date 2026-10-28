@@ -52,7 +52,9 @@ command as one Markdown text, which is handy to give to an LLM.
 
 A diffusion series as NIfTI (`.nii` or `.nii.gz`) with its `.bval`, `.bvec` and JSON sidecar, usually in a BIDS
 folder. The sidecar supplies what the corrections need: the phase-encoding direction, the readout time, the echo time
-and the shim settings. tractline tracks one shell: the one with the most volumes, unless `--shell` names another.
+and the shim settings. tractline tracks one shell: the one with the most volumes, unless `--shell` names another. The
+ORG atlas the labelers follow was built on b = 3000, so on a multi-shell scan `--shell 3000` (or the nearest shell)
+matches it (the [user guide](docs/motion-eddy-qc-guide.md), "Tractography input").
 
 The susceptibility correction needs a second series acquired with the opposite phase encoding, such as an AP/PA pair.
 tractline finds it from the sidecars (`B0FieldIdentifier`, `IntendedFor`, or a reversed diffusion series in the same
@@ -134,8 +136,8 @@ records full paths for local bookkeeping.
 ## Choosing a version
 
 - **No `@...`**, or `@main`: the newest release. The `main` branch moves only when a release is made.
-- **A tag** such as `@v0.7.0`: one release, permanently. Pin a tag when a study's scans must all run on the same
-  code: `uvx --from "tractline[cli] @ git+https://github.com/mhalle/tractline@v0.7.0" tractline ...`, or the same
+- **A tag** such as `@v0.7.1`: one release, permanently. Pin a tag when a study's scans must all run on the same
+  code: `uvx --from "tractline[cli] @ git+https://github.com/mhalle/tractline@v0.7.1" tractline ...`, or the same
   URL with `uv tool install`. `tractline --version` shows which version ran.
 - **`@dev`**: the newest code, ahead of the latest release.
 
@@ -144,7 +146,7 @@ tractline's code, but `uvx` and `uv tool install` resolve the newest versions of
 `uv.lock` pins every package, and running from a clone of the tag uses it:
 
 ```
-git clone --branch v0.7.0 https://github.com/mhalle/tractline && cd tractline
+git clone --branch v0.7.1 https://github.com/mhalle/tractline && cd tractline
 uv run --locked --no-dev --extra cli tractline run ../sub-01/dwi/sub-01_dir-AP_dwi.nii.gz --motion-eddy --trx ../out/sub-01.trx
 ```
 
@@ -159,10 +161,10 @@ tag until you install again with another. [CHANGELOG.md](CHANGELOG.md) lists wha
 Add tractline to a uv project, pinned to a release, with the `bids` extra for reading NIfTI and BIDS:
 
 ```
-uv add git+https://github.com/mhalle/tractline --tag v0.7.0 --extra bids
+uv add git+https://github.com/mhalle/tractline --tag v0.7.1 --extra bids
 ```
 
-Outside uv, `pip install "tractline[bids] @ git+https://github.com/mhalle/tractline@v0.7.0"` does the same.
+Outside uv, `pip install "tractline[bids] @ git+https://github.com/mhalle/tractline@v0.7.1"` does the same.
 
 ```python
 from tractline import bids, pipeline as P

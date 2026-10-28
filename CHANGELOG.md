@@ -4,6 +4,13 @@ Releases are git tags (`uv add git+https://github.com/mhalle/tractline --tag vX.
 release and `dev` the work in progress (`docs/development.md`, "Branches and releases"). The experiments
 behind each change, with their numbers and later corrections, are in `bench/results/NOTES.md`.
 
+## 0.7.1 - 2026-10-27
+
+- **Which shell to track, documented** (the user guide's "Tractography input", the README, `--shell`'s help): the ORG
+  atlas the labelers follow was built from HCP tractography on the b = 3000 shell alone (Zhang et al. 2018), so on a
+  multi-shell scan `--shell 3000` (or the nearest shell) matches it; the default (the shell with the most volumes) can
+  pick another. The default is unchanged.
+
 ## 0.7.0 - 2026-10-27
 
 - **A SynthStrip brain mask, opt-in** (`--mask synthstrip`; Python `mask="synthstrip"`; experimental): SynthStrip's

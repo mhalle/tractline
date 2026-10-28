@@ -67,7 +67,9 @@ def main():
               help="With --motion-eddy: write its QC files (TSV, JSON, plot) into this folder.")
 @click.option("--write-corrected", is_flag=True,
               help="With --qc: also the corrected series, its b-values and rotated b-vectors, into that folder.")
-@click.option("--shell", type=float, default=None, help="The b-value tracked (default: the shell with the most volumes).")
+@click.option("--shell", type=float, default=None,
+              help="The b-value tracked (default: the shell with the most volumes). The ORG atlas the labelers follow "
+                   "was built on b = 3000: on a multi-shell scan, 3000 or the nearest shell matches it.")
 @click.option("--labeler", type=click.Choice(["rapidparc", "hemiaug", "tractcloud"]), default="rapidparc",
               show_default=True, help="RapidParc, its model trained for lesions and surgery, or TractCloud (its code "
                                       "and model fetched from its GitHub on first use, about 42 MB).")

@@ -67,7 +67,7 @@ selects the linear model, and `--motion-eddy rigid` corrects head motion alone, 
 ringing before any other step (section 3; new in release 0.4.0). `--mask synthstrip` replaces the default brain mask
 (`median_otsu`) with SynthStrip's, which kept the lower brainstem on the scans checked (section 3, "Tractography input"; new in release
 0.7.0; its weights, 31 MB, are downloaded on first use). `--shell` sets the b-value tracked (by default the
-shell with the most volumes). `--labeler tractcloud` labels with TractCloud in place of
+shell with the most volumes; section 3, "Tractography input", on which to choose). `--labeler tractcloud` labels with TractCloud in place of
 RapidParc (section 3); its code and trained model are downloaded from TractCloud's GitHub on first use (about 42 MB,
 at the version tractline was tested with, checked against pinned checksums). `tractline run --help` lists every
 option.
@@ -174,7 +174,12 @@ instead (Hoopes et al. 2022; its authors' released model, 31 MB, fetched on firs
 which kept the brainstem on the scans checked and needs no T1. From Python its border is a setting
 (`mask={"impl": "synthstrip", "border": 3.0}` grows the mask by 2 mm). One shell is tracked, together with the b0 images:
 `tractline run` picks the shell with the most volumes unless `--shell` names another, and from Python the shell is
-given as `shell=`.
+given as `shell=`. Which shell is tracked can matter on a multi-shell scan. The ORG atlas, whose clusters the labelers
+assign, was built from HCP tractography tracked on the b = 3000 shell alone (Zhang et al. 2018), and both labelers were
+trained on UKF tractography labeled with its clusters. On a multi-shell scan, `--shell 3000` matches the atlas, or,
+when there is no b = 3000 shell, the shell nearest it (given by its own b-value: `--shell` takes the volumes within 50
+of the value given). The default can pick another shell, for example b = 1500 when it has more volumes than b = 3000.
+The default rule has not yet been compared with the nearest-to-3000 one.
 
 **UKF tractography.** The tracker is the two-tensor unscented Kalman filter of Malcolm et al. (2010), reimplemented
 from pnlbwh/ukftractography with the settings used to build the ORG atlas (two tensors, its seeding and stopping
