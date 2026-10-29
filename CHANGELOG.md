@@ -4,7 +4,7 @@ Releases are git tags (`uv add git+https://github.com/mhalle/tractline --tag vX.
 release and `dev` the work in progress (`docs/development.md`, "Branches and releases"). The experiments
 behind each change, with their numbers and later corrections, are in `bench/results/NOTES.md`.
 
-## Unreleased
+## 0.9.0 - 2026-10-29
 
 - **PTT without a T1** (`track:ptt` version 2, experimental, Python only; every `track:ptt` config's hash moves; the
   default tracker is unchanged). Its defaults are now `stopping="fa"`, `stopping_fa="auto"` and `seeding="fa"`, so it
