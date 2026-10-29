@@ -4,7 +4,7 @@ Releases are git tags (`uv add git+https://github.com/mhalle/tractline --tag vX.
 release and `dev` the work in progress (`docs/development.md`, "Branches and releases"). The experiments
 behind each change, with their numbers and later corrections, are in `bench/results/NOTES.md`.
 
-## Unreleased
+## 0.8.1 - 2026-10-28
 
 - **Motion and eddy correction in less memory:** on a Mac the step's peak is about a third lower (on a 105-volume
   2 mm scan, 6.6 copies of the series held by the GPU driver, from 11.0; 2.8 GB for the whole process, from 4.4),
