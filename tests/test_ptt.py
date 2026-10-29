@@ -125,3 +125,12 @@ def test_dipy_units_match_dipy(tmp_path):
     long_seed = lambda x: np.sort(np.linalg.norm(np.diff(x, axis=0), axis=1))[-2] > 0.9    # noqa: E731
     assert np.mean([long_seed(x) for x in ref]) > 0.9 and np.mean([long_seed(x) for x in ours["dipy"]]) > 0.9
     assert max(np.linalg.norm(np.diff(x, axis=0), axis=1).max() for x in ours["mm"]) < 0.55
+
+
+def test_open_ends():
+    """A half that stopped with no rule deciding (TRACKPOINT) ends validly only with keep_open_ends; INVALIDPOINT never."""
+    st = torch.tensor([F.TRACKPOINT, F.ENDPOINT, F.INVALIDPOINT, F.OUTSIDEIMAGE])
+    for keep, want in ((False, [False, True, False, True]), (True, [True, True, False, True])):
+        t = ptt.Tracker.__new__(ptt.Tracker)
+        t.p = ptt.Params(keep_open_ends=keep)
+        assert t._valid(st).tolist() == want

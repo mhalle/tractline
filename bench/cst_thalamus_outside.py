@@ -4,7 +4,7 @@
   2. Tracking inside a mask that includes CSF can follow a cranial nerve through a cistern, and the labeler gives it a
      brain tract's name (a trigeminal nerve named uncinate, ds001226 PAT29).
 
-    uv run --group bench python bench/cst_thalamus_outside.py        # -> results/cst_thalamus_outside.json
+    uv run python bench/cst_thalamus_outside.py        # -> results/cst_thalamus_outside.json
 
 Subjects with FastSurfer labels (VINN asegdkt via haversack, DATA/fastsurfer) and a rigid T1-to-DWI fit: ds001226 PAT16
 (the T1 to its corrected mean b0, DATA/ensemble/PAT16/tumor_dwi.npz) and MASiVar cIIIs04 (s1Bx1 scan 1; its field of

@@ -1,0 +1,655 @@
+{
+ "work": {
+  "scan": "phantom",
+  "shell": 1000.0,
+  "volumes": 33,
+  "directions": 32,
+  "mask_voxels": 144467,
+  "seconds": {
+   "field_estimate": 8.77,
+   "field_apply": 0.45,
+   "mask": 4.87
+  },
+  "total_s": 14.4
+ },
+ "seeds": 100000,
+ "track:ptt version": "2",
+ "arms": {
+  "mask, version 1": {
+   "run": {
+    "streamlines": 980,
+    "labeled": 973,
+    "Other share": 0.8386,
+    "length mm (quartiles), all": [
+     125.3,
+     136.4,
+     182.8
+    ],
+    "settings": {
+     "stopping": "mask",
+     "stopping_fa": 0.15,
+     "max_angle": 20.0,
+     "step_size": 0.5,
+     "probe_length": 1.5,
+     "pmf_threshold": 0.1,
+     "min_len": 20.0,
+     "max_len": 250.0,
+     "fa_seed": 0.2,
+     "open ends kept": false
+    }
+   },
+   "all streamlines": {
+    "streamlines": 980,
+    "VB": 11,
+    "of": 21,
+    "VS": 481,
+    "VS_ratio": 0.4908,
+    "IS_ratio": 0.5092,
+    "IC_ratio": 0.4531,
+    "NC_ratio": 0.0561,
+    "mean_OL_found": 0.0706,
+    "mean_OR_vs_found": 0.2617,
+    "mean_OR_gt_found": 0.0211,
+    "mean_f1_found": 0.1143,
+    "mean_OL_all21": 0.037,
+    "mean_OR_vs_all21": 0.1371,
+    "mean_f1_all21": 0.0599,
+    "missing_bundles": [
+     "CA",
+     "CP",
+     "Fornix",
+     "Cingulum_left",
+     "Cingulum_right",
+     "OR_left",
+     "OR_right",
+     "SCP_left",
+     "SCP_right",
+     "SLF_right"
+    ]
+   }
+  },
+  "mask": {
+   "run": {
+    "streamlines": 89440,
+    "labeled": 87385,
+    "Other share": 0.4819,
+    "length mm (quartiles), all": [
+     91.6,
+     120.8,
+     146.4
+    ],
+    "settings": {
+     "stopping": "mask",
+     "stopping_fa": 0.15,
+     "max_angle": 20.0,
+     "step_size": 0.5,
+     "probe_length": 1.5,
+     "pmf_threshold": 0.1,
+     "min_len": 20.0,
+     "max_len": 250.0,
+     "fa_seed": 0.2,
+     "open ends kept": true
+    }
+   },
+   "all streamlines": {
+    "streamlines": 89440,
+    "VB": 20,
+    "of": 21,
+    "VS": 43513,
+    "VS_ratio": 0.4865,
+    "IS_ratio": 0.5135,
+    "IC_ratio": 0.472,
+    "NC_ratio": 0.0414,
+    "mean_OL_found": 0.6933,
+    "mean_OR_vs_found": 0.5447,
+    "mean_OR_gt_found": 0.9605,
+    "mean_f1_found": 0.5031,
+    "mean_OL_all21": 0.6603,
+    "mean_OR_vs_all21": 0.5188,
+    "mean_f1_all21": 0.4792,
+    "missing_bundles": [
+     "CP"
+    ]
+   }
+  },
+  "fa 0.10": {
+   "run": {
+    "streamlines": 44312,
+    "labeled": 41313,
+    "Other share": 0.498,
+    "length mm (quartiles), all": [
+     67.9,
+     96.6,
+     123.8
+    ],
+    "settings": {
+     "stopping": "fa",
+     "stopping_fa": 0.1,
+     "max_angle": 20.0,
+     "step_size": 0.5,
+     "probe_length": 1.5,
+     "pmf_threshold": 0.1,
+     "min_len": 20.0,
+     "max_len": 250.0,
+     "fa_seed": 0.2,
+     "open ends kept": false
+    }
+   },
+   "all streamlines": {
+    "streamlines": 44312,
+    "VB": 19,
+    "of": 21,
+    "VS": 21551,
+    "VS_ratio": 0.4863,
+    "IS_ratio": 0.5137,
+    "IC_ratio": 0.4413,
+    "NC_ratio": 0.0724,
+    "mean_OL_found": 0.6371,
+    "mean_OR_vs_found": 0.4035,
+    "mean_OR_gt_found": 0.4812,
+    "mean_f1_found": 0.6021,
+    "mean_OL_all21": 0.5764,
+    "mean_OR_vs_all21": 0.3651,
+    "mean_f1_all21": 0.5448,
+    "missing_bundles": [
+     "CA",
+     "CP"
+    ]
+   }
+  },
+  "fa 0.15": {
+   "run": {
+    "streamlines": 68124,
+    "labeled": 60710,
+    "Other share": 0.504,
+    "length mm (quartiles), all": [
+     58.4,
+     85.5,
+     114.2
+    ],
+    "settings": {
+     "stopping": "fa",
+     "stopping_fa": 0.15,
+     "max_angle": 20.0,
+     "step_size": 0.5,
+     "probe_length": 1.5,
+     "pmf_threshold": 0.1,
+     "min_len": 20.0,
+     "max_len": 250.0,
+     "fa_seed": 0.2,
+     "open ends kept": false
+    }
+   },
+   "all streamlines": {
+    "streamlines": 68124,
+    "VB": 19,
+    "of": 21,
+    "VS": 31646,
+    "VS_ratio": 0.4645,
+    "IS_ratio": 0.5355,
+    "IC_ratio": 0.4438,
+    "NC_ratio": 0.0916,
+    "mean_OL_found": 0.6473,
+    "mean_OR_vs_found": 0.3529,
+    "mean_OR_gt_found": 0.3918,
+    "mean_f1_found": 0.6364,
+    "mean_OL_all21": 0.5856,
+    "mean_OR_vs_all21": 0.3193,
+    "mean_f1_all21": 0.5758,
+    "missing_bundles": [
+     "CA",
+     "CP"
+    ]
+   }
+  },
+  "fa 0.20": {
+   "run": {
+    "streamlines": 65591,
+    "labeled": 54608,
+    "Other share": 0.5511,
+    "length mm (quartiles), all": [
+     49.3,
+     75.0,
+     103.7
+    ],
+    "settings": {
+     "stopping": "fa",
+     "stopping_fa": 0.2,
+     "max_angle": 20.0,
+     "step_size": 0.5,
+     "probe_length": 1.5,
+     "pmf_threshold": 0.1,
+     "min_len": 20.0,
+     "max_len": 250.0,
+     "fa_seed": 0.2,
+     "open ends kept": false
+    }
+   },
+   "all streamlines": {
+    "streamlines": 65591,
+    "VB": 19,
+    "of": 21,
+    "VS": 28168,
+    "VS_ratio": 0.4294,
+    "IS_ratio": 0.5706,
+    "IC_ratio": 0.4484,
+    "NC_ratio": 0.1222,
+    "mean_OL_found": 0.5372,
+    "mean_OR_vs_found": 0.2868,
+    "mean_OR_gt_found": 0.2413,
+    "mean_f1_found": 0.6037,
+    "mean_OL_all21": 0.486,
+    "mean_OR_vs_all21": 0.2595,
+    "mean_f1_all21": 0.5462,
+    "missing_bundles": [
+     "CA",
+     "CP"
+    ]
+   }
+  },
+  "act": {
+   "run": {
+    "streamlines": 55325,
+    "labeled": 48004,
+    "Other share": 0.479,
+    "length mm (quartiles), all": [
+     54.4,
+     80.1,
+     108.2
+    ],
+    "settings": {
+     "stopping": "act",
+     "stopping_fa": 0.15,
+     "max_angle": 20.0,
+     "step_size": 0.5,
+     "probe_length": 1.5,
+     "pmf_threshold": 0.1,
+     "min_len": 20.0,
+     "max_len": 250.0,
+     "fa_seed": 0.2,
+     "open ends kept": false
+    }
+   },
+   "all streamlines": {
+    "streamlines": 55325,
+    "VB": 19,
+    "of": 21,
+    "VS": 26779,
+    "VS_ratio": 0.484,
+    "IS_ratio": 0.516,
+    "IC_ratio": 0.4478,
+    "NC_ratio": 0.0682,
+    "mean_OL_found": 0.5744,
+    "mean_OR_vs_found": 0.273,
+    "mean_OR_gt_found": 0.2482,
+    "mean_f1_found": 0.6301,
+    "mean_OL_all21": 0.5197,
+    "mean_OR_vs_all21": 0.247,
+    "mean_f1_all21": 0.5701,
+    "missing_bundles": [
+     "CA",
+     "CP"
+    ]
+   }
+  }
+ },
+ "count-matched (60,000)": {
+  "mask": {
+   "streamlines": 60000,
+   "VB": 20,
+   "of": 21,
+   "VS": 29198,
+   "VS_ratio": 0.4866,
+   "IS_ratio": 0.5134,
+   "IC_ratio": 0.4724,
+   "NC_ratio": 0.041,
+   "mean_OL_found": 0.6397,
+   "mean_OR_vs_found": 0.5174,
+   "mean_OR_gt_found": 0.7791,
+   "mean_f1_found": 0.503,
+   "mean_OL_all21": 0.6092,
+   "mean_OR_vs_all21": 0.4928,
+   "mean_f1_all21": 0.479,
+   "missing_bundles": [
+    "CP"
+   ]
+  },
+  "fa 0.15": {
+   "streamlines": 60000,
+   "VB": 19,
+   "of": 21,
+   "VS": 27821,
+   "VS_ratio": 0.4637,
+   "IS_ratio": 0.5363,
+   "IC_ratio": 0.4444,
+   "NC_ratio": 0.0919,
+   "mean_OL_found": 0.6319,
+   "mean_OR_vs_found": 0.3442,
+   "mean_OR_gt_found": 0.3676,
+   "mean_f1_found": 0.6328,
+   "mean_OL_all21": 0.5717,
+   "mean_OR_vs_all21": 0.3114,
+   "mean_f1_all21": 0.5726,
+   "missing_bundles": [
+    "CA",
+    "CP"
+   ]
+  },
+  "fa 0.20": {
+   "streamlines": 60000,
+   "VB": 19,
+   "of": 21,
+   "VS": 25753,
+   "VS_ratio": 0.4292,
+   "IS_ratio": 0.5708,
+   "IC_ratio": 0.4479,
+   "NC_ratio": 0.1229,
+   "mean_OL_found": 0.5271,
+   "mean_OR_vs_found": 0.2807,
+   "mean_OR_gt_found": 0.2299,
+   "mean_f1_found": 0.5993,
+   "mean_OL_all21": 0.4769,
+   "mean_OR_vs_all21": 0.254,
+   "mean_f1_all21": 0.5422,
+   "missing_bundles": [
+    "CA",
+    "CP"
+   ]
+  },
+  "ukf (today)": {
+   "streamlines": 60000,
+   "VB": 20,
+   "of": 21,
+   "VS": 16482,
+   "VS_ratio": 0.2747,
+   "IS_ratio": 0.7253,
+   "IC_ratio": 0.6286,
+   "NC_ratio": 0.0967,
+   "mean_OL_found": 0.4629,
+   "mean_OR_vs_found": 0.5015,
+   "mean_OR_gt_found": 0.5276,
+   "mean_f1_found": 0.4315,
+   "mean_OL_all21": 0.4408,
+   "mean_OR_vs_all21": 0.4776,
+   "mean_f1_all21": 0.4109,
+   "missing_bundles": [
+    "CA"
+   ]
+  },
+  "ptt + ACT, step 6's FODs and seeds": {
+   "streamlines": 60000,
+   "VB": 19,
+   "of": 21,
+   "VS": 28980,
+   "VS_ratio": 0.483,
+   "IS_ratio": 0.517,
+   "IC_ratio": 0.4506,
+   "NC_ratio": 0.0664,
+   "mean_OL_found": 0.5892,
+   "mean_OR_vs_found": 0.279,
+   "mean_OR_gt_found": 0.2612,
+   "mean_f1_found": 0.6372,
+   "mean_OL_all21": 0.5331,
+   "mean_OR_vs_all21": 0.2524,
+   "mean_f1_all21": 0.5765,
+   "missing_bundles": [
+    "CA",
+    "CP"
+   ]
+  }
+ },
+ "count-matched (55,000)": {
+  "mask": {
+   "streamlines": 55000,
+   "VB": 20,
+   "of": 21,
+   "VS": 26684,
+   "VS_ratio": 0.4852,
+   "IS_ratio": 0.5148,
+   "IC_ratio": 0.4737,
+   "NC_ratio": 0.0412,
+   "mean_OL_found": 0.6276,
+   "mean_OR_vs_found": 0.5132,
+   "mean_OR_gt_found": 0.7421,
+   "mean_f1_found": 0.5022,
+   "mean_OL_all21": 0.5977,
+   "mean_OR_vs_all21": 0.4888,
+   "mean_f1_all21": 0.4783,
+   "missing_bundles": [
+    "CP"
+   ]
+  },
+  "fa 0.15": {
+   "streamlines": 55000,
+   "VB": 19,
+   "of": 21,
+   "VS": 25526,
+   "VS_ratio": 0.4641,
+   "IS_ratio": 0.5359,
+   "IC_ratio": 0.4441,
+   "NC_ratio": 0.0918,
+   "mean_OL_found": 0.6206,
+   "mean_OR_vs_found": 0.3398,
+   "mean_OR_gt_found": 0.3537,
+   "mean_f1_found": 0.6289,
+   "mean_OL_all21": 0.5615,
+   "mean_OR_vs_all21": 0.3074,
+   "mean_f1_all21": 0.569,
+   "missing_bundles": [
+    "CA",
+    "CP"
+   ]
+  },
+  "fa 0.20": {
+   "streamlines": 55000,
+   "VB": 19,
+   "of": 21,
+   "VS": 23658,
+   "VS_ratio": 0.4301,
+   "IS_ratio": 0.5699,
+   "IC_ratio": 0.4474,
+   "NC_ratio": 0.1224,
+   "mean_OL_found": 0.5165,
+   "mean_OR_vs_found": 0.277,
+   "mean_OR_gt_found": 0.221,
+   "mean_f1_found": 0.5934,
+   "mean_OL_all21": 0.4673,
+   "mean_OR_vs_all21": 0.2507,
+   "mean_f1_all21": 0.5369,
+   "missing_bundles": [
+    "CA",
+    "CP"
+   ]
+  },
+  "act": {
+   "streamlines": 55000,
+   "VB": 19,
+   "of": 21,
+   "VS": 26607,
+   "VS_ratio": 0.4838,
+   "IS_ratio": 0.5162,
+   "IC_ratio": 0.448,
+   "NC_ratio": 0.0682,
+   "mean_OL_found": 0.5737,
+   "mean_OR_vs_found": 0.2727,
+   "mean_OR_gt_found": 0.2476,
+   "mean_f1_found": 0.6298,
+   "mean_OL_all21": 0.5191,
+   "mean_OR_vs_all21": 0.2468,
+   "mean_f1_all21": 0.5698,
+   "missing_bundles": [
+    "CA",
+    "CP"
+   ]
+  },
+  "ukf (today)": {
+   "streamlines": 55000,
+   "VB": 20,
+   "of": 21,
+   "VS": 15132,
+   "VS_ratio": 0.2751,
+   "IS_ratio": 0.7249,
+   "IC_ratio": 0.6277,
+   "NC_ratio": 0.0972,
+   "mean_OL_found": 0.4496,
+   "mean_OR_vs_found": 0.4957,
+   "mean_OR_gt_found": 0.5034,
+   "mean_f1_found": 0.4258,
+   "mean_OL_all21": 0.4282,
+   "mean_OR_vs_all21": 0.4721,
+   "mean_f1_all21": 0.4055,
+   "missing_bundles": [
+    "CA"
+   ]
+  },
+  "ptt + ACT, step 6's FODs and seeds": {
+   "streamlines": 55000,
+   "VB": 19,
+   "of": 21,
+   "VS": 26530,
+   "VS_ratio": 0.4824,
+   "IS_ratio": 0.5176,
+   "IC_ratio": 0.451,
+   "NC_ratio": 0.0667,
+   "mean_OL_found": 0.5777,
+   "mean_OR_vs_found": 0.2737,
+   "mean_OR_gt_found": 0.2483,
+   "mean_f1_found": 0.6323,
+   "mean_OL_all21": 0.5227,
+   "mean_OR_vs_all21": 0.2476,
+   "mean_f1_all21": 0.5721,
+   "missing_bundles": [
+    "CA",
+    "CP"
+   ]
+  }
+ },
+ "run to run (50,000 each)": {
+  "fa 0.15, tracking seed 1": {
+   "streamlines": 50000,
+   "VB": 19,
+   "of": 21,
+   "VS": 23196,
+   "VS_ratio": 0.4639,
+   "IS_ratio": 0.5361,
+   "IC_ratio": 0.4444,
+   "NC_ratio": 0.0917,
+   "mean_OL_found": 0.6063,
+   "mean_OR_vs_found": 0.3349,
+   "mean_OR_gt_found": 0.3382,
+   "mean_f1_found": 0.6229,
+   "mean_OL_all21": 0.5485,
+   "mean_OR_vs_all21": 0.303,
+   "mean_f1_all21": 0.5636,
+   "missing_bundles": [
+    "CA",
+    "CP"
+   ]
+  },
+  "fa 0.15, tracking seed 2": {
+   "streamlines": 50000,
+   "VB": 19,
+   "of": 21,
+   "VS": 23397,
+   "VS_ratio": 0.4679,
+   "IS_ratio": 0.5321,
+   "IC_ratio": 0.4417,
+   "NC_ratio": 0.0903,
+   "mean_OL_found": 0.6057,
+   "mean_OR_vs_found": 0.3331,
+   "mean_OR_gt_found": 0.3365,
+   "mean_f1_found": 0.6234,
+   "mean_OL_all21": 0.548,
+   "mean_OR_vs_all21": 0.3014,
+   "mean_f1_all21": 0.564,
+   "missing_bundles": [
+    "CA",
+    "CP"
+   ]
+  },
+  "fa 0.15, tracking seed 3": {
+   "streamlines": 50000,
+   "VB": 19,
+   "of": 21,
+   "VS": 23391,
+   "VS_ratio": 0.4678,
+   "IS_ratio": 0.5322,
+   "IC_ratio": 0.4369,
+   "NC_ratio": 0.0953,
+   "mean_OL_found": 0.6026,
+   "mean_OR_vs_found": 0.3333,
+   "mean_OR_gt_found": 0.3316,
+   "mean_f1_found": 0.6217,
+   "mean_OL_all21": 0.5452,
+   "mean_OR_vs_all21": 0.3016,
+   "mean_f1_all21": 0.5625,
+   "missing_bundles": [
+    "CA",
+    "CP"
+   ]
+  },
+  "act, tracking seed 1": {
+   "streamlines": 50000,
+   "VB": 19,
+   "of": 21,
+   "VS": 24184,
+   "VS_ratio": 0.4837,
+   "IS_ratio": 0.5163,
+   "IC_ratio": 0.4476,
+   "NC_ratio": 0.0687,
+   "mean_OL_found": 0.562,
+   "mean_OR_vs_found": 0.267,
+   "mean_OR_gt_found": 0.2358,
+   "mean_f1_found": 0.6244,
+   "mean_OL_all21": 0.5085,
+   "mean_OR_vs_all21": 0.2416,
+   "mean_f1_all21": 0.5649,
+   "missing_bundles": [
+    "CA",
+    "CP"
+   ]
+  },
+  "act, tracking seed 2": {
+   "streamlines": 50000,
+   "VB": 19,
+   "of": 21,
+   "VS": 24401,
+   "VS_ratio": 0.488,
+   "IS_ratio": 0.512,
+   "IC_ratio": 0.4444,
+   "NC_ratio": 0.0675,
+   "mean_OL_found": 0.5662,
+   "mean_OR_vs_found": 0.269,
+   "mean_OR_gt_found": 0.235,
+   "mean_f1_found": 0.6279,
+   "mean_OL_all21": 0.5123,
+   "mean_OR_vs_all21": 0.2434,
+   "mean_f1_all21": 0.5681,
+   "missing_bundles": [
+    "CA",
+    "CP"
+   ]
+  },
+  "act, tracking seed 3": {
+   "streamlines": 50000,
+   "VB": 19,
+   "of": 21,
+   "VS": 24276,
+   "VS_ratio": 0.4855,
+   "IS_ratio": 0.5145,
+   "IC_ratio": 0.4449,
+   "NC_ratio": 0.0696,
+   "mean_OL_found": 0.5637,
+   "mean_OR_vs_found": 0.2638,
+   "mean_OR_gt_found": 0.2308,
+   "mean_f1_found": 0.6273,
+   "mean_OL_all21": 0.5101,
+   "mean_OR_vs_all21": 0.2387,
+   "mean_f1_all21": 0.5675,
+   "missing_bundles": [
+    "CA",
+    "CP"
+   ]
+  }
+ }
+}

@@ -1,7 +1,7 @@
 """A SynthStrip port (synthstrip-torch 0.1.1) on the bench's mean b0s, on a CUDA GPU (Modal): skullstrip_check.py's
 reference.
 
-    uv run --group bench python bench/skullstrip_check.py --b0s        # writes the mean b0s (DATA/skullstrip/)
+    uv run python bench/skullstrip_check.py --b0s        # writes the mean b0s (DATA/skullstrip/)
     modal run bench/skullstrip_reference_modal.py                      # the reference's SDT beside each
 
 The reference is mhalle/synthstrip-torch (a torch port of FreeSurfer's mri_synthstrip, FreeSurfer-licensed), run here as

@@ -642,6 +642,27 @@ def default_shell(bval) -> float:
     return max(dw)[1]
 
 
+def auto_shell(bval) -> float:
+    """The shell stopping_fa auto reads diffusivity on: the lowest with at least AUTO_FA["min_directions"] volumes and
+    b >= AUTO_FA["min_b"] (a tensor needs directions; a low b weighs perfusion), as default_shell gives a shell: the
+    median of its own b-values. Above AUTO_FA["warn_b"] a warning: there fluid and cortex barely differ in
+    diffusivity, and the estimate may find the sulci's fluid (NOTES 2026-10-29)."""
+    from .motion_eddy import shell_groups
+    b = np.asarray(bval, float)
+    groups, nominal = shell_groups(b)
+    ok = [float(np.median(b[g])) for g, n in zip(groups, nominal)
+          if n > 0 and len(g) >= AUTO_FA["min_directions"] and float(np.median(b[g])) >= AUTO_FA["min_b"]]
+    if not ok:
+        raise ValueError(f"track:ptt: stopping_fa auto needs a shell with b >= {AUTO_FA['min_b']:g} and "
+                         f"{AUTO_FA['min_directions']} or more volumes; give stopping_fa a number")
+    if min(ok) > AUTO_FA["warn_b"]:
+        import warnings
+        warnings.warn(f"track:ptt: stopping_fa auto reads diffusivity at b = {min(ok):g}, the series' lowest usable "
+                      "shell; above about 1600 fluid and cortex barely differ, and the threshold may come out low",
+                      stacklevel=2)
+    return min(ok)
+
+
 UKF_BACKENDS = {"mps": "metal", "cuda": "triton_block", "cpu": "torch (fast step)"}
 
 
@@ -704,40 +725,105 @@ def ptt_seeds(region, affine, count, rng):
     return p @ A[:3, :3].T + A[:3, 3]
 
 
+#: auto_stopping_fa's rule (NOTES 2026-10-29, "Stopping at low FA, set from each scan"), fit on three brains. It is
+#: part of track:ptt's outputs but not of its options: a change to any of these is a new version of track:ptt.
+AUTO_FA = {"factor": 1.15, "md_relative": 1.5, "md_floor": 0.1, "wm_fa": 0.4, "below": 0.3, "bin": 0.005,
+           "smooth": 0.01, "plausible": (0.05, 0.25),                # cortex's FA on the brains measured: 0.10-0.17
+           "min_directions": 12, "min_b": 500.0, "warn_b": 1600.0}
+
+
+def auto_stopping_fa(fa_tracked, md_low, fa_low):
+    """track:ptt's stopping_fa "auto", from the mask's voxels: AUTO_FA["factor"] times an estimate of the FA of cortex.
+    The estimate is the mode of the tracked shell's FA below AUTO_FA["below"] (a histogram of AUTO_FA["bin"], smoothed
+    by a Gaussian of AUTO_FA["smooth"]) over the voxels whose mean diffusivity on auto_shell's shell (md_low, with
+    fa_low its FA) is under AUTO_FA["md_relative"] times white matter's (the median over fa_low > AUTO_FA["wm_fa"])
+    and above AUTO_FA["md_floor"] times it (no signal): gray and white matter, not the fluid in the sulci, whose FA
+    can sit below cortex's on a noisy scan. An estimate outside AUTO_FA["plausible"] is refused. -> (stopping_fa,
+    the estimate)."""
+    from scipy.ndimage import gaussian_filter1d
+    r = AUTO_FA
+    wm = md_low[fa_low > r["wm_fa"]]
+    if len(wm) < 100:
+        raise ValueError("track:ptt: stopping_fa auto found too little white matter (FA > 0.4) to set itself; give a number")
+    ref = np.median(wm)
+    x = fa_tracked[(md_low < r["md_relative"] * ref) & (md_low > r["md_floor"] * ref) & (fa_tracked < r["below"])]
+    if len(x) < 1000:
+        raise ValueError("track:ptt: stopping_fa auto found too little tissue to set itself; give a number")
+    n = int(round(r["below"] / r["bin"]))
+    h, e = np.histogram(x, bins=n, range=(0, r["below"]))
+    cortex = float(e[np.argmax(gaussian_filter1d(h.astype(float), r["smooth"] / r["bin"]))] + r["bin"] / 2)
+    lo, hi = r["plausible"]
+    if not lo <= cortex <= hi:                                    # not a brain's cortex (the ISMRM phantom: 0.27)
+        raise ValueError(f"track:ptt: stopping_fa auto estimated cortex's FA at {cortex:.3f}, outside the "
+                         f"{lo}-{hi} expected of a brain; give stopping_fa a number")
+    return round(r["factor"] * cortex, 4), cortex
+
+
+def ptt_stopping(o, mask, tissue=None, fa_map=None):
+    """track:ptt's stopping maps (include, exclude) on the DWI's grid, for fields.Act (each read trilinearly; above 0.5
+    decides). o: the track slot's options. act: include GM, the background and the field of view's faces, exclude CSF
+    (tissue: (X, Y, Z, 4) WM, GM, deep GM, CSF). mask: include outside the mask. fa: include outside the mask, where
+    fa_map < stopping_fa, and the field of view's faces (a path that runs into a field of view cut through the brain,
+    as at the pons, ends there; without them its FOD fades at the edge and the path is dropped: NOTES 2026-10-29)."""
+    if o["stopping"] == "fa" and not isinstance(o["stopping_fa"], (int, float)):
+        raise ValueError(f"ptt_stopping: stopping_fa {o['stopping_fa']!r}: resolve auto first (auto_stopping_fa)")
+
+    def faces(include):
+        for ax in range(3):
+            for idx in (0, -1):
+                sl = [slice(None)] * 3
+                sl[ax] = idx
+                include[tuple(sl)] = 1.0
+        return include
+
+    if o["stopping"] == "act":
+        pve = np.asarray(tissue, float)
+        include = pve[..., 1].copy()
+        include[pve.sum(-1) < 1e-6] = 1.0
+        return faces(include), pve[..., 3].copy()
+    include = (~mask).astype(float)
+    if o["stopping"] == "fa":
+        include[mask & (fa_map < o["stopping_fa"])] = 1.0
+        faces(include)
+    return include, np.zeros(mask.shape)
+
+
 def csd_ptt(s, dwi, mask, cfg: PipelineConfig, timer: Timer, prefix="", device="mps", tissue=None) -> Tractogram:
     """The model slot's csd and the track slot's ptt (docs/sota-pipeline-design.md, section 7.2): the b0s and the shell
     (b-vectors in image axes), the response and the FODs over the mask (tractline.csd), then PTT (tractline.ptt: the
     Metal kernel on mps, the torch prototype elsewhere) with ACT from `tissue` (stopping "act": (X, Y, Z, 4) partial
     volumes WM, GM, deep GM, CSF on the DWI's grid, as the bench's tissue maps; GM and the background end a path
-    validly, CSF invalidly, the field of view's faces validly) or the mask's edge (stopping "mask"), seeded uniformly in
-    WM >= 0.5 (seeding "wm") or in the mask where FA >= fa_seed ("fa"). The PMF is read on our own 362 directions."""
+    validly, CSF invalidly, the field of view's faces validly), the mask's edge with every path kept (stopping "mask":
+    where the FOD runs out ends a path too), or the mask's edge and FA below stopping_fa as the valid ends (stopping
+    "fa"); ptt_stopping makes the maps. Seeded uniformly in WM >= 0.5 (seeding "wm") or in the mask where FA >= fa_seed
+    ("fa"). The PMF is read on our own 362 directions."""
     from . import csd as C, fields as F, ptt as PT
     m, o = cfg.opts("model"), cfg.opts("track")
     d, bval, bvec = _shell_volumes(dwi, s.bval, s.bvec, m["shell"])
     g = _image_axes(bvec, s.affine)
-    with timer(prefix + "csd"):
+    with timer(prefix + "csd"):                        # its time includes the DTI for FA (and auto), done first: auto
+        fa_map, auto = None, {}                         # refuses before the CSD fit, not after it
+        if o["stopping"] == "fa" or o["seeding"] == "fa":
+            ev, _ = C.tensor_fit(d[mask].astype(np.float64), bval, g)
+            fa_map = np.zeros(mask.shape)
+            fa_map[mask] = C.fa(ev)
+        if o["stopping"] == "fa" and o["stopping_fa"] == "auto":
+            low = auto_shell(s.bval)
+            dl, bl, vl = _shell_volumes(dwi, s.bval, s.bvec, low)
+            evl, _ = C.tensor_fit(dl[mask].astype(np.float64), bl, _image_axes(vl, s.affine))
+            value, cortex = auto_stopping_fa(fa_map[mask], evl.mean(1), C.fa(evl))
+            if o["seeding"] == "fa" and value > o["fa_seed"]:
+                import warnings
+                warnings.warn(f"track:ptt: stopping_fa auto set itself to {value}, above fa_seed {o['fa_seed']}: the "
+                              "seeds with FA between them start where a path ends, and track nothing", stacklevel=2)
+            o = {**o, "stopping_fa": value}
+            auto = {"stopping_fa (auto)": value, "cortex FA estimate": cortex, "auto shell": low}
         resp = C.response_ssst(d, bval, g, roi_radius=m["roi_radius"], fa_threshold=m["fa_threshold"])
         order = int(m["order"]) if m["order"] != "auto" else (8 if int((bval > 50).sum()) >= 45 else 6)
         coeffs, cinfo = C.CSD(bval, g, resp, order=order, lambda_=m["lambda"], tau=m["tau"]).fit(d, mask, device=device)
     with timer(prefix + "ptt"):
-        if o["stopping"] == "act":
-            pve = np.asarray(tissue, float)
-            include = pve[..., 1].copy()
-            include[pve.sum(-1) < 1e-6] = 1.0
-            for ax in range(3):                                            # the field of view's faces: a valid end
-                for idx in (0, -1):
-                    sl = [slice(None)] * 3
-                    sl[ax] = idx
-                    include[tuple(sl)] = 1.0
-            exclude = pve[..., 3].copy()
-        else:
-            include, exclude = (~mask).astype(float), np.zeros(mask.shape)
-        if o["seeding"] == "wm":
-            region = np.asarray(tissue)[..., 0] >= 0.5
-        else:
-            ev, _ = C.tensor_fit(d[mask].astype(np.float64), bval, g)
-            region = np.zeros(mask.shape, bool)
-            region[mask] = C.fa(ev) >= o["fa_seed"]
+        include, exclude = ptt_stopping(o, mask, tissue, fa_map)
+        region = np.asarray(tissue)[..., 0] >= 0.5 if o["seeding"] == "wm" else mask & (fa_map >= o["fa_seed"])
         seeds = ptt_seeds(region, s.affine, o["seed_count"], o["seed_rng"])
         v = C.hemisphere(181)
         pmf = F.PmfField(coeffs, mask, np.r_[v, -v], device)
@@ -750,7 +836,7 @@ def csd_ptt(s, dwi, mask, cfg: PipelineConfig, timer: Timer, prefix="", device="
                           "slower and with another random stream", stacklevel=2)
         params = PT.Params(step_size=o["step_size"], max_angle=o["max_angle"], probe_length=o["probe_length"],
                            probe_quality=o["probe_quality"], pmf_threshold=o["pmf_threshold"], min_len=o["min_len"],
-                           max_len=o["max_len"])
+                           max_len=o["max_len"], keep_open_ends=o["stopping"] == "mask")
         tracker = PT.Tracker(pmf, act, s.affine, np.linalg.norm(np.asarray(s.affine)[:3, :3], axis=0), params, device,
                              backend=backend)
         by_seed, tinfo = tracker.track(seeds, seed=o["track_rng"], keep_index=True)
@@ -759,7 +845,7 @@ def csd_ptt(s, dwi, mask, cfg: PipelineConfig, timer: Timer, prefix="", device="
     stats = {"seeds": int(len(seeds)), "seed_index": np.asarray(order_, np.int64), "backend": backend,
              "random numbers": ("Philox, counter-based, keyed by the seed's index" if backend == "metal"
                                 else "a torch generator, its stream depending on the batch (20,000 seeds)"),
-             "seed voxels in the seeding region": int(region.sum()), **tinfo}
+             "seed voxels in the seeding region": int(region.sum()), **auto, **tinfo}
     info = {"shell": m["shell"], "directions": int((bval > 50).sum()), "order": order,
             "response": {"evals": resp.evals.tolist(), "S0": resp.S0, "voxels": resp.voxels}, "csd": cinfo,
             "mask_voxels": int(mask.sum())}
@@ -791,6 +877,12 @@ def execute(s, cfg: PipelineConfig, timer: Timer, prefix="", device="auto", work
     shell, tracker = cfg.opts("model")["shell"], cfg.opts("track")
     _check_shell(s.bval, shell)
     ptt = cfg["track"].impl == "ptt"
+    if ptt and tracker["stopping"] == "fa" and tracker["stopping_fa"] == "auto":
+        auto_shell(s.bval)                                  # a series with no usable shell: refused before any work
+    if ptt and tracker["stopping"] == "act" and tracker["seeding"] == "fa":
+        import warnings
+        warnings.warn("track:ptt: stopping act with seeding fa (the default): seeds by FA, not in the tissue maps' "
+                      "white matter; give seeding='wm' for ACT's usual pairing", stacklevel=2)
     uses_tissue = ptt and (tracker["stopping"] == "act" or tracker["seeding"] == "wm")
     if uses_tissue:
         if tissue is None:
@@ -800,6 +892,11 @@ def execute(s, cfg: PipelineConfig, timer: Timer, prefix="", device="auto", work
     elif tissue is not None:
         raise ValueError("execute: tissue= given, but this config does not use it (track:ptt with stopping 'act' or "
                          "seeding 'wm' does)")
+    if (ptt and tracker["stopping"] == "fa" and tracker["seeding"] == "fa" and tracker["stopping_fa"] != "auto"
+            and tracker["stopping_fa"] > tracker["fa_seed"]):
+        import warnings
+        warnings.warn(f"track:ptt: stopping_fa {tracker['stopping_fa']} is above fa_seed {tracker['fa_seed']}: the "
+                      "seeds with FA between them start where a path ends, and track nothing", stacklevel=2)
     if ptt and cfg.is_on("bundles") and cfg.opts("bundles").get("grouping", "index") != "index":
         raise ValueError("execute: track:ptt has no seed voxels (a voxel may seed several streamlines), so the bundles "
                          "slot's grouping must be 'index'")
@@ -875,6 +972,9 @@ def execute(s, cfg: PipelineConfig, timer: Timer, prefix="", device="auto", work
         runtime.pop("torch_compile", None)
         runtime["ptt backend"] = tg.stats["backend"]
         runtime["ptt random numbers"] = tg.stats["random numbers"]
+        if "stopping_fa (auto)" in tg.stats:            # what auto chose from this scan: an output of the run, recorded
+            runtime["ptt stopping_fa (auto)"] = {k: tg.stats[k] for k in      # here because the config (and its hash)
+                                                 ("stopping_fa (auto)", "cortex FA estimate", "auto shell")}  # says "auto"
     corr.provenance = {"config": config, "runtime": runtime}
     run = Run(corr, tg, labels, config, runtime)
     from . import provenance as PV

@@ -40,7 +40,10 @@ The method (per half-streamline; voxel coordinates; a frame T, N1, N2 and curvat
   each step: propagate with the current curvatures, then choose new ones; the point recorded, then ACT decides there:
     ENDPOINT or OUTSIDEIMAGE end validly, INVALIDPOINT invalidly, TRACKPOINT goes on; the deciding point is not kept;
   the backward half starts at the seed along minus the first forward segment, with fresh state; a streamline is kept
-    when both halves end validly and its length is within [min_len, max_len].
+    when both halves end validly and its length is within [min_len, max_len]. With Params.keep_open_ends, a half that
+    stopped with no direction taken (or at the point limit) ends validly too; INVALIDPOINT still does not. (An open
+    end: the status still TRACKPOINT. A half at the point limit is max_len long, so the length check drops it unless
+    the other half has no step.)
 Random numbers: one torch generator per call, seeded; a streamline's path depends on the seeds' order and the batch size
 (the kernels will use counter-based numbers, independent of both).
 """
@@ -66,6 +69,9 @@ class Params:
     data_support_exponent: float = 1.0
     min_len: float = 20.0            # mm (the step 6 benchmark's)
     max_len: float = 250.0           # mm
+    keep_open_ends: bool = False     # a half that ends with no stopping rule deciding (no direction accepted, or the
+                                     # point limit) is a valid end: for stopping at the mask's edge, where most paths
+                                     # stop where the FOD runs out (NOTES 2026-10-29)
     nbr_sample: int = 10             # candidates that estimate the maximum
     max_try: int = 100               # candidates tried for acceptance
     block: int = 10                  # tries scored at once (the rest in further blocks)
@@ -257,8 +263,13 @@ class Tracker:
             alive[go[stop]] = False
             n[go[stop]] -= 1                                                 # the deciding point is not kept
         stack = torch.stack(pts, 1)
+        return stack, n, self._valid(status)
+
+    def _valid(self, status):
+        """Which halves ended validly: leaving through an include region or the image; with keep_open_ends, also those
+        that stopped with no rule deciding (status still TRACKPOINT)."""
         valid = (status == F.ENDPOINT) | (status == F.OUTSIDEIMAGE)
-        return stack, n, valid
+        return valid | (status == F.TRACKPOINT) if self.p.keep_open_ends else valid
 
     @torch.no_grad()
     def track(self, seeds_world, seed=1, directions=None, batch=None, offset=0, keep_index=False):
@@ -282,8 +293,7 @@ class Tracker:
 
     def _halves_metal(self, sv, d, ids, seed, half):
         pts, n, st = self.metal.run(sv, d, seed=seed, half=half, ids=ids)
-        valid = (st == F.ENDPOINT) | (st == F.OUTSIDEIMAGE)
-        return pts.to(self.dt), n.to(torch.int64), valid
+        return pts.to(self.dt), n.to(torch.int64), self._valid(st)
 
     def _track(self, seeds_world, g, directions, seed=1, offset=0):
         inv = np.linalg.inv(self.affine)

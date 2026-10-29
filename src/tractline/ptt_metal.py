@@ -259,7 +259,7 @@ kernel void ptt_steps(device const float *table [[buffer(0)]], device const int 
     int n = s[0], st = TRACKPOINT, alive = 1;
     for (int it = 0; it < ip[14]; it++) {
         int i = n;
-        if (i >= c.maxp) { alive = 0; break; }                              // the point limit: an invalid end
+        if (i >= c.maxp) { alive = 0; break; }                              // the point limit: an open end
         float3 Tn, N2n;
         propagate(pos, T, N1, N2, k1, k2, c.step, c.inv_vox, c.k_small, Tn, N2n);
         T = normalize(Tn);
@@ -277,7 +277,7 @@ kernel void ptt_steps(device const float *table [[buffer(0)]], device const int 
             float v; float L = support(pos, T, N1, N2, k.x, k.y, last, c, table, rows, verts, cmap, v);
             if (u01(g) * Mx < L) { k1 = k.x; k2 = k.y; last = v; took = true; break; }
         }
-        if (!took) { st = TRACKPOINT; alive = 0; break; }                   // FAIL: no point, an invalid end
+        if (!took) { st = TRACKPOINT; alive = 0; break; }                   // FAIL: no point, an open end
         float3 p = pos + shift;
         out[3 * i] = p.x; out[3 * i + 1] = p.y; out[3 * i + 2] = p.z;
         n = i + 1;

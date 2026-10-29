@@ -56,7 +56,9 @@ III scan (below).
     anatomical stopping and white-matter seeding.
     - It scores mean F1 0.583 against UKF's 0.412: the largest accuracy difference measured in this work.
     - Seeding controls rule out the seeds as the cause. The tracker and its stopping rule were changed together, so
-      their effects are not separated.
+      their effects are not separated here. *Later* (NOTES 2026-10-29, tractline's own PTT): PTT with only the mask's
+      edge as its stop gives about 44 % of the gain over UKF; a stop at low FA from the DWI alone comes within about
+      0.003 F1 of ACT on the phantom.
     - On cIIIs04's rescans, PTT + ACT is slightly steadier than UKF at matched streamline counts, by margins of
       0.01–0.07. That rests on one subject and one run per scan, and PTT + ACT reused A's tissue maps for seeding and
       for ACT on every rescan. Only the CST part depends on a post hoc fix for ACT's edge rule; the AF and UF leads hold
@@ -84,7 +86,7 @@ III scan (below).
 | ORG atlas | The fiber-clustering atlas whose 800 clusters, and their outlier twins, define RapidParc's 43 classes. |
 | Other | RapidParc's class for streamlines it gives no named tract. It holds about half of all streamlines. |
 | CSD | Constrained spherical deconvolution: a model of fiber orientations in each voxel. |
-| PTT | Parallel transport tractography (DIPY), a probabilistic tracker; here it runs on a CSD fit. |
+| PTT | Parallel transport tractography, a probabilistic tracker on a CSD fit: DIPY's in step 6; tractline's own since (`track:ptt`, experimental). |
 | ACT | Anatomically constrained stopping from tissue maps. A path is kept only if it ends validly: in gray matter, outside the brain, or at the image's faces. |
 | TractSeg | A neural network that segments 72 bundles directly from fiber peaks, with no tracking. It was trained on HCP data. |
 | A | A subject's reference scan. For cIIIs04 it is compared with three rescans: "within" (the same session), session 3 and session 5. |
@@ -254,6 +256,7 @@ once per scan, with no ensemble:
   - Swapping seeds moves either tracker by less than 0.01 at a matched count.
   - Keeping PTT's invalid ends moves its VS by half a point.
   - PTT and ACT were changed together and are not separated: there was no PTT run without ACT, and no UKF run with it.
+    *Later* (NOTES 2026-10-29) they were separated, with tractline's own PTT: see the note under the summary above.
 - **The phantom Dice is the less firm comparison.**
   - The target is each ground-truth bundle's traversal mask.
   - The trackers give density presence, whose Dice rises with the streamline count. Hence the count-matched column,

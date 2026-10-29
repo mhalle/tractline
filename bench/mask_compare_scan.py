@@ -1,7 +1,7 @@
 """The brain masks compared on one scan given by path, distortion-corrected as tractline run does it (NOTES 2026-10-28,
 "Ron's claims checked; the masks with and without CSF").
 
-    uv run --group bench python bench/mask_compare_scan.py <dwi.nii.gz> <tag> [<out folder>]
+    uv run python bench/mask_compare_scan.py <dwi.nii.gz> <tag> [<out folder>]
                                                     # -> <out folder>/mask_compare_<tag>.json, .png (default results/)
 
 A scan that is not public (one shared for a check) keeps its outputs outside the repository: give the out folder.

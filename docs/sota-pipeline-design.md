@@ -471,7 +471,10 @@ interpolation) to understand it, and from Aydogan & Shi 2021. Our own implementa
    UKF has: one thread per half-streamline, the same samplers, the same counter-based random numbers.
 4. **Frames:** the b-vectors in image axes with FSL's x flip for a positive determinant, as `prep.py` and the bench
    apply it. Directions are in the voxel axes' mm frame, steps through 1/voxel size, as DIPY's.
-5. **The slot:** `track:ptt` (options as above) requires `model:csd` and a `tissue` input. It needs the `Scan` artifact
+5. **The slot:** `track:ptt` (options as above) requires `model:csd`, and a `tissue` input for stopping `act` or
+   seeding `wm`. Without tissue maps it stops at the mask's edge (`mask`, which since version 2 keeps the paths that
+   end inside the mask) or at low FA (`fa`, version 2, with `stopping_fa` set from the scan: the defaults since
+   version 2): NOTES 2026-10-29. It needs the `Scan` artifact
    state or a narrow stand-in, which comes due here.
 
 **Checks.**
@@ -511,9 +514,18 @@ interpolation) to understand it, and from Aydogan & Shi 2021. Our own implementa
     - Count-matched per tract, it agrees better than UKF on all three tracts. Raw, UKF's UF agrees better. PTT reuses
       A's tissue maps and seeds.
     - Against the stated 10°: no worse at matched counts, and much more UF tracked (17.4 against 10.5 mL).
-  - **Wired** (NOTES 2026-10-25): `model:csd` and `track:ptt` are config slots, run by `pipeline.execute`. Tissue maps
-    come from the caller (`tissue=`) until phase B makes them. On cIIIs04 a run takes 60.8 s from scan to labels (UKF:
-    89 s). The `Scan` state was not needed yet: execute branches on the track slot.
+  - **Wired** (NOTES 2026-10-25): `model:csd` and `track:ptt` are config slots, run by `pipeline.execute`. Tissue maps,
+    for stopping `act` and seeding `wm`, come from the caller (`tissue=`) until phase B makes them. On cIIIs04 a run
+    takes 60.8 s from scan to labels (UKF: 89 s). The `Scan` state was not needed yet: execute branches on the track
+    slot.
+  - **Without a T1** (NOTES 2026-10-29; `track:ptt` version 2). Its defaults now need no tissue maps: stopping `fa`
+    (the mask's edge, the field of view's faces, or FA below `stopping_fa` end a path validly; only paths with two
+    valid ends are kept), `stopping_fa="auto"` (1.15 times the scan's cortex FA: the low peak of the tracked shell's
+    FA among tissue voxels, fluid left out by its diffusivity on the lowest usable shell; refused when the estimate is
+    not a brain's) and seeding `fa`. At a fixed 0.15, `fa` comes within about 0.003 F1 of ACT on the ISMRM phantom
+    (where auto refuses) and its CST agreement on cIIIs04's rescans matches ACT's (auto chose 0.147-0.152 there);
+    against FastSurfer on three brains, auto ends fewer paths badly than UKF, at or near the best fixed threshold. The
+    automatic threshold is tractline's own heuristic, fit and checked on those three brains. Stopping `mask` now keeps paths that end inside the mask (version 1 kept almost none).
   - **Limits.** PTT has no seed voxels, so RapidParc's hash groupings are refused with it. Its Metal and torch backends
     give different random streams under one config hash (decision 6 extended, not yet checked at the ensemble level).
   - **Next for PTT:** a PTT ensemble (voxel summaries; replicates) and its calibration map, then a released preset.

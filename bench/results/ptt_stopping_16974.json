@@ -1,0 +1,955 @@
+{
+ "series": "sub-16974_ses-OXF1PRI001_dir-AP_dwi.nii.gz",
+ "shell": 2000.0,
+ "track:ptt version": "2",
+ "ukf, median-otsu": {
+  "config": {
+   "schema": "tractline.config/1",
+   "slots": {
+    "field": {
+     "impl": "tractline",
+     "version": "1",
+     "options": {}
+    },
+    "mask": {
+     "impl": "median-otsu",
+     "version": "1",
+     "options": {}
+    },
+    "model": {
+     "impl": "ukf-two-tensor",
+     "version": "1",
+     "options": {
+      "shell": 2000.0
+     }
+    },
+    "track": {
+     "impl": "ukf",
+     "version": "1",
+     "options": {
+      "Ql": 50.0,
+      "Qm": 0.001,
+      "Rs": 0.02,
+      "max_half_length": 250.0,
+      "record_length": 1.8,
+      "seeding_threshold": 0.1,
+      "step_length": 0.3,
+      "stopping_fa": 0.08,
+      "stopping_threshold": 0.06,
+      "tie_angle": 0.0,
+      "tie_sw2": false
+     }
+    },
+    "bundles": {
+     "impl": "rapidparc",
+     "version": "1",
+     "options": {
+      "draw": 0,
+      "grouping": "index",
+      "model": "rapidparc"
+     }
+    }
+   },
+   "origin": "ukf-rapidparc@1 + changes",
+   "sha256": "43c84606d585e5a1a4f0720b7df7ac74f17aac6b5927c9bd253c074bd7f8bc4b"
+  },
+  "field applied": true,
+  "streamlines": 98080,
+  "labeled": 80979,
+  "Other share": 0.537,
+  "median length mm (labeled)": 96.5,
+  "seconds": 86.0,
+  "stages": {
+   "field_estimate": 14.3,
+   "field_apply": 1.1,
+   "mask": 4.3,
+   "prep": 0.0,
+   "load": 0.3,
+   "ukf": 63.4,
+   "label": 1.7
+  },
+  "tracts": {
+   "AF": 927,
+   "CB": 1025,
+   "EC": 263,
+   "EmC": 422,
+   "ILF": 1667,
+   "IOFF": 743,
+   "MdLF": 1643,
+   "SLF-I": 1029,
+   "SLF-II": 860,
+   "SLF-III": 291,
+   "UF": 577,
+   "CST": 582,
+   "CR-F": 685,
+   "CR-P": 99,
+   "SF": 1362,
+   "SO": 69,
+   "SP": 106,
+   "TF": 2079,
+   "TO": 243,
+   "TT": 725,
+   "TP": 644,
+   "PLIC": 266,
+   "CC1": 165,
+   "CC2": 1087,
+   "CC3": 455,
+   "CC4": 481,
+   "CC5": 397,
+   "CC6": 2086,
+   "CC7": 286,
+   "CPC": 174,
+   "ICP": 301,
+   "Intra-CBLM-I-P": 896,
+   "Intra-CBLM-PaT": 1664,
+   "MCP": 165,
+   "Sup-F": 6115,
+   "Sup-FP": 383,
+   "Sup-O": 101,
+   "Sup-OT": 958,
+   "Sup-P": 2387,
+   "Sup-PO": 332,
+   "Sup-PT": 1788,
+   "Sup-T": 985,
+   "Other": 43466
+  }
+ },
+ "ptt, mask, median-otsu": {
+  "config": {
+   "schema": "tractline.config/1",
+   "slots": {
+    "field": {
+     "impl": "tractline",
+     "version": "1",
+     "options": {}
+    },
+    "mask": {
+     "impl": "median-otsu",
+     "version": "1",
+     "options": {}
+    },
+    "model": {
+     "impl": "csd",
+     "version": "1",
+     "options": {
+      "fa_threshold": 0.7,
+      "lambda": 1.0,
+      "order": "auto",
+      "roi_radius": 10,
+      "shell": 2000.0,
+      "tau": 0.1
+     }
+    },
+    "track": {
+     "impl": "ptt",
+     "version": "2",
+     "options": {
+      "fa_seed": 0.2,
+      "max_angle": 20.0,
+      "max_len": 250.0,
+      "min_len": 20.0,
+      "pmf_threshold": 0.1,
+      "probe_length": 1.5,
+      "probe_quality": 7,
+      "seed_count": 100000,
+      "seed_rng": 1,
+      "seeding": "fa",
+      "step_size": 0.5,
+      "stopping": "mask",
+      "stopping_fa": 0.15,
+      "track_rng": 1
+     }
+    },
+    "bundles": {
+     "impl": "rapidparc",
+     "version": "1",
+     "options": {
+      "draw": 0,
+      "grouping": "index",
+      "model": "rapidparc"
+     }
+    }
+   },
+   "origin": "ukf-rapidparc@1 + changes",
+   "sha256": "79497d6d4cb290145544525ee69323accc02227d67bb02000ac6d71fd0b86a42"
+  },
+  "field applied": true,
+  "streamlines": 79641,
+  "labeled": 76752,
+  "Other share": 0.614,
+  "median length mm (labeled)": 132.9,
+  "seconds": 66.6,
+  "stages": {
+   "field_estimate": 14.2,
+   "field_apply": 1.6,
+   "mask": 4.3,
+   "csd": 7.9,
+   "ptt": 35.1,
+   "label": 2.6
+  },
+  "tracts": {
+   "AF": 821,
+   "CB": 265,
+   "EC": 194,
+   "EmC": 102,
+   "ILF": 1451,
+   "IOFF": 774,
+   "MdLF": 1053,
+   "SLF-I": 87,
+   "SLF-II": 427,
+   "SLF-III": 194,
+   "UF": 776,
+   "CST": 1335,
+   "CR-F": 938,
+   "CR-P": 323,
+   "SF": 285,
+   "SO": 48,
+   "SP": 27,
+   "TF": 1083,
+   "TO": 98,
+   "TT": 290,
+   "TP": 256,
+   "PLIC": 244,
+   "CC1": 165,
+   "CC2": 1489,
+   "CC3": 892,
+   "CC4": 735,
+   "CC5": 612,
+   "CC6": 1557,
+   "CC7": 330,
+   "CPC": 98,
+   "ICP": 143,
+   "Intra-CBLM-I-P": 854,
+   "Intra-CBLM-PaT": 338,
+   "MCP": 172,
+   "Sup-F": 4577,
+   "Sup-FP": 393,
+   "Sup-O": 219,
+   "Sup-OT": 559,
+   "Sup-P": 2266,
+   "Sup-PO": 338,
+   "Sup-PT": 1395,
+   "Sup-T": 1450,
+   "Other": 47099
+  }
+ },
+ "ptt, fa 0.15, median-otsu": {
+  "config": {
+   "schema": "tractline.config/1",
+   "slots": {
+    "field": {
+     "impl": "tractline",
+     "version": "1",
+     "options": {}
+    },
+    "mask": {
+     "impl": "median-otsu",
+     "version": "1",
+     "options": {}
+    },
+    "model": {
+     "impl": "csd",
+     "version": "1",
+     "options": {
+      "fa_threshold": 0.7,
+      "lambda": 1.0,
+      "order": "auto",
+      "roi_radius": 10,
+      "shell": 2000.0,
+      "tau": 0.1
+     }
+    },
+    "track": {
+     "impl": "ptt",
+     "version": "2",
+     "options": {
+      "fa_seed": 0.2,
+      "max_angle": 20.0,
+      "max_len": 250.0,
+      "min_len": 20.0,
+      "pmf_threshold": 0.1,
+      "probe_length": 1.5,
+      "probe_quality": 7,
+      "seed_count": 100000,
+      "seed_rng": 1,
+      "seeding": "fa",
+      "step_size": 0.5,
+      "stopping": "fa",
+      "stopping_fa": 0.15,
+      "track_rng": 1
+     }
+    },
+    "bundles": {
+     "impl": "rapidparc",
+     "version": "1",
+     "options": {
+      "draw": 0,
+      "grouping": "index",
+      "model": "rapidparc"
+     }
+    }
+   },
+   "origin": "ukf-rapidparc@1 + changes",
+   "sha256": "27bb1649ec51dab39d822bbc64b21a57834951f8cc4abc540a069797b8217fc4"
+  },
+  "field applied": true,
+  "streamlines": 79521,
+  "labeled": 67425,
+  "Other share": 0.467,
+  "median length mm (labeled)": 90.1,
+  "seconds": 49.1,
+  "stages": {
+   "field_estimate": 14.1,
+   "field_apply": 1.3,
+   "mask": 4.3,
+   "csd": 6.7,
+   "ptt": 19.6,
+   "label": 2.2
+  },
+  "tracts": {
+   "AF": 868,
+   "CB": 1143,
+   "EC": 167,
+   "EmC": 156,
+   "ILF": 1272,
+   "IOFF": 749,
+   "MdLF": 1242,
+   "SLF-I": 138,
+   "SLF-II": 526,
+   "SLF-III": 282,
+   "UF": 719,
+   "CST": 1443,
+   "CR-F": 904,
+   "CR-P": 294,
+   "SF": 1088,
+   "SO": 151,
+   "SP": 293,
+   "TF": 2006,
+   "TO": 165,
+   "TT": 452,
+   "TP": 718,
+   "PLIC": 253,
+   "CC1": 176,
+   "CC2": 1894,
+   "CC3": 1283,
+   "CC4": 917,
+   "CC5": 733,
+   "CC6": 2026,
+   "CC7": 263,
+   "CPC": 93,
+   "ICP": 192,
+   "Intra-CBLM-I-P": 912,
+   "Intra-CBLM-PaT": 412,
+   "MCP": 236,
+   "Sup-F": 5249,
+   "Sup-FP": 442,
+   "Sup-O": 105,
+   "Sup-OT": 707,
+   "Sup-P": 2271,
+   "Sup-PO": 271,
+   "Sup-PT": 1647,
+   "Sup-T": 1069,
+   "Other": 31498
+  }
+ },
+ "ptt, fa auto, median-otsu": {
+  "config": {
+   "schema": "tractline.config/1",
+   "slots": {
+    "field": {
+     "impl": "tractline",
+     "version": "1",
+     "options": {}
+    },
+    "mask": {
+     "impl": "median-otsu",
+     "version": "1",
+     "options": {}
+    },
+    "model": {
+     "impl": "csd",
+     "version": "1",
+     "options": {
+      "fa_threshold": 0.7,
+      "lambda": 1.0,
+      "order": "auto",
+      "roi_radius": 10,
+      "shell": 2000.0,
+      "tau": 0.1
+     }
+    },
+    "track": {
+     "impl": "ptt",
+     "version": "2",
+     "options": {
+      "fa_seed": 0.2,
+      "max_angle": 20.0,
+      "max_len": 250.0,
+      "min_len": 20.0,
+      "pmf_threshold": 0.1,
+      "probe_length": 1.5,
+      "probe_quality": 7,
+      "seed_count": 100000,
+      "seed_rng": 1,
+      "seeding": "fa",
+      "step_size": 0.5,
+      "stopping": "fa",
+      "stopping_fa": "auto",
+      "track_rng": 1
+     }
+    },
+    "bundles": {
+     "impl": "rapidparc",
+     "version": "1",
+     "options": {
+      "draw": 0,
+      "grouping": "index",
+      "model": "rapidparc"
+     }
+    }
+   },
+   "origin": "ukf-rapidparc@1 + changes",
+   "sha256": "f9a9b3f8801e9ec29bedd37868cdbf302fc39e02a3ddcd803ada58ea8daf95cb"
+  },
+  "stopping_fa (auto)": 0.1294,
+  "cortex FA estimate": 0.1125,
+  "field applied": true,
+  "streamlines": 79990,
+  "labeled": 69835,
+  "Other share": 0.471,
+  "median length mm (labeled)": 95.1,
+  "seconds": 53.7,
+  "stages": {
+   "field_estimate": 14.1,
+   "field_apply": 1.3,
+   "mask": 4.3,
+   "csd": 6.7,
+   "ptt": 24.2,
+   "label": 2.2
+  },
+  "tracts": {
+   "AF": 918,
+   "CB": 1183,
+   "EC": 188,
+   "EmC": 157,
+   "ILF": 1297,
+   "IOFF": 810,
+   "MdLF": 1277,
+   "SLF-I": 145,
+   "SLF-II": 565,
+   "SLF-III": 283,
+   "UF": 713,
+   "CST": 1515,
+   "CR-F": 958,
+   "CR-P": 310,
+   "SF": 1092,
+   "SO": 117,
+   "SP": 231,
+   "TF": 1744,
+   "TO": 145,
+   "TT": 386,
+   "TP": 589,
+   "PLIC": 249,
+   "CC1": 174,
+   "CC2": 2046,
+   "CC3": 1348,
+   "CC4": 954,
+   "CC5": 778,
+   "CC6": 2106,
+   "CC7": 296,
+   "CPC": 97,
+   "ICP": 214,
+   "Intra-CBLM-I-P": 959,
+   "Intra-CBLM-PaT": 593,
+   "MCP": 233,
+   "Sup-F": 5498,
+   "Sup-FP": 438,
+   "Sup-O": 140,
+   "Sup-OT": 729,
+   "Sup-P": 2346,
+   "Sup-PO": 298,
+   "Sup-PT": 1655,
+   "Sup-T": 1140,
+   "Other": 32921
+  }
+ },
+ "ukf, synthstrip-nocsf": {
+  "config": {
+   "schema": "tractline.config/1",
+   "slots": {
+    "field": {
+     "impl": "tractline",
+     "version": "1",
+     "options": {}
+    },
+    "mask": {
+     "impl": "synthstrip-nocsf",
+     "version": "1",
+     "options": {
+      "border": 2.0
+     }
+    },
+    "model": {
+     "impl": "ukf-two-tensor",
+     "version": "1",
+     "options": {
+      "shell": 2000.0
+     }
+    },
+    "track": {
+     "impl": "ukf",
+     "version": "1",
+     "options": {
+      "Ql": 50.0,
+      "Qm": 0.001,
+      "Rs": 0.02,
+      "max_half_length": 250.0,
+      "record_length": 1.8,
+      "seeding_threshold": 0.1,
+      "step_length": 0.3,
+      "stopping_fa": 0.08,
+      "stopping_threshold": 0.06,
+      "tie_angle": 0.0,
+      "tie_sw2": false
+     }
+    },
+    "bundles": {
+     "impl": "rapidparc",
+     "version": "1",
+     "options": {
+      "draw": 0,
+      "grouping": "index",
+      "model": "rapidparc"
+     }
+    }
+   },
+   "origin": "ukf-rapidparc@1 + changes",
+   "sha256": "56afc484d60717165d1a54c2c5bcb1815ec260bd8615e608fd16f9286f45a5c7"
+  },
+  "field applied": true,
+  "streamlines": 102663,
+  "labeled": 84176,
+  "Other share": 0.512,
+  "median length mm (labeled)": 94.7,
+  "seconds": 89.6,
+  "stages": {
+   "field_estimate": 14.0,
+   "field_apply": 1.9,
+   "mask": 5.4,
+   "prep": 0.0,
+   "load": 0.4,
+   "ukf": 65.5,
+   "label": 1.8
+  },
+  "tracts": {
+   "AF": 930,
+   "CB": 1091,
+   "EC": 260,
+   "EmC": 446,
+   "ILF": 1767,
+   "IOFF": 776,
+   "MdLF": 1678,
+   "SLF-I": 1102,
+   "SLF-II": 835,
+   "SLF-III": 256,
+   "UF": 637,
+   "CST": 831,
+   "CR-F": 887,
+   "CR-P": 143,
+   "SF": 1382,
+   "SO": 82,
+   "SP": 98,
+   "TF": 2258,
+   "TO": 262,
+   "TT": 864,
+   "TP": 698,
+   "PLIC": 203,
+   "CC1": 143,
+   "CC2": 1144,
+   "CC3": 499,
+   "CC4": 535,
+   "CC5": 448,
+   "CC6": 2189,
+   "CC7": 257,
+   "CPC": 196,
+   "ICP": 291,
+   "Intra-CBLM-I-P": 1025,
+   "Intra-CBLM-PaT": 3160,
+   "MCP": 254,
+   "Sup-F": 6454,
+   "Sup-FP": 450,
+   "Sup-O": 121,
+   "Sup-OT": 912,
+   "Sup-P": 2392,
+   "Sup-PO": 317,
+   "Sup-PT": 1758,
+   "Sup-T": 1038,
+   "Other": 43107
+  }
+ },
+ "ptt, mask, synthstrip-nocsf": {
+  "config": {
+   "schema": "tractline.config/1",
+   "slots": {
+    "field": {
+     "impl": "tractline",
+     "version": "1",
+     "options": {}
+    },
+    "mask": {
+     "impl": "synthstrip-nocsf",
+     "version": "1",
+     "options": {
+      "border": 2.0
+     }
+    },
+    "model": {
+     "impl": "csd",
+     "version": "1",
+     "options": {
+      "fa_threshold": 0.7,
+      "lambda": 1.0,
+      "order": "auto",
+      "roi_radius": 10,
+      "shell": 2000.0,
+      "tau": 0.1
+     }
+    },
+    "track": {
+     "impl": "ptt",
+     "version": "2",
+     "options": {
+      "fa_seed": 0.2,
+      "max_angle": 20.0,
+      "max_len": 250.0,
+      "min_len": 20.0,
+      "pmf_threshold": 0.1,
+      "probe_length": 1.5,
+      "probe_quality": 7,
+      "seed_count": 100000,
+      "seed_rng": 1,
+      "seeding": "fa",
+      "step_size": 0.5,
+      "stopping": "mask",
+      "stopping_fa": 0.15,
+      "track_rng": 1
+     }
+    },
+    "bundles": {
+     "impl": "rapidparc",
+     "version": "1",
+     "options": {
+      "draw": 0,
+      "grouping": "index",
+      "model": "rapidparc"
+     }
+    }
+   },
+   "origin": "ukf-rapidparc@1 + changes",
+   "sha256": "4927c0d1bad7f0bed2ae94b153b0d2f4f7367379398d0031a9c5ff9dd60a4efb"
+  },
+  "field applied": true,
+  "streamlines": 80254,
+  "labeled": 77618,
+  "Other share": 0.582,
+  "median length mm (labeled)": 135.0,
+  "seconds": 67.9,
+  "stages": {
+   "field_estimate": 14.1,
+   "field_apply": 2.1,
+   "mask": 5.4,
+   "csd": 7.0,
+   "ptt": 35.7,
+   "label": 2.6
+  },
+  "tracts": {
+   "AF": 790,
+   "CB": 329,
+   "EC": 221,
+   "EmC": 121,
+   "ILF": 1432,
+   "IOFF": 796,
+   "MdLF": 956,
+   "SLF-I": 125,
+   "SLF-II": 485,
+   "SLF-III": 190,
+   "UF": 770,
+   "CST": 1754,
+   "CR-F": 1132,
+   "CR-P": 414,
+   "SF": 281,
+   "SO": 40,
+   "SP": 32,
+   "TF": 1182,
+   "TO": 120,
+   "TT": 318,
+   "TP": 286,
+   "PLIC": 164,
+   "CC1": 173,
+   "CC2": 1778,
+   "CC3": 1003,
+   "CC4": 808,
+   "CC5": 729,
+   "CC6": 1658,
+   "CC7": 300,
+   "CPC": 145,
+   "ICP": 131,
+   "Intra-CBLM-I-P": 765,
+   "Intra-CBLM-PaT": 1016,
+   "MCP": 328,
+   "Sup-F": 5003,
+   "Sup-FP": 420,
+   "Sup-O": 358,
+   "Sup-OT": 547,
+   "Sup-P": 2297,
+   "Sup-PO": 321,
+   "Sup-PT": 1222,
+   "Sup-T": 1507,
+   "Other": 45171
+  }
+ },
+ "ptt, fa 0.15, synthstrip-nocsf": {
+  "config": {
+   "schema": "tractline.config/1",
+   "slots": {
+    "field": {
+     "impl": "tractline",
+     "version": "1",
+     "options": {}
+    },
+    "mask": {
+     "impl": "synthstrip-nocsf",
+     "version": "1",
+     "options": {
+      "border": 2.0
+     }
+    },
+    "model": {
+     "impl": "csd",
+     "version": "1",
+     "options": {
+      "fa_threshold": 0.7,
+      "lambda": 1.0,
+      "order": "auto",
+      "roi_radius": 10,
+      "shell": 2000.0,
+      "tau": 0.1
+     }
+    },
+    "track": {
+     "impl": "ptt",
+     "version": "2",
+     "options": {
+      "fa_seed": 0.2,
+      "max_angle": 20.0,
+      "max_len": 250.0,
+      "min_len": 20.0,
+      "pmf_threshold": 0.1,
+      "probe_length": 1.5,
+      "probe_quality": 7,
+      "seed_count": 100000,
+      "seed_rng": 1,
+      "seeding": "fa",
+      "step_size": 0.5,
+      "stopping": "fa",
+      "stopping_fa": 0.15,
+      "track_rng": 1
+     }
+    },
+    "bundles": {
+     "impl": "rapidparc",
+     "version": "1",
+     "options": {
+      "draw": 0,
+      "grouping": "index",
+      "model": "rapidparc"
+     }
+    }
+   },
+   "origin": "ukf-rapidparc@1 + changes",
+   "sha256": "e46bdc5e0a503955869224f11eb6968cde3638302c774a087f89f1927cf81ff8"
+  },
+  "field applied": true,
+  "streamlines": 77314,
+  "labeled": 65659,
+  "Other share": 0.462,
+  "median length mm (labeled)": 91.1,
+  "seconds": 51.9,
+  "stages": {
+   "field_estimate": 14.2,
+   "field_apply": 2.1,
+   "mask": 5.3,
+   "csd": 7.1,
+   "ptt": 20.2,
+   "label": 2.2
+  },
+  "tracts": {
+   "AF": 909,
+   "CB": 1091,
+   "EC": 189,
+   "EmC": 144,
+   "ILF": 1284,
+   "IOFF": 687,
+   "MdLF": 1197,
+   "SLF-I": 138,
+   "SLF-II": 516,
+   "SLF-III": 255,
+   "UF": 699,
+   "CST": 1497,
+   "CR-F": 934,
+   "CR-P": 257,
+   "SF": 1065,
+   "SO": 166,
+   "SP": 262,
+   "TF": 1927,
+   "TO": 158,
+   "TT": 488,
+   "TP": 721,
+   "PLIC": 154,
+   "CC1": 199,
+   "CC2": 1797,
+   "CC3": 1181,
+   "CC4": 905,
+   "CC5": 728,
+   "CC6": 1841,
+   "CC7": 269,
+   "CPC": 114,
+   "ICP": 210,
+   "Intra-CBLM-I-P": 798,
+   "Intra-CBLM-PaT": 859,
+   "MCP": 363,
+   "Sup-F": 5110,
+   "Sup-FP": 424,
+   "Sup-O": 94,
+   "Sup-OT": 609,
+   "Sup-P": 2191,
+   "Sup-PO": 235,
+   "Sup-PT": 1562,
+   "Sup-T": 1099,
+   "Other": 30333
+  }
+ },
+ "ptt, fa auto, synthstrip-nocsf": {
+  "config": {
+   "schema": "tractline.config/1",
+   "slots": {
+    "field": {
+     "impl": "tractline",
+     "version": "1",
+     "options": {}
+    },
+    "mask": {
+     "impl": "synthstrip-nocsf",
+     "version": "1",
+     "options": {
+      "border": 2.0
+     }
+    },
+    "model": {
+     "impl": "csd",
+     "version": "1",
+     "options": {
+      "fa_threshold": 0.7,
+      "lambda": 1.0,
+      "order": "auto",
+      "roi_radius": 10,
+      "shell": 2000.0,
+      "tau": 0.1
+     }
+    },
+    "track": {
+     "impl": "ptt",
+     "version": "2",
+     "options": {
+      "fa_seed": 0.2,
+      "max_angle": 20.0,
+      "max_len": 250.0,
+      "min_len": 20.0,
+      "pmf_threshold": 0.1,
+      "probe_length": 1.5,
+      "probe_quality": 7,
+      "seed_count": 100000,
+      "seed_rng": 1,
+      "seeding": "fa",
+      "step_size": 0.5,
+      "stopping": "fa",
+      "stopping_fa": "auto",
+      "track_rng": 1
+     }
+    },
+    "bundles": {
+     "impl": "rapidparc",
+     "version": "1",
+     "options": {
+      "draw": 0,
+      "grouping": "index",
+      "model": "rapidparc"
+     }
+    }
+   },
+   "origin": "ukf-rapidparc@1 + changes",
+   "sha256": "822615d1952fd0aa67d5059a8781a7b228e0f035b109bceb37e3e9403077edc5"
+  },
+  "stopping_fa (auto)": 0.1294,
+  "cortex FA estimate": 0.1125,
+  "field applied": true,
+  "streamlines": 76376,
+  "labeled": 66770,
+  "Other share": 0.465,
+  "median length mm (labeled)": 96.1,
+  "seconds": 55.6,
+  "stages": {
+   "field_estimate": 14.3,
+   "field_apply": 1.4,
+   "mask": 5.3,
+   "csd": 7.0,
+   "ptt": 24.5,
+   "label": 2.2
+  },
+  "tracts": {
+   "AF": 935,
+   "CB": 1142,
+   "EC": 197,
+   "EmC": 148,
+   "ILF": 1255,
+   "IOFF": 739,
+   "MdLF": 1193,
+   "SLF-I": 141,
+   "SLF-II": 551,
+   "SLF-III": 265,
+   "UF": 684,
+   "CST": 1583,
+   "CR-F": 1003,
+   "CR-P": 280,
+   "SF": 1041,
+   "SO": 123,
+   "SP": 208,
+   "TF": 1649,
+   "TO": 142,
+   "TT": 385,
+   "TP": 577,
+   "PLIC": 148,
+   "CC1": 180,
+   "CC2": 1966,
+   "CC3": 1273,
+   "CC4": 938,
+   "CC5": 759,
+   "CC6": 1907,
+   "CC7": 295,
+   "CPC": 115,
+   "ICP": 235,
+   "Intra-CBLM-I-P": 745,
+   "Intra-CBLM-PaT": 1001,
+   "MCP": 318,
+   "Sup-F": 5331,
+   "Sup-FP": 432,
+   "Sup-O": 106,
+   "Sup-OT": 602,
+   "Sup-P": 2251,
+   "Sup-PO": 248,
+   "Sup-PT": 1517,
+   "Sup-T": 1147,
+   "Other": 31015
+  }
+ }
+}

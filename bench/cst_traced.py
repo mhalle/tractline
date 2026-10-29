@@ -1,7 +1,7 @@
 """Is the corticospinal tract traced at all, before any naming? (Lauren O'Donnell's question 2, 2026-10-28; NOTES
 2026-10-28, "Ron's claims checked; the masks with and without CSF; CST traced, whatever its name".)
 
-    uv run --group bench python bench/cst_traced.py        # -> results/cst_traced.json
+    uv run python bench/cst_traced.py        # -> results/cst_traced.json
 
 On the subjects of cst_thalamus_outside.py (PAT16, cIIIs04; corrected, the shell nearest b = 3000), with the default
 mask (median_otsu) and SynthStrip's no-CSF mask at border 2: every streamline, named or not, held to the corticospinal

@@ -1,6 +1,6 @@
 """Does the brain mask cost the brainstem and cerebellar tracts? (NOTES 2026-10-27, "The mask and the brainstem").
 
-    uv run --group bench python bench/mask_study.py        # -> results/mask_study.json
+    uv run python bench/mask_study.py        # -> results/mask_study.json
 
 Masks ("arms"), each used for seeding and for stopping unless said:
   A   today's: median_otsu of the mean b0 (tractline.mask; median radius 4, 4 passes);

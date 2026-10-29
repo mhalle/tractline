@@ -4,6 +4,30 @@ Releases are git tags (`uv add git+https://github.com/mhalle/tractline --tag vX.
 release and `dev` the work in progress (`docs/development.md`, "Branches and releases"). The experiments
 behind each change, with their numbers and later corrections, are in `bench/results/NOTES.md`.
 
+## Unreleased
+
+- **PTT without a T1** (`track:ptt` version 2, experimental, Python only; every `track:ptt` config's hash moves; the
+  default tracker is unchanged). Its defaults are now `stopping="fa"`, `stopping_fa="auto"` and `seeding="fa"`, so it
+  runs from the DWI alone; `stopping="act"` with `seeding="wm"` takes tissue maps as before (give both: `act` alone now
+  seeds by FA, with a warning). In detail:
+  - stopping `mask` now keeps the paths that end inside the mask where the fiber orientations run out. Version 1
+    dropped them and kept almost nothing (980 streamlines from 100,000 seeds on the ISMRM 2015 phantom);
+  - a new stopping `fa` ends a path at the mask's edge or where FA falls below `stopping_fa`: an approximation of
+    ACT's gray matter from the diffusion data alone. On the phantom at `stopping_fa=0.15`, at matched counts and with
+    everything else the same, it scored mean F1 0.569 against 0.570 for T1-based ACT and 0.406 for today's UKF (over
+    three tracking seeds ACT leads by about 0.003). The image's faces end a path validly too, so a field of view cut through the
+    brainstem does not drop the corticospinal tract. Against FastSurfer's labels on three brains, 0.15 gave the
+    fewest bad ends (deep in white matter, in CSF or outside the brain) on two, 12-13 % of ends against UKF's 26-49 %;
+    the third, a 1.5 mm multiband Prisma scan whose cortex FA is higher (most likely from noise), wanted 0.20;
+  - `stopping_fa="auto"` (the default) sets the threshold from each scan: 1.15 times its cortex's FA, estimated
+    without a T1 as the low peak of the tracked shell's FA among tissue voxels (fluid left out by its diffusivity on the
+    lowest usable shell). It is tractline's own heuristic: a short search found no published method that sets an FA
+    stop this way. Its rule was fit on those three brains, and on them it lands at or near the best of the fixed
+    values tried (the phantom and rescan figures above are for 0.15, which auto chose to within 0.003 on the
+    rescans; auto refuses the phantom); it varied by 0.006 across one subject's rescans; it refuses (asking for a number) when its estimate
+    is not a brain's, as on the ISMRM phantom. The config's hash says "auto"; the value chosen is in each run's
+    runtime record. A fourth scanner is the open test (NOTES 2026-10-29).
+
 ## 0.8.1 - 2026-10-28
 
 - **Motion and eddy correction in less memory:** on a Mac the step's peak is about a third lower (on a 105-volume

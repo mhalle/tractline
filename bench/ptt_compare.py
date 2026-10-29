@@ -15,6 +15,9 @@ Variants (the FODs and the tracker; everything else as step 6):
   mm-own   our CSD on our own sphere and real units: the pipeline's default.
 The PMF is read on DIPY's default_sphere in all three (as step 6). Seeds: DIPY's random_seeds_from_mask on wm >= 0.5 with
 step 6's count and generator (1), made in a DIPY process and cached, so every variant starts where DIPY's run started.
+Without a T1 (NOTES 2026-10-29): --stopping mask|fa (pipeline.ptt_stopping; --stopping-fa) and --seeding fa (the
+pipeline's: uniform in the tracking mask's FA >= 0.2, step 6's count, generator 1; FA by DTI on the work file's shell)
+replace the ACT maps and the WM seeds; the run's name says so.
 Each run: RapidParc labels; on the phantom, the 2023 ROI scoring (robust_phantom.score), as step 6's.
 Records: DATA/ensemble/benchmark/ptt_ours/<variant>/<subject>/; the summary sets them beside DIPY's step 6 records and, on
 cIIIs04, beside DIPY's reruns with other seeds (its own spread).
@@ -91,6 +94,10 @@ def run(args):
     subject = RB.subject_of(scan)
     n = args.seeds or RB.SEEDS["phantom" if scan == "phantom" else "cIIIs04"]
     name = run_name(variant, args.probe_length, args.max_angle)
+    if args.stopping != "act":
+        name += f"_{args.stopping}" + (f"{args.stopping_fa:g}" if args.stopping == "fa" else "")
+    if args.seeding == "fa":
+        name += '_faseeds'
     d = OUT / name / subject
     stem = scan if args.track_seed == 1 else f"{scan}_track{args.track_seed}"   # another tracking seed: run to run
     out = d / ("record.npz" if scan == "phantom" else f"{stem}.npz")
@@ -110,12 +117,21 @@ def run(args):
         model = csd.CSD(bval, bvec, resp, order=order, sphere=None if variant == "mm-own" else small_sphere)
         coeffs, cinfo = model.fit(dwi, mask, device=DEVICE)
     include, exclude = act_maps(pve, dwi)
+    if args.stopping != "act" or args.seeding == "fa":
+        ev, _ = csd.tensor_fit(dwi[mask].astype(np.float64), bval, bvec)
+        fa = np.zeros(mask.shape)
+        fa[mask] = csd.fa(ev)
+        if args.stopping != "act":
+            include, exclude = P.ptt_stopping({"stopping": args.stopping, "stopping_fa": args.stopping_fa}, mask, fa_map=fa)
+        if args.seeding == "fa":
+            seeds = P.ptt_seeds(mask & (fa >= 0.2), affine, n, 1)
     vox = np.linalg.norm(affine[:3, :3], axis=0)
     with timer("track"):
         pmf = F.PmfField(coeffs, mask, default_sphere, DEVICE)
         act = F.Act(include, exclude, DEVICE)
         tracker = ptt.Tracker(pmf, act, affine, vox, ptt.Params(min_len=20.0, max_len=250.0, probe_length=args.probe_length,
-                                                                  max_angle=args.max_angle), DEVICE,
+                                                                  max_angle=args.max_angle,
+                                                                  keep_open_ends=args.stopping == "mask"), DEVICE,
                               _dipy_compat=variant == "compat", backend=args.backend)
         fibers, tinfo = tracker.track(seeds, seed=args.track_seed)
     if args.pilot:                                                       # a timing and sanity run: nothing written
@@ -138,7 +154,10 @@ def run(args):
                                                                "probe_count", "pmf_threshold", "min_len", "max_len")},
                         "units": "DIPY 1.12's (validation switch)" if variant == "compat" else "real",
                         "constraint sphere": "ours (hemisphere 181)" if variant == "mm-own" else "DIPY's small_sphere",
-                        "pmf sphere": "DIPY's default_sphere", "seeds": "DIPY random_seeds_from_mask, wm >= 0.5, random_seed 1",
+                        "pmf sphere": "DIPY's default_sphere",
+                        "seeds": ("uniform in the mask's FA >= 0.2, generator 1" if args.seeding == "fa"
+                                  else "DIPY random_seeds_from_mask, wm >= 0.5, random_seed 1"),
+                        "stopping": args.stopping + (f" {args.stopping_fa:g}" if args.stopping == "fa" else ""),
                         "tracking random numbers": ("Philox, counter-based" if args.backend == "metal"
                                                     else "torch generator") + f", seed {args.track_seed}",
                         "backend": args.backend, "device": DEVICE},
@@ -308,7 +327,7 @@ def rescan(args):
                     for n in RB.FOCUS for k in [RB.TRACT_NAMES.index(n)] if k in pa and k in pb}
         out["methods"][name] = m
         del recs
-    (HERE / "results" / "ptt_rescan.json").write_text(json.dumps(out, indent=1, default=str))
+    (HERE / "results" / args.rescan_out).write_text(json.dumps(out, indent=1, default=str))
     print(json.dumps({n: {s: v["presence Dice"] for s, v in m["raw"]["rescans"].items()} for n, m in out["methods"].items()},
                      indent=1))
 
@@ -326,6 +345,11 @@ if __name__ == "__main__":
     ap.add_argument("--backend", choices=("torch", "metal"), default="torch")
     ap.add_argument("--probe-length", type=float, default=1.5, help="mm (the study; default step 6's)")
     ap.add_argument("--max-angle", type=float, default=10.0, help="degrees per step (the study; default step 6's)")
+    ap.add_argument("--stopping", choices=("act", "mask", "fa"), default="act", help="run: the stopping (default step 6's)")
+    ap.add_argument("--stopping-fa", type=float, default=0.15, help="run, --stopping fa: the FA below which a path ends")
+    ap.add_argument("--seeding", choices=("wm", "fa"), default="wm", help="run: step 6's WM seeds, or the mask's FA >= 0.2")
+    ap.add_argument("--rescan-out", default="ptt_rescan.json",
+                    help="rescan: the results file (another name keeps ptt_rescan.json's methods whose records are gone)")
     ap.add_argument("--n", type=int, help="subsample: the common streamline count")
     ap.add_argument("--sources", nargs="+", help="subsample: dipy, ukf, or our run names")
     args = ap.parse_args()

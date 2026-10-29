@@ -51,6 +51,14 @@ the labeler); `bench/results/README.md` says which, and what re-running their sc
   `docs/robustness-plan.md`).
 - The configurable pipeline: `dependency_check.py`, `device_agreement.py`, `csd_check.py`, `ptt_compare.py`
   (`docs/sota-pipeline-design.md`); data fetchers `fetch_ds*.py`.
+- PTT without a T1 (NOTES 2026-10-29): `ptt_stopping_phantom.py` (the stopping rules on the ISMRM phantom, count-matched,
+  and run to run), `ptt_stopping_scan.py` (on one scan given by path, beside UKF), `ptt_fa_anatomy.py` (where paths end
+  against FastSurfer's labels; FA by tissue and shell), `ptt_fa_auto.py` (the automatic threshold against FastSurfer's
+  cortex, and its repeatability).
+- The brain mask (NOTES 2026-10-27 and 10-28): `skullstrip_check.py` and `skullstrip_reference_modal.py` (the SynthStrip
+  network against its authors' release), `mask_study.py`, `mask_compare_scan.py` (the masks on one scan given by
+  path), `cst_thalamus_outside.py` and `cst_traced.py` (CST through the thalamus, named streamlines outside the brain,
+  CST by its endpoints).
 - Helpers: `_ds001226.py` (the patients' loader), `_fibercmp.py` (fibers compared by seed), `_bootstrap.py`
   (bootstrap replicates of a scan).
 

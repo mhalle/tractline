@@ -8014,3 +8014,181 @@ Two next steps were weighed and set aside:
   held: each is per volume, so it would be exact, and would save about one copy; it costs re-smoothing every
   iteration instead of caching per FWHM. Not measured, and where the remaining 5.1 copies go has not been profiled
   by phase (that would come first).
+
+## 2026-10-29 PTT without a T1: stopping at the mask's edge, or at low FA
+
+**Why.** Step 6 (2026-10-19) found PTT with ACT far more accurate than UKF on the ISMRM 2015 phantom, with PTT and ACT
+changed together. ACT needs tissue maps from a T1 (FastSurfer and a registration), which tractline does not make.
+`track:ptt` had a `mask` stopping since 2026-10-25, never run on a real scan: this entry runs it, finds it broken, fixes
+it (`track:ptt` version 2) and adds a stopping from the DWI alone.
+
+**Version 1's `mask` kept almost nothing.** It ended a path validly only where it left the mask, and dropped every
+path that ended inside the mask for want of a direction (the FOD falling below the PMF threshold), as ACT drops an end
+in white matter. Without ACT almost every path ends that way, in gray matter, before the mask's edge: on the phantom 980
+streamlines from 100,000 seeds (`results/ptt_stopping_phantom.json`), on 16974 about one seed in five and a skewed mix
+(CST 62 against UKF's 582; measured interactively, not recorded).
+
+**Version 2.** `stopping`:
+- `act`: unchanged.
+- `mask`: the mask's edge or the FOD's end stops a path, and every path within the lengths is kept (`ptt.Params.keep_open_ends`: a half
+  whose status is still TRACKPOINT when it stops, for want of a direction or at the point limit, is a valid end;
+  INVALIDPOINT still is not. At the point limit a half is max_len long, so the length check drops it unless the other
+  half has no step.)
+- `fa` (new): the mask's edge, or FA below `stopping_fa` (default 0.15), ends a path validly; running out of direction
+  above it does not, and only paths with two valid ends are kept. An approximation of ACT's gray matter from the DWI
+  (`include` = `~mask | FA < stopping_fa`; `pipeline.ptt_stopping` makes the maps for every stopping). With
+  `stopping_fa` above `fa_seed` the seeds with FA between them start where a path ends and track nothing: a warning.
+
+The version moves because `mask`'s results change for the same options; every `track:ptt` config's hash moves with
+it. The slot is experimental and in no preset.
+
+**The phantom** (`bench/ptt_stopping_phantom.py` -> `results/ptt_stopping_phantom.json`). Every arm: the slot's
+defaults (real units, 20 degrees), our CSD on our sphere, the same 100,000 seeds uniform in the tracking mask's FA >=
+0.2, RapidParc, the 2023 scoring; only the stopping differs. `act` uses step 6's tissue maps from the phantom's T1
+(the like-for-like ACT arm). As run: `mask` 89,440 streamlines, `fa` 0.10 44,312, 0.15 68,124, 0.20 65,591, `act`
+55,325. Subsampled to 55,000 (`act`'s count; `fa` 0.10 has too few), beside today's UKF and step 6's PTT with ACT
+(`ptt_compare`'s `mm_probe1.5_angle20`: DIPY's FODs and sphere, seeds in WM):
+
+| 55,000 streamlines | VB | valid share | invalid connections | no connection | mean OL | mean OR | mean F1 |
+|---|---|---|---|---|---|---|---|
+| UKF (today) | 20 | 27.5 % | 62.8 % | 9.7 % | 0.428 | 0.472 | 0.406 |
+| PTT, `mask` | 20 | 48.5 % | 47.4 % | 4.1 % | 0.598 | 0.489 | 0.478 |
+| PTT, `fa` 0.15 | 19 | 46.4 % | 44.4 % | 9.2 % | 0.562 | 0.307 | **0.569** |
+| PTT, `fa` 0.20 | 19 | 43.0 % | 44.7 % | 12.2 % | 0.467 | 0.251 | 0.537 |
+| PTT, `act` (the T1) | 19 | 48.4 % | 44.8 % | 6.8 % | 0.519 | 0.247 | **0.570** |
+| step 6's PTT + ACT (other FODs, seeds) | 19 | 48.2 % | 45.1 % | 6.7 % | 0.523 | 0.248 | 0.572 |
+
+- **PTT alone** (`mask`) gives 44 % of ACT's gain over UKF (F1 +0.073 of +0.164): more valid streamlines and more of
+  each true bundle covered (OL 0.60), but overreach as high as UKF's, since nothing stops a path at gray matter.
+- **`fa` 0.15 ties `act` on F1** (0.569 against 0.570) by another balance: more of each bundle (OL 0.56 against
+  0.52), more overreach (0.31 against 0.25) and more streamlines connecting nothing (9.2 against 6.8 %). At 0.20 it
+  cuts paths short (OL 0.47). 0.10 kept too few to compare at this count (as run, at 44,312: F1 0.545, against 0.576 for
+  0.15 at 68,124). The 60,000 block (in the JSON; `act` has too few for it) gives the same order: `fa` 0.15 0.573,
+  `mask` 0.479, UKF 0.411.
+- **A best case, on one run of each.** The threshold was chosen on this phantom, one of three tried, and scored on it;
+  no run-to-run spread was measured (a 0.001 difference is not a ranking). The phantom is synthetic: its gray matter's
+  FA is not a brain's, and in a real brain FA also falls below 0.15 where white-matter fibers cross, where `fa` would
+  end paths early. Not measured yet: where `fa`'s ends fall on a scan with FastSurfer labels (cIIIs04).
+- **Our FODs and seeds against step 6's** change F1 by 0.002 under ACT here (0.570 against 0.572).
+- An earlier, scratch run of `mask` at 10 degrees (the module's default, not the slot's 20) gave F1 0.490 at 60,000
+  (said to the user, not recorded). The table's run is at the slot's 20.
+
+**16974:** in the next entry (re-run after the field of view's faces became valid ends for `fa`). The next entry also
+supersedes this one's defaults: `stopping_fa` defaults to "auto" there, and `fa` is the default stopping.
+
+**Not decided:** any default or preset; UKF stays the default. Checked next: the next entry.
+
+## 2026-10-29 Stopping at low FA, checked on real brains, and set from each scan
+
+**Why.** `fa` 0.15 was chosen on the ISMRM 2015 phantom and scored on it (the entry above). Checked here: where its ends
+fall in three brains with FastSurfer labels, whether its threshold holds across shells and protocols, how repeatable it
+is across rescans, the phantom's run-to-run spread, and a threshold set from each scan ("auto").
+
+**A fix first: the field of view's faces end `fa` validly** (`pipeline.ptt_stopping`, as `act` already had). Without it
+a path that runs into a field of view cut through the brain (cIIIs04's ends at the pons; 16974's too) runs out of FOD
+at the edge, an open end, and is dropped: on cIIIs04 A, CST 325 streamlines without, 1,375 with; on its within-session
+rescan 1,312 and 1,349 (a scratch check, not recorded). The CST's volume then swung between rescans (34 to 79 mL). The
+phantom's mask touches no face, so its results above stand. Everything below is with the rule.
+
+**Ends against FastSurfer** (`bench/ptt_fa_anatomy.py` -> `results/ptt_fa_anatomy.json`; ds001226 PAT16, a tumor
+patient, b = 2800; MASiVar cIIIs04, b = 2000; and Ron's Prisma scan, b = 3000, its T1 through FastSurfer locally
+(FastSurferCNN's run_prediction in haversack's environment, VINN v2.0.0 on the CPU, 8.5 minutes; its own label volume,
+not the ranked store PAT16's and cIIIs04's came from) and a rigid fit to its corrected mean b0 (`bench/_register.py`,
+checked by eye); the Prisma results are kept outside the repository). Each kept streamline's two ends, carried into the
+T1, classed by label; median_otsu masks. A bad end: in white matter more than 2 mm from gray, in CSF, or outside
+FastSurfer's brain.
+
+| bad ends: PAT16 / cIIIs04 / Prisma | deep white matter | CSF | outside the brain | all bad |
+|---|---|---|---|---|
+| UKF | 9.4 / 7.1 / 10.7 % | 5.1 / 1.7 / 3.3 % | 34.1 / 17.2 / 36.7 % | 48.5 / 25.9 / 50.6 % |
+| PTT `mask` | 0.9 / 1.1 / 2.6 % | 2.7 / 1.1 / 0.8 % | 64.3 / 23.6 / 57.0 % | 67.9 / 25.8 / 60.4 % |
+| PTT `fa` 0.10 | 2.1 / 1.5 / 3.9 % | 3.8 / 3.5 / 2.8 % | 14.4 / 10.9 / 43.3 % | 20.3 / 15.9 / 50.0 % |
+| PTT `fa` 0.15 | 6.8 / 4.6 / 7.3 % | 3.2 / 3.4 / 1.9 % | 3.0 / 3.9 / 20.3 % | **12.9 / 12.0** / 29.5 % |
+| PTT `fa` 0.20 | 15.3 / 12.5 / 14.9 % | 2.2 / 2.8 / 1.4 % | 1.3 / 2.0 / 7.0 % | 18.8 / 17.3 / **23.3** % |
+| PTT `fa` auto (0.164 / 0.152 / 0.193) | 8.2 / 4.9 / 13.4 % | 2.9 / 3.5 / 1.5 % | 2.2 / 3.7 / 8.1 % | **13.2 / 12.1 / 23.0** % |
+
+- 0.15 has the fewest bad ends on PAT16 and cIIIs04, measured apart from the phantom it was chosen on; on the Prisma
+  scan 0.20 has (at 0.15 a fifth of its ends leave the brain). The best fixed threshold depends on the protocol.
+- `mask` ends most paths outside the brain; UKF ends a third to half of them badly.
+
+**FA by tissue and shell** (the same JSON, and the Prisma file): cortex's median FA is 0.10-0.13 on PAT16 and cIIIs04 at
+every shell (b = 700 to 2800), 0.17 on the Prisma scan (b = 1500 and 3000); deep white matter's 0.44-0.49 everywhere;
+0.6-2.2 % of deep white matter is below 0.15. So the threshold does not move with the b-value; it moves with the
+protocol, most likely with noise (1.5 mm multiband: noise raises FA in nearly isotropic tissue).
+
+**Auto** (`pipeline.auto_stopping_fa`, `stopping_fa="auto"`; `bench/ptt_fa_auto.py` -> `results/ptt_fa_auto.json`):
+1.15 times an estimate of cortex's FA: the mode of the tracked shell's FA below 0.3 over the mask's voxels whose mean
+diffusivity at the lowest shell is under 1.5 times white matter's (the median over FA > 0.4 there). The lowest shell,
+because at b = 2000-3000 the sulci's fluid and cortex are not separable by diffusivity, and on the Prisma scan the
+fluid's FA (about 0.13, measured interactively, not recorded) sits below cortex's (0.17), which a mode over all voxels
+found instead (0.12). The shell read is the lowest with 12 or more volumes and b >= 500 (`pipeline.auto_shell`), with a
+warning above b = 1600; voxels with no signal (MD under a tenth of white matter's) are left out. The rule and its
+constants were fit on these three brains and judged on them; they are not options, so changing them is a new
+`track:ptt` version. The config's hash says "auto"; the value each run chose, with the estimate and the shell, is in
+its runtime record.
+
+| | FastSurfer cortex FA | estimate | auto stopping_fa: median_otsu / no-CSF mask |
+|---|---|---|---|
+| PAT16 | 0.117 | 0.143-0.148 | 0.164 / 0.170 |
+| cIIIs04 | 0.130 | 0.133 | 0.152 / 0.152 |
+| Prisma | 0.172 | 0.168-0.173 | 0.193 / 0.198 |
+| 16974 | (no labels) | 0.113 | 0.129 / 0.129 |
+| cIIIs04's four scans, in their own space | | | 0.147-0.152 / 0.147-0.152 |
+| the same, one shell (b = 2000) on A's grid | | | 0.129-0.147 |
+
+- **Auto lands at or near the best of the three fixed values on each brain** (bad ends 13.2 against 12.9 %, 12.1
+  against 12.0 %, 23.0 against 23.3 %), where no one fixed value does on all three. In sample: the rule was fit on
+  these brains, the fixed values are a three-point grid, and the bad-end shares have no measured run-to-run spread.
+- **Repeatable:** across cIIIs04's rescans within 0.006, the two masks within 0.006: at most one histogram bin (the
+  value moves in steps of 0.00575); with one shell only (b = 2000, on A's grid) the spread is 0.017.
+- PAT16's estimate is above FastSurfer's cortex (0.143 against 0.117: a tumor brain, and its lowest shell b = 700), yet
+  its auto value sits next to its best.
+- **Refused where it is not a brain:** the ISMRM phantom's estimate is 0.268 (most likely its synthetic gray matter's
+  diffusivity is gated out as fluid, leaving white matter's low end; not checked), outside the plausible 0.05-0.25, so
+  auto refuses and asks for a number. The tests' synthetic band too. The refusal comes before the CSD fit.
+
+**Rescan agreement on cIIIs04** (`bench/ptt_compare.py run --stopping fa --stopping-fa 0.15 --seeding fa`, then
+`rescan --rescan-out ptt_rescan_fa.json` -> `results/ptt_rescan_fa.json`; `ptt_rescan.json` keeps the earlier methods,
+whose records are gone; count-matched to UKF's labeled count, presence Dice for within / session 3 / session 5):
+
+| | CST | AF | UF | CST volume as run, not count-matched (A, within, s3, s5) |
+|---|---|---|---|---|
+| UKF | 0.78 / 0.78 / 0.75 | 0.81 / 0.79 / 0.77 | 0.79 / 0.76 / 0.73 | 52-60 mL |
+| PTT `fa` 0.15 | 0.85 / 0.84 / 0.84 | 0.82 / 0.81 / 0.80 | 0.77 / 0.75 / 0.72 | 80-83 mL |
+| PTT with ACT (ptt_rescan.json) | 0.85 / 0.85 / 0.85 | 0.86 / 0.85 / 0.84 | 0.73 / 0.74 / 0.68 | 78-88 mL |
+
+The ACT runs used A's tissue maps on every rescan, which favors their agreement; `fa` uses each scan's own FA. The
+volumes are as run: count-matched to UKF's count, `fa`'s CST is 71-73 mL and ACT's 77-85. Auto's
+values on these four (0.147-0.152, their own space) are within 0.003 of the 0.15 run, which stands for it here.
+
+**The phantom's run-to-run spread** (`bench/ptt_stopping_phantom.py --spread`, in `results/ptt_stopping_phantom.json`;
+tracking seeds 1-3, the same seed points, 50,000 streamlines each): mean F1 `fa` 0.15 0.5636 / 0.5640 / 0.5625, `act`
+0.5649 / 0.5681 / 0.5675. ACT leads with every seed (by 0.0013, 0.0041 and 0.0050), against a spread of 0.0015
+(`fa`) and 0.0032 (`act`) within each.
+
+**16974** (`bench/ptt_stopping_scan.py` -> `results/ptt_stopping_16974.json`; field-corrected, b = 2000; median_otsu /
+the no-CSF mask; no labels, so counts):
+
+| | UKF | PTT `mask` | PTT `fa` 0.15 | PTT `fa` auto (0.129) |
+|---|---|---|---|---|
+| streamlines | 98,080 / 102,663 | 79,641 / 80,254 | 79,521 / 77,314 | 79,990 / 76,376 |
+| Other share | 0.537 / 0.512 | 0.614 / 0.582 | 0.467 / 0.462 | 0.471 / 0.465 |
+| median length (labeled) | 96.5 / 94.7 mm | 132.9 / 135.0 mm | 90.1 / 91.1 mm | 95.1 / 96.1 mm |
+| CST | 582 / 831 | 1,335 / 1,754 | 1,443 / 1,497 | 1,515 / 1,583 |
+| MCP | 165 / 254 | 172 / 328 | 236 / 363 | 233 / 318 |
+| CB | 1,025 / 1,091 | 265 / 329 | 1,143 / 1,091 | 1,183 / 1,142 |
+| TF | 2,079 / 2,258 | 1,083 / 1,182 | 2,006 / 1,927 | 1,744 / 1,649 |
+| SLF-I | 1,029 / 1,102 | 87 / 125 | 138 / 138 | 145 / 141 |
+| scan to labels | 86.0 / 89.6 s | 66.6 / 67.9 s | 49.1 / 51.9 s | 53.7 / 55.6 s |
+
+**The Prisma scan's counts** (`ptt_stopping_scan.py`, kept outside the repository; b = 3000; before auto existed): with
+median_otsu no tracker has the brainstem (CST 4-8, MCP 0-1: the mask cuts it away); with the no-CSF mask, `fa` 0.15 gives
+CST 879 and MCP 564 of 73,085 streamlines (1.2 and 0.8 %), UKF 1,286 and 841 of 254,853 (0.5 and 0.3 %; UKF seeds per
+voxel, which here gives 3.5 times PTT's streamlines from its 100,000 seeds).
+
+**Decided (with the user):** `track:ptt`'s defaults are `stopping="fa"`, `stopping_fa="auto"`, `seeding="fa"`: it
+runs from the DWI alone; `act` with `wm` seeding stays an option for tissue maps. No published method was found that
+sets an FA stop this way (a short search, 2026-10-29: FA thresholds, ACT, DORIS's diffusion-space tissue maps, whose
+weights are not released), so the docs call it tractline's own heuristic. Not decided: any preset; UKF stays the
+default. Open: the rule's factor and bounds, fit on three brains, on a fourth scanner; 16974's auto value (0.129)
+against labels it does not have.

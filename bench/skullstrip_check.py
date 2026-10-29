@@ -1,8 +1,8 @@
 """tractline.skullstrip against a SynthStrip port (synthstrip-torch 0.1.1) and against FastSurfer (NOTES 2026-10-27, "SynthStrip on the b0").
 
-    uv run --group bench python bench/skullstrip_check.py --b0s        # the mean b0s, into DATA/skullstrip/
+    uv run python bench/skullstrip_check.py --b0s        # the mean b0s, into DATA/skullstrip/
     modal run bench/skullstrip_reference_modal.py                      # the reference's SDT for each
-    uv run --group bench python bench/skullstrip_check.py              # -> results/skullstrip_check.json
+    uv run python bench/skullstrip_check.py              # -> results/skullstrip_check.json
 
 Scans: MASiVar cIIIs04 (session s1Bx1, scan 1, the b1000 series: a Philips field of view that ends at the pons) and
 ON-Harmony sub-16974 and sub-03286 on both of their coils (Siemens Prisma, Head_32 and HeadNeck_64; tilted about 24

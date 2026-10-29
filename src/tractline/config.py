@@ -57,9 +57,12 @@ class Option:
     high: float | None = None
     doc: str = ""
     hashed: bool = True                        # False: a runtime guard that never changes the outputs, not hashed
+    also: tuple = ()                           # strings accepted besides the kind (a float option's "auto")
 
     def check(self, where: str, value):
         """value, normalized (an int given for a float option becomes a float, so the hash does not depend on it)."""
+        if isinstance(value, str) and value in self.also:
+            return value
         if self.kind is bool:
             if not isinstance(value, bool):
                 raise ValueError(f"{where}: {value!r} is not a bool")
@@ -247,7 +250,7 @@ register(Implementation(
     doc="single-shell CSD (tractline.csd): the response from the data, Tournier 2007's constrained fit on our own "
         "181-axis constraint hemisphere; equal to DIPY's on DIPY's sphere (bench/csd_check.py)"))
 register(Implementation(
-    "track", "ptt", "1",
+    "track", "ptt", "2",
     {"step_size": Option(0.5, float, low=0.01, doc="mm"),
      "max_angle": Option(20.0, float, low=1.0, high=90.0, doc="degrees per step, real units (at 2 mm voxels, DIPY 1.12's "
                                                               "stated 10; NOTES 2026-10-25)"),
@@ -256,19 +259,36 @@ register(Implementation(
      "pmf_threshold": Option(0.1, float, low=0.0),
      "min_len": Option(20.0, float, low=0.0, doc="mm"),
      "max_len": Option(250.0, float, low=1.0, doc="mm"),
-     "stopping": Option("act", str, ("act", "mask"), doc="act: the anatomical constraint from tissue maps the caller gives "
-                                                        "execute (tissue=; GM and background end validly, CSF invalidly); "
-                                                        "mask: leaving the brain mask ends validly"),
-     "seeding": Option("wm", str, ("wm", "fa"), doc="wm: uniform in the voxels with WM >= 0.5 (tissue maps); fa: uniform "
-                                                    "in the mask's voxels with FA >= fa_seed"),
+     "stopping": Option("fa", str, ("act", "mask", "fa"),
+                        doc="fa (the default since version 2): leaving the mask, entering FA below stopping_fa or the "
+                            "field of view's faces ends a path validly, running out of direction does not (only paths "
+                            "with two valid ends are kept): tractline's own approximation of ACT's gray matter from the "
+                            "DWI alone, checked on one phantom and three brains (NOTES 2026-10-29); act: the anatomical "
+                            "constraint from tissue maps the caller gives execute (tissue=; GM and background end "
+                            "validly, CSF invalidly; only paths with two valid ends are kept); mask: leaving the brain "
+                            "mask or running out of direction ends a path, and every path within the lengths is kept "
+                            "(version 1 kept only those leaving the mask at both ends)"),
+     "stopping_fa": Option("auto", float, low=0.0, high=1.0, also=("auto",),
+                           doc="stopping fa: auto (the default) sets it from the scan (pipeline.auto_stopping_fa: 1.15 "
+                               "times the FA of its cortex, estimated without a T1; tractline's own heuristic, fit on "
+                               "three brains; refused, asking for a number, when the estimate is not a brain's; the "
+                               "value each run chose is in its runtime record, not the hash, which says auto); or the "
+                               "FA below which a path ends validly, at most fa_seed (0.15: chosen on the ISMRM phantom, "
+                               "best on two of three brains; a 1.5 mm multiband Prisma scan wanted 0.20; NOTES "
+                               "2026-10-29)"),
+     "seeding": Option("fa", str, ("wm", "fa"), doc="fa (the default since version 2): uniform in the mask's voxels "
+                                                    "with FA >= fa_seed; wm: uniform in the voxels with WM >= 0.5 "
+                                                    "(tissue maps)"),
      "fa_seed": Option(0.2, float, low=0.0, high=1.0),
      "seed_count": Option(100_000, int, low=1),
      "seed_rng": Option(1, int, low=0, doc="the seed points' generator"),
      "track_rng": Option(1, int, low=0, doc="the tracking's random numbers")},
     requires={"model": ("csd",), "mask": ()}, oracle="DIPY ptt_tracking (with its units: ptt's validation switch)",
     status="experimental",
-    doc="parallel transport tractography with ACT (tractline.ptt; the Metal kernel on mps, the torch prototype "
-        "elsewhere), real units; the PMF on our own 362 directions (hemisphere(181) and its antipodes)"))
+    doc="parallel transport tractography (tractline.ptt; the Metal kernel on mps, the torch prototype elsewhere), real "
+        "units, the PMF on our own 362 directions (hemisphere(181) and its antipodes); by default from the DWI alone "
+        "(stopping at low FA, the threshold set from the scan by tractline's own heuristic, seeds in FA), or with ACT "
+        "from tissue maps (stopping act, seeding wm)"))
 register(Implementation(
     "bundles", "rapidparc", "1",
     {"model": Option("rapidparc", str, ("rapidparc", "hemiaug"), doc="the released weights' name (rapidparc.MODELS)"),
