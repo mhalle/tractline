@@ -4,6 +4,15 @@ Releases are git tags (`uv add git+https://github.com/mhalle/tractline --tag vX.
 release and `dev` the work in progress (`docs/development.md`, "Branches and releases"). The experiments
 behind each change, with their numbers and later corrections, are in `bench/results/NOTES.md`.
 
+## Unreleased
+
+- **Motion and eddy correction in less memory:** on a Mac the step's peak is about a third lower (on a 105-volume
+  2 mm scan, 6.6 copies of the series held by the GPU driver, from 11.0; 2.8 GB for the whole process, from 4.4),
+  with results bit-identical and the same run time. The memory check's budget is now the measured peak, so it is a
+  little stricter than before. HCP-sized series are still refused on a 16 GB Mac (NOTES 2026-10-28).
+- **Fixed:** the motion and eddy option `anchor="mi"` (not a default) crashed; `apply_volumes` in float64 rounded its
+  input to float32.
+
 ## 0.8.0 - 2026-10-28
 
 - **A SynthStrip mask without CSF** (`--mask synthstrip-nocsf`; Python `mask="synthstrip-nocsf"`; experimental):

@@ -7998,10 +7998,19 @@ Found by the review and fixed with it: the shell anchor (`anchor="mi"`, not a de
 before it ran (already so before this branch; `test_anchor_mi`); `apply_volumes` in float64 rounded its input to
 float32; replacement keys read back as strings would have been skipped.
 
-**Not done: HCP size still does not fit 16 GB.** At 6.6 copies held by the driver, the HCP-sized series would need
-about 22 GB from Metal alone (an extrapolation from 16974's copies, not run; `--hcp` is in the script, not run on
-16 GB). What is left is in the fit's full-grid inputs (the series and its smoothed copy on the device, which the fit
-resamples), by reading the code, not by a per-phase measurement. The next step is to resample only the cropped box
-inside the fit: the resample kernels (Metal, Triton, torch) take an offset into the full grid, plus a margin for the
-motion, and a fallback to the full grid when the motion leaves the margin. That is a kernel change, measured for
-identical results before it lands.
+**Where this stops: HCP size still does not fit 16 GB.** At 6.6 copies held by the driver, the HCP-sized series
+would need about 22 GB from Metal alone (an extrapolation from 16974's copies, not run; `--hcp` is in the script, not
+run on 16 GB). Such a series stays refused on a 16 GB Mac, with the documented ways around it (`--device cpu`, or
+`--no-memory-check`); on CUDA the check is against the GPU's free memory. Decided with the user to stop here.
+
+Two next steps were weighed and set aside:
+
+- **Cropping the fit's input series to the brain's box** (the box the predictions already use, plus a margin for the
+  motion, with a fallback when a sample leaves it). It saves little: on 16974 the box (the prediction mask's bounding
+  box plus 4 voxels) is 79 % of the grid (85 x 101 x 72 of 104 x 104 x 72), and with a motion margin of 4 to 8 voxels
+  89-97 %, while the brain mask is 23 % of it (measured interactively, not recorded). The dilated mask reaches the
+  edge of the field of view along two axes. So 3-11 % of two copies, for kernel offsets on three backends.
+- **Smoothing and sampling 16 volumes at a time in the fit**, so that the full smoothed copy of the series is never
+  held: each is per volume, so it would be exact, and would save about one copy; it costs re-smoothing every
+  iteration instead of caching per FWHM. Not measured, and where the remaining 5.1 copies go has not been profiled
+  by phase (that would come first).

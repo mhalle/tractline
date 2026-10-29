@@ -1238,7 +1238,9 @@ measured):
 | final cubic resample (coefficients + output, box) | 0.37 GB | 0.65 GB |
 
 Restricting to the mask is what makes this fit beside other GPU work in the M2's 16 GB of unified memory. The step
-calls `release_memory` like the other stages.
+calls `release_memory` like the other stages. These were the design's estimates; the measured peaks of the step as built, on the 104 x 104 x 72 x 105 scan, are
+in `bench/results/NOTES.md` (2026-10-28, "Motion and eddy correction in less memory"): 5.1 copies allocated, 6.6 held
+by Metal's driver.
 
 **Run time, measured** (2026-10-20, M2, float32, MPS, mask 30 % of the box, P = 16; median of 5).
 
