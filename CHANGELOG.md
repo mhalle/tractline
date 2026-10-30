@@ -4,7 +4,7 @@ Releases are git tags (`uv add git+https://github.com/mhalle/tractline --tag vX.
 release and `dev` the work in progress (`docs/development.md`, "Branches and releases"). The experiments
 behind each change, with their numbers and later corrections, are in `bench/results/NOTES.md`.
 
-## Unreleased
+## 0.10.0 - 2026-10-29
 
 - **`tractline run --tracker ptt`** (experimental): PTT from the command, with `--stopping-fa auto` (the default) or a
   number, as `track:ptt`'s defaults in 0.9.0 (stopping at low FA, the threshold set from each scan, seeds in FA). The
