@@ -77,6 +77,11 @@ def test_usage_errors(tmp_path):
     assert r.exit_code != 0 and "need --motion-eddy" in r.output
     r = CliRunner().invoke(cli.main, ["run", str(f), "--motion-eddy", "--write-corrected"])
     assert r.exit_code != 0 and "--qc" in r.output
+    r = CliRunner().invoke(cli.main, ["run", str(f), "--stopping-fa", "0.2"])
+    assert r.exit_code != 0 and "applies to --tracker ptt" in r.output
+    for bad, msg in (("high", "auto or a number"), ("0.3", "where seeds start")):
+        r = CliRunner().invoke(cli.main, ["run", str(f), "--tracker", "ptt", "--stopping-fa", bad])
+        assert r.exit_code != 0 and msg in r.output
 
 
 def _bids(tmp_path):
@@ -297,6 +302,44 @@ def test_run_tractcloud(tmp_path):
     assert summary["streamlines"] > 0 and 0 <= summary["labeled"] <= summary["streamlines"]
 
 
+def test_run_ptt(tmp_path):
+    """`tractline run --tracker ptt` on the phantom's band: a fixed --stopping-fa tracks and is recorded; auto refuses
+    the band (not a brain) in one line, asking for a number."""
+    from tractline.data import DATA
+    if not (DATA / "RapidParc" / "rapidparc.safetensors").exists():
+        pytest.skip("RapidParc's weights are not in $TRACTOGRAPHY_DATA (the test does not download)")
+    dwi, s = _bids(tmp_path)
+    out = tmp_path / "out" / "ptt.trx"
+    r = CliRunner().invoke(cli.main, ["run", dwi, "--device", "cpu", "--tracker", "ptt", "--stopping-fa", "0.15",
+                                      "--trx", str(out), "--json", "-", "-q"])
+    assert r.exit_code == 0, r.output
+    summary = json.loads(r.stdout)
+    assert summary["tracker"] == "ptt" and summary["stopping_fa"] == 0.15 and summary["streamlines"] > 0
+    assert any(x.startswith("track: ptt") for x in summary["experimental"])
+    side = json.loads(Path(summary["provenance"]).read_text())                  # what reached the tracker
+    track = side["pipeline"]["slots"]["track"]
+    assert track["impl"] == "ptt" and track["options"]["stopping_fa"] == 0.15
+    r = CliRunner().invoke(cli.main, ["run", dwi, "--device", "cpu", "--tracker", "ptt", "-q"])
+    assert r.exit_code != 0 and "give stopping_fa a number" in r.output and "--stopping-fa, e.g. 0.15" in r.output
+
+
+def test_run_ptt_auto(tmp_path, monkeypatch):
+    """`--tracker ptt` with auto succeeding (the band's plausible range opened): the value set from the scan is
+    printed and is the summary's stopping_fa."""
+    from tractline.data import DATA
+    from tractline import pipeline as P
+    if not (DATA / "RapidParc" / "rapidparc.safetensors").exists():
+        pytest.skip("RapidParc's weights are not in $TRACTOGRAPHY_DATA (the test does not download)")
+    monkeypatch.setitem(P.AUTO_FA, "plausible", (0.0, 1.0))
+    dwi, s = _bids(tmp_path)
+    js = tmp_path / "s.json"
+    r = CliRunner().invoke(cli.main, ["run", dwi, "--device", "cpu", "--tracker", "ptt", "--json", str(js)])
+    assert r.exit_code == 0, r.output
+    summary = json.loads(js.read_text())
+    assert isinstance(summary["stopping_fa"], float) and f"stopping FA set from the scan: {summary['stopping_fa']}" \
+        in r.output
+
+
 def test_run_gibbs(tmp_path):
     """`tractline run --gibbs --motion-eddy rigid`: Gibbs removal first, timed and counted in the summary."""
     from tractline.data import DATA
@@ -334,5 +377,6 @@ def test_mask_choices_offered():
     """--mask offers the two SynthStrip masks beside the default, and tractline fetch can get both models."""
     r = CliRunner().invoke(cli.main, ["run", "--help"])
     assert r.exit_code == 0 and "synthstrip-nocsf" in r.output and "median-otsu" in r.output
+    assert "[ukf|ptt]" in r.output and "--stopping-fa" in r.output
     r = CliRunner().invoke(cli.main, ["fetch", "--help"])
     assert r.exit_code == 0 and "synthstrip-nocsf" in r.output

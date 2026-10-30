@@ -4,6 +4,14 @@ Releases are git tags (`uv add git+https://github.com/mhalle/tractline --tag vX.
 release and `dev` the work in progress (`docs/development.md`, "Branches and releases"). The experiments
 behind each change, with their numbers and later corrections, are in `bench/results/NOTES.md`.
 
+## Unreleased
+
+- **`tractline run --tracker ptt`** (experimental): PTT from the command, with `--stopping-fa auto` (the default) or a
+  number, as `track:ptt`'s defaults in 0.9.0 (stopping at low FA, the threshold set from each scan, seeds in FA). The
+  chosen threshold is printed, and recorded in the provenance file and the `--json` summary (`tracker`,
+  `stopping_fa`). A scan that auto refuses ends in one line asking for a number. The default tracker stays UKF; the
+  user guide's "PTT tractography" section says what was measured and its limits.
+
 ## 0.9.0 - 2026-10-29
 
 - **PTT without a T1** (`track:ptt` version 2, experimental, Python only; every `track:ptt` config's hash moves; the

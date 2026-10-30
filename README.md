@@ -86,6 +86,11 @@ the reversed series.
    the ORG atlas: a seed in every voxel of the brain mask whose FA is above 0.1. The mask is DIPY's `median_otsu` of
    the mean b0, or SynthStrip's without or with the CSF around the brain (`--mask synthstrip-nocsf`, `--mask
    synthstrip`; experimental), which kept the lower brainstem on the scans checked where `median_otsu` cut through it.
+   `--tracker ptt` (experimental) runs parallel transport tractography on a CSD fit instead, from the DWI alone: on
+   a simulated phantom, at a fixed stopping threshold chosen on that phantom, it was more accurate than UKF (mean
+   F1 0.57 against 0.41). By default the threshold is set from each scan by tractline's own rule, fit on three brains
+   (`--stopping-fa auto`; it refuses a phantom, and a number sets it by hand). The labelers were trained on UKF's
+   streamlines; see the user guide.
 5. **Tract labels** from RapidParc (the default; 94.5 % tract accuracy on TractCloud's labeled test set) or
    TractCloud (`--labeler tractcloud`).
 

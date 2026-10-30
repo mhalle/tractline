@@ -55,7 +55,7 @@ identifiers summarize it: the pipeline ID names the algorithm and its settings, 
 execution ID also covers the device, the operating system's build, the software versions and the weights, so two
 runs on the same input with the same execution ID should give the same streamlines. Files are identified by their
 checksums; their paths are recorded relative to the BIDS dataset, or by file name outside one, so the record can be
-attached to a paper without your folder names (`--record-absolute-paths` records full paths instead). A run that uses an experimental step, such as `--motion-eddy`, `--gibbs` or `--mask synthstrip`, says so
+attached to a paper without your folder names (`--record-absolute-paths` records full paths instead). A run that uses an experimental step, such as `--motion-eddy`, `--gibbs`, `--mask synthstrip` or `--tracker ptt`, says so
 when it starts.
 
 The reversed phase-encoding series used for the susceptibility field is found from the BIDS sidecars, or can be named
@@ -199,6 +199,36 @@ from pnlbwh/ukftractography with the settings used to build the ORG atlas (two t
 thresholds and record length) and the binary's own seeding, every voxel of the mask. In double precision it follows
 the binary's arithmetic. The GPU kernels run in single precision; their streamlines differ from double precision far
 less than the streamlines from two acquisitions of the same subject differ from each other.
+
+**PTT tractography (experimental).** `--tracker ptt` replaces UKF with parallel transport tractography (Aydogan & Shi
+2021, tractline's own implementation, checked against DIPY's) on a constrained spherical deconvolution of the tracked
+shell. It needs no T1:
+- seeds are spread uniformly where FA is at least 0.2;
+- a path ends at the mask's edge, the image's faces, or where FA falls below the stopping threshold, standing in for
+  the gray matter that T1-based anatomically constrained tractography (ACT) would use;
+- only paths with both ends of that kind are kept.
+
+`--stopping-fa auto`, the default, sets the threshold from each scan: 1.15 times its cortex's FA, estimated from the
+DWI. That rule is tractline's own (a short search found no published method that sets it this way), fit on three
+brains and judged on the same three: the best fixed value differed between them, 0.15 on two and 0.20 on a 1.5 mm
+multiband scan whose cortex FA was higher (most likely from noise), and auto landed at or near the best on each. It refuses a scan whose estimate does not look like a brain's (a
+phantom, say) and asks for a number: `--stopping-fa 0.15`. The value chosen is printed, and recorded in the
+`--json` summary and, with `--trx`, the provenance file. A threshold above 0.2, the FA where seeds start, is refused.
+
+What was measured (NOTES 2026-10-29):
+- on the ISMRM 2015 phantom, at a fixed 0.15 (chosen on that phantom, so a best case; auto refuses the phantom), mean
+  F1 0.57 against UKF's 0.41, 0.001-0.005 below PTT with T1-based ACT;
+- on three brains with FastSurfer labels, with auto: 12-23 % of streamline ends were bad ones (deep in white matter,
+  in CSF or outside the brain, together) against UKF's 26-51 %; most of UKF's were outside the brain, and on one scan
+  auto ended more paths deep in white matter than UKF did;
+- on one subject's rescans, at a fixed 0.15 (auto chose 0.147-0.152 there): corticospinal tract agreement as good as
+  ACT's (which reused one scan's tissue maps for all) and better than UKF's; the uncinate's slightly below UKF's.
+
+Limits: the labelers were trained on UKF's streamlines, so they name PTT's off their training domain (on the
+phantom, PTT's own paths, with ACT, were named about as correctly as UKF's own, and worse on the cerebellar and
+brainstem tracts); PTT's random numbers come from fixed generators, so a run repeats with the same settings on the
+same device, but not streamline for streamline across devices; and it is fast on an Apple GPU (the tracking step
+about 20 s on a 2 mm, 105-volume scan on an M2), with a slower torch version elsewhere.
 
 **Tract labels.** Each streamline of 40 mm or more is assigned to one of the ORG atlas's 800 fiber clusters (Zhang et
 al. 2018), which are then mapped to 42 named tracts and "Other", the same mapping TractCloud uses. The default

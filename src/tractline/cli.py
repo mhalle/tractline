@@ -72,6 +72,15 @@ def main():
 @click.option("--shell", type=float, default=None,
               help="The b-value tracked (default: the shell with the most volumes). The ORG atlas the labelers follow "
                    "was built on b = 3000: on a multi-shell scan, 3000 or the nearest shell matches it.")
+@click.option("--tracker", type=click.Choice(["ukf", "ptt"]), default="ukf", show_default=True,
+              help="ukf: two-tensor UKF tractography with the ORG atlas's settings. ptt (experimental): parallel "
+                   "transport tractography on a CSD fit, from the DWI alone: seeds where FA >= 0.2, a path ends at "
+                   "the mask's edge or where FA falls below --stopping-fa. Fast on an Apple GPU; elsewhere a slower "
+                   "torch version runs. The labelers were trained on UKF's streamlines (see the user guide).")
+@click.option("--stopping-fa", default=None,
+              help="With --tracker ptt: auto (the default: set from the scan, 1.15 times its cortex's FA, estimated "
+                   "without a T1; tractline's own heuristic, fit on three brains) or an FA up to 0.2 (where seeds "
+                   "start), such as 0.15.")
 @click.option("--labeler", type=click.Choice(["rapidparc", "hemiaug", "tractcloud"]), default="rapidparc",
               show_default=True, help="RapidParc, its model trained for lesions and surgery, or TractCloud (its code "
                                       "and model fetched from its GitHub on first use, about 8.4 MB).")
@@ -88,7 +97,7 @@ def main():
               help="Also write the run's summary as JSON here ('-' for standard output).")
 @click.option("-q", "--quiet", is_flag=True, help="Print nothing but errors (and --json -).")
 def run(dwi, partners, motion_eddy, gibbs, mask, outliers, trx, float16, labeled_only, qc, write_corrected, shell,
-        labeler, device, workers, no_memory_check, record_absolute_paths, json_path, quiet):
+        tracker, stopping_fa, labeler, device, workers, no_memory_check, record_absolute_paths, json_path, quiet):
     """Correct, track and label one dMRI series (NIfTI, BIDS). Errors end in one line; TRACTLINE_DEBUG=1 shows the
     traceback."""
     import os
@@ -99,11 +108,13 @@ def run(dwi, partners, motion_eddy, gibbs, mask, outliers, trx, float16, labeled
         ImageFileError = ValueError                                       # noqa: N806
     try:
         _run(dwi, partners, motion_eddy, gibbs, mask, outliers, trx, float16, labeled_only, qc, write_corrected,
-             shell, labeler, device, workers, no_memory_check, record_absolute_paths, json_path, quiet)
+             shell, labeler, device, workers, no_memory_check, record_absolute_paths, json_path, quiet,
+             tracker=tracker, stopping_fa=stopping_fa)
     except (ValueError, OSError, FetchError, ImageFileError) as e:        # the input, the disk, the network: one line
         if os.environ.get("TRACTLINE_DEBUG") == "1":
             raise
-        hint = " (here: --device cpu, or --no-memory-check)" if "check_memory" in str(e) else ""
+        hint = " (here: --device cpu, or --no-memory-check)" if "check_memory" in str(e) else \
+            " (here: --stopping-fa, e.g. 0.15)" if "give stopping_fa a number" in str(e) else ""
         raise click.ClickException(str(e) + hint) from e
 
 
@@ -116,8 +127,28 @@ def auto_shell(bval) -> float:
         raise click.ClickException(str(e)) from e
 
 
+def _stopping_fa(value):
+    """--stopping-fa: "auto" or a number from 0 to 1."""
+    if value is None or value == "auto":
+        return "auto"
+    try:
+        v = float(value)
+    except ValueError:
+        raise click.UsageError(f"--stopping-fa {value!r}: auto or a number") from None
+    if not 0.0 <= v <= FA_SEED:
+        raise click.UsageError(f"--stopping-fa {value}: an FA from 0 to {FA_SEED:g}, the FA where seeds start")
+    return v
+
+
+FA_SEED = 0.2                                             # track:ptt's fa_seed default: above it seeds start at a stop
+
+
 def _run(dwi, partners, motion_eddy, gibbs, mask, outliers, trx, float16, labeled_only, qc, write_corrected, shell,
-         labeler, device, workers, no_memory_check, record_absolute_paths, json_path, quiet):
+         labeler, device, workers, no_memory_check, record_absolute_paths, json_path, quiet, tracker="ukf",
+         stopping_fa=None):
+    if stopping_fa is not None and tracker != "ptt":
+        raise click.UsageError("--stopping-fa applies to --tracker ptt")
+    sfa = _stopping_fa(stopping_fa) if tracker == "ptt" else None
     if (qc or write_corrected or outliers) and not motion_eddy:
         raise click.UsageError("--qc, --write-corrected and --outliers need --motion-eddy")
     if write_corrected and not qc:
@@ -165,20 +196,39 @@ def _run(dwi, partners, motion_eddy, gibbs, mask, outliers, trx, float16, labele
         fetch_weights(mk, progress=None if quiet else _progress(f"SynthStrip's weights ({mk})"))
     timer = P.Timer(echo=None if quiet else "  ", stream=sys.stderr)       # standard output stays for --json -
     from . import provenance as PV
-    cfg = P.config_for(shell=shell, motion_eddy=me, gibbs=gb, mask=mk)
+    out = {"positions": "float16" if float16 else "float32", "labeled_only": labeled_only,
+           "absolute_paths": record_absolute_paths}
+    if tracker == "ptt":                                  # the model and track slots replaced: csd, then ptt
+        cfg = P.config_for(lab, shell=shell, motion_eddy=me, gibbs=gb, mask=mk).with_(
+            model={"impl": "csd", "shell": float(shell)}, track={"impl": "ptt", "stopping_fa": sfa})
+    else:
+        cfg = P.config_for(shell=shell, motion_eddy=me, gibbs=gb, mask=mk)
     say(f"running on {dev}: shell b = {shell:g}" + (", Gibbs ringing removed" if gb else "")
-        + (f", head motion and eddy currents ({motion_eddy})" if me else "") + (f", {mk} mask" if mk else ""))
+        + (f", head motion and eddy currents ({motion_eddy})" if me else "") + (f", {mk} mask" if mk else "")
+        + (f", PTT (stopping FA {sfa})" if tracker == "ptt" else ""))
     for step in PV.experimental(cfg.to_dict()):
         say(f"experimental: {step}")
-    r = P.run(s, lab, timer, trx=trx, device=dev, workers=workers, shell=shell, motion_eddy=me,
-              gibbs=gb, mask=mk, positions="float16" if float16 else "float32", labeled_only=labeled_only,
-              absolute_paths=record_absolute_paths)
+    if tracker == "ptt":
+        import warnings
+        with warnings.catch_warnings(record=True) as caught:            # the pipeline's warnings, as this command's
+            warnings.simplefilter("always", UserWarning)
+            r = P.run(s, lab, timer, trx=trx, device=dev, workers=workers, config=cfg, **out)
+        for w in caught:
+            if issubclass(w.category, UserWarning):
+                say(f"warning: {w.message}")
+            else:
+                warnings.warn_explicit(w.message, w.category, w.filename, w.lineno)
+    else:
+        r = P.run(s, lab, timer, trx=trx, device=dev, workers=workers, shell=shell, motion_eddy=me,
+                  gibbs=gb, mask=mk, **out)
     corr, tg, labels = r
     first = timer.seconds.get("gibbs", 0)                                 # before the field: not among pipeline_stages
     summary = {"series": str(dwi), "corrected": corr.applied, "note": corr.note, "residual_left": corr.residual_left,
                "warnings": corr.warnings, "shell": shell, "device": dev, "gibbs": corr.gibbs,
                "seconds": timer.seconds,
                "scan_to_labels_s": round(timer.total(*P.pipeline_stages("", cfg)) + first, 1),
+               "tracker": tracker,
+               **({"stopping_fa": tg.stats.get("stopping_fa (auto)", sfa)} if tracker == "ptt" else {}),
                "streamlines": len(tg.fibers), "labeled": int(labels.keep.sum()), "trx": str(trx) if trx else None,
                "pipeline_id": r.provenance["pipeline_id"], "execution_id": r.provenance["execution_id"],
                "experimental": r.provenance["experimental"],
@@ -192,6 +242,8 @@ def _run(dwi, partners, motion_eddy, gibbs, mask, outliers, trx, float16, labele
             _write_corrected(s, corr, Path(qc))
     for w in corr.warnings:
         say(f"warning: {w}")
+    if tracker == "ptt" and sfa == "auto":
+        say(f"stopping FA set from the scan: {summary['stopping_fa']}")
     say(f"{summary['streamlines']} streamlines, {summary['labeled']} labeled; {summary['scan_to_labels_s']} s"
         + (f"; TRX {trx}" if trx else "") + (f"; QC in {qc}" if qc else ""))
     if trx:
