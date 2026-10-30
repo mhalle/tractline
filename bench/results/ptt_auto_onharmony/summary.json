@@ -1,0 +1,191 @@
+{
+ "tractline": "0.10.0",
+ "auto rule (pipeline.AUTO_FA)": {
+  "factor": 1.15,
+  "md_relative": 1.5,
+  "md_floor": 0.1,
+  "wm_fa": 0.4,
+  "below": 0.3,
+  "bin": 0.005,
+  "smooth": 0.01,
+  "plausible": [
+   0.05,
+   0.25
+  ],
+  "min_directions": 12,
+  "min_b": 500.0,
+  "warn_b": 1600.0
+ },
+ "scans": {
+  "sub-16974_OXF1PRI001": {
+   "shell tracked": 2000.0,
+   "auto stopping_fa": 0.1294,
+   "auto, no-CSF mask": 0.1294,
+   "cortex FA estimate": 0.1125,
+   "FastSurfer cortex median FA": 0.1157,
+   "bad ends": {
+    "ukf": 0.3222,
+    "ptt, mask": 0.4645,
+    "ptt, fa 0.10": 0.1432,
+    "ptt, fa 0.15": 0.0925,
+    "ptt, fa 0.20": 0.1402,
+    "ptt, fa auto": 0.0943
+   },
+   "best fixed": "ptt, fa 0.15",
+   "auto minus best": 0.0018
+  },
+  "sub-16974_OXF2PRI001": {
+   "shell tracked": 1995.0,
+   "auto stopping_fa": 0.1409,
+   "auto, no-CSF mask": 0.1409,
+   "cortex FA estimate": 0.1225,
+   "FastSurfer cortex median FA": 0.1231,
+   "bad ends": {
+    "ukf": 0.332,
+    "ptt, mask": 0.4965,
+    "ptt, fa 0.10": 0.2165,
+    "ptt, fa 0.15": 0.1275,
+    "ptt, fa 0.20": 0.1663,
+    "ptt, fa auto": 0.1351
+   },
+   "best fixed": "ptt, fa 0.15",
+   "auto minus best": 0.0076
+  },
+  "sub-03286_OXF1PRI001": {
+   "shell tracked": 1995.0,
+   "auto stopping_fa": 0.1639,
+   "auto, no-CSF mask": 0.1696,
+   "cortex FA estimate": 0.14250000000000002,
+   "FastSurfer cortex median FA": 0.1262,
+   "bad ends": {
+    "ukf": 0.4532,
+    "ptt, mask": 0.5903,
+    "ptt, fa 0.10": 0.2093,
+    "ptt, fa 0.15": 0.1384,
+    "ptt, fa 0.20": 0.1724,
+    "ptt, fa auto": 0.1399
+   },
+   "best fixed": "ptt, fa 0.15",
+   "auto minus best": 0.0015
+  },
+  "sub-03286_OXF2PRI001": {
+   "shell tracked": 1995.0,
+   "auto stopping_fa": 0.1696,
+   "auto, no-CSF mask": 0.1754,
+   "cortex FA estimate": 0.1475,
+   "FastSurfer cortex median FA": 0.1275,
+   "bad ends": {
+    "ukf": 0.4434,
+    "ptt, mask": 0.5996,
+    "ptt, fa 0.10": 0.1846,
+    "ptt, fa 0.15": 0.109,
+    "ptt, fa 0.20": 0.1591,
+    "ptt, fa auto": 0.1205
+   },
+   "best fixed": "ptt, fa 0.15",
+   "auto minus best": 0.0115
+  },
+  "sub-03997_OXF1PRI001": {
+   "shell tracked": 1995.0,
+   "auto stopping_fa": 0.1409,
+   "auto, no-CSF mask": 0.1466,
+   "cortex FA estimate": 0.1225,
+   "FastSurfer cortex median FA": 0.1209,
+   "bad ends": {
+    "ukf": 0.3042,
+    "ptt, mask": 0.4184,
+    "ptt, fa 0.10": 0.133,
+    "ptt, fa 0.15": 0.0913,
+    "ptt, fa 0.20": 0.1257,
+    "ptt, fa auto": 0.0908
+   },
+   "best fixed": "ptt, fa 0.15",
+   "auto minus best": -0.0005
+  },
+  "sub-03997_OXF2PRI001": {
+   "shell tracked": 1995.0,
+   "auto stopping_fa": 0.1581,
+   "auto, no-CSF mask": 0.1581,
+   "cortex FA estimate": 0.1375,
+   "FastSurfer cortex median FA": 0.125,
+   "bad ends": {
+    "ukf": 0.3032,
+    "ptt, mask": 0.4179,
+    "ptt, fa 0.10": 0.1714,
+    "ptt, fa 0.15": 0.1003,
+    "ptt, fa 0.20": 0.134,
+    "ptt, fa auto": 0.0993
+   },
+   "best fixed": "ptt, fa 0.15",
+   "auto minus best": -0.001
+  },
+  "sub-12813_OXF1PRI001": {
+   "shell tracked": 1997.5,
+   "auto stopping_fa": 0.1351,
+   "auto, no-CSF mask": 0.1409,
+   "cortex FA estimate": 0.11750000000000001,
+   "FastSurfer cortex median FA": 0.1279,
+   "bad ends": {
+    "ukf": 0.3281,
+    "ptt, mask": 0.4459,
+    "ptt, fa 0.10": 0.1851,
+    "ptt, fa 0.15": 0.104,
+    "ptt, fa 0.20": 0.1446,
+    "ptt, fa auto": 0.1156
+   },
+   "best fixed": "ptt, fa 0.15",
+   "auto minus best": 0.0116
+  },
+  "sub-12813_OXF2PRI001": {
+   "shell tracked": 1995.0,
+   "auto stopping_fa": 0.1351,
+   "auto, no-CSF mask": 0.1409,
+   "cortex FA estimate": 0.11750000000000001,
+   "FastSurfer cortex median FA": 0.1243,
+   "bad ends": {
+    "ukf": 0.3062,
+    "ptt, mask": 0.4202,
+    "ptt, fa 0.10": 0.1237,
+    "ptt, fa 0.15": 0.0877,
+    "ptt, fa 0.20": 0.133,
+    "ptt, fa auto": 0.0852
+   },
+   "best fixed": "ptt, fa 0.15",
+   "auto minus best": -0.0025
+  },
+  "sub-13192_OXF1PRI001": {
+   "shell tracked": 1997.5,
+   "auto stopping_fa": 0.1466,
+   "auto, no-CSF mask": 0.1466,
+   "cortex FA estimate": 0.1275,
+   "FastSurfer cortex median FA": 0.1284,
+   "bad ends": {
+    "ukf": 0.3703,
+    "ptt, mask": 0.5094,
+    "ptt, fa 0.10": 0.2063,
+    "ptt, fa 0.15": 0.1214,
+    "ptt, fa 0.20": 0.1619,
+    "ptt, fa auto": 0.122
+   },
+   "best fixed": "ptt, fa 0.15",
+   "auto minus best": 0.0006
+  },
+  "sub-13192_OXF2PRI001": {
+   "shell tracked": 1995.0,
+   "auto stopping_fa": 0.1524,
+   "auto, no-CSF mask": 0.1524,
+   "cortex FA estimate": 0.1325,
+   "FastSurfer cortex median FA": 0.1287,
+   "bad ends": {
+    "ukf": 0.3718,
+    "ptt, mask": 0.4965,
+    "ptt, fa 0.10": 0.2075,
+    "ptt, fa 0.15": 0.1232,
+    "ptt, fa 0.20": 0.1548,
+    "ptt, fa auto": 0.1234
+   },
+   "best fixed": "ptt, fa 0.15",
+   "auto minus best": 0.0002
+  }
+ }
+}

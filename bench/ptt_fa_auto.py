@@ -5,6 +5,8 @@ compares estimators with FastSurfer's cortex on the scans that have labels, and 
 
     uv run python bench/ptt_fa_auto.py [--prisma <dwi> <labels.mgz> <t1_to_dwi.npz> <out folder>]
                                                    # -> results/ptt_fa_auto.json (the Prisma rows: <out folder>)
+    uv run python bench/ptt_fa_auto.py --scan <dwi> <labels.mgz> <t1_to_dwi.npz> <tag> <out folder>
+                                                   # one scan only -> <out folder>/ptt_fa_auto_<tag>.json
 
 Estimators (DTI on the tracked shell with the b0s, over the brain mask):
   mask mode      the mode of FA below 0.3 over the mask (a histogram, 0.005 wide, smoothed by a 0.01 Gaussian);
@@ -155,5 +157,17 @@ def main(prisma=None):
         (Path(out) / "ptt_fa_auto_prisma.json").write_text(json.dumps(row, indent=1) + "\n")
 
 
+def one_scan(args):
+    """--scan: the estimators and auto against FastSurfer's cortex on one scan (FastSurfer's .mgz label volume)."""
+    if len(args) != 5:
+        sys.exit("usage: ptt_fa_auto.py --scan <dwi> <labels.mgz> <t1_to_dwi.npz> <tag> <out folder>")
+    dwi, labels, fit, tag, out = args
+    row = scan_rows(bids.load(dwi), MgzAnatomy(labels), np.linalg.inv(np.load(fit)["t1_to_dwi"]))
+    (Path(out) / f"ptt_fa_auto_{tag}.json").write_text(json.dumps(row, indent=1) + "\n")
+
+
 if __name__ == "__main__":
-    main(sys.argv[sys.argv.index("--prisma") + 1:][:4] if "--prisma" in sys.argv else None)
+    if "--scan" in sys.argv:
+        one_scan(sys.argv[sys.argv.index("--scan") + 1:])
+    else:
+        main(sys.argv[sys.argv.index("--prisma") + 1:][:4] if "--prisma" in sys.argv else None)

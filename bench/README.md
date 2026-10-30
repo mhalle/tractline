@@ -54,7 +54,8 @@ the labeler); `bench/results/README.md` says which, and what re-running their sc
 - PTT without a T1 (NOTES 2026-10-29): `ptt_stopping_phantom.py` (the stopping rules on the ISMRM phantom, count-matched,
   and run to run), `ptt_stopping_scan.py` (on one scan given by path, beside UKF), `ptt_fa_anatomy.py` (where paths end
   against FastSurfer's labels; FA by tissue and shell), `ptt_fa_auto.py` (the automatic threshold against FastSurfer's
-  cortex, and its repeatability).
+  cortex, and its repeatability), `ptt_auto_onharmony.py` (the automatic threshold out of sample: ten ON-Harmony
+  scans, FastSurfer run locally; NOTES 2026-10-30).
 - The brain mask (NOTES 2026-10-27 and 10-28): `skullstrip_check.py` and `skullstrip_reference_modal.py` (the SynthStrip
   network against its authors' release), `mask_study.py`, `mask_compare_scan.py` (the masks on one scan given by
   path), `cst_thalamus_outside.py` and `cst_traced.py` (CST through the thalamus, named streamlines outside the brain,

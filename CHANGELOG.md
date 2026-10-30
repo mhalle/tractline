@@ -4,6 +4,12 @@ Releases are git tags (`uv add git+https://github.com/mhalle/tractline --tag vX.
 release and `dev` the work in progress (`docs/development.md`, "Branches and releases"). The experiments
 behind each change, with their numbers and later corrections, are in `bench/results/NOTES.md`.
 
+## Unreleased
+
+- **The automatic PTT threshold tested out of sample** (documentation and bench only): on ten ON-Harmony scans it was
+  not fit on, `--stopping-fa auto` stayed within about a point of the best fixed threshold (0.15 on all ten), safe
+  but no better there; the user guide says so (NOTES 2026-10-30; `bench/ptt_auto_onharmony.py`).
+
 ## 0.10.0 - 2026-10-29
 
 - **`tractline run --tracker ptt`** (experimental): PTT from the command, with `--stopping-fa auto` (the default) or a

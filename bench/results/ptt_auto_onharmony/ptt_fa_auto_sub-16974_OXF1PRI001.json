@@ -1,0 +1,43 @@
+{
+ "shell": 2000.0,
+ "median-otsu": {
+  "mask mode": 0.0975,
+  "tissue mode": 0.1025,
+  "tissue p20": 0.0982,
+  "tissue share": 0.956,
+  "lowest shell": 1000.0,
+  "low-shell mode, MD < 1.0e-3": 0.1125,
+  "low-shell mode, MD < 1.1e-3": 0.1125,
+  "low-shell mode, MD < 1.2e-3": 0.1075,
+  "lowest shell: white matter's MD (FA > 0.4)": 0.713,
+  "relative mode, MD < 1.4 x white matter's": 0.1125,
+  "relative mode, MD < 1.5 x white matter's": 0.1125,
+  "relative mode, MD < 1.6 x white matter's": 0.1075,
+  "auto (pipeline.auto_stopping_fa)": {
+   "stopping_fa": 0.1294,
+   "cortex FA estimate": 0.1125,
+   "auto shell": 1000.0
+  },
+  "FastSurfer cortex median FA": 0.1157
+ },
+ "synthstrip-nocsf": {
+  "mask mode": 0.1025,
+  "tissue mode": 0.1025,
+  "tissue p20": 0.0988,
+  "tissue share": 0.976,
+  "lowest shell": 1000.0,
+  "low-shell mode, MD < 1.0e-3": 0.1175,
+  "low-shell mode, MD < 1.1e-3": 0.1125,
+  "low-shell mode, MD < 1.2e-3": 0.1075,
+  "lowest shell: white matter's MD (FA > 0.4)": 0.714,
+  "relative mode, MD < 1.4 x white matter's": 0.1175,
+  "relative mode, MD < 1.5 x white matter's": 0.1125,
+  "relative mode, MD < 1.6 x white matter's": 0.1125,
+  "auto (pipeline.auto_stopping_fa)": {
+   "stopping_fa": 0.1294,
+   "cortex FA estimate": 0.1125,
+   "auto shell": 1000.0
+  },
+  "FastSurfer cortex median FA": 0.1169
+ }
+}

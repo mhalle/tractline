@@ -8192,3 +8192,54 @@ sets an FA stop this way (a short search, 2026-10-29: FA thresholds, ACT, DORIS'
 weights are not released), so the docs call it tractline's own heuristic. Not decided: any preset; UKF stays the
 default. Open: the rule's factor and bounds, fit on three brains, on a fourth scanner; 16974's auto value (0.129)
 against labels it does not have.
+
+## 2026-10-30 Auto on ON-Harmony, out of sample: within about a point of 0.15, which was best on every scan
+
+**Why.** `stopping_fa="auto"` (0.9.0) was fit and judged on the same three brains. This is its first test on scans it
+was not fit on, local data only (the user's choice: no downloads, so all Siemens).
+
+**What ran** (`bench/ptt_auto_onharmony.py` -> `results/ptt_auto_onharmony/`, per-scan JSONs and `summary.json`; the rule
+unchanged, nothing tuned): ON-Harmony (ds004712; Siemens Prisma at Oxford, 2 mm, multiband 3, tracked at b = 2000),
+sub-16974 and the first four other subjects in sorted order (03286, 03997, 12813, 13192; sub-10975, the known
+high-motion one, skipped, which also leaves out the scan most likely to have noise-raised cortex FA, where auto would
+most plausibly beat 0.15), each in both sessions (OXF1PRI001 with the 32-channel head coil, OXF2PRI001 with the
+64-channel head and neck coil): ten scans. Per scan: FastSurfer on the session's own T1 (locally, on the CPU, 10-16
+minutes each), a rigid fit of its conformed T1 to the corrected mean b0 (shifts under 2 mm; NCC -0.59 to -0.68 in
+OXF1, -0.43 to -0.50 in OXF2), overlays checked by eye on three (16974 and 03997 in OXF2, 12813 in OXF1: ventricles,
+cortex and brainstem on the b0's), then `ptt_fa_anatomy.py --scan` (bad ends: deep in white matter, in CSF or outside
+FastSurfer's brain; median_otsu masks) and `ptt_fa_auto.py --scan`.
+
+| ten scans | bad ends: range (median) |
+|---|---|
+| UKF | 30.3-45.3 % (33.0) |
+| PTT `mask` | 41.8-60.0 % (48.1) |
+| PTT `fa` 0.10 | 12.4-21.6 % (18.5) |
+| PTT `fa` 0.15 | 8.8-13.8 % (10.6) |
+| PTT `fa` 0.20 | 12.6-17.2 % (15.0) |
+| PTT `fa` auto (0.129-0.170) | 8.5-14.0 % (11.8) |
+
+The medians are unpaired; scan by scan, auto minus 0.15 has a median of +0.1 points.
+
+- **The best fixed threshold was 0.15 on all ten.** Auto minus the best, scan by scan: within ±0.25 points on seven,
+  0.8-1.2 points worse on three (16974 OXF2 +0.8, 03286 OXF2 +1.2, 12813 OXF1 +1.2). Safe on this protocol, no better
+  than a fixed 0.15.
+- **The cost does not follow the estimate's error.** Of the three costly scans, two have auto below 0.15 (12813 OXF1,
+  0.135, from an underestimate); 12813 OXF2 has the same auto value and comes out 0.25 points better than 0.15.
+  Differences of about a point look like scan-level variation; bad-end shares have no measured run-to-run spread.
+- **Its cortex estimate tracked FastSurfer's cortex only loosely here.** FastSurfer's cortex median FA spanned
+  0.116-0.129 across the ten; the estimate 0.113-0.148 (differences -0.010 to +0.020; Pearson 0.55, not
+  distinguishable from none at n = 10). The estimate moves in histogram bins of 0.005 (auto in steps of about
+  0.006), so most of auto's spread on this protocol (0.129-0.170) is the estimator's own, not the scans'.
+- **Across the two coils, one subject's auto value moved by 0 to 0.017** (0 to 3 bins: 16974 0.129 / 0.141, 03286
+  0.164 / 0.170, 03997 0.141 / 0.158, 12813 0.135 / 0.135, 13192 0.147 / 0.152), always up or level in OXF2;
+  FastSurfer's cortex FA was higher in OXF2 for four of five subjects. More than cIIIs04's rescans on one scanner
+  (within 0.006). The two masks agreed within 0.006 on every scan. (sub-13192 has more OXF1 sessions locally,
+  OXF1PRI002-006: a same-coil rescan test within ON-Harmony, not run.)
+- **The plausibility bound (0.05-0.25)** was never near: estimates 0.11-0.15.
+- **16974's auto value, 0.129** (the lowest seen, unchecked until now), comes within 0.2 points of 0.15 in OXF1.
+
+**Reading.** Auto is safe on this protocol (within about a point of the best fixed value) and buys nothing here. It
+has not yet been shown to help out of sample: its one advantage over 0.15 is on the Prisma scan it was fit on, where
+it tied the best fixed value (0.20). That it helps on a protocol whose cortex FA is higher is still a hypothesis. A
+sharper cortex estimate would narrow its spread; not attempted (no tuning on the test set). Still all Siemens; another
+vendor needs a download.

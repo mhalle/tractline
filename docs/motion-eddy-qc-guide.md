@@ -211,7 +211,10 @@ shell. It needs no T1:
 `--stopping-fa auto`, the default, sets the threshold from each scan: 1.15 times its cortex's FA, estimated from the
 DWI. That rule is tractline's own (a short search found no published method that sets it this way), fit on three
 brains and judged on the same three: the best fixed value differed between them, 0.15 on two and 0.20 on a 1.5 mm
-multiband scan whose cortex FA was higher (most likely from noise), and auto landed at or near the best on each. It refuses a scan whose estimate does not look like a brain's (a
+multiband scan whose cortex FA was higher (most likely from noise), and auto landed at or near the best on each. On
+ten further scans it was not fit on (ON-Harmony, five subjects on a Siemens Prisma with two head coils), the best fixed
+value was 0.15 on all ten, and auto stayed within about a point of it (bad ends 8.5-14 % against UKF's 30-45 %): safe
+there, but no better than 0.15 (NOTES 2026-10-30). It refuses a scan whose estimate does not look like a brain's (a
 phantom, say) and asks for a number: `--stopping-fa 0.15`. The value chosen is printed, and recorded in the
 `--json` summary and, with `--trx`, the provenance file. A threshold above 0.2, the FA where seeds start, is refused.
 
