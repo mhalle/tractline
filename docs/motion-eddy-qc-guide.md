@@ -73,7 +73,8 @@ RapidParc (section 3); its code and trained model are downloaded from TractCloud
 at the version tractline was tested with, checked against pinned checksums). `tractline run --help` lists every
 option.
 
-**Two full diffusion series.** Some protocols acquire the whole gradient table twice, once AP and once PA. By default
+**Two full diffusion series** (new in release 0.11.0). Some protocols acquire the whole gradient table twice, once AP
+and once PA. By default
 tractline tracks the series you name and uses only the b0 images of the other, to measure the field, so half the
 diffusion data goes unused. `--reversed-series` uses all of it. It needs `--motion-eddy`, because nothing else
 aligns the two series, and it is off unless given. Start with `pair-average`; the measurements at the end of this

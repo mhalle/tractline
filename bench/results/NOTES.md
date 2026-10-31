@@ -8366,8 +8366,9 @@ takes the mean and the scale, and pairs by b-value (50) and axis (5 degrees) ove
 unmatched unless told otherwise. eddy's `--resamp=lsr` (least-squares reconstruction from pairs) is not implemented.
 
 **Verified.** 16974 with `--motion-eddy --gibbs`: 95,941 streamlines, 79,109 labeled, the same pipeline_id, all 52 files of
-the TRX and the QC table identical byte for byte to the code before (Metal). CUDA: 16974 not compared against the code
-before; the kernels' default branches are unchanged, and the suite passes on an A10 (112 passed).
+the TRX and the QC table identical byte for byte to the code before, on Metal. On an A10, the same check against 0.10.0's
+code in the same way (95,949 streamlines, 79,097 labeled, the TRX's files and the QC table identical, run twice each), and
+the suite passes there (112 passed).
 
 **Open.** The tract gain on more subjects (ds005341 and ds007908 have more). UKF's `Rs` under concatenate. Jacobian-weighted
 averaging, to favor the polarity that stretched a region: HCP's is plain, not tried here. A shell's common field `c_f`

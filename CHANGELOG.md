@@ -4,7 +4,7 @@ Releases are git tags (`uv add git+https://github.com/mhalle/tractline --tag vX.
 release and `dev` the work in progress (`docs/development.md`, "Branches and releases"). The experiments
 behind each change, with their numbers and later corrections, are in `bench/results/NOTES.md`.
 
-## Unreleased
+## 0.11.0 - 2026-10-31
 
 - **Two full diffusion series** (`--reversed-series concatenate|pair-average`; `reversed_series=` in Python; the
   `reversed_series` config slot, experimental; needs `--motion-eddy`): a reversed series with its own diffusion-weighted
@@ -14,7 +14,8 @@ behind each change, with their numbers and later corrections, are in `bench/resu
   combination does but for pairing by content (`--unmatched refuse|keep|drop`). `bids.load(keep_reversed=True)` keeps the
   series, its b-vectors in the first series' frame, and refuses one that does not fit; `tractline warm --reversed-series`
   compiles its kernels. Twice the volumes: about twice the correction's time and memory, and the memory check counts both.
-  Off by default: the default run's pipeline_id and output are unchanged, byte for byte on 16974. On two public pairs,
+  Off by default: the default run's pipeline_id and output are unchanged, every file of the TRX and the QC table the same
+  bytes as 0.10.0's on 16974, on Metal and on CUDA. On two public pairs,
   FA repeated a quarter to a third better across two independent pairs (one subject), pair-average best; the tracts
   barely moved (Dice up 0.02-0.03), and correcting together aligned the polarities only slightly better than correcting
   them apart (NOTES 2026-10-30; user guide, "Two full diffusion series").
