@@ -1,0 +1,283 @@
+{
+ "series": [
+  "sub-9000_ses-1_dir-AP_run-1_dwi.nii.gz",
+  "sub-9000_ses-1_dir-PA_run-1_dwi.nii.gz"
+ ],
+ "volumes": [
+  99,
+  99
+ ],
+ "shell": 3000.0,
+ "pairs in the shell": 46,
+ "brain voxels": 374833,
+ "misalignment (share of the mean signal)": {
+  "per pair, median": {
+   "as acquired": 0.6917,
+   "corrected separately": 0.4962,
+   "corrected together": 0.4811
+  },
+  "shell means": {
+   "as acquired": {
+    "rms": 0.3836,
+    "median": 0.1356,
+    "p90": 0.5227
+   },
+   "corrected separately": {
+    "rms": 0.1789,
+    "median": 0.0866,
+    "p90": 0.2641
+   },
+   "corrected together": {
+    "rms": 0.1573,
+    "median": 0.0784,
+    "p90": 0.2351
+   }
+  },
+  "mean b0s": {
+   "as acquired": {
+    "rms": 0.4936,
+    "median": 0.165,
+    "p90": 0.704
+   },
+   "corrected separately": {
+    "rms": 0.1801,
+    "median": 0.0616,
+    "p90": 0.2534
+   },
+   "corrected together": {
+    "rms": 0.1721,
+    "median": 0.0592,
+    "p90": 0.2391
+   }
+  }
+ },
+ "tensor residual over FA > 0.3 (log signal, RMS)": {
+  "AP": 0.3711,
+  "PA": 0.3643,
+  "concatenate": 0.388,
+  "pair-average": 0.2457
+ },
+ "FA agreement": {
+  "AP alone vs PA alone": {
+   "mean |dFA|": 0.0713,
+   "correlation": 0.8136
+  },
+  "AP part vs PA part of the joint correction": {
+   "mean |dFA|": 0.0667,
+   "correlation": 0.8346
+  },
+  "concatenate vs AP alone": {
+   "mean |dFA|": 0.0452,
+   "correlation": 0.9208
+  },
+  "pair-average vs AP alone": {
+   "mean |dFA|": 0.0472,
+   "correlation": 0.9292
+  },
+  "concatenate vs pair-average": {
+   "mean |dFA|": 0.0136,
+   "correlation": 0.9769
+  }
+ },
+ "tracts": {
+  "streamlines, labeled": {
+   "AP": [
+    193196,
+    140113
+   ],
+   "PA": [
+    192789,
+    142372
+   ],
+   "concatenate": [
+    187842,
+    149777
+   ],
+   "pair-average": [
+    188516,
+    139713
+   ]
+  },
+  "Dice AP alone vs PA alone": {
+   "median over tracts": 0.585,
+   "lowest": 0.358,
+   "tracts": 42
+  },
+  "Dice concatenate vs AP alone": {
+   "median over tracts": 0.6,
+   "lowest": 0.342,
+   "tracts": 42
+  },
+  "Dice pair-average vs AP alone": {
+   "median over tracts": 0.632,
+   "lowest": 0.364,
+   "tracts": 42
+  },
+  "Dice concatenate vs pair-average": {
+   "median over tracts": 0.617,
+   "lowest": 0.346,
+   "tracts": 42
+  }
+ },
+ "record": {
+  "concatenate": {
+   "mode": "concatenate",
+   "series": "sub-9000_ses-1_dir-PA_run-1_dwi.nii.gz",
+   "volumes (diffusion series, reversed)": [
+    99,
+    99
+   ],
+   "intensity scale applied to the reversed series": 0.985445
+  },
+  "pair-average": {
+   "mode": "pair-average",
+   "series": "sub-9000_ses-1_dir-PA_run-1_dwi.nii.gz",
+   "volumes (diffusion series, reversed)": [
+    99,
+    99
+   ],
+   "intensity scale applied to the reversed series": 0.985445,
+   "pairs averaged (diffusion-weighted)": 92,
+   "b0 pairs averaged": 7,
+   "volumes in the result": 99,
+   "pairs that lost a volume to the fit (kept single)": 0,
+   "entries lost to the fit (gone)": 0,
+   "b0s alone (the longer series' extras)": 0,
+   "unmatched diffusion-weighted volumes": {
+    "diffusion series": [],
+    "reversed": [],
+    "what happened": "none"
+   },
+   "largest angle in a pair (deg)": 0.0,
+   "largest b-value difference in a pair": 0.0
+  }
+ },
+ "warnings": {
+  "AP": [
+   "motion_eddy: 1 outlier slices (signal loss) in 1 volumes, replaced by their prediction: 37: [11]"
+  ],
+  "PA": [
+   "motion_eddy: 3 outlier slices (signal loss) in 2 volumes, replaced by their prediction: 39: [18, 20]; 52: [18]"
+  ],
+  "concatenate": [
+   "motion_eddy: 20 outlier slices (signal loss) in 9 volumes, replaced by their prediction: 37: [11]; 132: [8]; 138: [8, 10, 12, 18, 20, 31, 33, 35]; 144: [24]; 151: [10]; 155: [10]; 165: [11, 13, 30, 34, 57]; 168: [31]; 172: [9]"
+  ],
+  "pair-average": [
+   "motion_eddy: 20 outlier slices (signal loss) in 9 volumes, replaced by their prediction: 37: [11]; 132: [8]; 138: [8, 10, 12, 18, 20, 31, 33, 35]; 144: [24]; 151: [10]; 155: [10]; 165: [11, 13, 30, 34, 57]; 168: [31]; 172: [9]"
+  ]
+ },
+ "seconds": {
+  "AP": {
+   "field_estimate": 49.73,
+   "motion_eddy": 59.36,
+   "field_apply": 2.6,
+   "mask": 9.94,
+   "prep": 0.58,
+   "load": 0.96,
+   "ukf": 104.53,
+   "label": 3.7
+  },
+  "PA": {
+   "field_estimate": 43.31,
+   "motion_eddy": 58.17,
+   "field_apply": 2.73,
+   "mask": 9.97,
+   "prep": 0.63,
+   "load": 1.69,
+   "ukf": 106.34,
+   "label": 3.37
+  },
+  "concatenate": {
+   "field_estimate": 46.42,
+   "motion_eddy": 161.01,
+   "field_apply": 15.14,
+   "mask": 14.02,
+   "prep": 2.76,
+   "load": 3.65,
+   "ukf": 188.12,
+   "label": 3.38
+  },
+  "pair-average": {
+   "field_estimate": 50.77,
+   "motion_eddy": 159.36,
+   "field_apply": 16.78,
+   "mask": 10.09,
+   "prep": 0.98,
+   "load": 1.12,
+   "ukf": 111.26,
+   "label": 3.48
+  }
+ },
+ "peak GPU driver memory, GB": {
+  "AP": 4.76,
+  "PA": 4.76,
+  "concatenate": 8.63,
+  "pair-average": 8.63
+ },
+ "test-retest": {
+  "run 2 onto run 1, mm and 0.01 rad": [
+   0.045,
+   -0.144,
+   0.354,
+   0.287,
+   0.374,
+   -0.196
+  ],
+  "AP": {
+   "mean |dFA| in the mask": 0.0581,
+   "FA correlation in the mask": 0.8771,
+   "mean |dFA| where FA > 0.2": 0.0606,
+   "tract Dice": {
+    "median over tracts": 0.596,
+    "lowest": 0.35,
+    "tracts": 42
+   },
+   "labeled": [
+    140113,
+    137805
+   ]
+  },
+  "PA": {
+   "mean |dFA| in the mask": 0.0577,
+   "FA correlation in the mask": 0.8706,
+   "mean |dFA| where FA > 0.2": 0.0594,
+   "tract Dice": {
+    "median over tracts": 0.588,
+    "lowest": 0.408,
+    "tracts": 42
+   },
+   "labeled": [
+    142372,
+    140712
+   ]
+  },
+  "concatenate": {
+   "mean |dFA| in the mask": 0.0432,
+   "FA correlation in the mask": 0.9262,
+   "mean |dFA| where FA > 0.2": 0.0442,
+   "tract Dice": {
+    "median over tracts": 0.622,
+    "lowest": 0.369,
+    "tracts": 42
+   },
+   "labeled": [
+    149777,
+    148537
+   ]
+  },
+  "pair-average": {
+   "mean |dFA| in the mask": 0.0388,
+   "FA correlation in the mask": 0.947,
+   "mean |dFA| where FA > 0.2": 0.0416,
+   "tract Dice": {
+    "median over tracts": 0.614,
+    "lowest": 0.315,
+    "tracts": 42
+   },
+   "labeled": [
+    139713,
+    138432
+   ]
+  }
+ }
+}

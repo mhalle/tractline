@@ -1,0 +1,177 @@
+{
+ "ses-OXF1PRI001": {
+  "series": "sub-16974_ses-OXF1PRI001_dir-AP_dwi.nii.gz",
+  "AP volumes in the shell": 50,
+  "PA volumes": 3,
+  "scale": 0.9917,
+  "share of the AP coefficients' variance the gradient explains": 0.979,
+  "rms of the forecast (voxels)": 0.5688,
+  "fitted - forecast, rms (the field turns)": 0.2684,
+  "fitted + forecast, rms (it does not)": 1.115,
+  "correlation, fitted and forecast": 0.903,
+  "residual of the PA volumes, true polarity": [
+   130.88,
+   129.67,
+   130.03
+  ],
+  "residual of the PA volumes, polarity ignored": [
+   259.41,
+   251.32,
+   250.93
+  ],
+  "residual of the AP volumes of the shell, median": 89.17,
+  "left out": {}
+ },
+ "ses-OXF1PRI002": {
+  "series": "sub-16974_ses-OXF1PRI002_dir-AP_dwi.nii.gz",
+  "AP volumes in the shell": 50,
+  "PA volumes": 3,
+  "scale": 0.9842,
+  "share of the AP coefficients' variance the gradient explains": 0.975,
+  "rms of the forecast (voxels)": 0.5239,
+  "fitted - forecast, rms (the field turns)": 0.2825,
+  "fitted + forecast, rms (it does not)": 1.0403,
+  "correlation, fitted and forecast": 0.877,
+  "residual of the PA volumes, true polarity": [
+   119.37,
+   117.17,
+   116.83
+  ],
+  "residual of the PA volumes, polarity ignored": [
+   241.26,
+   236.34,
+   233.73
+  ],
+  "residual of the AP volumes of the shell, median": 88.58,
+  "left out": {}
+ },
+ "ses-OXF1PRI003": {
+  "series": "sub-16974_ses-OXF1PRI003_dir-AP_dwi.nii.gz",
+  "AP volumes in the shell": 50,
+  "PA volumes": 3,
+  "scale": 0.9845,
+  "share of the AP coefficients' variance the gradient explains": 0.979,
+  "rms of the forecast (voxels)": 0.5486,
+  "fitted - forecast, rms (the field turns)": 0.2518,
+  "fitted + forecast, rms (it does not)": 1.0729,
+  "correlation, fitted and forecast": 0.901,
+  "residual of the PA volumes, true polarity": [
+   121.54,
+   120.47,
+   120.07
+  ],
+  "residual of the PA volumes, polarity ignored": [
+   247.83,
+   243.76,
+   242.94
+  ],
+  "residual of the AP volumes of the shell, median": 90.49,
+  "left out": {}
+ },
+ "ses-OXF1PRI004": {
+  "series": "sub-16974_ses-OXF1PRI004_dir-AP_dwi.nii.gz",
+  "AP volumes in the shell": 50,
+  "PA volumes": 3,
+  "scale": 0.9824,
+  "share of the AP coefficients' variance the gradient explains": 0.98,
+  "rms of the forecast (voxels)": 0.561,
+  "fitted - forecast, rms (the field turns)": 0.2479,
+  "fitted + forecast, rms (it does not)": 1.0672,
+  "correlation, fitted and forecast": 0.91,
+  "residual of the PA volumes, true polarity": [
+   126.36,
+   124.56,
+   124.1
+  ],
+  "residual of the PA volumes, polarity ignored": [
+   259.93,
+   253.28,
+   251.32
+  ],
+  "residual of the AP volumes of the shell, median": 91.7,
+  "left out": {}
+ },
+ "ses-OXF1PRI005": {
+  "series": "sub-16974_ses-OXF1PRI005_dir-AP_dwi.nii.gz",
+  "AP volumes in the shell": 50,
+  "PA volumes": 3,
+  "scale": 0.9871,
+  "share of the AP coefficients' variance the gradient explains": 0.981,
+  "rms of the forecast (voxels)": 0.5627,
+  "fitted - forecast, rms (the field turns)": 0.3157,
+  "fitted + forecast, rms (it does not)": 1.1221,
+  "correlation, fitted and forecast": 0.865,
+  "residual of the PA volumes, true polarity": [
+   122.95,
+   122.73,
+   123.4
+  ],
+  "residual of the PA volumes, polarity ignored": [
+   255.3,
+   248.2,
+   245.66
+  ],
+  "residual of the AP volumes of the shell, median": 89.7,
+  "left out": {}
+ },
+ "ses-OXF1PRI006": {
+  "series": "sub-16974_ses-OXF1PRI006_dir-AP_dwi.nii.gz",
+  "AP volumes in the shell": 50,
+  "PA volumes": 3,
+  "scale": 0.9857,
+  "share of the AP coefficients' variance the gradient explains": 0.98,
+  "rms of the forecast (voxels)": 0.5592,
+  "fitted - forecast, rms (the field turns)": 0.3001,
+  "fitted + forecast, rms (it does not)": 1.1188,
+  "correlation, fitted and forecast": 0.895,
+  "residual of the PA volumes, true polarity": [
+   119.64,
+   118.92,
+   118.83
+  ],
+  "residual of the PA volumes, polarity ignored": [
+   241.31,
+   234.78,
+   233.26
+  ],
+  "residual of the AP volumes of the shell, median": 86.85,
+  "left out": {}
+ },
+ "ses-OXF2PRI001": {
+  "series": "sub-16974_ses-OXF2PRI001_dir-AP_dwi.nii.gz",
+  "AP volumes in the shell": 50,
+  "PA volumes": 3,
+  "scale": 0.9717,
+  "share of the AP coefficients' variance the gradient explains": 0.929,
+  "rms of the forecast (voxels)": 0.4232,
+  "fitted - forecast, rms (the field turns)": 0.2891,
+  "fitted + forecast, rms (it does not)": 0.971,
+  "correlation, fitted and forecast": 0.891,
+  "residual of the PA volumes, true polarity": [
+   247.4,
+   251.9,
+   250.83
+  ],
+  "residual of the PA volumes, polarity ignored": [
+   511.03,
+   487.08,
+   493.82
+  ],
+  "residual of the AP volumes of the shell, median": 187.97,
+  "left out": {}
+ },
+ "summary": {
+  "sessions": 7,
+  "median fitted - forecast": 0.2825,
+  "median fitted + forecast": 1.0729,
+  "correlations": [
+   0.903,
+   0.877,
+   0.901,
+   0.91,
+   0.865,
+   0.895,
+   0.891
+  ]
+ }
+}

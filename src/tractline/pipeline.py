@@ -29,6 +29,11 @@ Stages, and where they run:
             float32, ~18 s on the M2), then applied to the DWI (susceptibility.apply: CPU, float64, ~1 s);
             residual_left: how much of the pair's difference the field leaves - above RESIDUAL_WARN a
             warning (Correction.warnings), never a refusal. Skipped when there is no pair (can_correct).
+  reversed_series  opt-in (run's reversed_series=; the reversed_series slot; needs motion_eddy): a full reversed
+            diffusion series (bids.load's keep_reversed) used in full, not only its b0s: denoised and freed of Gibbs
+            ringing on its own, joined after the diffusion series (tractline.series.merge), corrected with it with each
+            volume's own polarity, and tracked with it (concatenate) or averaged with it, pair by matched pair, before
+            the mask (pair-average)
   motion_eddy  opt-in (run's motion_eddy=; the motion_eddy slot): each volume's head motion and eddy currents
             (tractline.motion_eddy, the field in the map), then one resample of every volume composing field, motion
             and eddy in place of susceptibility.apply, and the b-vectors rotated for the tracker
@@ -46,7 +51,8 @@ Stages, and where they run:
 Dependencies of the default path: numpy, torch and RapidParc's weights - no scipy, no nibabel (reading the
 scan is the caller's), no TractCloud code (bench/dependency_check.py).
 
-Configuration (tractline.config): the stages are slots - denoise, field, mask, model, track, bundles - each off or one
+Configuration (tractline.config): the stages are slots - denoise, gibbs, reversed_series, field, motion_eddy, mask, model,
+track, bundles - each off or one
 implementation with its options; a PipelineConfig names them all, checks them before any work, and hashes what changes the
 outputs (calibration maps key on that hash). execute(s, cfg, ...) runs one; run()'s keywords build one from the "default"
 preset (config_for) and call execute, so both paths are the same code. The run's config and runtime are in
@@ -166,6 +172,8 @@ class Correction:
     bvec: np.ndarray | None = None   # (3, G) FSL, rotated with the head by the motion_eddy slot; None when it is off
     motion_eddy: dict | None = None  # the motion_eddy slot's parameters and QC (motion_eddy.record); None when off
     provenance: dict | None = None   # the run's config (PipelineConfig.to_dict) and runtime (execute); None: correct() alone
+    bval: np.ndarray | None = None   # (G,) the b-values of dwi when they are not the subject's (the reversed_series slot)
+    reversed_series: dict | None = None  # the reversed_series slot's record: the series used, its scale, the pairs; None: off
 
 
 RESIDUAL_WARN = 0.5              # residual_left above this: a warning, never a refusal. On 23 judged good pairs
@@ -299,11 +307,15 @@ def correct_motion_eddy(s, timer: Timer, device="mps", opts=None, field=True) ->
         # the brain mask of the data as acquired, by the pipeline's own median_otsu on the device (dipy's, exactly); with a
         # field the library takes its unwarped copy as the reference frame's (its own default would rerun median_otsu on
         # the unwarped mean b0, on the CPU: a few seconds, nearly the same mask)
-        b0 = np.asarray(s.dwi)[..., np.asarray(s.bval) < 50].astype(np.float32).mean(-1)
+        pe_v = getattr(s, "pe_signs", None)                               # the two series joined: the first's b0s alone
+        b0_sel = np.asarray(s.bval) < 50
+        if pe_v is not None:
+            b0_sel = b0_sel & (np.asarray(pe_v) == np.sign(s.pe_sign))
+        b0 = np.asarray(s.dwi)[..., b0_sel].astype(np.float32).mean(-1)
         mask = median_otsu(b0, median_radius=4, numpass=4, device=device)[1]
-        r = ME.estimate(s.dwi, s.bval, s.bvec, s.affine, s.pe_axis, field_hz=h, pe_sign=s.pe_sign,
-                        readout_s=s.readout_s, mask=mask, options=dict(opts or {}), device=device,
-                        slice_axis=slice_axis_of(s))
+        r = ME.estimate(s.dwi, s.bval, s.bvec, s.affine, s.pe_axis, field_hz=h,
+                        pe_sign=s.pe_sign if pe_v is None else pe_v, readout_s=getattr(s, "readouts_s", s.readout_s),
+                        mask=mask, options=dict(opts or {}), device=device, slice_axis=slice_axis_of(s))
     with timer("field_apply"):
         dwi, _valid = ME.apply_volumes(s.dwi, r, field_hz=h, device=device)
     if r.excluded:
@@ -343,7 +355,10 @@ def denoise_subject(s, timer: Timer, method="mppca", workers=None, mask=None):
     series' patches (MP-PCA) or voxelwise regressions (Patch2Self). When fewer b0s match than the b0s phase-encoded as
     the DWI is, a warning (the estimate then mixes denoised and raw forward b0s). method: a name tractline.denoise.parse
     takes ("mppca", "mppca:r3", "patch2self"); workers: MP-PCA's processes (default one per core); mask: a brain mask
-    on the DWI's grid, if one is known, over which the stats are given too (denoise.summary)."""
+    on the DWI's grid, if one is known, over which the stats are given too (denoise.summary). A reversed series kept in
+    full (s.reversed) is denoised on its own, for the same reason, its time in timer.seconds["denoise_reversed"], and
+    its b0s feed the field denoised; put onto the DWI's grid (not native), it stays as it is, with a warning: its noise
+    has been interpolated."""
     import warnings
     from . import denoise as D
     D.parse(method)                                                        # a ValueError before any work
@@ -351,6 +366,15 @@ def denoise_subject(s, timer: Timer, method="mppca", workers=None, mask=None):
         d = D.denoise(s.dwi, s.bval, method, workers)
     out = copy.copy(s)
     out.dwi = d.dwi
+    rv, drv = getattr(s, "reversed", None), None
+    if rv is not None and rv.native:
+        with timer("denoise_reversed"):
+            drv = D.denoise(rv.dwi, rv.bval, method, workers)
+        out.reversed = copy.copy(rv)
+        out.reversed.dwi = drv.dwi
+    elif rv is not None:
+        warnings.warn(f"denoise: the reversed series {rv.path.name} was put onto the DWI's grid, so its noise is no longer "
+                      "as acquired: it is not denoised, the DWI is", stacklevel=2)
     replaced = forward = 0
     if getattr(s, "b0s", None) is not None:
         b0s = np.array(s.b0s, np.float64)
@@ -359,6 +383,11 @@ def denoise_subject(s, timer: Timer, method="mppca", workers=None, mask=None):
             same = [i for i in b0i if np.array_equal(b0s[..., v], np.asarray(s.dwi[..., i], np.float64))]
             if same:
                 b0s[..., v], replaced = d.dwi[..., same[0]], replaced + 1
+            elif drv is not None:
+                other = [i for i in np.flatnonzero(np.asarray(rv.bval) < 50)
+                         if np.array_equal(b0s[..., v], np.asarray(rv.dwi[..., i], np.float64))]
+                if other:
+                    b0s[..., v] = drv.dwi[..., other[0]]
         out.b0s = b0s
         forward = int((np.sign(np.asarray(s.pe_vectors, float)[:, s.pe_axis]) == np.sign(s.pe_sign)).sum())
         if replaced < forward:
@@ -368,6 +397,8 @@ def denoise_subject(s, timer: Timer, method="mppca", workers=None, mask=None):
     stats = {**D.summary(s.dwi, d, s.bval, mask), "order": "acquired",
              "b0s denoised (the DWI's own), of those feeding the field": [replaced, n_b0s],
              "b0s phase-encoded as the DWI": forward}
+    if drv is not None:
+        stats["reversed series"] = D.summary(rv.dwi, drv, rv.bval, None)
     return out, stats
 
 
@@ -385,8 +416,10 @@ def gibbs_subject(s, timer: Timer, opts: dict, device="cpu"):
     corrected on their own where s.b0_native says they were not resampled onto the DWI's grid (the ringing is a pattern
     on the acquired grid; an interpolated image no longer has it there), and left as they are otherwise, or when the
     loader does not say (or s.b0_native's length is not the b0s'). A warning when a b0 phase-encoded against the DWI is
-    left: the field is then estimated from corrected forward b0s against uncorrected reversed ones. A copy of s, and
-    the counts: {"b0s from the DWI": n, "b0s corrected on their own": n, "b0s left (resampled or not known)": n}."""
+    left: the field is then estimated from corrected forward b0s against uncorrected reversed ones. A reversed series
+    kept in full (s.reversed) is corrected too when native; put onto the DWI's grid it keeps its ringing, with a warning.
+    A copy of s, and the counts: {"b0s from the DWI": n, "b0s corrected on their own": n, "b0s left (resampled or not
+    known)": n}."""
     import warnings
     from . import gibbs as GB
     out = copy.copy(s)
@@ -394,6 +427,13 @@ def gibbs_subject(s, timer: Timer, opts: dict, device="cpu"):
     counts = None
     with timer("gibbs"):
         out.dwi = run(s.dwi)
+        rv = getattr(s, "reversed", None)
+        if rv is not None and rv.native:
+            out.reversed = copy.copy(rv)
+            out.reversed.dwi = run(rv.dwi)
+        elif rv is not None:
+            warnings.warn(f"gibbs: the reversed series {rv.path.name} was put onto the DWI's grid, where its ringing is no "
+                          "longer a pattern on the grid: it keeps it, the DWI does not", stacklevel=2)
         if getattr(s, "b0s", None) is not None:
             b0s = np.array(s.b0s, np.float64)
             b0i = np.flatnonzero(np.asarray(s.bval) < 50)
@@ -588,12 +628,13 @@ def _labeler(cfg: PipelineConfig, labeler, device):
 
 
 def config_for(labeler=None, shell=2800.0, tracker=None, denoise=None, denoise_order="acquired",
-               motion_eddy=None, gibbs=None, mask=None) -> PipelineConfig:
+               motion_eddy=None, gibbs=None, mask=None, reversed_series=None) -> PipelineConfig:
     """run()'s keywords as a config: the "default" preset with them applied. labeler: None for the preset's (RapidParc),
     or an object (_bundles_of). motion_eddy: None (off), True (the slot's defaults), a model name ("rigid", "linear",
     "quadratic"), or a dict of the slot's options. gibbs: None (off), True (the slot's defaults: slice axis 2), or a
     dict of its options ({"slice_axis": slice_axis_of(s)} for a BIDS series). mask: None (the preset's, median-otsu),
-    a mask name ("synthstrip", "synthstrip-nocsf"), or {"impl": name, **options}."""
+    a mask name ("synthstrip", "synthstrip-nocsf"), or {"impl": name, **options}. reversed_series: None (off),
+    "concatenate", "pair-average", or {"impl": name, **options}; it needs motion_eddy."""
     changes = {"model": {"shell": float(shell)}}
     tracker = _check_tracker(tracker)
     if tracker:
@@ -611,6 +652,8 @@ def config_for(labeler=None, shell=2800.0, tracker=None, denoise=None, denoise_o
         changes["gibbs"] = {"impl": "subvoxel-shift", **({} if gibbs is True else dict(gibbs))}
     if mask is not None and mask is not False:
         changes["mask"] = {"impl": mask} if isinstance(mask, str) else dict(mask)
+    if reversed_series is not None and reversed_series is not False:
+        changes["reversed_series"] = reversed_series
     return PipelineConfig.preset("default").with_(**changes)
 
 
@@ -819,7 +862,12 @@ def csd_ptt(s, dwi, mask, cfg: PipelineConfig, timer: Timer, prefix="", device="
             o = {**o, "stopping_fa": value}
             auto = {"stopping_fa (auto)": value, "cortex FA estimate": cortex, "auto shell": low}
         resp = C.response_ssst(d, bval, g, roi_radius=m["roi_radius"], fa_threshold=m["fa_threshold"])
-        order = int(m["order"]) if m["order"] != "auto" else (8 if int((bval > 50).sum()) >= 45 else 6)
+        dirs = int((bval > 50).sum())
+        if cfg.is_on("reversed_series"):                                   # a pair's two volumes are one direction
+            from .series import axis_sets
+            gu = g[:, bval > 50].T
+            dirs = len(axis_sets(gu / np.clip(np.linalg.norm(gu, axis=1, keepdims=True), 1e-9, None)))
+        order = int(m["order"]) if m["order"] != "auto" else (8 if dirs >= 45 else 6)
         coeffs, cinfo = C.CSD(bval, g, resp, order=order, lambda_=m["lambda"], tau=m["tau"]).fit(d, mask, device=device)
     with timer(prefix + "ptt"):
         include, exclude = ptt_stopping(o, mask, tissue, fa_map)
@@ -852,11 +900,53 @@ def csd_ptt(s, dwi, mask, cfg: PipelineConfig, timer: Timer, prefix="", device="
     return Tractogram(fibers, stats, mask, info)
 
 
+def _check_reversed(s, cfg: PipelineConfig, device):
+    """The reversed_series slot's checks, before any work: the subject has a full reversed series and a pair to measure
+    the field from, what pair-average would pair (its Match; refused as its option says), the volumes the memory holds,
+    and the tracker's limit on the volumes it would be given."""
+    from . import series as SR, motion_eddy as ME
+    r = getattr(s, "reversed", None)
+    if r is None:
+        raise ValueError("reversed_series: the subject has no reversed series in full: bids.load(..., keep_reversed=True) "
+                         "keeps one (or `tractline run --reversed-series` does), and a loader of its own sets s.reversed")
+    if not can_correct(s):
+        raise ValueError(f"reversed_series: the two series are aligned through the field, and there is none: {_no_pair_note(s)}")
+    if np.shape(r.dwi)[:3] != np.shape(s.dwi)[:3]:
+        raise ValueError(f"reversed_series: the reversed series' grid {np.shape(r.dwi)[:3]} is not the DWI's "
+                         f"{np.shape(s.dwi)[:3]}")
+    st, m = cfg["reversed_series"], None
+    if st.impl == "pair-average":
+        o = st.opts()
+        m = SR.match(s.bval, s.bvec, r.bval, r.bvec, o["b_tol"], o["angle_tol"])
+        SR.check_match(m, o["unmatched"], o["b_tol"], o["angle_tol"])
+        if not m.pairs:
+            raise ValueError("pair-average: no volume of the two series pairs: use concatenate")
+    me = ME.Options.make({k: v for k, v in cfg.opts("motion_eddy").items() if k in ME.Options.__dataclass_fields__})
+    G = np.shape(s.dwi)[-1] + np.shape(r.dwi)[-1]
+    dev = torch.device(device)
+    if me.check_memory:
+        ME.check_memory(np.shape(s.dwi)[:3] + (G,), dev, ME._backend(me.backend, dev), both_series=True)
+    if cfg["track"].impl == "ukf" and dev.type == "mps":
+        from .ukf_metal import MAX_GRADIENTS
+        shell = cfg.opts("model")["shell"]
+        near = lambda b: np.abs(np.asarray(b, float) - shell) < 50          # noqa: E731
+        n = int(near(s.bval).sum()) + int(near(r.bval).sum() if m is None else
+                                          near(np.asarray(r.bval)[m.unmatched_b]).sum() if st.opts()["unmatched"] == "keep"
+                                          else 0)
+        if n > MAX_GRADIENTS:
+            raise ValueError(f"reversed_series: {st.impl} gives the tracker {n} directions at b = {shell:g}, and its Metal "
+                             f"kernel takes {MAX_GRADIENTS}" + (": use pair-average" if m is None else ""))
+    return m
+
+
 def execute(s, cfg: PipelineConfig, timer: Timer, prefix="", device="auto", workers=None, labeler=None, trx=None,
             release=True, tissue=None, absolute_paths=False, **trx_options) -> Run:
     """The pipeline as cfg configures it (tractline.config), on subject s. Every check runs before any work: the
     config's own (at its construction), the shell tracked, the CPU's main guard, the labeler against the bundles slot.
-    Then, in SLOTS' order: denoise (when on; order "acquired" before the field, "corrected" after it), field (when on
+    Then, in SLOTS' order: denoise (when on; order "acquired" before the field, "corrected" after it), reversed_series
+    (when on: the subject's reversed series, bids.load's keep_reversed, joined to it after denoise and gibbs, which treat
+    each series on its own; pair-average's refusals and the tracker's limit checked before any work; pair-average
+    itself after motion_eddy, before the mask; Correction.reversed_series and Correction.bval say what was done), field (when on
     and the subject has a pair: correct; off: the DWI as acquired, the reason in Correction.note), motion_eddy (when on:
     correct_motion_eddy in place of correct - the field estimate, then head motion and eddy currents, then one resample;
     the rotated b-vectors to the tracker), mask, model (the
@@ -906,6 +996,9 @@ def execute(s, cfg: PipelineConfig, timer: Timer, prefix="", device="auto", work
         Path(trx).parent.mkdir(parents=True, exist_ok=True)               # before the work, not after it
     if torch.device(device).type == "cpu" and (workers or os.cpu_count() or 1) > 1:
         U.require_main_guard()                                             # before the 20 s field estimate
+    rs_st, rs_match = cfg["reversed_series"], None
+    if rs_st is not None:
+        rs_match = _check_reversed(s, cfg, device)
     labeler = _labeler(cfg, labeler, device)
     if cfg["mask"].impl in SYNTHSTRIP:                                     # its weights now, after every check and
         from .fetch import weights                                         # before any work, not after the corrections
@@ -917,6 +1010,14 @@ def execute(s, cfg: PipelineConfig, timer: Timer, prefix="", device="auto", work
     gibbs_b0s = None
     if cfg.is_on("gibbs"):                                     # before the field (after denoising "acquired": MRtrix's order)
         s, gibbs_b0s = gibbs_subject(s, timer, cfg.opts("gibbs"), device)
+    rs_rec = None
+    if rs_st is not None:
+        from . import series as SR
+        rname = s.reversed.path.name if getattr(s.reversed, "path", None) is not None else "reversed series"
+        rvols = int(s.reversed.dwi.shape[-1])
+        s = SR.merge(s)
+        rs_rec = {"mode": rs_st.impl, "series": rname, "volumes (diffusion series, reversed)": [s.n_first, rvols],
+                  "intensity scale applied to the reversed series": round(float(s.reversed_scale), 6)}
     with exact_float32(device):
         if cfg.is_on("motion_eddy"):
             corr = correct_motion_eddy(s, timer, device, cfg.opts("motion_eddy"), field=cfg.is_on("field"))
@@ -929,12 +1030,26 @@ def execute(s, cfg: PipelineConfig, timer: Timer, prefix="", device="auto", work
         if order == "corrected":
             corr.dwi, dstats = denoise_corrected(corr.dwi, s.bval, timer, spec, workers)
         corr.denoise, corr.gibbs = dstats, gibbs_b0s
+        averaged = rs_st is not None and rs_st.impl == "pair-average"
+        if rs_st is not None:
+            if averaged:
+                o = rs_st.opts()
+                corr.dwi, bv, gv, rec = SR.average(corr.dwi, s.bval, corr.bvec, s.n_first, rs_match, o["unmatched"],
+                                                   [int(v) for v in corr.motion_eddy["left out"]])
+                rs_rec.update(rec)
+                corr.warnings = [w.replace("(in the corrected series with identity motion, b-vector as acquired)",
+                                           "(not in the averaged series; a pair's other volume stays, single)")
+                                 for w in corr.warnings]
+                s = copy.copy(s)
+                s.bval, s.bvec = bv, gv
+                corr.bvec = gv
+            corr.bval, corr.reversed_series = s.bval, rs_rec
         mask = brain_mask(corr.dwi, s.bval, timer, prefix, device, cfg["mask"].impl, cfg.opts("mask"), s.affine)
         st, tdwi = s, corr.dwi
         if corr.bvec is not None:                                          # the b-vectors turned with the head
             st = copy.copy(s)
             st.bvec = corr.bvec
-            left = [int(v) for v in (corr.motion_eddy or {}).get("left out", {})]
+            left = [] if averaged else [int(v) for v in (corr.motion_eddy or {}).get("left out", {})]
             if left:                                                       # not tracked: not registered, or corrupt
                 use = np.setdiff1d(np.arange(len(s.bval)), left)
                 st.bval, st.bvec, tdwi = np.asarray(s.bval)[use], corr.bvec[:, use], corr.dwi[..., use]
@@ -993,7 +1108,7 @@ def execute(s, cfg: PipelineConfig, timer: Timer, prefix="", device="auto", work
 
 def run(s, labeler, timer: Timer, prefix="", trx=None, device="auto", workers=None, release=True, shell=None, tracker=None,
         denoise=None, denoise_order="acquired", config=None, motion_eddy=None, gibbs=None, mask=None,
-        absolute_paths=False, **trx_options):
+        absolute_paths=False, reversed_series=None, **trx_options):
     """The whole pipeline on a subject: a Run, which unpacks and indexes as (Correction, Tractogram, Labels) and also
     holds the config, the runtime and the provenance record (written beside the TRX, when there is one, as
     <name>.tractline.json: tractline.provenance; absolute_paths=True records full paths in place of shareable ones). labeler: None for the default
@@ -1014,9 +1129,11 @@ def run(s, labeler, timer: Timer, prefix="", trx=None, device="auto", workers=No
     in Correction.bvec. gibbs: opt-in Gibbs ringing removal (gibbs_subject; config_for's values), first, on the
     series as acquired; its time in timer.seconds["gibbs"] (not among pipeline_stages). mask: opt-in, None for
     today's (median-otsu), or "synthstrip" / "synthstrip-nocsf" / {"impl": name, "border": mm} (brain_mask; config_for's
-    values).
-    config: a PipelineConfig instead of shell, tracker, denoise, denoise_order, motion_eddy, gibbs and mask (which must
-    then be left as they are).
+    values). reversed_series: opt-in, None for today's, or "concatenate" / "pair-average" / {"impl": name, **options}
+    (execute; config_for's values): a reversed series of s kept in full (bids.load's keep_reversed) used with it; it
+    needs motion_eddy.
+    config: a PipelineConfig instead of shell, tracker, denoise, denoise_order, motion_eddy, gibbs, mask and
+    reversed_series (which must then be left as they are).
     Either way the run goes through execute, the config and runtime recorded in Correction.provenance."""
     if motion_eddy is False:
         motion_eddy = None
@@ -1024,16 +1141,18 @@ def run(s, labeler, timer: Timer, prefix="", trx=None, device="auto", workers=No
         gibbs = None
     if mask is False:
         mask = None
+    if reversed_series is False:
+        reversed_series = None
     if config is None:
         if shell is None:
             shell = default_shell(s.bval)
         if denoise is not None and denoise_order not in DENOISE_ORDERS:
             raise ValueError(f"denoise_order: {denoise_order!r} is not one of {DENOISE_ORDERS}")
-        config = config_for(labeler, shell, tracker, denoise, denoise_order, motion_eddy, gibbs, mask)
-    elif (shell, tracker or None, denoise, denoise_order, motion_eddy, gibbs, mask) != (None, None, None, "acquired",
-                                                                                         None, None, None):
-        raise ValueError("run: with config=, set shell, tracker, denoise, motion_eddy, gibbs and mask in the config, "
-                         "not as keywords too")
+        config = config_for(labeler, shell, tracker, denoise, denoise_order, motion_eddy, gibbs, mask, reversed_series)
+    elif (shell, tracker or None, denoise, denoise_order, motion_eddy, gibbs, mask,
+          reversed_series) != (None, None, None, "acquired", None, None, None, None):
+        raise ValueError("run: with config=, set shell, tracker, denoise, motion_eddy, gibbs, mask and reversed_series in "
+                         "the config, not as keywords too")
     return execute(s, config, timer, prefix, device, workers, labeler, trx, release, absolute_paths=absolute_paths,
                    **trx_options)
 

@@ -229,14 +229,15 @@ def _file(path, absolute=False) -> dict | None:
 
 def inputs(s, absolute=False) -> list:
     """The files the subject came from: the diffusion series with its .bval, .bvec and sidecar, then the series that
-    measured the field; empty for a subject built from arrays."""
+    measured the field (the one kept in full, s.reversed, named so); empty for a subject built from arrays."""
     dwi = getattr(s, "dwi_path", None)
     if dwi is None:
         return []
     from .bids import _inherited
     out = []
     for i, nii in enumerate([Path(dwi)] + [Path(p) for p in getattr(getattr(s, "pairing", None), "series", []) or []]):
-        role = "diffusion series" if i == 0 else "field series"
+        rv = getattr(getattr(s, "reversed", None), "path", None)
+        role = "diffusion series" if i == 0 else "reversed series (kept in full)" if nii == rv else "field series"
         for f in [nii] + [g for ext in (".bval", ".bvec", ".json") for g in _inherited(nii, ext)]:
             rec = _file(f, absolute)                     # the series, then its tables and sidecars, inherited ones too
             if rec is not None:
@@ -333,7 +334,8 @@ def record(run, s, device, labeler, timer=None, trx=None, trx_options=None, abso
            "pairing": None if pairing is None else {"ok": pairing.ok, "how": pairing.how, "message": pairing.message,
                                                     "series": [_where(p, absolute_paths) for p in pairing.series]},
            "correction": {"applied": corr.applied, "note": corr.note, "warnings": list(corr.warnings or []),
-                          "residual_left": corr.residual_left},
+                          "residual_left": corr.residual_left,
+                          **({"reversed_series": corr.reversed_series} if getattr(corr, "reversed_series", None) else {})},
            "seconds": dict(timer.seconds) if timer is not None else None,
            "output": None}
     if trx is not None:

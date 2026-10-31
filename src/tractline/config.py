@@ -40,7 +40,7 @@ SCHEMA = "tractline.config/1"
 
 #: the slots, in the order they run. The design's later slots (bias, anatomy, register_t1, tissue, filter,
 #: tractometry) are added here as their implementations arrive; a slot is off unless a config sets it.
-SLOTS = ("denoise", "gibbs", "field", "motion_eddy", "mask", "model", "track", "bundles")
+SLOTS = ("denoise", "gibbs", "reversed_series", "field", "motion_eddy", "mask", "model", "track", "bundles")
 
 #: an implementation's status: "wrapper" runs the established tool itself; "experimental" is ours, not yet through both
 #: validation levels; "validated" is ours and through them (docs/sota-pipeline-design.md, section 5)
@@ -200,6 +200,25 @@ register(Implementation(
         "registered to a leave-one-out prediction from the others; the field (when the field slot corrects) composed "
         "into the same map, so each volume is resampled once; the b-vectors rotated with the head. Runs without a "
         "reversed pair too (motion and eddy only, as eddy without topup)"))
+_REVERSED_REQUIRES = {"field": (), "motion_eddy": ()}
+register(Implementation(
+    "reversed_series", "concatenate", "1", {}, requires=_REVERSED_REQUIRES,
+    oracle="FSL eddy on the two series joined (--imain, with both --acqp rows)", status="experimental",
+    doc="a full reversed diffusion series used, not only its b0s (tractline.series): joined after the diffusion "
+        "series, its gain matched by the mean b0, corrected together by the motion_eddy slot with each volume's own "
+        "polarity (they are not aligned without it), and tracked on all the volumes of both"))
+register(Implementation(
+    "reversed_series", "pair-average", "1",
+    {"b_tol": Option(50.0, float, low=0.0, doc="a pair's b-values differ by at most this (s/mm^2)"),
+     "angle_tol": Option(5.0, float, low=0.0, high=90.0, doc="a pair's axes differ by at most this (degrees; antipodes alike)"),
+     "unmatched": Option("refuse", str, ("refuse", "keep", "drop"),
+                         doc="diffusion-weighted volumes without a partner: refuse the run, keep them single, or leave "
+                             "them out")},
+    requires=_REVERSED_REQUIRES, oracle="the HCP pipeline's combination of eddy's output (plain mean)",
+    status="experimental",
+    doc="as concatenate, then each matched pair of corrected volumes averaged, one volume per direction, the b-vector "
+        "the pair's mean (tractline.series; the HCP pipeline's combination, except that a pair is found by its b-value "
+        "and direction, not by its place in the series)"))
 register(Implementation(
     "mask", "median-otsu", "1", {}, oracle="dipy.segment.mask.median_otsu", status="validated",
     doc="median_otsu of the mean b0 (median radius 4, 4 passes), dipy's exactly (tractline.mask)"))
@@ -392,6 +411,9 @@ class PipelineConfig:
             # denoise first (MRtrix's order), or not at all
             raise ValueError("gibbs runs on the series as acquired, so denoising must come before it: denoise order "
                              "'acquired', not 'corrected'")
+        if self["reversed_series"] is not None and dn is not None and dn.opts().get("order") == "corrected":
+            raise ValueError("reversed_series: denoise order 'corrected' would denoise the two series' volumes as one "
+                             "acquisition: use order 'acquired', which denoises each series on its own")
 
     def __getitem__(self, slot) -> Stage | None:
         for s, st in self.stages:

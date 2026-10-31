@@ -1,0 +1,213 @@
+{
+ "series": [
+  "sub-01_dir-AP_dwi.nii.gz",
+  "sub-01_dir-PA_dwi.nii.gz"
+ ],
+ "volumes": [
+  109,
+  109
+ ],
+ "shell": 2000.0,
+ "pairs in the shell": 64,
+ "brain voxels": 233196,
+ "misalignment (share of the mean signal)": {
+  "per pair, median": {
+   "as acquired": 0.4993,
+   "corrected separately": 0.2812,
+   "corrected together": 0.2706
+  },
+  "shell means": {
+   "as acquired": {
+    "rms": 0.4073,
+    "median": 0.1235,
+    "p90": 0.6048
+   },
+   "corrected separately": {
+    "rms": 0.1652,
+    "median": 0.0691,
+    "p90": 0.2502
+   },
+   "corrected together": {
+    "rms": 0.1565,
+    "median": 0.0637,
+    "p90": 0.2278
+   }
+  },
+  "mean b0s": {
+   "as acquired": {
+    "rms": 0.4261,
+    "median": 0.1265,
+    "p90": 0.5843
+   },
+   "corrected separately": {
+    "rms": 0.1379,
+    "median": 0.0517,
+    "p90": 0.1928
+   },
+   "corrected together": {
+    "rms": 0.1518,
+    "median": 0.0526,
+    "p90": 0.2092
+   }
+  }
+ },
+ "tensor residual over FA > 0.3 (log signal, RMS)": {
+  "AP": 0.1642,
+  "PA": 0.164,
+  "concatenate": 0.1857,
+  "pair-average": 0.1183
+ },
+ "FA agreement": {
+  "AP alone vs PA alone": {
+   "mean |dFA|": 0.0592,
+   "correlation": 0.8676
+  },
+  "AP part vs PA part of the joint correction": {
+   "mean |dFA|": 0.0522,
+   "correlation": 0.8896
+  },
+  "concatenate vs AP alone": {
+   "mean |dFA|": 0.0346,
+   "correlation": 0.9495
+  },
+  "pair-average vs AP alone": {
+   "mean |dFA|": 0.0347,
+   "correlation": 0.9531
+  },
+  "concatenate vs pair-average": {
+   "mean |dFA|": 0.0064,
+   "correlation": 0.9903
+  }
+ },
+ "tracts": {
+  "streamlines, labeled": {
+   "AP": [
+    127731,
+    106097
+   ],
+   "PA": [
+    129078,
+    107817
+   ],
+   "concatenate": [
+    127547,
+    110092
+   ],
+   "pair-average": [
+    127388,
+    106403
+   ]
+  },
+  "Dice AP alone vs PA alone": {
+   "median over tracts": 0.592,
+   "lowest": 0.273,
+   "tracts": 42
+  },
+  "Dice concatenate vs AP alone": {
+   "median over tracts": 0.59,
+   "lowest": 0.185,
+   "tracts": 42
+  },
+  "Dice pair-average vs AP alone": {
+   "median over tracts": 0.633,
+   "lowest": 0.314,
+   "tracts": 42
+  },
+  "Dice concatenate vs pair-average": {
+   "median over tracts": 0.613,
+   "lowest": 0.239,
+   "tracts": 42
+  }
+ },
+ "record": {
+  "concatenate": {
+   "mode": "concatenate",
+   "series": "sub-01_dir-PA_dwi.nii.gz",
+   "volumes (diffusion series, reversed)": [
+    109,
+    109
+   ],
+   "intensity scale applied to the reversed series": 0.996872
+  },
+  "pair-average": {
+   "mode": "pair-average",
+   "series": "sub-01_dir-PA_dwi.nii.gz",
+   "volumes (diffusion series, reversed)": [
+    109,
+    109
+   ],
+   "intensity scale applied to the reversed series": 0.996872,
+   "pairs averaged (diffusion-weighted)": 102,
+   "b0 pairs averaged": 7,
+   "volumes in the result": 109,
+   "pairs that lost a volume to the fit (kept single)": 0,
+   "entries lost to the fit (gone)": 0,
+   "b0s alone (the longer series' extras)": 0,
+   "unmatched diffusion-weighted volumes": {
+    "diffusion series": [],
+    "reversed": [],
+    "what happened": "none"
+   },
+   "largest angle in a pair (deg)": 0.0,
+   "largest b-value difference in a pair": 0.0
+  }
+ },
+ "warnings": {
+  "AP": [],
+  "PA": [],
+  "concatenate": [
+   "motion_eddy: 1 outlier slices (signal loss) in 1 volumes, replaced by their prediction: 79: [9]"
+  ],
+  "pair-average": [
+   "motion_eddy: 1 outlier slices (signal loss) in 1 volumes, replaced by their prediction: 79: [9]"
+  ]
+ },
+ "seconds": {
+  "AP": {
+   "field_estimate": 31.53,
+   "motion_eddy": 38.37,
+   "field_apply": 1.97,
+   "mask": 6.23,
+   "prep": 0.54,
+   "load": 0.83,
+   "ukf": 89.17,
+   "label": 2.41
+  },
+  "PA": {
+   "field_estimate": 31.28,
+   "motion_eddy": 37.05,
+   "field_apply": 1.93,
+   "mask": 6.38,
+   "prep": 0.64,
+   "load": 0.95,
+   "ukf": 90.07,
+   "label": 2.63
+  },
+  "concatenate": {
+   "field_estimate": 34.15,
+   "motion_eddy": 79.83,
+   "field_apply": 6.39,
+   "mask": 6.29,
+   "prep": 1.0,
+   "load": 1.62,
+   "ukf": 155.05,
+   "label": 2.51
+  },
+  "pair-average": {
+   "field_estimate": 33.3,
+   "motion_eddy": 82.66,
+   "field_apply": 5.74,
+   "mask": 6.28,
+   "prep": 0.57,
+   "load": 1.08,
+   "ukf": 88.97,
+   "label": 2.58
+  }
+ },
+ "peak GPU driver memory, GB": {
+  "AP": 3.06,
+  "PA": 3.07,
+  "concatenate": 5.36,
+  "pair-average": 6.28
+ }
+}

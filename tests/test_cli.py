@@ -79,6 +79,10 @@ def test_usage_errors(tmp_path):
     assert r.exit_code != 0 and "--qc" in r.output
     r = CliRunner().invoke(cli.main, ["run", str(f), "--stopping-fa", "0.2"])
     assert r.exit_code != 0 and "applies to --tracker ptt" in r.output
+    r = CliRunner().invoke(cli.main, ["run", str(f), "--reversed-series", "concatenate"])
+    assert r.exit_code != 0 and "needs --motion-eddy" in r.output
+    r = CliRunner().invoke(cli.main, ["run", str(f), "--motion-eddy", "--reversed-series", "concatenate", "--unmatched", "keep"])
+    assert r.exit_code != 0 and "applies to --reversed-series pair-average" in r.output
     for bad, msg in (("high", "auto or a number"), ("0.3", "where seeds start")):
         r = CliRunner().invoke(cli.main, ["run", str(f), "--tracker", "ptt", "--stopping-fa", bad])
         assert r.exit_code != 0 and msg in r.output
@@ -338,6 +342,56 @@ def test_run_ptt_auto(tmp_path, monkeypatch):
     summary = json.loads(js.read_text())
     assert isinstance(summary["stopping_fa"], float) and f"stopping FA set from the scan: {summary['stopping_fa']}" \
         in r.output
+
+
+def _bids_pair(tmp_path, seed=1):
+    """_bids's session with its PA series replaced by a full one: the same gradients, its own noise."""
+    import sys
+    sys.path.insert(0, str(Path(__file__).parent))
+    import nibabel as nib
+    from phantom import subject
+    dwi, s = _bids(tmp_path)
+    pa = Path(dwi).parent / "sub-01_dir-PA_dwi"
+    full = subject(seed=seed).dwi
+    nib.save(nib.Nifti1Image(full, s.affine), str(pa) + ".nii.gz")
+    np.savetxt(str(pa) + ".bval", s.bval[None], fmt="%g")
+    np.savetxt(str(pa) + ".bvec", s.bvec, fmt="%.6f")
+    return dwi, s
+
+
+@pytest.mark.parametrize("mode,gibbs", [("concatenate", False), ("pair-average", True)])
+def test_run_reversed_series(tmp_path, mode, gibbs):
+    """`tractline run --reversed-series`: both series corrected and tracked, what was done in the summary and the record,
+    the corrected series written with its own table; the same run without the flag still uses only the b0s."""
+    from tractline.data import DATA
+    if not (DATA / "RapidParc" / "rapidparc.safetensors").exists():
+        pytest.skip("RapidParc's weights are not in $TRACTOGRAPHY_DATA (the test does not download)")
+    dwi, s = _bids_pair(tmp_path)
+    out, qc = tmp_path / "out.trx", tmp_path / "qc"
+    r = CliRunner().invoke(cli.main, ["run", dwi, "--device", "cpu", "--workers", "1", "--motion-eddy", "rigid",
+                                      "--reversed-series", mode, "--trx", str(out), "--qc", str(qc), "--write-corrected",
+                                      *(["--gibbs"] if gibbs else []), "--json", "-", "-q"])
+    assert r.exit_code == 0, r.output
+    summary = json.loads(r.stdout)
+    rec = summary["reversed_series"]
+    assert rec["mode"] == mode and rec["volumes (diffusion series, reversed)"] == [32, 32]
+    assert summary["streamlines"] > 0 and any(x.startswith("reversed_series") for x in summary["experimental"])
+    side = json.loads(Path(summary["provenance"]).read_text())
+    assert side["pipeline"]["slots"]["reversed_series"]["impl"] == mode
+    assert [f["role"] for f in side["inputs"]].count("reversed series (kept in full)") == 4
+    assert side["correction"]["reversed_series"]["mode"] == mode
+    import nibabel as nib
+    G = 64 if mode == "concatenate" else 32
+    assert nib.load(str(qc / "corrected.nii.gz")).shape[-1] == G
+    assert np.loadtxt(qc / "corrected.bval").shape == (G,) and np.loadtxt(qc / "corrected.bvec").shape == (3, G)
+    if mode == "pair-average":
+        assert rec["pairs averaged (diffusion-weighted)"] == 30 and rec["b0 pairs averaged"] == 2
+
+
+def test_run_reversed_series_without_one_is_a_message(tmp_path):
+    dwi, _ = _bids(tmp_path)                                               # its PA series holds b0s only
+    r = CliRunner().invoke(cli.main, ["run", dwi, "--device", "cpu", "--motion-eddy", "--reversed-series", "concatenate", "-q"])
+    assert r.exit_code != 0 and "diffusion-weighted volumes" in r.output and "Traceback" not in r.output
 
 
 def test_run_gibbs(tmp_path):

@@ -6,6 +6,18 @@ behind each change, with their numbers and later corrections, are in `bench/resu
 
 ## Unreleased
 
+- **Two full diffusion series** (`--reversed-series concatenate|pair-average`; `reversed_series=` in Python; the
+  `reversed_series` config slot, experimental; needs `--motion-eddy`): a reversed series with its own diffusion-weighted
+  volumes is used in full, not only its b0s. The two are corrected together in one fit, each volume with its own
+  polarity and readout time, on Metal, Triton and torch; `concatenate` tracks on all the volumes, `pair-average` averages
+  each pair found by b-value (50 s/mm²) and axis (5 degrees) into one volume per direction, as the HCP pipeline's
+  combination does but for pairing by content (`--unmatched refuse|keep|drop`). `bids.load(keep_reversed=True)` keeps the
+  series, its b-vectors in the first series' frame, and refuses one that does not fit; `tractline warm --reversed-series`
+  compiles its kernels. Twice the volumes: about twice the correction's time and memory, and the memory check counts both.
+  Off by default: the default run's pipeline_id and output are unchanged, byte for byte on 16974. On two public pairs,
+  FA repeated a quarter to a third better across two independent pairs (one subject), pair-average best; the tracts
+  barely moved (Dice up 0.02-0.03), and correcting together aligned the polarities only slightly better than correcting
+  them apart (NOTES 2026-10-30; user guide, "Two full diffusion series").
 - **The automatic PTT threshold tested out of sample** (documentation and bench only): on ten ON-Harmony scans it was
   not fit on, `--stopping-fa auto` stayed within about a point of the best fixed threshold (0.15 on all ten), safe
   but no better there; the user guide says so (NOTES 2026-10-30; `bench/ptt_auto_onharmony.py`).

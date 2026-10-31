@@ -12,7 +12,8 @@ Installed with the `cli` extra (nibabel and scipy to read BIDS, matplotlib for t
 `run` is pipeline.run behind options: the series read by tractline.bids (the series that correct its distortion
 found from the sidecars, or named with --partners), corrected, tracked (UKF two-tensor, the ORG atlas's settings),
 labeled (RapidParc by default) and written as TRX; with --motion-eddy, head motion and eddy currents corrected in the
-same resample, and with --qc their QC files written (motion_eddy.write_qc, motion_eddy.plot_qc).
+same resample, and with --qc their QC files written (motion_eddy.write_qc, motion_eddy.plot_qc); with --reversed-series,
+a full reversed diffusion series used with the first (tractline.series).
 """
 from __future__ import annotations
 
@@ -58,6 +59,15 @@ def main():
                    "SynthStrip's brain with CSF (border 1 mm); or SynthStrip's brain without CSF (border 2 mm; fewer "
                    "streamlines run out of the brain with it; see the user guide). Both SynthStrip masks are "
                    "experimental; their released weights (31 MB each) are fetched on first use.")
+@click.option("--reversed-series", type=click.Choice(["concatenate", "pair-average"]), default=None,
+              help="Use every volume of a full reversed diffusion series (AP and PA, each with its own diffusion-weighted "
+                   "volumes), not only its b0s; needs --motion-eddy. pair-average (the one to start with) averages each "
+                   "matched pair after correction, one volume per direction, as the HCP pipeline does; concatenate tracks "
+                   "on the volumes of both. Off unless given. About twice the correction's time and memory (`tractline "
+                   "docs guide`, \"Two full diffusion series\").")
+@click.option("--unmatched", type=click.Choice(["refuse", "keep", "drop"]), default=None,
+              help="With --reversed-series pair-average: volumes without a partner (b-value within 50, axis within 5 "
+                   "degrees): stop (the default), keep them single, or leave them out.")
 @click.option("--outliers", type=click.Choice(["replace", "flag", "off"]), default=None,
               help="With --motion-eddy: outlier slices replaced by their prediction (the default), flagged only, or "
                    "not sought.")
@@ -96,8 +106,9 @@ def main():
 @click.option("--json", "json_path", type=click.Path(dir_okay=False), default=None,
               help="Also write the run's summary as JSON here ('-' for standard output).")
 @click.option("-q", "--quiet", is_flag=True, help="Print nothing but errors (and --json -).")
-def run(dwi, partners, motion_eddy, gibbs, mask, outliers, trx, float16, labeled_only, qc, write_corrected, shell,
-        tracker, stopping_fa, labeler, device, workers, no_memory_check, record_absolute_paths, json_path, quiet):
+def run(dwi, partners, motion_eddy, reversed_series, unmatched, gibbs, mask, outliers, trx, float16, labeled_only, qc,
+        write_corrected, shell, tracker, stopping_fa, labeler, device, workers, no_memory_check, record_absolute_paths,
+        json_path, quiet):
     """Correct, track and label one dMRI series (NIfTI, BIDS). Errors end in one line; TRACTLINE_DEBUG=1 shows the
     traceback."""
     import os
@@ -109,7 +120,7 @@ def run(dwi, partners, motion_eddy, gibbs, mask, outliers, trx, float16, labeled
     try:
         _run(dwi, partners, motion_eddy, gibbs, mask, outliers, trx, float16, labeled_only, qc, write_corrected,
              shell, labeler, device, workers, no_memory_check, record_absolute_paths, json_path, quiet,
-             tracker=tracker, stopping_fa=stopping_fa)
+             tracker=tracker, stopping_fa=stopping_fa, reversed_series=reversed_series, unmatched=unmatched)
     except (ValueError, OSError, FetchError, ImageFileError) as e:        # the input, the disk, the network: one line
         if os.environ.get("TRACTLINE_DEBUG") == "1":
             raise
@@ -145,7 +156,11 @@ FA_SEED = 0.2                                             # track:ptt's fa_seed 
 
 def _run(dwi, partners, motion_eddy, gibbs, mask, outliers, trx, float16, labeled_only, qc, write_corrected, shell,
          labeler, device, workers, no_memory_check, record_absolute_paths, json_path, quiet, tracker="ukf",
-         stopping_fa=None):
+         stopping_fa=None, reversed_series=None, unmatched=None):
+    if reversed_series and not motion_eddy:
+        raise click.UsageError("--reversed-series needs --motion-eddy: the two series are not aligned without it")
+    if unmatched and reversed_series != "pair-average":
+        raise click.UsageError("--unmatched applies to --reversed-series pair-average")
     if stopping_fa is not None and tracker != "ptt":
         raise click.UsageError("--stopping-fa applies to --tracker ptt")
     sfa = _stopping_fa(stopping_fa) if tracker == "ptt" else None
@@ -167,7 +182,7 @@ def _run(dwi, partners, motion_eddy, gibbs, mask, outliers, trx, float16, labele
     say = (lambda *a: None) if quiet else (lambda m: click.echo(m, err=True))     # noqa: E731
 
     dev = _device(device)
-    s = bids.load(dwi, partners=list(partners) or None)
+    s = bids.load(dwi, partners=list(partners) or None, keep_reversed=bool(reversed_series))
     say(f"{s.name}: {s.dwi.shape[-1]} volumes; {s.pairing.message}")
     if shell is None:
         shell = auto_shell(s.bval)
@@ -189,6 +204,9 @@ def _run(dwi, partners, motion_eddy, gibbs, mask, outliers, trx, float16, labele
     if motion_eddy:
         me = {"model": motion_eddy, **({"outliers": outliers} if outliers else {}),
               **({"check_memory": False} if no_memory_check else {})}
+    rs = None
+    if reversed_series:
+        rs = {"impl": reversed_series, **({"unmatched": unmatched} if unmatched else {})}
     gb = {"slice_axis": P.slice_axis_of(s)} if gibbs else None
     mk = None if mask == "median-otsu" else mask
     if mk:
@@ -199,12 +217,13 @@ def _run(dwi, partners, motion_eddy, gibbs, mask, outliers, trx, float16, labele
     out = {"positions": "float16" if float16 else "float32", "labeled_only": labeled_only,
            "absolute_paths": record_absolute_paths}
     if tracker == "ptt":                                  # the model and track slots replaced: csd, then ptt
-        cfg = P.config_for(lab, shell=shell, motion_eddy=me, gibbs=gb, mask=mk).with_(
+        cfg = P.config_for(lab, shell=shell, motion_eddy=me, gibbs=gb, mask=mk, reversed_series=rs).with_(
             model={"impl": "csd", "shell": float(shell)}, track={"impl": "ptt", "stopping_fa": sfa})
     else:
-        cfg = P.config_for(shell=shell, motion_eddy=me, gibbs=gb, mask=mk)
+        cfg = P.config_for(shell=shell, motion_eddy=me, gibbs=gb, mask=mk, reversed_series=rs)
     say(f"running on {dev}: shell b = {shell:g}" + (", Gibbs ringing removed" if gb else "")
-        + (f", head motion and eddy currents ({motion_eddy})" if me else "") + (f", {mk} mask" if mk else "")
+        + (f", head motion and eddy currents ({motion_eddy})" if me else "")
+        + (f", both series ({reversed_series})" if rs else "") + (f", {mk} mask" if mk else "")
         + (f", PTT (stopping FA {sfa})" if tracker == "ptt" else ""))
     for step in PV.experimental(cfg.to_dict()):
         say(f"experimental: {step}")
@@ -220,11 +239,12 @@ def _run(dwi, partners, motion_eddy, gibbs, mask, outliers, trx, float16, labele
                 warnings.warn_explicit(w.message, w.category, w.filename, w.lineno)
     else:
         r = P.run(s, lab, timer, trx=trx, device=dev, workers=workers, shell=shell, motion_eddy=me,
-                  gibbs=gb, mask=mk, **out)
+                  gibbs=gb, mask=mk, reversed_series=rs, **out)
     corr, tg, labels = r
     first = timer.seconds.get("gibbs", 0)                                 # before the field: not among pipeline_stages
     summary = {"series": str(dwi), "corrected": corr.applied, "note": corr.note, "residual_left": corr.residual_left,
                "warnings": corr.warnings, "shell": shell, "device": dev, "gibbs": corr.gibbs,
+               **({"reversed_series": corr.reversed_series} if corr.reversed_series else {}),
                "seconds": timer.seconds,
                "scan_to_labels_s": round(timer.total(*P.pipeline_stages("", cfg)) + first, 1),
                "tracker": tracker,
@@ -266,7 +286,7 @@ def _write_corrected(s, corr, folder: Path):
     img = nib.Nifti1Image(corr.dwi, s.affine, hdr)
     img.set_data_dtype(np.float32)
     nib.save(img, str(folder / "corrected.nii.gz"))
-    np.savetxt(folder / "corrected.bval", np.asarray(s.bval)[None], fmt="%g")
+    np.savetxt(folder / "corrected.bval", np.asarray(s.bval if corr.bval is None else corr.bval)[None], fmt="%g")
     np.savetxt(folder / "corrected.bvec", corr.bvec, fmt="%.6f")
 
 
@@ -287,11 +307,13 @@ def _progress(what: str):
               help="With DWI: the series that measures its field, as for run.")
 @click.option("--motion-eddy", "model", type=click.Choice(MODELS), default="quadratic", show_default=True,
               help="The eddy current model to compile for.")
+@click.option("--reversed-series", "both", is_flag=True,
+              help="Also for correcting two series of opposite phase encoding together (run's --reversed-series).")
 @click.option("--all", "everything", is_flag=True,
-              help="Every phase-encoding axis, model and field case (18 combinations; about 20 CPU-minutes).")
+              help="Every phase-encoding axis, model and field case (27 combinations; about 30 CPU-minutes).")
 @click.option("--workers", type=int, default=None,
               help="Compiling processes (default: one per kernel set, up to the CPUs this process may use).")
-def warm(dwi, partners, model, everything, workers):
+def warm(dwi, partners, model, both, everything, workers):
     """Compile the CUDA kernels ahead of the first run, into Triton's cache (TRITON_CACHE_DIR, by default
     ~/.triton/cache), so no run pays for compiling: the tracker's (every gradient count) and the head motion and eddy
     current correction's. With DWI: for that series' phase-encoding axis and whether it has a series that measures its
@@ -322,13 +344,13 @@ def warm(dwi, partners, model, everything, workers):
         if dwi:
             from . import bids, pipeline as P
             s = bids.load(dwi, partners=list(partners) or None)
-            which = T.combos((s.pe_axis,), (model,), (P.can_correct(s),))
+            which = T.combos((s.pe_axis,), (model,), (P.can_correct(s),) + ((2,) if both else ()))
             what = f"{s.name}: PE axis {s.pe_axis}, {model}, {'with' if P.can_correct(s) else 'without'} a field"
         elif everything:
-            which = T.combos((0, 1, 2), tuple(T.MODELS), (True, False))
+            which = T.combos((0, 1, 2), tuple(T.MODELS), (True, False, 2))
             what = "every combination"
         else:
-            which = T.combos((1,), (model,), (True, False))
+            which = T.combos((1,), (model,), (True, False) + ((2,) if both else ()))
             what = f"AP/PA phase encoding, {model}, with and without a field"
     except ImportError as e:
         raise click.ClickException(f"reading a series needs nibabel and scipy ({e}): install tractline[cli]") from e

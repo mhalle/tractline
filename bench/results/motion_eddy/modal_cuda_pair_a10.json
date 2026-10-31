@@ -1,0 +1,268 @@
+{
+ "one series": [
+  {
+   "series": "/data/ds005341/sub-01/dwi/sub-01_dir-AP_dwi.nii.gz",
+   "corrected": true,
+   "note": "corrected with sub-01_dir-PA_dwi.nii.gz (same folder); motion and eddy currents corrected with the field, one resample",
+   "residual_left": 0.332,
+   "warnings": [],
+   "shell": 2000.0,
+   "device": "cuda",
+   "gibbs": null,
+   "seconds": {
+    "field_estimate": 7.85,
+    "motion_eddy": 81.77,
+    "field_apply": 3.39,
+    "mask": 0.62,
+    "prep": 0.58,
+    "load": 1.47,
+    "ukf": 56.92,
+    "label": 2.47
+   },
+   "scan_to_labels_s": 155.1,
+   "tracker": "ukf",
+   "streamlines": 127724,
+   "labeled": 106066,
+   "trx": null,
+   "pipeline_id": "64460014a3d0f6192b4e12a580e9af1fb2a5dee26225c29157e6265a91b87567",
+   "execution_id": "827264c5b904dc55b9de3a42d21f87b63a007d8139187786d5737581c705c0f4",
+   "experimental": [
+    "motion_eddy: tractline; checked against FSL eddy (Andersson & Sotiropoulos 2016)"
+   ],
+   "provenance": null
+  },
+  {
+   "series": "/data/ds005341/sub-01/dwi/sub-01_dir-AP_dwi.nii.gz",
+   "corrected": true,
+   "note": "corrected with sub-01_dir-PA_dwi.nii.gz (same folder); motion and eddy currents corrected with the field, one resample",
+   "residual_left": 0.332,
+   "warnings": [],
+   "shell": 2000.0,
+   "device": "cuda",
+   "gibbs": null,
+   "seconds": {
+    "field_estimate": 7.77,
+    "motion_eddy": 4.68,
+    "field_apply": 1.07,
+    "mask": 0.63,
+    "prep": 0.7,
+    "load": 1.5,
+    "ukf": 25.65,
+    "label": 2.34
+   },
+   "scan_to_labels_s": 44.3,
+   "tracker": "ukf",
+   "streamlines": 127724,
+   "labeled": 106066,
+   "trx": null,
+   "pipeline_id": "64460014a3d0f6192b4e12a580e9af1fb2a5dee26225c29157e6265a91b87567",
+   "execution_id": "827264c5b904dc55b9de3a42d21f87b63a007d8139187786d5737581c705c0f4",
+   "experimental": [
+    "motion_eddy: tractline; checked against FSL eddy (Andersson & Sotiropoulos 2016)"
+   ],
+   "provenance": null
+  }
+ ],
+ "concatenate": [
+  {
+   "series": "/data/ds005341/sub-01/dwi/sub-01_dir-AP_dwi.nii.gz",
+   "corrected": true,
+   "note": "corrected with sub-01_dir-PA_dwi.nii.gz (same folder); the reversed series sub-01_dir-PA_dwi.nii.gz kept in full (109 volumes, b = [300, 1000, 2000]; on this grid); motion and eddy currents corrected with the field, one resample",
+   "residual_left": 0.332,
+   "warnings": [
+    "motion_eddy: 1 outlier slices (signal loss) in 1 volumes, replaced by their prediction: 79: [9]"
+   ],
+   "shell": 2000.0,
+   "device": "cuda",
+   "gibbs": null,
+   "reversed_series": {
+    "mode": "concatenate",
+    "series": "sub-01_dir-PA_dwi.nii.gz",
+    "volumes (diffusion series, reversed)": [
+     109,
+     109
+    ],
+    "intensity scale applied to the reversed series": 0.996872
+   },
+   "seconds": {
+    "field_estimate": 7.63,
+    "motion_eddy": 95.48,
+    "field_apply": 5.56,
+    "mask": 0.69,
+    "prep": 1.2,
+    "load": 2.74,
+    "ukf": 75.65,
+    "label": 2.49
+   },
+   "scan_to_labels_s": 191.4,
+   "tracker": "ukf",
+   "streamlines": 127559,
+   "labeled": 110085,
+   "trx": null,
+   "pipeline_id": "b47ca8d2d4881422cb2ec7f23afc84500c6c9cdb89dd08fd8299c26bb50a63c7",
+   "execution_id": "8aed3641f9ce17a09c67f4ddf5768206a7ed50d8562a0d8141754b7567f15156",
+   "experimental": [
+    "reversed_series: concatenate; checked against FSL eddy on the two series joined (--imain, with both --acqp rows)",
+    "motion_eddy: tractline; checked against FSL eddy (Andersson & Sotiropoulos 2016)"
+   ],
+   "provenance": null
+  },
+  {
+   "series": "/data/ds005341/sub-01/dwi/sub-01_dir-AP_dwi.nii.gz",
+   "corrected": true,
+   "note": "corrected with sub-01_dir-PA_dwi.nii.gz (same folder); the reversed series sub-01_dir-PA_dwi.nii.gz kept in full (109 volumes, b = [300, 1000, 2000]; on this grid); motion and eddy currents corrected with the field, one resample",
+   "residual_left": 0.332,
+   "warnings": [
+    "motion_eddy: 1 outlier slices (signal loss) in 1 volumes, replaced by their prediction: 79: [9]"
+   ],
+   "shell": 2000.0,
+   "device": "cuda",
+   "gibbs": null,
+   "reversed_series": {
+    "mode": "concatenate",
+    "series": "sub-01_dir-PA_dwi.nii.gz",
+    "volumes (diffusion series, reversed)": [
+     109,
+     109
+    ],
+    "intensity scale applied to the reversed series": 0.996872
+   },
+   "seconds": {
+    "field_estimate": 7.45,
+    "motion_eddy": 8.58,
+    "field_apply": 3.08,
+    "mask": 0.66,
+    "prep": 1.17,
+    "load": 2.49,
+    "ukf": 43.2,
+    "label": 2.46
+   },
+   "scan_to_labels_s": 69.1,
+   "tracker": "ukf",
+   "streamlines": 127559,
+   "labeled": 110085,
+   "trx": null,
+   "pipeline_id": "b47ca8d2d4881422cb2ec7f23afc84500c6c9cdb89dd08fd8299c26bb50a63c7",
+   "execution_id": "8aed3641f9ce17a09c67f4ddf5768206a7ed50d8562a0d8141754b7567f15156",
+   "experimental": [
+    "reversed_series: concatenate; checked against FSL eddy on the two series joined (--imain, with both --acqp rows)",
+    "motion_eddy: tractline; checked against FSL eddy (Andersson & Sotiropoulos 2016)"
+   ],
+   "provenance": null
+  }
+ ],
+ "pair-average": [
+  {
+   "series": "/data/ds005341/sub-01/dwi/sub-01_dir-AP_dwi.nii.gz",
+   "corrected": true,
+   "note": "corrected with sub-01_dir-PA_dwi.nii.gz (same folder); the reversed series sub-01_dir-PA_dwi.nii.gz kept in full (109 volumes, b = [300, 1000, 2000]; on this grid); motion and eddy currents corrected with the field, one resample",
+   "residual_left": 0.332,
+   "warnings": [
+    "motion_eddy: 1 outlier slices (signal loss) in 1 volumes, replaced by their prediction: 79: [9]"
+   ],
+   "shell": 2000.0,
+   "device": "cuda",
+   "gibbs": null,
+   "reversed_series": {
+    "mode": "pair-average",
+    "series": "sub-01_dir-PA_dwi.nii.gz",
+    "volumes (diffusion series, reversed)": [
+     109,
+     109
+    ],
+    "intensity scale applied to the reversed series": 0.996872,
+    "pairs averaged (diffusion-weighted)": 102,
+    "b0 pairs averaged": 7,
+    "volumes in the result": 109,
+    "pairs that lost a volume to the fit (kept single)": 0,
+    "entries lost to the fit (gone)": 0,
+    "b0s alone (the longer series' extras)": 0,
+    "unmatched diffusion-weighted volumes": {
+     "diffusion series": [],
+     "reversed": [],
+     "what happened": "none"
+    },
+    "largest angle in a pair (deg)": 0.0,
+    "largest b-value difference in a pair": 0.0
+   },
+   "seconds": {
+    "field_estimate": 7.36,
+    "motion_eddy": 8.58,
+    "field_apply": 2.82,
+    "mask": 0.61,
+    "prep": 0.58,
+    "load": 1.55,
+    "ukf": 25.6,
+    "label": 2.34
+   },
+   "scan_to_labels_s": 49.4,
+   "tracker": "ukf",
+   "streamlines": 127399,
+   "labeled": 106443,
+   "trx": null,
+   "pipeline_id": "5502ea4c40200ee2386d0d01a2634b35d15d3341287129f46299066d93b8356a",
+   "execution_id": "b9a20dac3015e4b468ab26abef9fc0bacbd1a3a428f3ed29e10643272f8c78b1",
+   "experimental": [
+    "reversed_series: pair-average; checked against the HCP pipeline's combination of eddy's output (plain mean)",
+    "motion_eddy: tractline; checked against FSL eddy (Andersson & Sotiropoulos 2016)"
+   ],
+   "provenance": null
+  },
+  {
+   "series": "/data/ds005341/sub-01/dwi/sub-01_dir-AP_dwi.nii.gz",
+   "corrected": true,
+   "note": "corrected with sub-01_dir-PA_dwi.nii.gz (same folder); the reversed series sub-01_dir-PA_dwi.nii.gz kept in full (109 volumes, b = [300, 1000, 2000]; on this grid); motion and eddy currents corrected with the field, one resample",
+   "residual_left": 0.332,
+   "warnings": [
+    "motion_eddy: 1 outlier slices (signal loss) in 1 volumes, replaced by their prediction: 79: [9]"
+   ],
+   "shell": 2000.0,
+   "device": "cuda",
+   "gibbs": null,
+   "reversed_series": {
+    "mode": "pair-average",
+    "series": "sub-01_dir-PA_dwi.nii.gz",
+    "volumes (diffusion series, reversed)": [
+     109,
+     109
+    ],
+    "intensity scale applied to the reversed series": 0.996872,
+    "pairs averaged (diffusion-weighted)": 102,
+    "b0 pairs averaged": 7,
+    "volumes in the result": 109,
+    "pairs that lost a volume to the fit (kept single)": 0,
+    "entries lost to the fit (gone)": 0,
+    "b0s alone (the longer series' extras)": 0,
+    "unmatched diffusion-weighted volumes": {
+     "diffusion series": [],
+     "reversed": [],
+     "what happened": "none"
+    },
+    "largest angle in a pair (deg)": 0.0,
+    "largest b-value difference in a pair": 0.0
+   },
+   "seconds": {
+    "field_estimate": 7.59,
+    "motion_eddy": 9.03,
+    "field_apply": 3.03,
+    "mask": 0.62,
+    "prep": 0.62,
+    "load": 1.48,
+    "ukf": 25.46,
+    "label": 2.34
+   },
+   "scan_to_labels_s": 50.2,
+   "tracker": "ukf",
+   "streamlines": 127399,
+   "labeled": 106443,
+   "trx": null,
+   "pipeline_id": "5502ea4c40200ee2386d0d01a2634b35d15d3341287129f46299066d93b8356a",
+   "execution_id": "b9a20dac3015e4b468ab26abef9fc0bacbd1a3a428f3ed29e10643272f8c78b1",
+   "experimental": [
+    "reversed_series: pair-average; checked against the HCP pipeline's combination of eddy's output (plain mean)",
+    "motion_eddy: tractline; checked against FSL eddy (Andersson & Sotiropoulos 2016)"
+   ],
+   "provenance": null
+  }
+ ]
+}

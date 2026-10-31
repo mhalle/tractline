@@ -73,6 +73,52 @@ RapidParc (section 3); its code and trained model are downloaded from TractCloud
 at the version tractline was tested with, checked against pinned checksums). `tractline run --help` lists every
 option.
 
+**Two full diffusion series.** Some protocols acquire the whole gradient table twice, once AP and once PA. By default
+tractline tracks the series you name and uses only the b0 images of the other, to measure the field, so half the
+diffusion data goes unused. `--reversed-series` uses all of it. It needs `--motion-eddy`, because nothing else
+aligns the two series, and it is off unless given. Start with `pair-average`; the measurements at the end of this
+section say why, and what it does not improve:
+
+```
+tractline run sub-01/dwi/sub-01_dir-AP_dwi.nii.gz --motion-eddy --reversed-series pair-average --trx out/sub-01.trx
+```
+
+`--reversed-series concatenate` corrects the two series together and tracks on every volume of both.
+`--reversed-series pair-average` corrects them together in the same way and then averages each pair of matching
+volumes, one volume per direction, as the HCP pipeline does after eddy. A pair is two volumes whose b-values agree
+within 50 s/mm² and whose gradient axes agree within 5 degrees, found over the whole table, in any order and with
+antipodal vectors treated as the same axis; the HCP pipeline instead pairs by position in the series. If any
+diffusion-weighted volume has no partner, the run stops before doing any work, says how many, and names the first of
+them. `--unmatched keep` keeps
+those volumes, single, and `--unmatched drop` leaves them out; the b0 images pair in order, and a longer series' extra
+b0 images stay, single. Each series' intensity is matched first, by one factor from its mean b0 over the whole image,
+and the factor is recorded. A volume the correction leaves out does not spoil its pair: the other volume stays, single.
+
+Each volume is corrected with its own phase-encoding direction and readout time: the field and the eddy current
+distortion both reverse in the reversed series, and a gradient has the same eddy field in both. Denoising and Gibbs
+removal run on each series separately. The second series is found as the partner is (or named with `--partners`), and
+it must have passed every pairing check, have diffusion-weighted volumes and a `.bvec` of its own, and be the only such
+candidate: otherwise the run stops and says why, and does not fall back to its b0 images. On another grid (a slab
+placed differently) its volumes are put onto the first series' grid by the scanner's coordinates and its b-vectors
+turned to match; those volumes are then interpolated twice, and denoising and Gibbs removal skip them, with a warning.
+
+With both series the correction holds twice the volumes, so it needs about twice the memory and takes about twice the
+time or more (on a Prisma scan at 1.5 mm, from about a minute to two or three, on an Apple M2; at 1.8 mm on an NVIDIA A10,
+from 5 to 9 seconds, and the whole run from 44 seconds to 50 with pair-average and 69 with concatenate), and the memory
+check counts both series. Concatenate also gives the tracker twice the measurements, so tracking takes 70 to 85 % longer, and
+the Apple GPU tracker takes at most 256 directions: more is refused at the start. On CUDA, `tractline warm
+--reversed-series` compiles the extra kernels ahead of time. The pipeline ID differs between the three runs, and the
+record beside the TRX names the series, the factor and the pairs.
+
+What it gained, measured on two public pairs (both Siemens Prisma; `bench/results/NOTES.md`, 2026-10-30): pair-average
+reduced the noise as two acquisitions should, by about the square root of two. Across two independent pairs of one
+subject FA repeated better, with a mean difference of 0.058 for one series, 0.043 for concatenate and 0.039 for
+pair-average. The tracts barely moved: their overlap across the two pairs rose by 0.02 to 0.03 on the median tract, and
+the worst tract did not improve. Correcting the series together aligned them only a little better than correcting them
+apart, because what stays between the polarities is mostly the field's limit in regions of signal pile-up.
+Concatenate labeled 4 to 7 % more streamlines; UKF's settings were tuned for each direction seen once, so that may not be a
+gain. Pair-average is the one to start with. These are the first measurements, on one retest subject.
+
 **From DICOM.** tractline reads NIfTI with its `.bval`, `.bvec` and JSON sidecar. dcm2niix converts a session's
 DICOM to that form, and also runs with `uvx`. It writes into an existing folder, so make an empty one per session
 first:
@@ -131,6 +177,11 @@ corr, tractogram, labels = r
 ME.write_qc(corr.motion_eddy, "qc/sub-01")            # the QC files, if wanted
 print(corr.note, corr.warnings, r.provenance["execution_id"])
 ```
+
+With two full series, `bids.load(path, keep_reversed=True)` keeps the second series (`s.reversed`) and
+`P.run(s, None, P.Timer(), motion_eddy=True, reversed_series="pair-average")` runs them together;
+`reversed_series={"impl": "pair-average", "angle_tol": 3.0, "unmatched": "keep"}` sets its options, and
+`corr.reversed_series` and `corr.bval` hold what was done.
 
 ## 3. The steps
 
@@ -353,6 +404,9 @@ They are documented in more detail in `docs/gpu-motion-eddy-design.md` and in `b
   scans (ON-Harmony, MASiVar, OpenNeuro ds001226, and the SHORELine simulations).
 - Slices acquired together in a multiband acquisition are judged separately, not as a group as in eddy's `--mb`.
 - Slice-to-volume motion, and the interaction of motion with the susceptibility field, are not modeled.
+- With two full series, the eddy polynomial's own Jacobian stays out of the fit, as with one series, and only the
+  field's is modeled there; the final resampling applies both. Pair-average is a plain mean: it does not favor the
+  polarity that stretched a region over the one that compressed it.
 
 ## References
 

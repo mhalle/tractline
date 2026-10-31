@@ -61,6 +61,14 @@ tractline finds it from the sidecars (`B0FieldIdentifier`, `IntendedFor`, or a r
 folder), checks that the two really match, and tells you why if it cannot use them. You can also name it with
 `--partners`. Without a usable pair, the scan is tracked without that correction, and the output says so.
 
+**Two full series.** By default tractline tracks the series you name and takes only the b0 images of the other. If the
+scan acquired the whole gradient table twice, AP and PA, add `--reversed-series pair-average` to use every volume of
+both (it needs `--motion-eddy`): the two are corrected together, and each matching pair is averaged into one volume, as
+the HCP pipeline does. `--reversed-series concatenate` tracks on all the volumes instead. Start with pair-average: on
+two public pairs it cut the noise by about the square root of two, and FA repeated a third better across two pairs from
+one subject, though the tracts barely changed. It adds about 6 seconds on an NVIDIA A10 and 45 on an Apple M2 at 1.8 mm;
+concatenate costs more. `tractline docs guide`, under "Two full diffusion series", has the details.
+
 **From DICOM**, convert with [dcm2niix](https://github.com/rordenlab/dcm2niix) first. It also runs with `uvx`:
 
 ```
@@ -81,7 +89,8 @@ the reversed series.
    directions. It agrees with topup and takes about 15 seconds on an Apple GPU, where topup takes about 11 minutes.
 3. **Head motion and eddy current correction** (`--motion-eddy`, optional): FSL eddy's model with tractline's own
    fit, combined with the susceptibility correction into a single resampling of each volume. Slices with signal
-   loss are replaced, as eddy's `--repol` does.
+   loss are replaced, as eddy's `--repol` does. With `--reversed-series`, both series of an AP/PA pair are corrected
+   together.
 4. **Tractography**: two-tensor UKF tractography as Slicer's UKFTractography does it, with the settings used to build
    the ORG atlas: a seed in every voxel of the brain mask whose FA is above 0.1. The mask is DIPY's `median_otsu` of
    the mean b0, or SynthStrip's without or with the CSF around the brain (`--mask synthstrip-nocsf`, `--mask

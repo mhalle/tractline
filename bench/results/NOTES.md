@@ -8243,3 +8243,134 @@ has not yet been shown to help out of sample: its one advantage over 0.15 is on 
 it tied the best fixed value (0.20). That it helps on a protocol whose cortex FA is higher is still a hypothesis. A
 sharper cortex estimate would narrow its spread; not attempted (no tuning on the test set). Still all Siemens; another
 vendor needs a download.
+
+## 2026-10-30 Two full series, AP and PA: FA repeats better, tracts barely, and the alignment gain is small
+
+**Why.** An outside team's scans have full AP and PA series, and tractline used the PA series' b0s alone: half the
+diffusion data dropped. The new `reversed_series` slot (`concatenate`, `pair-average`; `--reversed-series`) uses all of
+it; it is opt-in, needs `--motion-eddy`, and leaves the default run's pipeline_id and output alone.
+
+**The model** (`motion_eddy.py`'s docstring). Each volume has its own displacement scale m_v = (pe_sign readout)_v / (pe_sign
+readout)_0, on the field and on the eddy polynomial, both off-resonance fields read through the volume's own phase
+encoding, as eddy's --acqp rows convert its fields (Andersson & Sotiropoulos 2016; FSL's documentation, a source mirror
+and the HCP pipeline's scripts were read for the method, no code is taken from them). The kernels' branches are
+HAS_FIELD 2 on Metal, HF 2 on Triton; 0 and 1 are the old arithmetic.
+
+Four things one polarity never needed, found on a synthetic pair with known truth (`tests/test_motion_eddy.py`,
+`tensor_scan(paired=True)`, 30 directions per shell, field peak 3 voxels; edge error in voxels, one series 0.28, the pair
+0.11, stable from 25 to 60 steps):
+- *The eddy gauge.* A leave-one-out prediction cannot see what all a shell's volumes share. In one polarity that is a
+  common eddy field; with both, a field common in e_v is visible and the unseen one is common in the map, m_v e_v.
+  Projecting out the old intercept left the unseen part free: 1.4 voxels, growing with the steps.
+- *The field's Jacobian in the prediction.* Without it 0.42: the two polarities carry different intensity patterns, which
+  a one-polarity fit never sees. Only the field's goes in, a term with no parameter, so the step's Jacobian just scales.
+  A first version also divided by the eddy slope and left that out of the step's Jacobian; it reached 2.6, but with the
+  old gauge too, so what that term alone costs was not measured.
+- *The masks*: the points cover the brain as both polarities place it, and the mask comes from the first polarity's b0s.
+- *Judging within a polarity* (below, found on real data).
+Tried and dropped: predicting a volume without its twin (the same gradient, reversed), and lowering a shell's SH order
+for its distinct axes. My reason for them (twins overshoot) was wrong: no effect at 10, 16 or 30 directions, at sigma 1
+or 5 (0.13-0.18 either way). CSD's automatic order does count distinct axes: a concatenated table of 32 pairs is not 64
+directions.
+
+**Do real eddy currents turn with the polarity?** (`bench/reversed_eddy_sign.py` -> `results/reversed_eddy_sign.json`.) No
+local scan has two full series (ds001226's PA: 2 b0s; MASiVar's: 3 directions and no readout time),
+but ON-Harmony 16974's PA series has 3 b0s and 3 b = 2000 volumes. Fit AP alone, regress each eddy coefficient on the
+gradient, and foretell the PA volumes'; then fit both, the coefficients free per volume, so the fit does not assume the
+answer. Over 7 sessions, fitted against foretold: rms 0.28 voxel (median), against 1.07 for the opposite sign; correlations
+0.87-0.91. Yes. The PA volumes' residual also halves with their true polarity (first session: about 130 against 255; AP's in
+the shell 89).
+
+**Real full pairs** (`bench/reversed_series_compare.py` -> `results/reversed_series_compare_ds005341_sub-01.json`,
+`..._ds007908_sub-9000.json`; downloaded with the user's OK, both CC0, both Siemens Prisma, partial Fourier 0.75, so no
+`--gibbs`). ds005341 sub-01: 1.8 mm, 109 volumes each way, tracked at b = 2000, 64 pairs. ds007908 sub-9000: 1.5 mm, two
+pairs in one session with different gradient tables, tracked at b = 3000, 46 pairs, the numbers below from run 1. Each
+pair: AP alone and PA alone (each with the other's b0s for the field, as a run does today), concatenate, pair-average.
+
+| | ds005341 | ds007908 |
+|---|---|---|
+| AP/PA gap, shell means, RMS share of the signal: as acquired | 0.407 | 0.384 |
+| ... corrected separately | 0.165 | 0.179 |
+| ... corrected together | 0.157 | 0.157 |
+| ... the same, median voxel: separately / together | 0.069 / 0.064 | 0.087 / 0.078 |
+| AP/PA gap, mean b0s, RMS: separately / together | 0.138 / 0.152 | 0.180 / 0.172 |
+| ... median voxel | 0.052 / 0.053 | 0.062 / 0.059 |
+| Tensor residual, FA > 0.3: AP alone | 0.164 | 0.371 |
+| ... concatenate | 0.186 | 0.388 |
+| ... pair-average | 0.118 | 0.246 |
+| FA, AP against PA, mean difference: separately | 0.059 | 0.071 |
+| ... the two parts of the joint correction | 0.052 | 0.067 |
+| Labeled streamlines: AP alone | 106,097 | 140,113 |
+| ... concatenate | 110,092 | 149,777 |
+| ... pair-average | 106,403 | 139,713 |
+| Correction, s: AP alone / both | 37 / 78 | 57 / 141-187 |
+| UKF, s: AP alone / concatenate / pair-average | 90 / 157 / 89 | 104 / 176-192 / 103-109 |
+| Peak GPU driver memory, GB: AP alone / both | 3.1 / 5.4-6.3 | 4.8 / 8.6 |
+
+Times from a run with nothing else on the machine; the rest from the final code (the only change that moved these
+numbers is the outlier fix below, in the third decimal). The memory budget (`MEMORY_FACTOR`, 7 copies, of both series) is
+6.4 and 9.3 GB there: it holds, narrowly on ds005341 (peaks sampled every 0.1 s).
+
+**On CUDA** (`modal_cuda.py --pair` -> `results/motion_eddy/modal_cuda_pair_a10.json`: `tractline run` on ds005341 sub-01, A10,
+compiled):
+
+| s | field | correction | resample | UKF | label | scan to labels |
+|---|---|---|---|---|---|---|
+| one series | 7.8 | 4.7 | 1.1 | 25.7 | 2.3 | 44 |
+| concatenate | 7.5 | 8.6 | 3.1 | 43.2 | 2.5 | 69 |
+| pair-average | 7.5 | 8.6-9.0 | 2.8-3.0 | 25.5 | 2.3 | 49-50 |
+
+Against the M2's totals of about 170, 285 and 215 s. The first run of the mixed kernels compiles them, about 87 s more,
+once (`tractline warm --reversed-series`), as the one-polarity kernels' 77 s. Streamlines and labels close to the M2's: 127,559
+and 110,085 against 127,547 and 110,092 (concatenate), 127,399 and 106,443 against 127,388 and 106,403 (pair-average). The
+correction's memory on CUDA was not measured on a pair: the check's budget for this one is 16.5 GB (Triton's 18 copies), on the A10's 24.
+
+**Test-retest: the measure that needs no truth.** ds007908's two pairs are independent acquisitions with different
+gradient tables. Each mode against itself across them, run 2 put onto run 1 by a rigid fit of the mean b0s (0.38 mm,
+about 0.3 degrees; the fit itself checked on a known move, 0.003 voxel):
+
+| | FA, mean difference | FA correlation | Tract Dice, median | lowest tract |
+|---|---|---|---|---|
+| AP alone | 0.058 | 0.877 | 0.596 | 0.350 |
+| PA alone | 0.058 | 0.871 | 0.588 | 0.408 |
+| concatenate | 0.043 | 0.926 | 0.622 | 0.369 |
+| pair-average | 0.039 | 0.947 | 0.614 | 0.315 |
+
+**What improved.** Noise: pair-average's residual is the sqrt(2) of two acquisitions (a ratio of 1.39 and 1.51). FA's
+repeatability: a quarter to a third better, pair-average best. **What did not, or barely.** Alignment: correcting together
+beats correcting apart by 5-12 % at most on these gaps, and on ds005341's b0s it is no better; the median voxel's gap is
+about 5 %, the 99th percentile's 60 %, a tail where the field estimate, not motion or eddy, sets the limit (the two separate
+runs' fields themselves differ by 0.3 voxel rms). Tracts: Dice up 0.02-0.03 on the median and the worst tract no better.
+How much of FA's gain is more than averaging noise would give was not separated. One retest subject, and the protocols
+are both Siemens.
+**Concatenate against pair-average.** Their FA is close, but concatenate's tensor residual is above a single series' (the
+two polarities still disagree, and it shows; averaging hides it) and its tracking takes 70-85 % longer. It labels 4-7 % more
+streamlines, reproducibly (148,537 on run 2): UKF now sees each direction twice with an `Rs` tuned for once, so this
+may not be a gain; not decided here. Pair-average is the one to recommend, and the closest to HCP's.
+
+**A bug the real data found.** ds007908's joint fit flagged 35 outlier slices in 13 volumes, almost all PA; each series
+alone, 4 in 3. What the field leaves is systematic to a polarity, and against the shell's median that reads as signal
+loss. Judged within a polarity (`polarity_groups`: the screen, outlier slices, the residual's z), 20 slices in 9 volumes,
+and those look real: 8/31, 10/33, 12/35 and 11/34/57 are 23 apart, this protocol's multiband spacing (92 slices,
+factor 4).
+
+**The independent review** found more, fixed: a shell's pose tied to the mean of all the b0s fails when the head moves
+between series and the shell and the b0s split differently (edge error 0.57 and 0.50, 0.17 and 0.12 once tied to its own
+polarities' b0s, tests `test_head_motion_between_the_series`); the gauge's column is 1 / m_v, not m_v (the same at +-1); the
+QC's PE-offset split read a head step between the series as eddy on a half-sphere table (1-voxel step: 0.25 kept, now 1.0;
+QC only, the resample never used it); the outlier test could not fail until the split was 2 to 1.
+
+**HCP's combination**, read for the method: a plain mean of eddy's output; volumes paired by position alone, with no check
+of b-value or direction, so one missing volume misaligns the rest; a single scale per series from the mean b0. tractline
+takes the mean and the scale, and pairs by b-value (50) and axis (5 degrees) over the whole table, refusing the
+unmatched unless told otherwise. eddy's `--resamp=lsr` (least-squares reconstruction from pairs) is not implemented.
+
+**Verified.** 16974 with `--motion-eddy --gibbs`: 95,941 streamlines, 79,109 labeled, the same pipeline_id, all 52 files of
+the TRX and the QC table identical byte for byte to the code before (Metal). CUDA: 16974 not compared against the code
+before; the kernels' default branches are unchanged, and the suite passes on an A10 (112 passed).
+
+**Open.** The tract gain on more subjects (ds005341 and ds007908 have more). UKF's `Rs` under concatenate. Jacobian-weighted
+averaging, to favor the polarity that stretched a region: HCP's is plain, not tried here. A shell's common field `c_f`
+stays free in a pair; whether it absorbs field error was not measured. Which mode the outside team's comparison should
+use depends on how their pipeline combines the series: not yet asked.
+

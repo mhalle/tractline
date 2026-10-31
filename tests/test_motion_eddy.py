@@ -55,16 +55,18 @@ def test_inverse_map():
 
 @pytest.mark.parametrize("peak", [0.0, 4.0])
 def test_jacobian_is_the_chain_rule(peak):
-    """The step's Jacobian, d/dtheta P(phi^-1(y)), against central differences (float64), with and without a field."""
+    """The step's Jacobian, d/dtheta P(phi^-1(y)), against central differences (float64), with and without a field, and
+    with volumes of both polarities."""
     geo = geo64()
     rng = np.random.default_rng(0)
     th = torch.tensor(np.c_[rng.normal(0, 1.0, (3, 3)), rng.normal(0, 0.03, (3, 3)), rng.normal(0, 0.2, (3, 10))])
     coef = ME.t_prefilter(torch.tensor(rng.normal(size=(3,) + geo.shape)).cumsum(1).cumsum(2) / 10)
     y = torch.tensor(rng.uniform(8, 18, (300, 3)))
     df = torch.tensor(smooth_field(geo.shape, peak)) if peak else None
-    x = ME.phi_inv(geo, th, y, df, 6)
-    J = ME._jacobian(geo, th, x, ME.cubic_value_grad(coef, x)[1], ME._wgrad(geo, th, x, df))
-    P = lambda t: ME.cubic_value_grad(coef, ME.phi_inv(geo, t, y, df, 8), want_grad=False)[0]   # noqa: E731
+    pol = torch.tensor([1.0, -1.0, 1.0], dtype=torch.float64) if peak else None
+    x = ME.phi_inv(geo, th, y, df, 6, pol=pol)
+    J = ME._jacobian(geo, th, x, ME.cubic_value_grad(coef, x)[1], ME._wgrad(geo, th, x, df, pol), pol)
+    P = lambda t: ME.cubic_value_grad(coef, ME.phi_inv(geo, t, y, df, 8, pol=pol), want_grad=False)[0]   # noqa: E731
     for k in range(16):
         h = 1e-5
         tp, tm = th.clone(), th.clone()
@@ -121,10 +123,11 @@ def test_sh_smoother_is_basis_free():
 
 @pytest.mark.skipif(not FUSED, reason="no MPS or CUDA")
 @pytest.mark.parametrize("backend", FUSED or ["none"])
-@pytest.mark.parametrize("with_field", [False, True])
+@pytest.mark.parametrize("with_field", [False, True, 2])
 def test_kernels_are_torch(with_field, backend):
     """The fused kernels (motion_eddy_metal's on MPS, motion_eddy_triton's on CUDA; float32) against the torch path in
-    float64: step_moments' H, b and cost, step_cost, step_values, resample, prefilter, smooth and apply_volumes."""
+    float64: step_moments' H, b and cost, step_cost, step_values, resample, prefilter, smooth and apply_volumes. 2: a
+    field and a series of both polarities, the volumes' polarities alternating."""
     M = ME._kernels(backend)
     dev = FUSED_DEV[backend]
     torch.manual_seed(0)
@@ -140,26 +143,29 @@ def test_kernels_are_torch(with_field, backend):
     dfk = m(df) if with_field else torch.zeros(1, device=dev)
     ddf = torch.gradient(df, dim=1)[0] if with_field else None
     ddfk = m(ddf) if with_field else dfk
-    H, b, f = ME.t_step_moments(g64, coef, obs, pts, th, (0, 0, 0), df, npass=3, ddfield=ddf)
+    pol = torch.tensor([1.0, -1.0] * (G // 2), dtype=torch.float64) if with_field == 2 else None
+    pk = lambda t, v=None: ME.pack(m(t), None if pol is None else m(pol if v is None else pol[v]))  # noqa: E731
+    H, b, f = ME.t_step_moments(g64, coef, obs, pts, th, (0, 0, 0), df, npass=3, ddfield=ddf, pol=pol)
     nch, ip, fp = M.consts(g32, G, N, shape, npass=3, has_field=with_field)
-    Hm, bm, fm = M.step_moments(m(coef), m(obs), m(pts), ME.pack(m(th)), nch, ip, fp, dfk, ddfk, 16)
+    Hm, bm, fm = M.step_moments(m(coef), m(obs), m(pts), pk(th), nch, ip, fp, dfk, ddfk, 16)
     rel = lambda a, r: float((a.cpu().double() - r).abs().max() / r.abs().max())         # noqa: E731
     assert rel(Hm, H) < 1e-4 and rel(bm, b) < 1e-4 and rel(fm, f) < 1e-5
     k = torch.tensor([1, 4])
-    fc = ME.t_step_cost(g64, coef, obs, pts, th[k], k, (0, 0, 0), df, npass=3, ddfield=ddf)
-    fcm = M.step_cost(m(coef), m(obs), m(pts), ME.pack(m(th[k])), k.to(dev), nch, ip, fp, dfk, ddfk)
+    pk_ = None if pol is None else pol[k]
+    fc = ME.t_step_cost(g64, coef, obs, pts, th[k], k, (0, 0, 0), df, npass=3, ddfield=ddf, pol=pk_)
+    fcm = M.step_cost(m(coef), m(obs), m(pts), pk(th[k], k), k.to(dev), nch, ip, fp, dfk, ddfk)
     assert rel(fcm, fc) < 1e-5
-    sv = ME.t_step_values(g64, coef, pts, th[k], k, (0, 0, 0), df, npass=3, ddfield=ddf)
-    assert rel(M.step_values(m(coef), m(pts), ME.pack(m(th[k])), k.to(dev), ip, fp, dfk, ddfk), sv) < 1e-5
+    sv = ME.t_step_values(g64, coef, pts, th[k], k, (0, 0, 0), df, npass=3, ddfield=ddf, pol=pk_)
+    assert rel(M.step_values(m(coef), m(pts), pk(th[k], k), k.to(dev), ip, fp, dfk, ddfk), sv) < 1e-5
     vols = torch.rand(G, *shape, dtype=torch.float64) * 100
     nch2, ip2, fp2 = M.consts(g32, G, N, shape, has_field=with_field)
-    rs = ME.t_resample(g64, vols, pts, th, df)
-    assert rel(M.resample(m(vols), m(pts), ME.pack(m(th)), ip2, fp2, dfk), rs) < 1e-5
+    rs = ME.t_resample(g64, vols, pts, th, df, pol=pol, ddfield=ddf)
+    assert rel(M.resample(m(vols), m(pts), pk(th), ip2, fp2, dfk, ddfk), rs) < 1e-5
     assert rel(M.prefilter(m(vols)), ME.t_prefilter(vols)) < 1e-5
     assert rel(M.smooth(m(vols), 2.0), ME.t_smooth(vols, 2.0)) < 1e-5
-    out, valid = ME.t_apply_volumes(g64, vols, th, df, ddf)
+    out, valid = ME.t_apply_volumes(g64, vols, th, df, ddf, pol=pol)
     nch3, ip3, fp3 = M.consts(g32, G, 1, shape, has_field=with_field)
-    outm, validm = M.apply_volumes(m(vols), ME.pack(m(th)), ip3, fp3, dfk, ddfk)
+    outm, validm = M.apply_volumes(m(vols), pk(th), ip3, fp3, dfk, ddfk)
     inner = (valid > 0) & (validm.cpu().double() > 0)
     assert float((valid != validm.cpu().double()).double().mean()) < 1e-3
     assert float(((outm.cpu().double() - out) * inner).abs().max()) < 1e-3 * float(out.abs().max())
@@ -168,7 +174,8 @@ def test_kernels_are_torch(with_field, backend):
 # ------------------------------------------------------------------------------------------------ a synthetic scan
 
 def tensor_scan(seed=0, shape=(40, 44, 34), vox=2.5, nb0=4, shells=((1000, 30), (2000, 30)), motion=1.0, eddy=0.6,
-                field_peak=0.0, pe=1, sigma=1.0, reference="b0-mean", lams=(0.8e-3, 0.8e-3), sh_order=6):
+                field_peak=0.0, pe=1, sigma=1.0, reference="b0-mean", lams=(0.8e-3, 0.8e-3), sh_order=6, paired=False,
+                between=None):
     """A scan with a known truth: tensors in an ellipsoid with texture; per volume a rigid motion (mm, deg ~ motion),
     a quadratic eddy displacement linear in the gradient (voxels ~ eddy, no intercept per shell, no constant), and a
     field's displacement (peak voxels); the tissue sees each gradient turned by its volume's R^T. Each group's mean pose
@@ -177,7 +184,10 @@ def tensor_scan(seed=0, shape=(40, 44, 34), vox=2.5, nb0=4, shells=((1000, 30), 
     lams: the tensors' eigenvalues (mm^2/s; the default isotropic). With anisotropy coherent across the whole brain the
     shells' leave-one-out prediction misfits in a spatially structured way and biases the fit, the prototype's alike:
     with (1.1e-3, 0.55e-3) and no motion at all, 0.25-0.34 voxel of spurious displacement for any lambda 0.002-0.2
-    (NOTES 2026-10-26); isotropic, 0.02. So the regression cases here are isotropic."""
+    (NOTES 2026-10-26); isotropic, 0.02. So the regression cases here are isotropic.
+    paired: two series of opposite polarity with the same gradient table, one after the other, each volume with its
+    own motion: the eddy displacement of the second turns with its polarity (the same coefficients for the same
+    gradient), as the field's does. between: (6,) mm and degrees, how far the head moved between the two series."""
     rng = np.random.default_rng(seed)
     X, Y, Z = shape
     x, y, z = np.meshgrid(*[np.linspace(-1, 1, n) for n in shape], indexing="ij")
@@ -197,7 +207,10 @@ def tensor_scan(seed=0, shape=(40, 44, 34), vox=2.5, nb0=4, shells=((1000, 30), 
         dirs.append(v @ Q.T)
         bval.append(np.full(n, float(b)))
     gv, bval = np.concatenate(dirs), np.concatenate(bval)                                 # voxel-frame directions
+    if paired:
+        gv, bval = np.r_[gv, gv], np.r_[bval, bval]
     G = len(bval)
+    pol = np.r_[np.ones(G // 2), -np.ones(G // 2)] if paired else None
     affine = np.diag([vox, vox, vox, 1.0])                                                 # det > 0: FSL flips x
     Fl = np.diag([-1.0, 1.0, 1.0])
     bvec = (Fl @ gv.T)
@@ -219,6 +232,9 @@ def tensor_scan(seed=0, shape=(40, 44, 34), vox=2.5, nb0=4, shells=((1000, 30), 
             th[idx, :6] -= th[idx, :6].mean(0) - th[b0g, :6].mean(0)                       # the shell at the b0s' mean pose
             Xg = np.c_[np.ones(len(idx)), gv[idx]]
             th[idx, 6:] -= np.outer(np.ones(len(idx)), np.linalg.pinv(Xg)[0] @ th[idx, 6:])
+    if between is not None:
+        th[G // 2:, :3] += between[:3]
+        th[G // 2:, 3:6] += np.deg2rad(between[3:])
     geo = ME.Geometry(shape, [vox] * 3, pe, 10, "cpu", torch.float64)
     R = ME.rot(torch.tensor(th[:, 3:6])).numpy()
     q = np.einsum("gji,gj->gi", R, gv)                                                     # R^T g: what the tissue saw
@@ -236,16 +252,18 @@ def tensor_scan(seed=0, shape=(40, 44, 34), vox=2.5, nb0=4, shells=((1000, 30), 
     full = torch.stack(torch.meshgrid(*[torch.arange(n, dtype=torch.float64) for n in shape], indexing="ij"), -1).reshape(-1, 3)
     tt = torch.tensor(th)
     df = torch.tensor(dfield) if dfield is not None else None
-    xs = ME.phi_inv(geo, tt, full, df, npass=12)
+    pt = None if pol is None else torch.tensor(pol)
+    xs = ME.phi_inv(geo, tt, full, df, npass=12, pol=pt)
     coef = ME.t_prefilter(torch.tensor(np.moveaxis(sig, -1, 0).copy()))
     val, _ = ME.cubic_value_grad(coef, xs, want_grad=False)
-    jac = 1 + ME.eddy_dpe(geo, tt[:, 6:], xs)
+    jac = ME.eddy_dpe(geo, tt[:, 6:], xs)
     if df is not None:
         jac = jac + ME.field_at(torch.gradient(df, dim=pe)[0], xs)
+    jac = 1 + (jac if pol is None else jac * pt[:, None])
     acq = (val / jac).reshape(G, *shape).numpy()
     acq = np.clip(acq + rng.normal(0, sigma, acq.shape), 0, None)
     return dict(dwi=np.moveaxis(acq, 0, -1).astype(np.float32), bval=bval, bvec=bvec, affine=affine, pe_axis=pe,
-                theta=th, sig=sig, dfield=dfield, brain=brain, gv=gv, R=R)
+                theta=th, sig=sig, dfield=dfield, brain=brain, gv=gv, R=R, pol=pol)
 
 
 def edge_error(t, r):
@@ -256,7 +274,8 @@ def edge_error(t, r):
     xe = torch.tensor(np.argwhere(edge), dtype=torch.float64)
     est = torch.tensor(r.theta_fit)
     est = torch.nn.functional.pad(est, (0, 16 - est.shape[1]))
-    d = ME.phi(geo, est, xe) - ME.phi(geo, torch.tensor(t["theta"]), xe)
+    pol = None if t.get("pol") is None else torch.tensor(t["pol"])
+    d = ME.phi(geo, est, xe, pol=pol) - ME.phi(geo, torch.tensor(t["theta"]), xe, pol=pol)
     return float(d.norm(dim=-1).pow(2).mean().sqrt())
 
 
@@ -265,7 +284,8 @@ def true_disp(t):
     geo = ME.Geometry(t["brain"].shape, [t["affine"][0, 0]] * 3, t["pe_axis"], 10, "cpu", torch.float64)
     edge = t["brain"] & ~binary_erosion(t["brain"])
     xe = torch.tensor(np.argwhere(edge), dtype=torch.float64)
-    return float((ME.phi(geo, torch.tensor(t["theta"]), xe) - xe).norm(dim=-1).pow(2).mean().sqrt())
+    pol = None if t.get("pol") is None else torch.tensor(t["pol"])
+    return float((ME.phi(geo, torch.tensor(t["theta"]), xe, pol=pol) - xe).norm(dim=-1).pow(2).mean().sqrt())
 
 
 def bvec_error_deg(t, r):
@@ -279,6 +299,139 @@ def bvec_error_deg(t, r):
 @pytest.fixture(scope="module")
 def scan():
     return tensor_scan()
+
+
+@pytest.fixture(scope="module")
+def paired():
+    return tensor_scan(paired=True, field_peak=3.0, reference="first-b0")
+
+
+_PAIRED = {}
+
+
+def estimate_paired(t, device, pe_sign=None):
+    """A paired scan's estimate: the field given as Hz, for a readout time the test need not know. Kept per device."""
+    ro = 0.05
+    key = (device, pe_sign)
+    if key not in _PAIRED:
+        _PAIRED[key] = ME.estimate(t["dwi"], t["bval"], t["bvec"], t["affine"], t["pe_axis"], field_hz=t["dfield"] / ro,
+                                   pe_sign=t["pol"] if pe_sign is None else pe_sign, readout_s=ro, device=device,
+                                   options={"steps": 20})
+    return _PAIRED[key]
+
+
+@pytest.mark.parametrize("device", ["cpu", *(FUSED_DEV[b] for b in FUSED)])
+def test_estimate_recovers_motion_and_eddy_with_both_polarities(paired, device):
+    """Two series of opposite polarity, known motion, eddy currents and field, on every backend here: the map is
+    recovered, with the eddy displacement of the reversed series turned, and the same gradient gets the same
+    coefficients in both series."""
+    r = estimate_paired(paired, device)
+    before, after = true_disp(paired), edge_error(paired, r)
+    assert after < 0.15 * before and after < 0.2, (before, after)
+    assert np.median(bvec_error_deg(paired, r)) < 0.5
+    G = len(paired["bval"]) // 2
+    dw = paired["bval"][:G] > 50
+    twins = np.abs(r.theta_fit[:G][dw, 7:] - r.theta_fit[G:][dw, 7:])
+    spread = np.abs(paired["theta"][:G][dw, 7:])
+    assert np.median(twins) < np.median(spread), (np.median(twins), np.median(spread))
+
+
+@pytest.mark.skipif(not MPS and not CUDA, reason="no GPU: one backend is checked above, and this needs two runs")
+def test_ignoring_the_polarity_fails(paired):
+    """The test above has power: told every volume has the first's polarity, the same scan comes out far worse."""
+    dev = "mps" if MPS else "cuda"
+    assert edge_error(paired, estimate_paired(paired, dev, pe_sign=1.0)) > 4 * edge_error(paired, estimate_paired(paired, dev))
+
+
+@pytest.mark.parametrize("device", [FUSED_DEV[FUSED[0]] if FUSED else "cpu"])
+def test_polarity_applied(paired, device):
+    """apply_volumes resamples each volume with its own polarity: the corrected pairs agree, where they would not with
+    the signs ignored."""
+    r = estimate_paired(paired, device)
+    corr, valid = ME.apply_volumes(paired["dwi"], r, field_hz=paired["dfield"] / 0.05, device=device)
+    G = len(paired["bval"]) // 2
+    brain = binary_erosion(paired["brain"], iterations=2) & valid
+    a, b = corr[..., :G][brain].mean(0), corr[..., G:][brain].mean(0)
+    assert np.abs(a - b).max() < 0.05 * a.max()
+    d = (corr[..., :G] - corr[..., G:])[brain]
+    acq = (paired["dwi"][..., :G] - paired["dwi"][..., G:])[brain]
+    assert np.sqrt((d ** 2).mean()) < 0.5 * np.sqrt((acq ** 2).mean())
+
+
+def test_polarity_groups():
+    g = [np.arange(4), np.arange(4, 8)]
+    pol = np.array([1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, -1.0])
+    assert ME.polarity_groups(g, None) is g
+    assert [i.tolist() for i in ME.polarity_groups(g, pol)] == [[2, 3], [0, 1], [5, 7], [4, 6]]
+
+
+def subset(t, keep):
+    """A paired scan with only these volumes."""
+    return {**t, "dwi": t["dwi"][..., keep], "bval": t["bval"][keep], "bvec": t["bvec"][:, keep], "theta": t["theta"][keep],
+            "pol": t["pol"][keep], "R": t["R"][keep], "gv": t["gv"][keep]}
+
+
+def test_outliers_are_judged_within_a_polarity():
+    """The second polarity, a third of the volumes, carries a systematic deficit in a slice (what a field leaves in a
+    pile-up). Against the whole shell, whose median is then the first polarity's, each of those volumes would read as
+    signal loss there; none is flagged. A real dropout in one of them is."""
+    t = tensor_scan(paired=True, field_peak=3.0, reference="first-b0", sigma=0.5, seed=2)
+    G = len(t["bval"]) // 2
+    t = subset(t, np.r_[np.arange(G), np.arange(G, 2 * G, 2)])
+    d = t["dwi"].copy()
+    d[:, :, 12, G:] *= 0.85                                                # all of the second polarity, slice 12
+    hit = G + 12
+    d[:, :, 17, hit] *= 0.3                                                # one volume, slice 17
+    r = ME.estimate(d, t["bval"], t["bvec"], t["affine"], t["pe_axis"], field_hz=t["dfield"] / 0.05, pe_sign=t["pol"],
+                    readout_s=0.05, device=FUSED_DEV[FUSED[0]] if FUSED else "cpu", options={"steps": 12})
+    assert 17 in r.outlier_slices.get(hit, [])
+    assert not [v for v, ks in r.outlier_slices.items() if 12 in ks], r.outlier_slices
+
+
+@pytest.mark.parametrize("keep", ["balanced", "few reversed b0s", "a shell in one series"])
+def test_head_motion_between_the_series(keep):
+    """The head moves about 5 mm and 2 degrees between the series. Each shell's pose is tied to the b0s of its own
+    polarities, so the fit holds however the b0s and shells split between the series (0.57 and 0.50 voxel for the two
+    unbalanced cases when a shell is tied to the mean of all the b0s). The motion within a series is small here, as in a
+    still head: a lone b0 stands for its series only if its series is not jittering about it."""
+    t = tensor_scan(paired=True, field_peak=3.0, reference="first-b0", motion=0.3,
+                    between=np.array([3.0, 3.0, 2.0, 1.5, 1.5, 1.0]))
+    G = len(t["bval"]) // 2
+    all_ = np.arange(2 * G)
+    if keep == "few reversed b0s":
+        t = subset(t, np.setdiff1d(all_, [G + 1, G + 2, G + 3]))
+    elif keep == "a shell in one series":
+        t = subset(t, all_[(all_ < G) | (t["bval"] < 1500)])
+    r = ME.estimate(t["dwi"], t["bval"], t["bvec"], t["affine"], t["pe_axis"], field_hz=t["dfield"] / 0.05, pe_sign=t["pol"],
+                    readout_s=0.05, device=FUSED_DEV[FUSED[0]] if FUSED else "cpu", options={"steps": 25})
+    assert edge_error(t, r) < 0.25, edge_error(t, r)
+
+
+def test_gauge_with_different_readouts():
+    """A displacement common to the maps of a shell of m = (1, -0.8) is removed exactly: e_v = c / m_v."""
+    m = np.array([1.0, 1.0, -0.8, -0.8, 1.0, -0.8])
+    g = np.random.default_rng(0).normal(size=(6, 3))
+    X = np.c_[np.ones(6), 1 / m, g]
+    c = 0.7
+    e = c / m                                                              # the unseen field, in the coefficients
+    assert abs(np.linalg.pinv(X)[1] @ e - c) < 1e-9
+
+
+def test_one_polarity_given_per_volume_is_the_same_fit(scan):
+    """pe_sign and readout_s per volume, all alike: no mixed path, the same numbers to the bit."""
+    h = np.zeros(scan["dwi"].shape[:3])
+    G = len(scan["bval"])
+    kw = dict(field_hz=h, readout_s=0.05, device="cpu", options={"steps": 3})
+    a = ME.estimate(scan["dwi"], scan["bval"], scan["bvec"], scan["affine"], 1, pe_sign=-1.0, **kw)
+    b = ME.estimate(scan["dwi"], scan["bval"], scan["bvec"], scan["affine"], 1, pe_sign=np.full(G, -1.0), **kw)
+    assert a.polarity is None and b.polarity is None and (a.theta_fit == b.theta_fit).all()
+
+
+def test_different_readouts_scale_the_displacement():
+    """m_v follows the readout time as well as the sign (as a field's displacement does)."""
+    first, m = ME._polarity(np.array([1.0, 1.0, -1.0]), np.array([0.05, 0.1, 0.05]), 3)
+    assert first == 0.05 and m.tolist() == [1.0, 2.0, -1.0]
+    assert ME._polarity(-1.0, 0.05, 3)[1] is None
 
 
 def test_estimate_cpu(scan):

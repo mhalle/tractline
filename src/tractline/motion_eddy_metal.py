@@ -16,6 +16,11 @@ Also: resample (the forward map and a trilinear sample, for the predictions), pr
 B-spline prefilter), gauss_axis (separable Gaussian smoothing) and apply_volumes (the final cubic resample, times the
 displacement's Jacobian along PE). float32 throughout (Apple GPUs have no float64).
 
+A series of both phase-encoding polarities (motion_eddy's module docstring) is HAS_FIELD 2: the displacement is scaled by
+the volume's m_v (the last per-volume parameter) wherever it is used, the resample's sample is multiplied by the
+field's Jacobian, and the prediction is divided by it where it meets the data. Those branches are the only difference: with
+HAS_FIELD 0 or 1 the arithmetic is the one-polarity fit's.
+
 Moved here from the prototype (bench/motion_eddy/metal_step.py, 2026-10-21) and extended with the field's displacement.
 """
 from __future__ import annotations
@@ -26,7 +31,7 @@ import torch
 TG = 256                                                  # threads per threadgroup (8 SIMD groups of 32)
 NH = 136                                                  # upper triangle of a 16 x 16
 NA = NH + 16 + 1                                          # + J'r + r^2
-NPV = 49                                                  # per volume: R (9), t (3), eddy (10), dR_j (27)
+NPV = 50                                                  # per volume: R (9), t (3), eddy (10), dR_j (27), m_v
 NIP = 13                                                  # the int parameters (consts)
 
 _SRC = r"""
@@ -37,9 +42,10 @@ using namespace metal;
 #define NSG (TG / 32)
 #define NH 136
 #define NA (NH + 16 + 1)
-#define NPV 49
+#define NPV 50
 
-// ip: G, N, NCH, X, Y, Z (the sampled volumes' grid), PE, NMON, NPASS, HAS_FIELD, FX, FY, FZ (the field's grid: the full one)
+// ip: G, N, NCH, X, Y, Z (the sampled volumes' grid), PE, NMON, NPASS, HAS_FIELD (2: a field and a series of both
+// polarities), FX, FY, FZ (the field's grid: the full one)
 // fp: cen (3), half (3), vox (3), scale (16), the sampled grid's offset in the full grid (3)
 
 static inline float eddy_at(device const float* te, float3 u, int nmon) {
@@ -123,6 +129,11 @@ static inline float dpe_at(device const float* te, device const float* ddfield, 
     return d;
 }
 
+// a mixed series: the field's Jacobian along PE for this volume at reference point x, 1 + m_v d(d_h)/dx_pe
+static inline float jac_field(device const float* pv, device const float* ddfield, float3 x, int FX, int FY, int FZ) {
+    return 1.0f + pv[49] * field_at(ddfield, x, FX, FY, FZ);
+}
+
 // x = phi^-1(y), voxels: the rigid part inverted with the displacement at y, then npass Newton steps with the map's
 // derivative A + e_pe s e_pe' (s the displacement's slope along PE), by Sherman-Morrison (motion_eddy.phi_inv)
 static inline float3 phi_inv(device const float* pv, float3 y, device const float* fp, device const float* dfield,
@@ -130,6 +141,7 @@ static inline float3 phi_inv(device const float* pv, float3 y, device const floa
     float3 cen = float3(fp[0], fp[1], fp[2]), hlf = float3(fp[3], fp[4], fp[5]), vox = float3(fp[6], fp[7], fp[8]);
     device const float* R = pv; device const float* t = pv + 9; device const float* te = pv + 12;
     float e = disp_at(te, dfield, y, cen, hlf, nmon, has_field, FX, FY, FZ);
+    if (has_field == 2) e *= pv[49];
     float3 q = (y - cen) * vox - float3(t[0], t[1], t[2]);
     q[pe] -= e * vox[pe];
     float3 x = float3(R[0] * q.x + R[3] * q.y + R[6] * q.z,                // R^T q (R row-major)
@@ -143,11 +155,14 @@ static inline float3 phi_inv(device const float* pv, float3 y, device const floa
         float3 p = float3(R[0] * xm.x + R[1] * xm.y + R[2] * xm.z, R[3] * xm.x + R[4] * xm.y + R[5] * xm.z,
                           R[6] * xm.x + R[7] * xm.y + R[8] * xm.z);
         p = (p + float3(t[0], t[1], t[2])) / vox + cen;
-        p[pe] += disp_at(te, dfield, x, cen, hlf, nmon, has_field, FX, FY, FZ);
+        float dk = disp_at(te, dfield, x, cen, hlf, nmon, has_field, FX, FY, FZ);
+        if (has_field == 2) dk *= pv[49];
+        p[pe] += dk;
         float3 r = (p - y) * vox;
         float3 u = float3(R[0] * r.x + R[3] * r.y + R[6] * r.z, R[1] * r.x + R[4] * r.y + R[7] * r.z,
                           R[2] * r.x + R[5] * r.y + R[8] * r.z) / vox;  // A^-1 r
         float s = dpe_at(te, ddfield, x, cen, hlf, pe, nmon, has_field, FX, FY, FZ);
+        if (has_field == 2) s *= pv[49];
         float den = max(1.0f + s * a[pe], 0.1f);
         x = x - (u - a * (s * u[pe] / den));
     }
@@ -162,7 +177,9 @@ static inline float3 phi_fwd(device const float* pv, float3 x, device const floa
     float3 p = float3(pv[0] * xm.x + pv[1] * xm.y + pv[2] * xm.z, pv[3] * xm.x + pv[4] * xm.y + pv[5] * xm.z,
                       pv[6] * xm.x + pv[7] * xm.y + pv[8] * xm.z);
     p = (p + float3(pv[9], pv[10], pv[11])) / vox + cen;
-    p[pe] += disp_at(pv + 12, dfield, x, cen, hlf, nmon, has_field, FX, FY, FZ);
+    float d = disp_at(pv + 12, dfield, x, cen, hlf, nmon, has_field, FX, FY, FZ);
+    if (has_field == 2) d *= pv[49];
+    p[pe] += d;
     return p;
 }
 
@@ -225,6 +242,8 @@ kernel void step_moments(
         float3 x = phi_inv(pv, y, fp, dfield, ddfield, pe, nmon, npass, hf, FX, FY, FZ);
         float3 gr;
         float v = cubic_vg(coef + long(g) * X * Y * Z, x - float3(fp[25], fp[26], fp[27]), X, Y, Z, gr, true);
+        float jinv = 1.0f;                                                   // a mixed series: the field's Jacobian
+        if (hf == 2) { jinv = 1.0f / max(jac_field(pv, ddfield, x, FX, FY, FZ), 0.1f); v *= jinv; }
         r = v - obs[long(g) * N + n];
         float3 cen = float3(fp[0], fp[1], fp[2]), hlf = float3(fp[3], fp[4], fp[5]), vox = float3(fp[6], fp[7], fp[8]);
         device const float* sc = fp + 9;
@@ -236,6 +255,7 @@ kernel void step_moments(
                            R[6] * gq.x + R[7] * gq.y + R[8] * gq.z) * vox;
         float3 w = eddy_grad_at(pv + 12, x, cen, hlf, nmon);
         if (hf) w += field_grad_at(dfield, x, FX, FY, FZ);
+        if (hf == 2) w *= pv[49];
         float3 wq = w / vox;
         float3 aw = float3(R[0] * wq.x + R[1] * wq.y + R[2] * wq.z, R[3] * wq.x + R[4] * wq.y + R[5] * wq.z,
                            R[6] * wq.x + R[7] * wq.y + R[8] * wq.z) * vox;           // A^-T w
@@ -253,7 +273,9 @@ kernel void step_moments(
         float3 u = (x - cen) / hlf;
         float m[10] = {1.0f, u.x, u.y, u.z, u.x * u.x, u.y * u.y, u.z * u.z, u.x * u.y, u.x * u.z, u.y * u.z};
         float gpe = gt[pe];
+        if (hf == 2) gpe *= pv[49];
         for (int k = 0; k < nmon; k++) J[6 + k] = -gpe * m[k] * sc[6 + k];
+        if (hf == 2) for (int i = 0; i < 16; i++) J[i] *= jinv;
     }
     // sums over the SIMD group, then over the threadgroup
     int q = 0;
@@ -305,6 +327,7 @@ kernel void step_cost(
         float3 x = phi_inv(pvol + long(li) * NPV, y, fp, dfield, ddfield, pe, nmon, npass, hf, FX, FY, FZ);
         float3 gr;
         float v = cubic_vg(coef + long(g) * X * Y * Z, x - float3(fp[25], fp[26], fp[27]), X, Y, Z, gr, false);
+        if (hf == 2) v /= max(jac_field(pvol + long(li) * NPV, ddfield, x, FX, FY, FZ), 0.1f);
         float r = v - obs[long(g) * N + n];
         r2 = r * r;
     }
@@ -341,7 +364,9 @@ kernel void step_values(
     float3 y = float3(pts[3 * n], pts[3 * n + 1], pts[3 * n + 2]);
     float3 x = phi_inv(pvol + long(li) * NPV, y, fp, dfield, ddfield, pe, nmon, npass, hf, FX, FY, FZ);
     float3 gr;
-    out[long(li) * N + n] = cubic_vg(coef + long(g) * X * Y * Z, x - float3(fp[25], fp[26], fp[27]), X, Y, Z, gr, false);
+    float v = cubic_vg(coef + long(g) * X * Y * Z, x - float3(fp[25], fp[26], fp[27]), X, Y, Z, gr, false);
+    if (hf == 2) v /= max(jac_field(pvol + long(li) * NPV, ddfield, x, FX, FY, FZ), 0.1f);
+    out[long(li) * N + n] = v;
 }
 
 // the forward map phi(x) and a trilinear sample of the acquired volume there (zero outside: grid_sample's padding)
@@ -353,6 +378,7 @@ kernel void resample(
     device const int*   ip     [[buffer(4)]],
     device const float* fp     [[buffer(5)]],
     device const float* dfield [[buffer(6)]],
+    device const float* ddfield [[buffer(7)]],
     uint tid [[thread_position_in_grid]])
 {
     int N = ip[1], X = ip[3], Y = ip[4], Z = ip[5], pe = ip[6], nmon = ip[7];
@@ -378,6 +404,7 @@ kernel void resample(
             }
         }
     }
+    if (hf == 2) v *= max(jac_field(pv, ddfield, x, FX, FY, FZ), 0.0f);
     out[long(g) * N + n] = v;
 }
 
@@ -460,7 +487,9 @@ kernel void apply_volumes(
     device const float* pv = pvol + long(g) * NPV;
     float3 cen = float3(fp[0], fp[1], fp[2]), hlf = float3(fp[3], fp[4], fp[5]);
     float3 p = phi_fwd(pv, x, fp, dfield, pe, nmon, hf, FX, FY, FZ);
-    float jac = 1.0f + dpe_at(pv + 12, ddfield, x, cen, hlf, pe, nmon, hf, FX, FY, FZ);
+    float jac = dpe_at(pv + 12, ddfield, x, cen, hlf, pe, nmon, hf, FX, FY, FZ);
+    if (hf == 2) jac *= pv[49];
+    jac += 1.0f;
     float3 gr;
     float val = cubic_vg(coef + long(g) * nv, p, X, Y, Z, gr, false);
     bool in = p.x >= 0.0f && p.x <= float(X - 1) && p.y >= 0.0f && p.y <= float(Y - 1) && p.z >= 0.0f && p.z <= float(Z - 1);
@@ -496,7 +525,8 @@ def unpack_H(part, P):
 
 def consts(geo, G, N, grid, offset=(0, 0, 0), npass=2, has_field=False):
     """(nch, ip, fp) for the kernels. geo: the Geometry (motion_eddy.Geometry); grid: the shape of the volumes a kernel
-    samples (a crop of the full grid, `offset` its first voxel). The kernels index threads in 32 bits: refused above."""
+    samples (a crop of the full grid, `offset` its first voxel). has_field: False, True, or 2 (a field and a series of
+    both polarities). The kernels index threads in 32 bits: refused above."""
     nch = (N + TG - 1) // TG
     X, Y, Z = grid
     if max(G * N, G * X * Y * Z, G * nch * TG) >= 2 ** 31:
@@ -570,11 +600,11 @@ def apply_volumes(vols, pvol, ip, fp, dfield, ddfield):
     return out, valid
 
 
-def resample(vols, pts, pvol, ip, fp, dfield):
-    """vols (G, X, Y, Z) sampled trilinearly at phi_g(pts), zero outside -> (G, N)."""
+def resample(vols, pts, pvol, ip, fp, dfield, ddfield):
+    """vols (G, X, Y, Z) sampled trilinearly at phi_g(pts), zero outside -> (G, N); a mixed series: times the Jacobian."""
     G, N = vols.shape[0], pts.shape[0]
     out = torch.empty(G, N, dtype=torch.float32, device=vols.device)
-    library().resample(vols, pts, pvol, out, ip, fp, dfield, threads=_threads(G * N), group_size=TG)
+    library().resample(vols, pts, pvol, out, ip, fp, dfield, ddfield, threads=_threads(G * N), group_size=TG)
     return out
 
 

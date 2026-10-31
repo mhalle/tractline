@@ -14,7 +14,10 @@ prefilter and the Gaussian smoothing stay in torch (dense products and a convolu
 
 The PE axis, the number of eddy terms, the Newton passes and whether a field is given are compile-time constants:
 Triton compiles one copy per combination met (a few), cached on disk across processes (TRITON_CACHE_DIR, by default
-~/.triton/cache). The sizes are not specialized on, so a scan of other dimensions reuses the copy.
+~/.triton/cache). The sizes are not specialized on, so a scan of other dimensions reuses the copy. HF 2 is a field and a
+series of both phase-encoding polarities (motion_eddy's module docstring): only that copy scales the displacement by
+the volume's m_v and carries the field's Jacobian in the resample and the prediction; HF 0 and 1 compile as they
+always did.
 """
 from __future__ import annotations
 
@@ -27,7 +30,7 @@ except ImportError:                                       # no Triton (macOS, a 
     triton = None
 
 BLOCK = 256                                               # points (or voxels) per program
-NPV = 49                                                  # per volume: R (9, row-major), t (3), eddy (10), dR_j (27)
+NPV = 50                                                  # per volume: R (9, row-major), t (3), eddy (10), dR_j (27), m_v
 NOUT = 16 * 16 + 16 + 1                                   # per block: J'J, J'r, r^2
 
 
@@ -55,7 +58,7 @@ class Consts:
         self.G, self.N = int(G), int(N)
         self.X, self.Y, self.Z = (int(n) for n in grid)
         self.FX, self.FY, self.FZ = geo.shape
-        self.pe, self.nmon, self.npass, self.hf = geo.pe_axis, geo.nmon, int(npass), int(bool(has_field))
+        self.pe, self.nmon, self.npass, self.hf = geo.pe_axis, geo.nmon, int(npass), int(has_field)
         self.nch = (self.N + BLOCK - 1) // BLOCK
         sc = torch.zeros(16, dtype=torch.float32)
         sc[:geo.P] = geo.scale.float().cpu()
@@ -85,7 +88,7 @@ def smooth(vols, fwhm_vox):
 _UNSPEC = {'_step_moments': ['coef', 'obs', 'pts', 'pvol', 'part', 'fp', 'dfield', 'ddfield', 'N', 'NCH', 'X', 'Y', 'Z', 'FX', 'FY', 'FZ'],
            '_step_cost': ['coef', 'obs', 'pts', 'pvol', 'vols', 'part', 'fp', 'dfield', 'ddfield', 'N', 'NCH', 'X', 'Y', 'Z', 'FX', 'FY', 'FZ'],
            '_step_values': ['coef', 'pts', 'pvol', 'vols', 'out', 'fp', 'dfield', 'ddfield', 'N', 'X', 'Y', 'Z', 'FX', 'FY', 'FZ'],
-           '_resample': ['vols', 'pts', 'pvol', 'out', 'fp', 'dfield', 'N', 'X', 'Y', 'Z', 'FX', 'FY', 'FZ'],
+           '_resample': ['vols', 'pts', 'pvol', 'out', 'fp', 'dfield', 'ddfield', 'N', 'X', 'Y', 'Z', 'FX', 'FY', 'FZ'],
            '_apply_volumes': ['coef', 'pvol', 'out', 'valid', 'fp', 'dfield', 'ddfield', 'X', 'Y', 'Z', 'FX', 'FY', 'FZ']}
 
 if triton is not None:
@@ -194,6 +197,11 @@ if triton is not None:
         return d
 
     @triton.jit
+    def _jac_field(pv, ddfield, x0, x1, x2, FX, FY, FZ):
+        """A mixed series: the field's Jacobian along PE for this volume at reference points x, 1 + m_v d(d_h)/dx_pe."""
+        return 1.0 + tl.load(pv + 49) * _field(ddfield, x0, x1, x2, FX, FY, FZ)
+
+    @triton.jit
     def _phi_fwd(pv, fp, dfield, x0, x1, x2, FX, FY, FZ, PE: tl.constexpr, NMON: tl.constexpr, HF: tl.constexpr):
         c0, c1, c2 = tl.load(fp), tl.load(fp + 1), tl.load(fp + 2)
         h0, h1, h2 = tl.load(fp + 3), tl.load(fp + 4), tl.load(fp + 5)
@@ -203,6 +211,8 @@ if triton is not None:
         p1 = (tl.load(pv + 3) * m0 + tl.load(pv + 4) * m1 + tl.load(pv + 5) * m2 + tl.load(pv + 10)) / v1 + c1
         p2 = (tl.load(pv + 6) * m0 + tl.load(pv + 7) * m1 + tl.load(pv + 8) * m2 + tl.load(pv + 11)) / v2 + c2
         e = _disp(pv + 12, dfield, x0, x1, x2, c0, c1, c2, h0, h1, h2, FX, FY, FZ, NMON, HF)
+        if HF == 2:
+            e = e * tl.load(pv + 49)
         if PE == 0:
             p0 += e
         elif PE == 1:
@@ -221,6 +231,8 @@ if triton is not None:
         r10, r11, r12 = tl.load(pv + 3), tl.load(pv + 4), tl.load(pv + 5)
         r20, r21, r22 = tl.load(pv + 6), tl.load(pv + 7), tl.load(pv + 8)
         e = _disp(pv + 12, dfield, y0, y1, y2, c0, c1, c2, h0, h1, h2, FX, FY, FZ, NMON, HF)
+        if HF == 2:
+            e = e * tl.load(pv + 49)
         q0 = (y0 - c0) * v0 - tl.load(pv + 9)
         q1 = (y1 - c1) * v1 - tl.load(pv + 10)
         q2 = (y2 - c2) * v2 - tl.load(pv + 11)
@@ -245,6 +257,8 @@ if triton is not None:
             u1 = (r01 * s0 + r11 * s1 + r21 * s2) / v1
             u2 = (r02 * s0 + r12 * s1 + r22 * s2) / v2
             s = _dpe(pv + 12, ddfield, x0, x1, x2, c0, c1, c2, h0, h1, h2, FX, FY, FZ, PE, NMON, HF)
+            if HF == 2:
+                s = s * tl.load(pv + 49)
             den = tl.maximum(1.0 + s * ape, 0.1)
             k = s * _pick(u0, u1, u2, PE) / den
             x0 = x0 - (u0 - a0 * k)
@@ -311,7 +325,7 @@ if triton is not None:
     def _residual(coef, obs, pts, pvol, fp, dfield, ddfield, g, li, n, m, N, X, Y, Z, FX, FY, FZ,
                   PE: tl.constexpr, NMON: tl.constexpr, NPASS: tl.constexpr, HF: tl.constexpr, GRAD: tl.constexpr):
         """At the block's points n of volume g (parameters at row li of pvol): x = phi^-1(y), the prediction's value
-        (and gradient) there, and the residual against obs."""
+        (and gradient) there, and the residual against obs; ji, a mixed series' 1 / Jacobian, by which the value was multiplied (1 otherwise)."""
         y0 = tl.load(pts + 3 * n, mask=m, other=0.0)
         y1 = tl.load(pts + 3 * n + 1, mask=m, other=0.0)
         y2 = tl.load(pts + 3 * n + 2, mask=m, other=0.0)
@@ -320,8 +334,12 @@ if triton is not None:
         cg = coef + g.to(tl.int64) * X * Y * Z
         v, gr0, gr1, gr2 = _cubic(cg, x0 - tl.load(fp + 25), x1 - tl.load(fp + 26), x2 - tl.load(fp + 27), X, Y, Z,
                                   GRAD)
+        ji = tl.zeros_like(v) + 1.0
+        if HF == 2:
+            ji = 1.0 / tl.maximum(_jac_field(pv, ddfield, x0, x1, x2, FX, FY, FZ), 0.1)
+            v = v * ji
         r = v - tl.load(obs + g.to(tl.int64) * N + n, mask=m, other=0.0)
-        return tl.where(m, r, 0.0), v, x0, x1, x2, gr0, gr1, gr2
+        return tl.where(m, r, 0.0), v, x0, x1, x2, gr0, gr1, gr2, ji
 
     # ------------------------------------------------------------------------------------------------- kernels
 
@@ -333,8 +351,8 @@ if triton is not None:
         g = tl.program_id(1)
         n = ch * BLOCK + tl.arange(0, BLOCK)
         m = n < N
-        r, v, x0, x1, x2, gr0, gr1, gr2 = _residual(coef, obs, pts, pvol, fp, dfield, ddfield, g, g, n, m, N, X, Y, Z,
-                                                    FX, FY, FZ, PE, NMON, NPASS, HF, True)
+        r, v, x0, x1, x2, gr0, gr1, gr2, ji = _residual(coef, obs, pts, pvol, fp, dfield, ddfield, g, g, n, m, N, X, Y, Z,
+                                                        FX, FY, FZ, PE, NMON, NPASS, HF, True)
         c0, c1, c2 = tl.load(fp), tl.load(fp + 1), tl.load(fp + 2)
         h0, h1, h2 = tl.load(fp + 3), tl.load(fp + 4), tl.load(fp + 5)
         v0, v1, v2 = tl.load(fp + 6), tl.load(fp + 7), tl.load(fp + 8)
@@ -354,6 +372,8 @@ if triton is not None:
             w0 += f0
             w1 += f1
             w2 += f2
+        if HF == 2:
+            w0, w1, w2 = w0 * tl.load(pv + 49), w1 * tl.load(pv + 49), w2 * tl.load(pv + 49)
         w0, w1, w2 = w0 / v0, w1 / v1, w2 / v2
         aw0 = (r00 * w0 + r01 * w1 + r02 * w2) * v0
         aw1 = (r10 * w0 + r11 * w1 + r12 * w2) * v1
@@ -374,6 +394,8 @@ if triton is not None:
         J += tl.where(cols == 5, (-_rot_col(pv + 40, m0, m1, m2, v0, v1, v2, gt0, gt1, gt2) * tl.load(sc + 5))[:, None],
                       0.0)
         gpe = -_pick(gt0, gt1, gt2, PE)
+        if HF == 2:
+            gpe = gpe * tl.load(pv + 49)
         if NMON > 0:
             J += tl.where(cols == 6, (gpe * tl.load(sc + 6))[:, None], 0.0)
             J += tl.where(cols == 7, (gpe * u0 * tl.load(sc + 7))[:, None], 0.0)
@@ -386,6 +408,8 @@ if triton is not None:
             J += tl.where(cols == 13, (gpe * u0 * u1 * tl.load(sc + 13))[:, None], 0.0)
             J += tl.where(cols == 14, (gpe * u0 * u2 * tl.load(sc + 14))[:, None], 0.0)
             J += tl.where(cols == 15, (gpe * u1 * u2 * tl.load(sc + 15))[:, None], 0.0)
+        if HF == 2:
+            J = J * ji[:, None]
         J = tl.where(m[:, None], J, 0.0)
         H = tl.dot(tl.trans(J), J, input_precision="ieee")                       # (16, 16)
         b = tl.sum(J * r[:, None], axis=0)
@@ -404,8 +428,8 @@ if triton is not None:
         g = tl.load(vols + li)
         n = ch * BLOCK + tl.arange(0, BLOCK)
         m = n < N
-        r, v, x0, x1, x2, gr0, gr1, gr2 = _residual(coef, obs, pts, pvol, fp, dfield, ddfield, g, li, n, m, N, X, Y, Z,
-                                                    FX, FY, FZ, PE, NMON, NPASS, HF, False)
+        r, v, x0, x1, x2, gr0, gr1, gr2, ji = _residual(coef, obs, pts, pvol, fp, dfield, ddfield, g, li, n, m, N, X, Y, Z,
+                                                        FX, FY, FZ, PE, NMON, NPASS, HF, False)
         tl.store(part + li.to(tl.int64) * NCH + ch, tl.sum(r * r, axis=0))
 
     @triton.jit(do_not_specialize=_UNSPEC["_step_values"])
@@ -417,12 +441,12 @@ if triton is not None:
         g = tl.load(vols + li)
         n = ch * BLOCK + tl.arange(0, BLOCK)
         m = n < N
-        r, v, x0, x1, x2, gr0, gr1, gr2 = _residual(coef, pts, pts, pvol, fp, dfield, ddfield, g, li, n, m, 0, X, Y, Z,
-                                                    FX, FY, FZ, PE, NMON, NPASS, HF, False)
+        r, v, x0, x1, x2, gr0, gr1, gr2, ji = _residual(coef, pts, pts, pvol, fp, dfield, ddfield, g, li, n, m, 0, X, Y, Z,
+                                                        FX, FY, FZ, PE, NMON, NPASS, HF, False)
         tl.store(out + li.to(tl.int64) * N + n, v, mask=m)
 
     @triton.jit(do_not_specialize=_UNSPEC["_resample"])
-    def _resample(vols, pts, pvol, out, fp, dfield, N, X, Y, Z, FX, FY, FZ,
+    def _resample(vols, pts, pvol, out, fp, dfield, ddfield, N, X, Y, Z, FX, FY, FZ,
                   PE: tl.constexpr, NMON: tl.constexpr, HF: tl.constexpr, BLOCK: tl.constexpr):
         ch = tl.program_id(0)
         g = tl.program_id(1)
@@ -448,6 +472,8 @@ if triton is not None:
                     wk = t2 if k == 1 else 1.0 - t2
                     ok = m & (ia >= 0) & (ia <= X - 1) & (ib >= 0) & (ib <= Y - 1) & (ik >= 0) & (ik <= Z - 1)
                     v += wa * wb * wk * tl.load(c + (ia * Y + ib) * Z + ik, mask=ok, other=0.0)
+        if HF == 2:
+            v = v * tl.maximum(_jac_field(pvol + g * _NPV, ddfield, x0, x1, x2, FX, FY, FZ), 0.0)
         tl.store(out + g.to(tl.int64) * N + n, v, mask=m)
 
     @triton.jit(do_not_specialize=_UNSPEC["_apply_volumes"])
@@ -465,7 +491,10 @@ if triton is not None:
         p0, p1, p2 = _phi_fwd(pv, fp, dfield, x0, x1, x2, FX, FY, FZ, PE, NMON, HF)
         c0, c1, c2 = tl.load(fp), tl.load(fp + 1), tl.load(fp + 2)
         h0, h1, h2 = tl.load(fp + 3), tl.load(fp + 4), tl.load(fp + 5)
-        jac = 1.0 + _dpe(pv + 12, ddfield, x0, x1, x2, c0, c1, c2, h0, h1, h2, FX, FY, FZ, PE, NMON, HF)
+        dj = _dpe(pv + 12, ddfield, x0, x1, x2, c0, c1, c2, h0, h1, h2, FX, FY, FZ, PE, NMON, HF)
+        if HF == 2:
+            dj = dj * tl.load(pv + 49)
+        jac = 1.0 + dj
         val, d0, d1, d2 = _cubic(coef + g.to(tl.int64) * nv, p0, p1, p2, X, Y, Z, False)
         inside = ((p0 >= 0.0) & (p0 <= (X - 1).to(tl.float32)) & (p1 >= 0.0) & (p1 <= (Y - 1).to(tl.float32))
                   & (p2 >= 0.0) & (p2 <= (Z - 1).to(tl.float32)))
@@ -514,13 +543,13 @@ def step_values(coef, pts, pvol_sub, vols, c, fp, dfield, ddfield):
     return out
 
 
-def resample(vols, pts, pvol, c, fp, dfield):
-    """vols (G, X, Y, Z) sampled trilinearly at phi_g(pts), zero outside -> (G, N)."""
+def resample(vols, pts, pvol, c, fp, dfield, ddfield):
+    """vols (G, X, Y, Z) sampled trilinearly at phi_g(pts), zero outside -> (G, N); a mixed series: times the Jacobian."""
     G, N = vols.shape[0], pts.shape[0]
     out = torch.empty(G, N, dtype=torch.float32, device=vols.device)
     with torch.cuda.device(vols.device):                                 # Triton launches on the current device
-        _resample[((N + BLOCK - 1) // BLOCK, G)](vols, pts, pvol, out, fp, dfield, N, c.X, c.Y, c.Z, c.FX, c.FY, c.FZ,
-                                                 **_switches(c))
+        _resample[((N + BLOCK - 1) // BLOCK, G)](vols, pts, pvol, out, fp, dfield, ddfield, N, c.X, c.Y, c.Z,
+                                                 c.FX, c.FY, c.FZ, **_switches(c))
     return out
 
 
@@ -542,9 +571,10 @@ MODELS = {"rigid": 0, "linear": 4, "quadratic": 10}
 
 
 def combos(pe_axes=(1,), models=("quadratic",), fields=(True, False)) -> list:
-    """The compile-time combinations (PE axis, eddy terms, with a field, Newton passes) for these choices; the passes
-    are the estimator's default for each (3 with a field, 2 without)."""
-    return [(int(pe), MODELS[m], int(bool(hf)), 3 if hf else 2) for pe in pe_axes for m in models for hf in fields]
+    """The compile-time combinations (PE axis, eddy terms, field, Newton passes) for these choices; a field: False,
+    True, or 2 (a field and a series of both polarities); the passes are the estimator's default for each (3 with a
+    field, 2 without)."""
+    return [(int(pe), MODELS[m], int(hf), 3 if hf else 2) for pe in pe_axes for m in models for hf in fields]
 
 
 def _warm_combo(combo) -> float:
@@ -558,7 +588,7 @@ def _warm_combo(combo) -> float:
     _step_moments.warmup(f(), f(), f(), f(), f(), f(), f(), f(), 1, 1, 1, 1, 1, 1, 1, 1, NPASS=npass, grid=(1, 1), **sw)
     _step_cost.warmup(f(), f(), f(), f(), i, f(), f(), f(), f(), 1, 1, 1, 1, 1, 1, 1, 1, NPASS=npass, grid=(1, 1), **sw)
     _step_values.warmup(f(), f(), f(), i, f(), f(), f(), f(), 1, 1, 1, 1, 1, 1, 1, NPASS=npass, grid=(1, 1), **sw)
-    _resample.warmup(f(), f(), f(), f(), f(), f(), 1, 1, 1, 1, 1, 1, 1, grid=(1, 1), **sw)
+    _resample.warmup(f(), f(), f(), f(), f(), f(), f(), 1, 1, 1, 1, 1, 1, 1, grid=(1, 1), **sw)
     _apply_volumes.warmup(f(), f(), f(), f(), f(), f(), f(), 1, 1, 1, 1, 1, 1, grid=(1, 1), **sw)
     return round(time.perf_counter() - t0, 1)
 

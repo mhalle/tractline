@@ -6,6 +6,8 @@ slot (pipeline.gibbs_subject).
     modal run bench/motion_eddy/modal_cuda.py --tests          # tests/test_motion_eddy.py on the GPU first
     modal run bench/motion_eddy/modal_cuda.py --cli            # `tractline run --motion-eddy --gibbs` end to end, twice
     modal run bench/motion_eddy/modal_cuda.py --cli --warm     # `tractline warm <series>` first, then the runs
+    modal run bench/motion_eddy/modal_cuda.py --pair           # a full AP/PA pair (ds005341 sub-01): one series, then
+                                                               # concatenate and pair-average, end to end
 
 Per GPU, one container runs the correction `runs` times (the first pays for torch's warm-up), reporting each stage's
 time and the peak device memory; then gibbs on the series, its time and memory, and its float32 result on 8 volumes
@@ -25,12 +27,16 @@ DATA = Path(os.environ.get("TRACTOGRAPHY_DATA", Path.home() / "tmp/data/tractogr
 PKG = HERE.parent.parent / "src/tractline"
 SES = "ds004712/sub-16974/ses-OXF1PRI001/dwi"
 SERIES = f"/data/{SES}/sub-16974_ses-OXF1PRI001_dir-AP_dwi.nii.gz"
+PAIR = "ds005341/sub-01/dwi"
+PAIR_SERIES = f"/data/{PAIR}/sub-01_dir-AP_dwi.nii.gz"
 
 image = (modal.Image.debian_slim(python_version="3.12")
          .uv_pip_install("torch==2.14.1", "numpy>=2", "scipy>=1.15", "nibabel", "pytest", "click", "matplotlib", "dipy")
          .env({"PYTHONPATH": "/root/pkg", "TRACTOGRAPHY_DATA": "/data"}))
 if (DATA / SES).is_dir():                       # the real scan, where it is (the tests do not need it: CI has none)
     image = image.add_local_dir(str(DATA / SES), remote_path=f"/data/{SES}")
+if (DATA / PAIR).is_dir():                      # a public full pair (CC0), for --pair
+    image = image.add_local_dir(str(DATA / PAIR), remote_path=f"/data/{PAIR}")
 image = (image.add_local_dir(str(HERE.parent.parent / "tests"), remote_path="/root/tests")
          .add_local_dir(str(PKG), remote_path="/root/pkg/tractline"))
 app = modal.App("tractline-motion-eddy-cuda", image=image)
@@ -49,7 +55,7 @@ def tests_gpu(select: str = "") -> str:
         return json.dumps({"code": 1, "out": "Triton is not available on this GPU: " + pre.stderr[-2000:]})
     cmd = ["python", "-m", "pytest", "-q", "-rs", "-p", "no:cacheprovider", "/root/tests/test_motion_eddy.py",
            "/root/tests/test_devices.py", "/root/tests/test_gibbs.py", "/root/tests/test_provenance.py",
-           "/root/tests/test_skullstrip.py"]
+           "/root/tests/test_skullstrip.py", "/root/tests/test_series.py"]
     r = subprocess.run(cmd + (["-k", select] if select else []), capture_output=True, text=True, cwd="/root")
     return json.dumps({"code": r.returncode, "out": r.stdout[-6000:] + r.stderr[-3000:]})
 
@@ -70,6 +76,23 @@ def cli_gpu(warm: bool = False) -> str:
                             "cuda", "--trx", "/tmp/out.trx", "--qc", "/tmp/qc", "--json", "-", "-q"],
                            capture_output=True, text=True, env={**os.environ, "TRACTLINE_CACHE": "/tmp/cache"})
         outs.append(r.stdout if r.returncode == 0 else f"exit {r.returncode}: {r.stderr[-3000:]}")
+    return json.dumps(outs)
+
+
+@app.function(gpu="A10", timeout=3600, memory=32768, cpu=8)
+def pair_gpu() -> str:
+    """`tractline run` on a full pair, one series and both modes, each twice (the first of each pays for what it
+    compiles): the JSON summaries, in order."""
+    import subprocess
+    outs = {}
+    for name, extra in (("one series", []), ("concatenate", ["--reversed-series", "concatenate"]),
+                        ("pair-average", ["--reversed-series", "pair-average"])):
+        outs[name] = []
+        for k in range(2):
+            r = subprocess.run(["python", "-m", "tractline.cli", "run", PAIR_SERIES, "--motion-eddy", *extra, "--shell", "2000",
+                                "--device", "cuda", "--json", "-", "-q"], capture_output=True, text=True,
+                               env={**os.environ, "TRACTLINE_CACHE": "/tmp/cache"})
+            outs[name].append(json.loads(r.stdout) if r.returncode == 0 else f"exit {r.returncode}: {r.stderr[-3000:]}")
     return json.dumps(outs)
 
 
@@ -127,7 +150,7 @@ def run_gpu(runs: int = 2, profile: bool = False, backend: str = "auto") -> str:
 
 @app.local_entrypoint()
 def main(gpus: str = "A10", runs: int = 2, profile: bool = False, backend: str = "auto", tests: bool = False,
-         select: str = "", cli: bool = False, warm: bool = False):
+         select: str = "", cli: bool = False, warm: bool = False, pair: bool = False):
     """Writes results/motion_eddy/modal_cuda_<gpu>[_<backend>].json; compare_records.py compares its record with an
     MPS run's (record() saved as JSON)."""
     if tests:                                    # a failure exits non-zero, for CI (.github/workflows/gpu.yml)
@@ -139,6 +162,12 @@ def main(gpus: str = "A10", runs: int = 2, profile: bool = False, backend: str =
                 failed.append(g)
         if failed:
             raise SystemExit(f"GPU tests failed on {', '.join(failed)}")
+        return
+    if pair:
+        for g in gpus.split(","):
+            path = HERE.parent / "results" / "motion_eddy" / f"modal_cuda_pair_{g.lower()}.json"
+            path.write_text(json.dumps(json.loads(pair_gpu.with_options(gpu=g).remote()), indent=1))
+            print(g, "->", path)
         return
     if cli:
         for g in gpus.split(","):

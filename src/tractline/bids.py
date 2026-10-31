@@ -38,6 +38,15 @@ within one protocol only):
     phase-encoding axis, ParallelReductionFactorInPlane and PartialFourier where stated; said as assumed).
 A partner that fails is dropped when the others still cover both polarities (said), else the pairing is
 refused with the reasons.
+
+`load(..., keep_reversed=True)` also keeps a reversed diffusion series in full (Subject.reversed; the pipeline's
+reversed_series slot, tractline.series), not only its b0s. That series is one of the partners, found as above, or, if
+those are field maps only, the diffusion series in the same folder phase-encoded the other way. It must have passed
+every check above and be phase-encoded against the diffusion series, have diffusion-weighted volumes and a .bvec that
+fits them, and be the only such partner (name it with `partners=` otherwise): anything else is an error, with the reason,
+never a quiet fall back to its b0s. Its b-vectors are given in the diffusion series' frame. A partner on another
+grid (a slab placed differently) is put onto the diffusion series' by the scanner's coordinates, as its b0s are, its
+b-vectors turned by the two grids' rotation, and said: those volumes are then interpolated twice.
 """
 from __future__ import annotations
 
@@ -138,6 +147,19 @@ def _world(M, v):
     return w / np.linalg.norm(w)
 
 
+def _bvec_to(bvec, A_from, A_to):
+    """FSL b-vectors (3, G) of a series on grid A_from, as the same gradients on grid A_to: each grid's image axes (x
+    flipped when the affine's determinant is positive, FSL's convention) through the world."""
+    def axes(A):
+        M = np.asarray(A, float)[:3, :3]
+        return M / np.linalg.norm(M, axis=0), np.diag([-1.0 if np.linalg.det(M) > 0 else 1.0, 1.0, 1.0])
+    R0, F0 = axes(A_from)
+    R1, F1 = axes(A_to)
+    g = F1 @ np.linalg.solve(R1, R0 @ F0 @ np.asarray(bvec, float))
+    n = np.linalg.norm(g, axis=0)
+    return np.where(n > 0, g / np.where(n > 0, n, 1.0), 0.0)
+
+
 def _world_voxels(M, zooms):
     """The voxel size along each world axis (the image axis nearest to it)."""
     D = M[:3, :3] / np.linalg.norm(M[:3, :3], axis=0)
@@ -163,6 +185,20 @@ class Pairing:
 
 
 @dataclass
+class ReversedSeries:
+    """A reversed diffusion series kept in full (load's keep_reversed): tractline.series joins it to the diffusion
+    series. Its table is in the diffusion series' frame, its data on the diffusion series' grid."""
+    dwi: np.ndarray              # (X, Y, Z, G) as stored when native, float32 when put onto the diffusion series' grid
+    bval: np.ndarray
+    bvec: np.ndarray             # (3, G) FSL, in the diffusion series' frame
+    pe_sign: float               # +1 / -1 along the diffusion series' pe_axis
+    readout_s: float
+    path: Path
+    sidecar: dict
+    native: bool                 # False: interpolated onto the diffusion series' grid (the gibbs slot runs only on native)
+
+
+@dataclass
 class Subject:
     """pipeline.run's subject (pipeline.py's docstring), from BIDS."""
     name: str
@@ -182,6 +218,7 @@ class Subject:
     sidecar: dict
     b0_native: np.ndarray | None = None   # (V,) bool: the b0 is on its own grid, not resampled onto the DWI's (the gibbs
                                           # slot runs only on those); None: not known (other loaders)
+    reversed: ReversedSeries | None = None   # load's keep_reversed: the reversed series in full; None: its b0s only
 
 
 def _readout(side) -> tuple[float | None, str]:
@@ -202,7 +239,6 @@ def _names(entry, dwi: Path) -> bool:
 
 
 def _candidates(dwi: Path, side: dict, w0: np.ndarray) -> tuple[str, list[Path], list[str]]:
-    import nibabel as nib
     folder = dwi.parent
     session = folder.parent
     niis = sorted(p for p in session.glob("*/*.nii*") if p != dwi)
@@ -232,8 +268,15 @@ def _candidates(dwi: Path, side: dict, w0: np.ndarray) -> tuple[str, list[Path],
     hits = [p for p in niis if p.parent.name == "fmap" and _entities(_stem(p))[1] == "epi" and intended(p)]
     if hits:
         return "IntendedFor", hits, notes
+    hits = _same_folder(dwi, w0, notes)
+    return ("same folder", hits, notes) if hits else ("none", [], notes)
+
+
+def _same_folder(dwi: Path, w0, notes: list) -> list:
+    """The other diffusion series in dwi's folder phase-encoded the other way along its axis."""
+    import nibabel as nib
     hits = []
-    for p in sorted(folder.glob("*_dwi.nii*")):
+    for p in sorted(dwi.parent.glob("*_dwi.nii*")):
         if p == dwi:
             continue
         ps, bad = _try_sidecar(p)
@@ -242,13 +285,14 @@ def _candidates(dwi: Path, side: dict, w0: np.ndarray) -> tuple[str, list[Path],
         v = _pe(ps.get("PhaseEncodingDirection"))
         if v is not None and float(_world(nib.load(p).affine, v) @ w0) < -np.cos(np.radians(10)):
             hits.append(p)
-    return ("same folder", hits, notes) if hits else ("none", [], notes)
+    return hits
 
 
-def load(dwi_path, partners=None, name=None) -> Subject:
+def load(dwi_path, partners=None, name=None, keep_reversed=False) -> Subject:
     """The diffusion series at dwi_path (a BIDS *_dwi.nii[.gz] with its .bval, .bvec and .json, inherited or
     beside it) and the series that correct it (found as the module docstring says, or `partners`, NIfTI
-    paths)."""
+    paths). keep_reversed: also the reversed diffusion series in full (Subject.reversed; the module docstring), an
+    error when there is none that qualifies."""
     try:
         import nibabel as nib
         from scipy.ndimage import affine_transform
@@ -282,6 +326,8 @@ def load(dwi_path, partners=None, name=None) -> Subject:
         how, cands, notes = "given", [Path(p) for p in partners], []
     else:
         how, cands, notes = _candidates(dwi_path, side, w0)
+        if keep_reversed and how != "none" and not any(_entities(_stem(p))[1] == "dwi" for p in cands):
+            cands = cands + _same_folder(dwi_path, w0, notes)                # field maps found: the series beside them too
     run = _entities(_stem(dwi_path))[0].get("run")
     if run is not None and len(cands) > 1:
         same = [p for p in cands if _entities(_stem(p))[0].get("run") in (None, run)]
@@ -295,6 +341,7 @@ def load(dwi_path, partners=None, name=None) -> Subject:
     vols, pevs, ros = [dwi[..., b0i].astype(np.float64)], [pe0] * len(b0i), [readout] * len(b0i)
     native = [True] * len(b0i)
     vox_w = _world_voxels(A, vox)
+    kept = {}                                                                # partner -> what keep_reversed needs of it
 
     def drop(p, why):
         dropped.append(f"{p.name}: {why}")
@@ -369,6 +416,7 @@ def load(dwi_path, partners=None, name=None) -> Subject:
             pv = (1.0 if cos > 0 else -1.0) * pe0                            # its direction on the diffusion grid
         vols.append(data); pevs += [pv] * data.shape[-1]; ros += [ro] * data.shape[-1]; used.append(p)
         native += [on_grid] * data.shape[-1]
+        kept[p] = (pimg, ps, pv, ro, on_grid, cos)
     pe_vectors = np.array(pevs)
     both = len({float(np.sign(v[pe_axis])) for v in pe_vectors}) == 2
     extra = (f"; not used: {'; '.join(dropped)}" if dropped else "") + (f"; {'; '.join(n for n in notes if n not in dropped)}"
@@ -389,9 +437,57 @@ def load(dwi_path, partners=None, name=None) -> Subject:
         unknown = [c.name for c in checks if c.status == "unknown" and any(c.name.startswith(u.name) for u in used)]
         msg, ok = (f"corrected with {', '.join(p.name for p in used)} ({how})"
                    + (f"; not verified: {', '.join(unknown)}" if unknown else "") + extra), True
+    rev = None
+    if keep_reversed:
+        rev, line = _reversed(dwi_path, A, shape, pe_axis, ok, msg, used, kept, checks)
+        msg += f"; {line}"
     pairing = Pairing(ok, how, used, checks, sources, msg, dropped)
     return Subject(name=name or _stem(dwi_path), dwi=dwi, affine=A, vox=vox, bval=bval, bvec=bvec, pe_axis=pe_axis,
                    pe_sign=float(pe0[pe_axis]), readout_s=readout if readout is not None else float("nan"), pairing=pairing,
                    b0s=np.concatenate(vols, -1) if ok else None, pe_vectors=pe_vectors if ok else None,
                    b0_readout_s=np.array(ros, float) if ok else None, dwi_path=dwi_path, sidecar=side,
-                   b0_native=np.array(native, bool) if ok else None)
+                   b0_native=np.array(native, bool) if ok else None, reversed=rev)
+
+
+def _reversed(dwi_path, A, shape, pe_axis, ok, msg, used, kept, checks) -> tuple:
+    """load's keep_reversed: (ReversedSeries, the line for the pairing's message), or an error saying why not (the module
+    docstring)."""
+    from scipy.ndimage import affine_transform
+    if not ok:
+        raise ValueError(f"reversed series: the pairing failed, so there is none to use: {msg}")
+    against = [p for p in used if _entities(_stem(p))[1] == "dwi" and kept[p][5] < 0]
+    full = []
+    for p in against:
+        pb = _table(p, ".bval")
+        if (pb >= 50).any():
+            full.append((p, pb))
+    if not full:
+        raise ValueError(f"reversed series: none of the partners ({', '.join(p.name for p in used)}) is a diffusion series "
+                         "phase-encoded against this one with diffusion-weighted volumes; the field can still use their "
+                         "b0s without keep_reversed")
+    if len(full) > 1:
+        raise ValueError(f"reversed series: {len(full)} candidates ({', '.join(p.name for p, _ in full)}): name the one to "
+                         "use (partners= / --partners)")
+    p, pb = full[0]
+    pimg, ps, pv, ro, on_grid, _ = kept[p]
+    pg = _table(p, ".bvec")
+    n = pimg.shape[3] if len(pimg.shape) > 3 else 1
+    if pg is None or pg.shape != (3, n):
+        raise ValueError(f"reversed series {p.name}: its .bvec is missing or does not fit its {n} volumes")
+    if (np.linalg.norm(pg[:, pb >= 50], axis=0) < 0.5).any():
+        raise ValueError(f"reversed series {p.name}: a diffusion-weighted volume has no gradient direction (a trace image?)")
+    if on_grid:
+        data, bvec = np.asarray(pimg.dataobj), pg
+        how = "on this grid"
+    else:
+        M = np.linalg.inv(pimg.affine) @ A
+        data = np.empty(shape + (n,), np.float32)
+        for v in range(n):
+            data[..., v] = affine_transform(np.asarray(pimg.dataobj[..., v], np.float64), M[:3, :3], M[:3, 3],
+                                            output_shape=shape, order=3, mode="constant", cval=0.0).clip(0, None)
+        bvec = _bvec_to(pg, pimg.affine, A)
+        how = "put onto this grid by the scanner's coordinates, b-vectors turned to match: interpolated twice"
+    shells = sorted({int(round(b / 100) * 100) for b in pb[pb >= 50]})
+    line = f"the reversed series {p.name} kept in full ({n} volumes, b = {shells}; {how})"
+    checks.append(Check(f"{p.name}: kept in full", "ok", line))
+    return ReversedSeries(data, pb, bvec, float(pv[pe_axis]), ro, p, _try_sidecar(p)[0], on_grid), line

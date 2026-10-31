@@ -43,6 +43,9 @@ the labeler); `bench/results/README.md` says which, and what re-running their sc
   `modal_estimate_compare.py` (the field estimate, committed against working copy, per GPU), `timing_table.py` (the
   cross-platform table from timing_matrix's results), `gpu_track_profile.py` + `modal_gpu_track_profile.py` (the GPU
   tracker's steps against the fibers they carry; block sizes compared bit for bit).
+- Two full series of opposite phase encoding: `reversed_series_compare.py` (one series, concatenate and pair-average on
+  a real pair, with `--retest` a second pair of the session), `reversed_eddy_sign.py` (whether real eddy fields turn with
+  the polarity, from ON-Harmony's short PA series).
 - Head motion and eddy current correction: `motion_eddy/` (its own README): the prototype, the comparisons with eddy
   and TORTOISE, the field referee, the CUDA runner (`modal_cuda.py`) and the comparison of two runs' parameters
   (`compare_records.py`).
